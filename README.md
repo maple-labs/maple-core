@@ -1,5 +1,6 @@
 # Maple Core
 
+The Maple Finance contracts protocol.
 
 ## Setup
 
