@@ -1,26 +1,15 @@
-## `Greeter`
+# Maple Core
 
+The Maple Finance contracts protocol.
 
+## Setup
 
+```
+yarn
+```
 
+## Generating Docs
 
-
-### `constructor(string _greeting)` (public)
-
-
-
-
-
-### `greet() → string` (public)
-
-
-
-
-
-### `setGreeting(string _greeting)` (public)
-
-
-
-
-
-
+```
+yarn docs
+```
