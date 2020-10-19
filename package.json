@@ -1,0 +1,30 @@
+{
+  "name": "maple-core",
+  "version": "1.0.0",
+  "description": "Maple Core",
+  "main": "index.js",
+  "scripts": {
+    "docs": "solidity-docgen -i ./contracts -o ./docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maple-labs/maple-core.git"
+  },
+  "keywords": [
+    "Maple",
+    "Core",
+    "Solidity"
+  ],
+  "author": "Maple Labs",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maple-labs/maple-core/issues"
+  },
+  "homepage": "https://github.com/maple-labs/maple-core#readme",
+  "devDependencies": {
+    "solidity-docgen": "^0.5.7"
+  },
+  "dependencies": {
+    "@nomiclabs/buidler": "^1.4.8"
+  }
+}
