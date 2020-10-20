@@ -7,8 +7,13 @@ import "@nomiclabs/buidler/console.sol";
 /// @title Greeter Contract
 contract Greeter {
 
-    /// @notice The greeting value.
+    /**
+        @notice The public Greeting
+    */
+
     string public greeting;
+
+
 
     /// @notice This is an event description here.
     /// @param _greetings The greetings value.
