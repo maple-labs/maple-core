@@ -25,7 +25,6 @@
     "solidity-docgen": "^0.5.7"
   },
   "dependencies": {
-    "@nomiclabs/buidler": "^1.4.8",
-    "solc": "0.6.8"
+    "@nomiclabs/buidler": "^1.4.8"
   }
 }
