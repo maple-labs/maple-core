@@ -4,7 +4,7 @@
   "description": "Maple Core",
   "main": "index.js",
   "scripts": {
-    "docs": "solidity-docgen -i ./contracts -o ./docs"
+    "docs": "solidity-docgen -i ./contracts -o ./docs -t ./docs"
   },
   "repository": {
     "type": "git",
