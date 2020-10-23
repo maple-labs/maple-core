@@ -8,7 +8,7 @@
 
 ## <u>Functions</u>
 
-## `newLocker(address _bondVault, address _poolDelegate, address _collateralAsset, address _investmentAsset)`
+### `newLocker(address _bondVault, address _poolDelegate, address _collateralAsset, address _investmentAsset)`
 Instantiates a new locker.
 
 
@@ -23,7 +23,7 @@ Instantiates a new locker.
 
 ## <u>Events</u>
 
-## `NewLocker(address _locker, address _bondVault, address _poolDelegate, address _collateralAsset, address _investmentAsset)`
+### `NewLocker(address _locker, address _bondVault, address _poolDelegate, address _collateralAsset, address _investmentAsset)`
 Returns the address of a newLocker when created.
 
 

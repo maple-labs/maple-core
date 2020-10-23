@@ -9,7 +9,7 @@
 
 ## <u>Functions</u>
 
-## `constructor(address _bondVault, address _poolDelegate, address _collateralAsset, address _investmentAsset)`
+### `constructor(address _bondVault, address _poolDelegate, address _collateralAsset, address _investmentAsset)`
 Constructor for BondVaultCollateralLiquidationStrategy_LP.sol
 
 
@@ -22,7 +22,7 @@ Constructor for BondVaultCollateralLiquidationStrategy_LP.sol
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `_investmentAsset`: Address of the (ERC-20) InvestmentAsset the (ERC-20) CollateralAsset is exchanged for.
 
-## `initiateLiquidation(address _bondVault)`
+### `initiateLiquidation(address _bondVault)`
 Initiate liquidation of BondVault collateral.
 
 
@@ -33,7 +33,7 @@ Initiate liquidation of BondVault collateral.
 ### Returns:
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Represents whether or not liquidation initiation was successful.
 
-## `finaliseLiquidation(address _bondVault, uint256 _investmentAssetWaived)`
+### `finaliseLiquidation(address _bondVault, uint256 _investmentAssetWaived)`
 Finalise liquidation of BondVault collateral.
 
 
@@ -46,7 +46,7 @@ Finalise liquidation of BondVault collateral.
 ### Returns:
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Amount (10 ** decimals) of InvestmentAsset returned to liquidity pool InvestmentAsset locker.
 
-## `withdrawFromLocker(uint256 _assetAmount)`
+### `withdrawFromLocker(uint256 _assetAmount)`
 PoolDelegate override/manual withdrawal from this locker.
 
 
