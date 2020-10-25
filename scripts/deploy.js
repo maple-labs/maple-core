@@ -8,15 +8,15 @@ const governor = '0xc783df8a850f42e7F7e57013759C285caa701eB6'
 async function main() {
   console.log('📡 Deploy \n')
 
+  const mapleToken = await deploy('MapleToken', [
+    'Maple FDT',
+    'MPL',
+    '0xc783df8a850f42e7F7e57013759C285caa701eB6',
+  ])
+  console.log(mapleToken.address)
+
   // auto deploy to read contract directory and deploy them all (add ".args" files for arguments)
   // await autoDeploy()
-
-  const bondVault = await deploy('BondVaultCollateralLiquidationStrategy_LP', [
-    '0x2546bcd3c84621e976d8185a91a922ae77ecec30',
-    '0x2546bcd3c84621e976d8185a91a922ae77ecec30',
-    '0x2546bcd3c84621e976d8185a91a922ae77ecec30',
-    '0x2546bcd3c84621e976d8185a91a922ae77ecec30',
-  ])
 
   // const yourContract = await deploy('YourContract')
   // console.log(yourContract.address)
