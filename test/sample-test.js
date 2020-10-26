@@ -23,6 +23,15 @@ describe("Maple", function() {
       console.log("allowance2 mpl", allowmpl2.toString() )
 
   })
+  it("give some coins to friends", async function() {
+      const accounts =   await ethers.provider.listAccounts();
+      const Mpl = await ethers.getContractFactory("MapleToken");
+      const mpl =  Mpl.attach(mpladdy)
+      expect(await mpl.transfer(accounts[1],'20000000000000000000000'))
+       const bal = await mpl.balanceOf(accounts[1])
+       console.log("MPL bal account 1",bal.toString())
+  })
+ 
 
 })
 
