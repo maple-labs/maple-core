@@ -2,14 +2,14 @@ const fs = require('fs')
 const chalk = require('chalk')
 const bre = require('hardhat')
 
-const publishDir = '../react-app/src/contracts'
+const directories = ['../react-app/src/contracts', '../contracts/src/contracts']
 
-function publishContract(contractName) {
+function publishContract(contractName, directory) {
   console.log(
     'Publishing',
     chalk.cyan(contractName),
     'to',
-    chalk.yellow(publishDir),
+    chalk.yellow(directory),
   )
   let contract = fs
     .readFileSync(
@@ -21,15 +21,15 @@ function publishContract(contractName) {
     .toString()
   contract = JSON.parse(contract)
   fs.writeFileSync(
-    `${publishDir}/${contractName}.address.js`,
+    `${directory}/${contractName}.address.js`,
     `module.exports = "${address}";`,
   )
   fs.writeFileSync(
-    `${publishDir}/${contractName}.abi.js`,
+    `${directory}/${contractName}.abi.js`,
     `module.exports = ${JSON.stringify(contract.abi, null, 2)};`,
   )
   fs.writeFileSync(
-    `${publishDir}/${contractName}.bytecode.js`,
+    `${directory}/${contractName}.bytecode.js`,
     `module.exports = "${contract.bytecode}";`,
   )
 
@@ -37,23 +37,32 @@ function publishContract(contractName) {
 }
 
 async function main() {
-  if (!fs.existsSync(publishDir)) {
-    fs.mkdirSync(publishDir)
-  }
-  const finalContractList = []
-  fs.readdirSync(bre.config.paths.sources).forEach((file) => {
-    if (file.indexOf('.sol') >= 0) {
-      const contractName = file.replace('.sol', '')
-      // Add contract to list if publishing is successful
-      if (publishContract(contractName)) {
-        finalContractList.push(contractName)
-      }
+
+  for (let i = 0; i < directories.length; i++) {
+    if (!fs.existsSync(directories[i])) {
+      fs.mkdirSync(directories[i])
     }
-  })
-  fs.writeFileSync(
-    `${publishDir}/contracts.js`,
-    `module.exports = ${JSON.stringify(finalContractList)};`,
-  )
+    const finalContractList = []
+    fs.readdirSync(bre.config.paths.sources).forEach((file) => {
+      if (file.indexOf('.sol') >= 0) {
+        const contractName = file.replace('.sol', '')
+        // Add contract to list if publishing is successful
+        try {
+          if (publishContract(contractName, directories[i])) {
+            finalContractList.push(contractName)
+          }
+        }
+        catch(e) {
+          console.log(e)
+        }
+      }
+    })
+    fs.writeFileSync(
+      `${directories[i]}/contracts.js`,
+      `module.exports = ${JSON.stringify(finalContractList)};`,
+    )
+  }
+  
 }
 main()
   .then(() => process.exit(0))

@@ -1,14 +1,36 @@
-const { expect } = require("chai");
+const { expect } = require('chai')
 
-describe("Greeter", function() {
-  it("Should return the new greeting once it's changed", async function() {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const greeter = await Greeter.deploy("Hello, world!");
-    
-    await greeter.deployed();
-    expect(await greeter.greet()).to.equal("Hello, world!");
+const mpladdy = require('../../contracts/src/contracts/MapleToken.address.js')
+const bpooladdy = require('../../contracts/src/contracts/BPool.address.js')
 
-    await greeter.setGreeting("Hola, mundo!");
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
-  });
-});
+describe('Maple', function () {
+  it('Check balance maple token', async function () {
+    const accounts = await ethers.provider.listAccounts()
+    const Mpl = await ethers.getContractFactory('MapleToken')
+    const mpl = Mpl.attach(mpladdy)
+    const bal = await mpl.balanceOf(accounts[0])
+    console.log('mpl bal', bal.toString())
+  })
+  it('set allowances to balancer pool', async function () {
+    const accounts = await ethers.provider.listAccounts()
+    const Mpl = await ethers.getContractFactory('MapleToken')
+    const mpl = Mpl.attach(mpladdy)
+    const allowmpl = await mpl.allowance(accounts[0], bpooladdy)
+    console.log('allowance mpl', allowmpl.toString())
+    await mpl.approve(bpooladdy, '50000000000000000000000')
+    const allowmpl2 = await mpl.allowance(accounts[0], bpooladdy)
+    console.log('allowance2 mpl', allowmpl2.toString())
+  })
+  it('give some coins to friends', async function () {
+    const accounts = await ethers.provider.listAccounts()
+    const Mpl = await ethers.getContractFactory('MapleToken')
+    const mpl = Mpl.attach(mpladdy)
+    expect(await mpl.transfer(accounts[1], '20000000000000000000000'))
+    const bal = await mpl.balanceOf(accounts[1])
+    console.log('MPL bal account 1', bal.toString())
+    const mpl2 = await Mpl.attach(mpladdy).connect(ethers.provider.getSigner(1))
+    await mpl2.approve(bpooladdy, '20000000000000000000000')
+    const allowmpl2 = await mpl2.allowance(accounts[1], bpooladdy)
+    console.log('allowance bpool mpl acct 1', allowmpl2.toString())
+  })
+})
