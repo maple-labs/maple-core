@@ -15,6 +15,13 @@ async function main() {
   ])
   console.log(mapleToken.address)
 
+  const mapleGlobals = await deploy('MapleGlobals', [
+    'Maple FDT',
+    'MPL',
+    '0xc783df8a850f42e7F7e57013759C285caa701eB6',
+  ])
+  console.log(mapleToken.address)
+
   // auto deploy to read contract directory and deploy them all (add ".args" files for arguments)
   // await autoDeploy()
 
