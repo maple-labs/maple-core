@@ -1,10 +1,10 @@
 pragma solidity 0.7.3;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./IFundsDistributionToken.sol";
-import "./ERC20.sol";
-import "../Math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import "../Math/SafeMathUint.sol";
-import "../Math/SafeMathInt.sol";
 
 abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 
@@ -12,7 +12,6 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 	using SafeMathUint for uint256;
 	using SafeMathInt for int256;
 
-	// optimize, see https://github.com/ethereum/EIPs/issues/1726#issuecomment-472352728
 	uint256 constant internal pointsMultiplier = 2**128;
 	uint256 internal pointsPerShare;
 
@@ -52,7 +51,6 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 	}
 
 	/**
-	 * prev. withdrawDividend
 	 * @notice Prepares funds withdrawal
 	 * @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
 	 */
@@ -67,7 +65,6 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 	}
 
 	/** 
-	 * prev. withdrawableDividendOf
 	 * @notice View the amount of funds that an address can withdraw.
 	 * @param _owner The address of a token holder.
 	 * @return The amount funds that `_owner` can withdraw.
@@ -77,7 +74,6 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 	}
 	
 	/**
-	 * prev. withdrawnDividendOf
 	 * @notice View the amount of funds that an address has withdrawn.
 	 * @param _owner The address of a token holder.
 	 * @return The amount of funds that `_owner` has withdrawn.
@@ -87,7 +83,6 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 	}
 
 	/**
-	 * prev. accumulativeDividendOf
 	 * @notice View the amount of funds that an address has earned in total.
 	 * @dev accumulativeFundsOf(_owner) = withdrawableFundsOf(_owner) + withdrawnFundsOf(_owner)
 	 * = (pointsPerShare * balanceOf(_owner) + pointsCorrection[_owner]) / pointsMultiplier

@@ -2,7 +2,7 @@ pragma solidity 0.7.3;
 
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
-import "./Token/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract MapleToken is IFundsDistributionToken, FundsDistributionToken {
 
