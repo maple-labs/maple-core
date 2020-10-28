@@ -34,7 +34,7 @@
     "solc": "0.7.3"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^3.2.0"
+    "@openzeppelin/contracts": "3.2.1-solc-0.7"
   },
   "version": "1.0.0",
   "main": "index.js"

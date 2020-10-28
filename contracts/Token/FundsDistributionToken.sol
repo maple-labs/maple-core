@@ -1,15 +1,17 @@
 pragma solidity 0.7.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./IFundsDistributionToken.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/math/SignedSafeMath.sol";
+import "./IFundsDistributionToken.sol";
 import "../Math/SafeMathUint.sol";
+import "../Math/SafeMathInt.sol";
 
 abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 
 	using SafeMath for uint256;
 	using SafeMathUint for uint256;
+	using SignedSafeMath for int256;
 	using SafeMathInt for int256;
 
 	uint256 constant internal pointsMultiplier = 2**128;
