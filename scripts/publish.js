@@ -1,37 +1,35 @@
 const fs = require('fs')
 const chalk = require('chalk')
 const bre = require('hardhat')
-const { FixedNumber } = require('ethers')
 
-const publishDir = '../react-app/src/contracts'
+const directories = ['../react-app/src/contracts', '../contracts/src/contracts']
 
-async function publishContract(contractName) {
-  const addressLocation = `${bre.config.paths.artifacts}/${contractName}.address`
-  const abiLocation = `${bre.config.paths.artifacts}/contracts/${contractName}.sol/${contractName}.json`
-  const publishAddressLocation = `${publishDir}/${contractName}.address.js`
-  const publishAbiLocation = `${publishDir}/${contractName}.abi.js`
-  const publishByteCodeLocation = `${publishDir}/${contractName}.bytecode.js`
-
+function publishContract(contractName, directory) {
   console.log(
     'Publishing',
     chalk.cyan(contractName),
     'to',
-    chalk.yellow(publishDir),
+    chalk.yellow(directory),
   )
-
-  let contract = JSON.parse(fs.readFileSync(abiLocation).toString())
-
-  if (fs.readFileSync(addressLocation)) {
-    const address = await fs.readFileSync(addressLocation).toString()
-    fs.writeFileSync(publishAddressLocation, `module.exports = "${address}";`)
-  }
-
+  let contract = fs
+    .readFileSync(
+      `${bre.config.paths.artifacts}/contracts/${contractName}.sol/${contractName}.json`,
+    )
+    .toString()
+  const address = fs
+    .readFileSync(`${bre.config.paths.artifacts}/${contractName}.address`)
+    .toString()
+  contract = JSON.parse(contract)
   fs.writeFileSync(
-    publishAbiLocation,
+    `${directory}/${contractName}.address.js`,
+    `module.exports = "${address}";`,
+  )
+  fs.writeFileSync(
+    `${directory}/${contractName}.abi.js`,
     `module.exports = ${JSON.stringify(contract.abi, null, 2)};`,
   )
   fs.writeFileSync(
-    publishByteCodeLocation,
+    `${directory}/${contractName}.bytecode.js`,
     `module.exports = "${contract.bytecode}";`,
   )
 
@@ -39,27 +37,32 @@ async function publishContract(contractName) {
 }
 
 async function main() {
-  try {
-    if (!fs.existsSync(publishDir)) {
-      fs.mkdirSync(publishDir)
+
+  for (let i = 0; i < directories.length; i++) {
+    if (!fs.existsSync(directories[i])) {
+      fs.mkdirSync(directories[i])
     }
     const finalContractList = []
     fs.readdirSync(bre.config.paths.sources).forEach((file) => {
       if (file.indexOf('.sol') >= 0) {
         const contractName = file.replace('.sol', '')
         // Add contract to list if publishing is successful
-        if (publishContract(contractName)) {
-          finalContractList.push(contractName)
+        try {
+          if (publishContract(contractName, directories[i])) {
+            finalContractList.push(contractName)
+          }
+        }
+        catch(e) {
+          // console.log(e)
         }
       }
     })
     fs.writeFileSync(
-      `${publishDir}/contracts.js`,
+      `${directories[i]}/contracts.js`,
       `module.exports = ${JSON.stringify(finalContractList)};`,
     )
-  } catch (err) {
-    console.log(err)
   }
+  
 }
 main()
   .then(() => process.exit(0))
