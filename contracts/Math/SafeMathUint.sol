@@ -1,4 +1,4 @@
-pragma solidity 0.7.3;
+pragma solidity 0.7.0;
 
 library SafeMathUint {
   function toInt256Safe(uint256 a) internal pure returns (int256) {
