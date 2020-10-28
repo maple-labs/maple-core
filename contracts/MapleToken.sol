@@ -1,13 +1,13 @@
-pragma solidity 0.7.3;
+pragma solidity 0.7.0;
 
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
-import "./Token/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract MapleToken is IFundsDistributionToken, FundsDistributionToken {
 
-	using SafeMathUint for uint256;
 	using SafeMathInt for int256;
+	using SignedSafeMath for int256;
 
 	// token in which the funds can be sent to the FundsDistributionToken
 	IERC20 public fundsToken;
