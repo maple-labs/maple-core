@@ -1,7 +1,7 @@
 pragma solidity ^0.7.0;
 
-import "./Token/IFundsDistributionToken.sol";
-import "./Token/FundsDistributionToken.sol";
+import "../Token/IFundsDistributionToken.sol";
+import "../Token/FundsDistributionToken.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract LP is IFundsDistributionToken, FundsDistributionToken {

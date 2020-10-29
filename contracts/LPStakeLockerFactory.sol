@@ -2,7 +2,7 @@
 
 pragma solidity 0.7.0;
 
-import "./LPStakeLocker.sol";
+import "./LP/LPStakeLocker.sol";
 
 contract LPStakeLockerFactory {
 
