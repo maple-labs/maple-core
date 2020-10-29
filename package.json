@@ -3,6 +3,7 @@
   "scripts": {
     "chain": "hardhat node",
     "test": "hardhat test",
+    "test:lpool": "yarn deploy && hardhate test test/lp-test.js",
     "test:globals": "yarn deploy && hardhat test test/globals-init.js && hardhat test test/globals-set.js && yarn deploy",
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.js && hardhat run scripts/publish.js",
