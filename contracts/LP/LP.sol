@@ -11,7 +11,7 @@ interface ILPStakeLockerFactory {
 }
 
 interface IMapleGlobals {
-    function MapleToken() external view returns (address);
+    function mapleToken() external view returns (address);
 }
 
 interface IBpool {
@@ -109,7 +109,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 
     function addStakeLocker(address _stakedAsset) public {
         require(
-            IBpool(_stakedAsset).isBound(MapleGlobals.MapleToken()) &&
+            IBpool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&
                 IBpool(_stakedAsset).isBound(liquidAsset) &&
                 IBpool(_stakedAsset).isFinalized() &&
                 IBpool(_stakedAsset).isFinalized() &&
