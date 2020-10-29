@@ -89,9 +89,9 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         IliquidToken = IERC20(_liquidAsset);
         //IstakedAsset = IERC20(_stakedAsset);
         ILockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
-        stakedAssetLockers.push(newStakeLocker(_stakedAsset));
-        //addStakeLocker(_stakedAsset);
+        //stakedAssetLockers.push(newStakeLocker(_stakedAsset));
         MapleGlobals = IMapleGlobals(_MapleGlobalsaddy);
+        addStakeLocker(_stakedAsset);
         //IstakedAssetLocker = ILPStakeocker(stakedAssetLockers[0]);
         // bool
         // PublicPool = _publicPool;
@@ -107,7 +107,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         );
     }
 
-    function addStakeLocker(address _stakedAsset) external returns (bool) {
+    function addStakeLocker(address _stakedAsset) public {
         require(
             IBpool(_stakedAsset).isBound(MapleGlobals.MapleToken()) &&
                 IBpool(_stakedAsset).isBound(liquidAsset) &&

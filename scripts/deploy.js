@@ -8,12 +8,14 @@ const governor = '0xc783df8a850f42e7F7e57013759C285caa701eB6'
 async function main () {
   console.log('📡 Deploy \n')
 
-  const mapleToken = await deploy('MapleToken', [
-    'Maple FDT',
-    'MPL',
-    '0xc783df8a850f42e7F7e57013759C285caa701eB6'
-  ])
+  const mapleToken = await deploy('MapleToken', ['Maple FDT', 'MPL', governor])
   console.log(mapleToken.address)
+
+  const mapleGlobals = await deploy('MapleGlobals', [
+    governor,
+    mapleToken.address
+  ])
+  console.log(mapleGlobals.address)
 
   const LPStakeLockerFactory = await deploy('LPStakeLockerFactory')
   console.log(LPStakeLockerFactory.address)
