@@ -10,6 +10,18 @@ interface ILPStakeLockerFactory {
         returns (address);
 }
 
+interface IMapleGlobals {
+    function MapleToken() external view returns (address);
+}
+
+interface IBpool {
+    function isFinalized() external view returns (bool);
+
+    function isBound(address) external view returns (bool);
+
+    function getNumTokens() external view returns (uint256);
+}
+
 interface ILPStakeocker {
     function stake(uint256 _amountStakedAsset) external returns (uint256);
 
@@ -27,9 +39,11 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
     using SignedSafeMath for int256;
 
     // token in which the funds/dividends can be sent for the FundsDistributionToken
-    IERC20 public IliquidToken;
-    ILPStakeLockerFactory public ILockerFactory;
-    IERC20 public IstakedAsset;
+    IERC20 private IliquidToken;
+    ILPStakeLockerFactory private ILockerFactory;
+    IERC20 private IstakedAsset;
+    ILPStakeocker private IstakedAssetLocker;
+    IMapleGlobals private MapleGlobals;
     // balance of fundsToken that the FundsDistributionToken currently holds
     uint256 public fundsTokenBalance;
 
@@ -38,7 +52,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
     uint256 public ongoingFeeBasisPoints;
     address public liquidAsset;
     address public stakedAsset;
-    address public stakedAssetLocker;
+    address[] public stakedAssetLockers; //supports 8 for fixed memory
     address public poolDelegate;
 
     constructor(
@@ -46,7 +60,8 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         address _stakedAsset,
         address _stakedAssetLockerFactory,
         string memory name,
-        string memory symbol
+        string memory symbol,
+        address _MapleGlobalsaddy
     )
         public
         //        IERC20 _fundsToken
@@ -72,17 +87,36 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
         IliquidToken = IERC20(_liquidAsset);
-        IstakedAsset = IERC20(_stakedAsset);
+        //IstakedAsset = IERC20(_stakedAsset);
         ILockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
-        newStakeLocker(_stakedAsset, _liquidAsset);
+        stakedAssetLockers.push(newStakeLocker(_stakedAsset));
+        //addStakeLocker(_stakedAsset);
+        MapleGlobals = IMapleGlobals(_MapleGlobalsaddy);
+        //IstakedAssetLocker = ILPStakeocker(stakedAssetLockers[0]);
         // bool
         // PublicPool = _publicPool;
     }
 
-    function newStakeLocker(address _stakedAsset, address _liquidAsset)
-        internal
+    function newStakeLocker(address _stakedAsset)
+        private
+        returns (address _stakedAssetLocker)
     {
-        ILockerFactory.newLocker(_stakedAsset, _liquidAsset);
+        _stakedAssetLocker = ILockerFactory.newLocker(
+            _stakedAsset,
+            liquidAsset
+        );
+    }
+
+    function addStakeLocker(address _stakedAsset) external returns (bool) {
+        require(
+            IBpool(_stakedAsset).isBound(MapleGlobals.MapleToken()) &&
+                IBpool(_stakedAsset).isBound(liquidAsset) &&
+                IBpool(_stakedAsset).isFinalized() &&
+                IBpool(_stakedAsset).isFinalized() &&
+                (IBpool(_stakedAsset).getNumTokens() == 2),
+            "FDT_LP.addStakeLocker: BALANCER_POOL_NOT_ELIDGEABLE"
+        );
+        stakedAssetLockers.push(newStakeLocker(_stakedAsset));
     }
 
     /*

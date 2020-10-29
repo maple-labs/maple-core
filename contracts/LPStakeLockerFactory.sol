@@ -14,7 +14,7 @@ contract LPStakeLockerFactory {
     function newLocker(
         address _stakedAsset,
         address _liquidAsset //should be external? only callable by other contracts?
-    ) public returns (address) {
+    ) external returns (address) {
         address locker = address(
             new LPStakeLocker(
                 _stakedAsset,

@@ -3,7 +3,7 @@ pragma solidity ^0.7.0;
 import "./LP/LP.sol";
 
 contract LPFactory {
-    mapping(uint256 => address) public LiquidityPools;
+    mapping(uint256 => address) private LiquidityPools;
     uint256 public LiquidityPoolsCreated;
 
     function createLiquidityPool(
@@ -11,15 +11,16 @@ contract LPFactory {
         address _stakedAsset,
         address _stakedAssetLockerFactory,
         string memory name,
-        string memory symbol
+        string memory symbol,
+        address _MapleGlobalsaddy
     ) public {
         LP lpool = new LP(
             _liquidAsset,
             _stakedAsset,
             _stakedAssetLockerFactory,
             name,
-            symbol
-            //IERC20(_liquidAsset)
+            symbol,
+            _MapleGlobalsaddy //IERC20(_liquidAsset)
         );
         LiquidityPools[LiquidityPoolsCreated] = address(lpool);
         LiquidityPoolsCreated++;
