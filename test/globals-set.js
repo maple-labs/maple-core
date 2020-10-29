@@ -19,9 +19,6 @@ describe('Maple', function () {
 
   it('update state variables via setters', async function () {
       
-    const accounts = await ethers.provider.listAccounts()
-    console.log(accounts)
-
     await mapleGlobals.setEstablishmentFee(50)
     const establishmentFeeFetch = await mapleGlobals.establishmentFeeBasisPoints()
     expect(establishmentFeeFetch).to.equal(50)
@@ -46,6 +43,18 @@ describe('Maple', function () {
         mapleGlobals.setEstablishmentFee(50)
     ).to.be.revertedWith("msg.sender is not Governor");
 
+    await expect(
+        mapleGlobals.setTreasurySplit(30)
+    ).to.be.revertedWith("msg.sender is not Governor");
+    
+    await expect(
+        mapleGlobals.setGracePeriod(86400)
+    ).to.be.revertedWith("msg.sender is not Governor");
+    
+    await expect(
+        mapleGlobals.setGovernor('0x70997970C51812dc3A010C7d01b50e0d17dc79C8')
+    ).to.be.revertedWith("msg.sender is not Governor");
+    
   })
 
 
