@@ -24,4 +24,8 @@ contract LPFactory {
         LiquidityPools[LiquidityPoolsCreated] = address(lpool);
         LiquidityPoolsCreated++;
     }
+
+    function getLiquidityPool(uint256 _ind) public view returns (address) {
+        return LiquidityPools[_ind];
+    }
 }
