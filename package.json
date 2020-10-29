@@ -1,6 +1,5 @@
 {
   "name": "maple-core",
-  "private": true,
   "version": "1.0.0",
   "scripts": {
     "chain": "hardhat node",
