@@ -8,98 +8,19 @@ const governor = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
 async function main () {
   console.log('📡 Deploy \n')
 
-<<<<<<< HEAD
   const mapleToken = await deploy('MapleToken', [
     'Maple FDT',
     'MPL',
-<<<<<<< HEAD
     '0xc783df8a850f42e7F7e57013759C285caa701eB6'
   ])
-=======
-  const mapleToken = await deploy('MapleToken', ['Maple FDT', 'MPL', governor])
->>>>>>> d6391fda9f8afeee5cb84856e8a89115b4d8d329
   console.log(mapleToken.address)
-
-  const mapleGlobals = await deploy('MapleGlobals', [
-    governor,
-    mapleToken.address
-  ])
-  console.log(mapleGlobals.address)
 
   const LPStakeLockerFactory = await deploy('LPStakeLockerFactory')
   console.log(LPStakeLockerFactory.address)
 
   const LPFactory = await deploy('LPFactory')
   console.log(LPFactory.address)
-
-  // auto deploy to read contract directory and deploy them all (add ".args" files for arguments)
-  // await autoDeploy()
-
-  // const yourContract = await deploy('YourContract')
-  // console.log(yourContract.address)
-
-  // const mintableTokenUSDC = await deploy('MintableTokenUSDC', [
-  //   'Stablecoin USDC',
-  //   'USDC',
-  //   6,
-  // ])
-  // console.log(mintableTokenUSDC.address)
-
-  // const mintableTokenDAI = await deploy('MintableTokenDAI', [
-  //   'Stablecoin DAI',
-  //   'DAI',
-  //   18,
-  // ])
-  // console.log(mintableTokenDAI.address)
-
-  // const mintableTokenWBTC = await deploy('MintableTokenWBTC', [
-  //   'Wrapped BTC',
-  //   'wBTC',
-  //   8,
-  // ])
-  // console.log(mintableTokenWBTC.address)
-
-  // const mapleToken = await deploy('mapleToken', [
-  //   'Maple FDT',
-  //   'MPL',
-  //   mintableTokenDAI.address,
-  // ])
-  // console.log(mapleToken.address)
-
-  // // 2) Deploy the MapleGlobal contract, using MapleToken address as input.
-  // const mapleGlobal = await deploy('MapleGlobal', [
-  //   governor,
-  //   mapleToken.address,
-  // ])
-  // console.log(mapleGlobal.address)
-
-  // const liquidityPoolFactory = await deploy('LiquidityPoolFactory')
-
-  // const bFactory = await deploy('BFactory')
-  // console.log(bFactory.address)
-
-  // const bCreator = await deploy('BCreator', [bFactory.address])
-  // console.log(bCreator.address)
-
-  // const bPool = await deploy('BPool')
-  // console.log(bPool.address)
-
-  // OR
-  // custom deploy (to use deployed addresses dynamically for example:)
-  // const exampleToken = await deploy("ExampleToken")
-  // const examplePriceOracle = await deploy("ExamplePriceOracle")
-  // const smartContractWallet = await deploy("SmartContractWallet",[exampleToken.address,examplePriceOracle.address])
-=======
-    governor
-  ])
-  console.log(mapleToken.address)
-
-  const mapleGlobals = await deploy('MapleGlobals', [
-    governor,
-    mapleToken.address
-  ])
-  console.log(mapleGlobals.address)
->>>>>>> 688f6585921ddcc42b8014b0edea2ece564a2d19
+  
 }
 
 async function deploy (name, _args) {
