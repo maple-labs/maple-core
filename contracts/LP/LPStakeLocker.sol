@@ -7,29 +7,30 @@ import "../Token/IFundsDistributionToken.sol";
 import "../Token/FundsDistributionToken.sol";
 
 contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
-
     using SafeMathInt for int256;
-	using SignedSafeMath for int256;
+    using SignedSafeMath for int256;
 
-	// token in which the funds/dividends can be sent for the FundsDistributionToken
-	IERC20 private IliquidAsset; //private if it doesnt need to be public to save gas 
-	
-	// balance of liquidToken that the FundsDistributionToken currently holds
-	uint256 public liquidTokenBalance;
+    // token in which the funds/dividends can be sent for the FundsDistributionToken
+    IERC20 private IliquidAsset; //private if it doesnt need to be public to save gas
+
+    // balance of liquidToken that the FundsDistributionToken currently holds
+    uint256 public liquidTokenBalance;
 
     //address poolDelegate; // TODO: consider if required
     address stakedAsset;
     address liquidAsset;
-    constructor (
-        address _stakedAsset,
-		address _liquidAsset
-    ) FundsDistributionToken('Maple Stake Locker', 'MPLSTAKE') {
+
+    constructor(address _stakedAsset, address _liquidAsset)
+        public
+        FundsDistributionToken("Maple Stake Locker", "MPLSTAKE")
+    {
         //require(address(_liquidToken) != address(0), "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS");
-		liquidAsset = _liquidAsset;
+        liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
-		IliquidAsset = IERC20(_liquidAsset);
+        IliquidAsset = IERC20(_liquidAsset);
     }
-/* //i think this makes no sense as there is no hook for a ERC20 receive. its not a thing in ERC20. no interaction comes here. its only in the liquidAsset Contract
+
+    /* //i think this makes no sense as there is no hook for a ERC20 receive. its not a thing in ERC20. no interaction comes here. its only in the liquidAsset Contract
 	modifier onlyLiquidAsset () {
 		require(msg.sender == address(liquidAsset), "FDT_ERC20Extension.onlyIliquidAsset: UNAUTHORIZED_SENDER");
 		_;
@@ -41,35 +42,36 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 	/**
 	 * @notice Withdraws all available funds for a token holder
 	 */
-	function withdrawFunds() 
-		external override
-	{
-		uint256 withdrawableFunds = _prepareWithdraw();
-		
-		require(IliquidAsset.transfer(msg.sender, withdrawableFunds), "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED");
+    function withdrawFunds() external override {
+        uint256 withdrawableFunds = _prepareWithdraw();
 
-		_updateIliquidAssetBalance();
-	}
+        require(
+            IliquidAsset.transfer(msg.sender, withdrawableFunds),
+            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
+        );
 
-	/**
-	 * @dev Updates the current funds token balance 
-	 * and returns the difference of new and previous funds token balances
-	 * @return A int256 representing the difference of the new and previous funds token balance
-	 */
-	function _updateIliquidAssetBalance() internal returns (int256) {
-		uint256 prevIliquidAssetBalance = liquidTokenBalance;
-		
-		liquidTokenBalance = IliquidAsset.balanceOf(address(this));
+        _updateIliquidAssetBalance();
+    }
 
-		return int256(liquidTokenBalance).sub(int256(prevIliquidAssetBalance));
-	}
+    /**
+     * @dev Updates the current funds token balance
+     * and returns the difference of new and previous funds token balances
+     * @return A int256 representing the difference of the new and previous funds token balance
+     */
+    function _updateIliquidAssetBalance() internal returns (int256) {
+        uint256 prevIliquidAssetBalance = liquidTokenBalance;
 
-	/**
-	 * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
-	 * @dev Calls _updateIliquidAssetBalance(), whereby the contract computes the delta of the previous and the new 
-	 * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
-	 */
-/*	function updateFundsReceived() external {
+        liquidTokenBalance = IliquidAsset.balanceOf(address(this));
+
+        return int256(liquidTokenBalance).sub(int256(prevIliquidAssetBalance));
+    }
+
+    /**
+     * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
+     * @dev Calls _updateIliquidAssetBalance(), whereby the contract computes the delta of the previous and the new
+     * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
+     */
+    /*	function updateFundsReceived() external {
 		int256 newFunds = _updateIliquidAssetBalance();
 
 		if (newFunds > 0) {
@@ -79,10 +81,10 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 */
     // TODO: implement
     // Staker deposits BPTs into the locker.
-    function stake(uint _amountStakedAsset) external returns(uint) {
+    function stake(uint256 _amountStakedAsset) external returns (uint256) {
         return _amountStakedAsset;
     }
-/*
+    /*
     // TODO: implement
     // Staker withdraws BPTs from the locker.
     function unstake(uint _amountStakedAsset) external returns(uint) {
