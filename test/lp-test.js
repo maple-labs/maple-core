@@ -12,8 +12,8 @@ const lpfactoryaddy = require('../../contracts/src/contracts/LPFactory.address.j
 //const bpooladdy = require('../../contracts/src/contracts/BPool.address.js')
 
 describe('Liquidity Pool and locker', function () {
-  //let lpaddy
-  //let lplockeraddy
+  let dailp
+  let usdclp
   before(async () => {
     lpfactory = new ethers.Contract(
       lpfactoryaddy,
@@ -29,23 +29,9 @@ describe('Liquidity Pool and locker', function () {
 
     daibpooladdy = await bc.getBPoolAddress(0)
     usdcbpooladdy = await bc.getBPoolAddress(1)
-    await lplockerfactory.newLocker(daibpooladdy)
-    await lplockerfactory.newLocker(usdcbpooladdy)
-  })
-
-  it('LP Locker factory getter', async function () {
-    await lplockerfactory.newLocker(daibpooladdy)
-    await lplockerfactory.newLocker(usdcbpooladdy)
-    const dailplocker = await lplockerfactory.getLocker(0)
-    const usdclplocker = await lplockerfactory.getLocker(1)
-    console.log('DAI locker', dailplocker)
-    console.log('USDC Locker', usdclplocker)
-  })
-  it('Create LP', async function () {
-    const dailplocker = await lplockerfactory.getLocker(0)
     await lpfactory.createLiquidityPool(
       daiaddy,
-      dailplocker,
+      daibpooladdy,
       lplockerfactoryaddy,
       'Maple DAI LP',
       'LPDAI'
@@ -53,14 +39,34 @@ describe('Liquidity Pool and locker', function () {
     const usdclplocker = await lplockerfactory.getLocker(1)
     await lpfactory.createLiquidityPool(
       usdcaddy,
-      usdclplocker,
+      usdcbpooladdy,
       lplockerfactoryaddy,
       'Maple USDC LP',
       'LPUSDC'
     )
-    dailp = lpfactory.getLiquidityPool(0)
-    usdclp = lpfactory.getLiquidityPool(1)
+    dailp = await lpfactory.getLiquidityPool(0)
+    usdclp = await lpfactory.getLiquidityPool(1)
     console.log('DAI Liquidity Pool', dailp)
     console.log('USDC Liquidity Pool', usdclp)
+    //await lplockerfactory.newLocker(daibpooladdy)
+    //await lplockerfactory.newLocker(usdcbpooladdy)
   })
+  it('Check locker owners', async function () {
+    const dailplocker = await lplockerfactory.getLocker(0)
+    const usdclplocker = await lplockerfactory.getLocker(1)
+    console.log('DAI locker', dailplocker)
+    console.log('USDC Locker', usdclplocker)
+    const dailockerowner = await lplockerfactory.getOwner(dailplocker)
+    const usdclockerowner = await lplockerfactory.getOwner(usdclplocker)
+    expect(dailockerowner).to.equal(dailp)
+    expect(usdclockerowner).to.equal(usdclp)
+  })
+  /*it('LP Locker factory getter', async function () {
+    await lplockerfactory.newLocker(daibpooladdy)
+    await lplockerfactory.newLocker(usdcbpooladdy)
+    const dailplocker = await lplockerfactory.getLocker(0)
+    const usdclplocker = await lplockerfactory.getLocker(1)
+    console.log('DAI locker', dailplocker)
+    console.log('USDC Locker', usdclplocker)
+  })*/
 })
