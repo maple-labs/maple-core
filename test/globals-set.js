@@ -42,16 +42,9 @@ describe('Maple', function () {
 
   it('check msg.sender throws revert error', async function () {
       
-    let coffeeCup = 'empty';
-
-    try {
-      await mapleGlobals.setEstablishmentFee(50)
-    }
-    catch(e) {
-        coffeeCup = 'full';
-    }
-
-    expect(coffeeCup).to.equal('full')
+    await expect(
+        mapleGlobals.setEstablishmentFee(50)
+    ).to.be.revertedWith("msg.sender is not Governor");
 
   })
 
