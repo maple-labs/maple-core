@@ -5,6 +5,7 @@ const bcaddy = require('../../contracts/src/contracts/BCreator.address.js')
 const bcabi = require('../../contracts/src/contracts/BCreator.abi.js')
 const mpladdy = require('../../contracts/src/contracts/MapleToken.address.js')
 const mplabi = require('../../contracts/src/contracts/MapleToken.abi.js')
+const mplglobalsaddy = require('../../contracts/src/contracts/MapleGlobals.address.js')
 const lplockerfactoryabi = require('../../contracts/src/contracts/LPStakeLockerFactory.abi.js')
 const lpfactoryabi = require('../../contracts/src/contracts/LPFactory.abi.js')
 const lplockerfactoryaddy = require('../../contracts/src/contracts/LPStakeLockerFactory.address.js')
@@ -34,7 +35,8 @@ describe('Liquidity Pool and locker', function () {
       daibpooladdy,
       lplockerfactoryaddy,
       'Maple DAI LP',
-      'LPDAI'
+      'LPDAI',
+      mplglobalsaddy
     )
     const usdclplocker = await lplockerfactory.getLocker(1)
     await lpfactory.createLiquidityPool(
@@ -42,7 +44,8 @@ describe('Liquidity Pool and locker', function () {
       usdcbpooladdy,
       lplockerfactoryaddy,
       'Maple USDC LP',
-      'LPUSDC'
+      'LPUSDC',
+      mplglobalsaddy
     )
     dailp = await lpfactory.getLiquidityPool(0)
     usdclp = await lpfactory.getLiquidityPool(1)
