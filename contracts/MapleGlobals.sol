@@ -63,4 +63,12 @@ contract MapleGlobals {
         gracePeriod = _gracePeriod;
     }
 
+    /**
+        @notice Governor can specify a new governor.
+        @param _newGovernor The address of new governor.
+     */
+    function setGovernor(address _newGovernor) isGovernor public {
+        governor = _newGovernor;
+    }
+
 }
