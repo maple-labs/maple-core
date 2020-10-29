@@ -5,15 +5,21 @@ const { utils } = require('ethers')
 
 const governor = '0xc783df8a850f42e7F7e57013759C285caa701eB6'
 
-async function main() {
+async function main () {
   console.log('📡 Deploy \n')
 
   const mapleToken = await deploy('MapleToken', [
     'Maple FDT',
     'MPL',
-    '0xc783df8a850f42e7F7e57013759C285caa701eB6',
+    '0xc783df8a850f42e7F7e57013759C285caa701eB6'
   ])
   console.log(mapleToken.address)
+
+  const LPStakeLockerFactory = await deploy('LPStakeLockerFactory')
+  console.log(LPStakeLockerFactory.address)
+
+  const LPFactory = await deploy('LPFactory')
+  console.log(LPFactory.address)
 
   // auto deploy to read contract directory and deploy them all (add ".args" files for arguments)
   // await autoDeploy()
@@ -74,7 +80,7 @@ async function main() {
   // const smartContractWallet = await deploy("SmartContractWallet",[exampleToken.address,examplePriceOracle.address])
 }
 
-async function deploy(name, _args) {
+async function deploy (name, _args) {
   try {
     const args = _args || []
 
@@ -86,22 +92,22 @@ async function deploy(name, _args) {
       chalk.cyan(name),
       'deployed to:',
       chalk.magenta(contract.address),
-      '\n',
+      '\n'
     )
     fs.writeFileSync(`artifacts/${name}.address`, contract.address)
     console.log(
       '💾  Artifacts (address, abi, and args) saved to: ',
       chalk.blue('packages/buidler/artifacts/'),
-      '\n',
+      '\n'
     )
     return contract
   } catch (err) {}
 }
 
-const isSolidity = (fileName) =>
+const isSolidity = fileName =>
   fileName.indexOf('.sol') >= 0 && fileName.indexOf('.swp.') < 0
 
-function readArgumentsFile(contractName) {
+function readArgumentsFile (contractName) {
   let args = []
   try {
     const argsFile = `./contracts/${contractName}.args`
@@ -115,34 +121,34 @@ function readArgumentsFile(contractName) {
   return args
 }
 
-async function autoDeploy() {
+async function autoDeploy () {
   const contractList = fs.readdirSync(config.paths.sources)
   return contractList
-    .filter((fileName) => isSolidity(fileName))
+    .filter(fileName => isSolidity(fileName))
     .reduce((lastDeployment, fileName) => {
       const contractName = fileName.replace('.sol', '')
       const args = readArgumentsFile(contractName)
 
       // Wait for last deployment to complete before starting the next
-      return lastDeployment.then((resultArrSoFar) =>
+      return lastDeployment.then(resultArrSoFar =>
         deploy(contractName, args).then((result, b, c) => {
           if (args && result && result.interface && result.interface.deploy) {
             let encoded = utils.defaultAbiCoder.encode(
               result.interface.deploy.inputs,
-              args,
+              args
             )
             fs.writeFileSync(`artifacts/${contractName}.args`, encoded)
           }
 
           return [...resultArrSoFar, result]
-        }),
+        })
       )
     }, Promise.resolve([]))
 }
 
 main()
   .then(() => process.exit(0))
-  .catch((error) => {
+  .catch(error => {
     console.error(error)
     process.exit(1)
   })
