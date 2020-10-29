@@ -1,15 +1,15 @@
 {
   "name": "maple-core",
-  "private": true,
   "scripts": {
     "chain": "hardhat node",
     "test": "hardhat test",
+    "test:globals": "yarn deploy && hardhat test test/globals-init.js && hardhat test test/globals-set.js && yarn deploy",
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.js && hardhat run scripts/publish.js",
     "watch": "node scripts/watch.js",
     "accounts": "hardhat accounts",
     "balance": "hardhat balance",
-    "docs": "npx solidity-docgen -i ./contracts -o ./docs -t ./docs"
+    "docs": "npx solidity-docgen --solc-module solc -i ./contracts -o ./docs -t ./docs"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
   "keywords": [
@@ -34,8 +34,8 @@
     "solc": "0.7.3"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "3.2.1-solc-0.7"
+    "@openzeppelin/contracts": "3.2.1-solc-0.7",
+    "solc": "0.7.0"
   },
-  "version": "1.0.0",
   "main": "index.js"
 }

@@ -3,7 +3,7 @@ const chalk = require('chalk')
 const { config, ethers } = require('hardhat')
 const { utils } = require('ethers')
 
-const governor = '0xc783df8a850f42e7F7e57013759C285caa701eB6'
+const governor = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
 
 async function main () {
   console.log('📡 Deploy \n')
@@ -11,6 +11,7 @@ async function main () {
   const mapleToken = await deploy('MapleToken', [
     'Maple FDT',
     'MPL',
+<<<<<<< HEAD
     '0xc783df8a850f42e7F7e57013759C285caa701eB6'
   ])
   console.log(mapleToken.address)
@@ -78,6 +79,17 @@ async function main () {
   // const exampleToken = await deploy("ExampleToken")
   // const examplePriceOracle = await deploy("ExamplePriceOracle")
   // const smartContractWallet = await deploy("SmartContractWallet",[exampleToken.address,examplePriceOracle.address])
+=======
+    governor
+  ])
+  console.log(mapleToken.address)
+
+  const mapleGlobals = await deploy('MapleGlobals', [
+    governor,
+    mapleToken.address
+  ])
+  console.log(mapleGlobals.address)
+>>>>>>> 688f6585921ddcc42b8014b0edea2ece564a2d19
 }
 
 async function deploy (name, _args) {
