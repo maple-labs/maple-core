@@ -12,6 +12,7 @@ async function main () {
     'Maple FDT',
     'MPL',
 <<<<<<< HEAD
+<<<<<<< HEAD
     governor
   ])
   console.log(mapleToken.address)
@@ -25,12 +26,21 @@ async function main () {
     '0xc783df8a850f42e7F7e57013759C285caa701eB6'
   ])
   console.log(mapleToken.address)
+=======
+    '0xc783df8a850f42e7F7e57013759C285caa701eB6'
+  ])
+  console.log(mapleToken.address)
+
+  const MapleGlobals = await deploy('MapleGlobals',[governor,mapleToken.address])
+  console.log(MapleGlobals.address)
+>>>>>>> 456d3977412a202065b53d21d5b8287abee822c9
 
   const LPStakeLockerFactory = await deploy('LPStakeLockerFactory')
   console.log(LPStakeLockerFactory.address)
 
   const LPFactory = await deploy('LPFactory')
   console.log(LPFactory.address)
+<<<<<<< HEAD
 
   // auto deploy to read contract directory and deploy them all (add ".args" files for arguments)
   // await autoDeploy()
@@ -90,6 +100,9 @@ async function main () {
   // const examplePriceOracle = await deploy("ExamplePriceOracle")
   // const smartContractWallet = await deploy("SmartContractWallet",[exampleToken.address,examplePriceOracle.address])
 >>>>>>> update deploy
+=======
+  
+>>>>>>> 456d3977412a202065b53d21d5b8287abee822c9
 }
 
 async function deploy (name, _args) {

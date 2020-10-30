@@ -26,7 +26,7 @@ describe('Maple', function () {
     const bal = await mpl.balanceOf(accounts[0])
     console.log('mpl bal', bal.toString())
   })
-  it('set allowances to dai balancer pool', async function () {
+  /*it('set allowances to dai balancer pool', async function () {
     const accounts = await ethers.provider.listAccounts()
     const allowmpl = await mpl.allowance(accounts[0], bpooladdy)
     console.log('allowance mpl', allowmpl.toString())
@@ -41,7 +41,7 @@ describe('Maple', function () {
     await mpl.approve(bpooladdy2, '50000000000000000000000')
     const allowmpl2 = await mpl.allowance(accounts[0], bpooladdy2)
     console.log('allowance2 mpl', allowmpl2.toString())
-  })
+  })*/
   it('give some coins to friends', async function () {
     const accounts = await ethers.provider.listAccounts()
     expect(await mpl.transfer(accounts[1], '20000000000000000000000'))
