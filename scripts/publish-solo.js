@@ -2,7 +2,7 @@ const fs = require('fs')
 const chalk = require('chalk')
 const bre = require('hardhat')
 
-const directories = ['../react-app/src/contracts', '../contracts/src/contracts']
+const directories = ['./src']
 
 function publishContract(contractName, directory) {
   console.log(
