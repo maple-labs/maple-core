@@ -2,14 +2,14 @@ const { expect, assert } = require('chai')
 
 const mapleTokenAddress = require('../../contracts/src/contracts/MapleToken.address.js')
 const mapleTokenABI = require('../../contracts/src/contracts/MapleToken.abi.js')
-// const mapleTokenAddress = require('../../contracts/src/contracts/MapleToken.address.js')
-// const mapleTokenABI = require('../../contracts/src/contracts/MapleToken.abi.js')
+const fundTokenAddress = require('../../contracts/src/contracts/MintableTokenUSDC.address.js')
+const fundTokenABI = require('../../contracts/src/contracts/MintableTokenUSDC.abi.js')
 const governor = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 
 describe('Maple', function () {
 
-  let mapleToken;
-  let mapleTokenExternal;
+  let mapleToken, mapleTokenExternal;
+  let fundToken, fundTokenExternal;
 
   before(async () => {
     mapleToken = new ethers.Contract(
@@ -20,6 +20,16 @@ describe('Maple', function () {
     mapleTokenExternal = new ethers.Contract(
       mapleTokenAddress, 
       mapleTokenABI, 
+      ethers.provider.getSigner(1)
+    )
+    fundToken = new ethers.Contract(
+      fundTokenAddress,
+      fundTokenABI,
+      ethers.provider.getSigner(0)
+    )
+    fundTokenExternal = new ethers.Contract(
+      fundTokenAddress,
+      fundTokenABI,
       ethers.provider.getSigner(1)
     )
   })
@@ -83,7 +93,7 @@ describe('Maple', function () {
     // Reverts when calling via mapleToken, not when calling mapleTokenExternal (see: before hook lines 14-25)
     await expect(
       mapleToken.transferFrom(accounts[2], accounts[1], amountToApproveTransfer)
-      ).to.be.revertedWith("transfer amount exceeds balance")
+    ).to.be.revertedWith("transfer amount exceeds balance")
 
     expect(await mapleTokenExternal.transferFrom(governor, accounts[1], amountToApproveTransfer))
     
@@ -97,24 +107,11 @@ describe('Maple', function () {
 
   })
 
-  it('SafeMathInt.sol / SafeMathUint.sol libraries work', async function () {
-    
-    // Check the function in each safeMath library for it's particular type, to ensure type conversion works
-    expect(0).to.equal(0)
-
-  })
-
-  it('getBalance() / getApproval() ', async function () {
-    
-    // Check the basic ERC-20 view functions are exposed
-    expect(0).to.equal(0)
-
-  })
-
   it('FDT: fundsToken instatiation ', async function () {
     
     // Check the mapleToken has the correct fundsToken address (USDC, or DAI)
-    expect(0).to.equal(0)
+    const fetchFundTokenAddress = await mapleToken.fundsToken()
+    expect(fetchFundTokenAddress).to.equal(fundTokenAddress)
 
   })
 
@@ -122,14 +119,58 @@ describe('Maple', function () {
     
     // Mint the fundsToken inside the mapleToken contract, and call updateFunds()
     // Confirm that withdrawableFundsOf() / accumulativeFundsOf() view functions show correct data
-    expect(0).to.equal(0)
+
+    const fundTokenDecimals = await fundToken.decimals()
+    const amountToMint = BigInt(100)
+
+    // Please note that mintSpecial() takes in whole number (i.e. 100) and mints (100 * 10**decimals), thus handles conversion.
+    expect(await fundToken.mintSpecial(mapleTokenAddress, amountToMint))
+
+    const fundTokenBalance = await fundToken.balanceOf(mapleTokenAddress)
+    
+    expect(fundTokenBalance / 10**fundTokenDecimals).to.equal(100)
+    expect(await mapleToken.updateFundsReceived())
+
+    const accounts = await ethers.provider.listAccounts()
+    const withdrawableFundsOfGovernor = await mapleToken.withdrawableFundsOf(governor)
+    const accumulativeFundsOfGovernor = await mapleToken.accumulativeFundsOf(governor)
+    const withdrawableFundsOfAccountOne = await mapleToken.withdrawableFundsOf(accounts[1])
+    const accumulativeFundsOfAccountOne = await mapleToken.accumulativeFundsOf(accounts[1])
+
+    expect(BigInt(withdrawableFundsOfGovernor)).to.equal(BigInt(accumulativeFundsOfGovernor))
+    expect(BigInt(withdrawableFundsOfAccountOne)).to.equal(BigInt(accumulativeFundsOfAccountOne))
+    expect(BigInt(withdrawableFundsOfGovernor)).to.equal(BigInt(99997999))
+    expect(BigInt(withdrawableFundsOfAccountOne)).to.equal(BigInt(1999))
 
   })
 
   it('FDT: withdrawFunds() ', async function () {
     
-    // Withdraw the fundsToken and confirm balanceOf() is correct for appropriate parties
-    // Confirm correct internal account with withdrawnFundsOf() view function
+    // Withdraw the fundsToken and confirm withdrawnFundsOf() is correct for appropriate parties
+    // Confirm other internal accounting with withdrawableFundsOf() and accumulativeFundsOf() view function
+
+    const accounts = await ethers.provider.listAccounts()
+    const fundTokenDecimals = await fundToken.decimals()
+
+    expect(await mapleToken.withdrawFunds())
+
+    const withdrawnFundsOfGovernor = await mapleToken.withdrawnFundsOf(governor)
+    const withdrawableFundsOfGovernor = await mapleToken.withdrawableFundsOf(governor)
+    const accumulativeFundsOfGovernor = await mapleToken.accumulativeFundsOf(governor)
+    
+    expect(BigInt(withdrawnFundsOfGovernor)).to.equal(BigInt(99997999))
+    expect(BigInt(accumulativeFundsOfGovernor)).to.equal(BigInt(99997999))
+    expect(withdrawableFundsOfGovernor).to.equal(0)
+
+    expect(await mapleTokenExternal.withdrawFunds())
+
+    const withdrawnFundsOfAccountOne = await mapleToken.withdrawnFundsOf(accounts[1])
+    const withdrawableFundsOfAccountOne = await mapleToken.withdrawableFundsOf(accounts[1])
+    const accumulativeFundsOfAccountOne = await mapleToken.accumulativeFundsOf(accounts[1])
+
+    expect(BigInt(withdrawnFundsOfAccountOne)).to.equal(BigInt(1999))
+    expect(BigInt(accumulativeFundsOfAccountOne)).to.equal(BigInt(1999))
+    expect(withdrawableFundsOfAccountOne).to.equal(0)
 
   })
 
