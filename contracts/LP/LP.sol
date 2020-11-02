@@ -1,5 +1,4 @@
 pragma solidity ^0.7.0;
-import "@nomiclabs/buidler/console.sol";
 import "../Token/IFundsDistributionToken.sol";
 import "../Token/FundsDistributionToken.sol";
 import "../Math/CalcBPool.sol";
@@ -38,8 +37,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
     IERC20 private IStakedAsset;
     ILPStakeocker private IStakedAssetLocker;
     IMapleGlobals private MapleGlobals;
-    // balance of fundsToken that the FundsDistributionToken currently holds
-    uint256 public fundsTokenBalance;
+    uint256 public liquidTokenBalance;
 
     // Instantiated during constructor()
     uint256 public stakerFeeBasisPoints;
@@ -67,7 +65,6 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
             "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
         );
 
-        // address
         liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
         ILiquidAsset = IERC20(_liquidAsset);
@@ -75,6 +72,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         MapleGlobals = IMapleGlobals(_MapleGlobalsaddy);
         poolDelegate = tx.origin;
         tokenOne = 10**ERC20(liquidAsset).decimals();
+        console.log("BPT val",CalcBPool.BPTVal(_stakedAsset,poolDelegate,liquidAsset));
         makeStakeLocker(_stakedAsset);
     }
 
@@ -86,6 +84,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
                 (IBPool(_stakedAsset).getNumTokens() == 2),
             "FDT_LP.makeStakeLocker: BALANCER_POOL_NOT_VALID"
         );
+        //this is to test the function but needs to be changed to be applied to the delegate's stake in the locker
         require(CalcBPool.BPTVal(_stakedAsset,poolDelegate,liquidAsset) > minStake.mul(tokenOne), "FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE");
         stakedAssetLocker = ILockerFactory.newLocker(
             _stakedAsset,
@@ -113,11 +112,11 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
      * @return A int256 representing the difference of the new and previous funds token balance
      */
     function _updateILiquidAssetBalance() internal returns (int256) {
-        uint256 prevILiquidAssetBalance = fundsTokenBalance;
+        uint256 prevILiquidAssetBalance = liquidTokenBalance;
 
-        fundsTokenBalance = ILiquidAsset.balanceOf(address(this));
+        liquidTokenBalance = ILiquidAsset.balanceOf(address(this));
 
-        return int256(fundsTokenBalance).sub(int256(prevILiquidAssetBalance));
+        return int256(liquidTokenBalance).sub(int256(prevILiquidAssetBalance));
     }
 
     /**
