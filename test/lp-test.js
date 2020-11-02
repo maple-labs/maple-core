@@ -10,7 +10,6 @@ const lplockerfactoryabi = require('../../contracts/src/contracts/LPStakeLockerF
 const lpfactoryabi = require('../../contracts/src/contracts/LPFactory.abi.js')
 const lplockerfactoryaddy = require('../../contracts/src/contracts/LPStakeLockerFactory.address.js')
 const lpfactoryaddy = require('../../contracts/src/contracts/LPFactory.address.js')
-//const bpooladdy = require('../../contracts/src/contracts/BPool.address.js')
 
 describe('Liquidity Pool and locker', function () {
   let dailp
@@ -49,27 +48,13 @@ describe('Liquidity Pool and locker', function () {
     )
     dailp = await lpfactory.getLiquidityPool(0)
     usdclp = await lpfactory.getLiquidityPool(1)
-    console.log('DAI Liquidity Pool', dailp)
-    console.log('USDC Liquidity Pool', usdclp)
-    //await lplockerfactory.newLocker(daibpooladdy)
-    //await lplockerfactory.newLocker(usdcbpooladdy)
   })
   it('Check locker owners', async function () {
     const dailplocker = await lplockerfactory.getLocker(0)
     const usdclplocker = await lplockerfactory.getLocker(1)
-    console.log('DAI locker', dailplocker)
-    console.log('USDC Locker', usdclplocker)
     const dailockerowner = await lplockerfactory.getOwner(dailplocker)
     const usdclockerowner = await lplockerfactory.getOwner(usdclplocker)
     expect(dailockerowner).to.equal(dailp)
     expect(usdclockerowner).to.equal(usdclp)
   })
-  /*it('LP Locker factory getter', async function () {
-    await lplockerfactory.newLocker(daibpooladdy)
-    await lplockerfactory.newLocker(usdcbpooladdy)
-    const dailplocker = await lplockerfactory.getLocker(0)
-    const usdclplocker = await lplockerfactory.getLocker(1)
-    console.log('DAI locker', dailplocker)
-    console.log('USDC Locker', usdclplocker)
-  })*/
 })
