@@ -16,9 +16,13 @@ describe('Maple', function () {
     )
   })
 
-  it('msg.sender (Governor) has tokens', async function () {
+  it('msg.sender (Governor) has tokens, correct init values for MapleToken', async function () {
     
     // Test whether or not the MapleGovernor (admin) has been minted correct amount of tokens.
+    // Initial supply is 10mm
+    // Precision is 18
+    // Symbol is MPL
+    // Name is MapleToken
 
   })
 
