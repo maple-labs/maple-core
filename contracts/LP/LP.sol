@@ -39,10 +39,10 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
     using SignedSafeMath for int256;
 
     // token in which the funds/dividends can be sent for the FundsDistributionToken
-    IERC20 private IliquidToken;
+    IERC20 private ILiquidAsset;
     ILPStakeLockerFactory private ILockerFactory;
-    IERC20 private IstakedAsset;
-    ILPStakeocker private IstakedAssetLocker;
+    IERC20 private IStakedAsset;
+    ILPStakeocker private IStakedAssetLocker;
     IMapleGlobals private MapleGlobals;
     // balance of fundsToken that the FundsDistributionToken currently holds
     uint256 public fundsTokenBalance;
@@ -64,7 +64,6 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         address _MapleGlobalsaddy
     )
         public
-        //        IERC20 _fundsToken
 
         FundsDistributionToken(name, symbol)
     {
@@ -73,28 +72,13 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
             "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
         );
 
-        // deploy _liquidAssetLocker / _stakedAssetLocker / _stakedLiquidationStrategy here ??
-        // assign PoolInvestorWhitelist inherently (singular contract) ... or deploy (factory) ??
-
-        // ierc20
-        //IliquidToken = _fundsToken;
-
-        // uint
-        // StakerFeeBasisPoints = _stakerFeeBasisPoints;
-        // OngoingFeeBasisPoints = _ongoingFeeBasisPoints;
-
         // address
         liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
-        IliquidToken = IERC20(_liquidAsset);
-        //IstakedAsset = IERC20(_stakedAsset);
+        ILiquidAsset = IERC20(_liquidAsset);
         ILockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
-        //stakedAssetLockers.push(newStakeLocker(_stakedAsset));
         MapleGlobals = IMapleGlobals(_MapleGlobalsaddy);
         addStakeLocker(_stakedAsset);
-        //IstakedAssetLocker = ILPStakeocker(stakedAssetLockers[0]);
-        // bool
-        // PublicPool = _publicPool;
     }
 
     function newStakeLocker(address _stakedAsset)
@@ -112,22 +96,12 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
             IBpool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&
                 IBpool(_stakedAsset).isBound(liquidAsset) &&
                 IBpool(_stakedAsset).isFinalized() &&
-                IBpool(_stakedAsset).isFinalized() &&
                 (IBpool(_stakedAsset).getNumTokens() == 2),
             "FDT_LP.addStakeLocker: BALANCER_POOL_NOT_ELIDGEABLE"
         );
         stakedAssetLockers.push(newStakeLocker(_stakedAsset));
     }
 
-    /*
-    modifier onlyIliquidToken() {
-        require(
-            msg.sender == address(IliquidToken),
-            "FDT_ERC20Extension.onlyIliquidToken: UNAUTHORIZED_SENDER"
-        );
-        _;
-    }
-*/
     /**
      * @notice Withdraws all available funds for a token holder
      */
@@ -135,11 +109,11 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
-            IliquidToken.transfer(msg.sender, withdrawableFunds),
+            ILiquidAsset.transfer(msg.sender, withdrawableFunds),
             "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
         );
 
-        _updateIliquidTokenBalance();
+        _updateILiquidAssetBalance();
     }
 
     /**
@@ -147,21 +121,21 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
      * and returns the difference of new and previous funds token balances
      * @return A int256 representing the difference of the new and previous funds token balance
      */
-    function _updateIliquidTokenBalance() internal returns (int256) {
-        uint256 prevIliquidTokenBalance = fundsTokenBalance;
+    function _updateILiquidAssetBalance() internal returns (int256) {
+        uint256 prevILiquidAssetBalance = fundsTokenBalance;
 
-        fundsTokenBalance = IliquidToken.balanceOf(address(this));
+        fundsTokenBalance = ILiquidAsset.balanceOf(address(this));
 
-        return int256(fundsTokenBalance).sub(int256(prevIliquidTokenBalance));
+        return int256(fundsTokenBalance).sub(int256(prevILiquidAssetBalance));
     }
 
     /**
      * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
-     * @dev Calls _updateIliquidTokenBalance(), whereby the contract computes the delta of the previous and the new
+     * @dev Calls _updateILiquidAssetBalance(), whereby the contract computes the delta of the previous and the new
      * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
      */
     function updateFundsReceived() external {
-        int256 newFunds = _updateIliquidTokenBalance();
+        int256 newFunds = _updateILiquidAssetBalance();
 
         if (newFunds > 0) {
             _distributeFunds(newFunds.toUint256Safe());

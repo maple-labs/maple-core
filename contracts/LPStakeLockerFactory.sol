@@ -19,9 +19,6 @@ contract LPStakeLockerFactory {
             new LPStakeLocker(
                 _stakedAsset,
                 _liquidAsset
-                //"NAME",
-                //"SYMBOL",
-                //IERC20(_stakedAsset)
             )
         );
         lockers[lockersCreated] = address(locker);

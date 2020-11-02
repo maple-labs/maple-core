@@ -20,7 +20,7 @@ contract LPFactory {
             _stakedAssetLockerFactory,
             name,
             symbol,
-            _MapleGlobalsaddy //IERC20(_liquidAsset)
+            _MapleGlobalsaddy 
         );
         LiquidityPools[LiquidityPoolsCreated] = address(lpool);
         LiquidityPoolsCreated++;
