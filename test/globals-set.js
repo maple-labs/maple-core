@@ -31,6 +31,10 @@ describe('Maple', function () {
     const gracePeriodFetch = await mapleGlobals.gracePeriod()
     expect(gracePeriodFetch).to.equal(86400)
 
+    await mapleGlobals.setStakeRequired(35000)
+    const stakeRequiredFetch = await mapleGlobals.stakeAmountRequired()
+    expect(stakeRequiredFetch).to.equal(35000)
+
     await mapleGlobals.setGovernor('0x70997970C51812dc3A010C7d01b50e0d17dc79C8')
     const governorFetch = await mapleGlobals.governor()
     expect(governorFetch).to.equal('0x70997970C51812dc3A010C7d01b50e0d17dc79C8')
@@ -49,6 +53,10 @@ describe('Maple', function () {
     
     await expect(
         mapleGlobals.setGracePeriod(86400)
+    ).to.be.revertedWith("msg.sender is not Governor");
+    
+    await expect(
+        mapleGlobals.setStakeRequired(30000)
     ).to.be.revertedWith("msg.sender is not Governor");
     
     await expect(
