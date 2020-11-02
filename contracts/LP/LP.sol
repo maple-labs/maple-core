@@ -72,7 +72,6 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         MapleGlobals = IMapleGlobals(_MapleGlobalsaddy);
         poolDelegate = tx.origin;
         tokenOne = 10**ERC20(liquidAsset).decimals();
-        console.log("BPT val",CalcBPool.BPTVal(_stakedAsset,poolDelegate,liquidAsset));
         makeStakeLocker(_stakedAsset);
     }
 
