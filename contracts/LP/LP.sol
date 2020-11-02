@@ -1,63 +1,89 @@
-pragma solidity ^0.7.0;
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.7.0;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../Token/IFundsDistributionToken.sol";
 import "../Token/FundsDistributionToken.sol";
 import "../Math/CalcBPool.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../interface/IBPool.sol";
-interface ILPStakeLockerFactory {
-    function newLocker(address _stakedAsset, address _liquidAsset)
-        external
-        returns (address);
-}
 
+/// @title IMapleGlobals interacts with the core MapleGlobals.sol contract.
 interface IMapleGlobals {
     function mapleToken() external view returns (address);
 }
 
-interface ILPStakeocker {
+/// @title ILPStakeLockerFactory is responsbile for instantiating/initializing a staked asset locker.
+interface ILPStakeLockerFactory {
+    function newLocker(address _stakedAsset, address _liquidAsset) external returns (address);
+}
+
+/// @title ILPStakeLocker interfaces with the staked asset locker of the liquidity pool.
+interface ILPStakeLocker {
     function stake(uint256 _amountStakedAsset) external returns (uint256);
-
     function unstake(uint256 _amountStakedAsset) external returns (uint256);
-
-    function withdrawUnstaked(uint256 _amountUnstaked)
-        external
-        returns (uint256);
-
+    function withdrawUnstaked(uint256 _amountUnstaked) external returns (uint256);
     function withdrawInterest() external returns (uint256);
 }
 
+/// @title LP is the core liquidity pool contract.
 contract LP is IFundsDistributionToken, FundsDistributionToken {
+
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
     using SafeMath for uint256;
-    // token in which the funds/dividends can be sent for the FundsDistributionToken
+
+    // The dividend token for this contract's FundsDistributionToken.
     IERC20 private ILiquidAsset;
+
+    // The factory for instantiating staked asset lockers.
     ILPStakeLockerFactory private ILockerFactory;
+
+    // The staked asset for this liquidity pool (the Balancer Pool).
     IERC20 private IStakedAsset;
-    ILPStakeocker private IStakedAssetLocker;
+
+    // The staked asset locker which escrows the staked asset.
+    ILPStakeLocker private IStakedAssetLocker;
+
+    // The maple globals contract.
     IMapleGlobals private MapleGlobals;
+
+    /// @notice The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract. 
     uint256 public liquidTokenBalance;
 
-    // Instantiated during constructor()
+    /// @notice Represents the fees, in basis points, distributed to the lender when a borrower's loan is funded.
     uint256 public stakerFeeBasisPoints;
+    
+    /// @notice Represents the fees, in basis points, distributed to the MapleToken when a borrower's loan is funded.
     uint256 public ongoingFeeBasisPoints;
+
+    /// @notice The asset deposited by lenders into the liquidAssetLocker, for funding loans.
     address public liquidAsset;
+
+    /// @notice The asset deposited by stakers into the stakedAssetLocker, for liquidation during defaults.
     address public stakedAsset;
+
+    /// @notice The address of the staked asset locker, escrowing the staked asset.
     address public stakedAssetLocker; //supports 8 for fixed memory
+
+    /// @notice The pool delegate which has full authority over the liquidity pool and investment decisions.
     address public poolDelegate;
+
+    /// TODO: Remove this, move this to globals.
     uint256 public minStake = 100;//min stake in usd/usdc/dai SHOULD BE IN GLOBALS!!!!
+
+    // TODO: What is this? Remove?
     uint tokenOne;
-    constructor(
+
+    constructor (
         address _liquidAsset,
         address _stakedAsset,
         address _stakedAssetLockerFactory,
         string memory name,
         string memory symbol,
-        address _MapleGlobalsaddy
+        address _mapleGlobals
     )
-        public
-
         FundsDistributionToken(name, symbol)
     {
         require(
@@ -69,10 +95,12 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         stakedAsset = _stakedAsset;
         ILiquidAsset = IERC20(_liquidAsset);
         ILockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
-        MapleGlobals = IMapleGlobals(_MapleGlobalsaddy);
+        MapleGlobals = IMapleGlobals(_mapleGlobals);
         poolDelegate = tx.origin;
-        tokenOne = 10**ERC20(liquidAsset).decimals();
+        tokenOne = 10**ERC20(liquidAsset).decimals(); // What is this? tokenOne?
         makeStakeLocker(_stakedAsset);
+
+        // TODO: Put the BPTs in the stake lockers?
     }
 
     function makeStakeLocker(address _stakedAsset) private {

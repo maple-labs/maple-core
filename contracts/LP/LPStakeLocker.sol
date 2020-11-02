@@ -6,25 +6,31 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../Token/IFundsDistributionToken.sol";
 import "../Token/FundsDistributionToken.sol";
 
+/// @title LPStakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
+
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
 
-    // token in which the funds/dividends can be sent for the FundsDistributionToken
-    IERC20 private IliquidAsset; //private if it doesnt need to be public to save gas
+    // The primary investment asset for the LP, and the dividend token for this contract.
+    IERC20 private ILiquidAsset;
 
+    /// @notice  The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract. 
     uint256 public liquidTokenBalance;
     
-    address stakedAsset;
-    address liquidAsset;
+    /// @notice The primary investment asset for the liquidity pool. Also the dividend token for this contract.
+    address public liquidAsset;
 
-    constructor(address _stakedAsset, address _liquidAsset)
-        public
+    /// @notice The asset deposited by stakers into this contract, for liquidation during defaults.
+    address public stakedAsset;
+
+    // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
+    constructor (address _stakedAsset, address _liquidAsset)
         FundsDistributionToken("Maple Stake Locker", "MPLSTAKE")
     {
         liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
-        IliquidAsset = IERC20(_liquidAsset);
+        ILiquidAsset = IERC20(_liquidAsset);
     }
 
 	/**
@@ -34,11 +40,11 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
-            IliquidAsset.transfer(msg.sender, withdrawableFunds),
+            ILiquidAsset.transfer(msg.sender, withdrawableFunds),
             "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
         );
 
-        _updateIliquidAssetBalance();
+        _updateILiquidAssetBalance();
     }
 
     /**
@@ -46,12 +52,12 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
      * and returns the difference of new and previous funds token balances
      * @return A int256 representing the difference of the new and previous funds token balance
      */
-    function _updateIliquidAssetBalance() internal returns (int256) {
-        uint256 prevIliquidAssetBalance = liquidTokenBalance;
+    function _updateILiquidAssetBalance() internal returns (int256) {
+        uint256 prevILiquidAssetBalance = liquidTokenBalance;
 
-        liquidTokenBalance = IliquidAsset.balanceOf(address(this));
+        liquidTokenBalance = ILiquidAsset.balanceOf(address(this));
 
-        return int256(liquidTokenBalance).sub(int256(prevIliquidAssetBalance));
+        return int256(liquidTokenBalance).sub(int256(prevILiquidAssetBalance));
     }
 
     /**
