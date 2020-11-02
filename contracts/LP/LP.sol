@@ -52,7 +52,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
     uint256 public ongoingFeeBasisPoints;
     address public liquidAsset;
     address public stakedAsset;
-    address[] public stakedAssetLockers; //supports 8 for fixed memory
+    address public stakedAssetLocker; //supports 8 for fixed memory
     address public poolDelegate;
 
     constructor(
@@ -78,28 +78,21 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         ILiquidAsset = IERC20(_liquidAsset);
         ILockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
         MapleGlobals = IMapleGlobals(_MapleGlobalsaddy);
-        addStakeLocker(_stakedAsset);
+        makeStakeLocker(_stakedAsset);
     }
 
-    function newStakeLocker(address _stakedAsset)
-        private
-        returns (address _stakedAssetLocker)
-    {
-        _stakedAssetLocker = ILockerFactory.newLocker(
-            _stakedAsset,
-            liquidAsset
-        );
-    }
-
-    function addStakeLocker(address _stakedAsset) public {
+    function makeStakeLocker(address _stakedAsset) private {
         require(
             IBpool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&
                 IBpool(_stakedAsset).isBound(liquidAsset) &&
                 IBpool(_stakedAsset).isFinalized() &&
                 (IBpool(_stakedAsset).getNumTokens() == 2),
-            "FDT_LP.addStakeLocker: BALANCER_POOL_NOT_ELIDGEABLE"
+            "FDT_LP.makeStakeLocker: BALANCER_POOL_NOT_VALID"
         );
-        stakedAssetLockers.push(newStakeLocker(_stakedAsset));
+        stakedAssetLocker = ILockerFactory.newLocker(
+            _stakedAsset,
+            liquidAsset
+        );
     }
 
     /**
