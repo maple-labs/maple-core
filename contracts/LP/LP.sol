@@ -1,9 +1,11 @@
 pragma solidity ^0.7.0;
-
+import "@nomiclabs/buidler/console.sol";
 import "../Token/IFundsDistributionToken.sol";
 import "../Token/FundsDistributionToken.sol";
+import "../Math/CalcBPool.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../interface/IBPool.sol";
 interface ILPStakeLockerFactory {
     function newLocker(address _stakedAsset, address _liquidAsset)
         external
@@ -12,14 +14,6 @@ interface ILPStakeLockerFactory {
 
 interface IMapleGlobals {
     function mapleToken() external view returns (address);
-}
-
-interface IBpool {
-    function isFinalized() external view returns (bool);
-
-    function isBound(address) external view returns (bool);
-
-    function getNumTokens() external view returns (uint256);
 }
 
 interface ILPStakeocker {
@@ -37,7 +31,7 @@ interface ILPStakeocker {
 contract LP is IFundsDistributionToken, FundsDistributionToken {
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
-
+    using SafeMath for uint256;
     // token in which the funds/dividends can be sent for the FundsDistributionToken
     IERC20 private ILiquidAsset;
     ILPStakeLockerFactory private ILockerFactory;
@@ -54,7 +48,8 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
     address public stakedAsset;
     address public stakedAssetLocker; //supports 8 for fixed memory
     address public poolDelegate;
-
+    uint256 public minStake = 100;//min stake in usd/usdc/dai SHOULD BE IN GLOBALS!!!!
+    uint tokenOne;
     constructor(
         address _liquidAsset,
         address _stakedAsset,
@@ -78,17 +73,20 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         ILiquidAsset = IERC20(_liquidAsset);
         ILockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
         MapleGlobals = IMapleGlobals(_MapleGlobalsaddy);
+        poolDelegate = tx.origin;
+        tokenOne = 10**ERC20(liquidAsset).decimals();
         makeStakeLocker(_stakedAsset);
     }
 
     function makeStakeLocker(address _stakedAsset) private {
         require(
-            IBpool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&
-                IBpool(_stakedAsset).isBound(liquidAsset) &&
-                IBpool(_stakedAsset).isFinalized() &&
-                (IBpool(_stakedAsset).getNumTokens() == 2),
+            IBPool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&
+                IBPool(_stakedAsset).isBound(liquidAsset) &&
+                IBPool(_stakedAsset).isFinalized() &&
+                (IBPool(_stakedAsset).getNumTokens() == 2),
             "FDT_LP.makeStakeLocker: BALANCER_POOL_NOT_VALID"
         );
+        require(CalcBPool.BPTVal(_stakedAsset,poolDelegate,liquidAsset) > minStake.mul(tokenOne), "FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE");
         stakedAssetLocker = ILockerFactory.newLocker(
             _stakedAsset,
             liquidAsset
