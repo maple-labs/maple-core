@@ -24,11 +24,13 @@ describe('Maple', function () {
     const establishmentFeeFetch = await mapleGlobals.establishmentFeeBasisPoints()
     const treasuryFeeFetch = await mapleGlobals.treasuryFeeBasisPoints()
     const gracePeriodFetch = await mapleGlobals.gracePeriod()
+    const stakeRequiredFetch = await mapleGlobals.stakeAmountRequired()
     expect(governorFetch).to.equal(governor)
     expect(mapleTokenFetch).to.equal(mapleTokenAddress)
     expect(establishmentFeeFetch).to.equal(200)
     expect(treasuryFeeFetch).to.equal(20)
     expect(gracePeriodFetch).to.equal(432000)
+    expect(stakeRequiredFetch).to.equal(25000)
   })
 
 })

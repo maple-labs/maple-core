@@ -1,4 +1,5 @@
 const { expect, assert } = require('chai')
+const BigNumber = require('bignumber.js');
 
 const mapleTokenAddress = require('../../contracts/src/contracts/MapleToken.address.js')
 const mapleTokenABI = require('../../contracts/src/contracts/MapleToken.abi.js')
@@ -136,6 +137,19 @@ describe('Maple', function () {
     const accumulativeFundsOfGovernor = await mapleToken.accumulativeFundsOf(governor)
     const withdrawableFundsOfAccountOne = await mapleToken.withdrawableFundsOf(accounts[1])
     const accumulativeFundsOfAccountOne = await mapleToken.accumulativeFundsOf(accounts[1])
+
+    const mapleTokenSupply = await mapleToken.totalSupply()
+    const mapleTokenDecimals = await mapleToken.decimals()
+    const pointsMultiplier = 2**128;
+    const pointsPerShare = pointsMultiplier * mapleTokenSupply;
+    const mapleTokenBalanceGovernor = await mapleToken.balanceOf(governor)
+    const mapleTokenBalanceAccountOne = await mapleToken.accumulativeFundsOf(accounts[1])
+
+    const expectedWithdrawGovernor = pointsPerShare  * mapleTokenBalanceGovernor / pointsMultiplier / 10**mapleTokenDecimals;;
+    const expectedWithdrawAccountOne = pointsPerShare * mapleTokenBalanceAccountOne / pointsMultiplier / 10**mapleTokenDecimals;
+    
+    console.log(expectedWithdrawGovernor)
+    console.log(expectedWithdrawAccountOne)
 
     expect(BigInt(withdrawableFundsOfGovernor)).to.equal(BigInt(accumulativeFundsOfGovernor))
     expect(BigInt(withdrawableFundsOfAccountOne)).to.equal(BigInt(accumulativeFundsOfAccountOne))
