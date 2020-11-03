@@ -119,9 +119,12 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 
     function finalize() external{//TODO FIX THIS, VERIFY BALANCE AND BALANCE WITHIN LOCKER MAPPING
         uint _minStake = MapleGlobals.stakeAmountRequired();
-        require(CalcBPool.BPTVal(stakedAsset,stakedAssetLocker,liquidAsset) > _minStake.mul(_ONE), "FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE");
+        require(CalcBPool.BPTVal(stakedAsset,poolDelegate,liquidAsset,stakedAssetLocker) > _minStake.mul(_ONE), "FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE");
+        
+        //add in so that the logic is non redundant and establishes that the delegate has the stake by checking his locker token balance
         isFinalized = true;
     }
+    //"EVERYTHING BELOW THIS LINE I DID NOT WORK ON" - CHRIS, 2020 11 3
     /**
      * @notice Withdraws all available funds for a token holder
      */
