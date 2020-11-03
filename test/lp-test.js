@@ -1,6 +1,8 @@
 const { expect } = require('chai')
 const daiaddy = require('../../contracts/src/contracts/MintableTokenDAI.address.js')
 const bpoolabi = require('../../contracts/src/contracts/BPool.abi.js')
+const stakelockerabi = require('../../contracts/src/contracts/LPStakeLocker.abi.js')
+const lpabi = require('../../contracts/src/contracts/LP.abi.js')
 const usdcaddy = require('../../contracts/src/contracts/MintableTokenUSDC.address.js')
 const bcaddy = require('../../contracts/src/contracts/BCreator.address.js')
 const bcabi = require('../../contracts/src/contracts/BCreator.abi.js')
@@ -46,16 +48,16 @@ describe('Liquidity Pool and respective lockers', function () {
       'LPUSDC',
       mplglobalsaddy
     )
-    dailp = await lpfactory.getLiquidityPool(0)
-    usdclp = await lpfactory.getLiquidityPool(1)
+    dailpaddy = await lpfactory.getLiquidityPool(0)
+    usdclpaddy = await lpfactory.getLiquidityPool(1)
   })
   it('Check locker owners', async function () {
     const dailplocker = await lplockerfactory.getLocker(0)
     const usdclplocker = await lplockerfactory.getLocker(1)
-    const dailockerowner = await lplockerfactory.getOwner(dailplocker)
-    const usdclockerowner = await lplockerfactory.getOwner(usdclplocker)
-    expect(dailockerowner).to.equal(dailp)
-    expect(usdclockerowner).to.equal(usdclp)
+    const dailockerowner = await lplockerfactory.getPool(dailplocker)
+    const usdclockerowner = await lplockerfactory.getPool(usdclplocker)
+    expect(dailockerowner).to.equal(dailpaddy)
+    expect(usdclockerowner).to.equal(usdclpaddy)
   })
   it('Can deposit stake DAI', async function () {
     const daibpool = new ethers.Contract(
@@ -64,18 +66,21 @@ describe('Liquidity Pool and respective lockers', function () {
       ethers.provider.getSigner(0)
     )
     const dailockeraddy = await lplockerfactory.getLocker(0)
-    const dailocker = new eithers.Contract(
+    const dailocker = new ethers.Contract(
       dailockeraddy,
       stakelockerabi,
-      ethers,
-      provider,
-      getSigner(0)
+      ethers.provider.getSigner(0)
     )
     await daibpool.approve(dailplocker, '100000000000000000000')
-    //await .addStake('100000000000000000000')
+    await dailocker.stake('100000000000000000000')
   })
   it('Can deposit stake USDC', async function () {})
   it('Can not finalize pool without stake', async function () {})
-  it('Can finalize pool with stake', async function () {})
+  it('Can finalize DAI pool with stake', async function () {
+    dailp = new ethers.Contract(dailpaddy, lpabi, ethers.provider.getSigner(0))
+    await dailp.finalize()
+    isfin = await dailp.isFinalized()
+    expect(isfin.toString()).to.equal('true')
+  })
   it('', async function () {})
 })
