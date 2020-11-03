@@ -35,7 +35,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     }
     
     
-    function addStake(uint _amt) external returns (uint){
+    function stake(uint _amt) external returns (uint){//this name sucks, it should be called addStake because that is what it does
         require(IStakedAsset.transferFrom(tx.origin,address(this),_amt),'LPStakeLocker: ERR_INSUFFICIENT_APPROVED_FUNDS');
         _mint(tx.origin,_amt);
     }
