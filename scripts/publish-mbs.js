@@ -16,11 +16,11 @@ function publishContract(contractName, directory) {
       `${bre.config.paths.artifacts}/contracts/${contractName}.sol/${contractName}.json`,
     )
     .toString()
+  contract = JSON.parse(contract)
   try {
   const address = fs
     .readFileSync(`${bre.config.paths.artifacts}/${contractName}.address`)
     .toString()
-  contract = JSON.parse(contract)
   fs.writeFileSync(
     `${directory}/${contractName}.address.js`,
     `module.exports = "${address}";`,
