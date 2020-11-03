@@ -17,6 +17,9 @@ contract MapleGlobals {
     /// @return Represents the amount of time a borrower has to make a missed payment before a default can be triggered.
     uint public gracePeriod;
 
+    /// @return Represents the USD value a pool delegate must stake (in BPTs) when insantiating a liquidity pool.
+    uint public stakeAmountRequired;
+
     modifier isGovernor() {
         require(msg.sender == governor, "msg.sender is not Governor");
         _;
@@ -37,6 +40,7 @@ contract MapleGlobals {
         establishmentFeeBasisPoints = 200;
         treasuryFeeBasisPoints = 20;
         gracePeriod = 432000;
+        stakeAmountRequired = 25000;
     }
 
     /**
@@ -61,6 +65,14 @@ contract MapleGlobals {
      */
     function setGracePeriod(uint _gracePeriod) isGovernor public {
         gracePeriod = _gracePeriod;
+    }
+
+    /**
+        @notice Governor can adjust the stake amount required to create a liquidity pool.
+        @param _newAmount The new minimum stake required.
+     */
+    function setStakeRequired(uint _newAmount) isGovernor public {
+        stakeAmountRequired = _newAmount;
     }
 
     /**
