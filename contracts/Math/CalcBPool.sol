@@ -9,47 +9,47 @@ import "../interface/IBPool.sol";
 //this would not be the same as how much money they put in as it includes slippage and fees
 
 library CalcBPool {
-    uint256 constant _ONE = 10**18;
+	uint256 constant _ONE = 10**18;
 
-    //we need to use this division function which does synthetic float with 10^-18 precision.
-    //it is from balancer pool
+	//we need to use this division function which does synthetic float with 10^-18 precision.
+	//it is from balancer pool
 
-    function bdiv(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b != 0, "ERR_DIV_ZERO");
-        uint256 c0 = a * _ONE;
-        require(a == 0 || c0 / a == _ONE, "ERR_DIV_INTERNAL"); // bmul overflow
-        uint256 c1 = c0 + (b / 2);
-        require(c1 >= c0, "ERR_DIV_INTERNAL"); //  badd require
-        uint256 c2 = c1 / b;
-        return c2;
-    }
+	function bdiv(uint256 a, uint256 b) internal pure returns (uint256) {
+		require(b != 0, "ERR_DIV_ZERO");
+		uint256 c0 = a * _ONE;
+		require(a == 0 || c0 / a == _ONE, "ERR_DIV_INTERNAL"); // bmul overflow
+		uint256 c1 = c0 + (b / 2);
+		require(c1 >= c0, "ERR_DIV_INTERNAL"); //  badd require
+		uint256 c2 = c1 / b;
+		return c2;
+	}
 
-    function BPTVal(
-        address _BPoolAddy,
-        address _staker,
-        address _liquidAssetContract,
-        address _stakedAssetLocker
-    ) internal view returns (uint256) {
-        //calculates the value of BPT in unites of _liquidAssetContract, in 'wei' (decimals) for this token
-        IBPool _IBPool = IBPool(_BPoolAddy);
-        IERC20 _IBPoolERC20 = IERC20(_BPoolAddy);
-        uint256 _BPTBal = IERC20(_stakedAssetLocker).balanceOf(_staker);
-        //the number of BPT staked per _staker is the same as his balance of staked asset locker tokens.
-        //this is used to prove it exists and is staked currently.
-        uint256 _BPTtotal = _IBPoolERC20.totalSupply();
-        uint256 _liquidAssetBal = _IBPool.getBalance(_liquidAssetContract);
-        uint256 _liquidAssetWeight = _IBPool.getNormalizedWeight(
-            _liquidAssetContract
-        );
-        uint256 _val = SafeMath.div(
-            bdiv(_BPTBal, _BPTtotal) *
-                bdiv(_liquidAssetBal, _liquidAssetWeight),
-            _ONE
-        );
-        //we have to divide out the extra _ONE with normal safemath
-        //the two divisions must be separate, as coins that are lower decimals(like usdc) will underflow and give 0
-        //due to the fact that the _liquidAssetWeight is a synthetic float from bpool, IE  x*10^18 where 0<x<1
-        //the result here is
-        return _val;
-    }
+	function BPTVal(
+		address _BPoolAddy,
+		address _staker,
+		address _liquidAssetContract,
+		address _stakedAssetLocker
+	) internal view returns (uint256) {
+		//calculates the value of BPT in unites of _liquidAssetContract, in 'wei' (decimals) for this token
+		IBPool _IBPool = IBPool(_BPoolAddy);
+		IERC20 _IBPoolERC20 = IERC20(_BPoolAddy);
+		uint256 _BPTBal = IERC20(_stakedAssetLocker).balanceOf(_staker);
+		//the number of BPT staked per _staker is the same as his balance of staked asset locker tokens.
+		//this is used to prove it exists and is staked currently.
+		uint256 _BPTtotal = _IBPoolERC20.totalSupply();
+		uint256 _liquidAssetBal = _IBPool.getBalance(_liquidAssetContract);
+		uint256 _liquidAssetWeight = _IBPool.getNormalizedWeight(
+			_liquidAssetContract
+		);
+		uint256 _val = SafeMath.div(
+			bdiv(_BPTBal, _BPTtotal) *
+				bdiv(_liquidAssetBal, _liquidAssetWeight),
+			_ONE
+		);
+		//we have to divide out the extra _ONE with normal safemath
+		//the two divisions must be separate, as coins that are lower decimals(like usdc) will underflow and give 0
+		//due to the fact that the _liquidAssetWeight is a synthetic float from bpool, IE  x*10^18 where 0<x<1
+		//the result here is
+		return _val;
+	}
 }
