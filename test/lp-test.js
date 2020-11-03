@@ -1,5 +1,6 @@
 const { expect } = require('chai')
 const daiaddy = require('../../contracts/src/contracts/MintableTokenDAI.address.js')
+const bpoolabi = require('../../contracts/src/contracts/BPool.abi.js')
 const usdcaddy = require('../../contracts/src/contracts/MintableTokenUSDC.address.js')
 const bcaddy = require('../../contracts/src/contracts/BCreator.address.js')
 const bcabi = require('../../contracts/src/contracts/BCreator.abi.js')
@@ -11,7 +12,7 @@ const lpfactoryabi = require('../../contracts/src/contracts/LPFactory.abi.js')
 const lplockerfactoryaddy = require('../../contracts/src/contracts/LPStakeLockerFactory.address.js')
 const lpfactoryaddy = require('../../contracts/src/contracts/LPFactory.address.js')
 
-describe('Liquidity Pool and locker', function () {
+describe('Liquidity Pool and respective lockers', function () {
   let dailp
   let usdclp
   before(async () => {
@@ -37,7 +38,6 @@ describe('Liquidity Pool and locker', function () {
       'LPDAI',
       mplglobalsaddy
     )
-    const usdclplocker = await lplockerfactory.getLocker(1)
     await lpfactory.createLiquidityPool(
       usdcaddy,
       usdcbpooladdy,
@@ -57,4 +57,25 @@ describe('Liquidity Pool and locker', function () {
     expect(dailockerowner).to.equal(dailp)
     expect(usdclockerowner).to.equal(usdclp)
   })
+  it('Can deposit stake DAI', async function () {
+    const daibpool = new ethers.Contract(
+      daibpooladdy,
+      bpoolabi,
+      ethers.provider.getSigner(0)
+    )
+    const dailockeraddy = await lplockerfactory.getLocker(0)
+    const dailocker = new eithers.Contract(
+      dailockeraddy,
+      stakelockerabi,
+      ethers,
+      provider,
+      getSigner(0)
+    )
+    await daibpool.approve(dailplocker, '100000000000000000000')
+    //await .addStake('100000000000000000000')
+  })
+  it('Can deposit stake USDC', async function () {})
+  it('Can not finalize pool without stake', async function () {})
+  it('Can finalize pool with stake', async function () {})
+  it('', async function () {})
 })
