@@ -65,8 +65,13 @@ describe('Liquidity Pool and respective lockers', function () {
     expect(dailockerowner).to.equal(dailpaddy)
     expect(usdclockerowner).to.equal(usdclpaddy)
   })
+  it('is not finalized', async function () {
+    isfindai = await dailp.isFinalized()
+    isfinusdc = await usdclp.isFinalized()
+    expect(isfindai).to.equal(false)
+    expect(isfinusdc).to.equal(false)
+  })
   it('Can not finalize DAI pool without stake', async function () {
-    /*dailp = new ethers.Contract(dailpaddy, lpabi, ethers.provider.getSigner(0))*/
     await expect(dailp.finalize()).to.be.revertedWith(
       'FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE'
     )
@@ -89,17 +94,11 @@ describe('Liquidity Pool and respective lockers', function () {
     await dailocker.stake('100000000000000000000')
   })
   it('Can finalize DAI pool with stake', async function () {
-    /*dailp = new ethers.Contract(dailpaddy, lpabi, ethers.provider.getSigner(0))*/
     await dailp.finalize()
     isfin = await dailp.isFinalized()
     expect(isfin.toString()).to.equal('true')
   })
   it('Can not finalize USDC pool without stake', async function () {
-    /*usdclp = new ethers.Contract(
-      usdclpaddy,
-      lpabi,
-      ethers.provider.getSigner(0)
-    )*/
     await expect(usdclp.finalize()).to.be.revertedWith(
       'FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE'
     )
@@ -122,11 +121,6 @@ describe('Liquidity Pool and respective lockers', function () {
     await usdclocker.stake('100000000000000000000')
   })
   it('Can finalize USDC pool with stake', async function () {
-    /*usdclp = new ethers.Contract(
-      usdclpaddy,
-      lpabi,
-      ethers.provider.getSigner(0)
-    )*/
     await usdclp.finalize()
     isfin = await usdclp.isFinalized()
     expect(isfin.toString()).to.equal('true')

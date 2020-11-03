@@ -81,7 +81,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 	/// @notice true if the Liquidity Pool is fully set up and delegate meets staking criteria.
 	bool public isFinalized;
 
-	// This is 10^k where k = liquidAsset decimals
+	// This is 10^k where k = liquidAsset decimals, IE, it is one liquid asset unit in 'wei'
 	uint256 private _ONE;
 
 	constructor(
@@ -131,7 +131,6 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 			"FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE"
 		);
 
-		//add in so that the logic is non redundant and establishes that the delegate has the stake by checking his locker token balance
 		isFinalized = true;
 	}
 
