@@ -3,8 +3,8 @@
 pragma solidity 0.7.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../Token/IFundsDistributionToken.sol";
-import "../Token/FundsDistributionToken.sol";
+import "./Token/IFundsDistributionToken.sol";
+import "./Token/FundsDistributionToken.sol";
 
 /// @title LPStakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
@@ -14,7 +14,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     // The primary investment asset for the LP, and the dividend token for this contract.
     IERC20 private ILiquidAsset;
-
+    IERC20 private IStakedAsset;
     /// @notice  The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract. 
     uint256 public liquidTokenBalance;
     
@@ -31,12 +31,20 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
         ILiquidAsset = IERC20(_liquidAsset);
+        IStakedAsset = IERC20(_stakedAsset);
     }
+    
+    
+    function addStake(uint _amt) external returns (uint){
+        require(IStakedAsset.transferFrom(tx.origin,address(this),_amt),'LPStakeLocker: ERR_INSUFFICIENT_APPROVED_FUNDS');
+        _mint(tx.origin,_amt);
+    }
+
 
 	/**
 	 * @notice Withdraws all available funds for a token holder
 	 */
-    function withdrawFunds() external override {
+    function withdrawRewards() external override {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
@@ -65,4 +73,5 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
      * @dev Calls _updateIliquidAssetBalance(), whereby the contract computes the delta of the previous and the new
      * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
      */
+     
 }

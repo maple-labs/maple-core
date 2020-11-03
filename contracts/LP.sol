@@ -4,14 +4,15 @@ pragma solidity 0.7.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../Token/IFundsDistributionToken.sol";
-import "../Token/FundsDistributionToken.sol";
-import "../Math/CalcBPool.sol";
-import "../interface/IBPool.sol";
+import "./Token/IFundsDistributionToken.sol";
+import "./Token/FundsDistributionToken.sol";
+import "./Math/CalcBPool.sol";
+import "./interface/IBPool.sol";
 
 /// @title IMapleGlobals interacts with the core MapleGlobals.sol contract.
 interface IMapleGlobals {
     function mapleToken() external view returns (address);
+    function stakeAmountRequired() external view returns (uint);
 }
 
 /// @title ILPStakeLockerFactory is responsbile for instantiating/initializing a staked asset locker.
@@ -70,11 +71,11 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
     /// @notice The pool delegate which has full authority over the liquidity pool and investment decisions.
     address public poolDelegate;
 
-    /// TODO: Remove this, move this to globals.
-    uint256 public minStake = 100;//min stake in usd/usdc/dai SHOULD BE IN GLOBALS!!!!
+/// @notice true if the Liquidity Pool is fully set up and delegate meets staking criteria.
+    bool public isFinalized;
 
-    // TODO: What is this? Remove?
-    uint tokenOne;
+    // This is 10^k where k = liquidAsset decimals
+    uint private _ONE;
 
     constructor (
         address _liquidAsset,
@@ -97,10 +98,9 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
         ILockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
         MapleGlobals = IMapleGlobals(_mapleGlobals);
         poolDelegate = tx.origin;
-        tokenOne = 10**ERC20(liquidAsset).decimals(); // What is this? tokenOne?
+        _ONE = 10**ERC20(liquidAsset).decimals(); 
         makeStakeLocker(_stakedAsset);
 
-        // TODO: Put the BPTs in the stake lockers?
     }
 
     function makeStakeLocker(address _stakedAsset) private {
@@ -111,14 +111,17 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
                 (IBPool(_stakedAsset).getNumTokens() == 2),
             "FDT_LP.makeStakeLocker: BALANCER_POOL_NOT_VALID"
         );
-        //this is to test the function but needs to be changed to be applied to the delegate's stake in the locker
-        require(CalcBPool.BPTVal(_stakedAsset,poolDelegate,liquidAsset) > minStake.mul(tokenOne), "FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE");
         stakedAssetLocker = ILockerFactory.newLocker(
             _stakedAsset,
             liquidAsset
         );
     }
 
+    function finalize() external{//TODO FIX THIS, VERIFY BALANCE AND BALANCE WITHIN LOCKER MAPPING
+        uint _minStake = MapleGlobals.stakeAmountRequired();
+        require(CalcBPool.BPTVal(stakedAsset,stakedAssetLocker,liquidAsset) > _minStake.mul(_ONE), "FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE");
+        isFinalized = true;
+    }
     /**
      * @notice Withdraws all available funds for a token holder
      */

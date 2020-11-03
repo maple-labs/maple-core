@@ -1,9 +1,8 @@
 pragma solidity 0.7.0;
 
-import "./LP/LP.sol";
+import "./LP.sol";
 
 contract LPFactory {
-
     // Mapping data structure for all liquidity pools.
     mapping(uint256 => address) private LiquidityPools;
 
@@ -25,14 +24,14 @@ contract LPFactory {
         string memory name,
         string memory symbol,
         address _mapleGlobals
-    ) public returns(address) {
+    ) public returns (address) {
         LP lpool = new LP(
             _liquidAsset,
             _stakedAsset,
             _stakedAssetLockerFactory,
             name,
             symbol,
-            _mapleGlobals 
+            _mapleGlobals
         );
         LiquidityPools[LiquidityPoolsCreated] = address(lpool);
         LiquidityPoolsCreated++;
