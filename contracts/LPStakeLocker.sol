@@ -44,7 +44,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 	/**
 	 * @notice Withdraws all available funds for a token holder
 	 */
-    function withdrawRewards() external override {
+    function withdrawFunds() external override {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
