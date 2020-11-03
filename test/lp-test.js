@@ -106,7 +106,7 @@ describe('Liquidity Pool and respective lockers', function () {
       bpoolabi,
       ethers.provider.getSigner(0)
     )
-    const usdclockeraddy = await lplockerfactory.getLocker(0)
+    const usdclockeraddy = await lplockerfactory.getLocker(1)
     const usdclocker = new ethers.Contract(
       usdclockeraddy,
       stakelockerabi,
