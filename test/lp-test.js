@@ -59,6 +59,14 @@ describe('Liquidity Pool and respective lockers', function () {
     expect(dailockerowner).to.equal(dailpaddy)
     expect(usdclockerowner).to.equal(usdclpaddy)
   })
+  it('Can not finalize DAI pool without stake', async function () {
+    dailp = new ethers.Contract(dailpaddy, lpabi, ethers.provider.getSigner(0))
+    await expect(dailp.finalize()).to.be.revertedWith(
+      'FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE'
+    )
+    isfin = await dailp.isFinalized()
+    expect(isfin.toString()).to.equal('false')
+  })
   it('Can deposit stake DAI', async function () {
     const daibpool = new ethers.Contract(
       daibpooladdy,
@@ -71,16 +79,50 @@ describe('Liquidity Pool and respective lockers', function () {
       stakelockerabi,
       ethers.provider.getSigner(0)
     )
-    await daibpool.approve(dailplocker, '100000000000000000000')
+    await daibpool.approve(dailockeraddy, '100000000000000000000')
     await dailocker.stake('100000000000000000000')
   })
-  it('Can deposit stake USDC', async function () {})
-  it('Can not finalize pool without stake', async function () {})
   it('Can finalize DAI pool with stake', async function () {
     dailp = new ethers.Contract(dailpaddy, lpabi, ethers.provider.getSigner(0))
     await dailp.finalize()
     isfin = await dailp.isFinalized()
     expect(isfin.toString()).to.equal('true')
   })
-  it('', async function () {})
+  it('Can not finalize USDC pool without stake', async function () {
+    usdclp = new ethers.Contract(
+      usdclpaddy,
+      lpabi,
+      ethers.provider.getSigner(0)
+    )
+    await expect(usdclp.finalize()).to.be.revertedWith(
+      'FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE'
+    )
+    isfin = await usdclp.isFinalized()
+    expect(isfin.toString()).to.equal('false')
+  })
+  it('Can deposit stake USDC', async function () {
+    const usdcbpool = new ethers.Contract(
+      usdcbpooladdy,
+      bpoolabi,
+      ethers.provider.getSigner(0)
+    )
+    const usdclockeraddy = await lplockerfactory.getLocker(0)
+    const usdclocker = new ethers.Contract(
+      usdclockeraddy,
+      stakelockerabi,
+      ethers.provider.getSigner(0)
+    )
+    await usdcbpool.approve(usdclockeraddy, '100000000000000000000')
+    await usdclocker.stake('100000000000000000000')
+  })
+  it('Can finalize USDC pool with stake', async function () {
+    usdclp = new ethers.Contract(
+      usdclpaddy,
+      lpabi,
+      ethers.provider.getSigner(0)
+    )
+    await usdclp.finalize()
+    isfin = await usdclp.isFinalized()
+    expect(isfin.toString()).to.equal('true')
+  })
 })
