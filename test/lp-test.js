@@ -180,7 +180,16 @@ describe('Liquidity Pool and respective lockers', function () {
     const usdclockerLP = await usdclp.liquidAssetLocker()
     expect(usdclocker).to.equal(usdclockerLP)
   })
-
+  it('Mapping DAI locker to parent pool', async function () {
+    const dailocker = await dailp.liquidAssetLocker()
+    const daiP = await lalockerfactory.getPool(dailocker)
+    expect(daiP).to.equal(dailpaddy)
+  })
+  it('Mapping USDC locker to parent pool', async function () {
+    const usdclocker = await usdclp.liquidAssetLocker()
+    const usdcP = await lalockerfactory.getPool(usdclocker)
+    expect(usdcP).to.equal(usdclpaddy)
+  })
   /*it('liquidAssetLocker can deposit?', async function () {})
   it('liquidAssetLocker can withdraw?', async function () {})
   it('liquidAssetLocker balance correct?', async function () {})
