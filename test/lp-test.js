@@ -13,6 +13,9 @@ const lplockerfactoryabi = require('../../contracts/src/contracts/LPStakeLockerF
 const lpfactoryabi = require('../../contracts/src/contracts/LPFactory.abi.js')
 const lplockerfactoryaddy = require('../../contracts/src/contracts/LPStakeLockerFactory.address.js')
 const lpfactoryaddy = require('../../contracts/src/contracts/LPFactory.address.js')
+const liquidlockerabi = require('../../contracts/src/contracts/liquidAssetLocker.abi.js')
+const liquidlockerfactoryabi = require('../../contracts/src/contracts/liquidAssetLockerFactory.abi.js')
+const liquidlockerfactoryaddy = require('../../contracts/src/contracts/liquidAssetLockerFactory.address.js')
 
 describe('Liquidity Pool and respective lockers', function () {
   let dailp
@@ -36,6 +39,7 @@ describe('Liquidity Pool and respective lockers', function () {
       daiaddy,
       daibpooladdy,
       lplockerfactoryaddy,
+      liquidlockerfactoryaddy,
       'Maple DAI LP',
       'LPDAI',
       mplglobalsaddy
@@ -44,6 +48,7 @@ describe('Liquidity Pool and respective lockers', function () {
       usdcaddy,
       usdcbpooladdy,
       lplockerfactoryaddy,
+      liquidlockerfactoryaddy,
       'Maple USDC LP',
       'LPUSDC',
       mplglobalsaddy
@@ -54,6 +59,11 @@ describe('Liquidity Pool and respective lockers', function () {
     usdclp = new ethers.Contract(
       usdclpaddy,
       lpabi,
+      ethers.provider.getSigner(0)
+    )
+    lalockerfactory = new ethers.Contract(
+      liquidlockerfactoryaddy,
+      liquidlockerfactoryabi,
       ethers.provider.getSigner(0)
     )
   })
@@ -160,4 +170,19 @@ describe('Liquidity Pool and respective lockers', function () {
     const BPTbal = await usdcbpool.balanceOf(usdclockeraddy)
     expect(BPTbal).to.equal(totalsup)
   })
+  it('DAI liquidAssetLocker created, indexed by factory and known to LP?', async function () {
+    const dailocker = await lalockerfactory.getLocker(0)
+    const dailockerLP = await dailp.liquidAssetLocker()
+    expect(dailocker).to.equal(dailockerLP)
+  })
+  it('USDC liquidAssetLocker created, indexed by factory and known to LP?', async function () {
+    const usdclocker = await lalockerfactory.getLocker(1)
+    const usdclockerLP = await usdclp.liquidAssetLocker()
+    expect(usdclocker).to.equal(usdclockerLP)
+  })
+
+  /*it('liquidAssetLocker can deposit?', async function () {})
+  it('liquidAssetLocker can withdraw?', async function () {})
+  it('liquidAssetLocker balance correct?', async function () {})
+*/
 })

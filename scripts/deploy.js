@@ -15,15 +15,20 @@ async function main () {
   ])
   console.log(mapleToken.address)
 
-  const MapleGlobals = await deploy('MapleGlobals',[governor,mapleToken.address])
+  const MapleGlobals = await deploy('MapleGlobals', [
+    governor,
+    mapleToken.address
+  ])
   console.log(MapleGlobals.address)
 
   const LPStakeLockerFactory = await deploy('LPStakeLockerFactory')
   console.log(LPStakeLockerFactory.address)
 
+  const liquidAssetLockerFactory = await deploy('liquidAssetLockerFactory')
+  console.log(liquidAssetLockerFactory.address)
+
   const LPFactory = await deploy('LPFactory')
   console.log(LPFactory.address)
-  
 }
 
 async function deploy (name, _args) {
