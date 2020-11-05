@@ -69,7 +69,7 @@ describe('Liquidity Pool and respective lockers', function () {
       LPABI,
       ethers.provider.getSigner(0)
     )
-    laLockerFactory = new ethers.Contract(
+    LALockerFactory = new ethers.Contract(
       liquidLockerFactoryAddress,
       liquidLockerFactoryABI,
       ethers.provider.getSigner(0)
@@ -179,23 +179,23 @@ describe('Liquidity Pool and respective lockers', function () {
     expect(BPTbal).to.equal(totalsup)
   })
   it('DAI liquidAssetLocker created, indexed by factory and known to LP?', async function () {
-    const DAILocker = await laLockerFactory.getLocker(0)
+    const DAILocker = await LALockerFactory.getLocker(0)
     const DAILockerLP = await DAILP.liquidAssetLocker()
     expect(DAILocker).to.equal(DAILockerLP)
   })
   it('USDC liquidAssetLocker created, indexed by factory and known to LP?', async function () {
-    const USDCLocker = await laLockerFactory.getLocker(1)
+    const USDCLocker = await LALockerFactory.getLocker(1)
     const USDCLockerLP = await USDCLP.liquidAssetLocker()
     expect(USDCLocker).to.equal(USDCLockerLP)
   })
   it('Mapping DAI locker to parent pool', async function () {
     const DAILocker = await DAILP.liquidAssetLocker()
-    const DAIPool = await laLockerFactory.getPool(DAILocker)
+    const DAIPool = await LALockerFactory.getPool(DAILocker)
     expect(DAIPool).to.equal(DAILPAddress)
   })
   it('Mapping USDC locker to parent pool', async function () {
     const USDCLocker = await USDCLP.liquidAssetLocker()
-    const USDCPool = await laLockerFactory.getPool(USDCLocker)
+    const USDCPool = await LALockerFactory.getPool(USDCLocker)
     expect(USDCPool).to.equal(USDCLPAddress)
   })
   it('Check DAI LP is recognized by LPFactory.isLPool()', async function () {
