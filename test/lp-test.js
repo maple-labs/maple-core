@@ -74,12 +74,14 @@ describe('Liquidity Pool and respective lockers', function () {
       liquidLockerFactoryABI,
       ethers.provider.getSigner(0)
     )
+    DAIStakeLockerAddress = await DAILP.stakedAssetLocker()
+    USDCStakeLockerAddress = await USDCLP.stakedAssetLocker()
   })
   it('Sets the correct owners for Token Lockers', async function () {
-    const DAILPLocker = await LPLockerFactory.getLocker(0)
-    const USDCLPLocker = await LPLockerFactory.getLocker(1)
-    const DAILockerowner = await LPLockerFactory.getPool(DAILPLocker)
-    const USDCLockerowner = await LPLockerFactory.getPool(USDCLPLocker)
+    const DAILockerowner = await LPLockerFactory.getPool(DAIStakeLockerAddress)
+    const USDCLockerowner = await LPLockerFactory.getPool(
+      USDCStakeLockerAddress
+    )
     expect(DAILockerowner).to.equal(DAILPAddress)
     expect(USDCLockerowner).to.equal(USDCLPAddress)
   })
@@ -102,13 +104,12 @@ describe('Liquidity Pool and respective lockers', function () {
       BPoolABI,
       ethers.provider.getSigner(0)
     )
-    const DAILockerAddress = await LPLockerFactory.getLocker(0)
     const DAILocker = new ethers.Contract(
-      DAILockerAddress,
+      DAIStakeLockerAddress,
       stakeLockerABI,
       ethers.provider.getSigner(0)
     )
-    await DAIBPool.approve(DAILockerAddress, '100000000000000000000')
+    await DAIBPool.approve(DAIStakeLockerAddress, '100000000000000000000')
     await DAILocker.stake('100000000000000000000')
   })
   it('Can finalize DAI pool with stake', async function () {
@@ -129,13 +130,12 @@ describe('Liquidity Pool and respective lockers', function () {
       BPoolABI,
       ethers.provider.getSigner(0)
     )
-    const USDCLockerAddress = await LPLockerFactory.getLocker(1)
     const USDCLocker = new ethers.Contract(
-      USDCLockerAddress,
+      USDCStakeLockerAddress,
       stakeLockerABI,
       ethers.provider.getSigner(0)
     )
-    await USDCBPool.approve(USDCLockerAddress, '100000000000000000000')
+    await USDCBPool.approve(USDCStakeLockerAddress, '100000000000000000000')
     await USDCLocker.stake('100000000000000000000')
   })
   it('Can finalize USDC pool with stake', async function () {
@@ -146,9 +146,9 @@ describe('Liquidity Pool and respective lockers', function () {
 
   //keep these two at bottom or do multiple times
   it('DAI BPT bal of stakedAssetLocker is same as stakedAssetLocker total token supply', async function () {
-    DAILockerAddress = DAILP.stakedAssetLocker()
+    DAIStakeLockerAddress = DAILP.stakedAssetLocker()
     const DAILocker = new ethers.Contract(
-      DAILockerAddress,
+      DAIStakeLockerAddress,
       stakeLockerABI,
       ethers.provider.getSigner(0)
     )
@@ -158,14 +158,14 @@ describe('Liquidity Pool and respective lockers', function () {
       ethers.provider.getSigner(0)
     )
     const totalsup = await DAILocker.totalSupply()
-    const BPTbal = await DAIBPool.balanceOf(DAILockerAddress)
+    const BPTbal = await DAIBPool.balanceOf(DAIStakeLockerAddress)
     expect(BPTbal).to.equal(totalsup)
   })
 
   it('USDC BPT bal of stakedAssetLocker is same as stakedAssetLocker total token supply', async function () {
-    USDCLockerAddress = USDCLP.stakedAssetLocker()
+    USDCStakeLockerAddress = USDCLP.stakedAssetLocker()
     const USDCLocker = new ethers.Contract(
-      USDCLockerAddress,
+      USDCStakeLockerAddress,
       stakeLockerABI,
       ethers.provider.getSigner(0)
     )
@@ -175,7 +175,7 @@ describe('Liquidity Pool and respective lockers', function () {
       ethers.provider.getSigner(0)
     )
     const totalsup = await USDCLocker.totalSupply()
-    const BPTbal = await USDCBPool.balanceOf(USDCLockerAddress)
+    const BPTbal = await USDCBPool.balanceOf(USDCStakeLockerAddress)
     expect(BPTbal).to.equal(totalsup)
   })
   it('DAI liquidAssetLocker created, indexed by factory and known to LP?', async function () {
