@@ -13,8 +13,7 @@
     "balance": "hardhat balance",
     "docs": "npx solidity-docgen --solc-module solc -i ./contracts -o ./docs -t ./docs",
     "lint": "npx solhint contracts/**/*.sol",
-    "prettier:solidity": "npx prettier --write contracts/**/*.sol",
-    "precommit": "yarn lint && yarn prettier"
+    "prettier:solidity": "npx prettier --write contracts/**/*.sol"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
   "keywords": [
@@ -49,7 +48,7 @@
   "main": "index.js",
   "husky": {
     "hooks": {
-      "pre-commit": "yarn precommit"
+      "pre-commit": "yarn lint"
     }
   }
 }
