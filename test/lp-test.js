@@ -75,7 +75,7 @@ describe('Liquidity Pool and respective lockers', function () {
       ethers.provider.getSigner(0)
     )
   })
-  it('Check locker owners', async function () {
+  it('Sets the correct owners for Token Lockers', async function () {
     const DAILPLocker = await LPLockerFactory.getLocker(0)
     const USDCLPLocker = await LPLockerFactory.getLocker(1)
     const DAILockerowner = await LPLockerFactory.getPool(DAILPLocker)
@@ -197,5 +197,13 @@ describe('Liquidity Pool and respective lockers', function () {
     const USDCLocker = await USDCLP.liquidAssetLocker()
     const USDCPool = await laLockerFactory.getPool(USDCLocker)
     expect(USDCPool).to.equal(USDCLPAddress)
+  })
+  it('Check DAI LP is recognized by LPFactory.isLPool()', async function () {
+    const isPool = await LPFactory.isLPool(DAILPAddress)
+    expect(isPool).to.equal(true)
+  })
+  it('Check USDC LP is recognized by LPFactory.isLPool()', async function () {
+    const isPool = await LPFactory.isLPool(USDCLPAddress)
+    expect(isPool).to.equal(true)
   })
 })

@@ -63,7 +63,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 	IMapleGlobals private MapleGlobals;
 
 	/// @notice The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract.
-	uint256 public liquidTokenBalance;
+	uint256 public fundsTokenBalance;
 
 	/// @notice Represents the fees, in basis points, distributed to the lender when a borrower's loan is funded.
 	uint256 public stakerFeeBasisPoints;
@@ -89,7 +89,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 	bool public isFinalized;
 
 	// This is 10^k where k = liquidAsset decimals, IE, it is one liquid asset unit in 'wei'
-	uint256 private _ONE;
+	uint256 private _liquidAssetONE;
 
 	constructor(
 		address _liquidAsset,
@@ -111,8 +111,8 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 		IStakeLockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
 		MapleGlobals = IMapleGlobals(_mapleGlobals);
 		poolDelegate = tx.origin;
-		_ONE = 10**ERC20(liquidAsset).decimals();
-		makeStakeLocker(_stakedAsset);
+		_liquidAssetONE = 10**ERC20(liquidAsset).decimals();
+		stakedAssetLocker = makeStakeLocker(_stakedAsset);
 		liquidAssetLocker = address(
 			ILiquidAssetLockerFactory(_liquidAssetLockerFactory).newLocker(
 				liquidAsset
@@ -120,7 +120,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 		);
 	}
 
-	function makeStakeLocker(address _stakedAsset) private {
+	function makeStakeLocker(address _stakedAsset) private returns (address) {
 		require(
 			IBPool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&
 				IBPool(_stakedAsset).isBound(liquidAsset) &&
@@ -128,14 +128,14 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 				(IBPool(_stakedAsset).getNumTokens() == 2),
 			"FDT_LP.makeStakeLocker: BALANCER_POOL_NOT_VALID"
 		);
-		stakedAssetLocker = IStakeLockerFactory.newLocker(
+		address _stakedAssetLocker = IStakeLockerFactory.newLocker(
 			_stakedAsset,
 			liquidAsset
 		);
+		return _stakedAssetLocker;
 	}
 
 	function finalize() external {
-		//TODO FIX THIS, VERIFY BALANCE AND BALANCE WITHIN LOCKER MAPPING
 		uint256 _minStake = MapleGlobals.stakeAmountRequired();
 		require(
 			CalcBPool.BPTVal(
@@ -143,7 +143,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 				poolDelegate,
 				liquidAsset,
 				stakedAssetLocker
-			) > _minStake.mul(_ONE),
+			) > _minStake.mul(_liquidAssetONE),
 			"FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE"
 		);
 
@@ -162,7 +162,7 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 			"FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
 		);
 
-		_updateILiquidAssetBalance();
+		_updateFundsTokenBalance();
 	}
 
 	/**
@@ -170,21 +170,21 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 	 * and returns the difference of new and previous funds token balances
 	 * @return A int256 representing the difference of the new and previous funds token balance
 	 */
-	function _updateILiquidAssetBalance() internal returns (int256) {
-		uint256 prevILiquidAssetBalance = liquidTokenBalance;
+	function _updateFundsTokenBalance() internal returns (int256) {
+		uint256 _prevFundsTokenBalance = fundsTokenBalance;
 
-		liquidTokenBalance = ILiquidAsset.balanceOf(address(this));
+		fundsTokenBalance = ILiquidAsset.balanceOf(address(this));
 
-		return int256(liquidTokenBalance).sub(int256(prevILiquidAssetBalance));
+		return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
 	}
 
 	/**
 	 * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
-	 * @dev Calls _updateILiquidAssetBalance(), whereby the contract computes the delta of the previous and the new
+	 * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
 	 * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
 	 */
 	function updateFundsReceived() external {
-		int256 newFunds = _updateILiquidAssetBalance();
+		int256 newFunds = _updateFundsTokenBalance();
 
 		if (newFunds > 0) {
 			_distributeFunds(newFunds.toUint256Safe());

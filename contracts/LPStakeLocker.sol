@@ -15,7 +15,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 	IERC20 private ILiquidAsset;
 	IERC20 private IStakedAsset;
 	/// @notice  The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract.
-	uint256 public liquidTokenBalance;
+	uint256 public fundsTokenBalance;
 
 	/// @notice The primary investment asset for the liquidity pool. Also the dividend token for this contract.
 	address public liquidAsset;
@@ -53,7 +53,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 			"FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
 		);
 
-		_updateILiquidAssetBalance();
+		_updateFundsTokenBalance();
 	}
 
 	/**
@@ -61,12 +61,12 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 	 * and returns the difference of new and previous funds token balances
 	 * @return A int256 representing the difference of the new and previous funds token balance
 	 */
-	function _updateILiquidAssetBalance() internal returns (int256) {
-		uint256 prevILiquidAssetBalance = liquidTokenBalance;
+	function _updateFundsTokenBalance() internal returns (int256) {
+		uint256 prevFundsTokenBalance = fundsTokenBalance;
 
-		liquidTokenBalance = ILiquidAsset.balanceOf(address(this));
+		fundsTokenBalance = ILiquidAsset.balanceOf(address(this));
 
-		return int256(liquidTokenBalance).sub(int256(prevILiquidAssetBalance));
+		return int256(fundsTokenBalance).sub(int256(prevFundsTokenBalance));
 	}
 
 	/**

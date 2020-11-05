@@ -5,7 +5,7 @@ import "./LP.sol";
 contract LPFactory {
 	// Mapping data structure for all liquidity pools.
 	mapping(uint256 => address) private LiquidityPools;
-
+	mapping(address => bool) private _isLPool;
 	/// @notice Incrementor for number of LPs created.
 	uint256 public LiquidityPoolsCreated;
 
@@ -36,6 +36,7 @@ contract LPFactory {
 			_mapleGlobals
 		);
 		LiquidityPools[LiquidityPoolsCreated] = address(lpool);
+		_isLPool[address(lpool)] = true;
 		LiquidityPoolsCreated++;
 		return address(lpool);
 	}
@@ -45,5 +46,9 @@ contract LPFactory {
 	/// @return The address of the liquidity pool at _id.
 	function getLiquidityPool(uint256 _id) public view returns (address) {
 		return LiquidityPools[_id];
+	}
+
+	function isLPool(address _addy) public view returns (bool) {
+		return _isLPool[_addy];
 	}
 }

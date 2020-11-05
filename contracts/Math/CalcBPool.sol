@@ -33,7 +33,7 @@ library CalcBPool {
 		//calculates the value of BPT in unites of _liquidAssetContract, in 'wei' (decimals) for this token
 		IBPool _IBPool = IBPool(_BPoolAddy);
 		IERC20 _IBPoolERC20 = IERC20(_BPoolAddy);
-		uint256 _BPTBal = IERC20(_stakedAssetLocker).balanceOf(_staker);
+		uint256 _FDTBalBPT = IERC20(_stakedAssetLocker).balanceOf(_staker); //bal of FDTs that are 1:1 with BPTs
 		//the number of BPT staked per _staker is the same as his balance of staked asset locker tokens.
 		//this is used to prove it exists and is staked currently.
 		uint256 _BPTtotal = _IBPoolERC20.totalSupply();
@@ -42,7 +42,7 @@ library CalcBPool {
 			_liquidAssetContract
 		);
 		uint256 _val = SafeMath.div(
-			bdiv(_BPTBal, _BPTtotal) *
+			bdiv(_FDTBalBPT, _BPTtotal) *
 				bdiv(_liquidAssetBal, _liquidAssetWeight),
 			_ONE
 		);
