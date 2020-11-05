@@ -1,4 +1,5 @@
 require('@nomiclabs/hardhat-waffle')
+require('hardhat-gas-reporter');
 
 const { utils } = require('ethers')
 const fs = require('fs')
@@ -34,6 +35,9 @@ function mnemonic() {
 
 module.exports = {
   defaultNetwork,
+  gasReporter: {
+    showMethodSig: true
+  },
 
   // don't forget to set your provider like:
   // REACT_APP_PROVIDER=https://dai.poa.network in packages/react-app/.env
