@@ -1,197 +1,193 @@
 const { expect } = require('chai')
-const daiaddy = require('../../contracts/src/contracts/MintableTokenDAI.address.js')
-const bpoolabi = require('../../contracts/src/contracts/BPool.abi.js')
-const stakelockerabi = require('../../contracts/src/contracts/LPStakeLocker.abi.js')
-const lpabi = require('../../contracts/src/contracts/LP.abi.js')
-const usdcaddy = require('../../contracts/src/contracts/MintableTokenUSDC.address.js')
-const bcaddy = require('../../contracts/src/contracts/BCreator.address.js')
-const bcabi = require('../../contracts/src/contracts/BCreator.abi.js')
-const mpladdy = require('../../contracts/src/contracts/MapleToken.address.js')
-const mplabi = require('../../contracts/src/contracts/MapleToken.abi.js')
-const mplglobalsaddy = require('../../contracts/src/contracts/MapleGlobals.address.js')
-const lplockerfactoryabi = require('../../contracts/src/contracts/LPStakeLockerFactory.abi.js')
-const lpfactoryabi = require('../../contracts/src/contracts/LPFactory.abi.js')
-const lplockerfactoryaddy = require('../../contracts/src/contracts/LPStakeLockerFactory.address.js')
-const lpfactoryaddy = require('../../contracts/src/contracts/LPFactory.address.js')
-const liquidlockerabi = require('../../contracts/src/contracts/liquidAssetLocker.abi.js')
-const liquidlockerfactoryabi = require('../../contracts/src/contracts/liquidAssetLockerFactory.abi.js')
-const liquidlockerfactoryaddy = require('../../contracts/src/contracts/liquidAssetLockerFactory.address.js')
+const DAIAddress = require('../../contracts/src/contracts/MintableTokenDAI.address.js')
+const BPoolABI = require('../../contracts/src/contracts/BPool.abi.js')
+const stakeLockerABI = require('../../contracts/src/contracts/LPStakeLocker.abi.js')
+const LPABI = require('../../contracts/src/contracts/LP.abi.js')
+const USDCAddress = require('../../contracts/src/contracts/MintableTokenUSDC.address.js')
+const bcAddress = require('../../contracts/src/contracts/BCreator.address.js')
+const bcABI = require('../../contracts/src/contracts/BCreator.abi.js')
+const mplAddress = require('../../contracts/src/contracts/MapleToken.address.js')
+const mplABI = require('../../contracts/src/contracts/MapleToken.abi.js')
+const MPLGlobalsAddress = require('../../contracts/src/contracts/MapleGlobals.address.js')
+const LPLockerFactoryABI = require('../../contracts/src/contracts/LPStakeLockerFactory.abi.js')
+const LPFactoryABI = require('../../contracts/src/contracts/LPFactory.abi.js')
+const LPLockerFactoryAddress = require('../../contracts/src/contracts/LPStakeLockerFactory.address.js')
+const LPFactoryAddress = require('../../contracts/src/contracts/LPFactory.address.js')
+const liquidLockerABI = require('../../contracts/src/contracts/liquidAssetLocker.abi.js')
+const liquidLockerFactoryABI = require('../../contracts/src/contracts/liquidAssetLockerFactory.abi.js')
+const liquidLockerFactoryAddress = require('../../contracts/src/contracts/liquidAssetLockerFactory.address.js')
 
 describe('Liquidity Pool and respective lockers', function () {
-  let dailp
-  let usdclp
+  let DAILP
+  let USDCLP
   before(async () => {
-    lpfactory = new ethers.Contract(
-      lpfactoryaddy,
-      lpfactoryabi,
+    LPFactory = new ethers.Contract(
+      LPFactoryAddress,
+      LPFactoryABI,
       ethers.provider.getSigner(0)
     )
-    lplockerfactory = new ethers.Contract(
-      lplockerfactoryaddy,
-      lplockerfactoryabi,
+    LPLockerFactory = new ethers.Contract(
+      LPLockerFactoryAddress,
+      LPLockerFactoryABI,
       ethers.provider.getSigner(0)
     )
-    const bc = new ethers.Contract(bcaddy, bcabi, ethers.provider.getSigner(0))
+    const bc = new ethers.Contract(bcAddress, bcABI, ethers.provider.getSigner(0))
 
-    daibpooladdy = await bc.getBPoolAddress(0)
-    usdcbpooladdy = await bc.getBPoolAddress(1)
-    await lpfactory.createLiquidityPool(
-      daiaddy,
-      daibpooladdy,
-      lplockerfactoryaddy,
-      liquidlockerfactoryaddy,
+    DAIBPoolAddress = await bc.getBPoolAddress(0)
+    USDCBPoolAddress = await bc.getBPoolAddress(1)
+    await LPFactory.createLiquidityPool(
+      DAIAddress,
+      DAIBPoolAddress,
+      LPLockerFactoryAddress,
+      liquidLockerFactoryAddress,
       'Maple DAI LP',
       'LPDAI',
-      mplglobalsaddy
+      MPLGlobalsAddress
     )
-    await lpfactory.createLiquidityPool(
-      usdcaddy,
-      usdcbpooladdy,
-      lplockerfactoryaddy,
-      liquidlockerfactoryaddy,
+    await LPFactory.createLiquidityPool(
+      USDCAddress,
+      USDCBPoolAddress,
+      LPLockerFactoryAddress,
+      liquidLockerFactoryAddress,
       'Maple USDC LP',
       'LPUSDC',
-      mplglobalsaddy
+      MPLGlobalsAddress
     )
-    dailpaddy = await lpfactory.getLiquidityPool(0)
-    usdclpaddy = await lpfactory.getLiquidityPool(1)
-    dailp = new ethers.Contract(dailpaddy, lpabi, ethers.provider.getSigner(0))
-    usdclp = new ethers.Contract(
-      usdclpaddy,
-      lpabi,
+    DAILPAddress = await LPFactory.getLiquidityPool(0)
+    USDCLPAddress = await LPFactory.getLiquidityPool(1)
+    DAILP = new ethers.Contract(DAILPAddress, LPABI, ethers.provider.getSigner(0))
+    USDCLP = new ethers.Contract(
+      USDCLPAddress,
+      LPABI,
       ethers.provider.getSigner(0)
     )
-    lalockerfactory = new ethers.Contract(
-      liquidlockerfactoryaddy,
-      liquidlockerfactoryabi,
+    laLockerFactory = new ethers.Contract(
+      liquidLockerFactoryAddress,
+      liquidLockerFactoryABI,
       ethers.provider.getSigner(0)
     )
   })
   it('Check locker owners', async function () {
-    const dailplocker = await lplockerfactory.getLocker(0)
-    const usdclplocker = await lplockerfactory.getLocker(1)
-    const dailockerowner = await lplockerfactory.getPool(dailplocker)
-    const usdclockerowner = await lplockerfactory.getPool(usdclplocker)
-    expect(dailockerowner).to.equal(dailpaddy)
-    expect(usdclockerowner).to.equal(usdclpaddy)
+    const DAILPLocker = await LPLockerFactory.getLocker(0)
+    const USDCLPLocker = await LPLockerFactory.getLocker(1)
+    const DAILockerowner = await LPLockerFactory.getPool(DAILPLocker)
+    const USDCLockerowner = await LPLockerFactory.getPool(USDCLPLocker)
+    expect(DAILockerowner).to.equal(DAILPAddress)
+    expect(USDCLockerowner).to.equal(USDCLPAddress)
   })
   it('is not finalized', async function () {
-    isfindai = await dailp.isFinalized()
-    isfinusdc = await usdclp.isFinalized()
-    expect(isfindai).to.equal(false)
-    expect(isfinusdc).to.equal(false)
+    isfinDAI = await DAILP.isFinalized()
+    isfinUSDC = await USDCLP.isFinalized()
+    expect(isfinDAI).to.equal(false)
+    expect(isfinUSDC).to.equal(false)
   })
   it('Can not finalize DAI pool without stake', async function () {
-    await expect(dailp.finalize()).to.be.revertedWith(
+    await expect(DAILP.finalize()).to.be.revertedWith(
       'FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE'
     )
-    isfin = await dailp.isFinalized()
+    isfin = await DAILP.isFinalized()
     expect(isfin.toString()).to.equal('false')
   })
   it('Can deposit stake DAI', async function () {
-    const daibpool = new ethers.Contract(
-      daibpooladdy,
-      bpoolabi,
+    const DAIBPool = new ethers.Contract(
+      DAIBPoolAddress,
+      BPoolABI,
       ethers.provider.getSigner(0)
     )
-    const dailockeraddy = await lplockerfactory.getLocker(0)
-    const dailocker = new ethers.Contract(
-      dailockeraddy,
-      stakelockerabi,
+    const DAILockerAddress = await LPLockerFactory.getLocker(0)
+    const DAILocker = new ethers.Contract(
+      DAILockerAddress,
+      stakeLockerABI,
       ethers.provider.getSigner(0)
     )
-    await daibpool.approve(dailockeraddy, '100000000000000000000')
-    await dailocker.stake('100000000000000000000')
+    await DAIBPool.approve(DAILockerAddress, '100000000000000000000')
+    await DAILocker.stake('100000000000000000000')
   })
   it('Can finalize DAI pool with stake', async function () {
-    await dailp.finalize()
-    isfin = await dailp.isFinalized()
+    await DAILP.finalize()
+    isfin = await DAILP.isFinalized()
     expect(isfin.toString()).to.equal('true')
   })
   it('Can not finalize USDC pool without stake', async function () {
-    await expect(usdclp.finalize()).to.be.revertedWith(
+    await expect(USDCLP.finalize()).to.be.revertedWith(
       'FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE'
     )
-    isfin = await usdclp.isFinalized()
+    isfin = await USDCLP.isFinalized()
     expect(isfin.toString()).to.equal('false')
   })
   it('Can deposit stake USDC', async function () {
-    const usdcbpool = new ethers.Contract(
-      usdcbpooladdy,
-      bpoolabi,
+    const USDCBPool = new ethers.Contract(
+      USDCBPoolAddress,
+      BPoolABI,
       ethers.provider.getSigner(0)
     )
-    const usdclockeraddy = await lplockerfactory.getLocker(1)
-    const usdclocker = new ethers.Contract(
-      usdclockeraddy,
-      stakelockerabi,
+    const USDCLockerAddress = await LPLockerFactory.getLocker(1)
+    const USDCLocker = new ethers.Contract(
+      USDCLockerAddress,
+      stakeLockerABI,
       ethers.provider.getSigner(0)
     )
-    await usdcbpool.approve(usdclockeraddy, '100000000000000000000')
-    await usdclocker.stake('100000000000000000000')
+    await USDCBPool.approve(USDCLockerAddress, '100000000000000000000')
+    await USDCLocker.stake('100000000000000000000')
   })
   it('Can finalize USDC pool with stake', async function () {
-    await usdclp.finalize()
-    isfin = await usdclp.isFinalized()
+    await USDCLP.finalize()
+    isfin = await USDCLP.isFinalized()
     expect(isfin.toString()).to.equal('true')
   })
 
   //keep these two at bottom or do multiple times
-  it('DAI BPT bal of stakedAssetLocker is same as stakedassetlocker total token supply', async function () {
-    dailockeraddy = dailp.stakedAssetLocker()
-    const dailocker = new ethers.Contract(
-      dailockeraddy,
-      stakelockerabi,
+  it('DAI BPT bal of stakedAssetLocker is same as stakedassetLocker total token supply', async function () {
+    DAILockerAddress = DAILP.stakedAssetLocker()
+    const DAILocker = new ethers.Contract(
+      DAILockerAddress,
+      stakeLockerABI,
       ethers.provider.getSigner(0)
     )
-    const daibpool = new ethers.Contract(
-      daibpooladdy,
-      bpoolabi,
+    const DAIBPool = new ethers.Contract(
+      DAIBPoolAddress,
+      BPoolABI,
       ethers.provider.getSigner(0)
     )
-    const totalsup = await dailocker.totalSupply()
-    const BPTbal = await daibpool.balanceOf(dailockeraddy)
+    const totalsup = await DAILocker.totalSupply()
+    const BPTbal = await DAIBPool.balanceOf(DAILockerAddress)
     expect(BPTbal).to.equal(totalsup)
   })
 
-  it('USDC BPT bal of stakedAssetLocker is same as stakedassetlocker total token supply', async function () {
-    usdclockeraddy = usdclp.stakedAssetLocker()
-    const usdclocker = new ethers.Contract(
-      usdclockeraddy,
-      stakelockerabi,
+  it('USDC BPT bal of stakedAssetLocker is same as stakedassetLocker total token supply', async function () {
+    USDCLockerAddress = USDCLP.stakedAssetLocker()
+    const USDCLocker = new ethers.Contract(
+      USDCLockerAddress,
+      stakeLockerABI,
       ethers.provider.getSigner(0)
     )
-    const usdcbpool = new ethers.Contract(
-      usdcbpooladdy,
-      bpoolabi,
+    const USDCBPool = new ethers.Contract(
+      USDCBPoolAddress,
+      BPoolABI,
       ethers.provider.getSigner(0)
     )
-    const totalsup = await usdclocker.totalSupply()
-    const BPTbal = await usdcbpool.balanceOf(usdclockeraddy)
+    const totalsup = await USDCLocker.totalSupply()
+    const BPTbal = await USDCBPool.balanceOf(USDCLockerAddress)
     expect(BPTbal).to.equal(totalsup)
   })
   it('DAI liquidAssetLocker created, indexed by factory and known to LP?', async function () {
-    const dailocker = await lalockerfactory.getLocker(0)
-    const dailockerLP = await dailp.liquidAssetLocker()
-    expect(dailocker).to.equal(dailockerLP)
+    const DAILocker = await laLockerFactory.getLocker(0)
+    const DAILockerLP = await DAILP.liquidAssetLocker()
+    expect(DAILocker).to.equal(DAILockerLP)
   })
   it('USDC liquidAssetLocker created, indexed by factory and known to LP?', async function () {
-    const usdclocker = await lalockerfactory.getLocker(1)
-    const usdclockerLP = await usdclp.liquidAssetLocker()
-    expect(usdclocker).to.equal(usdclockerLP)
+    const USDCLocker = await laLockerFactory.getLocker(1)
+    const USDCLockerLP = await USDCLP.liquidAssetLocker()
+    expect(USDCLocker).to.equal(USDCLockerLP)
   })
   it('Mapping DAI locker to parent pool', async function () {
-    const dailocker = await dailp.liquidAssetLocker()
-    const daiP = await lalockerfactory.getPool(dailocker)
-    expect(daiP).to.equal(dailpaddy)
+    const DAILocker = await DAILP.liquidAssetLocker()
+    const DAIPool = await laLockerFactory.getPool(DAILocker)
+    expect(DAIPool).to.equal(DAILPAddress)
   })
   it('Mapping USDC locker to parent pool', async function () {
-    const usdclocker = await usdclp.liquidAssetLocker()
-    const usdcP = await lalockerfactory.getPool(usdclocker)
-    expect(usdcP).to.equal(usdclpaddy)
+    const USDCLocker = await USDCLP.liquidAssetLocker()
+    const USDCPool = await laLockerFactory.getPool(USDCLocker)
+    expect(USDCPool).to.equal(USDCLPAddress)
   })
-  /*it('liquidAssetLocker can deposit?', async function () {})
-  it('liquidAssetLocker can withdraw?', async function () {})
-  it('liquidAssetLocker balance correct?', async function () {})
-*/
 })
