@@ -65,12 +65,6 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 	/// @notice The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract.
 	uint256 public fundsTokenBalance;
 
-	/// @notice Represents the fees, in basis points, distributed to the lender when a borrower's loan is funded.
-	uint256 public stakerFeeBasisPoints;
-
-	/// @notice Represents the fees, in basis points, distributed to the MapleToken when a borrower's loan is funded.
-	uint256 public ongoingFeeBasisPoints;
-
 	/// @notice The asset deposited by lenders into the liquidAssetLocker, for funding loans.
 	address public liquidAsset;
 
