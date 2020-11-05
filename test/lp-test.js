@@ -31,7 +31,11 @@ describe('Liquidity Pool and respective lockers', function () {
       LPLockerFactoryABI,
       ethers.provider.getSigner(0)
     )
-    const bc = new ethers.Contract(bcAddress, bcABI, ethers.provider.getSigner(0))
+    const bc = new ethers.Contract(
+      bcAddress,
+      bcABI,
+      ethers.provider.getSigner(0)
+    )
 
     DAIBPoolAddress = await bc.getBPoolAddress(0)
     USDCBPoolAddress = await bc.getBPoolAddress(1)
@@ -55,7 +59,11 @@ describe('Liquidity Pool and respective lockers', function () {
     )
     DAILPAddress = await LPFactory.getLiquidityPool(0)
     USDCLPAddress = await LPFactory.getLiquidityPool(1)
-    DAILP = new ethers.Contract(DAILPAddress, LPABI, ethers.provider.getSigner(0))
+    DAILP = new ethers.Contract(
+      DAILPAddress,
+      LPABI,
+      ethers.provider.getSigner(0)
+    )
     USDCLP = new ethers.Contract(
       USDCLPAddress,
       LPABI,
@@ -137,7 +145,7 @@ describe('Liquidity Pool and respective lockers', function () {
   })
 
   //keep these two at bottom or do multiple times
-  it('DAI BPT bal of stakedAssetLocker is same as stakedassetLocker total token supply', async function () {
+  it('DAI BPT bal of stakedAssetLocker is same as stakedAssetLocker total token supply', async function () {
     DAILockerAddress = DAILP.stakedAssetLocker()
     const DAILocker = new ethers.Contract(
       DAILockerAddress,
@@ -154,7 +162,7 @@ describe('Liquidity Pool and respective lockers', function () {
     expect(BPTbal).to.equal(totalsup)
   })
 
-  it('USDC BPT bal of stakedAssetLocker is same as stakedassetLocker total token supply', async function () {
+  it('USDC BPT bal of stakedAssetLocker is same as stakedAssetLocker total token supply', async function () {
     USDCLockerAddress = USDCLP.stakedAssetLocker()
     const USDCLocker = new ethers.Contract(
       USDCLockerAddress,
