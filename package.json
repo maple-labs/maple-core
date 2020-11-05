@@ -12,7 +12,9 @@
     "accounts": "hardhat accounts",
     "balance": "hardhat balance",
     "docs": "npx solidity-docgen --solc-module solc -i ./contracts -o ./docs -t ./docs",
-    "lint": "npx solhint contracts/**/*.sol"
+    "lint": "npx solhint contracts/**/*.sol",
+    "prettier:solidity": "npx prettier --write contracts/**/*.sol",
+    "precommit": "yarn lint && yarn prettier"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
   "keywords": [
@@ -33,13 +35,21 @@
     "ethereum-waffle": "^3.1.1",
     "ethers": "^5.0.18",
     "hardhat": "^2.0.0",
+    "husky": "^4.3.0",
     "node-watch": "^0.7.0",
-    "solc": "0.7.3",
-    "solhint": "^3.3.1"
+    "prettier": "^2.1.2",
+    "prettier-plugin-solidity": "^1.0.0-alpha.59",
+    "solhint": "^3.3.1",
+    "solhint-plugin-prettier": "^0.0.5"
   },
   "dependencies": {
     "@openzeppelin/contracts": "3.2.1-solc-0.7",
     "solc": "0.7.0"
   },
-  "main": "index.js"
+  "main": "index.js",
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn precommit"
+    }
+  }
 }
