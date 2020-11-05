@@ -35,6 +35,7 @@
     "ethers": "^5.0.18",
     "hardhat": "^2.0.0",
     "husky": "^4.3.0",
+    "hardhat-gas-reporter": "^1.0.0",
     "node-watch": "^0.7.0",
     "prettier": "^2.1.2",
     "prettier-plugin-solidity": "^1.0.0-alpha.59",
