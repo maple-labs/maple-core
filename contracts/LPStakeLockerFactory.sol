@@ -14,10 +14,6 @@ contract LPStakeLockerFactory {
 	/// @notice Incrementor for number of lockers created.
 	uint256 public lockersCreated;
 
-	/// @notice Fires when a new locker is instantiated.
-	/// @param newLocker The address of a newly instantiated locker.
-	event NewLocker(address newLocker); //THERE IS NO REASON TO EMIT THIS EVENT IF THERE IS ONLY ONE LOCKER PER POOL
-
 	/// @notice Creates a new locker.
 	/// @param _stakedAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
 	/// @param _liquidAsset The address of the dividend token, also the primary investment asset of the LP.
@@ -31,7 +27,6 @@ contract LPStakeLockerFactory {
 		lockers[lockersCreated] = address(locker);
 		lockerPool[address(locker)] = address(msg.sender); //address of LP contract that sent it, not poolManager
 		lockersCreated++;
-		emit NewLocker(locker);
 		return address(locker);
 	}
 

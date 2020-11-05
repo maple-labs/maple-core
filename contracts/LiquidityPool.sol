@@ -42,7 +42,7 @@ interface ILiquidAssetLockerFactory {
 }
 
 /// @title LP is the core liquidity pool contract.
-contract LP is IFundsDistributionToken, FundsDistributionToken {
+contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 	using SafeMathInt for int256;
 	using SignedSafeMath for int256;
 	using SafeMath for uint256;
@@ -135,6 +135,9 @@ contract LP is IFundsDistributionToken, FundsDistributionToken {
 		return _stakedAssetLocker;
 	}
 
+	/**
+	 * @notice Check the size of the poolDelegate's stake held in the stakeLocker and finalize the pool
+	 */
 	function finalize() external {
 		uint256 _minStake = MapleGlobals.stakeAmountRequired();
 		require(
