@@ -16,21 +16,27 @@ function publishContract(contractName, directory) {
       `${bre.config.paths.artifacts}/contracts/${contractName}.sol/${contractName}.json`,
     )
     .toString()
+  contract = JSON.parse(contract)
+  try {
   const address = fs
     .readFileSync(`${bre.config.paths.artifacts}/${contractName}.address`)
     .toString()
-  contract = JSON.parse(contract)
   fs.writeFileSync(
     `${directory}/${contractName}.address.js`,
     `module.exports = "${address}";`,
+  ) 
+    fs.writeFileSync(
+    `${directory}/${contractName}.bytecode.js`,
+    `module.exports = "${contract.bytecode}";`,
   )
+
+  }catch(e){
+	console.log("Pushing only abi for ",contractName);
+  }
+  
   fs.writeFileSync(
     `${directory}/${contractName}.abi.js`,
     `module.exports = ${JSON.stringify(contract.abi, null, 2)};`,
-  )
-  fs.writeFileSync(
-    `${directory}/${contractName}.bytecode.js`,
-    `module.exports = "${contract.bytecode}";`,
   )
 
   return true
