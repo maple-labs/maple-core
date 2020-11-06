@@ -1,5 +1,5 @@
 {
-  "cwd": "./contracts",
+  "compile_force_framework": "hardhat",
   "node_version": "14.4.0",
   "solc": "0.7.0",
   "use_yarn": true
