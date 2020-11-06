@@ -13,9 +13,9 @@ const LPLockerFactoryABI = require('../../contracts/src/contracts/LPStakeLockerF
 const LPFactoryABI = require('../../contracts/src/contracts/LPFactory.abi.js')
 const LPLockerFactoryAddress = require('../../contracts/src/contracts/LPStakeLockerFactory.address.js')
 const LPFactoryAddress = require('../../contracts/src/contracts/LPFactory.address.js')
-const liquidLockerABI = require('../../contracts/src/contracts/liquidAssetLocker.abi.js')
-const liquidLockerFactoryABI = require('../../contracts/src/contracts/liquidAssetLockerFactory.abi.js')
-const liquidLockerFactoryAddress = require('../../contracts/src/contracts/liquidAssetLockerFactory.address.js')
+const liquidLockerABI = require('../../contracts/src/contracts/LiquidAssetLocker.abi.js')
+const liquidLockerFactoryABI = require('../../contracts/src/contracts/LiquidAssetLockerFactory.abi.js')
+const liquidLockerFactoryAddress = require('../../contracts/src/contracts/LiquidAssetLockerFactory.address.js')
 
 describe('Liquidity Pool and respective lockers', function () {
   let DAILP
@@ -178,12 +178,12 @@ describe('Liquidity Pool and respective lockers', function () {
     const BPTbal = await USDCBPool.balanceOf(USDCStakeLockerAddress)
     expect(BPTbal).to.equal(totalsup)
   })
-  it('DAI liquidAssetLocker created, indexed by factory and known to LP?', async function () {
+  it('DAI LiquidAssetLocker created, indexed by factory and known to LP?', async function () {
     const DAILocker = await LALockerFactory.getLocker(0)
     const DAILockerLP = await DAILP.liquidAssetLocker()
     expect(DAILocker).to.equal(DAILockerLP)
   })
-  it('USDC liquidAssetLocker created, indexed by factory and known to LP?', async function () {
+  it('USDC LiquidAssetLocker created, indexed by factory and known to LP?', async function () {
     const USDCLocker = await LALockerFactory.getLocker(1)
     const USDCLockerLP = await USDCLP.liquidAssetLocker()
     expect(USDCLocker).to.equal(USDCLockerLP)

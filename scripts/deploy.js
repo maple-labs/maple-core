@@ -24,7 +24,7 @@ async function main () {
   const LPStakeLockerFactory = await deploy('LPStakeLockerFactory')
   console.log(LPStakeLockerFactory.address)
 
-  const liquidAssetLockerFactory = await deploy('liquidAssetLockerFactory')
+  const liquidAssetLockerFactory = await deploy('LiquidAssetLockerFactory')
   console.log(liquidAssetLockerFactory.address)
 
   const LPFactory = await deploy('LPFactory')

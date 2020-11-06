@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 
-/// @title LPStakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
+// @title LPStakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 	using SafeMathInt for int256;
 	using SignedSafeMath for int256;
@@ -14,13 +14,13 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 	// The primary investment asset for the LP, and the dividend token for this contract.
 	IERC20 private ILiquidAsset;
 	IERC20 private IStakedAsset;
-	/// @notice  The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract.
+	// @notice  The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract.
 	uint256 public fundsTokenBalance;
 
-	/// @notice The primary investment asset for the liquidity pool. Also the dividend token for this contract.
+	// @notice The primary investment asset for the liquidity pool. Also the dividend token for this contract.
 	address public liquidAsset;
 
-	/// @notice The asset deposited by stakers into this contract, for liquidation during defaults.
+	// @notice The asset deposited by stakers into this contract, for liquidation during defaults.
 	address public stakedAsset;
 
 	// TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
@@ -33,8 +33,11 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 		ILiquidAsset = IERC20(_liquidAsset);
 		IStakedAsset = IERC20(_stakedAsset);
 	}
-
-	function stake(uint256 _amt) external returns (uint256) {
+	/**
+	* @notice Deposit stakedAsset and mint an equal number of FundsDistributionTokens to the user
+	* @param _amt Amount of stakedAsset(BPTs) to stake
+	*/
+	function stake(uint256 _amt) external {
 		require(
 			IStakedAsset.transferFrom(tx.origin, address(this), _amt),
 			"LPStakeLocker: ERR_INSUFFICIENT_APPROVED_FUNDS"

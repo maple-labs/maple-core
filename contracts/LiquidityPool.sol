@@ -8,23 +8,23 @@ import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./Math/CalcBPool.sol";
 import "./interface/IBPool.sol";
-import "./liquidAssetLockerFactory.sol";
+import "./LiquidAssetLockerFactory.sol";
 
-/// @title IMapleGlobals interacts with the core MapleGlobals.sol contract.
+// @title IMapleGlobals interacts with the core MapleGlobals.sol contract.
 interface IMapleGlobals {
 	function mapleToken() external view returns (address);
 
 	function stakeAmountRequired() external view returns (uint256);
 }
 
-/// @title ILPStakeLockerFactory is responsbile for instantiating/initializing a staked asset locker.
+// @title ILPStakeLockerFactory is responsbile for instantiating/initializing a staked asset locker.
 interface ILPStakeLockerFactory {
 	function newLocker(address _stakedAsset, address _liquidAsset)
 		external
 		returns (address);
 }
 
-/// @title ILPStakeLocker interfaces with the staked asset locker of the liquidity pool.
+// @title ILPStakeLocker interfaces with the staked asset locker of the liquidity pool.
 interface ILPStakeLocker {
 	function stake(uint256 _amountStakedAsset) external returns (uint256);
 
@@ -41,7 +41,7 @@ interface ILiquidAssetLockerFactory {
 	function newLocker(address _liquidAsset) external returns (address);
 }
 
-/// @title LP is the core liquidity pool contract.
+// @title LP is the core liquidity pool contract.
 contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 	using SafeMathInt for int256;
 	using SignedSafeMath for int256;
@@ -49,6 +49,9 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 
 	// The dividend token for this contract's FundsDistributionToken.
 	IERC20 private ILiquidAsset;
+
+	//FUNDS TOKEN IS ILiquidAsset
+	IERC20 private fundsToken;
 
 	// The factory for instantiating staked asset lockers.
 	ILPStakeLockerFactory private IStakeLockerFactory;
@@ -62,28 +65,28 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 	// The maple globals contract.
 	IMapleGlobals private MapleGlobals;
 
-	/// @notice The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract.
+	// @notice The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract.
 	uint256 public fundsTokenBalance;
 
-	/// @notice The asset deposited by lenders into the liquidAssetLocker, for funding loans.
+	// @notice The asset deposited by lenders into the liquidAssetLocker, for funding loans.
 	address public liquidAsset;
 
 	address public liquidAssetLocker;
 
-	/// @notice The asset deposited by stakers into the stakedAssetLocker, for liquidation during defaults.
+	// @notice The asset deposited by stakers into the stakedAssetLocker, for liquidation during defaults.
 	address public stakedAsset;
 
-	/// @notice The address of the staked asset locker, escrowing the staked asset.
+	// @notice The address of the staked asset locker, escrowing the staked asset.
 	address public stakedAssetLocker; //supports 8 for fixed memory
 
-	/// @notice The pool delegate which has full authority over the liquidity pool and investment decisions.
+	// @notice The pool delegate which has full authority over the liquidity pool and investment decisions.
 	address public poolDelegate;
 
-	/// @notice true if the Liquidity Pool is fully set up and delegate meets staking criteria.
+	// @notice true if the Liquidity Pool is fully set up and delegate meets staking criteria.
 	bool public isFinalized;
 
 	// This is 10^k where k = liquidAsset decimals, IE, it is one liquid asset unit in 'wei'
-	uint256 private _liquidAssetONE;
+	uint256 private immutable _ONELiquidAsset;
 
 	constructor(
 		address _liquidAsset,
@@ -102,10 +105,11 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 		liquidAsset = _liquidAsset;
 		stakedAsset = _stakedAsset;
 		ILiquidAsset = IERC20(_liquidAsset);
+		fundsToken = ILiquidAsset;
 		IStakeLockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
 		MapleGlobals = IMapleGlobals(_mapleGlobals);
 		poolDelegate = tx.origin;
-		_liquidAssetONE = 10**ERC20(liquidAsset).decimals();
+		_ONELiquidAsset = 10**ERC20(liquidAsset).decimals();
 		stakedAssetLocker = makeStakeLocker(_stakedAsset);
 		liquidAssetLocker = address(
 			ILiquidAssetLockerFactory(_liquidAssetLockerFactory).newLocker(
@@ -140,7 +144,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 				poolDelegate,
 				liquidAsset,
 				stakedAssetLocker
-			) > _minStake.mul(_liquidAssetONE),
+			) > _minStake.mul(_ONELiquidAsset),
 			"FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE"
 		);
 
@@ -155,7 +159,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 		uint256 withdrawableFunds = _prepareWithdraw();
 
 		require(
-			ILiquidAsset.transfer(msg.sender, withdrawableFunds),
+			fundsToken.transfer(msg.sender, withdrawableFunds),
 			"FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
 		);
 
@@ -170,7 +174,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 	function _updateFundsTokenBalance() internal returns (int256) {
 		uint256 _prevFundsTokenBalance = fundsTokenBalance;
 
-		fundsTokenBalance = ILiquidAsset.balanceOf(address(this));
+		fundsTokenBalance = fundsToken.balanceOf(address(this));
 
 		return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
 	}
