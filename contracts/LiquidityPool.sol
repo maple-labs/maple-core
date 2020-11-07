@@ -68,10 +68,10 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 	// @notice The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract.
 	uint256 public fundsTokenBalance;
 
-	// @notice The asset deposited by lenders into the liquidAssetLocker, for funding loans.
+	// @notice The asset deposited by lenders into the LiquidAssetLocker, for funding loans.
 	address public liquidAsset;
 
-	address public liquidAssetLocker;
+	address public LiquidAssetLocker;
 
 	// @notice The asset deposited by stakers into the stakedAssetLocker, for liquidation during defaults.
 	address public stakedAsset;
@@ -92,7 +92,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 		address _liquidAsset,
 		address _stakedAsset,
 		address _stakedAssetLockerFactory,
-		address _liquidAssetLockerFactory,
+		address _LiquidAssetLockerFactory,
 		string memory name,
 		string memory symbol,
 		address _mapleGlobals
@@ -111,8 +111,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 		poolDelegate = tx.origin;
 		_ONELiquidAsset = 10**ERC20(liquidAsset).decimals();
 		stakedAssetLocker = makeStakeLocker(_stakedAsset);
-		liquidAssetLocker = address(
-			ILiquidAssetLockerFactory(_liquidAssetLockerFactory).newLocker(
+		LiquidAssetLocker = address(
+			ILiquidAssetLockerFactory(_LiquidAssetLockerFactory).newLocker(
 				liquidAsset
 			)
 		);
