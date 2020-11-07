@@ -6,7 +6,7 @@ const { utils } = require('ethers')
 const governor = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
 const mintableUSDC = require('../../contracts/src/contracts/MintableTokenUSDC.address.js')
 
-async function main() {
+async function main () {
   console.log('📡 Deploy \n')
 
   const mapleToken = await deploy('MapleToken', [
@@ -16,11 +16,20 @@ async function main() {
   ])
   console.log(mapleToken.address)
 
-  const mapleGlobals = await deploy('MapleGlobals', [
+  const MapleGlobals = await deploy('MapleGlobals', [
     governor,
     mapleToken.address
   ])
-  console.log(mapleGlobals.address)
+  console.log(MapleGlobals.address)
+
+  const LPStakeLockerFactory = await deploy('LPStakeLockerFactory')
+  console.log(LPStakeLockerFactory.address)
+
+  const liquidAssetLockerFactory = await deploy('LiquidAssetLockerFactory')
+  console.log(liquidAssetLockerFactory.address)
+
+  const LPFactory = await deploy('LPFactory')
+  console.log(LPFactory.address)
 }
 
 async function deploy (name, _args) {
