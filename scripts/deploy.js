@@ -4,14 +4,15 @@ const { config, ethers } = require('hardhat')
 const { utils } = require('ethers')
 
 const governor = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+const mintableUSDC = require('../../contracts/src/contracts/MintableTokenUSDC.address.js')
 
 async function main () {
   console.log('📡 Deploy \n')
 
   const mapleToken = await deploy('MapleToken', [
-    'Maple FDT',
+    'MapleToken',
     'MPL',
-    '0xc783df8a850f42e7F7e57013759C285caa701eB6'
+    mintableUSDC
   ])
   console.log(mapleToken.address)
 
