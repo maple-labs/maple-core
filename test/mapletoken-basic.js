@@ -152,11 +152,11 @@ describe('Maple Token', function () {
     console.log(expectedWithdrawGovernor)
     console.log(expectedWithdrawAccountOne)
 
-    expect(BigInt(withdrawableFundsOfGovernor)).to.equal(BigInt(accumulativeFundsOfGovernor))
-    expect(BigInt(withdrawableFundsOfAccountOne)).to.equal(BigInt(accumulativeFundsOfAccountOne))
-    expect(BigInt(withdrawableFundsOfGovernor)).to.equal(BigInt(99997999))
-    expect(BigInt(withdrawableFundsOfAccountOne)).to.equal(BigInt(1999))
-
+    expect(withdrawableFundsOfGovernor).to.equal(accumulativeFundsOfGovernor)
+    expect(withdrawableFundsOfAccountOne).to.equal(accumulativeFundsOfAccountOne)
+    expect(withdrawableFundsOfGovernor).to.equal(99987999)
+    expect(withdrawableFundsOfAccountOne).to.equal(1999)
+    
   })
 
   it('FDT: withdrawFunds() ', async function () {
@@ -172,9 +172,8 @@ describe('Maple Token', function () {
     const withdrawnFundsOfGovernor = await mapleToken.withdrawnFundsOf(governor)
     const withdrawableFundsOfGovernor = await mapleToken.withdrawableFundsOf(governor)
     const accumulativeFundsOfGovernor = await mapleToken.accumulativeFundsOf(governor)
-    
-    expect(BigInt(withdrawnFundsOfGovernor)).to.equal(BigInt(99997999))
-    expect(BigInt(accumulativeFundsOfGovernor)).to.equal(BigInt(99997999))
+    expect(withdrawnFundsOfGovernor).to.equal(99987999)
+    expect(accumulativeFundsOfGovernor).to.equal(99987999)
     expect(withdrawableFundsOfGovernor).to.equal(0)
 
     expect(await mapleTokenExternal.withdrawFunds())
@@ -182,9 +181,8 @@ describe('Maple Token', function () {
     const withdrawnFundsOfAccountOne = await mapleToken.withdrawnFundsOf(accounts[1])
     const withdrawableFundsOfAccountOne = await mapleToken.withdrawableFundsOf(accounts[1])
     const accumulativeFundsOfAccountOne = await mapleToken.accumulativeFundsOf(accounts[1])
-
-    expect(BigInt(withdrawnFundsOfAccountOne)).to.equal(BigInt(1999))
-    expect(BigInt(accumulativeFundsOfAccountOne)).to.equal(BigInt(1999))
+    expect(withdrawnFundsOfAccountOne).to.equal(1999)
+    expect(accumulativeFundsOfAccountOne).to.equal(1999)
     expect(withdrawableFundsOfAccountOne).to.equal(0)
 
   })
