@@ -41,7 +41,7 @@ describe('Maple Token', function () {
     const balanceOfGovernor = await mapleToken.balanceOf(governor)
     const supply = await mapleToken.totalSupply()
 
-    expect(balanceOfGovernor / 10**decimals).to.equal(10000000)
+    expect(balanceOfGovernor / 10**decimals).to.equal(9999000)
     expect(supply._hex / 10**decimals).to.equal(10000000)
 
   })
