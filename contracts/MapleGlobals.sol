@@ -8,6 +8,9 @@ contract MapleGlobals {
     /// @return mapleToken is the ERC-2222 token for the Maple protocol.
     address public mapleToken;
 
+    /// @return mapleTreasury is the Treasury which all fees pass through for conversion, prior to distribution.
+    address public mapleTreasury;
+
     /// @return Represents the fees, in basis points, distributed to the lender when a borrower's loan is funded.
     uint public establishmentFeeBasisPoints;
 
@@ -33,10 +36,12 @@ contract MapleGlobals {
     */
     constructor(
         address _governor,
-        address _mapleTokenAddress
+        address _mapleTokenAddress,
+        address _mapleTreasuryAddress
     ) { 
         governor = _governor;
         mapleToken = _mapleTokenAddress; 
+        mapleTreasury = _mapleTreasuryAddress; 
         establishmentFeeBasisPoints = 200;
         treasuryFeeBasisPoints = 20;
         gracePeriod = 432000;
