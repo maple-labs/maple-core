@@ -32,7 +32,7 @@ contract LiquidAssetLockerFactory {
 	// @notice returns true if address is a liwuid asset locker
 	// @param _addy address to test
 	// @return true if _addy is liquid asset locker
-	function isLiquidAssetLocker(address _addy) external view returns (bool) {
-		return isLocker[_addy];
+	function isLiquidAssetLocker(address _locker) external view returns (bool) {
+		return isLocker[_locker];
 	}
 }

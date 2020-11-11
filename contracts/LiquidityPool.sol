@@ -39,7 +39,7 @@ interface ILPStakeLocker {
 
 interface ILiquidAssetLockerFactory {
 	function newLocker(address _liquidAsset) external returns (address);
-	function isLiquidAssetLocker(address _addy) external returns (bool);
+	function isLiquidAssetLocker(address _locker) external returns (bool);
 }
 
 // @title LP is the core liquidity pool contract.
