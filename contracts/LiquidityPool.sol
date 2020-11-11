@@ -71,13 +71,13 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 	// @notice The asset deposited by lenders into the LiquidAssetLocker, for funding loans.
 	address public liquidAsset;
 
-	address public LiquidAssetLocker;
+	address public immutable LiquidAssetLocker;
 
 	// @notice The asset deposited by stakers into the stakedAssetLocker, for liquidation during defaults.
 	address public stakedAsset;
 
 	// @notice The address of the staked asset locker, escrowing the staked asset.
-	address public stakedAssetLocker; //supports 8 for fixed memory
+	address public immutable stakedAssetLocker; //supports 8 for fixed memory
 
 	// @notice The pool delegate which has full authority over the liquidity pool and investment decisions.
 	address public poolDelegate;

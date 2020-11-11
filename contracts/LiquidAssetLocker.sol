@@ -3,8 +3,15 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract LiquidAssetLocker {
 	address public liquidAsset;
-
-	constructor(address _liquidAsset, address _LPaddy) public {
+	address public immutable ownerLP;
+	constructor(address _liquidAsset, _LPaddy) public {
 		liquidAsset = _liquidAsset;
+		ownerLP = _LPaddy;
 	}
+
+	modifier isOwner(address _addy){
+		require(_addy == ownerLP);
+		_;
+	}
+
 }
