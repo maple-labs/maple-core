@@ -190,13 +190,13 @@ describe('Liquidity Pool and respective lockers', function () {
     expect(USDCisLock).to.equal(true)
   })
   it('Mapping DAI locker to parent pool', async function () {
-    const DAILocker = await DAILP.LiquidAssetLocker()
-    const DAIPool = await LALockerFactory.getPool(DAILocker)
+    const DAILockerAddress = await DAILP.LiquidAssetLocker()
+    const DAIPool = await LALockerFactory.getPool(DAILockerAddress)
     expect(DAIPool).to.equal(DAILPAddress)
   })
   it('Mapping USDC locker to parent pool', async function () {
-    const USDCLocker = await USDCLP.LiquidAssetLocker()
-    const USDCPool = await LALockerFactory.getPool(USDCLocker)
+    const USDCLockerAddress = await USDCLP.LiquidAssetLocker()
+    const USDCPool = await LALockerFactory.getPool(USDCLockerAddress)
     expect(USDCPool).to.equal(USDCLPAddress)
   })
   it('Check DAI LP is recognized by LPFactory.isLPool()', async function () {
@@ -206,5 +206,27 @@ describe('Liquidity Pool and respective lockers', function () {
   it('Check USDC LP is recognized by LPFactory.isLPool()', async function () {
     const isPool = await LPFactory.isLPool(USDCLPAddress)
     expect(isPool).to.equal(true)
+  })
+  it('Random guy can not approve USDC Liquid Asset Locker Spend', async function () {
+    const USDCLockerAddress = await USDCLP.LiquidAssetLocker()
+    const USDCLALocker = new ethers.Contract(
+      USDCLockerAddress,
+      liquidLockerABI,
+      ethers.provider.getSigner(0)
+    )
+    await expect(USDCLALocker.approve(0)).to.be.revertedWith(
+      'ERR:LiquidAssetLocker: IS NOT OWNER POOL'
+    )
+  })
+  it('Random guy can not approve DAI Liquid Asset Locker Spend', async function () {
+    const DAILockerAddress = await DAILP.LiquidAssetLocker()
+    const DAILALocker = new ethers.Contract(
+      DAILockerAddress,
+      liquidLockerABI,
+      ethers.provider.getSigner(0)
+    )
+    await expect(DAILALocker.approve(0)).to.be.revertedWith(
+      'ERR:LiquidAssetLocker: IS NOT OWNER POOL'
+    )
   })
 })
