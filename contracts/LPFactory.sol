@@ -48,7 +48,7 @@ contract LPFactory {
 		return LiquidityPools[_id];
 	}
 
-	function isLPool(address _addy) public view returns (bool) {
+	function isLPool(address _addy) external view returns (bool) {
 		return _isLPool[_addy];
 	}
 }

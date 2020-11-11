@@ -14,7 +14,9 @@ contract LiquidAssetLockerFactory {
 	// TODO: Consider whether this needs to be external or public.
 	function newLocker(address _liquidAsset) external returns (address) {
 		address _LPaddy = address(msg.sender);
-		address _liquidLocker = address(new LiquidAssetLocker(_liquidAsset,_LPaddy));
+		address _liquidLocker = address(
+			new LiquidAssetLocker(_liquidAsset, _LPaddy)
+		);
 		lockerPool[_liquidLocker] = _LPaddy;
 		isLocker[_liquidLocker] = true;
 		return _liquidLocker;
@@ -30,7 +32,7 @@ contract LiquidAssetLockerFactory {
 	// @notice returns true if address is a liwuid asset locker
 	// @param _addy address to test
 	// @return true if _addy is liquid asset locker
-	function isLiquidAssetLocker(address _addy) public view returns (bool) {
+	function isLiquidAssetLocker(address _addy) external view returns (bool) {
 		return isLocker[_addy];
 	}
 }
