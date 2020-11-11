@@ -1,9 +1,9 @@
 pragma solidity 0.7.0;
 
 contract MapleTreasury {
-
-	address public mapleGlobals;
-	address public mapleToken;
+  
+  address public mapleGlobals;
+  address public mapleToken;
   address public fundsToken;
   address public uniswapRouter;
 
