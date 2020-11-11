@@ -5,7 +5,7 @@ const gloablABI = require('../../contracts/src/contracts/MapleGlobals.abi.js')
 const mapleTokenAddress = require('../../contracts/src/contracts/MapleToken.address.js')
 const governor = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 
-describe('Maple', function () {
+describe('Maple globals set', function () {
 
   let mapleGlobals;
 

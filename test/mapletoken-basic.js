@@ -7,7 +7,7 @@ const fundTokenAddress = require('../../contracts/src/contracts/MintableTokenUSD
 const fundTokenABI = require('../../contracts/src/contracts/MintableTokenUSDC.abi.js')
 const governor = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 
-describe('Maple', function () {
+describe('Maple Token', function () {
 
   let mapleToken, mapleTokenExternal;
   let fundToken, fundTokenExternal;
@@ -41,7 +41,7 @@ describe('Maple', function () {
     const balanceOfGovernor = await mapleToken.balanceOf(governor)
     const supply = await mapleToken.totalSupply()
 
-    expect(balanceOfGovernor / 10**decimals).to.equal(10000000)
+    expect(balanceOfGovernor / 10**decimals).to.equal(9999000)
     expect(supply._hex / 10**decimals).to.equal(10000000)
 
   })
@@ -65,14 +65,14 @@ describe('Maple', function () {
     const accounts = await ethers.provider.listAccounts()
     const decimals = await mapleToken.decimals()
     const amountToTransfer = BigInt(100 * 10**decimals)
+    const initBalanceOfGovernor = BigInt(await mapleToken.balanceOf(governor))
+    expect(await mapleToken.transfer(accounts[1], amountToTransfer.toString()))
 
-    expect(await mapleToken.transfer(accounts[1], amountToTransfer))
+    const balanceOfGovernor = BigInt(await mapleToken.balanceOf(governor))
+    const balanceOfReceiver = BigInt(await mapleToken.balanceOf(accounts[1]))
 
-    const balanceOfGovernor = await mapleToken.balanceOf(governor)
-    const balanceOfReceiver = await mapleToken.balanceOf(accounts[1])
-
-    expect(balanceOfGovernor / 10**decimals).to.equal(10000000 - 100)
-    expect(balanceOfReceiver / 10**decimals).to.equal(100)
+    expect(balanceOfGovernor).to.equal(initBalanceOfGovernor - amountToTransfer)
+    expect(balanceOfReceiver).to.equal(amountToTransfer)
 
   })
 
@@ -84,12 +84,13 @@ describe('Maple', function () {
     const accounts = await ethers.provider.listAccounts()
     const decimals = await mapleToken.decimals()
     const amountToApproveTransfer = BigInt(100 * 10**decimals)
-
+    const initBalanceOfGovernor = BigInt(await mapleToken.balanceOf(governor))
+    const initBalanceOfReceiver = BigInt(await mapleToken.balanceOf(accounts[1]))
     expect(await mapleToken.approve(accounts[1], amountToApproveTransfer))
 
-    const approvalAmount = await mapleToken.allowance(governor, accounts[1])
+    const approvalAmount = BigInt(await mapleToken.allowance(governor, accounts[1]))
 
-    expect(approvalAmount / 10**decimals).to.equal(100)
+    expect(approvalAmount).to.equal(amountToApproveTransfer)
 
     // Reverts when calling via mapleToken, not when calling mapleTokenExternal (see: before hook lines 14-25)
     await expect(
@@ -98,13 +99,13 @@ describe('Maple', function () {
 
     expect(await mapleTokenExternal.transferFrom(governor, accounts[1], amountToApproveTransfer))
     
-    const balanceOfGovernor = await mapleToken.balanceOf(governor)
-    const balanceOfReceiver = await mapleToken.balanceOf(accounts[1])
+    const balanceOfGovernor = BigInt(await mapleToken.balanceOf(governor))
+    const balanceOfReceiver = BigInt(await mapleToken.balanceOf(accounts[1]))
 
-    // Balance difference should be 200, given governor transferred 100 tokens in last test.
-    expect(balanceOfGovernor / 10**decimals).to.equal(10000000 - 200)
-    // Receiver should have 200, given receiver obtained 100 tokens in last test.
-    expect(balanceOfReceiver / 10**decimals).to.equal(200)
+    // Balance difference should be -amountToApproveTransfer from start of test.
+    expect(balanceOfGovernor).to.equal(initBalanceOfGovernor - amountToApproveTransfer)
+    // Receiver should have +amountToApproveTransfer, given receiver obtained 100 tokens in last test.
+    expect(balanceOfReceiver).to.equal(initBalanceOfReceiver + amountToApproveTransfer)
 
   })
 
@@ -151,11 +152,11 @@ describe('Maple', function () {
     console.log(expectedWithdrawGovernor)
     console.log(expectedWithdrawAccountOne)
 
-    expect(BigInt(withdrawableFundsOfGovernor)).to.equal(BigInt(accumulativeFundsOfGovernor))
-    expect(BigInt(withdrawableFundsOfAccountOne)).to.equal(BigInt(accumulativeFundsOfAccountOne))
-    expect(BigInt(withdrawableFundsOfGovernor)).to.equal(BigInt(99997999))
-    expect(BigInt(withdrawableFundsOfAccountOne)).to.equal(BigInt(1999))
-
+    expect(withdrawableFundsOfGovernor).to.equal(accumulativeFundsOfGovernor)
+    expect(withdrawableFundsOfAccountOne).to.equal(accumulativeFundsOfAccountOne)
+    expect(withdrawableFundsOfGovernor).to.equal(99987999)
+    expect(withdrawableFundsOfAccountOne).to.equal(1999)
+    
   })
 
   it('FDT: withdrawFunds() ', async function () {
@@ -171,9 +172,8 @@ describe('Maple', function () {
     const withdrawnFundsOfGovernor = await mapleToken.withdrawnFundsOf(governor)
     const withdrawableFundsOfGovernor = await mapleToken.withdrawableFundsOf(governor)
     const accumulativeFundsOfGovernor = await mapleToken.accumulativeFundsOf(governor)
-    
-    expect(BigInt(withdrawnFundsOfGovernor)).to.equal(BigInt(99997999))
-    expect(BigInt(accumulativeFundsOfGovernor)).to.equal(BigInt(99997999))
+    expect(withdrawnFundsOfGovernor).to.equal(99987999)
+    expect(accumulativeFundsOfGovernor).to.equal(99987999)
     expect(withdrawableFundsOfGovernor).to.equal(0)
 
     expect(await mapleTokenExternal.withdrawFunds())
@@ -181,9 +181,8 @@ describe('Maple', function () {
     const withdrawnFundsOfAccountOne = await mapleToken.withdrawnFundsOf(accounts[1])
     const withdrawableFundsOfAccountOne = await mapleToken.withdrawableFundsOf(accounts[1])
     const accumulativeFundsOfAccountOne = await mapleToken.accumulativeFundsOf(accounts[1])
-
-    expect(BigInt(withdrawnFundsOfAccountOne)).to.equal(BigInt(1999))
-    expect(BigInt(accumulativeFundsOfAccountOne)).to.equal(BigInt(1999))
+    expect(withdrawnFundsOfAccountOne).to.equal(1999)
+    expect(accumulativeFundsOfAccountOne).to.equal(1999)
     expect(withdrawableFundsOfAccountOne).to.equal(0)
 
   })
