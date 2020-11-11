@@ -2,11 +2,23 @@ pragma solidity 0.7.0;
 
 contract MapleTreasury {
   
+  /// @notice mapleGlobals is the MapleGlobals.sol contract.
   address public mapleGlobals;
+
+  /// @notice mapletoken is the MapleToken.sol contract.
   address public mapleToken;
+
+  /// @notice fundsToken is the _fundsToken value in the MapleToken.sol contract.
   address public fundsToken;
+
+  /// @notice uniswapRouter is the official UniswapV2 router contract.
   address public uniswapRouter;
 
+  /// @notice Instantiates the MapleTreasury contract.
+  /// @param _mapleGlobals is the MapleGlobals.sol contract.
+  /// @param _mapleToken is the MapleToken.sol contract.
+  /// @param _fundsToken is the _fundsToken value in the MapleToken.sol contract.
+  /// @param _uniswapRouter is the official UniswapV2 router contract.
   constructor(
     address _mapleGlobals, 
     address _mapleToken, 
@@ -19,6 +31,11 @@ contract MapleTreasury {
     uniswapRouter = _uniswapRouter;
   }
 
+  /// @notice Fired when an ERC-20 asset is converted to fundsToken and transferred to mapleToken.
+  /// @param _asset The asset that is converted.
+  /// @param _by The msg.sender calling the conversion function.
+  /// @param _amountIn The amount of _asset converted to fundsToken.
+  /// @param _amountOut The amount of fundsToken received for _asset conversion.
   event ERC20Conversion(
     address _asset,
     address _by,
@@ -26,21 +43,29 @@ contract MapleTreasury {
     uint _amountOut
   );
 
+  /// @notice Fired when ETH is converted to fundsToken and transferred to mapleToken.
+  /// @param _by The msg.sender calling the conversion function.
+  /// @param _amountIn The amount of ETH converted to fundsToken.
+  /// @param _amountOut The amount of fundsToken received for ETH conversion.
   event ETHConversion(
     address _by,
     uint _amountIn,
     uint _amountOut
   );
 
-  // TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
-  //        and also to prevent front-running of transactions.
-  //        The price feed should be used for USDC conversion, supplied in the ...
-  //        2nd parameter of the swapExactTokensForTokens() function.
+  /**
+   TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
+          and also to prevent front-running of transactions.
+          The price feed should be used for USDC conversion, supplied in the ...
+          2nd parameter of the swapExactTokensForTokens() function.
+  */
 
+  /// @notice Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
+  /// @param _asset The ERC-20 asset to convert.
   function convertERC20Bilateral(address _asset) public {
     require(
       ERC20(_asset).approve(uniswapRouter, ERC20(_asset).balanceOf(address(this))), 
-      "MapleTreasury::convertERC20_ROUTER_APPROVE_FAIL"
+      "MapleTreasury::convertERC20Bilateral:ROUTER_APPROVE_FAIL"
     );
     address[] memory path = new address[](2);
     path[0] = _asset;
@@ -52,6 +77,10 @@ contract MapleTreasury {
       mapleToken,
       block.timestamp
     );
+    require(
+      ERC20(fundsToken).transfer(mapleToken, returnAmounts[2]), 
+      "MapleTreasury::convertERC20Bilateral:FUNDS_RECEIVE_TRANSFER_ERROR"
+    );
     emit ERC20Conversion(
       _asset,
       msg.sender,
@@ -60,15 +89,20 @@ contract MapleTreasury {
     );
   }
 
-  // TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
-  //        and also to prevent front-running of transactions.
-  //        The price feed should be used for USDC conversion, supplied in the ...
-  //        2nd parameter of the swapExactTokensForTokens() function.
+  /**
+   TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
+          and also to prevent front-running of transactions.
+          The price feed should be used for USDC conversion, supplied in the ...
+          2nd parameter of the swapExactTokensForTokens() function.
+  */
 
+  /// @notice Convert an ERC-20 asset through Uniswap via triangular transaction (three asset path).
+  /// @param _asset The ERC-20 asset to convert.
+  /// @param _triangularAsset The middle asset conversion path, _asset -> _triangularAsset -> fundsToken.
   function convertERC20Triangular(address _asset, address _triangularAsset) public {
     require(
       ERC20(_asset).approve(uniswapRouter, ERC20(_asset).balanceOf(address(this))), 
-      "MapleTreasury::convertERC20_ROUTER_APPROVE_FAIL"
+      "MapleTreasury::convertERC20Triangular:ROUTER_APPROVE_FAIL"
     );
     address[] memory path = new address[](3);
     path[0] = _asset;
@@ -81,6 +115,10 @@ contract MapleTreasury {
       mapleToken,
       block.timestamp
     );
+    require(
+      ERC20(fundsToken).transfer(mapleToken, returnAmounts[2]), 
+      "MapleTreasury::convertERC20Triangular:FUNDS_RECEIVE_TRANSFER_ERROR"
+    );
     emit ERC20Conversion(
       _asset,
       msg.sender,
@@ -89,11 +127,14 @@ contract MapleTreasury {
     );
   }
 
-  // TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
-  //        and also to prevent front-running of transactions.
-  //        The price feed should be used for USDC conversion, supplied in the ...
-  //        2nd parameter of the swapETHForExactTokens() function.
+  /**
+   TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
+          and also to prevent front-running of transactions.
+          The price feed should be used for USDC conversion, supplied in the ...
+          2nd parameter of the swapETHForExactTokens() function.
+  */
 
+  /// @notice Convert ETH through Uniswap via bilateral transaction (two asset path).
   function convertETHBilateral() public {
     address[] memory path = new address[](2);
     path[0] = IUniswapRouter(uniswapRouter).WETH();
@@ -104,6 +145,10 @@ contract MapleTreasury {
       mapleToken,
       block.timestamp
     );
+    require(
+      ERC20(fundsToken).transfer(mapleToken, returnAmounts[2]), 
+      "MapleTreasury::convertETHBilateral:FUNDS_RECEIVE_TRANSFER_ERROR"
+    );
     emit ETHConversion(
       msg.sender,
       returnAmounts[0],
@@ -111,11 +156,15 @@ contract MapleTreasury {
     );
   }
 
-  // TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
-  //        and also to prevent front-running of transactions.
-  //        The price feed should be used for USDC conversion, supplied in the ...
-  //        2nd parameter of the swapETHForExactTokens() function.
+  /**
+   TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
+          and also to prevent front-running of transactions.
+          The price feed should be used for USDC conversion, supplied in the ...
+          2nd parameter of the swapETHForExactTokens() function.
+  */
 
+  /// @notice Convert ETH through Uniswap via triangular transaction (three asset path).
+  /// @param _triangularAsset The middle asset conversion path, ETH -> _triangularAsset -> fundsToken.
   function convertETHTriangular(address _triangularAsset) public {
     address[] memory path = new address[](3);
     path[0] = IUniswapRouter(uniswapRouter).WETH();
@@ -126,6 +175,10 @@ contract MapleTreasury {
       path,
       mapleToken,
       block.timestamp
+    );
+    require(
+      ERC20(fundsToken).transfer(mapleToken, returnAmounts[2]), 
+      "MapleTreasury::convertETHTriangular:FUNDS_RECEIVE_TRANSFER_ERROR"
     );
     emit ETHConversion(
       msg.sender,
@@ -138,6 +191,7 @@ contract MapleTreasury {
 
 interface ERC20 {
   function balanceOf(address _owner) external view returns (uint256 balance);
+  function transfer(address _to, uint256 _value) external returns (bool success);
   function approve(address _spender, uint256 _value) external returns (bool success);
 }
 
