@@ -45,12 +45,18 @@ contract MapleTreasury {
     address[] memory path = new address[](2);
     path[0] = _asset;
     path[1] = fundsToken;
-    IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
+    uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
       ERC20(_asset).balanceOf(address(this)),
       0,
       path,
       mapleToken,
       block.timestamp
+    );
+    emit ERC20Conversion(
+      _asset,
+      msg.sender,
+      returnAmounts[0],
+      returnAmounts[1]
     );
   }
 
@@ -68,12 +74,18 @@ contract MapleTreasury {
     path[0] = _asset;
     path[1] = _triangularAsset;
     path[2] = fundsToken;
-    IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
+    uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
       ERC20(_asset).balanceOf(address(this)),
       0,
       path,
       mapleToken,
       block.timestamp
+    );
+    emit ERC20Conversion(
+      _asset,
+      msg.sender,
+      returnAmounts[0],
+      returnAmounts[2]
     );
   }
 
@@ -86,11 +98,16 @@ contract MapleTreasury {
     address[] memory path = new address[](2);
     path[0] = IUniswapRouter(uniswapRouter).WETH();
     path[1] = fundsToken;
-    IUniswapRouter(uniswapRouter).swapETHForExactTokens(
+    uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapETHForExactTokens(
       0,
       path,
       mapleToken,
       block.timestamp
+    );
+    emit ETHConversion(
+      msg.sender,
+      returnAmounts[0],
+      returnAmounts[1]
     );
   }
 
@@ -104,11 +121,16 @@ contract MapleTreasury {
     path[0] = IUniswapRouter(uniswapRouter).WETH();
     path[1] = _triangularAsset;
     path[2] = fundsToken;
-    IUniswapRouter(uniswapRouter).swapETHForExactTokens(
+    uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapETHForExactTokens(
       0,
       path,
       mapleToken,
       block.timestamp
+    );
+    emit ETHConversion(
+      msg.sender,
+      returnAmounts[0],
+      returnAmounts[2]
     );
   }
 
