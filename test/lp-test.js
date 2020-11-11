@@ -186,6 +186,8 @@ describe('Liquidity Pool and respective lockers', function () {
   it('USDC LiquidAssetLocker created, indexed by factory and known to LP?', async function () {
     const USDCLocker = await LALockerFactory.getLocker(1)
     const USDCLockerLP = await USDCLP.LiquidAssetLocker()
+    console.log('USDCLOCKER',USDCLocker);
+    console.log('USDCLOCKER',USDCLockerLP);
     expect(USDCLocker).to.equal(USDCLockerLP)
   })
   it('Mapping DAI locker to parent pool', async function () {
