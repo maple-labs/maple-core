@@ -82,7 +82,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 
     // @notice true if the Liquidity Pool is fully set up and delegate meets staking criteria.
     bool public isFinalized;
-
+    //@notice decimals() for liquid asset
+    uint8 private liquidAssetDecimals;
     // This is 10^k where k = liquidAsset decimals, IE, it is one liquid asset unit in 'wei'
     uint256 private immutable _ONELiquidAsset;
 
@@ -107,7 +108,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         IStakeLockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
         MapleGlobals = IMapleGlobals(_mapleGlobals);
         poolDelegate = tx.origin;
-        _ONELiquidAsset = 10**ERC20(liquidAsset).decimals();
+        liquidAssetDecimals = ERC20(liquidAsset).decimals();
+        _ONELiquidAsset = 10**(liquidAssetDecimals);
         stakedAssetLocker = makeStakeLocker(_stakedAsset);
         LiquidAssetLocker = address(
             ILiquidAssetLockerFactory(_LiquidAssetLockerFactory).newLocker(liquidAsset)
@@ -138,6 +140,41 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         );
 
         isFinalized = true;
+    }
+
+    // @notice deposit in liquidasset get equal parts FDT. muste approve this contract for it to work
+    // @param _amt is ammount to deposit
+    function deposit(uint256 _amt) external {
+        //this means tether cna not be used.
+        require(
+            ILiquidAsset.transferFrom(msg.sender, LiquidAssetLocker, _amt),
+            "ERR:LP:cant transfer liquidasset"
+        );
+        uint256 _mintAmt = liq2FDT(_amt);
+        _mint(msg.sender, _mintAmt);
+    }
+
+    /*these are to convert between FDT of 18 decim and liquidasset locker of 0 to 256 decimals
+    if we change the decimals on the FDT to match liquidasset this would not be necessary
+    but that will cause frontend interface complications!
+    if we dont support decimals > 18, that would half this code, but some jerk probably has a higher decimal coin
+    */
+    function liq2FDT(uint256 _amt) internal view returns (uint256 _out) {
+        if (liquidAssetDecimals > 18) {
+            _out = _amt.div(10**(liquidAssetDecimals - 18));
+        } else {
+            _out = _amt.mul(10**(18 - liquidAssetDecimals));
+        }
+        return _out;
+    }
+
+    function FDT2liq(uint256 _amt) internal view returns (uint256 _out) {
+        if (liquidAssetDecimals > 18) {
+            _out = _amt.mul(10**(liquidAssetDecimals - 18));
+        } else {
+            _out = _amt.div(10**(18 - liquidAssetDecimals));
+        }
+        return _out;
     }
 
     //"EVERYTHING BELOW THIS LINE I DID NOT WORK ON" - CHRIS, 2020 11 3
