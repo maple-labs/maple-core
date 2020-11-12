@@ -1,9 +1,12 @@
 const { expect } = require("chai");
 const DAIAddress = require("../../contracts/src/contracts/MintableTokenDAI.address.js");
+const DAIAbi = require("../../contracts/src/contracts/MintableTokenDAI.abi.js");
 const BPoolABI = require("../../contracts/src/contracts/BPool.abi.js");
 const stakeLockerABI = require("../../contracts/src/contracts/LPStakeLocker.abi.js");
 const LPABI = require("../../contracts/src/contracts/LiquidityPool.abi.js");
 const USDCAddress = require("../../contracts/src/contracts/MintableTokenUSDC.address.js");
+const USDCAbi = require("../../contracts/src/contracts/MintableTokenUSDC.abi.js");
+
 const bcAddress = require("../../contracts/src/contracts/BCreator.address.js");
 const bcABI = require("../../contracts/src/contracts/BCreator.abi.js");
 const mplAddress = require("../../contracts/src/contracts/MapleToken.address.js");
@@ -38,6 +41,13 @@ describe("Liquidity Pool and respective lockers", function () {
       bcABI,
       ethers.provider.getSigner(0)
     );
+    USDC = new ethers.Contract(
+      USDCAddress,
+      USDCAbi,
+      ethers.provider.getSigner(0)
+    );
+
+    DAI = new ethers.Contract(DAIAddress, DAIAbi, ethers.provider.getSigner(0));
 
     DAIBPoolAddress = await bc.getBPoolAddress(0);
     USDCBPoolAddress = await bc.getBPoolAddress(1);
@@ -216,7 +226,7 @@ describe("Liquidity Pool and respective lockers", function () {
       liquidLockerABI,
       ethers.provider.getSigner(0)
     );
-    await expect(USDCLALocker.transfer(accounts[0],0)).to.be.revertedWith(
+    await expect(USDCLALocker.transfer(accounts[0], 0)).to.be.revertedWith(
       "ERR:LiquidAssetLocker: IS NOT OWNER POOL"
     );
   });
@@ -227,30 +237,28 @@ describe("Liquidity Pool and respective lockers", function () {
       liquidLockerABI,
       ethers.provider.getSigner(0)
     );
-    await expect(DAILALocker.transfer(accounts[0],0)).to.be.revertedWith(
+    await expect(DAILALocker.transfer(accounts[0], 0)).to.be.revertedWith(
       "ERR:LiquidAssetLocker: IS NOT OWNER POOL"
     );
   });
-/*  it("Can't send to 0 address USDC LAL", async function () {
-    const USDCLockerAddress = await USDCLP.LiquidAssetLocker();
-    const USDCLALocker = new ethers.Contract(
-      USDCLockerAddress,
-      liquidLockerABI,
-      ethers.provider.getSigner(0)
-    );
-    await expect(
-      USDCLALocker.transfer("0x0000000000000000000000000000000000000000",0)
-    ).to.be.revertedWith("ERR:LiquidAssetLocker: NO SEND TO 0 ADDRESS");
+  it("DEPOSIT INTO USDC LP, Check if depositor is issued appropriate balance of FDT", async function () {
+    const money = 100;
+    const dec = BigInt(await USDC.decimals());
+    const moneyUSDC = BigInt(money) * BigInt(10) ** dec;
+    const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
+    await USDC.approve(USDCLP.address, moneyUSDC);
+    await USDCLP.deposit(moneyUSDC);
+    const USDCFDTbal = BigInt(await USDCLP.balanceOf(accounts[0]));
+    expect(USDCFDTbal).to.equal(moneyInWEI);
   });
-  it("Can't send to 0 address DAI LAL", async function () {
-    const DAILockerAddress = await DAILP.LiquidAssetLocker();
-    const DAILALocker = new ethers.Contract(
-      DAILockerAddress,
-      liquidLockerABI,
-      ethers.provider.getSigner(0)
-    );
-    await expect(
-      DAILALocker.transfer("0x0000000000000000000000000000000000000000",0)
-    ).to.be.revertedWith("ERR:LiquidAssetLocker: NO SEND TO 0 ADDRESS");
-  });*/
+  it("DEPOSIT INTO DAI LP, Check if depositor is issued appropriate balance of FDT", async function () {
+    const money = 100;
+    const dec = BigInt(await DAI.decimals());
+    const moneyDAI = BigInt(money) * BigInt(10) ** dec;
+    const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
+    await DAI.approve(DAILP.address, moneyDAI);
+    await DAILP.deposit(moneyDAI);
+    const DAIFDTbal = BigInt(await DAILP.balanceOf(accounts[0]));
+    expect(DAIFDTbal).to.equal(moneyInWEI);
+  });
 });
