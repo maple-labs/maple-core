@@ -110,8 +110,38 @@ describe('MapleTreasury.sol', function () {
 
     const factoryAddress = await uniswapRouter.factory()
     
-    expect(factoryAddress).to.equals()
+    expect(factoryAddress).to.equals(uniswapFactoryAddress)
 
+  })
+
+  it('look through events on DAI / USDC Uniswap pair', async function () {
+
+    // const getPairAddress = await uniswapFactory.getPair(mintableDAIAddress, fundsTokenAddress);
+    
+    // uniswapPair = new ethers.Contract(
+    //   getPairAddress, 
+    //   uniswapV2PairABI, 
+    //   ethers.provider.getSigner(0)
+    // )
+
+    // const mintEvents = await uniswapPair.Mint();
+    // console.log(mintEvents);
+
+    // expect(await fundsToken.transfer(mintableDAIAddress, 1));
+    // expect(await fundsToken.transfer(mintableDAIAddress, 1));
+    // expect(await fundsToken.transfer(mintableDAIAddress, 1));
+    // expect(await fundsToken.transfer(mintableDAIAddress, 1));
+    // expect(await mintableDAI.transfer(fundsTokenAddress, 1));
+    // expect(await mintableDAI.transfer(fundsTokenAddress, 1));
+    // expect(await mintableDAI.transfer(fundsTokenAddress, 1));
+    // expect(await mintableDAI.transfer(fundsTokenAddress, 1));
+
+    // const MPLTransferEvents = await fundsToken.Transfer();
+    // console.log(MPLTransferEvents);
+    
+    // const DAITransferEvents = await mintableDAI.Transfer();
+    // console.log(DAITransferEvents);
+    
   })
 
   it('attempt via personal wallet, convert DAI to USDC', async function () {
@@ -121,13 +151,13 @@ describe('MapleTreasury.sol', function () {
     let personalDAIBalance = await mintableDAI.balanceOf(accounts[0])
     personalDAIBalance = parseInt(personalDAIBalance["_hex"]) / 10**DAIDecimals
 
-    const amountToApproveTransfer = BigInt(10 * 10**DAIDecimals)
-    expect(await mintableDAI.approve(uniswapRouterAddress, amountToApproveTransfer))
+    const amountToApproveDAI = BigInt(10 * 10**DAIDecimals)
+    expect(await mintableDAI.approve(uniswapRouterAddress, amountToApproveDAI))
 
     expect(await uniswapRouter.swapExactTokensForTokens(
-      amountToApproveTransfer,
+      amountToApproveDAI,
       0,
-      [mintableDAIAddress, fundsTokenAddress],
+      [fundsTokenAddress, mintableDAIAddress],
       accounts[0],
       Math.floor(Date.now() / 1000) + 1000
     ))
@@ -139,11 +169,11 @@ describe('MapleTreasury.sol', function () {
 
   it('convert DAI to USDC via bilateral swap', async function () {
     
-    const DAIDecimals = await mintableDAI.decimals()
-    let treasuryDAIBalance = await mintableDAI.balanceOf(treasuryAddress)
-    treasuryDAIBalance = parseInt(treasuryDAIBalance["_hex"]) / 10**DAIDecimals
+    // const DAIDecimals = await mintableDAI.decimals()
+    // let treasuryDAIBalance = await mintableDAI.balanceOf(treasuryAddress)
+    // treasuryDAIBalance = parseInt(treasuryDAIBalance["_hex"]) / 10**DAIDecimals
 
-    console.log(treasuryDAIBalance)
+    // console.log(treasuryDAIBalance)
     
     expect(await mapleTreasury.convertERC20Bilateral(mintableDAIAddress))
 

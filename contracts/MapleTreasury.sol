@@ -1,6 +1,10 @@
 pragma solidity 0.7.0;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
+
 contract MapleTreasury {
+
+	using SafeMath for uint256;
 
   /// @notice mapletoken is the MapleToken.sol contract.
   address public mapleToken;
@@ -83,23 +87,24 @@ contract MapleTreasury {
     address[] memory path = new address[](2);
     path[0] = _asset;
     path[1] = fundsToken;
-    uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
-      ERC20(_asset).balanceOf(address(this)),
+    // uint[] memory returnAmounts = 
+    IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
+      10,
       0,
       path,
       mapleToken,
       block.timestamp + 1000
     );
-    require(
-      ERC20(fundsToken).transfer(mapleToken, returnAmounts[2]), 
-      "MapleTreasury::convertERC20Bilateral:FUNDS_RECEIVE_TRANSFER_ERROR"
-    );
-    emit ERC20Conversion(
-      _asset,
-      msg.sender,
-      returnAmounts[0],
-      returnAmounts[1]
-    );
+    // require(
+    //   ERC20(fundsToken).transfer(mapleToken, returnAmounts[2]), 
+    //   "MapleTreasury::convertERC20Bilateral:FUNDS_RECEIVE_TRANSFER_ERROR"
+    // );
+    // emit ERC20Conversion(
+    //   _asset,
+    //   msg.sender,
+    //   returnAmounts[0],
+    //   returnAmounts[1]
+    // );
   }
 
   /**
