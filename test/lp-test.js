@@ -21,6 +21,8 @@ describe("Liquidity Pool and respective lockers", function () {
   let DAILP;
   let USDCLP;
   before(async () => {
+    accounts = await ethers.provider.listAccounts();
+
     LPFactory = new ethers.Contract(
       LPFactoryAddress,
       LPFactoryABI,
@@ -207,4 +209,48 @@ describe("Liquidity Pool and respective lockers", function () {
     const isPool = await LPFactory.isLPool(USDCLPAddress);
     expect(isPool).to.equal(true);
   });
+  it("Random guy can not USDC Liquid Asset Locker Spend", async function () {
+    const USDCLockerAddress = await USDCLP.LiquidAssetLocker();
+    const USDCLALocker = new ethers.Contract(
+      USDCLockerAddress,
+      liquidLockerABI,
+      ethers.provider.getSigner(0)
+    );
+    await expect(USDCLALocker.transfer(accounts[0],0)).to.be.revertedWith(
+      "ERR:LiquidAssetLocker: IS NOT OWNER POOL"
+    );
+  });
+  it("Random guy can not DAI Liquid Asset Locker Spend", async function () {
+    const DAILockerAddress = await DAILP.LiquidAssetLocker();
+    const DAILALocker = new ethers.Contract(
+      DAILockerAddress,
+      liquidLockerABI,
+      ethers.provider.getSigner(0)
+    );
+    await expect(DAILALocker.transfer(accounts[0],0)).to.be.revertedWith(
+      "ERR:LiquidAssetLocker: IS NOT OWNER POOL"
+    );
+  });
+/*  it("Can't send to 0 address USDC LAL", async function () {
+    const USDCLockerAddress = await USDCLP.LiquidAssetLocker();
+    const USDCLALocker = new ethers.Contract(
+      USDCLockerAddress,
+      liquidLockerABI,
+      ethers.provider.getSigner(0)
+    );
+    await expect(
+      USDCLALocker.transfer("0x0000000000000000000000000000000000000000",0)
+    ).to.be.revertedWith("ERR:LiquidAssetLocker: NO SEND TO 0 ADDRESS");
+  });
+  it("Can't send to 0 address DAI LAL", async function () {
+    const DAILockerAddress = await DAILP.LiquidAssetLocker();
+    const DAILALocker = new ethers.Contract(
+      DAILockerAddress,
+      liquidLockerABI,
+      ethers.provider.getSigner(0)
+    );
+    await expect(
+      DAILALocker.transfer("0x0000000000000000000000000000000000000000",0)
+    ).to.be.revertedWith("ERR:LiquidAssetLocker: NO SEND TO 0 ADDRESS");
+  });*/
 });
