@@ -32,16 +32,14 @@ contract MapleGlobals {
         @notice Constructor function.
         @dev Initializes the contract's state variables.
         @param _governor The administrator's address.
-        @param _mapleTokenAddress The address of the ERC-2222 token for the Maple protocol.
+        @param _mapleToken The address of the ERC-2222 token for the Maple protocol.
     */
     constructor(
         address _governor,
-        address _mapleTokenAddress,
-        address _mapleTreasuryAddress
+        address _mapleToken
     ) { 
         governor = _governor;
-        mapleToken = _mapleTokenAddress; 
-        mapleTreasury = _mapleTreasuryAddress; 
+        mapleToken = _mapleToken;
         establishmentFeeBasisPoints = 200;
         treasuryFeeBasisPoints = 20;
         gracePeriod = 432000;
@@ -54,6 +52,14 @@ contract MapleGlobals {
      */
     function setEstablishmentFee(uint _establishmentFeeBasisPoints) isGovernor public {
         establishmentFeeBasisPoints = _establishmentFeeBasisPoints;
+    }
+
+    /**
+        @notice Governor can set the MapleTreasury contract.
+        @param _mapleTreasury The MapleTreasury contract.
+     */
+    function setMapleTreasury(address _mapleTreasury) isGovernor public {
+        mapleTreasury = _mapleTreasury;
     }
 
     /**
