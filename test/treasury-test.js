@@ -21,44 +21,18 @@ describe('MapleTreasury.sol', function () {
   let mintableDAI, fundsToken, mapleTreasury, mapleToken, uniswapRouter, uniswapFactory;
 
   before(async () => {
-    mintableDAI = new ethers.Contract(
-      mintableDAIAddress, 
-      mintableDAIABI, 
-      ethers.provider.getSigner(0)
-    )
-    fundsToken = new ethers.Contract(
-      fundsTokenAddress, 
-      fundsTokenABI, 
-      ethers.provider.getSigner(0)
-    )
-    mapleTreasury = new ethers.Contract(
-      treasuryAddress, 
-      treasuryABI, 
-      ethers.provider.getSigner(0)
-    )
-    mapleToken = new ethers.Contract(
-      mapleTokenAddress, 
-      mapleTokenABI, 
-      ethers.provider.getSigner(0)
-    )
-    uniswapRouter = new ethers.Contract(
-      uniswapRouterAddress, 
-      uniswapRouterABI, 
-      ethers.provider.getSigner(0)
-    )
-    uniswapFactory = new ethers.Contract(
-      uniswapFactoryAddress, 
-      uniswapFactoryABI, 
-      ethers.provider.getSigner(0)
-    )
+    mintableDAI = new ethers.Contract(mintableDAIAddress, mintableDAIABI, ethers.provider.getSigner(0))
+    fundsToken = new ethers.Contract(fundsTokenAddress, fundsTokenABI, ethers.provider.getSigner(0))
+    mapleTreasury = new ethers.Contract(treasuryAddress, treasuryABI, ethers.provider.getSigner(0))
+    mapleToken = new ethers.Contract(mapleTokenAddress, mapleTokenABI, ethers.provider.getSigner(0))
+    uniswapRouter = new ethers.Contract(uniswapRouterAddress, uniswapRouterABI,ethers.provider.getSigner(0))
+    uniswapFactory = new ethers.Contract(uniswapFactoryAddress, uniswapFactoryABI, ethers.provider.getSigner(0))
   })
 
   it('mint DAI and fundsToken (USDC) within MapleTreasury', async function () {
-    
     // mintSpecial() takes in whole number (i.e. 100) and mints (100 * 10**decimals)
     expect(await mintableDAI.mintSpecial(treasuryAddress, 10))
     expect(await fundsToken.mintSpecial(treasuryAddress, 10))
-
   })
 
   it('pass through USDC to MapleToken', async function () {
@@ -108,14 +82,88 @@ describe('MapleTreasury.sol', function () {
     expect(getPairDAIBalance).to.equals(10000);
     expect(getPairUSDCBalance).to.equals(10000);
 
-    const factoryAddress = await uniswapRouter.factory()
-    
-    expect(factoryAddress).to.equals(uniswapFactoryAddress)
+  })
 
+  it('call read functions from uniswapPair to confirm state vars', async function () {
+
+    const getPairAddress = await uniswapFactory.getPair(fundsTokenAddress, mintableDAIAddress);
+
+    uniswapPair = new ethers.Contract(
+      getPairAddress, 
+      uniswapV2PairABI, 
+      ethers.provider.getSigner(0)
+    )
+
+    const pairToken0 = await uniswapPair.token0();
+    const pairToken1 = await uniswapPair.token1();
+    expect(pairToken0).to.equals(fundsTokenAddress);
+    expect(pairToken1).to.equals(mintableDAIAddress);
+
+    const getReserves = await uniswapPair.getReserves()
+
+    expect(parseInt(getReserves["_reserve0"]["_hex"]) / 10e6).to.equals(1000);
+    expect(parseInt(getReserves["_reserve1"]["_hex"]) / 10e18).to.equals(1000);
+
+  })
+
+  it('ensure uniswapRouter is pointing to unsiwapFactory', async function() {
+    const factoryAddress = await uniswapRouter.factory()
+    expect(factoryAddress).to.equals(uniswapFactoryAddress)
+  })
+
+  it('call getAmountsOut() from uniswapRouter to ensure liquidity in USDC/DAI pool', async function () {
+
+    /**
+      TODO: Identify why we're unable to call getAmountsOut() ... uniswapRouter accesses UniswapV2Library to call:
+      
+      function getAmountsOut(address factory, uint amountIn, address[] memory path) internal view returns (uint[] memory amounts) {
+        require(path.length >= 2, 'UniswapV2Library: INVALID_PATH');
+        amounts = new uint[](path.length);
+        amounts[0] = amountIn;
+        for (uint i; i < path.length - 1; i++) {
+          (uint reserveIn, uint reserveOut) = getReserves(factory, path[i], path[i + 1]);
+          amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
+        }
+      }
+
+      Could there be a problem with getReserves() or getAmountOut()** unique to getAmountsOut()**
+
+      function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) internal pure returns (uint amountOut) {
+        require(amountIn > 0, 'UniswapV2Library: INSUFFICIENT_INPUT_AMOUNT');
+        require(reserveIn > 0 && reserveOut > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');
+        uint amountInWithFee = amountIn.mul(997);
+        uint numerator = amountInWithFee.mul(reserveOut);
+        uint denominator = reserveIn.mul(1000).add(amountInWithFee);
+        amountOut = numerator / denominator;
+      }
+
+      function getReserves(address factory, address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB) {
+        (address token0,) = sortTokens(tokenA, tokenB);
+        (uint reserve0, uint reserve1,) = IUniswapV2Pair(pairFor(factory, tokenA, tokenB)).getReserves();
+        (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
+      }
+
+    */
+    // Debug getReserves()
+    const getPairAddress = await uniswapFactory.getPair(fundsTokenAddress, mintableDAIAddress);
+    uniswapPair = new ethers.Contract(getPairAddress, uniswapV2PairABI, ethers.provider.getSigner(0))
+
+    const getReservesDAIUSDC = await uniswapPair.getReserves();
+
+    console.log(getReservesDAIUSDC)
+
+    const getAmountsA = await uniswapRouter.getAmountsOut(
+      '100000000000',
+      [fundsTokenAddress, mintableDAIAddress]
+    )
+    
+    console.log(getAmountsA)
   })
 
   it('look through events on DAI / USDC Uniswap pair', async function () {
 
+    // TODO: Identify an alternative package to read historical events on-chain. ethers.js doesn't cut it.
+    
     // const getPairAddress = await uniswapFactory.getPair(mintableDAIAddress, fundsTokenAddress);
     
     // uniswapPair = new ethers.Contract(

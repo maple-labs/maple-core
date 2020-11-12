@@ -87,24 +87,23 @@ contract MapleTreasury {
     address[] memory path = new address[](2);
     path[0] = _asset;
     path[1] = fundsToken;
-    // uint[] memory returnAmounts = 
-    IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
-      10,
-      0,
+    uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
+      ERC20(_asset).balanceOf(address(this)),
+      ERC20(_asset).balanceOf(address(this)).mul(98).div(100),
       path,
       mapleToken,
       block.timestamp + 1000
     );
-    // require(
-    //   ERC20(fundsToken).transfer(mapleToken, returnAmounts[2]), 
-    //   "MapleTreasury::convertERC20Bilateral:FUNDS_RECEIVE_TRANSFER_ERROR"
-    // );
-    // emit ERC20Conversion(
-    //   _asset,
-    //   msg.sender,
-    //   returnAmounts[0],
-    //   returnAmounts[1]
-    // );
+    require(
+      ERC20(fundsToken).transfer(mapleToken, returnAmounts[2]), 
+      "MapleTreasury::convertERC20Bilateral:FUNDS_RECEIVE_TRANSFER_ERROR"
+    );
+    emit ERC20Conversion(
+      _asset,
+      msg.sender,
+      returnAmounts[0],
+      returnAmounts[1]
+    );
   }
 
   /**
