@@ -241,6 +241,25 @@ describe("Liquidity Pool and respective lockers", function () {
       "ERR:LiquidAssetLocker: IS NOT OWNER POOL"
     );
   });
+  it("DEPOSIT INTO USDC LP WITHOUT allowance, revert", async function () {
+    const money = 100;
+    const dec = BigInt(await USDC.decimals());
+    const moneyUSDC = BigInt(money) * BigInt(10) ** dec;
+    const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
+    expect(USDCLP.deposit(moneyUSDC)).to.revertedWith(
+      "ERR:LP:cant transfer liquidasset"
+    );
+  });
+  it("DEPOSIT INTO DAI LP WITHOUT allowance, revert", async function () {
+    const money = 100;
+    const dec = BigInt(await DAI.decimals());
+    const moneyDAI = BigInt(money) * BigInt(10) ** dec;
+    const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
+    expect(DAILP.deposit(moneyDAI)).to.revertedWith(
+      "ERR:LP:cant transfer liquidasset"
+    );
+  });
+
   it("DEPOSIT INTO USDC LP, Check if depositor is issued appropriate balance of FDT", async function () {
     const money = 100;
     const dec = BigInt(await USDC.decimals());

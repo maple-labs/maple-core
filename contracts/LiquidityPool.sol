@@ -147,9 +147,10 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     function deposit(uint256 _amt) external {
         //this means tether cna not be used.
         require(
-            ILiquidAsset.transferFrom(msg.sender, LiquidAssetLocker, _amt),
+            ILiquidAsset.allowance(msg.sender, address(this)) >= _amt,
             "ERR:LP:cant transfer liquidasset"
         );
+        ILiquidAsset.transferFrom(msg.sender, LiquidAssetLocker, _amt);
         uint256 _mintAmt = liq2FDT(_amt);
         _mint(msg.sender, _mintAmt);
     }
