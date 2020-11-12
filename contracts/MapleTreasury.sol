@@ -88,7 +88,7 @@ contract MapleTreasury {
       0,
       path,
       mapleToken,
-      block.timestamp
+      block.timestamp + 1000
     );
     require(
       ERC20(fundsToken).transfer(mapleToken, returnAmounts[2]), 
