@@ -1,9 +1,6 @@
 pragma solidity 0.7.0;
 
 contract MapleTreasury {
-  
-  /// @notice mapleGlobals is the MapleGlobals.sol contract.
-  address public mapleGlobals;
 
   /// @notice mapletoken is the MapleToken.sol contract.
   address public mapleToken;
@@ -15,17 +12,14 @@ contract MapleTreasury {
   address public uniswapRouter;
 
   /// @notice Instantiates the MapleTreasury contract.
-  /// @param _mapleGlobals is the MapleGlobals.sol contract.
   /// @param _mapleToken is the MapleToken.sol contract.
   /// @param _fundsToken is the _fundsToken value in the MapleToken.sol contract.
   /// @param _uniswapRouter is the official UniswapV2 router contract.
   constructor(
-    address _mapleGlobals, 
     address _mapleToken, 
     address _fundsToken, 
     address _uniswapRouter
   ) {
-    mapleGlobals = _mapleGlobals;
     mapleToken = _mapleToken;
     fundsToken = _fundsToken;
     uniswapRouter = _uniswapRouter;
@@ -52,6 +46,24 @@ contract MapleTreasury {
     uint _amountIn,
     uint _amountOut
   );
+
+  /// @notice Fired when fundsToken is passed through to mapleToken.
+  event PassThrough(
+    address _by,
+    uint _amount
+  );
+
+  /// @notice Passes through the current fundsToken to MapleToken.
+  function passThroughFundsToken() public {
+    emit PassThrough(
+      msg.sender,
+      ERC20(fundsToken).balanceOf(address(this))
+    );
+    require(
+      ERC20(fundsToken).transfer(mapleToken, ERC20(fundsToken).balanceOf(address(this))), 
+      "MapleTreasury::convertERC20Bilateral:FUNDS_RECEIVE_TRANSFER_ERROR"
+    );
+  }
 
   /**
    TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
