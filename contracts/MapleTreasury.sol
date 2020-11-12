@@ -75,6 +75,7 @@ contract MapleTreasury {
   /// @notice Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
   /// @param _asset The ERC-20 asset to convert.
   function convertERC20Bilateral(address _asset) public {
+    require(_asset != fundsToken, "MapleTreasury::convertERC20Bilateral:ERR_ASSET");
     require(
       ERC20(_asset).approve(uniswapRouter, ERC20(_asset).balanceOf(address(this))), 
       "MapleTreasury::convertERC20Bilateral:ROUTER_APPROVE_FAIL"
@@ -112,6 +113,8 @@ contract MapleTreasury {
   /// @param _asset The ERC-20 asset to convert.
   /// @param _triangularAsset The middle asset conversion path, _asset -> _triangularAsset -> fundsToken.
   function convertERC20Triangular(address _asset, address _triangularAsset) public {
+    require(_asset != fundsToken, "MapleTreasury::convertERC20Bilateral:ERR_ASSET");
+    require(_triangularAsset != fundsToken, "MapleTreasury::convertERC20Bilateral:ERR_ASSET");
     require(
       ERC20(_asset).approve(uniswapRouter, ERC20(_asset).balanceOf(address(this))), 
       "MapleTreasury::convertERC20Triangular:ROUTER_APPROVE_FAIL"
@@ -178,6 +181,7 @@ contract MapleTreasury {
   /// @notice Convert ETH through Uniswap via triangular transaction (three asset path).
   /// @param _triangularAsset The middle asset conversion path, ETH -> _triangularAsset -> fundsToken.
   function convertETHTriangular(address _triangularAsset) public {
+    require(_triangularAsset != fundsToken, "MapleTreasury::convertERC20Bilateral:ERR_ASSET");
     address[] memory path = new address[](3);
     path[0] = IUniswapRouter(uniswapRouter).WETH();
     path[1] = _triangularAsset;
