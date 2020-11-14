@@ -51,6 +51,44 @@ describe('MapleTreasury.sol', function () {
 
   })
 
+  it('add liquidity to DAI/USDC pool', async function () {
+    
+    const accounts = await ethers.provider.listAccounts()
+    const DAIDecimals = await mintableDAI.decimals()
+    const USDCDecimals = await fundsToken.decimals()
+    expect(await mintableDAI.mintSpecial(accounts[0], 100000))
+    expect(await fundsToken.mintSpecial(accounts[0], 100000))
+    expect(await mintableDAI.approve(uniswapRouterAddress, BigInt(100000 * 10**DAIDecimals)))
+    expect(await fundsToken.approve(uniswapRouterAddress, BigInt(100000 * 10**USDCDecimals)))
+
+    await expect(
+      uniswapRouter.addLiquidity(
+        mintableDAIAddress,
+        fundsTokenAddress,
+        BigInt(100000 * 10**DAIDecimals),
+        BigInt(100000 * 10**USDCDecimals),
+        0,
+        0,
+        accounts[0],
+        1
+      )
+    ).to.be.revertedWith("UniswapV2Router: EXPIRED");
+
+    expect(
+      await uniswapRouter.addLiquidity(
+        mintableDAIAddress,
+        fundsTokenAddress,
+        10,
+        10,
+        0,
+        0,
+        accounts[0],
+        Math.floor(Date.now() / 1000) + 1000
+      )
+    )
+
+  })
+
   it('get uniswap pool basic information', async function () {
 
     const getPairAddress = await uniswapFactory.getPair(mintableDAIAddress, fundsTokenAddress);
@@ -153,7 +191,7 @@ describe('MapleTreasury.sol', function () {
     console.log(getReservesDAIUSDC)
 
     const getAmountsA = await uniswapRouter.getAmountsOut(
-      '100000000000',
+      100,
       [fundsTokenAddress, mintableDAIAddress]
     )
     
@@ -217,11 +255,11 @@ describe('MapleTreasury.sol', function () {
 
   it('convert DAI to USDC via bilateral swap', async function () {
     
-    // const DAIDecimals = await mintableDAI.decimals()
-    // let treasuryDAIBalance = await mintableDAI.balanceOf(treasuryAddress)
-    // treasuryDAIBalance = parseInt(treasuryDAIBalance["_hex"]) / 10**DAIDecimals
+    const DAIDecimals = await mintableDAI.decimals()
+    let treasuryDAIBalance = await mintableDAI.balanceOf(treasuryAddress)
+    treasuryDAIBalance = parseInt(treasuryDAIBalance["_hex"]) / 10**DAIDecimals
 
-    // console.log(treasuryDAIBalance)
+    console.log(treasuryDAIBalance)
     
     expect(await mapleTreasury.convertERC20Bilateral(mintableDAIAddress))
 
