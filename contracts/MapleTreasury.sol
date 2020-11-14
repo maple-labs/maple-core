@@ -94,10 +94,6 @@ contract MapleTreasury {
       mapleToken,
       block.timestamp + 1000
     );
-    require(
-      ERC20(fundsToken).transfer(mapleToken, returnAmounts[2]), 
-      "MapleTreasury::convertERC20Bilateral:FUNDS_RECEIVE_TRANSFER_ERROR"
-    );
     emit ERC20Conversion(
       _asset,
       msg.sender,
