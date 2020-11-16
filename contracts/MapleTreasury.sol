@@ -89,7 +89,7 @@ contract MapleTreasury {
     path[1] = fundsToken;
     uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
       ERC20(_asset).balanceOf(address(this)),
-      ERC20(_asset).balanceOf(address(this)).mul(98).div(100),
+      0,
       path,
       mapleToken,
       block.timestamp + 1000
