@@ -46,6 +46,14 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         _mint(tx.origin, _amt);
     }
 
+    function unstake(uint256 _amt) external {
+        //not sure if the transfer is needed, or if burn wont work without allowance
+        //add delay logic, force fundstoken to WD
+        withdrawFunds();
+        require(transferFrom(msg.sender, address(this), _amt));
+        _burn(address(this), _amt);
+    }
+
     /**
      * @notice Withdraws all available funds for a token holder
      */
