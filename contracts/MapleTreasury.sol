@@ -139,11 +139,11 @@ contract MapleTreasury {
   */
 
   /// @notice Convert ETH through Uniswap via bilateral transaction (two asset path).
-  function convertETH(uint _amountOut) isGovernor public {
+  function convertETH(uint _amountOut, uint _amountIn) isGovernor public {
     address[] memory path = new address[](2);
     path[0] = IUniswapRouter(uniswapRouter).WETH();
     path[1] = fundsToken;
-    uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapETHForExactTokens(
+    uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapETHForExactTokens{value: _amountIn}(
       _amountOut,
       path,
       mapleToken,

@@ -97,18 +97,13 @@ describe('MapleTreasury.sol', function () {
 
   it('send ETH to mapleTreasury, convert via convertETH()', async function () {
     
-    // const tx = await ethers.provider.getSigner(0).sendTransaction({
-    //   to: treasuryAddress,
-    //   value: ethers.utils.parseEther("1.0")
-    // });
+    const tx = await ethers.provider.getSigner(0).sendTransaction({
+      to: treasuryAddress,
+      value: ethers.utils.parseEther("1.0")
+    });
     
-    let preBalance = BigInt(await ethers.provider.getBalance(treasuryAddress))
-    console.log(preBalance)
-
-    expect(await mapleTreasury.convertETH('1000000000000'));
-
-    let postBalance = BigInt(await ethers.provider.getBalance(treasuryAddress))
-    console.log(postBalance)
+    let ETHBalance = BigInt(await ethers.provider.getBalance(treasuryAddress))
+    expect(await mapleTreasury.convertETH('100000000', ETHBalance));
 
   })
 
