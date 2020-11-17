@@ -8,6 +8,9 @@ contract MapleGlobals {
     /// @return mapleToken is the ERC-2222 token for the Maple protocol.
     address public mapleToken;
 
+    /// @return mapleTreasury is the Treasury which all fees pass through for conversion, prior to distribution.
+    address public mapleTreasury;
+
     /// @return Represents the fees, in basis points, distributed to the lender when a borrower's loan is funded.
     uint public establishmentFeeBasisPoints;
 
@@ -29,14 +32,14 @@ contract MapleGlobals {
         @notice Constructor function.
         @dev Initializes the contract's state variables.
         @param _governor The administrator's address.
-        @param _mapleTokenAddress The address of the ERC-2222 token for the Maple protocol.
+        @param _mapleToken The address of the ERC-2222 token for the Maple protocol.
     */
     constructor(
         address _governor,
-        address _mapleTokenAddress
+        address _mapleToken
     ) { 
         governor = _governor;
-        mapleToken = _mapleTokenAddress; 
+        mapleToken = _mapleToken;
         establishmentFeeBasisPoints = 200;
         treasuryFeeBasisPoints = 20;
         gracePeriod = 432000;
@@ -49,6 +52,14 @@ contract MapleGlobals {
      */
     function setEstablishmentFee(uint _establishmentFeeBasisPoints) isGovernor public {
         establishmentFeeBasisPoints = _establishmentFeeBasisPoints;
+    }
+
+    /**
+        @notice Governor can set the MapleTreasury contract.
+        @param _mapleTreasury The MapleTreasury contract.
+     */
+    function setMapleTreasury(address _mapleTreasury) isGovernor public {
+        mapleTreasury = _mapleTreasury;
     }
 
     /**
