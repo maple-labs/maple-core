@@ -14,8 +14,9 @@ contract LPStakeLockerFactory {
     // @return The address of the newly created locker.
     // TODO: Consider whether this needs to be external or public.
     function newLocker(address _stakedAsset, address _liquidAsset) external returns (address) {
-        address locker = address(new LPStakeLocker(_stakedAsset, _liquidAsset));
-        lockerPool[address(locker)] = address(msg.sender); //address of LP contract that sent it, not poolManager
+        address _ownerLP = address(msg.sender);
+        address locker = address(new LPStakeLocker(_stakedAsset, _liquidAsset, _ownerLP));
+        lockerPool[address(locker)] = _ownerLP; //address of LP contract that sent it, not poolManager
         return address(locker);
     }
 

@@ -22,14 +22,17 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     // @notice The asset deposited by stakers into this contract, for liquidation during defaults.
     address public stakedAsset;
+    address public immutable ownerLP;
 
     // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
-    constructor(address _stakedAsset, address _liquidAsset)
-        public
-        FundsDistributionToken("Maple Stake Locker", "MPLSTAKE")
-    {
+    constructor(
+        address _stakedAsset,
+        address _liquidAsset,
+        address _ownerLP
+    ) public FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") {
         liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
+        ownerLP = _ownerLP;
         ILiquidAsset = IERC20(_liquidAsset);
         IStakedAsset = IERC20(_stakedAsset);
     }
@@ -47,7 +50,6 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     }
 
     function unstake(uint256 _amt) external {
-        //not sure if the transfer is needed, or if burn wont work without allowance
         //add delay logic, force fundstoken to WD
         withdrawFunds();
         require(transferFrom(msg.sender, address(this), _amt));
@@ -59,8 +61,6 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
      */
     function withdrawFunds() external override {
         uint256 withdrawableFunds = _prepareWithdraw();
-        // i think there is something very seriously wrong here. I do not think the above function returns withdrawable funds in our liquidasset.
-        //need to call distributeFunds somewhere
         require(
             ILiquidAsset.transfer(msg.sender, withdrawableFunds),
             "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
@@ -94,5 +94,4 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
             _distributeFunds(newFunds.toUint256Safe());
         }
     }
-
 }
