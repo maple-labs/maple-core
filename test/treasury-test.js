@@ -100,6 +100,19 @@ describe('MapleTreasury.sol', function () {
 
   })
 
+  it('claim fee distribution from convertERC20()', async function () {
+    
+    const accounts = await ethers.provider.listAccounts()
+    const preWithdraw = await mapleToken.withdrawnFundsOf(accounts[0])
+
+    expect(await mapleToken.withdrawFunds())
+
+    const postWithdraw = await mapleToken.withdrawnFundsOf(accounts[0])
+
+    expect(parseInt(postWithdraw["_hex"])).to.be.above(parseInt(preWithdraw["_hex"]));
+
+  })
+
   it('send ETH to mapleTreasury, convert via convertETH()', async function () {
     
     const tx = await ethers.provider.getSigner(0).sendTransaction({
@@ -109,6 +122,19 @@ describe('MapleTreasury.sol', function () {
     
     let ETHBalance = BigInt(await ethers.provider.getBalance(treasuryAddress))
     expect(await mapleTreasury.convertETH('10000000', ETHBalance));
+
+  })
+
+  it('claim fee distribution from convertETH()', async function () {
+    
+    const accounts = await ethers.provider.listAccounts()
+    const preWithdraw = await mapleToken.withdrawnFundsOf(accounts[0])
+
+    expect(await mapleToken.withdrawFunds())
+
+    const postWithdraw = await mapleToken.withdrawnFundsOf(accounts[0])
+
+    expect(parseInt(postWithdraw["_hex"])).to.be.above(parseInt(preWithdraw["_hex"]));
 
   })
 
