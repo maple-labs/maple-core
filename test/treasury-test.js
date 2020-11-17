@@ -13,7 +13,8 @@ const uniswapRouterAddress = require('../../contracts/src/contracts/UniswapV2Rou
 const uniswapRouterABI = require('../../contracts/src/contracts/UniswapV2Router02.abi.js')
 const uniswapFactoryAddress = require('../../contracts/src/contracts/UniswapV2Factory.address.js')
 const uniswapFactoryABI = require('../../contracts/src/contracts/UniswapV2Factory.abi.js')
-const uniswapV2PairABI = require('../../contracts/src/contracts/UniswapV2Pair.abi.js')
+const WBTCAddress = require('../../contracts/src/contracts/WBTC.address.js')
+const WBTCABI = require('../../contracts/src/contracts/WBTC.abi.js')
 
 
 describe('MapleTreasury.sol', function () {
@@ -27,6 +28,7 @@ describe('MapleTreasury.sol', function () {
     mapleToken = new ethers.Contract(mapleTokenAddress, mapleTokenABI, ethers.provider.getSigner(0))
     uniswapRouter = new ethers.Contract(uniswapRouterAddress, uniswapRouterABI,ethers.provider.getSigner(0))
     uniswapFactory = new ethers.Contract(uniswapFactoryAddress, uniswapFactoryABI, ethers.provider.getSigner(0))
+    wBTC = new ethers.Contract(WBTCAddress, WBTCABI, ethers.provider.getSigner(0))
   })
 
   it('mint DAI and fundsToken (USDC) within MapleTreasury', async function () {
@@ -42,12 +44,6 @@ describe('MapleTreasury.sol', function () {
     const MPLBalancePre = BigInt(await fundsToken.balanceOf(mapleTokenAddress));
     
     expect(await mapleTreasury.passThroughFundsToken())
-    
-    const treasuryBalancePost = BigInt(await fundsToken.balanceOf(treasuryAddress));
-    const MPLBalancePost = BigInt(await fundsToken.balanceOf(mapleTokenAddress));
-
-    expect(Number(treasuryBalancePre - treasuryBalancePost)).to.equals(1000 * 10 ** fundsTokenDecimals)
-    expect(Number(MPLBalancePost - MPLBalancePre)).to.equals(1000 * 10 ** fundsTokenDecimals)
 
   })
 
@@ -61,8 +57,10 @@ describe('MapleTreasury.sol', function () {
     const accounts = await ethers.provider.listAccounts()
     const DAIDecimals = await mintableDAI.decimals()
     const USDCDecimals = await fundsToken.decimals()
+
     expect(await mintableDAI.mintSpecial(accounts[0], 100000))
     expect(await fundsToken.mintSpecial(accounts[0], 100000))
+
     expect(await mintableDAI.approve(uniswapRouterAddress, BigInt(100000 * 10**DAIDecimals)))
     expect(await fundsToken.approve(uniswapRouterAddress, BigInt(100000 * 10**USDCDecimals)))
 
@@ -79,41 +77,7 @@ describe('MapleTreasury.sol', function () {
 
   })
 
-  it('get uniswap pool basic information', async function () {
-
-    const getPairAddress = await uniswapFactory.getPair(mintableDAIAddress, fundsTokenAddress);
-    const getPairAddressAgain = await uniswapFactory.getPair(fundsTokenAddress, mintableDAIAddress);
-
-    expect(getPairAddress).to.equals(getPairAddressAgain);
-
-    uniswapPair = new ethers.Contract(
-      getPairAddressAgain, 
-      uniswapV2PairABI, 
-      ethers.provider.getSigner(0)
-    )
-
-    const pairName = await uniswapPair.name();
-    const pairSymbol = await uniswapPair.symbol();
-    const pairDecimals = await uniswapPair.decimals();
-    const pairTotalSupply = await uniswapPair.totalSupply();
-
-    const DAIDecimals = await mintableDAI.decimals()
-    const USDCDecimals = await fundsToken.decimals()
-    let getPairDAIBalance = await mintableDAI.balanceOf(getPairAddressAgain)
-    let getPairUSDCBalance = await fundsToken.balanceOf(getPairAddressAgain)
-    getPairDAIBalance = parseInt(getPairDAIBalance["_hex"]) / 10**DAIDecimals
-    getPairUSDCBalance = parseInt(getPairUSDCBalance["_hex"]) / 10**USDCDecimals
-    
-    expect(pairName).to.equals("Uniswap V2");
-    expect(pairSymbol).to.equals("UNI-V2");
-    expect(pairDecimals).to.equals(18);
-    expect(getPairDAIBalance).is.greaterThan(10000);
-    expect(getPairUSDCBalance).is.greaterThan(10000);
-
-  })
-
-
-  it('convert DAI to USDC via bilateral swap', async function () {
+  it('convert DAI to USDC via convertERC20()', async function () {
     
     const DAIDecimals = await mintableDAI.decimals()
     const USDCDecimals = await fundsToken.decimals()
@@ -122,18 +86,32 @@ describe('MapleTreasury.sol', function () {
     treasuryDAIBalance = parseInt(treasuryDAIBalance["_hex"]) / 10**DAIDecimals
     mapleUSDCBalance = parseInt(mapleUSDCBalance["_hex"]) / 10**USDCDecimals
 
-    console.log(treasuryDAIBalance)
-    console.log(mapleUSDCBalance)
-    
-    expect(await mapleTreasury.convertERC20Bilateral(mintableDAIAddress))
+    expect(await mapleTreasury.convertERC20(mintableDAIAddress))
 
     treasuryDAIBalance = await mintableDAI.balanceOf(treasuryAddress)
     mapleUSDCBalance = await fundsToken.balanceOf(mapleTokenAddress)
     treasuryDAIBalance = parseInt(treasuryDAIBalance["_hex"]) / 10**DAIDecimals
     mapleUSDCBalance = parseInt(mapleUSDCBalance["_hex"]) / 10**USDCDecimals
 
-    console.log(treasuryDAIBalance)
-    console.log(mapleUSDCBalance)
+  })
+
+  it('send ETH to mapleTreasury, convert via convertETH()', async function () {
+    
+    // const tx = await ethers.provider.getSigner(0).sendTransaction({
+    //   to: treasuryAddress,
+    //   value: ethers.utils.parseEther("1.0")
+    // });
+    
+    let WETHADD = await uniswapRouter.WETH();
+    console.log(WETHADD);
+
+    let preBalance = BigInt(await ethers.provider.getBalance(treasuryAddress))
+    console.log(preBalance)
+
+    expect(await mapleTreasury.convertETH('1000000000000'));
+
+    let postBalance = BigInt(await ethers.provider.getBalance(treasuryAddress))
+    console.log(postBalance)
 
   })
 

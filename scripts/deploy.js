@@ -35,9 +35,12 @@ async function main () {
   const mapleTreasury = await deploy('MapleTreasury', [
     mapleToken.address,
     mintableUSDC,
-    uniswapRouter
+    uniswapRouter,
+    mapleGlobals.address
   ])
   console.log(mapleTreasury.address)
+  const updateGlobals = await mapleGlobals.setMapleTreasury(mapleTreasury.address)
+  
 }
 
 async function deploy (name, _args) {
