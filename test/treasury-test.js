@@ -77,6 +77,11 @@ describe('MapleTreasury.sol', function () {
 
   })
 
+  it('ensure uniswapRouter is pointing to unsiwapFactory', async function() {
+    const factoryAddress = await uniswapRouter.factory()
+    expect(factoryAddress).to.equals(uniswapFactoryAddress)
+  })
+
   it('convert DAI to USDC via convertERC20()', async function () {
     
     const DAIDecimals = await mintableDAI.decimals()

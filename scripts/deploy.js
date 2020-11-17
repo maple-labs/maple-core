@@ -3,9 +3,9 @@ const chalk = require('chalk')
 const { config, ethers } = require('hardhat')
 const { utils } = require('ethers')
 
-const governor = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
 const mintableUSDC = require('../../contracts/src/contracts/MintableTokenUSDC.address.js')
 const uniswapRouter = require('../../contracts/src/contracts/UniswapV2Router02.address.js')
+const governor = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 
 async function main () {
   console.log('📡 Deploy \n')
@@ -16,6 +16,9 @@ async function main () {
     mintableUSDC
   ])
   console.log(mapleToken.address)
+
+  const accounts = await ethers.provider.listAccounts()
+  console.log(accounts[0])
 
   const mapleGlobals = await deploy('MapleGlobals', [
     governor,
