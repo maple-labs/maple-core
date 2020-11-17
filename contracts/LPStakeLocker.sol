@@ -5,7 +5,7 @@ pragma solidity 0.7.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
-import "interface/ILiquidityPool.sol";
+import "./interface/ILiquidityPool.sol";
 
 // @title LPStakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
@@ -41,8 +41,8 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
         parentLP = _parentLP;
-	IParentLP = ILiquidityPool(_parentLP);
-	poolDelegate = IParentLP.poolDelegate();
+        IParentLP = ILiquidityPool(_parentLP);
+        poolDelegate = IParentLP.poolDelegate();
         ILiquidAsset = IERC20(_liquidAsset);
         IStakedAsset = IERC20(_stakedAsset);
     }
@@ -59,7 +59,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         _mint(tx.origin, _amt);
     }
 
-    function unstake(uint256 _amt) external unstakeDelay() {
+    function unstake(uint256 _amt) external {
         //add delay logic, force fundstoken to WD
         withdrawFunds(); //has to be before the transfer or they will end up here
         require(transferFrom(msg.sender, address(this), _amt));
@@ -69,7 +69,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @notice Withdraws all available funds for a token holder
      */
-    function withdrawFunds() external override {
+    function withdrawFunds() public override { //must be public so it can be called insdie here
         uint256 withdrawableFunds = _prepareWithdraw();
         require(
             ILiquidAsset.transfer(msg.sender, withdrawableFunds),
