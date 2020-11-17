@@ -5,6 +5,7 @@ pragma solidity 0.7.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
+import "interface/ILiquidityPool.sol";
 
 // @title LPStakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
@@ -22,17 +23,26 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     // @notice The asset deposited by stakers into this contract, for liquidation during defaults.
     address public stakedAsset;
-    address public immutable ownerLP;
+
+    // @notice parent LiqidityPool's delegate address
+    address private poolDelegate;
+
+    ILiquidityPool private IParentLP;
+
+    // @notice parent liquidity pool
+    address public immutable parentLP;
 
     // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
     constructor(
         address _stakedAsset,
         address _liquidAsset,
-        address _ownerLP
+        address _parentLP
     ) public FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") {
         liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
-        ownerLP = _ownerLP;
+        parentLP = _parentLP;
+	IParentLP = ILiquidityPool(_parentLP);
+	poolDelegate = IParentLP.poolDelegate();
         ILiquidAsset = IERC20(_liquidAsset);
         IStakedAsset = IERC20(_stakedAsset);
     }
@@ -49,9 +59,9 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         _mint(tx.origin, _amt);
     }
 
-    function unstake(uint256 _amt) external {
+    function unstake(uint256 _amt) external unstakeDelay() {
         //add delay logic, force fundstoken to WD
-        withdrawFunds();
+        withdrawFunds(); //has to be before the transfer or they will end up here
         require(transferFrom(msg.sender, address(this), _amt));
         _burn(address(this), _amt);
     }
