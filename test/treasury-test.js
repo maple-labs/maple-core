@@ -103,7 +103,7 @@ describe('MapleTreasury.sol', function () {
     });
     
     let ETHBalance = BigInt(await ethers.provider.getBalance(treasuryAddress))
-    expect(await mapleTreasury.convertETH('100000000', ETHBalance));
+    expect(await mapleTreasury.convertETH('10000000', ETHBalance));
 
   })
 

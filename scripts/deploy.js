@@ -57,7 +57,6 @@ async function deploy (name, _args) {
       chalk.magenta(contract.address),
       '\n'
     )
-    console.log('test...')
     fs.writeFileSync(`artifacts/${name}.address`, contract.address)
     console.log(
       '💾  Artifacts (address, abi, and args) saved to: ',

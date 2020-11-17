@@ -1,7 +1,9 @@
 pragma solidity 0.7.0;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interface/IGlobals.sol";
+import "./interface/IUniswapRouter.sol";
 
 contract MapleTreasury {
 
@@ -90,10 +92,10 @@ contract MapleTreasury {
   function passThroughFundsToken() isGovernor public {
     emit PassThrough(
       msg.sender,
-      ERC20(fundsToken).balanceOf(address(this))
+      IERC20(fundsToken).balanceOf(address(this))
     );
     require(
-      ERC20(fundsToken).transfer(mapleToken, ERC20(fundsToken).balanceOf(address(this))), 
+      IERC20(fundsToken).transfer(mapleToken, IERC20(fundsToken).balanceOf(address(this))), 
       "MapleTreasury::passThroughFundsToken:FUNDS_RECEIVE_TRANSFER_ERROR"
     );
   }
@@ -110,18 +112,18 @@ contract MapleTreasury {
   function convertERC20(address _asset) isGovernor public {
     require(_asset != fundsToken, "MapleTreasury::convertERC20:ERR_ASSET");
     require(
-      ERC20(_asset).approve(uniswapRouter, ERC20(_asset).balanceOf(address(this))), 
+      IERC20(_asset).approve(uniswapRouter, IERC20(_asset).balanceOf(address(this))), 
       "MapleTreasury::convertERC20:ROUTER_APPROVE_FAIL"
     );
     address[] memory path = new address[](2);
     path[0] = _asset;
     path[1] = fundsToken;
     uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
-      ERC20(_asset).balanceOf(address(this)),
+      IERC20(_asset).balanceOf(address(this)),
       0,
       path,
       mapleToken,
-      block.timestamp + 1000
+      block.timestamp + 1
     );
     emit ERC20Conversion(
       _asset,
@@ -147,7 +149,7 @@ contract MapleTreasury {
       _amountOut,
       path,
       mapleToken,
-      block.timestamp + 1000
+      block.timestamp + 1
     );
     emit ETHConversion(
       msg.sender,
@@ -155,38 +157,5 @@ contract MapleTreasury {
       returnAmounts[1]
     );
   }
-
-}
-
-interface ERC20 {
-  function balanceOf(address _owner) external view returns (uint256 balance);
-  function transfer(address _to, uint256 _value) external returns (bool success);
-  function approve(address _spender, uint256 _value) external returns (bool success);
-}
-
-interface IUniswapRouter {
-
-  function swapExactTokensForTokens(
-    uint amountIn,
-    uint amountOutMin,
-    address[] calldata path,
-    address to,
-    uint deadline
-  ) external returns (uint[] memory amounts);
-  
-  function swapETHForExactTokens(
-    uint amountOut,
-    address[] calldata path, 
-    address to, 
-    uint deadline
-  ) external payable returns (uint[] memory amounts);
-
-  function quote(
-    uint amountA, 
-    uint reserveA, 
-    uint reserveB
-  ) external pure returns (uint amountB);
-  
-  function WETH() external pure returns (address);
 
 }
