@@ -24,13 +24,10 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     // @notice The asset deposited by stakers into this contract, for liquidation during defaults.
     address public stakedAsset;
 
-    // @notice parent LiqidityPool's delegate address
-    address private poolDelegate;
-
     ILiquidityPool private IParentLP;
 
     // @notice parent liquidity pool
-    address public immutable parentLP;
+    address immutable public parentLP;
 
     // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
     constructor(
@@ -42,7 +39,6 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         stakedAsset = _stakedAsset;
         parentLP = _parentLP;
         IParentLP = ILiquidityPool(_parentLP);
-        poolDelegate = IParentLP.poolDelegate();
         ILiquidAsset = IERC20(_liquidAsset);
         IStakedAsset = IERC20(_stakedAsset);
     }
