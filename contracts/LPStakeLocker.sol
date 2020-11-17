@@ -84,7 +84,15 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     /**
      * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
-     * @dev Calls _updateIliquidAssetBalance(), whereby the contract computes the delta of the previous and the new
+     * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
      * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
      */
+    function updateFundsReceived() external {
+        int256 newFunds = _updateFundsTokenBalance();
+
+        if (newFunds > 0) {
+            _distributeFunds(newFunds.toUint256Safe());
+        }
+    }
+
 }
