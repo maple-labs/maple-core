@@ -4,6 +4,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interface/IGlobals.sol";
 import "./interface/IUniswapRouter.sol";
+import "./interface/IMapleToken.sol";
 
 contract MapleTreasury {
 
@@ -125,6 +126,7 @@ contract MapleTreasury {
       mapleToken,
       block.timestamp + 1
     );
+    IMapleToken(mapleToken).updateFundsReceived();
     emit ERC20Conversion(
       _asset,
       msg.sender,
@@ -151,6 +153,7 @@ contract MapleTreasury {
       mapleToken,
       block.timestamp + 1
     );
+    IMapleToken(mapleToken).updateFundsReceived();
     emit ETHConversion(
       msg.sender,
       returnAmounts[0],
