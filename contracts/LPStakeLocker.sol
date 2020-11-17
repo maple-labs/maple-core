@@ -59,7 +59,8 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
      */
     function withdrawFunds() external override {
         uint256 withdrawableFunds = _prepareWithdraw();
-
+        // i think there is something very seriously wrong here. I do not think the above function returns withdrawable funds in our liquidasset.
+        //need to call distributeFunds somewhere
         require(
             ILiquidAsset.transfer(msg.sender, withdrawableFunds),
             "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
