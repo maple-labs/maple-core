@@ -29,7 +29,7 @@ contract MapleToken is IFundsDistributionToken, FundsDistributionToken {
 		FundsDistributionToken(name, symbol)
 	{
 		require(address(_fundsToken) != address(0), "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS");
-        _mint(msg.sender, 10000000 * (10 ** uint256(decimals())));
+		_mint(msg.sender, 10000000 * (10 ** uint256(decimals())));
 		fundsToken = _fundsToken;
 	}
 

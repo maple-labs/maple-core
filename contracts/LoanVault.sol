@@ -38,6 +38,16 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @notice The borrower of this loan, responsible for repayments.
     address public borrower;
 
+    /// @notice The current state of this loan, as defined in the State enum below.
+    State public loanState;
+
+    enum State { Initialized, Funding, Active, Defaulted, Matured }
+
+    modifier isState(State _state) {
+        require(loanState == _state, "LoanVault::FAIL_STATE_CHECK");
+        _;
+    }
+
     /// @notice Constructor for loan vault.
     /// @param _assetRequested The asset borrower is requesting funding in.
     /// @param _assetCollateral The asset provided as collateral by the borrower.
@@ -63,6 +73,20 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         fundsToken = IRequestedAsset;
         MapleGlobals = IGlobals(_mapleGlobals);
         borrower = tx.origin;
+    }
+
+    // TODO: Consider decimal precision difference: RequestedAsset <> FundsToken
+
+    /**
+     * @notice Fund this loan and mint the investor LoanTokens.
+     * @param _amount Amount of _assetRequested to fund the loan.
+     */
+    function fundLoan(uint _amount) external isState(State.Funding) {
+        require(
+            IRequestedAsset.transferFrom(tx.origin, address(this), _amount),
+            "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
+        );
+        _mint(tx.origin, _amount);
     }
 
     /**
