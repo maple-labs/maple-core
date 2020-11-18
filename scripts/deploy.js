@@ -15,27 +15,21 @@ async function main() {
     "MPL",
     mintableUSDC,
   ]);
-  console.log(mapleToken.address);
 
   const accounts = await ethers.provider.listAccounts();
-  console.log(accounts[0]);
 
   const mapleGlobals = await deploy("MapleGlobals", [
     governor,
     mapleToken.address,
   ]);
-  console.log(mapleGlobals.address);
 
   const LPStakeLockerFactory = await deploy("LPStakeLockerFactory", [
     mapleGlobals.address,
   ]);
-  console.log(LPStakeLockerFactory.address);
 
   const liquidAssetLockerFactory = await deploy("LiquidAssetLockerFactory");
-  console.log(liquidAssetLockerFactory.address);
 
   const LPFactory = await deploy("LPFactory");
-  console.log(LPFactory.address);
 
   const mapleTreasury = await deploy("MapleTreasury", [
     mapleToken.address,
