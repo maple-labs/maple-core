@@ -46,6 +46,10 @@ async function main () {
   
   const LVFactory = await deploy('LoanVaultFactory')
   console.log(LVFactory.address)
+  const LVCLFactory = await deploy('LoanVaultCollateralLockerFactory')
+  console.log(LVCLFactory.address)
+  const LVFLFactory = await deploy('LoanVaultFundingLockerFactory')
+  console.log(LVFLFactory.address)
 
 }
 

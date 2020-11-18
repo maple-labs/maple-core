@@ -59,6 +59,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @notice Constructor for loan vault.
     /// @param _assetRequested The asset borrower is requesting funding in.
     /// @param _assetCollateral The asset provided as collateral by the borrower.
+    /// @param _fundingLockerFactory Factory to instantiate FundingLocker through.
+    /// @param _collateralLockerFactory Factory to instantiate CollateralLocker through.
     /// @param name The name of the loan vault's token (minted when investors fund the loan).
     /// @param symbol The ticker of the loan vault's token.
     /// @param _mapleGlobals Address of the MapleGlobals.sol contract.
@@ -66,6 +68,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         address _assetRequested,
         address _assetCollateral,
         address _fundingLockerFactory,
+        address _collateralLockerFactory,
         string memory name,
         string memory symbol,
         address _mapleGlobals
