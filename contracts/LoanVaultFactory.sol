@@ -2,6 +2,8 @@ pragma solidity 0.7.0;
 
 import "./LoanVault.sol";
 
+
+/// @title LoanVaultFactory instantiates LoanVault contracts.
 contract LoanVaultFactory {
 
     // Data structures for loan vaults.
@@ -45,9 +47,9 @@ contract LoanVaultFactory {
         return loanVaults[_id];
     }
 
-    /// @dev R
+    /// @dev Identifies if a loan vault was created through this contract.
     /// @param _loanVault The incrementor value to supply.
-    /// @return True if the address supplied is a loan vault created through here, otherwise false.
+    /// @return True if the address is a loan vault created through this contract.
     function isLoanVault(address _loanVault) public view returns (bool) {
         return _isLoanVault[_loanVault];
     }

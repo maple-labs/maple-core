@@ -3,15 +3,11 @@
 pragma solidity 0.7.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
-import "./Math/CalcBPool.sol";
-import "./interface/IBPool.sol";
 import "./interface/IGlobals.sol";
-import "./LiquidAssetLockerFactory.sol";
 
-// @title LP is the core liquidity pool contract.
+/// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
     using SafeMathInt for int256;

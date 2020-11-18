@@ -44,6 +44,9 @@ async function main () {
   console.log(mapleTreasury.address)
   const updateGlobals = await mapleGlobals.setMapleTreasury(mapleTreasury.address)
   
+  const LVFactory = await deploy('LoanVaultFactory')
+  console.log(LVFactory.address)
+
 }
 
 async function deploy (name, _args) {
