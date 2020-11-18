@@ -7,7 +7,7 @@ contract LoanVaultCollateralLocker {
     /// @notice Address the loan is funded with.
     address public immutable collateralAsset;
 
-    /// @notice LoanVault this FundingLocker is attached to.
+    /// @notice LoanVault this CollateralLocker is attached to.
     address public immutable loanVault;
 
     constructor(address _collateralAsset, address _loanVault) {
@@ -16,7 +16,7 @@ contract LoanVaultCollateralLocker {
     }
 
     modifier isLoanVault() {
-        require(msg.sender == loanVault, "LoanVaultFundingLocker::ERR_ISLOANVAULT_CHECK");
+        require(msg.sender == loanVault, "LoanVaultCollateralLocker::ERR_ISLOANVAULT_CHECK");
         _;
     }
     
