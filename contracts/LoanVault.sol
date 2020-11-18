@@ -122,7 +122,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     }
 
     /// @notice Prepare this loan for funding by transitioning loanState from Initialized to Funding.
-    function preapreLoan() external isState(State.Initialized) isBorrower {
+    function prepareLoan() external isState(State.Initialized) isBorrower {
         loanState = State.Funding;
     }
 
@@ -130,6 +130,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @param _amount The amount of fundingAsset borrower will claim, remainder returned to lenders.
     function endFunding(uint _amount) external isState(State.Funding) isBorrower {
         loanState = State.Active;
+        // TODO: Handle collateral deposit here.
         require(IFundingLocker(fundingLocker).pull(borrower, _amount), "LoanVault::endFunding:ERR_PULL");
         require(IFundingLocker(fundingLocker).drain(),"LoanVault::endFunding:ERR_DRAIN");
     }

@@ -34,4 +34,8 @@ describe('MapleTreasury.sol', function () {
     
   })
 
+  it('claim funding via endFunding()', async function () {
+    
+  })
+
 })
