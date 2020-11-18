@@ -11,7 +11,9 @@ const bcAddress = require("../../contracts/src/contracts/BCreator.address.js");
 const bcABI = require("../../contracts/src/contracts/BCreator.abi.js");
 const mplAddress = require("../../contracts/src/contracts/MapleToken.address.js");
 const mplABI = require("../../contracts/src/contracts/MapleToken.abi.js");
+const MPLGlobalsABI = require("../../contracts/src/contracts/MapleGlobals.abi.js");
 const MPLGlobalsAddress = require("../../contracts/src/contracts/MapleGlobals.address.js");
+
 const LPLockerFactoryABI = require("../../contracts/src/contracts/LPStakeLockerFactory.abi.js");
 const LPFactoryABI = require("../../contracts/src/contracts/LPFactory.abi.js");
 const LPLockerFactoryAddress = require("../../contracts/src/contracts/LPStakeLockerFactory.address.js");
@@ -307,6 +309,35 @@ describe("Liquidity Pool and respective lockers", function () {
     fdtbal = await DAIStakeLocker.balanceOf(accounts[5]);
     expect(fdtbal.toString()).to.equal(bptbal.toString());
   });
+  it("third party CANT unstake with unsatisfied unstakeDelay?", async function () {
+    const MPLGlobals = new ethers.Contract(
+      MPLGlobalsAddress,
+      MPLGlobalsABI,
+      ethers.provider.getSigner(0)
+    );
+    const DAIStakeLocker = new ethers.Contract(
+      DAIStakeLockerAddress,
+      stakeLockerABI,
+      ethers.provider.getSigner(5)
+    );
+    const DAIBPool = new ethers.Contract(
+      DAIBPoolAddress,
+      BPoolABI,
+      ethers.provider.getSigner(5)
+    );
+	await MPLGlobals.setUnstakeDelay("999999999999999999");
+    fdtbal = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
+    bptbal1 = BigInt(await DAIBPool.balanceOf(accounts[5]));
+    await expect(DAIStakeLocker.unstake(fdtbal)).to.be.revertedWith(
+      "LPStakelocker: not enough unstakeable balance"
+    );
+    fdtbal2 = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
+    bptbal2 = BigInt(await DAIBPool.balanceOf(accounts[5]));
+    bptbaldiff = bptbal2 - bptbal1;
+    expect(bptbaldiff.toString()).to.equal("0");
+    expect(fdtbal2.toString()).to.equal(fdtbal.toString());
+    await MPLGlobals.setUnstakeDelay("0");
+  });
   it("can third party unstake with zero unstakeDelay?, did he get his BPTs back?", async function () {
     const DAIStakeLocker = new ethers.Contract(
       DAIStakeLockerAddress,
@@ -319,11 +350,13 @@ describe("Liquidity Pool and respective lockers", function () {
       ethers.provider.getSigner(5)
     );
 
-    fdtbal = await DAIStakeLocker.balanceOf(accounts[5]);
+    fdtbal = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
     bptbal1 = BigInt(await DAIBPool.balanceOf(accounts[5]));
     await DAIStakeLocker.unstake(fdtbal);
     bptbal2 = BigInt(await DAIBPool.balanceOf(accounts[5]));
     bptbaldiff = bptbal2 - bptbal1;
+    fdtbal2 = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
     expect(bptbaldiff.toString()).to.equal(fdtbal.toString());
+    expect(fdtbal2.toString()).to.equal("0");
   });
 });
