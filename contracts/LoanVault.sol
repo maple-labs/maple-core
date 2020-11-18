@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./interface/IGlobals.sol";
+import "./interface/IFundingLockerFactory.sol";
+import "./interface/ICollateralLockerFactory.sol";
 
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
@@ -35,6 +37,12 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @notice The asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
     address public assetCollateral;
 
+    /// @notice The FundingLocker for this contract.
+    address public fundingLocker;
+
+    /// @notice The CollateralLocker for this contract.
+    address public collateralLocker;
+
     /// @notice The borrower of this loan, responsible for repayments.
     address public borrower;
 
@@ -57,6 +65,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     constructor(
         address _assetRequested,
         address _assetCollateral,
+        address _fundingLockerFactory,
         string memory name,
         string memory symbol,
         address _mapleGlobals
@@ -73,18 +82,49 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         fundsToken = IRequestedAsset;
         MapleGlobals = IGlobals(_mapleGlobals);
         borrower = tx.origin;
+
+        _initializeFundingLocker(_fundingLockerFactory);
+        _initializeCollateralLocker(_collateralLockerFactory);
+
     }
 
-    // TODO: Consider decimal precision difference: RequestedAsset <> FundsToken
+    /**
+     * @notice Initailize the FundingLocker for this contract.
+     * @param _fundingLockerFactory The factory contract to initialize FundingLocker through.
+     */
+    function _initializeFundingLocker(address _fundingLockerFactory) private {
+        address _fundingLocker = IFundingLockerFactory(_fundingLockerFactory).newLocker(
+            assetRequested,
+            address(this)
+        );
+        fundingLocker = _fundingLocker;
+    }
+
+    /**
+     * @notice Initailize the CollateralLocker for this contract.
+     * @param _collateralLockerFactory The factory contract to initialize CollateralLocker through.
+     */
+    function _initializeCollateralLocker(address _collateralLockerFactory) private {
+        address _collateralLocker = ICollateralLockerFactory(_collateralLockerFactory).newLocker(
+            assetCollateral,
+            address(this)
+        );
+        collateralLocker = _collateralLocker;
+    }
 
     /**
      * @notice Fund this loan and mint the investor LoanTokens.
-     * @param _amount Amount of _assetRequested to fund the loan.
+     * @param _amount Amount of _assetRequested to fund the loan for.
      */
     function fundLoan(uint _amount) external isState(State.Funding) {
+        // TODO: Consider decimal precision difference: RequestedAsset <> FundsToken
         require(
             IRequestedAsset.transferFrom(tx.origin, address(this), _amount),
             "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
+        );
+        require(
+            IRequestedAsset.transfer(fundingLocker, _amount), 
+            "LoanVault::fundLoan:ERR_TRANSFER_FUNDS"
         );
         _mint(tx.origin, _amount);
     }

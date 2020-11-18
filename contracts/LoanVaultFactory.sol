@@ -2,7 +2,6 @@ pragma solidity 0.7.0;
 
 import "./LoanVault.sol";
 
-
 /// @title LoanVaultFactory instantiates LoanVault contracts.
 contract LoanVaultFactory {
 

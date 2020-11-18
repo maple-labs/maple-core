@@ -4,13 +4,13 @@ import "./LoanVaultFundingLocker.sol";
 
 contract LoanVaultFundingLockerFactory {
 
-    // Mapping of LoanVaultFundingLocker contracts to the LoanVault it's attached with.
+    // Mapping of FundingLocker contracts to the LoanVault it's attached with.
     mapping(address => address) private lockerOwner;
 
     // Mapping of identification check to confirm a locker was created through this factory.
     mapping(address => bool) private isLocker;
 
-    /// @notice Instantiate a LoanVaultFundingLocker contract.
+    /// @notice Instantiate a FundingLocker contract.
     /// @param _fundingAsset Address of the funding asset.
     /// @return Address of the instantiated locker.
     function newLocker(address _fundingAsset) public returns (address) {
@@ -20,14 +20,14 @@ contract LoanVaultFundingLockerFactory {
       return _fundingLocker;
     }
 
-    /// @notice Returns the LoanVault a LoanVaultFundingLocker is attached with.
-    /// @param _locker The address of the LoanVaultFundingLocker contract.
+    /// @notice Returns the LoanVault a FundingLocker is attached with.
+    /// @param _locker The address of the FundingLocker contract.
     /// @return The LoanVault which owns the locker.
     function getOwner(address _locker) public view returns (address) {
         return lockerOwner[_locker];
     }
 
-    /// @notice Confirm if an address is a LoanVaultFundingLocker instantiated by this factory.
+    /// @notice Confirm if an address is a FundingLocker instantiated by this factory.
     /// @param _locker Address of the locker.
     /// @return True if _locker was instantiated by this factory contract, otherwise false.
     function verifyLocker(address _locker) external view returns (bool) {
