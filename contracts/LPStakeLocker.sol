@@ -12,6 +12,9 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
 
+    //map address to date value
+    mapping(address => uint256) private stakeDate;
+
     // The primary investment asset for the LP, and the dividend token for this contract.
     IERC20 private ILiquidAsset;
     IERC20 private IStakedAsset;
@@ -26,8 +29,11 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     ILiquidityPool private IParentLP;
 
+    uint256 constant _ONE = 10**18; //this is for synthetic float calculations
+    //DELET THIS GET FROM GLOBALS
+    uint256 unstakeDelay = 120; //in seconds
     // @notice parent liquidity pool
-    address immutable public parentLP;
+    address public immutable parentLP;
 
     // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
     constructor(
@@ -52,12 +58,17 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
             IStakedAsset.transferFrom(tx.origin, address(this), _amt),
             "LPStakeLocker: ERR_INSUFFICIENT_APPROVED_FUNDS"
         );
+        _updateStakeDate(tx.origin, _amt);
         _mint(tx.origin, _amt);
     }
 
     function unstake(uint256 _amt) external {
         //add delay logic, force fundstoken to WD
-	updateFundsReceived();
+        require(
+            _amt <= getUnstakeableBalance(msg.sender),
+            "LPStakelocker: not enough unstakeable balance"
+        );
+        updateFundsReceived();
         withdrawFunds(); //has to be before the transfer or they will end up here
         require(transferFrom(msg.sender, address(this), _amt));
         _burn(address(this), _amt);
@@ -66,7 +77,8 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @notice Withdraws all available funds for a token holder
      */
-    function withdrawFunds() public override { //must be public so it can be called insdie here
+    function withdrawFunds() public override {
+        //must be public so it can be called insdie here
         uint256 withdrawableFunds = _prepareWithdraw();
         require(
             ILiquidAsset.transfer(msg.sender, withdrawableFunds),
@@ -74,6 +86,30 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         );
 
         _updateFundsTokenBalance();
+    }
+
+    function _updateStakeDate(address _addy, uint256 _amt) internal {
+        //going to have to override _transder() to make this work properly
+        //or just allow transfer to reset the staking period
+        if (stakeDate[_addy] == 0) {
+            stakeDate[_addy] = block.timestamp;
+        } else {
+            uint256 _date = stakeDate[_addy];
+            //make sure this is executed before mint or line below needs change on denominator
+            uint256 _coef = (_ONE * _amt) / (balanceOf(_addy) + _amt); //yes, i want 0 if _amt is too small
+            //thhis addition will start to overflow in about 3^52 years
+            stakeDate[_addy] = (_date * _ONE + (block.timestamp - _date) * _coef) / _ONE;
+            //I know this is insane but its good trust me
+        }
+    }
+
+    function getUnstakeableBalance(address _addy) public view returns (uint256) {
+        uint256 _bal = balanceOf(_addy);
+        uint256 _time = (block.timestamp - stakeDate[_addy]) * _ONE;
+        uint256 _out = ((_time / (unstakeDelay + 1)) * _bal) / _ONE;
+        //the plus one is to avoid division by 0 if unstakeDelay is 0
+        //also i do indeed want this to return 0 if denominator is less than _ONE
+        return _out;
     }
 
     /**
