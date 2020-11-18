@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./interface/ILiquidityPool.sol";
+import "./interface/IGlobals.sol";
 
 // @title LPStakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
@@ -26,12 +27,12 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     // @notice The asset deposited by stakers into this contract, for liquidation during defaults.
     address public stakedAsset;
-
+    IGlobals private IMapleGlobals;
     ILiquidityPool private IParentLP;
 
     uint256 constant _ONE = 10**18; //this is for synthetic float calculations
     //DELET THIS GET FROM GLOBALS
-    uint256 unstakeDelay = 120; //in seconds
+    uint256 unstakeDelay; //in seconds
     // @notice parent liquidity pool
     address public immutable parentLP;
 
@@ -39,7 +40,8 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     constructor(
         address _stakedAsset,
         address _liquidAsset,
-        address _parentLP
+        address _parentLP,
+	address _globals
     ) public FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") {
         liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
@@ -47,6 +49,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         IParentLP = ILiquidityPool(_parentLP);
         ILiquidAsset = IERC20(_liquidAsset);
         IStakedAsset = IERC20(_stakedAsset);
+	IMapleGlobals = IGlobals(_globals);
     }
 
     /**
@@ -106,9 +109,10 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     function getUnstakeableBalance(address _addy) public view returns (uint256) {
         uint256 _bal = balanceOf(_addy);
         uint256 _time = (block.timestamp - stakeDate[_addy]) * _ONE;
-        uint256 _out = ((_time / (unstakeDelay + 1)) * _bal) / _ONE;
+        uint256 _out = ((_time / (IMapleGlobals.unstakeDelay() + 1)) * _bal) / _ONE;
         //the plus one is to avoid division by 0 if unstakeDelay is 0
         //also i do indeed want this to return 0 if denominator is less than _ONE
+	//will output more than _bal in current form
         return _out;
     }
 
