@@ -23,6 +23,9 @@ contract MapleGlobals {
     /// @return Represents the USD value a pool delegate must stake (in BPTs) when insantiating a liquidity pool.
     uint public stakeAmountRequired;
 
+    // @param parameter for unstake delay
+    uint public unstakeDelay;
+
     modifier isGovernor() {
         require(msg.sender == governor, "msg.sender is not Governor");
         _;
@@ -92,6 +95,10 @@ contract MapleGlobals {
      */
     function setGovernor(address _newGovernor) isGovernor public {
         governor = _newGovernor;
+    }
+
+    function setUnstakeDelay(uint _unstakeDelay) isGovernor public {
+        unstakeDelay = _unstakeDelay;
     }
 
 }
