@@ -57,6 +57,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     function unstake(uint256 _amt) external {
         //add delay logic, force fundstoken to WD
+	updateFundsReceived();
         withdrawFunds(); //has to be before the transfer or they will end up here
         require(transferFrom(msg.sender, address(this), _amt));
         _burn(address(this), _amt);
@@ -93,7 +94,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
      * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
      * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
      */
-    function updateFundsReceived() external {
+    function updateFundsReceived() public {
         int256 newFunds = _updateFundsTokenBalance();
 
         if (newFunds > 0) {

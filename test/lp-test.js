@@ -268,7 +268,7 @@ describe("Liquidity Pool and respective lockers", function () {
     await USDC.approve(USDCLP.address, moneyUSDC);
     await USDCLP.deposit(moneyUSDC);
     const USDCFDTbal = BigInt(await USDCLP.balanceOf(accounts[0]));
-    expect(USDCFDTbal).to.equal(moneyInWEI);
+    expect(USDCFDTbal.toString()).to.equal(moneyInWEI.toString());
   });
   it("DEPOSIT INTO DAI LP, Check if depositor is issued appropriate balance of FDT", async function () {
     const money = 100;
@@ -278,6 +278,33 @@ describe("Liquidity Pool and respective lockers", function () {
     await DAI.approve(DAILP.address, moneyDAI);
     await DAILP.deposit(moneyDAI);
     const DAIFDTbal = BigInt(await DAILP.balanceOf(accounts[0]));
-    expect(DAIFDTbal).to.equal(moneyInWEI);
+    expect(DAIFDTbal.toString()).to.equal(moneyInWEI.toString());
+  });
+  it("Customer/third party stake some DAI", async function () {
+    const DAIBPool = new ethers.Contract(
+      DAIBPoolAddress,
+      BPoolABI,
+      ethers.provider.getSigner(5)
+    );
+    const DAIStakeLocker = new ethers.Contract(
+      DAIStakeLockerAddress,
+      stakeLockerABI,
+      ethers.provider.getSigner(5)
+    );
+    DAIacct5 = new ethers.Contract(
+      DAIAddress,
+      DAIAbi,
+      ethers.provider.getSigner(5)
+    );
+    usdstake = BigInt(1000);
+    DAIstake = BigInt(10 ** 18) * usdstake;
+    DAI.transfer(accounts[5], DAIstake);
+    DAIacct5.approve(DAIBPoolAddress, DAIstake);
+    DAIBPool.joinswapExternAmountIn(DAIAddress, DAIstake, 0);
+    bptbal = BigInt(await DAIBPool.balanceOf(accounts[5]));
+    await DAIBPool.approve(DAIStakeLockerAddress, bptbal);
+    await DAIStakeLocker.stake(bptbal);
+    fdtbal = await DAIStakeLocker.balanceOf(accounts[5]);
+    expect(fdtbal.toString()).to.equal(bptbal.toString())
   });
 });
