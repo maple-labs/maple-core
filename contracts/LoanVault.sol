@@ -92,8 +92,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         MapleGlobals = IGlobals(_mapleGlobals);
         borrower = tx.origin;
 
-        _initializeFundingLocker(_fundingLockerFactory);
-        _initializeCollateralLocker(_collateralLockerFactory);
+        // _initializeFundingLocker(_fundingLockerFactory);
+        // _initializeCollateralLocker(_collateralLockerFactory);
 
     }
 
@@ -101,11 +101,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
      * @notice Initailize the FundingLocker for this contract.
      * @param _fundingLockerFactory The factory contract to initialize FundingLocker through.
      */
-    function _initializeFundingLocker(address _fundingLockerFactory) private {
-        address _fundingLocker = IFundingLockerFactory(_fundingLockerFactory).newLocker(
-            assetRequested,
-            address(this)
-        );
+    function _initializeFundingLocker(address _fundingLockerFactory) public {
+        address _fundingLocker = IFundingLockerFactory(_fundingLockerFactory).newLocker(assetRequested);
         fundingLocker = _fundingLocker;
     }
 
@@ -114,10 +111,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
      * @param _collateralLockerFactory The factory contract to initialize CollateralLocker through.
      */
     function _initializeCollateralLocker(address _collateralLockerFactory) private {
-        address _collateralLocker = ICollateralLockerFactory(_collateralLockerFactory).newLocker(
-            assetCollateral,
-            address(this)
-        );
+        address _collateralLocker = ICollateralLockerFactory(_collateralLockerFactory).newLocker(assetCollateral);
         collateralLocker = _collateralLocker;
     }
 
