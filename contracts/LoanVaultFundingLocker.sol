@@ -19,5 +19,12 @@ contract LoanVaultFundingLocker {
         require(msg.sender == loanVault, "LoanVaultFundingLocker::ERR_ISLOANVAULT_CHECK");
         _;
     }
+
+    /// @notice Transfers _amount of fundingAsset to _destination.
+    /// @param _destination Desintation to transfer fundingAsset to.
+    /// @param _amount Amount of fundingAsset to transfer.
+    function pull(address _destination, uint _amount) isLoanVault() public returns(bool) {
+        return IERC20(fundingAsset).transfer(_destination, _amount);
+    }
     
 }

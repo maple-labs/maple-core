@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./interface/IGlobals.sol";
+import "./interface/IFundingLocker.sol";
 import "./interface/IFundingLockerFactory.sol";
 import "./interface/ICollateralLockerFactory.sol";
 
@@ -53,6 +54,11 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
     modifier isState(State _state) {
         require(loanState == _state, "LoanVault::FAIL_STATE_CHECK");
+        _;
+    }
+
+    modifier isBorrower() {
+        require(msg.sender == borrower, "LoanVault::MSG_SENDER_NOT_BORROWER");
         _;
     }
 
@@ -113,6 +119,19 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             address(this)
         );
         collateralLocker = _collateralLocker;
+    }
+
+    /// @notice Prepare this loan for funding by transitioning loanState from Initialized to Funding.
+    function preapreLoan() external isState(State.Initialized) isBorrower {
+        loanState = State.Funding;
+    }
+
+    /// @notice End funding period by claiming funds and transitioning loanState from Funding to Active.
+    /// @param _amount The amount of fundingAsset borrower will claim, remainder returned to lenders.
+    function endFunding(uint _amount) external isState(State.Funding) isBorrower {
+        loanState = State.Active;
+        require(IFundingLocker(fundingLocker).pull(borrower, _amount), "LoanVault::endFunding:ERR_PULL");
+        require(IFundingLocker(fundingLocker).drain(),"LoanVault::endFunding:ERR_DRAIN");
     }
 
     /**
