@@ -26,5 +26,11 @@ contract LoanVaultFundingLocker {
     function pull(address _destination, uint _amount) isLoanVault() public returns(bool) {
         return IERC20(fundingAsset).transfer(_destination, _amount);
     }
+
+    /// @notice Transfers the remainder of fundingAsset to LoanVault;
+    function drain() isLoanVault() public returns(bool) {
+        uint transferAmount = IERC20(fundingAsset).balanceOf(address(this));
+        return IERC20(fundingAsset).transfer(loanVault, transferAmount);
+    }
     
 }
