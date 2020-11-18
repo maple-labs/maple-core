@@ -41,7 +41,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         address _stakedAsset,
         address _liquidAsset,
         address _parentLP,
-	address _globals
+        address _globals
     ) public FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") {
         liquidAsset = _liquidAsset;
         stakedAsset = _stakedAsset;
@@ -49,7 +49,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         IParentLP = ILiquidityPool(_parentLP);
         ILiquidAsset = IERC20(_liquidAsset);
         IStakedAsset = IERC20(_stakedAsset);
-	IMapleGlobals = IGlobals(_globals);
+        IMapleGlobals = IGlobals(_globals);
     }
 
     /**
@@ -73,7 +73,12 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         );
         updateFundsReceived();
         withdrawFunds(); //has to be before the transfer or they will end up here
-        require(transferFrom(msg.sender, address(this), _amt));
+        _transfer(msg.sender, address(this), _amt);
+        require(
+            IStakedAsset.transferFrom(address(this),msg.sender, _amt),
+            "LPStakeLocker: ERR I DONT HAVE YOUR BPTs"
+        );
+	//are tx's being sent directly here? should i be using tx.origin?
         _burn(address(this), _amt);
     }
 
@@ -112,7 +117,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         uint256 _out = ((_time / (IMapleGlobals.unstakeDelay() + 1)) * _bal) / _ONE;
         //the plus one is to avoid division by 0 if unstakeDelay is 0
         //also i do indeed want this to return 0 if denominator is less than _ONE
-	//will output more than _bal in current form
+        //will output more than _bal in current form
         return _out;
     }
 

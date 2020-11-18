@@ -298,13 +298,32 @@ describe("Liquidity Pool and respective lockers", function () {
     );
     usdstake = BigInt(1000);
     DAIstake = BigInt(10 ** 18) * usdstake;
-    DAI.transfer(accounts[5], DAIstake);
-    DAIacct5.approve(DAIBPoolAddress, DAIstake);
-    DAIBPool.joinswapExternAmountIn(DAIAddress, DAIstake, 0);
+    await DAI.transfer(accounts[5], DAIstake);
+    await DAIacct5.approve(DAIBPoolAddress, DAIstake);
+    await DAIBPool.joinswapExternAmountIn(DAIAddress, DAIstake, 0);
     bptbal = BigInt(await DAIBPool.balanceOf(accounts[5]));
     await DAIBPool.approve(DAIStakeLockerAddress, bptbal);
     await DAIStakeLocker.stake(bptbal);
     fdtbal = await DAIStakeLocker.balanceOf(accounts[5]);
-    expect(fdtbal.toString()).to.equal(bptbal.toString())
+    expect(fdtbal.toString()).to.equal(bptbal.toString());
+  });
+  it("can third party unstake with zero unstakeDelay?, did he get his BPTs back?", async function () {
+    const DAIStakeLocker = new ethers.Contract(
+      DAIStakeLockerAddress,
+      stakeLockerABI,
+      ethers.provider.getSigner(5)
+    );
+    const DAIBPool = new ethers.Contract(
+      DAIBPoolAddress,
+      BPoolABI,
+      ethers.provider.getSigner(5)
+    );
+
+    fdtbal = await DAIStakeLocker.balanceOf(accounts[5]);
+    bptbal1 = BigInt(await DAIBPool.balanceOf(accounts[5]));
+    await DAIStakeLocker.unstake(fdtbal);
+    bptbal2 = BigInt(await DAIBPool.balanceOf(accounts[5]));
+    bptbaldiff = bptbal2 - bptbal1;
+    expect(bptbaldiff.toString()).to.equal(fdtbal.toString());
   });
 });
