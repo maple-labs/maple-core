@@ -379,4 +379,35 @@ describe("Liquidity Pool and respective lockers", function () {
     expect(bptbaldiff.toString()).to.equal(fdtbal.toString());
     expect(fdtbal2.toString()).to.equal("0");
   });
+  it("poolDelegate can not transfer his FDTs", async function () {
+    const DAIStakeLocker = new ethers.Contract(
+      DAIStakeLockerAddress,
+      stakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+    const DAIBPool = new ethers.Contract(
+      DAIBPoolAddress,
+      BPoolABI,
+      ethers.provider.getSigner(0)
+    );
+    await expect(DAIStakeLocker.transfer(accounts[2], 100)).to.be.revertedWith(
+      "LPStakeLocker: ERR DELEGATE STAKE LOCKED"
+    );
+  });
+
+  it("poolDelegate can not unstake his FDTs", async function () {
+    const DAIStakeLocker = new ethers.Contract(
+      DAIStakeLockerAddress,
+      stakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+    const DAIBPool = new ethers.Contract(
+      DAIBPoolAddress,
+      BPoolABI,
+      ethers.provider.getSigner(0)
+    );
+    await expect(DAIStakeLocker.unstake(100)).to.be.revertedWith(
+      "LPStakeLocker: ERR DELEGATE STAKE LOCKED"
+    );
+  });
 });
