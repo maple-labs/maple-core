@@ -58,15 +58,15 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
      */
     function stake(uint256 _amt) external {
         require(
-            IStakedAsset.transferFrom(tx.origin, address(this), _amt),
+            IStakedAsset.transferFrom(msg.sender, address(this), _amt),
             "LPStakeLocker: ERR_INSUFFICIENT_APPROVED_FUNDS"
         );
-        _updateStakeDate(tx.origin, _amt);
-        _mint(tx.origin, _amt);
+        _updateStakeDate(msg.sender, _amt);
+        _mint(msg.sender, _amt);
     }
 
     function unstake(uint256 _amt) external {
-        //add delay logic, force fundstoken to WD
+	require(msg.sender!=IParentLP.poolDelegate() || IParentLP.poolDefunct());
         require(
             _amt <= getUnstakeableBalance(msg.sender),
             "LPStakelocker: not enough unstakeable balance"
@@ -78,7 +78,6 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
             IStakedAsset.transferFrom(address(this), msg.sender, _amt),
             "LPStakeLocker: ERR I DONT HAVE YOUR BPTs"
         );
-        //are tx's being sent directly here? should i be using tx.origin?
         _burn(address(this), _amt);
     }
 

@@ -13,7 +13,11 @@ import "./interface/IGlobals.sol";
 
 // @title ILPStakeLockerFactory is responsbile for instantiating/initializing a staked asset locker.
 interface ILPStakeLockerFactory {
-    function newLocker(address _stakedAsset, address _liquidAsset, address _globals) external returns (address);
+    function newLocker(
+        address _stakedAsset,
+        address _liquidAsset,
+        address _globals
+    ) external returns (address);
 }
 
 // @title ILPStakeLocker interfaces with the staked asset locker of the liquidity pool.
@@ -77,6 +81,9 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     // @notice true if the Liquidity Pool is fully set up and delegate meets staking criteria.
     bool public isFinalized;
 
+    // @notice set to true when the pool is closed so delegate can remove his stake
+    bool public isDefunct;
+
     //@notice decimals() for liquid asset
     uint8 private liquidAssetDecimals;
 
@@ -112,6 +119,15 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         );
     }
 
+    modifier finalized() {
+        require(isFinalized, "LiquidityPool: IS NOT FINALIZED");
+        _;
+    }
+    modifier notDefunct() {
+        require(!isDefunct, "LiquidityPool: IS NOT FINALIZED");
+        _;
+    }
+
     function makeStakeLocker(address _stakedAsset) private returns (address) {
         require(
             IBPool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&
@@ -120,7 +136,11 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
                 (IBPool(_stakedAsset).getNumTokens() == 2),
             "FDT_LP.makeStakeLocker: BALANCER_POOL_NOT_VALID"
         );
-        address _stakedAssetLocker = IStakeLockerFactory.newLocker(_stakedAsset, liquidAsset,address(MapleGlobals));
+        address _stakedAssetLocker = IStakeLockerFactory.newLocker(
+            _stakedAsset,
+            liquidAsset,
+            address(MapleGlobals)
+        );
         return _stakedAssetLocker;
     }
 
@@ -140,7 +160,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 
     // @notice deposit in liquidasset get equal parts FDT. muste approve this contract for it to work
     // @param _amt is ammount to deposit
-    function deposit(uint256 _amt) external {
+    function deposit(uint256 _amt) external notDefunct finalized {
         //this means tether cna not be used.
         require(
             ILiquidAsset.allowance(msg.sender, address(this)) >= _amt,
@@ -178,7 +198,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @notice Withdraws all available funds for a token holder
      */
-    function withdrawFunds() public override {//must be public rather than external
+    function withdrawFunds() public override {
+        //must be public rather than external
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
