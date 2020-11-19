@@ -52,6 +52,14 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         IMapleGlobals = IGlobals(_globals);
     }
 
+    modifier delegateLock() {
+        require(
+            msg.sender != IParentLP.poolDelegate() || IParentLP.isDefunct(),
+            "LPStakeLocker:ERR DELEGATE STAKE LOCKED"
+        );
+        _;
+    }
+
     /**
      * @notice Deposit stakedAsset and mint an equal number of FundsDistributionTokens to the user
      * @param _amt Amount of stakedAsset(BPTs) to stake
@@ -65,8 +73,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         _mint(msg.sender, _amt);
     }
 
-    function unstake(uint256 _amt) external {
-        require(msg.sender != IParentLP.poolDelegate() || IParentLP.poolDefunct());
+    function unstake(uint256 _amt) external delegateLock {
         require(
             _amt <= getUnstakeableBalance(msg.sender),
             "LPStakelocker: not enough unstakeable balance"
@@ -159,11 +166,10 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         address from,
         address to,
         uint256 value
-    ) internal override{
-        require(msg.sender != IParentLP.poolDelegate() || IParentLP.poolDefunct());
+    ) internal override delegateLock{
         super._transfer(from, to, value);
-	_updateStakeDate(to,value);
-	//can improve this so the updated age of tokens reflects their age in the senders wallets
-	//right now it simply is equivalent to the age update if the receiver was making a new stake
+        _updateStakeDate(to, value);
+        //can improve this so the updated age of tokens reflects their age in the senders wallets
+        //right now it simply is equivalent to the age update if the receiver was making a new stake
     }
 }
