@@ -7,20 +7,15 @@ import "./LPStakeLocker.sol";
 contract LPStakeLockerFactory {
     // Mapping data structure for owners of staked asset lockers.
     mapping(address => address) private lockerPool;
-    address public immutable globals;
-
-    constructor(address _globals) public {
-        globals = _globals;
-    }
 
     // @notice Creates a new locker.
     // @param _stakedAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
     // @param _liquidAsset The address of the dividend token, also the primary investment asset of the LP.
     // @return The address of the newly created locker.
     // TODO: Consider whether this needs to be external or public.
-    function newLocker(address _stakedAsset, address _liquidAsset) external returns (address) {
+    function newLocker(address _stakedAsset, address _liquidAsset, address _globals) external returns (address) {
         address _ownerLP = address(msg.sender);
-        address locker = address(new LPStakeLocker(_stakedAsset, _liquidAsset, _ownerLP, globals));
+        address locker = address(new LPStakeLocker(_stakedAsset, _liquidAsset, _ownerLP, _globals));
         lockerPool[address(locker)] = _ownerLP; //address of LP contract that sent it, not poolManager
         return address(locker);
     }

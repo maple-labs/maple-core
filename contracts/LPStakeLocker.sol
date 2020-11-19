@@ -30,9 +30,9 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     IGlobals private IMapleGlobals;
     ILiquidityPool private IParentLP;
 
-    uint256 constant _ONE = 10**18; //this is for synthetic float calculations
-    //DELET THIS GET FROM GLOBALS
-    uint256 unstakeDelay; //in seconds
+    //scaling factor for synthetic float division
+    uint256 constant _ONE = 10**18;
+
     // @notice parent liquidity pool
     address public immutable parentLP;
 
@@ -75,10 +75,10 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         withdrawFunds(); //has to be before the transfer or they will end up here
         _transfer(msg.sender, address(this), _amt);
         require(
-            IStakedAsset.transferFrom(address(this),msg.sender, _amt),
+            IStakedAsset.transferFrom(address(this), msg.sender, _amt),
             "LPStakeLocker: ERR I DONT HAVE YOUR BPTs"
         );
-	//are tx's being sent directly here? should i be using tx.origin?
+        //are tx's being sent directly here? should i be using tx.origin?
         _burn(address(this), _amt);
     }
 
@@ -96,9 +96,13 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         _updateFundsTokenBalance();
     }
 
+    /** @notice updates data structure that stores the information used to calculate unstake delay
+     * @param _addy address of staker
+     * @param _amt ammount he is staking
+     */
     function _updateStakeDate(address _addy, uint256 _amt) internal {
         //going to have to override _transder() to make this work properly
-        //or just allow transfer to reset the staking period
+        //or just allow transfer to reset the staking period(as it is without override)
         if (stakeDate[_addy] == 0) {
             stakeDate[_addy] = block.timestamp;
         } else {
@@ -111,13 +115,20 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         }
     }
 
+    /**
+     * @dev view function returning your unstakeable balance.
+     * @param _addy wallet address
+     * @return uint ammount of BPTs that may be unstaked
+     */
     function getUnstakeableBalance(address _addy) public view returns (uint256) {
         uint256 _bal = balanceOf(_addy);
         uint256 _time = (block.timestamp - stakeDate[_addy]) * _ONE;
         uint256 _out = ((_time / (IMapleGlobals.unstakeDelay() + 1)) * _bal) / _ONE;
-        //the plus one is to avoid division by 0 if unstakeDelay is 0
+        //the plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
         //also i do indeed want this to return 0 if denominator is less than _ONE
-        //will output more than _bal in current form
+        if (_out > _bal) {
+            _out = _bal;
+        }
         return _out;
     }
 

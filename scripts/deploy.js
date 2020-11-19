@@ -23,9 +23,7 @@ async function main() {
     mapleToken.address,
   ]);
 
-  const LPStakeLockerFactory = await deploy("LPStakeLockerFactory", [
-    mapleGlobals.address,
-  ]);
+  const LPStakeLockerFactory = await deploy("LPStakeLockerFactory");
 
   const liquidAssetLockerFactory = await deploy("LiquidAssetLockerFactory");
 
