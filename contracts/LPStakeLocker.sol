@@ -66,7 +66,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     }
 
     function unstake(uint256 _amt) external {
-	require(msg.sender!=IParentLP.poolDelegate() || IParentLP.poolDefunct());
+        require(msg.sender != IParentLP.poolDelegate() || IParentLP.poolDefunct());
         require(
             _amt <= getUnstakeableBalance(msg.sender),
             "LPStakelocker: not enough unstakeable balance"
@@ -100,8 +100,6 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
      * @param _amt ammount he is staking
      */
     function _updateStakeDate(address _addy, uint256 _amt) internal {
-        //going to have to override _transder() to make this work properly
-        //or just allow transfer to reset the staking period(as it is without override)
         if (stakeDate[_addy] == 0) {
             stakeDate[_addy] = block.timestamp;
         } else {
@@ -155,5 +153,17 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         if (newFunds > 0) {
             _distributeFunds(newFunds.toUint256Safe());
         }
+    }
+
+    function _transfer(
+        address from,
+        address to,
+        uint256 value
+    ) internal override{
+        require(msg.sender != IParentLP.poolDelegate() || IParentLP.poolDefunct());
+        super._transfer(from, to, value);
+	_updateStakeDate(to,value);
+	//can improve this so the updated age of tokens reflects their age in the senders wallets
+	//right now it simply is equivalent to the age update if the receiver was making a new stake
     }
 }

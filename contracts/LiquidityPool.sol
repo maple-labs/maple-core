@@ -124,7 +124,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         _;
     }
     modifier notDefunct() {
-        require(!isDefunct, "LiquidityPool: IS NOT FINALIZED");
+        require(!isDefunct, "LiquidityPool: IS DEFUNCT");
         _;
     }
 
