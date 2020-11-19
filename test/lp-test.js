@@ -126,6 +126,26 @@ describe("Liquidity Pool and respective lockers", function () {
     await DAIBPool.approve(DAIStakeLockerAddress, "100000000000000000000");
     await DAILocker.stake("100000000000000000000");
   });
+  it("Can not deposit into DAI liquidity pool before it is finalized", async function () {
+    const money = 1;
+    const dec = BigInt(await DAI.decimals());
+    const moneyDAI = BigInt(money) * BigInt(10) ** dec;
+    const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
+    await DAI.approve(DAILP.address, moneyDAI);
+    await expect(DAILP.deposit(moneyDAI)).to.be.revertedWith(
+      "LiquidityPool: IS NOT FINALIZED"
+    );
+  });
+  it("Can not deposit into USDC liquidity pool before it is finalized", async function () {
+    const money = 1;
+    const dec = BigInt(await USDC.decimals());
+    const moneyUSDC = BigInt(money) * BigInt(10) ** dec;
+    const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
+    await USDC.approve(USDCLP.address, moneyUSDC);
+    await expect(USDCLP.deposit(moneyUSDC)).to.be.revertedWith(
+      "LiquidityPool: IS NOT FINALIZED"
+    );
+  });
   it("Can finalize DAI pool with stake", async function () {
     await DAILP.finalize();
     isfin = await DAILP.isFinalized();
@@ -325,7 +345,7 @@ describe("Liquidity Pool and respective lockers", function () {
       BPoolABI,
       ethers.provider.getSigner(5)
     );
-	await MPLGlobals.setUnstakeDelay("999999999999999999");
+    await MPLGlobals.setUnstakeDelay("999999999999999999");
     fdtbal = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
     bptbal1 = BigInt(await DAIBPool.balanceOf(accounts[5]));
     await expect(DAIStakeLocker.unstake(fdtbal)).to.be.revertedWith(
