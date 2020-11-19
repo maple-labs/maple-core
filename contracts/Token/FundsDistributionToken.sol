@@ -114,7 +114,7 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 		address from,
 		address to,
 		uint256 value
-	) internal override {
+	) internal override virtual{
 		super._transfer(from, to, value);
 
 		int256 _magCorrection = pointsPerShare.mul(value).toInt256Safe();
