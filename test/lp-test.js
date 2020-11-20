@@ -1,4 +1,5 @@
 const { expect } = require("chai");
+const BigNumber = require('bignumber.js');
 const DAIAddress = require("../../contracts/src/contracts/MintableTokenDAI.address.js");
 const DAIAbi = require("../../contracts/src/contracts/MintableTokenDAI.abi.js");
 const BPoolABI = require("../../contracts/src/contracts/BPool.abi.js");
@@ -27,6 +28,11 @@ describe("Liquidity Pool and respective lockers", function () {
   let USDCLP;
   before(async () => {
     accounts = await ethers.provider.listAccounts();
+    MPLGlobals = new ethers.Contract(
+      MPLGlobalsAddress,
+      MPLGlobalsABI,
+      ethers.provider.getSigner(0)
+    );
 
     LPFactory = new ethers.Contract(
       LPFactoryAddress,
@@ -330,11 +336,6 @@ describe("Liquidity Pool and respective lockers", function () {
     expect(fdtbal.toString()).to.equal(bptbal.toString());
   });
   it("third party CANT unstake with unsatisfied unstakeDelay?", async function () {
-    const MPLGlobals = new ethers.Contract(
-      MPLGlobalsAddress,
-      MPLGlobalsABI,
-      ethers.provider.getSigner(0)
-    );
     const DAIStakeLocker = new ethers.Contract(
       DAIStakeLockerAddress,
       stakeLockerABI,
@@ -351,6 +352,7 @@ describe("Liquidity Pool and respective lockers", function () {
     await expect(DAIStakeLocker.unstake(fdtbal)).to.be.revertedWith(
       "LPStakelocker: not enough unstakeable balance"
     );
+
     fdtbal2 = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
     bptbal2 = BigInt(await DAIBPool.balanceOf(accounts[5]));
     bptbaldiff = bptbal2 - bptbal1;
@@ -369,7 +371,6 @@ describe("Liquidity Pool and respective lockers", function () {
       BPoolABI,
       ethers.provider.getSigner(5)
     );
-
     fdtbal = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
     bptbal1 = BigInt(await DAIBPool.balanceOf(accounts[5]));
     await DAIStakeLocker.unstake(fdtbal);
@@ -405,8 +406,65 @@ describe("Liquidity Pool and respective lockers", function () {
       BPoolABI,
       ethers.provider.getSigner(0)
     );
-    await expect(DAIStakeLocker.transfer(accounts[2],100)).to.be.revertedWith(
+    await expect(DAIStakeLocker.transfer(accounts[2], 100)).to.be.revertedWith(
       "LPStakeLocker:ERR DELEGATE STAKE LOCKED"
     );
+  });
+  it("check unstakeable balance", async function () {
+    const DAIStakeLocker = new ethers.Contract(
+      DAIStakeLockerAddress,
+      stakeLockerABI,
+      ethers.provider.getSigner(5)
+    );
+    const DAIBPool = new ethers.Contract(
+      DAIBPoolAddress,
+      BPoolABI,
+      ethers.provider.getSigner(5)
+    );
+    await MPLGlobals.setUnstakeDelay("100");
+
+    bptbal = BigInt(await DAIBPool.balanceOf(accounts[5]));
+    await DAIBPool.approve(DAIStakeLockerAddress, bptbal);
+    await DAIStakeLocker.stake(bptbal);
+    await new Promise((r) => setTimeout(r, 2000));
+  });
+  it("check unstakeable balance", async function () {
+    const DAIStakeLocker = new ethers.Contract(
+      DAIStakeLockerAddress,
+      stakeLockerABI,
+      ethers.provider.getSigner(5)
+    );
+    await MPLGlobals.setUnstakeDelay("100");
+
+    const ubal = await DAIStakeLocker.getUnstakeableBalance(accounts[5]);
+    console.log(ubal.toString());
+  });
+  it("Check FDT capability in DAI stake locker", async function () {
+    const DAIStakeLocker = new ethers.Contract(
+      DAIStakeLockerAddress,
+      stakeLockerABI,
+      ethers.provider.getSigner(5)
+    );
+    const DAIBPool = new ethers.Contract(
+      DAIBPoolAddress,
+      BPoolABI,
+      ethers.provider.getSigner(5)
+    );
+    bptbal = BigInt(await DAIBPool.balanceOf(accounts[5]));
+    await DAIBPool.approve(DAIStakeLockerAddress, bptbal);
+    await DAIStakeLocker.stake(bptbal);
+    DAIReward = BigInt(10000) * BigInt(10 ** 18);
+    await DAI.transfer(DAIStakeLockerAddress, DAIReward);
+    await DAIStakeLocker.updateFundsReceived();
+    DAIbal0 = BigInt(await DAI.balanceOf(accounts[5]));
+    await DAIStakeLocker.withdrawFunds();
+    DAIbal1 = BigInt(await DAI.balanceOf(accounts[5]));
+    baldiff = DAIbal1 - DAIbal0;
+    FDTbal = await DAIStakeLocker.balanceOf(accounts[5]);
+    totalFDT = await DAIStakeLocker.totalSupply();
+    ratio = FDTbal / totalFDT;
+    expectedDAI = BigNumber(ratio)*BigNumber(DAIReward);
+    console.log(expectedDAI);
+    console.log(baldiff.toString());
   });
 });
