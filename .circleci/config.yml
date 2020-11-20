@@ -14,7 +14,7 @@ jobs:
           command: GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-beta-scaffold.git .
       - run:
           name: Checkout mbs dependencies
-          command: yarn setup
+          command: GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" yarn setup
       - run:
           name: Checkout current maple-core branch
           command: cd ~/project/packages/maple-core && git checkout $CIRCLE_BRANCH
