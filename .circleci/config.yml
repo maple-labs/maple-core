@@ -53,6 +53,7 @@ jobs:
           command: yarn all:test
 
   teardown:
+    <<: *defaults
     steps:
       - run:
           name: Stop mbs chain
