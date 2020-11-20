@@ -36,6 +36,9 @@ jobs:
           name: Run mbs chain
           command: cd ~/project && yarn chain >> /dev/null & # Note: pipe this to /dev/null once happy with config
       - run:
+          name: Wait for chain to start
+          command: sleep 3
+      - run:
           name: Run tests for maple-core
           command: cd ~/project && yarn all:test
 
