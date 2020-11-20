@@ -4,17 +4,16 @@
   "scripts": {
     "chain": "hardhat node",
     "test": "hardhat test",
-    "test:globals": "yarn deploy:mbs && hardhat test test/globals-init.js && hardhat test test/globals-set.js && yarn deploy",
-    "test:token": "yarn deploy:mbs && hardhat test test/mapletoken-basic.js",
+    "test:globals": "yarn deploy && hardhat test test/globals-init.js && hardhat test test/globals-set.js && yarn deploy",
+    "test:token": "yarn deploy && hardhat test test/mapletoken-basic.js",
     "compile": "hardhat compile",
-    "deploy:mbs": "hardhat run scripts/deploy.js && hardhat run scripts/publish-mbs.js",
-    "deploy:solo": "hardhat run scripts/deploy.js && hardhat run scripts/publish-solo.js",
+    "deploy": "hardhat run scripts/deploy.js && hardhat run scripts/publish.js",
     "watch": "node scripts/watch.js",
     "accounts": "hardhat accounts",
     "balance": "hardhat balance",
     "docs": "npx solidity-docgen --solc-module solc -i ./contracts -o ./docs -t ./docs",
     "lint": "npx solhint contracts/**/*.sol",
-    "prettier:solidity": "npx prettier --write contracts/**/*.sol"
+    "pretty": "npx prettier --write contracts/**/*.sol"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
   "keywords": [
@@ -41,9 +40,10 @@
     "prettier": "^2.1.2",
     "prettier-plugin-solidity": "^1.0.0-alpha.59",
     "solhint": "^3.3.1",
-    "solhint-plugin-prettier": "^0.0.5"
+    "solhint-plugin-prettier": "0.0.5"
   },
   "dependencies": {
+    "@maplelabs/hardhat-scripts": "^1.0.2",
     "@openzeppelin/contracts": "3.2.1-solc-0.7",
     "bignumber.js": "^9.0.1",
     "solc": "0.7.0"
