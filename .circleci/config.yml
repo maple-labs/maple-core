@@ -21,10 +21,15 @@ jobs:
       - run:
           name: Install maple-core deps
           command: yarn
+      - persist_to_workspace:
+          root: ~/project
 
   test:
     <<: *defaults
     steps:
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: ~/project
       - run:
           name: Run mbs chain
           command: cd ~/project && yarn chain >> /dev/null & # Note: pipe this to /dev/null once happy with config
