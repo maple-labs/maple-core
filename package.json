@@ -4,8 +4,8 @@
   "scripts": {
     "chain": "hardhat node",
     "test": "hardhat test",
-    "test:globals": "yarn deploy:mbs && hardhat test test/globals-init.js && hardhat test test/globals-set.js && yarn deploy",
-    "test:token": "yarn deploy:mbs && hardhat test test/mapletoken-basic.js",
+    "test:globals": "yarn deploy && hardhat test test/globals-init.js && hardhat test test/globals-set.js && yarn deploy",
+    "test:token": "yarn deploy && hardhat test test/mapletoken-basic.js",
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.js && hardhat run scripts/publish.js",
     "watch": "node scripts/watch.js",
