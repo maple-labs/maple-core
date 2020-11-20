@@ -34,7 +34,8 @@ jobs:
           at: ~/project
       - run:
           name: Run mbs chain
-          command: cd ~/project && yarn chain >> /dev/null & # Note: pipe this to /dev/null once happy with config
+          command: cd ~/project && yarn chain >> /dev/null # Note: pipe this to /dev/null once happy with config
+          background: true
       - run:
           name: Wait for chain to start
           command: sleep 3
