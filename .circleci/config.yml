@@ -1,0 +1,69 @@
+version: 2
+
+aliases:
+  - &defaults
+    docker:
+      - image: circleci/node:10
+
+  - &cache_key_node_modules
+    key: v1-node_modules-{{ checksum "package-lock.json" }}
+
+jobs:
+  dependencies:
+    <<: *defaults
+    steps:
+      - run:
+          name: Checkout maple-beta-scaffold
+          command: git clone git@github.com:maple-labs/maple-beta-scaffold.git .
+      - restore_cache:
+          <<: *cache_key_node_modules
+      - run:
+          name: Install npm dependencies
+          command: |
+            if [ ! -d node_modules ]; then
+              npm ci
+            fi
+      - persist_to_workspace:
+          root: .
+          paths:
+            - node_modules
+            - build
+      - save_cache:
+          paths:
+            - node_modules
+          <<: *cache_key_node_modules
+      - run:
+          name: Checkout mbs dependencies
+          command: yarn setup
+      - run:
+          name: Checkout current maple-core branch
+          command: cd packages/maple-core && git checkout $CIRCLE_BRANCH
+      - run:
+          name: Install maple-core deps
+          command: yarn
+
+  test:
+    <<: *defaults
+    steps:
+      - run:
+          name: Run mbs chain
+          command: cd ~ && yarn chain & # Note: pipe this to /dev/null once happy with config
+      - run:
+          name: Run tests for maple-core
+          command: yarn all:test
+
+  teardown:
+    steps:
+      - run:
+          name: Stop mbs chain
+          command: lsof -t -i tcp:8545 | xargs kill
+
+workflows:
+  version: 2
+  everything:
+    jobs:
+      - dependencies
+      - test:
+          requires:
+            - dependencies
+      - teardown
