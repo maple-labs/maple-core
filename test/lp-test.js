@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const BigNumber = require('bignumber.js');
+const BigNumber = require("bignumber.js");
 const DAIAddress = require("../../contracts/src/contracts/MintableTokenDAI.address.js");
 const DAIAbi = require("../../contracts/src/contracts/MintableTokenDAI.abi.js");
 const BPoolABI = require("../../contracts/src/contracts/BPool.abi.js");
@@ -450,20 +450,21 @@ describe("Liquidity Pool and respective lockers", function () {
       BPoolABI,
       ethers.provider.getSigner(5)
     );
-    bptbal = BigNumber(await DAIBPool.balanceOf(accounts[5]));
+    bptbal = BigInt(await DAIBPool.balanceOf(accounts[5]));
     await DAIBPool.approve(DAIStakeLockerAddress, bptbal);
     await DAIStakeLocker.stake(bptbal);
-    DAIReward = BigNumber(10000) * BigNumber(10 ** 18);
+    DAIReward = BigInt(10000) * BigInt(10 ** 18);
     await DAI.transfer(DAIStakeLockerAddress, DAIReward);
     await DAIStakeLocker.updateFundsReceived();
-    DAIbal0 = BigNumber(await DAI.balanceOf(accounts[5]));
+    DAIbal0 = BigInt(await DAI.balanceOf(accounts[5]));
     await DAIStakeLocker.withdrawFunds();
-    DAIbal1 = BigNumber(await DAI.balanceOf(accounts[5]));
+    DAIbal1 = BigInt(await DAI.balanceOf(accounts[5]));
     baldiff = DAIbal1 - DAIbal0;
     FDTbal = await DAIStakeLocker.balanceOf(accounts[5]);
     totalFDT = await DAIStakeLocker.totalSupply();
     ratio = BigNumber(FDTbal / totalFDT);
-    expectedDAI = ratio*DAIReward;
-    expect((expectedDAI - baldiff)<3000)
+    expectedDAI = BigNumber(ratio * BigNumber(DAIReward));
+    //the expected dai is off due to roundoff. i must not be using bignumber correctly here
+    expect(expectedDAI / BigNumber(baldiff)).to.equal(1);
   });
 });
