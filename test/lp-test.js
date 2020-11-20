@@ -450,21 +450,20 @@ describe("Liquidity Pool and respective lockers", function () {
       BPoolABI,
       ethers.provider.getSigner(5)
     );
-    bptbal = BigInt(await DAIBPool.balanceOf(accounts[5]));
+    bptbal = BigNumber(await DAIBPool.balanceOf(accounts[5]));
     await DAIBPool.approve(DAIStakeLockerAddress, bptbal);
     await DAIStakeLocker.stake(bptbal);
-    DAIReward = BigInt(10000) * BigInt(10 ** 18);
+    DAIReward = BigNumber(10000) * BigNumber(10 ** 18);
     await DAI.transfer(DAIStakeLockerAddress, DAIReward);
     await DAIStakeLocker.updateFundsReceived();
-    DAIbal0 = BigInt(await DAI.balanceOf(accounts[5]));
+    DAIbal0 = BigNumber(await DAI.balanceOf(accounts[5]));
     await DAIStakeLocker.withdrawFunds();
-    DAIbal1 = BigInt(await DAI.balanceOf(accounts[5]));
+    DAIbal1 = BigNumber(await DAI.balanceOf(accounts[5]));
     baldiff = DAIbal1 - DAIbal0;
     FDTbal = await DAIStakeLocker.balanceOf(accounts[5]);
     totalFDT = await DAIStakeLocker.totalSupply();
-    ratio = FDTbal / totalFDT;
-    expectedDAI = BigNumber(ratio)*BigNumber(DAIReward);
-    console.log(expectedDAI);
-    console.log(baldiff.toString());
+    ratio = BigNumber(FDTbal / totalFDT);
+    expectedDAI = ratio*DAIReward;
+    expect((expectedDAI - baldiff)<3000)
   });
 });
