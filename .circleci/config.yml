@@ -23,7 +23,8 @@ jobs:
           command: yarn
       - persist_to_workspace:
           root: ~/project
-          path: *
+          paths:
+              - "./*"
 
   test:
     <<: *defaults
