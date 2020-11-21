@@ -41,7 +41,7 @@ jobs:
           at: ~/project
       - run:
           name: Install hardhat globally
-          command: npm i -g hardhat
+          command: sudo npm i -g hardhat
       - run:
           name: Run mbs chain
           command: cd ~/project && yarn chain >> /dev/null # Note: pipe this to /dev/null once happy with config
