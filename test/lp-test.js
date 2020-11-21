@@ -1,27 +1,24 @@
 const { expect } = require("chai");
-const BigNumber = require("bignumber.js");
-const DAIAddress = require("../../contracts/src/contracts/MintableTokenDAI.address.js");
-const DAIAbi = require("../../contracts/src/contracts/MintableTokenDAI.abi.js");
-const BPoolABI = require("../../contracts/src/contracts/BPool.abi.js");
-const stakeLockerABI = require("../../contracts/src/contracts/LPStakeLocker.abi.js");
-const LPABI = require("../../contracts/src/contracts/LiquidityPool.abi.js");
-const USDCAddress = require("../../contracts/src/contracts/MintableTokenUSDC.address.js");
-const USDCAbi = require("../../contracts/src/contracts/MintableTokenUSDC.abi.js");
+const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
+const DAIAbi = require("../../contracts/localhost/abis/MintableTokenDAI.abi.js");
+const BPoolABI = require("../../contracts/localhost/abis/BPool.abi.js");
+const stakeLockerABI = require("../../contracts/localhost/abis/LPStakeLocker.abi.js");
+const LPABI = require("../../contracts/localhost/abis/LiquidityPool.abi.js");
+const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
+const USDCAbi = require("../../contracts/localhost/abis/MintableTokenUSDC.abi.js");
 
-const bcAddress = require("../../contracts/src/contracts/BCreator.address.js");
-const bcABI = require("../../contracts/src/contracts/BCreator.abi.js");
-const mplAddress = require("../../contracts/src/contracts/MapleToken.address.js");
-const mplABI = require("../../contracts/src/contracts/MapleToken.abi.js");
-const MPLGlobalsABI = require("../../contracts/src/contracts/MapleGlobals.abi.js");
-const MPLGlobalsAddress = require("../../contracts/src/contracts/MapleGlobals.address.js");
-
-const LPLockerFactoryABI = require("../../contracts/src/contracts/LPStakeLockerFactory.abi.js");
-const LPFactoryABI = require("../../contracts/src/contracts/LPFactory.abi.js");
-const LPLockerFactoryAddress = require("../../contracts/src/contracts/LPStakeLockerFactory.address.js");
-const LPFactoryAddress = require("../../contracts/src/contracts/LPFactory.address.js");
-const liquidLockerABI = require("../../contracts/src/contracts/LiquidAssetLocker.abi.js");
-const liquidLockerFactoryABI = require("../../contracts/src/contracts/LiquidAssetLockerFactory.abi.js");
-const liquidLockerFactoryAddress = require("../../contracts/src/contracts/LiquidAssetLockerFactory.address.js");
+const bcAddress = require("../../contracts/localhost/addresses/BCreator.address.js");
+const bcABI = require("../../contracts/localhost/abis/BCreator.abi.js");
+const mplAddress = require("../../contracts/localhost/addresses/MapleToken.address.js");
+const mplABI = require("../../contracts/localhost/abis/MapleToken.abi.js");
+const MPLGlobalsAddress = require("../../contracts/localhost/addresses/MapleGlobals.address.js");
+const LPLockerFactoryABI = require("../../contracts/localhost/abis/LPStakeLockerFactory.abi.js");
+const LPFactoryABI = require("../../contracts/localhost/abis/LPFactory.abi.js");
+const LPLockerFactoryAddress = require("../../contracts/localhost/addresses/LPStakeLockerFactory.address.js");
+const LPFactoryAddress = require("../../contracts/localhost/addresses/LPFactory.address.js");
+const liquidLockerABI = require("../../contracts/localhost/abis/LiquidAssetLocker.abi.js");
+const liquidLockerFactoryABI = require("../../contracts/localhost/abis/LiquidAssetLockerFactory.abi.js");
+const liquidLockerFactoryAddress = require("../../contracts/localhost/addresses/LiquidAssetLockerFactory.address.js");
 
 describe("Liquidity Pool and respective lockers", function () {
   let DAILP;
