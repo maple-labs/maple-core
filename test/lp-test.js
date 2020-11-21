@@ -133,6 +133,24 @@ describe("Liquidity Pool and respective lockers", function () {
     await DAIBPool.approve(DAIStakeLockerAddress, "100000000000000000000");
     await DAILocker.stake("100000000000000000000");
   });
+  it("delegate can unstake BEFORE FINALIZE", async function () {
+    const DAIStakeLocker = new ethers.Contract(
+      DAIStakeLockerAddress,
+      stakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+    const DAIBPool = new ethers.Contract(
+      DAIBPoolAddress,
+      BPoolABI,
+      ethers.provider.getSigner(0)
+    );
+
+    const daibal = await DAIBPool.balanceOf(accounts[0]);
+    await DAIStakeLocker.unstake(100);
+    const daibal2 = await DAIBPool.balanceOf(accounts[0]);
+    expect(daibal2 - daibal).to.equal(100);
+  });
+
   it("Can not deposit into DAI liquidity pool before it is finalized", async function () {
     const money = 1;
     const dec = BigInt(await DAI.decimals());
@@ -429,7 +447,7 @@ describe("Liquidity Pool and respective lockers", function () {
     const bal = await DAIStakeLocker.balanceOf(accounts[5]);
     // this is because the denominator has a +1 to prevent div by 0
     // double precision arithmatic truncation error means we will get inaccuracy after about 15 digits
-    expect(Math.abs(ubal/bal - 2/(stakeDelay+1))<(10**(-15)));
+    expect(Math.abs(ubal / bal - 2 / (stakeDelay + 1)) < 10 ** -15);
   });
   it("Check FDT capability in DAI stake locker", async function () {
     const DAIStakeLocker = new ethers.Contract(
