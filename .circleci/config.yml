@@ -27,7 +27,7 @@ jobs:
       - save_cache:
           paths:
             - ~/usr/local/lib/node_modules  # location depends on npm version
-          key: v1-npm-deps-{{ checksum "package-lock.json" }}
+          key: v1-npm-deps-{{ checksum "~/project/package-lock.json" }}
       - persist_to_workspace:
           root: ~/project
           paths:
