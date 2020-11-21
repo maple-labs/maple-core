@@ -112,51 +112,6 @@ describe("MapleTreasury.sol", function () {
       0,
       0,
       accounts[0],
-<<<<<<< HEAD
-      "99999999999999999999999"
-    )
-
-  })
-
-  it('ensure uniswapRouter is pointing to unsiwapFactory', async function() {
-    const factoryAddress = await uniswapRouter.factory()
-    expect(factoryAddress).to.equals(uniswapFactoryAddress)
-  })
-
-  it('convert DAI to USDC via convertERC20()', async function () {
-    
-    const DAIDecimals = await mintableDAI.decimals()
-    const USDCDecimals = await fundsToken.decimals()
-    let treasuryDAIBalance = await mintableDAI.balanceOf(treasuryAddress)
-    let mapleUSDCBalance = await fundsToken.balanceOf(mapleTokenAddress)
-    treasuryDAIBalance = parseInt(treasuryDAIBalance["_hex"]) / 10**DAIDecimals
-    mapleUSDCBalance = parseInt(mapleUSDCBalance["_hex"]) / 10**USDCDecimals
-
-    expect(await mapleTreasury.convertERC20(mintableDAIAddress))
-
-    treasuryDAIBalance = await mintableDAI.balanceOf(treasuryAddress)
-    mapleUSDCBalance = await fundsToken.balanceOf(mapleTokenAddress)
-    treasuryDAIBalance = parseInt(treasuryDAIBalance["_hex"]) / 10**DAIDecimals
-    mapleUSDCBalance = parseInt(mapleUSDCBalance["_hex"]) / 10**USDCDecimals
-
-  })
-
-  it('claim fee distribution from convertERC20()', async function () {
-    
-    const accounts = await ethers.provider.listAccounts()
-    const preWithdraw = await mapleToken.withdrawnFundsOf(accounts[0])
-
-    expect(await mapleToken.withdrawFunds())
-
-    const postWithdraw = await mapleToken.withdrawnFundsOf(accounts[0])
-
-    expect(parseInt(postWithdraw["_hex"])).to.be.above(parseInt(preWithdraw["_hex"]));
-
-  })
-
-  it('send ETH to mapleTreasury, convert via convertETH()', async function () {
-    
-=======
       Math.floor(Date.now() / 1000) + 1000
     );
   });
@@ -198,7 +153,6 @@ describe("MapleTreasury.sol", function () {
   });
 
   it("send ETH to mapleTreasury, convert via convertETH()", async function () {
->>>>>>> master
     const tx = await ethers.provider.getSigner(0).sendTransaction({
       to: treasuryAddress,
       value: ethers.utils.parseEther("1.0"),
