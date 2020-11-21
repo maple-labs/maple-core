@@ -1,7 +1,7 @@
 const { deploy } = require("@maplelabs/hardhat-scripts");
 
-const mintableUSDC = require("../../contracts/src/contracts/MintableTokenUSDC.address.js");
-const uniswapRouter = require("../../contracts/src/contracts/UniswapV2Router02.address.js");
+const mintableUSDC = require("../../contracts/localhost/addresses/MintableTokenUSDC.address");
+const uniswapRouter = require("../../contracts/localhost/addresses/UniswapV2Router02.address");
 
 const governor = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 
