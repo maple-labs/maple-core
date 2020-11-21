@@ -24,6 +24,9 @@ jobs:
       - run:
           name: Install maple-core deps
           command: npm i # Have to use NPM here beacuse we're checksumming the package-lock
+      - run:
+          name: Install hardhat globally
+          command: sudo npm i -g hardhat
       - save_cache:
           paths:
             - ~/usr/local/lib/node_modules  # location depends on npm version
