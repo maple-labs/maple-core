@@ -1,4 +1,6 @@
 const { expect } = require("chai");
+const BigNumber = require("bignumber.js");
+
 const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
 const DAIAbi = require("../../contracts/localhost/abis/MintableTokenDAI.abi.js");
 const BPoolABI = require("../../contracts/localhost/abis/BPool.abi.js");
@@ -7,11 +9,13 @@ const LPABI = require("../../contracts/localhost/abis/LiquidityPool.abi.js");
 const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
 const USDCAbi = require("../../contracts/localhost/abis/MintableTokenUSDC.abi.js");
 
+const MPLGlobalsABI = require("../../contracts/localhost/abis/MapleGlobals.abi.js");
+const MPLGlobalsAddress = require("../../contracts/localhost/addresses/MapleGlobals.address.js");
+
 const bcAddress = require("../../contracts/localhost/addresses/BCreator.address.js");
 const bcABI = require("../../contracts/localhost/abis/BCreator.abi.js");
 const mplAddress = require("../../contracts/localhost/addresses/MapleToken.address.js");
 const mplABI = require("../../contracts/localhost/abis/MapleToken.abi.js");
-const MPLGlobalsAddress = require("../../contracts/localhost/addresses/MapleGlobals.address.js");
 const LPLockerFactoryABI = require("../../contracts/localhost/abis/LPStakeLockerFactory.abi.js");
 const LPFactoryABI = require("../../contracts/localhost/abis/LPFactory.abi.js");
 const LPLockerFactoryAddress = require("../../contracts/localhost/addresses/LPStakeLockerFactory.address.js");
@@ -377,15 +381,15 @@ describe("Liquidity Pool and respective lockers", function () {
     expect(bptbaldiff.toString()).to.equal(fdtbal.toString());
     expect(fdtbal2.toString()).to.equal("0");
   });
+  it("check isDefunct() DAI LP", async function () {
+    defunct = await DAILP.isDefunct();
+    expect(defunct).to.equal(false);
+  });
+
   it("delegate can not unstake", async function () {
     const DAIStakeLocker = new ethers.Contract(
       DAIStakeLockerAddress,
       stakeLockerABI,
-      ethers.provider.getSigner(0)
-    );
-    const DAIBPool = new ethers.Contract(
-      DAIBPoolAddress,
-      BPoolABI,
       ethers.provider.getSigner(0)
     );
     await expect(DAIStakeLocker.unstake(100)).to.be.revertedWith(
@@ -398,16 +402,11 @@ describe("Liquidity Pool and respective lockers", function () {
       stakeLockerABI,
       ethers.provider.getSigner(0)
     );
-    const DAIBPool = new ethers.Contract(
-      DAIBPoolAddress,
-      BPoolABI,
-      ethers.provider.getSigner(0)
-    );
     await expect(DAIStakeLocker.transfer(accounts[2], 100)).to.be.revertedWith(
       "LPStakeLocker:ERR DELEGATE STAKE LOCKED"
     );
   });
-  it("check unstakeable balance", async function () {
+  it("Check partial unstake ability.", async function () {
     const DAIStakeLocker = new ethers.Contract(
       DAIStakeLockerAddress,
       stakeLockerABI,
@@ -418,23 +417,19 @@ describe("Liquidity Pool and respective lockers", function () {
       BPoolABI,
       ethers.provider.getSigner(5)
     );
-    await MPLGlobals.setUnstakeDelay("100");
+    const stakeDelay = 10;
+    await MPLGlobals.setUnstakeDelay(stakeDelay);
 
     bptbal = BigInt(await DAIBPool.balanceOf(accounts[5]));
     await DAIBPool.approve(DAIStakeLockerAddress, bptbal);
     await DAIStakeLocker.stake(bptbal);
     await new Promise((r) => setTimeout(r, 2000));
-  });
-  it("check unstakeable balance", async function () {
-    const DAIStakeLocker = new ethers.Contract(
-      DAIStakeLockerAddress,
-      stakeLockerABI,
-      ethers.provider.getSigner(5)
-    );
-    await MPLGlobals.setUnstakeDelay("100");
-
+    await MPLGlobals.setUnstakeDelay(stakeDelay); //generic tx to issue a new block so next view can see it
     const ubal = await DAIStakeLocker.getUnstakeableBalance(accounts[5]);
-    console.log(ubal.toString());
+    const bal = await DAIStakeLocker.balanceOf(accounts[5]);
+    // this is because the denominator has a +1 to prevent div by 0
+    // double precision arithmatic truncation error means we will get inaccuracy after about 15 digits
+    expect(Math.abs(ubal/bal - 2/(stakeDelay+1))<(10**(-15)));
   });
   it("Check FDT capability in DAI stake locker", async function () {
     const DAIStakeLocker = new ethers.Contract(

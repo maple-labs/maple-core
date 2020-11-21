@@ -25,6 +25,8 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     // @notice The primary investment asset for the liquidity pool. Also the dividend token for this contract.
     address public liquidAsset;
 
+    bool private isLPDefunct;
+    bool private isLPFinalized;
     // @notice The asset deposited by stakers into this contract, for liquidation during defaults.
     address public stakedAsset;
     IGlobals private IMapleGlobals;
@@ -54,9 +56,13 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     modifier delegateLock() {
         require(
-            msg.sender != IParentLP.poolDelegate() || IParentLP.isDefunct(),
+            msg.sender != IParentLP.poolDelegate() || isLPDefunct || !isLPFinalized,
             "LPStakeLocker:ERR DELEGATE STAKE LOCKED"
         );
+        _;
+    }
+    modifier isLP() {
+        require(msg.sender == parentLP, "LPStakeLocker:ERR UNAUTHORIZED");
         _;
     }
 
@@ -100,6 +106,14 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         );
 
         _updateFundsTokenBalance();
+    }
+
+    function deleteLP() public isLP{
+        isLPDefunct = true;
+    }
+
+    function finalizeLP() public isLP {
+        isLPFinalized = true;
     }
 
     /** @notice updates data structure that stores the information used to calculate unstake delay
@@ -166,7 +180,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         address from,
         address to,
         uint256 value
-    ) internal override delegateLock{
+    ) internal override delegateLock {
         super._transfer(from, to, value);
         _updateStakeDate(to, value);
         //can improve this so the updated age of tokens reflects their age in the senders wallets

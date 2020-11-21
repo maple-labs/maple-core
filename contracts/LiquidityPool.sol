@@ -29,6 +29,10 @@ interface ILPStakeLocker {
     function withdrawUnstaked(uint256 _amountUnstaked) external returns (uint256);
 
     function withdrawInterest() external returns (uint256);
+
+    function deleteLP() external;
+
+    function finalizeLP() external;
 }
 
 interface ILiquidAssetLockerFactory {
@@ -136,11 +140,9 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
                 (IBPool(_stakedAsset).getNumTokens() == 2),
             "FDT_LP.makeStakeLocker: BALANCER_POOL_NOT_VALID"
         );
-        address _stakedAssetLocker = IStakeLockerFactory.newLocker(
-            _stakedAsset,
-            liquidAsset,
-            address(MapleGlobals)
-        );
+        address _stakedAssetLocker =
+            IStakeLockerFactory.newLocker(_stakedAsset, liquidAsset, address(MapleGlobals));
+        IStakedAssetLocker = ILPStakeLocker(_stakedAssetLocker);
         return _stakedAssetLocker;
     }
 
@@ -156,6 +158,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         );
 
         isFinalized = true;
+        IStakedAssetLocker.finalizeLP();
     }
 
     // @notice deposit in liquidasset get equal parts FDT. muste approve this contract for it to work
