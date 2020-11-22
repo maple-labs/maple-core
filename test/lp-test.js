@@ -477,4 +477,18 @@ describe("Liquidity Pool and respective lockers", function () {
     //the expected dai is off due to roundoff. i must not be using bignumber correctly here
     expect(expectedDAI / BigNumber(baldiff)).to.equal(1);
   });
+  it("Check that random people can not call admin commands on stake lockers", async function () {
+    const USDCStakeLocker = new ethers.Contract(
+      USDCStakeLockerAddress,
+      stakeLockerABI,
+      ethers.provider.getSigner(2)
+    );
+
+    await expect(USDCStakeLocker.deleteLP()).to.be.revertedWith(
+      "LPStakeLocker:ERR UNAUTHORIZED"
+    );
+    await expect(USDCStakeLocker.finalizeLP()).to.be.revertedWith(
+      "LPStakeLocker:ERR UNAUTHORIZED"
+    );
+  });
 });

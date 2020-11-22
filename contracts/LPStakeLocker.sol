@@ -62,7 +62,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         _;
     }
     modifier isLP() {
-        require(msg.sender == parentLP, "LPStakeLocker:ERR UNAUTHORIZED");
+        require(msg.sender==parentLP, "LPStakeLocker:ERR UNAUTHORIZED");
         _;
     }
 
@@ -108,11 +108,11 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         _updateFundsTokenBalance();
     }
 
-    function deleteLP() public isLP{
+    function deleteLP() external isLP {
         isLPDefunct = true;
     }
 
-    function finalizeLP() public isLP {
+    function finalizeLP() external isLP {
         isLPFinalized = true;
     }
 
