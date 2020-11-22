@@ -166,6 +166,23 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         fundingLocker = IFundingLockerFactory(fundingLockerFactory).newLocker(assetRequested);
     }
 
+    /**
+     * @notice Fund this loan and mint the investor LoanTokens.
+     * @param _amount Amount of _assetRequested to fund the loan for.
+     */
+    function fundLoan(uint _amount) external isState(State.Funding) {
+        // TODO: Consider decimal precision difference: RequestedAsset <> FundsToken
+        require(
+            IRequestedAsset.transferFrom(tx.origin, address(this), _amount),
+            "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
+        );
+        require(
+            IRequestedAsset.transfer(fundingLocker, _amount), 
+            "LoanVault::fundLoan:ERR_TRANSFER_FUNDS"
+        );
+        _mint(tx.origin, _amount);
+    }
+
     /// @notice End funding period by claiming funds, posting collateral, transitioning loanState from Funding to Active.
     /// @param _drawdownAmount Amount of fundingAsset borrower will claim, remainder is returned to LoanVault.
     function endFunding(uint _drawdownAmount) external isState(State.Funding) isBorrower {
@@ -205,23 +222,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @return The amount of collateralAsset required to post for given _amount.
     function collateralRequiredForDrawdown(uint _drawdownAmount) internal view returns(uint) {
         return _drawdownAmount.mul(collateralAtDesiredRaise).div(desiredRaise);
-    }
-
-    /**
-     * @notice Fund this loan and mint the investor LoanTokens.
-     * @param _amount Amount of _assetRequested to fund the loan for.
-     */
-    function fundLoan(uint _amount) external isState(State.Funding) {
-        // TODO: Consider decimal precision difference: RequestedAsset <> FundsToken
-        require(
-            IRequestedAsset.transferFrom(tx.origin, address(this), _amount),
-            "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
-        );
-        require(
-            IRequestedAsset.transfer(fundingLocker, _amount), 
-            "LoanVault::fundLoan:ERR_TRANSFER_FUNDS"
-        );
-        _mint(tx.origin, _amount);
     }
 
     /**

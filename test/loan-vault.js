@@ -208,4 +208,102 @@ describe('LoanVault.sol', function () {
 
   })
   
+  it('prepareLoan() with invalid input parameters', async function () {
+    
+    /** 
+     *  @notice Provide the specifications of the loan, transition state from Initialized to Funding.
+     *  @param _details The specifications of the loan.
+     *      _details[0] = APR_BIPS
+     *      _details[1] = NUMBER_OF_PAYMENTS
+     *      _details[2] = PAYMENT_INTERVAL_SECONDS
+     *      _details[3] = MIN_RAISE
+     *      _details[4] = DESIRED_RAISE
+     *      _details[5] = COLLATERAL_AT_DESIRED_RAISE
+     *      @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
+     *      @param _premiumCalculator The calculator used for call premiums.
+     * 
+     *  function prepareLoan(
+     *      uint[6] memory _details,
+     *      address _repaymentCalculator,
+     *      address _premiumCalculator
+     *  )
+    */ 
+
+
+    await expect(
+      LoanVault.prepareLoan(
+        [1000, 0, 0, 0, 0, 0],
+        BUNK_ADDRESS,
+        BUNK_ADDRESS
+      )
+    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1')
+
+    await expect(
+      LoanVault.prepareLoan(
+        [1000, 1, 0, 0, 0, 0],
+        BUNK_ADDRESS,
+        BUNK_ADDRESS
+      )
+    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_INVALID_PAYMENT_INTERVAL_SECONDS')
+
+    await expect(
+      LoanVault.prepareLoan(
+        [1000, 1, 2592000, 0, 0, 0],
+        BUNK_ADDRESS,
+        BUNK_ADDRESS
+      )
+    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO')
+    
+    await expect(
+      LoanVault.prepareLoan(
+        [1000, 1, 2592000, 100000000, 0, 0],
+        BUNK_ADDRESS,
+        BUNK_ADDRESS
+      )
+    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO')
+
+    await expect(
+      LoanVault.prepareLoan(
+        [1000, 1, 2592000, 100000001, 100000000, 0],
+        BUNK_ADDRESS,
+        BUNK_ADDRESS
+      )
+    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO')
+
+    await expect(
+      LoanVault.prepareLoan(
+        [1000, 1, 2592000, 100000000, 500000000, 0],
+        BUNK_ADDRESS,
+        BUNK_ADDRESS
+      )
+    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_INVALID_REPAYMENT_CALCULATOR')
+
+    // Temporarily set repaymentCalculator validity of address(0) to TRUE.
+    await Globals.setRepaymentCalculatorValidity(BUNK_ADDRESS, true);
+    
+    await expect(
+      LoanVault.prepareLoan(
+        [1000, 1, 2592000, 100000000, 500000000, 0],
+        BUNK_ADDRESS,
+        BUNK_ADDRESS
+      )
+    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_INVALID_PREMIUM_CALCULATOR')
+
+    // Temporarily set premiumCalculator validity of BUNK_ADDRESS to TRUE.
+    await Globals.setPremiumCalculatorValidity(BUNK_ADDRESS, true);
+
+    await expect(
+      LoanVault.prepareLoan(
+        [1000, 1, 2592000, 100000000, 500000000, 0],
+        BUNK_ADDRESS,
+        BUNK_ADDRESS
+      )
+    )
+
+    // Revert validity of BUNK_ADDRESS for repaymentCalculator AND premiumCalculator.
+    await expect(Globals.setRepaymentCalculatorValidity(BUNK_ADDRESS, false));
+    await expect(Globals.setPremiumCalculatorValidity(BUNK_ADDRESS, false));
+
+  })
+
 })
