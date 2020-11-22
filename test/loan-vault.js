@@ -27,6 +27,7 @@ const LoanVaultABI = require('../../contracts/localhost/abis/LoanVault.abi.js')
 describe('LoanVault.sol', function () {
 
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
+  const BUNK_ADDRESS_V2 = "0x0000000000000000000000000000000000000001";
 
   let DAI, USDC, MPL, WETH, WBTC, LoanVaultFactory, FundingLockerFactory, CollateralLockerFactory, Globals;
 
@@ -121,9 +122,8 @@ describe('LoanVault.sol', function () {
      *      _details[3] = MIN_RAISE
      *      _details[4] = DESIRED_RAISE
      *      _details[5] = COLLATERAL_AT_DESIRED_RAISE
-     *      @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
-     *      @param _premiumCalculator The calculator used for call premiums.
-     * 
+     *  @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
+     *  @param _premiumCalculator The calculator used for call premiums.
      *  function prepareLoan(
      *      uint[6] memory _details,
      *      address _repaymentCalculator,
@@ -208,7 +208,7 @@ describe('LoanVault.sol', function () {
 
   })
   
-  it('prepareLoan() with invalid input parameters', async function () {
+  it('create new loan vault, prepareLoan() with valid input parameters (bunk calculators + 0 collateral)', async function () {
     
     /** 
      *  @notice Provide the specifications of the loan, transition state from Initialized to Funding.
@@ -219,9 +219,8 @@ describe('LoanVault.sol', function () {
      *      _details[3] = MIN_RAISE
      *      _details[4] = DESIRED_RAISE
      *      _details[5] = COLLATERAL_AT_DESIRED_RAISE
-     *      @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
-     *      @param _premiumCalculator The calculator used for call premiums.
-     * 
+     *  @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
+     *  @param _premiumCalculator The calculator used for call premiums.
      *  function prepareLoan(
      *      uint[6] memory _details,
      *      address _repaymentCalculator,
@@ -229,80 +228,67 @@ describe('LoanVault.sol', function () {
      *  )
     */ 
 
+    // Fetch preIncremntorValue of V2 vault (the vault we pass valid data to).
+    const preIncrementorValue_V2 = await LoanVaultFactory.loanVaultsCreated();
 
-    await expect(
-      LoanVault.prepareLoan(
-        [1000, 0, 0, 0, 0, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1')
+    // Create a new loan vault.
+    const contract = await LoanVaultFactory.createLoanVault(
+      DAIAddress,
+      WETHAddress,
+      FLFAddress,
+      CLFAddress,
+      'QuantFundLoan_V2',
+      'QFL_V2',
+      GlobalsAddress
+    );
 
-    await expect(
-      LoanVault.prepareLoan(
-        [1000, 1, 0, 0, 0, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_INVALID_PAYMENT_INTERVAL_SECONDS')
+    // Get new loan vault address, create contract object.
+    const loanVaultAddress_V2 = await LoanVaultFactory.getLoanVault(preIncrementorValue_V2);
+    LoanVault_V2 = new ethers.Contract(loanVaultAddress_V2, LoanVaultABI, ethers.provider.getSigner(0))
+ 
+    // Add validity of BUNK_ADDRESS_V2 for repaymentCalculator AND premiumCalculator.
+    await Globals.setRepaymentCalculatorValidity(BUNK_ADDRESS_V2, true);
+    await Globals.setPremiumCalculatorValidity(BUNK_ADDRESS_V2, true);
 
-    await expect(
-      LoanVault.prepareLoan(
-        [1000, 1, 2592000, 0, 0, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO')
-    
-    await expect(
-      LoanVault.prepareLoan(
-        [1000, 1, 2592000, 100000000, 0, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO')
-
-    await expect(
-      LoanVault.prepareLoan(
-        [1000, 1, 2592000, 100000001, 100000000, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO')
-
-    await expect(
-      LoanVault.prepareLoan(
-        [1000, 1, 2592000, 100000000, 500000000, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_INVALID_REPAYMENT_CALCULATOR')
-
-    // Temporarily set repaymentCalculator validity of address(0) to TRUE.
-    await Globals.setRepaymentCalculatorValidity(BUNK_ADDRESS, true);
-    
-    await expect(
-      LoanVault.prepareLoan(
-        [1000, 1, 2592000, 100000000, 500000000, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    ).to.be.revertedWith('LoanVault::prepareLoan:ERR_INVALID_PREMIUM_CALCULATOR')
-
-    // Temporarily set premiumCalculator validity of BUNK_ADDRESS to TRUE.
-    await Globals.setPremiumCalculatorValidity(BUNK_ADDRESS, true);
-
-    await expect(
-      LoanVault.prepareLoan(
-        [1000, 1, 2592000, 100000000, 500000000, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
+    await LoanVault_V2.prepareLoan(
+      [1000, 1, 2592000, 100000000, 500000000, 0],
+      BUNK_ADDRESS_V2,
+      BUNK_ADDRESS_V2
     )
+    
+    // Ensure that state variables of new LoanVault has proper values.
+    const APR_BIPS = await LoanVault_V2.aprBips();
+    const NUMBER_OF_PAYMENTS = await LoanVault_V2.numberOfPayments();
+    const PAYMENT_INTERVAL_SECONDS = await LoanVault_V2.paymentIntervalSeconds();
+    const MIN_RAISE = await LoanVault_V2.minRaise();
+    const DESIRED_RAISE = await LoanVault_V2.desiredRaise();
+    const COLLATERAL_AT_DESIRED_RAISE = await LoanVault_V2.collateralAtDesiredRaise();
+    const REPAYMENT_CALCULATOR = await LoanVault_V2.repaymentCalculator();
+    const PREMIUM_CALCULATOR = await LoanVault_V2.premiumCalculator();
+    const LOAN_STATE = await LoanVault_V2.loanState();
+
+    expect(parseInt(APR_BIPS["_hex"])).to.equals(1000);
+    expect(parseInt(NUMBER_OF_PAYMENTS["_hex"])).to.equals(1);
+    expect(parseInt(PAYMENT_INTERVAL_SECONDS["_hex"])).to.equals(2592000);
+    expect(parseInt(MIN_RAISE["_hex"])).to.equals(100000000);
+    expect(parseInt(DESIRED_RAISE["_hex"])).to.equals(500000000);
+    expect(parseInt(COLLATERAL_AT_DESIRED_RAISE["_hex"])).to.equals(0);
+    expect(REPAYMENT_CALCULATOR).to.equals(BUNK_ADDRESS_V2);
+    expect(PREMIUM_CALCULATOR).to.equals(BUNK_ADDRESS_V2);
+    expect(LOAN_STATE).to.equals(1);
+
+    // Ensure that the LoanVault was issued and assigned a valid FundingLocker.
+    const FUNDING_LOCKER = await LoanVault_V2.fundingLocker();
+    const IS_VALID_FUNDING_LOCKER = await FundingLockerFactory.verifyLocker(FUNDING_LOCKER);
+    const FUNDING_LOCKER_OWNER = await FundingLockerFactory.getOwner(FUNDING_LOCKER);
+
+    expect(FUNDING_LOCKER).to.not.equals(BUNK_ADDRESS);
+    expect(IS_VALID_FUNDING_LOCKER);
+    expect(FUNDING_LOCKER_OWNER).to.equals(loanVaultAddress_V2);
 
     // Revert validity of BUNK_ADDRESS for repaymentCalculator AND premiumCalculator.
-    await expect(Globals.setRepaymentCalculatorValidity(BUNK_ADDRESS, false));
-    await expect(Globals.setPremiumCalculatorValidity(BUNK_ADDRESS, false));
+    await expect(Globals.setRepaymentCalculatorValidity(BUNK_ADDRESS_V2, false));
+    await expect(Globals.setPremiumCalculatorValidity(BUNK_ADDRESS_V2, false));
 
   })
 

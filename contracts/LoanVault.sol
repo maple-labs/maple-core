@@ -48,12 +48,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
     /// @notice The borrower of this loan, responsible for repayments.
     address public borrower;
-    
-    /// @notice The repayment calculator for this loan.
-    address public repaymentCalculator;
-
-    /// @notice The premium calculator for this loan.
-    address public premiumCalculator;
 
     /// @notice The loan specifications.
     uint public aprBips;
@@ -62,6 +56,12 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     uint public minRaise;
     uint public desiredRaise;
     uint public collateralAtDesiredRaise;
+    
+    /// @notice The repayment calculator for this loan.
+    address public repaymentCalculator;
+
+    /// @notice The premium calculator for this loan.
+    address public premiumCalculator;
     
     /// @notice The current state of this loan, as defined in the State enum below.
     State public loanState;
