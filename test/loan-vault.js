@@ -207,12 +207,5 @@ describe('LoanVault.sol', function () {
     await expect(Globals.setPremiumCalculatorValidity(BUNK_ADDRESS, false));
 
   })
-
-  it('prepareLoan() with valid input parameters', async function () {
-    
-    // TODO
-
-  })
-
-
+  
 })
