@@ -1,34 +1,57 @@
 const { deploy } = require("@maplelabs/hardhat-scripts");
 
-const mintableUSDC = require("../../contracts/localhost/addresses/MintableTokenUSDC.address");
-const uniswapRouter = require("../../contracts/localhost/addresses/UniswapV2Router02.address");
-
-const governor = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+const mintableUSDC = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
+const uniswapRouter = require("../../contracts/localhost/addresses/UniswapV2Router02.address.js");
 
 async function main() {
-  const mapleToken = await deploy("MapleToken", [
-    "MapleToken",
-    "MPL",
-    mintableUSDC,
-  ]);
 
-  const mapleGlobals = await deploy("MapleGlobals", [
-    governor,
-    mapleToken.address,
-  ]);
+  const mapleToken = await deploy('MapleToken', [
+    'MapleToken',
+    'MPL',
+    mintableUSDC
+  ])
+  console.log(mapleToken.address)
 
-  await deploy("LPStakeLockerFactory");
-  await deploy("LiquidAssetLockerFactory");
-  await deploy("LPFactory");
+  // Governor = accounts[0]
+  const accounts = await ethers.provider.listAccounts()
 
-  const mapleTreasury = await deploy("MapleTreasury", [
+  const mapleGlobals = await deploy('MapleGlobals', [
+    accounts[0],
+    mapleToken.address
+  ])
+  console.log(mapleGlobals.address)
+
+  const LPStakeLockerFactory = await deploy('LPStakeLockerFactory')
+  console.log(LPStakeLockerFactory.address)
+
+  const liquidAssetLockerFactory = await deploy('LiquidAssetLockerFactory')
+  console.log(liquidAssetLockerFactory.address)
+
+  const LPFactory = await deploy('LPFactory')
+  console.log(LPFactory.address)
+
+  const mapleTreasury = await deploy('MapleTreasury', [
     mapleToken.address,
     mintableUSDC,
     uniswapRouter,
-    mapleGlobals.address,
-  ]);
+    mapleGlobals.address
+  ])
+  console.log(mapleTreasury.address)
+  const updateGlobals = await mapleGlobals.setMapleTreasury(mapleTreasury.address)
+  
+  const LVFactory = await deploy('LoanVaultFactory')
+  console.log(LVFactory.address)
 
-  await mapleGlobals.setMapleTreasury(mapleTreasury.address);
+  const CollateralLockerFactory = await deploy('LoanVaultCollateralLockerFactory', [
+    LVFactory.address
+  ])
+  console.log(CollateralLockerFactory.address)
+
+  const FundingLockerFactory = await deploy('LoanVaultFundingLockerFactory', [
+    LVFactory.address
+  ])
+  console.log(FundingLockerFactory.address)
+
 }
 
 main()
