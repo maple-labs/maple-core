@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const BigNumber = require("bignumber.js");
+const BigNumber = require("bignumber.js"); //DONT USE THIS USE THE ONE FROM ETHERS
 
 const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
 const DAIAbi = require("../../contracts/localhost/abis/MintableTokenDAI.abi.js");
@@ -24,10 +24,14 @@ const liquidLockerABI = require("../../contracts/localhost/abis/LiquidAssetLocke
 const liquidLockerFactoryABI = require("../../contracts/localhost/abis/LiquidAssetLockerFactory.abi.js");
 const liquidLockerFactoryAddress = require("../../contracts/localhost/addresses/LiquidAssetLockerFactory.address.js");
 
+//TODO: CORRECT THE MATH LIBRARY USE
+//USE ONLY BIGNUMBER FROM ETHERS!!!!!!
+
 describe("Liquidity Pool and respective lockers", function () {
   let DAILP;
   let USDCLP;
   before(async () => {
+    //STOP HAVING SO MUCH SHIT HERE IN THE BEFORE()
     accounts = await ethers.provider.listAccounts();
     MPLGlobals = new ethers.Contract(
       MPLGlobalsAddress,
@@ -450,6 +454,7 @@ describe("Liquidity Pool and respective lockers", function () {
     expect(Math.abs(ubal / bal - 2 / (stakeDelay + 1)) < 10 ** -15);
   });
   it("Check FDT capability in DAI stake locker", async function () {
+    //DUPLICATE SOME OF THESE DAI LOCKER TESTS TO RUN ON USDC TOOOO!!
     const DAIStakeLocker = new ethers.Contract(
       DAIStakeLockerAddress,
       stakeLockerABI,
@@ -483,7 +488,7 @@ describe("Liquidity Pool and respective lockers", function () {
       stakeLockerABI,
       ethers.provider.getSigner(2)
     );
-
+    //MAYBE FIGURE OUT WHY THIS WAS HAVING MYSTERIOUS PROBLEMS
     await expect(USDCStakeLocker.deleteLP()).to.be.revertedWith(
       "LPStakeLocker:ERR UNAUTHORIZED"
     );
