@@ -12,6 +12,7 @@ contract LiquidAssetLockerFactory {
     // @param _liquidAsset The address of the dividend token, also the primary investment asset of the LP.
     // @return The address of the newly created locker.
     // TODO: Consider whether this needs to be external or public.
+    //TODO ADD MODIFIER LETTING ONLY LIQUIDITY POOLS RUN THIS (not critical, but good)
     function newLocker(address _liquidAsset) external returns (address) {
         address _LPaddy = address(msg.sender);
         address _liquidLocker = address(new LiquidAssetLocker(_liquidAsset, _LPaddy));

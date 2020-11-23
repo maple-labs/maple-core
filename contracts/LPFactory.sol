@@ -4,7 +4,7 @@ import "./LiquidityPool.sol";
 
 contract LPFactory {
     // Mapping data structure for all liquidity pools.
-    mapping(uint256 => address) private LiquidityPools;
+    mapping(uint256 => address) private LiquidityPools;//TODO: this should be an array. 
     mapping(address => bool) private _isLPool;
     // @notice Incrementor for number of LPs created.
     uint256 public LiquidityPoolsCreated;

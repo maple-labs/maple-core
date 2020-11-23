@@ -11,4 +11,5 @@ interface IGlobals {
   function validPaymentIntervalSeconds(uint) external view returns (bool);
   function validRepaymentCalculators(address) external view returns (bool);
   function validPremiumCalculators(address) external view returns (bool);
+  function unstakeDelay() external view returns (uint);
 }
