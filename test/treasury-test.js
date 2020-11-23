@@ -112,7 +112,7 @@ describe("MapleTreasury.sol", function () {
       0,
       0,
       accounts[0],
-      Math.floor(Date.now() / 1000) + 1000
+      "999999999999999999"
     );
   });
 
