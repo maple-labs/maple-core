@@ -267,6 +267,8 @@ describe('LoanVault.sol', function () {
     const PREMIUM_CALCULATOR = await LoanVault_V2.premiumCalculator();
     const LOAN_STATE = await LoanVault_V2.loanState();
 
+      console.log(APR_BIPS);
+
     expect(parseInt(APR_BIPS["_hex"])).to.equals(1000);
     expect(parseInt(NUMBER_OF_PAYMENTS["_hex"])).to.equals(1);
     expect(parseInt(PAYMENT_INTERVAL_SECONDS["_hex"])).to.equals(2592000);
