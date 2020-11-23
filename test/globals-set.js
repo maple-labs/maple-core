@@ -5,7 +5,6 @@ const gloablABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
 const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
 
 describe("Maple globals set", function () {
-
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
 
   let mapleGlobals;
@@ -61,19 +60,18 @@ describe("Maple globals set", function () {
     await expect(mapleGlobals.setGovernor(accounts[1])).to.be.revertedWith(
       "msg.sender is not Governor"
     );
-    
-    await expect(mapleGlobals.setPaymentIntervalValidity(0, true)).to.be.revertedWith(
-      "msg.sender is not Governor"
-    );
-    
-    await expect(mapleGlobals.setRepaymentCalculatorValidity(BUNK_ADDRESS, true)).to.be.revertedWith(
-      "msg.sender is not Governor"
-    );
-    
-    await expect(mapleGlobals.setPremiumCalculatorValidity(BUNK_ADDRESS, true)).to.be.revertedWith(
-      "msg.sender is not Governor"
-    );
 
+    await expect(
+      mapleGlobals.setPaymentIntervalValidity(0, true)
+    ).to.be.revertedWith("msg.sender is not Governor");
+
+    await expect(
+      mapleGlobals.setRepaymentCalculatorValidity(BUNK_ADDRESS, true)
+    ).to.be.revertedWith("msg.sender is not Governor");
+
+    await expect(
+      mapleGlobals.setPremiumCalculatorValidity(BUNK_ADDRESS, true)
+    ).to.be.revertedWith("msg.sender is not Governor");
   });
 
   it("set governor back", async function () {

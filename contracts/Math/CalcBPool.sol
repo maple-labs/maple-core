@@ -39,10 +39,11 @@ library CalcBPool {
         uint256 _BPTtotal = _IBPoolERC20.totalSupply();
         uint256 _liquidAssetBal = _IBPool.getBalance(_liquidAssetContract);
         uint256 _liquidAssetWeight = _IBPool.getNormalizedWeight(_liquidAssetContract);
-        uint256 _val = SafeMath.div(
-            bdiv(_FDTBalBPT, _BPTtotal) * bdiv(_liquidAssetBal, _liquidAssetWeight),
-            _ONE
-        );
+        uint256 _val =
+            SafeMath.div(
+                bdiv(_FDTBalBPT, _BPTtotal) * bdiv(_liquidAssetBal, _liquidAssetWeight),
+                _ONE
+            );
         //we have to divide out the extra _ONE with normal safemath
         //the two divisions must be separate, as coins that are lower decimals(like usdc) will underflow and give 0
         //due to the fact that the _liquidAssetWeight is a synthetic float from bpool, IE  x*10^18 where 0<x<1
