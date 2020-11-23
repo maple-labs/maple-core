@@ -8,5 +8,7 @@ interface IGlobals {
   function treasuryFeeBasisPoints() external view returns (uint);
   function gracePeriod() external view returns (uint);
   function stakeAmountRequired() external view returns (uint);
-  function unstakeDelay() external view returns (uint);
+  function validPaymentIntervalSeconds(uint) external view returns (bool);
+  function validRepaymentCalculators(address) external view returns (bool);
+  function validPremiumCalculators(address) external view returns (bool);
 }

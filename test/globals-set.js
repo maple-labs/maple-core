@@ -3,9 +3,11 @@ const { expect, assert, should } = require("chai");
 const globalAddress = require("../../contracts/localhost/addresses/MapleGlobals.address");
 const gloablABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
 const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
-const governor = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 
 describe("Maple globals set", function () {
+
+  const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
+
   let mapleGlobals;
 
   before(async () => {
@@ -59,6 +61,19 @@ describe("Maple globals set", function () {
     await expect(mapleGlobals.setGovernor(accounts[1])).to.be.revertedWith(
       "msg.sender is not Governor"
     );
+    
+    await expect(mapleGlobals.setPaymentIntervalValidity(0, true)).to.be.revertedWith(
+      "msg.sender is not Governor"
+    );
+    
+    await expect(mapleGlobals.setRepaymentCalculatorValidity(BUNK_ADDRESS, true)).to.be.revertedWith(
+      "msg.sender is not Governor"
+    );
+    
+    await expect(mapleGlobals.setPremiumCalculatorValidity(BUNK_ADDRESS, true)).to.be.revertedWith(
+      "msg.sender is not Governor"
+    );
+
   });
 
   it("set governor back", async function () {
@@ -68,8 +83,8 @@ describe("Maple globals set", function () {
       ethers.provider.getSigner(1)
     );
 
-    await mapleGlobals2.setGovernor(governor);
+    await mapleGlobals2.setGovernor(accounts[0]);
     const governorFetch = await mapleGlobals2.governor();
-    expect(governorFetch).to.equal(governor);
+    expect(governorFetch).to.equal(accounts[0]);
   });
 });
