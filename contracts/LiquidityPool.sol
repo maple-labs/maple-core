@@ -12,6 +12,10 @@ import "./LiquidAssetLockerFactory.sol";
 import "./interface/IGlobals.sol";
 
 // @title ILPStakeLockerFactory is responsbile for instantiating/initializing a staked asset locker.
+//this shoiuldnt even be here but it is easier to have it here now and write it here now where i am using it.
+//It will be in a separate file when it is done
+//same goes for all of these interfaces
+//TODO: put the interfaces in their own files as this is the civilized way
 interface ILPStakeLockerFactory {
     function newLocker(
         address _stakedAsset,
@@ -132,6 +136,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         _;
     }
 
+    // @notice creates stake locke
     function makeStakeLocker(address _stakedAsset) private returns (address) {
         require(
             IBPool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&
@@ -188,6 +193,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         return _out;
     }
 
+    //TODO: make these more efficient nad remove the one below if not being used after qithdrawl is implemented
     function FDT2liq(uint256 _amt) internal view returns (uint256 _out) {
         if (liquidAssetDecimals > 18) {
             _out = _amt.mul(10**(liquidAssetDecimals - 18));
