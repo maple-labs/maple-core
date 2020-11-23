@@ -7,6 +7,7 @@ import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./interface/ILiquidityPool.sol";
 import "./interface/IGlobals.sol";
+import "hardhat/console.sol";
 
 // @title LPStakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
@@ -62,6 +63,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         _;
     }
     modifier isLP() {
+	console.log("msg.sender",msg.sender==parentLP);
         require(msg.sender==parentLP, "LPStakeLocker:ERR UNAUTHORIZED");
         _;
     }
