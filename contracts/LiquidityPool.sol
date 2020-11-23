@@ -11,6 +11,9 @@ import "./interface/IBPool.sol";
 import "./LiquidAssetLockerFactory.sol";
 import "./interface/IGlobals.sol";
 
+//TODO IMPLEMENT WITHDRAWL FUNCTIONS
+//TODO IMPLEMENT DELETE FUNCTIONS CALLING stakedAssetLocker deleteLP()
+
 // @title ILPStakeLockerFactory is responsbile for instantiating/initializing a staked asset locker.
 //this shoiuldnt even be here but it is easier to have it here now and write it here now where i am using it.
 //It will be in a separate file when it is done
@@ -50,7 +53,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
     using SafeMath for uint256;
-
+    //TODO REMOVE REDUNDANT VARIABLES HERE IF THERE ARE ANY
     // The dividend token for this contract's FundsDistributionToken.
     IERC20 private ILiquidAsset;
 
@@ -136,7 +139,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         _;
     }
 
-    // @notice creates stake locke
+    // @notice creates stake locker
     function makeStakeLocker(address _stakedAsset) private returns (address) {
         require(
             IBPool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&

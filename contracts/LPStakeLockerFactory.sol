@@ -12,8 +12,12 @@ contract LPStakeLockerFactory {
     // @param _stakedAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
     // @param _liquidAsset The address of the dividend token, also the primary investment asset of the LP.
     // @return The address of the newly created locker.
-    // TODO: Consider whether this needs to be external or public.
-    function newLocker(address _stakedAsset, address _liquidAsset, address _globals) external returns (address) {
+    //TODO: add a modifier here that only lets a liquidity pool run this. This is good for security, but not critical.
+    function newLocker(
+        address _stakedAsset,
+        address _liquidAsset,
+        address _globals
+    ) external returns (address) {
         address _ownerLP = address(msg.sender);
         address locker = address(new LPStakeLocker(_stakedAsset, _liquidAsset, _ownerLP, _globals));
         lockerPool[address(locker)] = _ownerLP; //address of LP contract that sent it, not poolManager

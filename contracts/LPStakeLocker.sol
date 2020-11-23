@@ -37,7 +37,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     uint256 constant _ONE = 10**18;
 
     // @notice parent liquidity pool
-    address public immutable parentLP;
+    address public immutable parentLP; //TODO: not strictly needed, redundant to IParentLP 
 
     // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
     constructor(
@@ -62,7 +62,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
         );
         _;
     }
-    modifier isLP() {
+    modifier isLP() { //TODO: fucked up things were happening here and mysterious dissapeared when the console.log was added
 	console.log("msg.sender",msg.sender==parentLP);
         require(msg.sender==parentLP, "LPStakeLocker:ERR UNAUTHORIZED");
         _;
@@ -112,7 +112,7 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     function deleteLP() external isLP {
         isLPDefunct = true;
-    }
+    }//TODO: make sure LP gets the delete function implemented
 
     function finalizeLP() external isLP {
         isLPFinalized = true;
@@ -185,6 +185,8 @@ contract LPStakeLocker is IFundsDistributionToken, FundsDistributionToken {
     ) internal override delegateLock {
         super._transfer(from, to, value);
         _updateStakeDate(to, value);
+	//TODO: make this handle transfer of time lock more properly, parameterize _updateStakeDate 
+	// to these ends to save code. 
         //can improve this so the updated age of tokens reflects their age in the senders wallets
         //right now it simply is equivalent to the age update if the receiver was making a new stake
     }
