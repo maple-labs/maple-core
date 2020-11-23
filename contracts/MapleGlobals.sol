@@ -23,8 +23,17 @@ contract MapleGlobals {
     /// @return Represents the USD value a pool delegate must stake (in BPTs) when insantiating a liquidity pool.
     uint public stakeAmountRequired;
 
-    // @param parameter for unstake delay
+    /// @return Parameter for unstake delay, with relation to LiquidityPoolStakedAssetLocker withdrawals.
     uint public unstakeDelay;
+
+    // Validity mapping of payment intervals (in seconds).
+    mapping(uint => bool) public validPaymentIntervalSeconds;
+
+    // Validity mapping of repayment calculators.
+    mapping(address => bool) public validRepaymentCalculators;
+
+    // Validity mapping of premium calculators.
+    mapping(address => bool) public validPremiumCalculators;
 
     modifier isGovernor() {
         require(msg.sender == governor, "msg.sender is not Governor");
@@ -47,6 +56,38 @@ contract MapleGlobals {
         treasuryFeeBasisPoints = 20;
         gracePeriod = 432000;
         stakeAmountRequired = 25000;
+
+        validPaymentIntervalSeconds[2592000] = true;    // Monthly
+        validPaymentIntervalSeconds[7776000] = true;    // Quarterly
+        validPaymentIntervalSeconds[15552000] = true;   // Semi-annually
+        validPaymentIntervalSeconds[31104000] = true;   // Annually
+    }
+
+    /**
+        @notice Governor can adjust the accepted payment intervals.
+        @param _paymentIntervalSeconds The payment interval.
+        @param _validity The new validity of specified payment interval.
+     */
+    function setPaymentIntervalValidity(uint _paymentIntervalSeconds, bool _validity) isGovernor public {
+        validPaymentIntervalSeconds[_paymentIntervalSeconds] = _validity;
+    }
+
+    /**
+        @notice Governor can update the validitiy of a _REPAYMENT_ calculator address.
+        @param _repaymentCalculator Address of the _REPAYMENT_ calculator.
+        @param _validity The new validity of specified payment interval.
+     */
+    function setRepaymentCalculatorValidity(address _repaymentCalculator, bool _validity) isGovernor public {
+        validRepaymentCalculators[_repaymentCalculator] = _validity;
+    }
+
+    /**
+        @notice Governor can update the validitiy of a _PREMIUM_ calculator address.
+        @param _premiumCalculator Address of the _PREMIUM_ calculator.
+        @param _validity The new validity of specified payment interval.
+     */
+    function setPremiumCalculatorValidity(address _premiumCalculator, bool _validity) isGovernor public {
+        validPremiumCalculators[_premiumCalculator] = _validity;
     }
 
     /**
@@ -97,8 +138,13 @@ contract MapleGlobals {
         governor = _newGovernor;
     }
 
+    /**
+        @notice Governor can specify a new unstake delay value.
+        @param _unstakeDelay The new unstake delay.
+     */
     function setUnstakeDelay(uint _unstakeDelay) isGovernor public {
         unstakeDelay = _unstakeDelay;
     }
+
 
 }

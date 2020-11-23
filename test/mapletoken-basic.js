@@ -169,9 +169,6 @@ describe("Maple Token", function () {
       pointsMultiplier /
       10 ** mapleTokenDecimals;
 
-    console.log(expectedWithdrawGovernor);
-    console.log(expectedWithdrawAccountOne);
-
     expect(withdrawableFundsOfGovernor).to.equal(accumulativeFundsOfGovernor);
     expect(withdrawableFundsOfAccountOne).to.equal(
       accumulativeFundsOfAccountOne
