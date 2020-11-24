@@ -276,127 +276,51 @@ describe("LoanVault.sol", function () {
 
   });
 
-  // it("confirm loanVault borrower address", async function () {
-  //   LoanVault = new ethers.Contract(
-  //     vaultAddress,
-  //     LoanVaultABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   const accounts = await ethers.provider.listAccounts();
-  //   const borrower = await LoanVault.borrower();
-  //   expect(borrower).to.equals(accounts[0]);
-  // });
+  it("confirm loanVault borrower, other state vars, and specifications", async function () {
+    LoanVault = new ethers.Contract(
+      vaultAddress,
+      LoanVaultABI,
+      ethers.provider.getSigner(0)
+    );
 
-  // it("block locker creation from external (fails isLoanVault check)", async function () {
-  //   await expect(FundingLockerFactory.newLocker(DAIAddress)).to.be.revertedWith(
-  //     "LoanVaultFundingLockerFactory::newLocker:ERR_MSG_SENDER_NOT_LOAN_VAULT"
-  //   );
+    const accounts = await ethers.provider.listAccounts();
+    const borrower = await LoanVault.borrower();
+    expect(borrower).to.equals(accounts[0]);
 
-  //   await expect(
-  //     CollateralLockerFactory.newLocker(WETHAddress)
-  //   ).to.be.revertedWith(
-  //     "LoanVaultCollateralLockerFactory::newLocker:ERR_MSG_SENDER_NOT_LOAN_VAULT"
-  //   );
-  // });
+    // Ensure that state variables of new LoanVault has proper values.
+    const APR_BIPS = await LoanVault.aprBips();
+    const NUMBER_OF_PAYMENTS = await LoanVault.numberOfPayments();
+    const PAYMENT_INTERVAL_SECONDS = await LoanVault.paymentIntervalSeconds();
+    const MIN_RAISE = await LoanVault.minRaise();
+    const DESIRED_RAISE = await LoanVault.desiredRaise();
+    const COLLATERAL_AT_DESIRED_RAISE = await LoanVault.collateralAtDesiredRaise();
+    const REPAYMENT_CALCULATOR = await LoanVault.repaymentCalculator();
+    const PREMIUM_CALCULATOR = await LoanVault.premiumCalculator();
+    const LOAN_STATE = await LoanVault.loanState();
 
-  // it("create new loan vault, prepareLoan() with valid input parameters (bunk calculators + 0 collateral)", async function () {
-  //   /**
-  //    *  @notice Provide the specifications of the loan, transition state from Initialized to Funding.
-  //    *  @param _details The specifications of the loan.
-  //    *      _details[0] = APR_BIPS
-  //    *      _details[1] = NUMBER_OF_PAYMENTS
-  //    *      _details[2] = PAYMENT_INTERVAL_SECONDS
-  //    *      _details[3] = MIN_RAISE
-  //    *      _details[4] = DESIRED_RAISE
-  //    *      _details[5] = COLLATERAL_AT_DESIRED_RAISE
-  //    *  @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
-  //    *  @param _premiumCalculator The calculator used for call premiums.
-  //    *  function prepareLoan(
-  //    *      uint[6] memory _details,
-  //    *      address _repaymentCalculator,
-  //    *      address _premiumCalculator
-  //    *  )
-  //    */
+    expect(parseInt(APR_BIPS["_hex"])).to.equals(1000);
+    expect(parseInt(NUMBER_OF_PAYMENTS["_hex"])).to.equals(1);
+    expect(parseInt(PAYMENT_INTERVAL_SECONDS["_hex"])).to.equals(2592000);
+    expect(parseInt(MIN_RAISE["_hex"])).to.equals(100000000);
+    expect(parseInt(DESIRED_RAISE["_hex"])).to.equals(500000000);
+    expect(parseInt(COLLATERAL_AT_DESIRED_RAISE["_hex"])).to.equals(0);
+    expect(REPAYMENT_CALCULATOR).to.equals(BUNK_ADDRESS);
+    expect(PREMIUM_CALCULATOR).to.equals(BUNK_ADDRESS);
+    expect(LOAN_STATE).to.equals(1);
 
-  //   // Fetch preIncremntorValue of V2 vault (the vault we pass valid data to).
-  //   const preIncrementorValue_V2 = await LoanVaultFactory.loanVaultsCreated();
+    // Ensure that the LoanVault was issued and assigned a valid FundingLocker.
+    const FUNDING_LOCKER = await LoanVault.fundingLocker();
+    const IS_VALID_FUNDING_LOCKER = await FundingLockerFactory.verifyLocker(
+      FUNDING_LOCKER
+    );
+    const FUNDING_LOCKER_OWNER = await FundingLockerFactory.getOwner(
+      FUNDING_LOCKER
+    );
 
-  //   // Create a new loan vault.
-  //   const contract = await LoanVaultFactory.createLoanVault(
-  //     DAIAddress,
-  //     WETHAddress,
-  //     FLFAddress,
-  //     CLFAddress,
-  //     "QuantFundLoan_V2",
-  //     "QFL_V2",
-  //     GlobalsAddress
-  //   );
-
-  //   // Get new loan vault address, create contract object.
-  //   const loanVaultAddress_V2 = await LoanVaultFactory.getLoanVault(
-  //     preIncrementorValue_V2
-  //   );
-  //   LoanVault_V2 = new ethers.Contract(
-  //     loanVaultAddress_V2,
-  //     LoanVaultABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-
-  //   // Add validity of BUNK_ADDRESS_V2 for repaymentCalculator AND premiumCalculator.
-  //   await Globals.setRepaymentCalculatorValidity(BUNK_ADDRESS_V2, true);
-  //   await Globals.setPremiumCalculatorValidity(BUNK_ADDRESS_V2, true);
-
-  //   await LoanVault_V2.prepareLoan(
-  //     DAIAddress,
-  //     WETHAddress,
-  //     FLFAddress,
-  //     CLFAddress,
-  //     "QuantFundLoan",
-  //     "QFL",
-  //     [1000, 1, 2592000, 100000000, 500000000, 0],
-  //     BUNK_ADDRESS_V2,
-  //     BUNK_ADDRESS_V2
-  //   );
-
-  //   // Ensure that state variables of new LoanVault has proper values.
-  //   const APR_BIPS = await LoanVault_V2.aprBips();
-  //   const NUMBER_OF_PAYMENTS = await LoanVault_V2.numberOfPayments();
-  //   const PAYMENT_INTERVAL_SECONDS = await LoanVault_V2.paymentIntervalSeconds();
-  //   const MIN_RAISE = await LoanVault_V2.minRaise();
-  //   const DESIRED_RAISE = await LoanVault_V2.desiredRaise();
-  //   const COLLATERAL_AT_DESIRED_RAISE = await LoanVault_V2.collateralAtDesiredRaise();
-  //   const REPAYMENT_CALCULATOR = await LoanVault_V2.repaymentCalculator();
-  //   const PREMIUM_CALCULATOR = await LoanVault_V2.premiumCalculator();
-  //   const LOAN_STATE = await LoanVault_V2.loanState();
-
-  //   expect(parseInt(APR_BIPS["_hex"])).to.equals(1000);
-  //   expect(parseInt(NUMBER_OF_PAYMENTS["_hex"])).to.equals(1);
-  //   expect(parseInt(PAYMENT_INTERVAL_SECONDS["_hex"])).to.equals(2592000);
-  //   expect(parseInt(MIN_RAISE["_hex"])).to.equals(100000000);
-  //   expect(parseInt(DESIRED_RAISE["_hex"])).to.equals(500000000);
-  //   expect(parseInt(COLLATERAL_AT_DESIRED_RAISE["_hex"])).to.equals(0);
-  //   expect(REPAYMENT_CALCULATOR).to.equals(BUNK_ADDRESS_V2);
-  //   expect(PREMIUM_CALCULATOR).to.equals(BUNK_ADDRESS_V2);
-  //   expect(LOAN_STATE).to.equals(1);
-
-  //   // Ensure that the LoanVault was issued and assigned a valid FundingLocker.
-  //   const FUNDING_LOCKER = await LoanVault_V2.fundingLocker();
-  //   const IS_VALID_FUNDING_LOCKER = await FundingLockerFactory.verifyLocker(
-  //     FUNDING_LOCKER
-  //   );
-  //   const FUNDING_LOCKER_OWNER = await FundingLockerFactory.getOwner(
-  //     FUNDING_LOCKER
-  //   );
-
-  //   expect(FUNDING_LOCKER).to.not.equals(BUNK_ADDRESS);
-  //   expect(IS_VALID_FUNDING_LOCKER);
-  //   expect(FUNDING_LOCKER_OWNER).to.equals(loanVaultAddress_V2);
-
-  //   // Revert validity of BUNK_ADDRESS for repaymentCalculator AND premiumCalculator.
-  //   await expect(
-  //     Globals.setRepaymentCalculatorValidity(BUNK_ADDRESS_V2, false)
-  //   );
-  //   await expect(Globals.setPremiumCalculatorValidity(BUNK_ADDRESS_V2, false));
-  // });
+    expect(FUNDING_LOCKER).to.not.equals(BUNK_ADDRESS);
+    expect(IS_VALID_FUNDING_LOCKER);
+    expect(FUNDING_LOCKER_OWNER).to.equals(vaultAddress);
+    
+  });
 
 });
