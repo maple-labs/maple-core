@@ -149,7 +149,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         );
         require(
             _specifications[6] >= 86400, 
-            "LoanVault::prepareLoan:ERR_INVALID_PREMIUM_CALCULATOR"
+            "LoanVault::prepareLoan:ERR_FUNDING_PERIOD_LESS_THAN_86400"
         );
 
         // Update state variables.

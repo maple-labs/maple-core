@@ -42,9 +42,7 @@ async function main() {
     [LVFactory.address]
   );
 
-  const FundingLockerFactory = await deploy("LoanVaultFundingLockerFactory", [
-    LVFactory.address,
-  ]);
+  const FundingLockerFactory = await deploy("LoanVaultFundingLockerFactory");
 }
 
 main()
