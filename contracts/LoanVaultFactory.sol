@@ -12,6 +12,13 @@ contract LoanVaultFactory {
     /// @notice Incrementor for number of loan vaults created.
     uint256 public loanVaultsCreated;
 
+    /// @notice The MapleGlobals.sol contract.
+    address public mapleGlobals;
+
+    constructor(address _mapleGlobals) {
+        mapleGlobals = _mapleGlobals;
+    }
+
     /// @notice Instantiates a loan vault.
     /// @param _assetRequested The asset borrower is requesting funding in.
     /// @param _assetCollateral The asset provided as collateral by the borrower.
@@ -19,7 +26,16 @@ contract LoanVaultFactory {
     /// @param _collateralLockerFactory Factory to instantiate CollateralLocker through.
     /// @param name The name of the loan vault's token (minted when investors fund the loan).
     /// @param symbol The ticker of the loan vault's token.
-    /// @param _mapleGlobals Address of the MapleGlobals.sol contract.
+    /// @param _specifications The specifications of the loan.
+    ///        _specifications[0] = APR_BIPS
+    ///        _specifications[1] = NUMBER_OF_PAYMENTS
+    ///        _specifications[2] = PAYMENT_INTERVAL_SECONDS
+    ///        _specifications[3] = MIN_RAISE
+    ///        _specifications[4] = DESIRED_RAISE
+    ///        _specifications[5] = COLLATERAL_AT_DESIRED_RAISE
+    ///        _specifications[6] = FUNDING_PERIOD_SECONDS
+    /// @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
+    /// @param _premiumCalculator The calculator used for call premiums.
     /// @return The address of the newly instantiated liquidity pool.
     function createLoanVault(
         address _assetRequested,
@@ -28,7 +44,9 @@ contract LoanVaultFactory {
         address _collateralLockerFactory,
         string memory name,
         string memory symbol,
-        address _mapleGlobals
+        uint[7] memory _specifications,
+        address _repaymentCalculator,
+        address _premiumCalculator
     ) public returns (address) {
         LoanVault vault = new LoanVault(
             _assetRequested,
@@ -37,7 +55,10 @@ contract LoanVaultFactory {
             _collateralLockerFactory,
             name,
             symbol,
-            _mapleGlobals
+            mapleGlobals,
+            _specifications,
+            _repaymentCalculator,
+            _premiumCalculator
         );
         loanVaults[loanVaultsCreated] = address(vault);
         _isLoanVault[address(vault)] = true;

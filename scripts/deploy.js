@@ -35,7 +35,7 @@ async function main() {
     mapleTreasury.address
   );
 
-  const LVFactory = await deploy("LoanVaultFactory");
+  const LVFactory = await deploy("LoanVaultFactory", [mapleGlobals.address]);
 
   const CollateralLockerFactory = await deploy(
     "LoanVaultCollateralLockerFactory",

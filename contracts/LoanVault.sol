@@ -56,6 +56,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     uint public minRaise;
     uint public desiredRaise;
     uint public collateralAtDesiredRaise;
+    uint public fundingPeriodSeconds;
     
     /// @notice The repayment calculator for this loan.
     address public repaymentCalculator;
@@ -86,6 +87,16 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @param name The name of the loan vault's token (minted when investors fund the loan).
     /// @param symbol The ticker of the loan vault's token.
     /// @param _mapleGlobals Address of the MapleGlobals.sol contract.
+    /// @param _specifications The specifications of the loan.
+    ///        _specifications[0] = APR_BIPS
+    ///        _specifications[1] = NUMBER_OF_PAYMENTS
+    ///        _specifications[2] = PAYMENT_INTERVAL_SECONDS
+    ///        _specifications[3] = MIN_RAISE
+    ///        _specifications[4] = DESIRED_RAISE
+    ///        _specifications[5] = COLLATERAL_AT_DESIRED_RAISE
+    ///        _specifications[6] = FUNDING_PERIOD_SECONDS
+    /// @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
+    /// @param _premiumCalculator The calculator used for call premiums.
     constructor(
         address _assetRequested,
         address _assetCollateral,
@@ -93,7 +104,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         address _collateralLockerFactory,
         string memory name,
         string memory symbol,
-        address _mapleGlobals
+        address _mapleGlobals,
+        uint[7] memory _specifications,
+        address _repaymentCalculator,
+        address _premiumCalculator
     ) FundsDistributionToken(name, symbol) {
 
         require(
@@ -110,37 +124,19 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         fundsToken = IRequestedAsset;
         borrower = tx.origin;
 
-    }
-
-    /// @notice Provide the specifications of the loan, transition state from Initialized to Funding.
-    /// @param _details The specifications of the loan.
-    ///        _details[0] = APR_BIPS
-    ///        _details[1] = NUMBER_OF_PAYMENTS
-    ///        _details[2] = PAYMENT_INTERVAL_SECONDS
-    ///        _details[3] = MIN_RAISE
-    ///        _details[4] = DESIRED_RAISE
-    ///        _details[5] = COLLATERAL_AT_DESIRED_RAISE
-    /// @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
-    /// @param _premiumCalculator The calculator used for call premiums.
-    function prepareLoan(
-        uint[6] memory _details,
-        address _repaymentCalculator,
-        address _premiumCalculator
-    ) external isState(State.Initialized) isBorrower {
-
         // Transition state first.
         loanState = State.Funding;
 
         // Perform validity cross-checks.
         require(
-            _details[1] >= 1, 
+            _specifications[1] >= 1, 
             "LoanVault::prepareLoan:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1"
         );
         require(
-            MapleGlobals.validPaymentIntervalSeconds(_details[2]), 
+            MapleGlobals.validPaymentIntervalSeconds(_specifications[2]), 
             "LoanVault::prepareLoan:ERR_INVALID_PAYMENT_INTERVAL_SECONDS"
         );
-        require(_details[4] >= _details[3] && _details[3] > 0,
+        require(_specifications[4] >= _specifications[3] && _specifications[3] > 0,
             "LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
         );
         require(
@@ -151,14 +147,18 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             MapleGlobals.validPremiumCalculators(_premiumCalculator), 
             "LoanVault::prepareLoan:ERR_INVALID_PREMIUM_CALCULATOR"
         );
+        require(
+            _specifications[6] >= 86400, 
+            "LoanVault::prepareLoan:ERR_INVALID_PREMIUM_CALCULATOR"
+        );
 
         // Update state variables.
-        aprBips = _details[0];
-        numberOfPayments = _details[1];
-        paymentIntervalSeconds = _details[2];
-        minRaise = _details[3];
-        desiredRaise = _details[4];
-        collateralAtDesiredRaise = _details[5];
+        aprBips = _specifications[0];
+        numberOfPayments = _specifications[1];
+        paymentIntervalSeconds = _specifications[2];
+        minRaise = _specifications[3];
+        desiredRaise = _specifications[4];
+        collateralAtDesiredRaise = _specifications[5];
         repaymentCalculator = _repaymentCalculator;
         premiumCalculator = _premiumCalculator;
 
