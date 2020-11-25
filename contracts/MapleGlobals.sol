@@ -53,6 +53,7 @@ contract MapleGlobals {
         treasuryFeeBasisPoints = 20;
         gracePeriod = 432000;
         stakeAmountRequired = 25000;
+        unstakeDelay = 7776000;
 
         validPaymentIntervalSeconds[2592000] = true;    // Monthly
         validPaymentIntervalSeconds[7776000] = true;    // Quarterly

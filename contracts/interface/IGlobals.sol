@@ -17,10 +17,6 @@ interface IGlobals {
 
     function validPaymentIntervalSeconds(uint256) external view returns (bool);
 
-    function validRepaymentCalculators(address) external view returns (bool);
-
-    function validPremiumCalculators(address) external view returns (bool);
-
     function interestStructureCalculators(bytes32) external view returns (address);
 
     function unstakeDelay() external view returns (uint256);

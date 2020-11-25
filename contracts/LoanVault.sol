@@ -153,11 +153,11 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     }
 
     /**
-     * @notice Fund this loan and mint the investor LoanTokens.
+     * @notice Fund this loan and mint LoanTokens.
      * @param _amount Amount of _assetRequested to fund the loan for.
-     */
-    // TODO: Implement and test this function.
-    function fundLoan(uint _amount) external isState(State.Funding) {
+     * @param _toMint The address to mint LoanVaultTokens for.
+    */
+    function fundLoan(uint _amount, address _toMint) external isState(State.Funding) {
         // TODO: Consider decimal precision difference: RequestedAsset <> FundsToken
         require(
             IRequestedAsset.transferFrom(tx.origin, address(this), _amount),
@@ -167,13 +167,13 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             IRequestedAsset.transfer(fundingLocker, _amount), 
             "LoanVault::fundLoan:ERR_TRANSFER_FUNDS"
         );
-        _mint(tx.origin, _amount);
+        _mint(_toMint, _amount);
     }
 
     /// @notice End funding period by claiming funds, posting collateral, transitioning loanState from Funding to Active.
     /// @param _drawdownAmount Amount of fundingAsset borrower will claim, remainder is returned to LoanVault.
     // TODO: Implement and test this function.
-    function endFunding(uint _drawdownAmount) external isState(State.Funding) isBorrower {
+    function drawdown(uint _drawdownAmount) external isState(State.Funding) isBorrower {
 
         require(
             _drawdownAmount >= minRaise, 

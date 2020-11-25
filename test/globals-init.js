@@ -4,8 +4,6 @@ const globalAddress = require("../../contracts/localhost/addresses/MapleGlobals.
 const globalABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
 const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
 
-const governor = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
-
 describe("Maple Globals init", function () {
   let mapleGlobals;
 
@@ -25,11 +23,31 @@ describe("Maple Globals init", function () {
     const treasuryFeeFetch = await mapleGlobals.treasuryFeeBasisPoints();
     const gracePeriodFetch = await mapleGlobals.gracePeriod();
     const stakeRequiredFetch = await mapleGlobals.stakeAmountRequired();
-    expect(governorFetch).to.equal(governor);
+    const unstakeDelay = await mapleGlobals.unstakeDelay();
+    expect(governorFetch).to.equal(accounts[0]);
     expect(mapleTokenFetch).to.equal(mapleTokenAddress);
     expect(establishmentFeeFetch).to.equal(200);
     expect(treasuryFeeFetch).to.equal(20);
     expect(gracePeriodFetch).to.equal(432000);
     expect(stakeRequiredFetch).to.equal(25000);
+    expect(unstakeDelay).to.equal(7776000);
   });
+
+  it("paymentInterval mapping is initialized properly", async function () {
+    // Valid cases.
+    const paymentIntervalMonthlyValid = await mapleGlobals.validPaymentIntervalSeconds(2592000);
+    const paymentIntervalQuarterlyValid = await mapleGlobals.validPaymentIntervalSeconds(7776000);
+    const paymentIntervalSemiAnnuallyValid = await mapleGlobals.validPaymentIntervalSeconds(15552000);
+    const paymentIntervalAnnuallyValid = await mapleGlobals.validPaymentIntervalSeconds(31104000);
+    expect(paymentIntervalMonthlyValid);
+    expect(paymentIntervalQuarterlyValid);
+    expect(paymentIntervalSemiAnnuallyValid);
+    expect(paymentIntervalAnnuallyValid);
+    // Invalid cases.
+    const paymentIntervalZeroInvalid = await mapleGlobals.validPaymentIntervalSeconds(0);
+    const paymentIntervalMonthlyInvalid = await mapleGlobals.validPaymentIntervalSeconds(2592001);
+    expect(!paymentIntervalZeroInvalid);
+    expect(!paymentIntervalMonthlyInvalid);
+  });
+
 });
