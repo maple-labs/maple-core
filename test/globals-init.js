@@ -4,7 +4,7 @@ const globalAddress = require("../../contracts/localhost/addresses/MapleGlobals.
 const globalABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
 const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
 
-describe("Maple Globals init", function () {
+describe("MapleGlobals.sol Initialization", function () {
   let mapleGlobals;
 
   before(async () => {

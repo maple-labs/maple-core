@@ -33,7 +33,7 @@ contract MapleGlobals {
     mapping(bytes32 => address) public interestStructureCalculators;
 
     modifier isGovernor() {
-        require(msg.sender == governor, "msg.sender is not Governor");
+        require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
         _;
     }
 

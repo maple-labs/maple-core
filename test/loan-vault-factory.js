@@ -24,7 +24,7 @@ const GlobalsABI = require("../../contracts/localhost/abis/MapleGlobals.abi.js")
 const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi.js");
 const LoanVaultFundingLockerFactoryAbi = require("../../contracts/localhost/abis/LoanVaultFundingLockerFactory.abi.js");
 
-describe("LoanVault.sol", function () {
+describe("LoanVaultFactory.sol / LoanVault.sol", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
   const BUNK_ADDRESS_AMORTIZATION = "0x0000000000000000000000000000000000000001";
   const BUNK_ADDRESS_BULLET = "0x0000000000000000000000000000000000000002";
@@ -107,7 +107,7 @@ describe("LoanVault.sol", function () {
         ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
-      "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
+      "LoanVault::constructor:ERR_INVALID_FUNDS_TOKEN_ADDRESS"
     );
 
     await expect(
@@ -129,7 +129,7 @@ describe("LoanVault.sol", function () {
         ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
-      "LoanVault::prepareLoan:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1"
+      "LoanVault::constructor:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1"
     );
     
     await expect(
@@ -140,7 +140,7 @@ describe("LoanVault.sol", function () {
         ethers.utils.formatBytes32String('AMORTIZATION')
       )
     ).to.be.revertedWith(
-      "LoanVault::prepareLoan:ERR_INVALID_PAYMENT_INTERVAL_SECONDS"
+      "LoanVault::constructor:ERR_INVALID_PAYMENT_INTERVAL_SECONDS"
     );
     
     await expect(
@@ -151,7 +151,7 @@ describe("LoanVault.sol", function () {
         ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
-      "LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
+      "LoanVault::constructor:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
     );
     
     await expect(
@@ -162,7 +162,7 @@ describe("LoanVault.sol", function () {
         ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
-      "LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
+      "LoanVault::constructor:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
     );
     
     await expect(
@@ -173,7 +173,7 @@ describe("LoanVault.sol", function () {
         ethers.utils.formatBytes32String('AMORTIZATION')
       )
     ).to.be.revertedWith(
-      "LoanVault::prepareLoan:ERR_FUNDING_PERIOD_LESS_THAN_86400"
+      "LoanVault::constructor:ERR_FUNDING_PERIOD_LESS_THAN_86400"
     );
     
   });
@@ -274,6 +274,55 @@ describe("LoanVault.sol", function () {
     expect(FUNDING_LOCKER).to.not.equals(BUNK_ADDRESS);
     expect(IS_VALID_FUNDING_LOCKER);
     expect(FUNDING_LOCKER_OWNER).to.equals(vaultAddress);
+    
+  });
+
+  
+
+  it("adjust loanVaultFactory state vars - fundingLockerFactory / collateralLockerFactory", async function () {
+    
+    // Instantiate LVF object via getSigner(1) [non-governor].
+    LoanVaultFactory_EXTERNAL_USER = new ethers.Contract(
+      LVFactoryAddress,
+      LVFactoryABI,
+      ethers.provider.getSigner(1)
+    );
+
+    // Perform isGovernor modifier checks.
+    await expect(LoanVaultFactory_EXTERNAL_USER.setFundingLockerFactory(
+      BUNK_ADDRESS
+    )).to.be.revertedWith(
+      "LoanVaultFactory::ERR_MSG_SENDER_NOT_GOVERNOR"
+    );
+
+    await expect(LoanVaultFactory_EXTERNAL_USER.setFundingLockerFactory(
+      BUNK_ADDRESS
+    )).to.be.revertedWith(
+      "LoanVaultFactory::ERR_MSG_SENDER_NOT_GOVERNOR"
+    );
+
+    // Save current factory addresses, update state vars to new addresses via Governor.
+    const currentFundingLockerFactory = await LoanVaultFactory.fundingLockerFactory();
+    const currentCollateralLockerFactory = await LoanVaultFactory.collateralLockerFactory();
+    const BUNK_ADDRESS_FUNDING_LOCKER_FACTORY = "0x0000000000000000000000000000000000000005";
+    const BUNK_ADDRESS_COLLATERAL_LOCKER_FACTORY = "0x0000000000000000000000000000000000000006";
+
+    await LoanVaultFactory.setFundingLockerFactory(BUNK_ADDRESS_FUNDING_LOCKER_FACTORY);
+    await LoanVaultFactory.setCollateralLockerFactory(BUNK_ADDRESS_COLLATERAL_LOCKER_FACTORY);
+    const newFundingLockerFactory = await LoanVaultFactory.fundingLockerFactory();
+    const newCollateralLockerFactory = await LoanVaultFactory.collateralLockerFactory();
+    
+    expect(newFundingLockerFactory).to.equals(BUNK_ADDRESS_FUNDING_LOCKER_FACTORY);
+    expect(newCollateralLockerFactory).to.equals(BUNK_ADDRESS_COLLATERAL_LOCKER_FACTORY);
+
+    // Revert to initial factory addresses.
+    await LoanVaultFactory.setFundingLockerFactory(currentFundingLockerFactory);
+    await LoanVaultFactory.setCollateralLockerFactory(currentCollateralLockerFactory);
+    const revertedFundingLockerFactory = await LoanVaultFactory.fundingLockerFactory();
+    const revertedCollateralLockerFactory = await LoanVaultFactory.collateralLockerFactory();
+
+    expect(revertedFundingLockerFactory).to.equals(currentFundingLockerFactory);
+    expect(revertedCollateralLockerFactory).to.equals(currentCollateralLockerFactory);
     
   });
 

@@ -31,7 +31,7 @@ contract LoanVaultFactory {
 
     // Authorization to call Treasury functions.
     modifier isGovernor() {
-        require(msg.sender == IGlobals(mapleGlobals).governor(), "msg.sender is not Governor");
+        require(msg.sender == IGlobals(mapleGlobals).governor(), "LoanVaultFactory::ERR_MSG_SENDER_NOT_GOVERNOR");
         _;
     }
 
@@ -64,7 +64,7 @@ contract LoanVaultFactory {
         uint[7] memory _specifications,
         bytes32 _interestStructure
     ) public returns (address) {
-        
+
         // Pre-checks.
         require(
             _assetCollateral!= address(0),

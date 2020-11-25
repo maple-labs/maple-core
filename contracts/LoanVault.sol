@@ -70,12 +70,12 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     enum State { Initialized, Funding, Active, Defaulted, Matured }
 
     modifier isState(State _state) {
-        require(loanState == _state, "LoanVault::FAIL_STATE_CHECK");
+        require(loanState == _state, "LoanVault::ERR_FAIL_STATE_CHECK");
         _;
     }
 
     modifier isBorrower() {
-        require(msg.sender == borrower, "LoanVault::MSG_SENDER_NOT_BORROWER");
+        require(msg.sender == borrower, "LoanVault::ERR_MSG_SENDER_NOT_BORROWER");
         _;
     }
 
@@ -106,7 +106,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         require(
             address(_assetRequested) != address(0),
-            "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
+            "LoanVault::constructor:ERR_INVALID_FUNDS_TOKEN_ADDRESS"
         );
 
         assetRequested = _assetRequested;
@@ -124,18 +124,18 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         // Perform validity cross-checks.
         require(
             _specifications[1] >= 1, 
-            "LoanVault::prepareLoan:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1"
+            "LoanVault::constructor:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1"
         );
         require(
             MapleGlobals.validPaymentIntervalSeconds(_specifications[2]), 
-            "LoanVault::prepareLoan:ERR_INVALID_PAYMENT_INTERVAL_SECONDS"
+            "LoanVault::constructor:ERR_INVALID_PAYMENT_INTERVAL_SECONDS"
         );
         require(_specifications[4] >= _specifications[3] && _specifications[3] > 0,
-            "LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
+            "LoanVault::constructor:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
         );
         require(
             _specifications[6] >= 86400, 
-            "LoanVault::prepareLoan:ERR_FUNDING_PERIOD_LESS_THAN_86400"
+            "LoanVault::constructor:ERR_FUNDING_PERIOD_LESS_THAN_86400"
         );
 
         // Update state variables.

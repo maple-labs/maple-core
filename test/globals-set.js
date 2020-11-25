@@ -4,7 +4,7 @@ const globalAddress = require("../../contracts/localhost/addresses/MapleGlobals.
 const gloablABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
 const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
 
-describe("Maple globals set", function () {
+describe("MapleGlobals.sol Interactions", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
 
   let mapleGlobals;
@@ -66,27 +66,27 @@ describe("Maple globals set", function () {
 
   it("check msg.sender throws revert error", async function () {
     await expect(mapleGlobals.setEstablishmentFee(50)).to.be.revertedWith(
-      "msg.sender is not Governor"
+      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
     await expect(mapleGlobals.setTreasurySplit(30)).to.be.revertedWith(
-      "msg.sender is not Governor"
+      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
     await expect(mapleGlobals.setGracePeriod(86400)).to.be.revertedWith(
-      "msg.sender is not Governor"
+      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
     await expect(mapleGlobals.setStakeRequired(30000)).to.be.revertedWith(
-      "msg.sender is not Governor"
+      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
     await expect(mapleGlobals.setUnstakeDelay(86400)).to.be.revertedWith(
-      "msg.sender is not Governor"
+      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
     await expect(mapleGlobals.setPaymentIntervalValidity(86400, true)).to.be.revertedWith(
-      "msg.sender is not Governor"
+      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
     const BUNK_ADDRESS_AMORTIZATION = "0x0000000000000000000000000000000000000003";
@@ -95,11 +95,11 @@ describe("Maple globals set", function () {
       ethers.utils.formatBytes32String('AMORTIZATION'),
       BUNK_ADDRESS_AMORTIZATION
     )).to.be.revertedWith(
-      "msg.sender is not Governor"
+      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
     await expect(mapleGlobals.setGovernor(accounts[1])).to.be.revertedWith(
-      "msg.sender is not Governor"
+      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
   });
 
