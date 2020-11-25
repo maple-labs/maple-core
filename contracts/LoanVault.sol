@@ -160,7 +160,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     function fundLoan(uint _amount, address _toMint) external isState(State.Funding) {
         // TODO: Consider decimal precision difference: RequestedAsset <> FundsToken
         require(
-            IRequestedAsset.transferFrom(tx.origin, address(this), _amount),
+            IRequestedAsset.transferFrom(msg.sender, address(this), _amount),
             "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
         );
         require(
