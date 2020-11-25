@@ -1,6 +1,8 @@
 pragma solidity 0.7.0;
 
 import "./LoanVault.sol";
+import "./interface/IGlobals.sol";
+import "hardhat/console.sol";
 
 /// @title LoanVaultFactory instantiates LoanVault contracts.
 contract LoanVaultFactory {
@@ -14,18 +16,39 @@ contract LoanVaultFactory {
 
     /// @notice The MapleGlobals.sol contract.
     address public mapleGlobals;
+    
+    /// @notice The LoanVaultFundingLockerFactory to use for this particular LoanVaultFactory.
+    address public fundingLockerFactory;
+    
+    /// @notice The LoanVaultCollateralLockerFactory to use for this particular LoanVaultFactory.
+    address public collateralLockerFactory;
 
-    constructor(address _mapleGlobals) {
+    constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) {
         mapleGlobals = _mapleGlobals;
+        fundingLockerFactory = _fundingLockerFactory;
+        collateralLockerFactory = _collateralLockerFactory;
     }
 
-    /// @notice Instantiates a loan vault.
+    // Authorization to call Treasury functions.
+    modifier isGovernor() {
+        require(msg.sender == IGlobals(mapleGlobals).governor(), "msg.sender is not Governor");
+        _;
+    }
+
+    /// @notice Fired when user calls createLoanVault()
+    event LoanVaultCreated(
+        uint _loanVaultID,
+        address indexed _borrower,
+        address indexed _assetRequested,
+        address _assetCollateral,
+		address _loanVaultAddress,
+        uint[7] _specifications,
+        bytes32 _interestStructure
+    );
+
+    /// @notice Instantiates a LoanVault
     /// @param _assetRequested The asset borrower is requesting funding in.
     /// @param _assetCollateral The asset provided as collateral by the borrower.
-    /// @param _fundingLockerFactory Factory to instantiate FundingLocker through.
-    /// @param _collateralLockerFactory Factory to instantiate CollateralLocker through.
-    /// @param name The name of the loan vault's token (minted when investors fund the loan).
-    /// @param symbol The ticker of the loan vault's token.
     /// @param _specifications The specifications of the loan.
     ///        _specifications[0] = APR_BIPS
     ///        _specifications[1] = NUMBER_OF_PAYMENTS
@@ -34,34 +57,51 @@ contract LoanVaultFactory {
     ///        _specifications[4] = DESIRED_RAISE
     ///        _specifications[5] = COLLATERAL_AT_DESIRED_RAISE
     ///        _specifications[6] = FUNDING_PERIOD_SECONDS
-    /// @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
-    /// @param _premiumCalculator The calculator used for call premiums.
-    /// @return The address of the newly instantiated liquidity pool.
+    /// @return The address of the newly instantiated LoanVault.
     function createLoanVault(
         address _assetRequested,
         address _assetCollateral,
-        address _fundingLockerFactory,
-        address _collateralLockerFactory,
-        string memory name,
-        string memory symbol,
         uint[7] memory _specifications,
-        address _repaymentCalculator,
-        address _premiumCalculator
+        bytes32 _interestStructure
     ) public returns (address) {
+        
+        // Pre-checks.
+        require(
+            _assetCollateral!= address(0),
+            "LoanVaultFactory::createLoanVault:ERR_NULL_ASSET_COLLATERAL"
+        );
+        require(
+            IGlobals(mapleGlobals).interestStructureCalculators(_interestStructure) != address(0),
+            "LoanVaultFactory::createLoanVault:ERR_NULL_INTEREST_STRUCTURE_CALC"
+        );
+        
+        // Deploy loan vault contract.
         LoanVault vault = new LoanVault(
             _assetRequested,
             _assetCollateral,
-            _fundingLockerFactory,
-            _collateralLockerFactory,
-            name,
-            symbol,
+            fundingLockerFactory,
+            collateralLockerFactory,
             mapleGlobals,
             _specifications,
-            _repaymentCalculator,
-            _premiumCalculator
+            IGlobals(mapleGlobals).interestStructureCalculators(_interestStructure)
         );
+
+        // Update LoanVaultFactory identification mappings.
         loanVaults[loanVaultsCreated] = address(vault);
         _isLoanVault[address(vault)] = true;
+
+        // Emit event.
+        emit LoanVaultCreated(
+            loanVaultsCreated,
+            msg.sender,
+            _assetRequested,
+            _assetCollateral,
+            address(vault),
+            _specifications,
+            _interestStructure
+        );
+
+        // Increment loanVaultCreated (IDs), return loan vault address.
         loanVaultsCreated++;
         return address(vault);
     }
@@ -78,5 +118,17 @@ contract LoanVaultFactory {
     /// @return True if the address is a loan vault created through this contract.
     function isLoanVault(address _loanVault) public view returns (bool) {
         return _isLoanVault[_loanVault];
+    }
+
+    /// @dev Governor can adjust the fundingLockerFactory.
+    /// @param _fundingLockerFactory The new fundingLockerFactory address.
+    function setFundingLockerFactory(address _fundingLockerFactory) public isGovernor {
+        fundingLockerFactory = _fundingLockerFactory;
+    }
+    
+    /// @dev Governor can adjust the fundingLockerFactory.
+    /// @param _collateralLockerFactory The new collateralLockerFactory address.
+    function setCollateralLockerFactory(address _collateralLockerFactory) public isGovernor {
+        collateralLockerFactory = _collateralLockerFactory;
     }
 }

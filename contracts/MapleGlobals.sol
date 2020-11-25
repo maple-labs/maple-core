@@ -29,11 +29,8 @@ contract MapleGlobals {
     // Validity mapping of payment intervals (in seconds).
     mapping(uint => bool) public validPaymentIntervalSeconds;
 
-    // Validity mapping of repayment calculators.
-    mapping(address => bool) public validRepaymentCalculators;
-
-    // Validity mapping of premium calculators.
-    mapping(address => bool) public validPremiumCalculators;
+    // Mapping of bytes32 interest structure IDs to address of the corresponding repaymentCalculator.
+    mapping(bytes32 => address) public interestStructureCalculators;
 
     modifier isGovernor() {
         require(msg.sender == governor, "msg.sender is not Governor");
@@ -73,21 +70,12 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can update the validitiy of a _REPAYMENT_ calculator address.
-        @param _repaymentCalculator Address of the _REPAYMENT_ calculator.
-        @param _validity The new validity of specified payment interval.
+        @notice Governor can adjust the grace period.
+        @param _interestStructure Name of the interest structure (e.g. "BULLET")
+        @param _calculator Address of the corresponding calculator for repayments, etc.
      */
-    function setRepaymentCalculatorValidity(address _repaymentCalculator, bool _validity) isGovernor public {
-        validRepaymentCalculators[_repaymentCalculator] = _validity;
-    }
-
-    /**
-        @notice Governor can update the validitiy of a _PREMIUM_ calculator address.
-        @param _premiumCalculator Address of the _PREMIUM_ calculator.
-        @param _validity The new validity of specified payment interval.
-     */
-    function setPremiumCalculatorValidity(address _premiumCalculator, bool _validity) isGovernor public {
-        validPremiumCalculators[_premiumCalculator] = _validity;
+    function setInterestStructureCalculator(bytes32 _interestStructure, address _calculator) isGovernor public {
+        interestStructureCalculators[_interestStructure] = _calculator;
     }
 
     /**

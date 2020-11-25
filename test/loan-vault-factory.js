@@ -26,7 +26,8 @@ const LoanVaultFundingLockerFactoryAbi = require("../../contracts/localhost/abis
 
 describe("LoanVault.sol", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
-  const BUNK_ADDRESS_V2 = "0x0000000000000000000000000000000000000001";
+  const BUNK_ADDRESS_AMORTIZATION = "0x0000000000000000000000000000000000000001";
+  const BUNK_ADDRESS_BULLET = "0x0000000000000000000000000000000000000002";
 
   let DAI,
     USDC,
@@ -86,140 +87,90 @@ describe("LoanVault.sol", function () {
   let vaultAddress;
 
   it("test invalid instantiations from loanVault from factory", async function () {
-    
-    // Revert validity of BUNK_ADDRESS for repaymentCalculator AND premiumCalculator.
-    await expect(Globals.setRepaymentCalculatorValidity(BUNK_ADDRESS, false));
-    await expect(Globals.setPremiumCalculatorValidity(BUNK_ADDRESS, false));
 
     await expect(
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        FLFAddress,
-        CLFAddress,
-        "QuantFundLoan",
-        "QFL",
-        [1000, 0, 0, 0, 0, 0, 0], 
-        BUNK_ADDRESS, 
-        BUNK_ADDRESS
+        [5000, 0, 0, 0, 0, 0, 0], 
+        ethers.utils.formatBytes32String('BALLET')
+      )
+    ).to.be.revertedWith(
+      "LoanVaultFactory::createLoanVault:ERR_NULL_INTEREST_STRUCTURE_CALC"
+    );
+
+    await expect(
+      LoanVaultFactory.createLoanVault(
+        BUNK_ADDRESS,
+        WETHAddress,
+        [5000, 0, 0, 0, 0, 0, 0], 
+        ethers.utils.formatBytes32String('BULLET')
+      )
+    ).to.be.revertedWith(
+      "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
+    );
+
+    await expect(
+      LoanVaultFactory.createLoanVault(
+        DAIAddress,
+        BUNK_ADDRESS,
+        [5000, 0, 0, 0, 0, 0, 0], 
+        ethers.utils.formatBytes32String('AMORTIZATION')
+      )
+    ).to.be.revertedWith(
+      "LoanVaultFactory::createLoanVault:ERR_NULL_ASSET_COLLATERAL"
+    );
+
+    await expect(
+      LoanVaultFactory.createLoanVault(
+        DAIAddress,
+        WETHAddress,
+        [5000, 0, 0, 0, 0, 0, 0], 
+        ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
       "LoanVault::prepareLoan:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1"
     );
-
+    
     await expect(
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        FLFAddress,
-        CLFAddress,
-        "QuantFundLoan",
-        "QFL",
-        [1000, 1, 0, 0, 0, 0, 0], 
-        BUNK_ADDRESS, 
-        BUNK_ADDRESS
+        [5000, 1, 0, 0, 0, 0, 0], 
+        ethers.utils.formatBytes32String('AMORTIZATION')
       )
     ).to.be.revertedWith(
       "LoanVault::prepareLoan:ERR_INVALID_PAYMENT_INTERVAL_SECONDS"
     );
-
+    
     await expect(
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        FLFAddress,
-        CLFAddress,
-        "QuantFundLoan",
-        "QFL",
-        [1000, 1, 2592000, 0, 0, 0, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
+        [5000, 1, 7776000, 1000000000000, 8000000000, 0, 0], 
+        ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
       "LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
     );
-
+    
     await expect(
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        FLFAddress,
-        CLFAddress,
-        "QuantFundLoan",
-        "QFL",
-        [1000, 1, 2592000, 100000000, 0, 0, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
+        [5000, 1, 7776000, 1000000000000, 0, 0, 0], 
+        ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
       "LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
     );
-
+    
     await expect(
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        FLFAddress,
-        CLFAddress,
-        "QuantFundLoan",
-        "QFL",
-        [1000, 1, 2592000, 100000001, 100000000, 0, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    ).to.be.revertedWith(
-      "LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
-    );
-
-    await expect(
-      LoanVaultFactory.createLoanVault(
-        DAIAddress,
-        WETHAddress,
-        FLFAddress,
-        CLFAddress,
-        "QuantFundLoan",
-        "QFL",
-        [1000, 1, 2592000, 100000000, 500000000, 0, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    ).to.be.revertedWith(
-      "LoanVault::prepareLoan:ERR_INVALID_REPAYMENT_CALCULATOR"
-    );
-
-    // Temporarily set repaymentCalculator validity of address(0) to TRUE.
-    await Globals.setRepaymentCalculatorValidity(BUNK_ADDRESS, true);
-
-    await expect(
-      LoanVaultFactory.createLoanVault(
-        DAIAddress,
-        WETHAddress,
-        FLFAddress,
-        CLFAddress,
-        "QuantFundLoan",
-        "QFL",
-        [1000, 1, 2592000, 100000000, 500000000, 0, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    ).to.be.revertedWith(
-      "LoanVault::prepareLoan:ERR_INVALID_PREMIUM_CALCULATOR"
-    );
-
-    // Temporarily set premiumCalculator validity of BUNK_ADDRESS to TRUE.
-    await Globals.setPremiumCalculatorValidity(BUNK_ADDRESS, true);
-
-    await expect(
-      LoanVaultFactory.createLoanVault(
-        DAIAddress,
-        WETHAddress,
-        FLFAddress,
-        CLFAddress,
-        "QuantFundLoan",
-        "QFL",
-        [1000, 1, 2592000, 100000000, 500000000, 0, 0],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
+        [5000, 1, 7776000, 1000000000000, 2000000000000, 0, 86399], 
+        ethers.utils.formatBytes32String('AMORTIZATION')
       )
     ).to.be.revertedWith(
       "LoanVault::prepareLoan:ERR_FUNDING_PERIOD_LESS_THAN_86400"
@@ -233,19 +184,12 @@ describe("LoanVault.sol", function () {
     // Confirm incrementor pre/post-checks.
     const preIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
 
-    await expect(
-      LoanVaultFactory.createLoanVault(
-        DAIAddress,
-        WETHAddress,
-        FLFAddress,
-        CLFAddress,
-        "QuantFundLoan",
-        "QFL",
-        [1000, 1, 2592000, 100000000, 500000000, 0, 86400],
-        BUNK_ADDRESS,
-        BUNK_ADDRESS
-      )
-    );
+    await LoanVaultFactory.createLoanVault(
+      DAIAddress,
+      WETHAddress,
+      [5000, 1, 7776000, 1000000000000, 2000000000000, 0, 86400], 
+      ethers.utils.formatBytes32String('BULLET')
+    )
 
     const postIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
 
@@ -287,6 +231,15 @@ describe("LoanVault.sol", function () {
     const borrower = await LoanVault.borrower();
     expect(borrower).to.equals(accounts[0]);
 
+    /**
+      await LoanVaultFactory.createLoanVault(
+        DAIAddress,
+        WETHAddress,
+        [5000, 1, 7776000, 1000000000000, 2000000000000, 0, 86400], 
+        ethers.utils.formatBytes32String('BULLET')
+      )
+    */
+
     // Ensure that state variables of new LoanVault has proper values.
     const APR_BIPS = await LoanVault.aprBips();
     const NUMBER_OF_PAYMENTS = await LoanVault.numberOfPayments();
@@ -294,18 +247,19 @@ describe("LoanVault.sol", function () {
     const MIN_RAISE = await LoanVault.minRaise();
     const DESIRED_RAISE = await LoanVault.desiredRaise();
     const COLLATERAL_AT_DESIRED_RAISE = await LoanVault.collateralAtDesiredRaise();
+    const FUNDING_PERIOD_SECONDS = await LoanVault.fundingPeriodSeconds();
     const REPAYMENT_CALCULATOR = await LoanVault.repaymentCalculator();
     const PREMIUM_CALCULATOR = await LoanVault.premiumCalculator();
     const LOAN_STATE = await LoanVault.loanState();
 
-    expect(parseInt(APR_BIPS["_hex"])).to.equals(1000);
+    expect(parseInt(APR_BIPS["_hex"])).to.equals(5000);
     expect(parseInt(NUMBER_OF_PAYMENTS["_hex"])).to.equals(1);
-    expect(parseInt(PAYMENT_INTERVAL_SECONDS["_hex"])).to.equals(2592000);
-    expect(parseInt(MIN_RAISE["_hex"])).to.equals(100000000);
-    expect(parseInt(DESIRED_RAISE["_hex"])).to.equals(500000000);
+    expect(parseInt(PAYMENT_INTERVAL_SECONDS["_hex"])).to.equals(7776000);
+    expect(parseInt(MIN_RAISE["_hex"])).to.equals(1000000000000);
+    expect(parseInt(DESIRED_RAISE["_hex"])).to.equals(2000000000000);
     expect(parseInt(COLLATERAL_AT_DESIRED_RAISE["_hex"])).to.equals(0);
-    expect(REPAYMENT_CALCULATOR).to.equals(BUNK_ADDRESS);
-    expect(PREMIUM_CALCULATOR).to.equals(BUNK_ADDRESS);
+    expect(parseInt(FUNDING_PERIOD_SECONDS["_hex"])).to.equals(86400);
+    expect(REPAYMENT_CALCULATOR).to.equals(BUNK_ADDRESS_BULLET);
     expect(LOAN_STATE).to.equals(1);
 
     // Ensure that the LoanVault was issued and assigned a valid FundingLocker.

@@ -35,14 +35,36 @@ async function main() {
     mapleTreasury.address
   );
 
-  const LVFactory = await deploy("LoanVaultFactory", [mapleGlobals.address]);
-
-  const CollateralLockerFactory = await deploy(
-    "LoanVaultCollateralLockerFactory",
-    [LVFactory.address]
+  // TODO: Create repayment calculators, use bunk ones temporarily.
+  const BUNK_ADDRESS_AMORTIZATION = "0x0000000000000000000000000000000000000001";
+  const BUNK_ADDRESS_BULLET = "0x0000000000000000000000000000000000000002";
+  const updateGlobalsRepaymentCalcAmortization = await mapleGlobals.setInterestStructureCalculator(
+    ethers.utils.formatBytes32String('AMORTIZATION'),
+    BUNK_ADDRESS_AMORTIZATION
+  );
+  const updateGlobalsRepaymentCalcBullet = await mapleGlobals.setInterestStructureCalculator(
+    ethers.utils.formatBytes32String('BULLET'),
+    BUNK_ADDRESS_BULLET
   );
 
+  const CollateralLockerFactory = await deploy("LoanVaultCollateralLockerFactory",);
+
   const FundingLockerFactory = await deploy("LoanVaultFundingLockerFactory");
+
+  const LVFactory = await deploy("LoanVaultFactory", [
+    mapleGlobals.address,
+    FundingLockerFactory.address,
+    CollateralLockerFactory.address
+  ]);
+
+  const updateFundingLockerFactory = await LVFactory.setFundingLockerFactory(
+    FundingLockerFactory.address
+  );
+
+  const updateCollateralLockerFactory = await LVFactory.setCollateralLockerFactory(
+    CollateralLockerFactory.address
+  );
+
 }
 
 main()

@@ -84,8 +84,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @param _assetCollateral The asset provided as collateral by the borrower.
     /// @param _fundingLockerFactory Factory to instantiate FundingLocker through.
     /// @param _collateralLockerFactory Factory to instantiate CollateralLocker through.
-    /// @param name The name of the loan vault's token (minted when investors fund the loan).
-    /// @param symbol The ticker of the loan vault's token.
     /// @param _mapleGlobals Address of the MapleGlobals.sol contract.
     /// @param _specifications The specifications of the loan.
     ///        _specifications[0] = APR_BIPS
@@ -96,19 +94,15 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     ///        _specifications[5] = COLLATERAL_AT_DESIRED_RAISE
     ///        _specifications[6] = FUNDING_PERIOD_SECONDS
     /// @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
-    /// @param _premiumCalculator The calculator used for call premiums.
     constructor(
         address _assetRequested,
         address _assetCollateral,
         address _fundingLockerFactory,
         address _collateralLockerFactory,
-        string memory name,
-        string memory symbol,
         address _mapleGlobals,
         uint[7] memory _specifications,
-        address _repaymentCalculator,
-        address _premiumCalculator
-    ) FundsDistributionToken(name, symbol) {
+        address _repaymentCalculator
+    ) FundsDistributionToken('LoanVault', 'LVT') {
 
         require(
             address(_assetRequested) != address(0),
@@ -140,14 +134,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
         );
         require(
-            MapleGlobals.validRepaymentCalculators(_repaymentCalculator), 
-            "LoanVault::prepareLoan:ERR_INVALID_REPAYMENT_CALCULATOR"
-        );
-        require(
-            MapleGlobals.validPremiumCalculators(_premiumCalculator), 
-            "LoanVault::prepareLoan:ERR_INVALID_PREMIUM_CALCULATOR"
-        );
-        require(
             _specifications[6] >= 86400, 
             "LoanVault::prepareLoan:ERR_FUNDING_PERIOD_LESS_THAN_86400"
         );
@@ -159,8 +145,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         minRaise = _specifications[3];
         desiredRaise = _specifications[4];
         collateralAtDesiredRaise = _specifications[5];
+        fundingPeriodSeconds = _specifications[6];
         repaymentCalculator = _repaymentCalculator;
-        premiumCalculator = _premiumCalculator;
 
         // Deploy a funding locker.
         fundingLocker = IFundingLockerFactory(fundingLockerFactory).newLocker(assetRequested);

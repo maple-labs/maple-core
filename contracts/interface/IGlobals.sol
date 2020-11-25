@@ -21,5 +21,7 @@ interface IGlobals {
 
     function validPremiumCalculators(address) external view returns (bool);
 
+    function interestStructureCalculators(bytes32) external view returns (address);
+
     function unstakeDelay() external view returns (uint256);
 }
