@@ -2,9 +2,12 @@ pragma solidity 0.7.0;
 
 import "./LoanVault.sol";
 import "./interface/IGlobals.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 /// @title LoanVaultFactory instantiates LoanVault contracts.
 contract LoanVaultFactory {
+
+	using SafeMath for uint256;
 
     // Data structures for loan vaults.
     mapping(uint256 => address) private loanVaults;
@@ -50,17 +53,16 @@ contract LoanVaultFactory {
     /// @param _assetCollateral The asset provided as collateral by the borrower.
     /// @param _specifications The specifications of the loan.
     ///        _specifications[0] = APR_BIPS
-    ///        _specifications[1] = NUMBER_OF_PAYMENTS
-    ///        _specifications[2] = PAYMENT_INTERVAL_SECONDS
+    ///        _specifications[1] = TERM_DAYS
+    ///        _specifications[2] = PAYMENT_INTERVAL_DAYS
     ///        _specifications[3] = MIN_RAISE
-    ///        _specifications[4] = DESIRED_RAISE
-    ///        _specifications[5] = COLLATERAL_AT_DESIRED_RAISE
-    ///        _specifications[6] = FUNDING_PERIOD_SECONDS
+    ///        _specifications[4] = COLLATERAL_BIPS_RATIO
+    ///        _specifications[5] = FUNDING_PERIOD_DAYS
     /// @return The address of the newly instantiated LoanVault.
     function createLoanVault(
         address _assetRequested,
         address _assetCollateral,
-        uint[7] memory _specifications,
+        uint[6] memory _specifications,
         bytes32 _interestStructure
     ) public returns (address) {
 

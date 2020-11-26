@@ -28,9 +28,6 @@ contract MapleGlobals {
     /// @return Amount of time to allow borrower to drawdown on their loan after funding period ends.
     uint256 public drawdownGracePeriod;
 
-    // Validity mapping of payment intervals (in seconds).
-    mapping(uint256 => bool) public validPaymentIntervalSeconds;
-
     // Validitying mapping of assets that borrowers can request or use as collateral.
     mapping(address => bool) public isValidBorrowToken;
     mapping(address => bool) public isValidCollateral;
@@ -61,11 +58,6 @@ contract MapleGlobals {
         stakeAmountRequired = 25000;
         unstakeDelay = 90 days;
         drawdownGracePeriod = 1 days;
-
-        validPaymentIntervalSeconds[2592000] = true; // Monthly
-        validPaymentIntervalSeconds[7776000] = true; // Quarterly
-        validPaymentIntervalSeconds[15552000] = true; // Semi-annually
-        validPaymentIntervalSeconds[31104000] = true; // Annually
     }
 
     /**
@@ -105,19 +97,7 @@ contract MapleGlobals {
         interestStructureCalculators[_type] = _calculator;
         validInterestStructures.push(_type);
     }
-
-    /**
-        @notice Governor can adjust the accepted payment intervals.
-        @param _paymentIntervalSeconds The payment interval.
-        @param _validity The new validity of specified payment interval.
-     */
-    function setPaymentIntervalValidity(uint256 _paymentIntervalSeconds, bool _validity)
-        public
-        isGovernor
-    {
-        validPaymentIntervalSeconds[_paymentIntervalSeconds] = _validity;
-    }
-
+    
     /**
         @notice Governor can adjust the grace period.
         @param _interestStructure Name of the interest structure (e.g. "BULLET")

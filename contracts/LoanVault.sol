@@ -89,12 +89,11 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @param _mapleGlobals Address of the MapleGlobals.sol contract.
     /// @param _specifications The specifications of the loan.
     ///        _specifications[0] = APR_BIPS
-    ///        _specifications[1] = NUMBER_OF_PAYMENTS
-    ///        _specifications[2] = PAYMENT_INTERVAL_SECONDS
+    ///        _specifications[1] = TERM_DAYS
+    ///        _specifications[2] = PAYMENT_INTERVAL_DAYS
     ///        _specifications[3] = MIN_RAISE
-    ///        _specifications[4] = DESIRED_RAISE
-    ///        _specifications[5] = COLLATERAL_AT_DESIRED_RAISE
-    ///        _specifications[6] = FUNDING_PERIOD_SECONDS
+    ///        _specifications[4] = COLLATERAL_BIPS_RATIO
+    ///        _specifications[5] = FUNDING_PERIOD_DAYS
     /// @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
     constructor(
         address _assetRequested,
@@ -102,7 +101,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         address _fundingLockerFactory,
         address _collateralLockerFactory,
         address _mapleGlobals,
-        uint[7] memory _specifications,
+        uint[6] memory _specifications,
         address _repaymentCalculator
     ) FundsDistributionToken('LoanVault', 'LVT') {
 
@@ -126,6 +125,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::constructor:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1"
         );
         require(
+            _specifications[1].mod(_specifications[2]) == 0,
+            "LoanVault::constructor:ERR_INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION"
+        );
+        require(
             MapleGlobals.validPaymentIntervalSeconds(_specifications[2]), 
             "LoanVault::constructor:ERR_INVALID_PAYMENT_INTERVAL_SECONDS"
         );
@@ -133,7 +136,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::constructor:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
         );
         require(
-            _specifications[6] >= 86400, 
+            _specifications[5] >= 1, 
             "LoanVault::constructor:ERR_FUNDING_PERIOD_LESS_THAN_86400"
         );
 
@@ -144,7 +147,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         minRaise = _specifications[3];
         desiredRaise = _specifications[4];
         collateralAtDesiredRaise = _specifications[5];
-        fundingPeriodSeconds = _specifications[6];
+        fundingPeriodSeconds = _specifications[5].mul(86400);
         repaymentCalculator = _repaymentCalculator;
 
         // Deploy a funding locker.
