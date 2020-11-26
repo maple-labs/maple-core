@@ -87,7 +87,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
   let vaultAddress;
 
   it("test invalid instantiations from loanVault from factory", async function () {
-
+    
     await expect(
       LoanVaultFactory.createLoanVault(
         DAIAddress,
@@ -97,6 +97,17 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
       )
     ).to.be.revertedWith(
       "LoanVaultFactory::createLoanVault:ERR_NULL_INTEREST_STRUCTURE_CALC"
+    );
+
+    await expect(
+      LoanVaultFactory.createLoanVault(
+        DAIAddress,
+        WETHAddress,
+        [5000, 0, 0, 0, 0, 0], 
+        ethers.utils.formatBytes32String('BULLET')
+      )
+    ).to.be.revertedWith(
+      "LoanVault::constructor:ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO"
     );
 
     await expect(
@@ -129,7 +140,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
-      "LoanVault::constructor:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1"
+      "LoanVault::constructor:ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO"
     );
     
     await expect(
@@ -140,40 +151,40 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         ethers.utils.formatBytes32String('AMORTIZATION')
       )
     ).to.be.revertedWith(
-      "LoanVault::constructor:ERR_INVALID_PAYMENT_INTERVAL_SECONDS"
+      "LoanVault::constructor:ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO"
     );
     
     await expect(
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        [5000, 1, 7776000, 1000000000000, 0, 0], 
+        [5000, 30, 29, 1000000000000, 0, 0], 
         ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
-      "LoanVault::constructor:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
+      "LoanVault::constructor:ERR_INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION"
     );
     
     await expect(
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        [5000, 1, 7776000, 1000000000000, 0, 0, 0], 
+        [5000, 30, 30, 0, 0, 0], 
         ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
-      "LoanVault::constructor:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
+      "LoanVault::constructor:ERR_MIN_RAISE_EQUALS_ZERO"
     );
     
     await expect(
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        [5000, 1, 7776000, 1000000000000, 2000000000000, 0, 86399], 
+        [5000, 90, 30, 1000000000000, 0, 0], 
         ethers.utils.formatBytes32String('AMORTIZATION')
       )
     ).to.be.revertedWith(
-      "LoanVault::constructor:ERR_FUNDING_PERIOD_LESS_THAN_86400"
+      "LoanVault::constructor:ERR_FUNDING_PERIOD_EQUALS_ZERO"
     );
     
   });
@@ -187,8 +198,8 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
     await LoanVaultFactory.createLoanVault(
       DAIAddress,
       WETHAddress,
-      [5000, 1, 7776000, 1000000000000, 2000000000000, 0, 86400], 
-      ethers.utils.formatBytes32String('BULLET')
+      [5000, 90, 30, 1000000000000, 0, 7], 
+      ethers.utils.formatBytes32String('AMORTIZATION')
     )
 
     const postIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
@@ -235,8 +246,8 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
       await LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        [5000, 1, 7776000, 1000000000000, 2000000000000, 0, 86400], 
-        ethers.utils.formatBytes32String('BULLET')
+        [5000, 90, 30, 1000000000000, 0, 7], 
+        ethers.utils.formatBytes32String('AMORTIZATION')
       )
     */
 
@@ -245,22 +256,20 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
     const NUMBER_OF_PAYMENTS = await LoanVault.numberOfPayments();
     const PAYMENT_INTERVAL_SECONDS = await LoanVault.paymentIntervalSeconds();
     const MIN_RAISE = await LoanVault.minRaise();
-    const DESIRED_RAISE = await LoanVault.desiredRaise();
-    const COLLATERAL_AT_DESIRED_RAISE = await LoanVault.collateralAtDesiredRaise();
+    const COLLATERAL_BIPS_RATIO = await LoanVault.collateralBipsRatio();
     const FUNDING_PERIOD_SECONDS = await LoanVault.fundingPeriodSeconds();
     const REPAYMENT_CALCULATOR = await LoanVault.repaymentCalculator();
     const PREMIUM_CALCULATOR = await LoanVault.premiumCalculator();
     const LOAN_STATE = await LoanVault.loanState();
 
     expect(parseInt(APR_BIPS["_hex"])).to.equals(5000);
-    expect(parseInt(NUMBER_OF_PAYMENTS["_hex"])).to.equals(1);
-    expect(parseInt(PAYMENT_INTERVAL_SECONDS["_hex"])).to.equals(7776000);
+    expect(parseInt(NUMBER_OF_PAYMENTS["_hex"])).to.equals(3);
+    expect(parseInt(PAYMENT_INTERVAL_SECONDS["_hex"])).to.equals(2592000);
     expect(parseInt(MIN_RAISE["_hex"])).to.equals(1000000000000);
-    expect(parseInt(DESIRED_RAISE["_hex"])).to.equals(2000000000000);
-    expect(parseInt(COLLATERAL_AT_DESIRED_RAISE["_hex"])).to.equals(0);
-    expect(parseInt(FUNDING_PERIOD_SECONDS["_hex"])).to.equals(86400);
-    expect(REPAYMENT_CALCULATOR).to.equals(BUNK_ADDRESS_BULLET);
-    expect(LOAN_STATE).to.equals(1);
+    expect(parseInt(COLLATERAL_BIPS_RATIO["_hex"])).to.equals(0);
+    expect(parseInt(FUNDING_PERIOD_SECONDS["_hex"])).to.equals(604800);
+    expect(REPAYMENT_CALCULATOR).to.equals(BUNK_ADDRESS_AMORTIZATION);
+    expect(LOAN_STATE).to.equals(0);
 
     // Ensure that the LoanVault was issued and assigned a valid FundingLocker.
     const FUNDING_LOCKER = await LoanVault.fundingLocker();

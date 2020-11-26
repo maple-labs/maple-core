@@ -130,6 +130,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::constructor:ERR_INVALID_ASSET_REQUESTED"
         );
         require(
+            _specifications[2] != 0,
+            "LoanVault::constructor:ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO"
+        );
+        require(
             _specifications[1].mod(_specifications[2]) == 0,
             "LoanVault::constructor:ERR_INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION"
         );
