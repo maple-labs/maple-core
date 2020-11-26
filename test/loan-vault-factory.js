@@ -92,7 +92,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        [5000, 0, 0, 0, 0, 0, 0], 
+        [5000, 0, 0, 0, 0, 0], 
         ethers.utils.formatBytes32String('BALLET')
       )
     ).to.be.revertedWith(
@@ -103,7 +103,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
       LoanVaultFactory.createLoanVault(
         BUNK_ADDRESS,
         WETHAddress,
-        [5000, 0, 0, 0, 0, 0, 0], 
+        [5000, 0, 0, 0, 0, 0], 
         ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
@@ -114,7 +114,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         BUNK_ADDRESS,
-        [5000, 0, 0, 0, 0, 0, 0], 
+        [5000, 0, 0, 0, 0, 0], 
         ethers.utils.formatBytes32String('AMORTIZATION')
       )
     ).to.be.revertedWith(
@@ -125,7 +125,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        [5000, 0, 0, 0, 0, 0, 0], 
+        [5000, 0, 0, 0, 0, 0], 
         ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(
@@ -136,7 +136,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        [5000, 1, 0, 0, 0, 0, 0], 
+        [5000, 1, 0, 0, 0, 0], 
         ethers.utils.formatBytes32String('AMORTIZATION')
       )
     ).to.be.revertedWith(
@@ -147,7 +147,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
       LoanVaultFactory.createLoanVault(
         DAIAddress,
         WETHAddress,
-        [5000, 1, 7776000, 1000000000000, 8000000000, 0, 0], 
+        [5000, 1, 7776000, 1000000000000, 0, 0], 
         ethers.utils.formatBytes32String('BULLET')
       )
     ).to.be.revertedWith(

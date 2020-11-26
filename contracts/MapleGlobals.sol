@@ -74,7 +74,7 @@ contract MapleGlobals {
         @notice Governor can add a valid token, used for borrowing.
         @param _token Address of the valid token.
      */
-    function addBorrowTokens(address _token) external isGovernor {
+    function addBorrowToken(address _token) external isGovernor {
         require(!isValidBorrowToken[_token], "MapleGloblas::addBorrowTokens:ERR_ALREADY_ADDED");
         isValidBorrowToken[_token] = true;
         validBorrowTokenAddresses.push(_token);
@@ -97,7 +97,7 @@ contract MapleGlobals {
         interestStructureCalculators[_type] = _calculator;
         validInterestStructures.push(_type);
     }
-    
+
     /**
         @notice Governor can adjust the grace period.
         @param _interestStructure Name of the interest structure (e.g. "BULLET")

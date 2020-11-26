@@ -44,7 +44,7 @@ contract LoanVaultFactory {
         address indexed _assetRequested,
         address _assetCollateral,
 		address _loanVaultAddress,
-        uint[7] _specifications,
+        uint[6] _specifications,
         bytes32 _interestStructure
     );
 

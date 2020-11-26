@@ -1,13 +1,16 @@
 const { deploy } = require("@maplelabs/hardhat-scripts");
 
-const mintableUSDC = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
+const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
+const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
+const WETHAddress = require("../../contracts/localhost/addresses/WETH9.address.js");
+const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address.js");
 const uniswapRouter = require("../../contracts/localhost/addresses/UniswapV2Router02.address.js");
 
 async function main() {
   const mapleToken = await deploy("MapleToken", [
     "MapleToken",
     "MPL",
-    mintableUSDC,
+    USDCAddress,
   ]);
 
   // Governor = accounts[0]
@@ -26,7 +29,7 @@ async function main() {
 
   const mapleTreasury = await deploy("MapleTreasury", [
     mapleToken.address,
-    mintableUSDC,
+    USDCAddress,
     uniswapRouter,
     mapleGlobals.address,
   ]);
@@ -34,6 +37,15 @@ async function main() {
   const updateGlobals = await mapleGlobals.setMapleTreasury(
     mapleTreasury.address
   );
+
+  await mapleGlobals.addCollateralToken(DAIAddress);
+  await mapleGlobals.addBorrowToken(DAIAddress);
+  await mapleGlobals.addCollateralToken(USDCAddress);
+  await mapleGlobals.addBorrowToken(USDCAddress);
+  await mapleGlobals.addCollateralToken(WETHAddress);
+  await mapleGlobals.addBorrowToken(WETHAddress);
+  await mapleGlobals.addCollateralToken(WBTCAddress);
+  await mapleGlobals.addBorrowToken(WBTCAddress);
 
   // TODO: Create repayment calculators, use bunk ones temporarily.
   const BUNK_ADDRESS_AMORTIZATION = "0x0000000000000000000000000000000000000001";
