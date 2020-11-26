@@ -51,7 +51,7 @@ interface ILiquidAssetLockerFactory {
 }
 
 interface ILiquidAssetLocker {
-function fundLoan(address _loanVault, uint256 _amt) external;
+    function fundLoan(address _loanVault, uint256 _amt) external;
 }
 
 // @title LP is the core liquidity pool contract.

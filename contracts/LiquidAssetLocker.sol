@@ -38,8 +38,8 @@ contract LiquidAssetLocker {
 
     // @notice approve and call fundloan in loanvault
     //check if it is actually a loan vault
-    function fundLoan(address _loanVault, uint256 _amt) isOwner external {
+    function fundLoan(address _loanVault, uint256 _amt) external isOwner {
         ILiquidAsset.approve(_loanVault, _amt);
-	ILoanVault(_loanVault).fundLoan(_amt);
+        ILoanVault(_loanVault).fundLoan(_amt);
     }
 }
