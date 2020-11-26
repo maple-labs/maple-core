@@ -36,12 +36,10 @@ contract MapleGlobals {
     mapping(address => bool) public isValidCollateral;
     address[] public validBorrowTokenAddresses;
     address[] public validCollateralTokenAddresses;
-    bytes32[] public validInterestStructures;
-    //string[] public validBorrowTokenStringList;
-    //string[] public validCollateralTokenStringList;
 
     // Mapping of bytes32 interest structure IDs to address of the corresponding interestStructureCalculators.
     mapping(bytes32 => address) public interestStructureCalculators;
+    bytes32[] public validInterestStructures;
 
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
@@ -59,25 +57,53 @@ contract MapleGlobals {
         mapleToken = _mapleToken;
         establishmentFeeBasisPoints = 200;
         treasuryFeeBasisPoints = 20;
-        gracePeriod = 5 days; //432000;
+        gracePeriod = 5 days;
         stakeAmountRequired = 25000;
-        unstakeDelay = 90 days; //7776000;
-        drawdownGracePeriod = 1 days; //86400;
-        // solidity has time units built in minute hour day week.
+        unstakeDelay = 90 days;
+        drawdownGracePeriod = 1 days;
+
         validPaymentIntervalSeconds[2592000] = true; // Monthly
         validPaymentIntervalSeconds[7776000] = true; // Quarterly
         validPaymentIntervalSeconds[15552000] = true; // Semi-annually
         validPaymentIntervalSeconds[31104000] = true; // Annually
     }
 
+    /**
+        @notice Governor can add a valid token, used as collateral.
+        @param _token Address of the valid token.
+     */
     function addCollateralToken(address _token) external isGovernor {
+        require(!isValidCollateral[_token], "MapleGloblas::addCollateralToken:ERR_ALREADY_ADDED");
         isValidCollateral[_token] = true;
         validCollateralTokenAddresses.push(_token);
     }
 
+    /**
+        @notice Governor can add a valid token, used for borrowing.
+        @param _token Address of the valid token.
+     */
     function addBorrowTokens(address _token) external isGovernor {
+        require(!isValidBorrowToken[_token], "MapleGloblas::addBorrowTokens:ERR_ALREADY_ADDED");
         isValidBorrowToken[_token] = true;
         validBorrowTokenAddresses.push(_token);
+    }
+
+    /**
+        @notice Governor can adjust the accepted payment intervals.
+        @param _type The bytes32 name identifying the interest structure (e.g. "BULLET")
+        @param _calculator Address of the calculator.
+     */
+    function addValidInterestStructure(bytes32 _type, address _calculator) external isGovernor {
+        require(
+            _calculator != address(0), 
+            "MapleGloblas::addValidInterestStructure:ERR_NULL_ADDRESS_SUPPLIED_FOR_CALCULATOR"
+        );
+        require(
+            interestStructureCalculators[_type] == address(0), 
+            "MapleGloblas::addValidInterestStructure:ERR_ALREADY_ADDED"
+        );
+        interestStructureCalculators[_type] = _calculator;
+        validInterestStructures.push(_type);
     }
 
     /**
