@@ -26,10 +26,21 @@ contract MapleGlobals {
     /// @return Parameter for unstake delay, with relation to LiquidityPoolStakedAssetLocker withdrawals.
     uint public unstakeDelay;
 
+    /// @return Amount of time to allow borrower to drawdown on their loan after funding period ends.
+    uint public drawdownGracePeriod;
+
     // Validity mapping of payment intervals (in seconds).
     mapping(uint => bool) public validPaymentIntervalSeconds;
+    
+    // Validitying mapping of assets that borrowers can request or use as collateral.
+    mapping(address => bool) public validBorrowTokens;
+    mapping(address => bool) public validCollateralTokens;
+    address[] public validBorrowTokenAddressList;
+    address[] public validCollateralTokenAddressList;
+    string[] public validBorrowTokenStringList;
+    string[] public validCollateralTokenStringList;
 
-    // Mapping of bytes32 interest structure IDs to address of the corresponding repaymentCalculator.
+    // Mapping of bytes32 interest structure IDs to address of the corresponding interestStructureCalculators.
     mapping(bytes32 => address) public interestStructureCalculators;
 
     modifier isGovernor() {
@@ -54,6 +65,7 @@ contract MapleGlobals {
         gracePeriod = 432000;
         stakeAmountRequired = 25000;
         unstakeDelay = 7776000;
+        drawdownGracePeriod = 86400;
 
         validPaymentIntervalSeconds[2592000] = true;    // Monthly
         validPaymentIntervalSeconds[7776000] = true;    // Quarterly

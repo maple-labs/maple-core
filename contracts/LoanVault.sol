@@ -67,7 +67,9 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @notice The current state of this loan, as defined in the State enum below.
     State public loanState;
 
-    enum State { Initialized, Funding, Active, Defaulted, Matured }
+    // Live = Created
+    // Active = Drawndown
+    enum State { Live, Active }
 
     modifier isState(State _state) {
         require(loanState == _state, "LoanVault::ERR_FAIL_STATE_CHECK");
@@ -118,9 +120,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         fundsToken = IRequestedAsset;
         borrower = tx.origin;
 
-        // Transition state first.
-        loanState = State.Funding;
-
         // Perform validity cross-checks.
         require(
             _specifications[1] >= 1, 
@@ -157,7 +156,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
      * @param _amount Amount of _assetRequested to fund the loan for.
      * @param _toMint The address to mint LoanVaultTokens for.
     */
-    function fundLoan(uint _amount, address _toMint) external isState(State.Funding) {
+    function fundLoan(uint _amount, address _toMint) external isState(State.Live) {
         // TODO: Consider decimal precision difference: RequestedAsset <> FundsToken
         require(
             IRequestedAsset.transferFrom(msg.sender, address(this), _amount),
@@ -173,7 +172,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @notice End funding period by claiming funds, posting collateral, transitioning loanState from Funding to Active.
     /// @param _drawdownAmount Amount of fundingAsset borrower will claim, remainder is returned to LoanVault.
     // TODO: Implement and test this function.
-    function drawdown(uint _drawdownAmount) external isState(State.Funding) isBorrower {
+    function drawdown(uint _drawdownAmount) external isState(State.Live) isBorrower {
 
         require(
             _drawdownAmount >= minRaise, 
