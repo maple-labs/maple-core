@@ -3,10 +3,11 @@ const { expect, assert } = require("chai");
 const globalAddress = require("../../contracts/localhost/addresses/MapleGlobals.address");
 const globalABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
 const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
+const LPFactoryAddress = require("../../contracts/localhost/addresses/LPFactory.address.js");
+const LVFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address.js");
 
-const governor = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
 
-describe("Maple Globals init", function () {
+describe("MapleGlobals.sol Initialization", function () {
   let mapleGlobals;
 
   before(async () => {
@@ -25,11 +26,20 @@ describe("Maple Globals init", function () {
     const treasuryFeeFetch = await mapleGlobals.treasuryFeeBasisPoints();
     const gracePeriodFetch = await mapleGlobals.gracePeriod();
     const stakeRequiredFetch = await mapleGlobals.stakeAmountRequired();
-    expect(governorFetch).to.equal(governor);
+    const unstakeDelay = await mapleGlobals.unstakeDelay();
+    expect(governorFetch).to.equal(accounts[0]);
     expect(mapleTokenFetch).to.equal(mapleTokenAddress);
     expect(establishmentFeeFetch).to.equal(200);
     expect(treasuryFeeFetch).to.equal(20);
     expect(gracePeriodFetch).to.equal(432000);
     expect(stakeRequiredFetch).to.equal(25000);
+    expect(unstakeDelay).to.equal(7776000);
   });
+
+   it("factory addresses set properly in globals", async function () {
+	const LPFaddress = await mapleGlobals.liquidityPoolFactory();
+	const LVFaddress = await mapleGlobals.loanVaultFactory();
+	expect(LPFaddress).to.equal(LPFactoryAddress);
+	expect(LVFaddress).to.equal(LVFactoryAddress);
+   })
 });
