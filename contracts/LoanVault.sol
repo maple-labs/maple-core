@@ -148,10 +148,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         // Update state variables.
         aprBips = _specifications[0];
         numberOfPayments = _specifications[1].div(_specifications[2]);
-        paymentIntervalSeconds = _specifications[2].mul(86400);
+        paymentIntervalSeconds = _specifications[2].mul(1 days);
         minRaise = _specifications[3];
         collateralBipsRatio = _specifications[4];
-        fundingPeriodSeconds = _specifications[5].mul(86400);
+        fundingPeriodSeconds = _specifications[5].mul(1 days);
         repaymentCalculator = _repaymentCalculator;
 
         // Deploy a funding locker.
