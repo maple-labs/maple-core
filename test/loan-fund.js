@@ -24,7 +24,7 @@ const GlobalsABI = require("../../contracts/localhost/abis/MapleGlobals.abi.js")
 const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi.js");
 const LoanVaultFundingLockerFactoryAbi = require("../../contracts/localhost/abis/LoanVaultFundingLockerFactory.abi.js");
 
-describe("LoanVaultFactory.sol / LoanVault.sol", function () {
+describe("fundLoan() in LoanVault.sol", function () {
 
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000020";
 
