@@ -1,9 +1,6 @@
 pragma solidity 0.7.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-interface ILoanVault {
-    function fundLoan(uint256 _amount) external;
-}
+import "./interface/ILoanVault.sol";
 
 contract LiquidAssetLocker {
     //address to ERC20 contract for liquidAsset
@@ -40,6 +37,6 @@ contract LiquidAssetLocker {
     //check if it is actually a loan vault
     function fundLoan(address _loanVault, uint256 _amt) external isOwner {
         ILiquidAsset.approve(_loanVault, _amt);
-        ILoanVault(_loanVault).fundLoan(_amt);
+        ILoanVault(_loanVault).fundLoan(_amt,ownerLP);
     }
 }
