@@ -38,6 +38,10 @@ contract MapleGlobals {
     mapping(bytes32 => address) public interestStructureCalculators;
     bytes32[] public validInterestStructures;
 
+    // @return primary factory addresses
+    address public loanVaultFactory;
+    address public liquidityPoolFactory;
+
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
         _;
@@ -58,6 +62,14 @@ contract MapleGlobals {
         stakeAmountRequired = 25000;
         unstakeDelay = 90 days;
         drawdownGracePeriod = 1 days;
+    }
+
+    function setLiquidityPoolFactory(address _factory) external isGovernor {
+        liquidityPoolFactory = _factory;
+    }
+
+    function setLoanVaultFactory(address _factory) external isGovernor {
+        loanVaultFactory = _factory;
     }
 
     /**
@@ -87,11 +99,11 @@ contract MapleGlobals {
      */
     function addValidInterestStructure(bytes32 _type, address _calculator) external isGovernor {
         require(
-            _calculator != address(0), 
+            _calculator != address(0),
             "MapleGloblas::addValidInterestStructure:ERR_NULL_ADDRESS_SUPPLIED_FOR_CALCULATOR"
         );
         require(
-            interestStructureCalculators[_type] == address(0), 
+            interestStructureCalculators[_type] == address(0),
             "MapleGloblas::addValidInterestStructure:ERR_ALREADY_ADDED"
         );
         interestStructureCalculators[_type] = _calculator;

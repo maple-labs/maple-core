@@ -48,25 +48,28 @@ async function main() {
   await mapleGlobals.addBorrowToken(WBTCAddress);
 
   // TODO: Create repayment calculators, use bunk ones temporarily.
-  const BUNK_ADDRESS_AMORTIZATION = "0x0000000000000000000000000000000000000001";
+  const BUNK_ADDRESS_AMORTIZATION =
+    "0x0000000000000000000000000000000000000001";
   const BUNK_ADDRESS_BULLET = "0x0000000000000000000000000000000000000002";
   const updateGlobalsRepaymentCalcAmortization = await mapleGlobals.setInterestStructureCalculator(
-    ethers.utils.formatBytes32String('AMORTIZATION'),
+    ethers.utils.formatBytes32String("AMORTIZATION"),
     BUNK_ADDRESS_AMORTIZATION
   );
   const updateGlobalsRepaymentCalcBullet = await mapleGlobals.setInterestStructureCalculator(
-    ethers.utils.formatBytes32String('BULLET'),
+    ethers.utils.formatBytes32String("BULLET"),
     BUNK_ADDRESS_BULLET
   );
 
-  const CollateralLockerFactory = await deploy("LoanVaultCollateralLockerFactory",);
+  const CollateralLockerFactory = await deploy(
+    "LoanVaultCollateralLockerFactory"
+  );
 
   const FundingLockerFactory = await deploy("LoanVaultFundingLockerFactory");
 
   const LVFactory = await deploy("LoanVaultFactory", [
     mapleGlobals.address,
     FundingLockerFactory.address,
-    CollateralLockerFactory.address
+    CollateralLockerFactory.address,
   ]);
 
   const updateFundingLockerFactory = await LVFactory.setFundingLockerFactory(
@@ -77,6 +80,9 @@ async function main() {
     CollateralLockerFactory.address
   );
 
+  await mapleGlobals.setLiquidityPoolFactory(LPFactory.address);
+
+  await mapleGlobals.setLoanVaultFactory(LVFactory.address);
 }
 
 main()
