@@ -1,7 +1,6 @@
 pragma solidity 0.7.0;
 
 contract MapleGlobals {
-
     /// @return governor is responsible for management of global Maple variables.
     address public governor;
 
@@ -12,31 +11,35 @@ contract MapleGlobals {
     address public mapleTreasury;
 
     /// @return Represents the fees, in basis points, distributed to the lender when a borrower's loan is funded.
-    uint public establishmentFeeBasisPoints;
+    uint256 public establishmentFeeBasisPoints;
 
     /// @return Represents the fees, in basis points, distributed to the Mapletoken when a borrower's loan is funded.
-    uint public treasuryFeeBasisPoints;
+    uint256 public treasuryFeeBasisPoints;
 
     /// @return Represents the amount of time a borrower has to make a missed payment before a default can be triggered.
-    uint public gracePeriod;
+    uint256 public gracePeriod;
 
     /// @return Represents the USD value a pool delegate must stake (in BPTs) when insantiating a liquidity pool.
-    uint public stakeAmountRequired;
+    uint256 public stakeAmountRequired;
 
     /// @return Parameter for unstake delay, with relation to LiquidityPoolStakedAssetLocker withdrawals.
-    uint public unstakeDelay;
+    uint256 public unstakeDelay;
 
-    // Validity mapping of payment intervals (in seconds).
-    mapping(uint => bool) public validPaymentIntervalSeconds;
+    /// @return Amount of time to allow borrower to drawdown on their loan after funding period ends.
+    uint256 public drawdownGracePeriod;
 
-    // Validity mapping of repayment calculators.
-    mapping(address => bool) public validRepaymentCalculators;
+    // Validitying mapping of assets that borrowers can request or use as collateral.
+    mapping(address => bool) public isValidBorrowToken;
+    mapping(address => bool) public isValidCollateral;
+    address[] public validBorrowTokenAddresses;
+    address[] public validCollateralTokenAddresses;
 
-    // Validity mapping of premium calculators.
-    mapping(address => bool) public validPremiumCalculators;
+    // Mapping of bytes32 interest structure IDs to address of the corresponding interestStructureCalculators.
+    mapping(bytes32 => address) public interestStructureCalculators;
+    bytes32[] public validInterestStructures;
 
     modifier isGovernor() {
-        require(msg.sender == governor, "msg.sender is not Governor");
+        require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
         _;
     }
 
@@ -46,55 +49,73 @@ contract MapleGlobals {
         @param _governor The administrator's address.
         @param _mapleToken The address of the ERC-2222 token for the Maple protocol.
     */
-    constructor(
-        address _governor,
-        address _mapleToken
-    ) { 
+    constructor(address _governor, address _mapleToken) {
         governor = _governor;
         mapleToken = _mapleToken;
         establishmentFeeBasisPoints = 200;
         treasuryFeeBasisPoints = 20;
-        gracePeriod = 432000;
+        gracePeriod = 5 days;
         stakeAmountRequired = 25000;
+        unstakeDelay = 90 days;
+        drawdownGracePeriod = 1 days;
+    }
 
-        validPaymentIntervalSeconds[2592000] = true;    // Monthly
-        validPaymentIntervalSeconds[7776000] = true;    // Quarterly
-        validPaymentIntervalSeconds[15552000] = true;   // Semi-annually
-        validPaymentIntervalSeconds[31104000] = true;   // Annually
+    /**
+        @notice Governor can add a valid token, used as collateral.
+        @param _token Address of the valid token.
+     */
+    function addCollateralToken(address _token) external isGovernor {
+        require(!isValidCollateral[_token], "MapleGloblas::addCollateralToken:ERR_ALREADY_ADDED");
+        isValidCollateral[_token] = true;
+        validCollateralTokenAddresses.push(_token);
+    }
+
+    /**
+        @notice Governor can add a valid token, used for borrowing.
+        @param _token Address of the valid token.
+     */
+    function addBorrowToken(address _token) external isGovernor {
+        require(!isValidBorrowToken[_token], "MapleGloblas::addBorrowTokens:ERR_ALREADY_ADDED");
+        isValidBorrowToken[_token] = true;
+        validBorrowTokenAddresses.push(_token);
     }
 
     /**
         @notice Governor can adjust the accepted payment intervals.
-        @param _paymentIntervalSeconds The payment interval.
-        @param _validity The new validity of specified payment interval.
+        @param _type The bytes32 name identifying the interest structure (e.g. "BULLET")
+        @param _calculator Address of the calculator.
      */
-    function setPaymentIntervalValidity(uint _paymentIntervalSeconds, bool _validity) isGovernor public {
-        validPaymentIntervalSeconds[_paymentIntervalSeconds] = _validity;
+    function addValidInterestStructure(bytes32 _type, address _calculator) external isGovernor {
+        require(
+            _calculator != address(0), 
+            "MapleGloblas::addValidInterestStructure:ERR_NULL_ADDRESS_SUPPLIED_FOR_CALCULATOR"
+        );
+        require(
+            interestStructureCalculators[_type] == address(0), 
+            "MapleGloblas::addValidInterestStructure:ERR_ALREADY_ADDED"
+        );
+        interestStructureCalculators[_type] = _calculator;
+        validInterestStructures.push(_type);
     }
 
     /**
-        @notice Governor can update the validitiy of a _REPAYMENT_ calculator address.
-        @param _repaymentCalculator Address of the _REPAYMENT_ calculator.
-        @param _validity The new validity of specified payment interval.
+        @notice Governor can adjust the grace period.
+        @param _interestStructure Name of the interest structure (e.g. "BULLET")
+        @param _calculator Address of the corresponding calculator for repayments, etc.
      */
-    function setRepaymentCalculatorValidity(address _repaymentCalculator, bool _validity) isGovernor public {
-        validRepaymentCalculators[_repaymentCalculator] = _validity;
-    }
-
-    /**
-        @notice Governor can update the validitiy of a _PREMIUM_ calculator address.
-        @param _premiumCalculator Address of the _PREMIUM_ calculator.
-        @param _validity The new validity of specified payment interval.
-     */
-    function setPremiumCalculatorValidity(address _premiumCalculator, bool _validity) isGovernor public {
-        validPremiumCalculators[_premiumCalculator] = _validity;
+    function setInterestStructureCalculator(bytes32 _interestStructure, address _calculator)
+        public
+        isGovernor
+    {
+        interestStructureCalculators[_interestStructure] = _calculator;
+        validInterestStructures.push(_interestStructure);
     }
 
     /**
         @notice Governor can adjust the establishment fee.
         @param _establishmentFeeBasisPoints The fee, 50 = 0.50%
      */
-    function setEstablishmentFee(uint _establishmentFeeBasisPoints) isGovernor public {
+    function setEstablishmentFee(uint256 _establishmentFeeBasisPoints) public isGovernor {
         establishmentFeeBasisPoints = _establishmentFeeBasisPoints;
     }
 
@@ -102,7 +123,7 @@ contract MapleGlobals {
         @notice Governor can set the MapleTreasury contract.
         @param _mapleTreasury The MapleTreasury contract.
      */
-    function setMapleTreasury(address _mapleTreasury) isGovernor public {
+    function setMapleTreasury(address _mapleTreasury) public isGovernor {
         mapleTreasury = _mapleTreasury;
     }
 
@@ -110,7 +131,7 @@ contract MapleGlobals {
         @notice Governor can adjust the treasury fee.
         @param _treasuryFeeBasisPoints The fee, 50 = 0.50%
      */
-    function setTreasurySplit(uint _treasuryFeeBasisPoints) isGovernor public {
+    function setTreasurySplit(uint256 _treasuryFeeBasisPoints) public isGovernor {
         treasuryFeeBasisPoints = _treasuryFeeBasisPoints;
     }
 
@@ -118,7 +139,7 @@ contract MapleGlobals {
         @notice Governor can adjust the grace period.
         @param _gracePeriod Number of seconds to set the grace period to.
      */
-    function setGracePeriod(uint _gracePeriod) isGovernor public {
+    function setGracePeriod(uint256 _gracePeriod) public isGovernor {
         gracePeriod = _gracePeriod;
     }
 
@@ -126,7 +147,7 @@ contract MapleGlobals {
         @notice Governor can adjust the stake amount required to create a liquidity pool.
         @param _newAmount The new minimum stake required.
      */
-    function setStakeRequired(uint _newAmount) isGovernor public {
+    function setStakeRequired(uint256 _newAmount) public isGovernor {
         stakeAmountRequired = _newAmount;
     }
 
@@ -134,7 +155,7 @@ contract MapleGlobals {
         @notice Governor can specify a new governor.
         @param _newGovernor The address of new governor.
      */
-    function setGovernor(address _newGovernor) isGovernor public {
+    function setGovernor(address _newGovernor) public isGovernor {
         governor = _newGovernor;
     }
 
@@ -142,9 +163,7 @@ contract MapleGlobals {
         @notice Governor can specify a new unstake delay value.
         @param _unstakeDelay The new unstake delay.
      */
-    function setUnstakeDelay(uint _unstakeDelay) isGovernor public {
+    function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
         unstakeDelay = _unstakeDelay;
     }
-
-
 }

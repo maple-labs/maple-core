@@ -54,8 +54,9 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     uint public numberOfPayments;
     uint public paymentIntervalSeconds;
     uint public minRaise;
-    uint public desiredRaise;
-    uint public collateralAtDesiredRaise;
+    uint public collateralBipsRatio;
+    uint public fundingPeriodSeconds;
+    uint public loanCreatedTimestamp;
     
     /// @notice The repayment calculator for this loan.
     address public repaymentCalculator;
@@ -66,15 +67,17 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @notice The current state of this loan, as defined in the State enum below.
     State public loanState;
 
-    enum State { Initialized, Funding, Active, Defaulted, Matured }
+    // Live = Created
+    // Active = Drawndown
+    enum State { Live, Active }
 
     modifier isState(State _state) {
-        require(loanState == _state, "LoanVault::FAIL_STATE_CHECK");
+        require(loanState == _state, "LoanVault::ERR_FAIL_STATE_CHECK");
         _;
     }
 
     modifier isBorrower() {
-        require(msg.sender == borrower, "LoanVault::MSG_SENDER_NOT_BORROWER");
+        require(msg.sender == borrower, "LoanVault::ERR_MSG_SENDER_NOT_BORROWER");
         _;
     }
 
@@ -83,22 +86,28 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @param _assetCollateral The asset provided as collateral by the borrower.
     /// @param _fundingLockerFactory Factory to instantiate FundingLocker through.
     /// @param _collateralLockerFactory Factory to instantiate CollateralLocker through.
-    /// @param name The name of the loan vault's token (minted when investors fund the loan).
-    /// @param symbol The ticker of the loan vault's token.
     /// @param _mapleGlobals Address of the MapleGlobals.sol contract.
+    /// @param _specifications The specifications of the loan.
+    ///        _specifications[0] = APR_BIPS
+    ///        _specifications[1] = TERM_DAYS
+    ///        _specifications[2] = PAYMENT_INTERVAL_DAYS
+    ///        _specifications[3] = MIN_RAISE
+    ///        _specifications[4] = COLLATERAL_BIPS_RATIO
+    ///        _specifications[5] = FUNDING_PERIOD_DAYS
+    /// @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
     constructor(
         address _assetRequested,
         address _assetCollateral,
         address _fundingLockerFactory,
         address _collateralLockerFactory,
-        string memory name,
-        string memory symbol,
-        address _mapleGlobals
-    ) FundsDistributionToken(name, symbol) {
+        address _mapleGlobals,
+        uint[6] memory _specifications,
+        address _repaymentCalculator
+    ) FundsDistributionToken('LoanVault', 'LVT') {
 
         require(
             address(_assetRequested) != address(0),
-            "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
+            "LoanVault::constructor:ERR_INVALID_FUNDS_TOKEN_ADDRESS"
         );
 
         assetRequested = _assetRequested;
@@ -109,121 +118,44 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         MapleGlobals = IGlobals(_mapleGlobals);
         fundsToken = IRequestedAsset;
         borrower = tx.origin;
-
-    }
-
-    /// @notice Provide the specifications of the loan, transition state from Initialized to Funding.
-    /// @param _details The specifications of the loan.
-    ///        _details[0] = APR_BIPS
-    ///        _details[1] = NUMBER_OF_PAYMENTS
-    ///        _details[2] = PAYMENT_INTERVAL_SECONDS
-    ///        _details[3] = MIN_RAISE
-    ///        _details[4] = DESIRED_RAISE
-    ///        _details[5] = COLLATERAL_AT_DESIRED_RAISE
-    /// @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
-    /// @param _premiumCalculator The calculator used for call premiums.
-    function prepareLoan(
-        uint[6] memory _details,
-        address _repaymentCalculator,
-        address _premiumCalculator
-    ) external isState(State.Initialized) isBorrower {
-
-        // Transition state first.
-        loanState = State.Funding;
+        loanCreatedTimestamp = block.timestamp;
 
         // Perform validity cross-checks.
         require(
-            _details[1] >= 1, 
-            "LoanVault::prepareLoan:ERR_NUMBER_OF_PAYMENTS_LESS_THAN_1"
+            MapleGlobals.isValidBorrowToken(_assetRequested),
+            "LoanVault::constructor:ERR_INVALID_ASSET_REQUESTED"
         );
         require(
-            MapleGlobals.validPaymentIntervalSeconds(_details[2]), 
-            "LoanVault::prepareLoan:ERR_INVALID_PAYMENT_INTERVAL_SECONDS"
-        );
-        require(_details[4] >= _details[3] && _details[3] > 0,
-            "LoanVault::prepareLoan:ERR_MIN_RAISE_ABOVE_DESIRED_RAISE_OR_MIN_RAISE_EQUALS_ZERO"
+            MapleGlobals.isValidCollateral(_assetCollateral),
+            "LoanVault::constructor:ERR_INVALID_ASSET_REQUESTED"
         );
         require(
-            MapleGlobals.validRepaymentCalculators(_repaymentCalculator), 
-            "LoanVault::prepareLoan:ERR_INVALID_REPAYMENT_CALCULATOR"
+            _specifications[2] != 0,
+            "LoanVault::constructor:ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO"
         );
         require(
-            MapleGlobals.validPremiumCalculators(_premiumCalculator), 
-            "LoanVault::prepareLoan:ERR_INVALID_PREMIUM_CALCULATOR"
+            _specifications[1].mod(_specifications[2]) == 0,
+            "LoanVault::constructor:ERR_INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION"
+        );
+        require(_specifications[3] > 0,
+            "LoanVault::constructor:ERR_MIN_RAISE_EQUALS_ZERO"
+        );
+        require(
+            _specifications[5] > 0, 
+            "LoanVault::constructor:ERR_FUNDING_PERIOD_EQUALS_ZERO"
         );
 
         // Update state variables.
-        aprBips = _details[0];
-        numberOfPayments = _details[1];
-        paymentIntervalSeconds = _details[2];
-        minRaise = _details[3];
-        desiredRaise = _details[4];
-        collateralAtDesiredRaise = _details[5];
+        aprBips = _specifications[0];
+        numberOfPayments = _specifications[1].div(_specifications[2]);
+        paymentIntervalSeconds = _specifications[2].mul(1 days);
+        minRaise = _specifications[3];
+        collateralBipsRatio = _specifications[4];
+        fundingPeriodSeconds = _specifications[5].mul(1 days);
         repaymentCalculator = _repaymentCalculator;
-        premiumCalculator = _premiumCalculator;
 
         // Deploy a funding locker.
         fundingLocker = IFundingLockerFactory(fundingLockerFactory).newLocker(assetRequested);
-    }
-
-    /**
-     * @notice Fund this loan and mint the investor LoanTokens.
-     * @param _amount Amount of _assetRequested to fund the loan for.
-     */
-    // TODO: Implement and test this function.
-    function fundLoan(uint _amount) external isState(State.Funding) {
-        // TODO: Consider decimal precision difference: RequestedAsset <> FundsToken
-        require(
-            IRequestedAsset.transferFrom(tx.origin, address(this), _amount),
-            "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
-        );
-        require(
-            IRequestedAsset.transfer(fundingLocker, _amount), 
-            "LoanVault::fundLoan:ERR_TRANSFER_FUNDS"
-        );
-        _mint(tx.origin, _amount);
-    }
-
-    /// @notice End funding period by claiming funds, posting collateral, transitioning loanState from Funding to Active.
-    /// @param _drawdownAmount Amount of fundingAsset borrower will claim, remainder is returned to LoanVault.
-    // TODO: Implement and test this function.
-    function endFunding(uint _drawdownAmount) external isState(State.Funding) isBorrower {
-
-        require(
-            _drawdownAmount >= minRaise, 
-            "LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE"
-        );
-        require(
-            _drawdownAmount <= IRequestedAsset.balanceOf(fundingLocker), 
-            "LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE"
-        );
-
-        loanState = State.Active;
-
-        // Instantiate collateral locker, fetch deposit required, transfer collateral from borrower to locker.
-        collateralLocker = ICollateralLockerFactory(collateralLockerFactory).newLocker(assetCollateral);
-        uint collateralAmountToPost = collateralRequiredForDrawdown(_drawdownAmount);
-        require(
-            ICollateralAsset.transferFrom(borrower, collateralLocker, collateralAmountToPost), 
-            "LoanVault::endFunding:ERR_COLLATERAL_TRANSFER_FROM_APPROVAL_OR_BALANCE"
-        );
-
-        // Transfer funding amount from FundingLocker to Borrower, then remaining funds to LoanVault.
-        require(
-            IFundingLocker(fundingLocker).pull(borrower, _drawdownAmount), 
-            "LoanVault::endFunding:CRITICAL_ERR_PULL"
-        );
-        require(
-            IFundingLocker(fundingLocker).drain(),
-            "LoanVault::endFunding:ERR_DRAIN"
-        );
-    }
-
-    /// @notice Viewer helper for calculating collateral required to drawdown funding.
-    /// @param _drawdownAmount The amount of fundingAsset to drawdown from FundingLocker.
-    /// @return The amount of collateralAsset required to post for given _amount.
-    function collateralRequiredForDrawdown(uint _drawdownAmount) internal view returns(uint) {
-        return _drawdownAmount.mul(collateralAtDesiredRaise).div(desiredRaise);
     }
 
     /**

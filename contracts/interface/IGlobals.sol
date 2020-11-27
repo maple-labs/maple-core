@@ -13,13 +13,21 @@ interface IGlobals {
 
     function gracePeriod() external view returns (uint256);
 
+    function drawdownGracePeriod() external view returns (uint256);
+
     function stakeAmountRequired() external view returns (uint256);
 
-    function validPaymentIntervalSeconds(uint256) external view returns (bool);
+    function isValidBorrowToken(address) external view returns (bool);
 
-    function validRepaymentCalculators(address) external view returns (bool);
+    function isValidCollateral(address) external view returns (bool);
 
-    function validPremiumCalculators(address) external view returns (bool);
+    function validBorrowTokenAddresses() external view returns (address[] memory);
+
+    function validCollateralTokenAddresses() external view returns (address[] memory);
+
+    function interestStructureCalculators(bytes32) external view returns (address);
+
+    function validInterestStructures() external view returns (bytes32[] memory);
 
     function unstakeDelay() external view returns (uint256);
 }
