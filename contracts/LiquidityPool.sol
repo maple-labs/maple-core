@@ -10,6 +10,7 @@ import "./Math/CalcBPool.sol";
 import "./interface/IBPool.sol";
 import "./LiquidAssetLockerFactory.sol";
 import "./interface/IGlobals.sol";
+import "./interface/ILoanVaultFactory.sol";
 
 //TODO IMPLEMENT WITHDRAWL FUNCTIONS
 //TODO IMPLEMENT DELETE FUNCTIONS CALLING stakedAssetLocker deleteLP()
@@ -193,7 +194,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     }
 
     function fundLoan(address _loanVault, uint256 _amt) external notDefunct finalized isDelegate {
-        //should check if it is actually a loanVault from globals and factory but factory not in globals yet
+        require(ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault));
         ILiquidAssetLocker(LiquidAssetLocker).fundLoan(_loanVault, _amt);
     }
 
