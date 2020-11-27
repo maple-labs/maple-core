@@ -194,7 +194,10 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     }
 
     function fundLoan(address _loanVault, uint256 _amt) external notDefunct finalized isDelegate {
-        require(ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault));
+        require(
+            ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault),
+            "LiquidityPool:ERR_IS_NOT_LOAN_VAULT"
+        );
         ILiquidAssetLocker(LiquidAssetLocker).fundLoan(_loanVault, _amt);
     }
 

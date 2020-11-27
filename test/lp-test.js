@@ -507,4 +507,9 @@ describe("Liquidity Pool and respective lockers", function () {
     const LV1 = await LVF.getLoanVault(0);
     await DAILP.fundLoan(LV1, 100);
   });
+  it("check if you can execute fundLoan on a random address", async function () {
+    await expect(DAILP.fundLoan(accounts[1], 100)).to.be.revertedWith(
+      "LiquidityPool:ERR_IS_NOT_LOAN_VAULT"
+    );
+  });
 });
