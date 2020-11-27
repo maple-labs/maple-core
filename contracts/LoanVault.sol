@@ -81,6 +81,12 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         _;
     }
 
+    /// @notice Fired when user calls fundLoan()
+    event LoanFunded(
+        uint _amountFunded,
+        address indexed _fundedBy
+    );
+
     /// @notice Constructor for loan vault.
     /// @param _assetRequested The asset borrower is requesting funding in.
     /// @param _assetCollateral The asset provided as collateral by the borrower.
@@ -168,6 +174,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         require(
             IRequestedAsset.transferFrom(msg.sender, fundingLocker, _amount),
             "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
+        );
+        emit LoanFunded(
+            _amount,
+            _mintedTokenReceiver
         );
         _mint(_mintedTokenReceiver, _amount);
     }
