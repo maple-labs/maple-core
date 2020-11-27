@@ -85,10 +85,6 @@ describe("MapleGlobals.sol Interactions", function () {
       "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
-    await expect(mapleGlobals.setPaymentIntervalValidity(86400, true)).to.be.revertedWith(
-      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
-    );
-
     const BUNK_ADDRESS_AMORTIZATION = "0x0000000000000000000000000000000000000003";
 
     await expect(mapleGlobals.setInterestStructureCalculator(

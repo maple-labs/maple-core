@@ -3,6 +3,9 @@ const { expect, assert } = require("chai");
 const globalAddress = require("../../contracts/localhost/addresses/MapleGlobals.address");
 const globalABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
 const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
+const LPFactoryAddress = require("../../contracts/localhost/addresses/LPFactory.address.js");
+const LVFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address.js");
+
 
 describe("MapleGlobals.sol Initialization", function () {
   let mapleGlobals;
@@ -33,21 +36,10 @@ describe("MapleGlobals.sol Initialization", function () {
     expect(unstakeDelay).to.equal(7776000);
   });
 
-  it("paymentInterval mapping is initialized properly", async function () {
-    // Valid cases.
-    const paymentIntervalMonthlyValid = await mapleGlobals.validPaymentIntervalSeconds(2592000);
-    const paymentIntervalQuarterlyValid = await mapleGlobals.validPaymentIntervalSeconds(7776000);
-    const paymentIntervalSemiAnnuallyValid = await mapleGlobals.validPaymentIntervalSeconds(15552000);
-    const paymentIntervalAnnuallyValid = await mapleGlobals.validPaymentIntervalSeconds(31104000);
-    expect(paymentIntervalMonthlyValid);
-    expect(paymentIntervalQuarterlyValid);
-    expect(paymentIntervalSemiAnnuallyValid);
-    expect(paymentIntervalAnnuallyValid);
-    // Invalid cases.
-    const paymentIntervalZeroInvalid = await mapleGlobals.validPaymentIntervalSeconds(0);
-    const paymentIntervalMonthlyInvalid = await mapleGlobals.validPaymentIntervalSeconds(2592001);
-    expect(!paymentIntervalZeroInvalid);
-    expect(!paymentIntervalMonthlyInvalid);
-  });
-
+   it("factory addresses set properly in globals", async function () {
+	const LPFaddress = await mapleGlobals.liquidityPoolFactory();
+	const LVFaddress = await mapleGlobals.loanVaultFactory();
+	expect(LPFaddress).to.equal(LPFactoryAddress);
+	expect(LVFaddress).to.equal(LVFactoryAddress);
+   })
 });
