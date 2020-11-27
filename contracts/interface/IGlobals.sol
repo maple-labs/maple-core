@@ -30,4 +30,8 @@ interface IGlobals {
     function validInterestStructures() external view returns (bytes32[] memory);
 
     function unstakeDelay() external view returns (uint256);
+
+    function loanVaultFactory() external view returns (address);
+
+    function liquidityPoolFactory() external view returns (address);
 }

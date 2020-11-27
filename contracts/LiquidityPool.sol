@@ -10,6 +10,7 @@ import "./Math/CalcBPool.sol";
 import "./interface/IBPool.sol";
 import "./LiquidAssetLockerFactory.sol";
 import "./interface/IGlobals.sol";
+import "./interface/ILoanVaultFactory.sol";
 
 //TODO IMPLEMENT WITHDRAWL FUNCTIONS
 //TODO IMPLEMENT DELETE FUNCTIONS CALLING stakedAssetLocker deleteLP()
@@ -46,6 +47,12 @@ interface ILiquidAssetLockerFactory {
     function newLocker(address _liquidAsset) external returns (address);
 
     function isLiquidAssetLocker(address _locker) external returns (bool);
+
+    function fundLoan(address _loanVault, uint256 _amt) external;
+}
+
+interface ILiquidAssetLocker {
+    function fundLoan(address _loanVault, uint256 _amt) external;
 }
 
 // @title LP is the core liquidity pool contract.
@@ -138,6 +145,10 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         require(!isDefunct, "LiquidityPool: IS DEFUNCT");
         _;
     }
+    modifier isDelegate() {
+        require(msg.sender == poolDelegate, "LiquidityPool: ERR UNAUTH");
+        _;
+    }
 
     // @notice creates stake locker
     function makeStakeLocker(address _stakedAsset) private returns (address) {
@@ -180,6 +191,14 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         ILiquidAsset.transferFrom(msg.sender, LiquidAssetLocker, _amt);
         uint256 _mintAmt = liq2FDT(_amt);
         _mint(msg.sender, _mintAmt);
+    }
+
+    function fundLoan(address _loanVault, uint256 _amt) external notDefunct finalized isDelegate {
+        require(
+            ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault),
+            "LiquidityPool:ERR_IS_NOT_LOAN_VAULT"
+        );
+        ILiquidAssetLocker(LiquidAssetLocker).fundLoan(_loanVault, _amt);
     }
 
     /*these are to convert between FDT of 18 decim and liquidasset locker of 0 to 256 decimals

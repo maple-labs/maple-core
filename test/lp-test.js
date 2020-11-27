@@ -23,6 +23,8 @@ const LPFactoryAddress = require("../../contracts/localhost/addresses/LPFactory.
 const liquidLockerABI = require("../../contracts/localhost/abis/LiquidAssetLocker.abi.js");
 const liquidLockerFactoryABI = require("../../contracts/localhost/abis/LiquidAssetLockerFactory.abi.js");
 const liquidLockerFactoryAddress = require("../../contracts/localhost/addresses/LiquidAssetLockerFactory.address.js");
+const LVFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address.js");
+const LVFactoryABI = require("../../contracts/localhost/abis/LoanVaultFactory.abi.js");
 
 //TODO: CORRECT THE MATH LIBRARY USE
 //USE ONLY BIGNUMBER FROM ETHERS!!!!!!
@@ -494,6 +496,20 @@ describe("Liquidity Pool and respective lockers", function () {
     );
     await expect(USDCStakeLocker.finalizeLP()).to.be.revertedWith(
       "LPStakeLocker:ERR UNAUTHORIZED"
+    );
+  });
+  it("Execute fundloan()", async function () {
+    LVF = new ethers.Contract(
+      LVFactoryAddress,
+      LVFactoryABI,
+      ethers.provider.getSigner(0)
+    );
+    const LV1 = await LVF.getLoanVault(0);
+    await DAILP.fundLoan(LV1, 100);
+  });
+  it("check if you can execute fundLoan on a random address", async function () {
+    await expect(DAILP.fundLoan(accounts[1], 100)).to.be.revertedWith(
+      "LiquidityPool:ERR_IS_NOT_LOAN_VAULT"
     );
   });
 });
