@@ -81,6 +81,12 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         _;
     }
 
+    /// @notice Fired when user calls fundLoan()
+    event LoanFunded(
+        uint _amountFunded,
+        address indexed _fundedBy
+    );
+
     /// @notice Constructor for loan vault.
     /// @param _assetRequested The asset borrower is requesting funding in.
     /// @param _assetCollateral The asset provided as collateral by the borrower.
@@ -156,6 +162,24 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         // Deploy a funding locker.
         fundingLocker = IFundingLockerFactory(fundingLockerFactory).newLocker(assetRequested);
+    }
+
+    /**
+     * @notice Fund this loan and mint LoanTokens.
+     * @param _amount Amount of _assetRequested to fund the loan for.
+     * @param _mintedTokenReceiver The address to mint LoanTokens for.
+    */
+    function fundLoan(uint _amount, address _mintedTokenReceiver) external isState(State.Live) {
+        // TODO: Consider testing decimal precision difference: RequestedAsset <> FundsToken
+        require(
+            IRequestedAsset.transferFrom(msg.sender, fundingLocker, _amount),
+            "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
+        );
+        emit LoanFunded(
+            _amount,
+            _mintedTokenReceiver
+        );
+        _mint(_mintedTokenReceiver, _amount);
     }
 
     /**
