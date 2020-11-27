@@ -159,6 +159,20 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     }
 
     /**
+     * @notice Fund this loan and mint LoanTokens.
+     * @param _amount Amount of _assetRequested to fund the loan for.
+     * @param _mintedTokenReceiver The address to mint LoanTokens for.
+    */
+    function fundLoan(uint _amount, address _mintedTokenReceiver) external isState(State.Live) {
+        // TODO: Consider testing decimal precision difference: RequestedAsset <> FundsToken
+        require(
+            IRequestedAsset.transferFrom(msg.sender, fundingLocker, _amount),
+            "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
+        );
+        _mint(_mintedTokenReceiver, _amount);
+    }
+
+    /**
      * @notice Withdraws all available funds for a token holder
      */
     function withdrawFunds() external override {
