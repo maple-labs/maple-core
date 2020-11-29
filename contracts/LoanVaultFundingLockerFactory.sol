@@ -11,22 +11,18 @@ contract LoanVaultFundingLockerFactory {
     // Mapping of identification check to confirm a locker was created through this factory.
     mapping(address => bool) private isLocker;
 
-    /// @notice The factory to conduct identification checks with isLoanVault().
-    address public loanVaultFactory;
-
-    /// @notice Point to the LoanVaultFactory for isLoanVault() identification checks.
-    constructor(address _loanVaultFactory) {
-        loanVaultFactory = _loanVaultFactory;
-    }
+    // Unique deployment per address, ensure no duplication (or decoupling).
+    mapping(address => bool) private deployedLocker;
 
     /// @notice Instantiate a FundingLocker contract.
     /// @param _fundingAsset Address of the funding asset.
     /// @return Address of the instantiated locker.
     function newLocker(address _fundingAsset) public returns (address) {
         require(
-            ILoanVaultFactory(loanVaultFactory).isLoanVault(msg.sender), 
-            "LoanVaultFundingLockerFactory::newLocker:ERR_MSG_SENDER_NOT_LOAN_VAULT"
+            !deployedLocker[msg.sender], 
+            "LoanVaultFundingLockerFactory::newLocker:ERR_MSG_SENDER_ALREADY_DEPLOYED_FUNDING_LOCKER"
         );
+        deployedLocker[msg.sender] = true;
         address _fundingLocker = address(new LoanVaultFundingLocker(_fundingAsset, msg.sender));
         lockerOwner[_fundingLocker] = msg.sender;
         isLocker[_fundingLocker] = true;
