@@ -11,22 +11,10 @@ import "./interface/IBPool.sol";
 import "./LiquidAssetLockerFactory.sol";
 import "./interface/IGlobals.sol";
 import "./interface/ILoanVaultFactory.sol";
+import "./interface/IStakeLockerFactory.sol";
 
 //TODO IMPLEMENT WITHDRAWL FUNCTIONS
 //TODO IMPLEMENT DELETE FUNCTIONS CALLING stakedAssetLocker deleteLP()
-
-// @title ILPStakeLockerFactory is responsbile for instantiating/initializing a staked asset locker.
-//this shoiuldnt even be here but it is easier to have it here now and write it here now where i am using it.
-//It will be in a separate file when it is done
-//same goes for all of these interfaces
-//TODO: put the interfaces in their own files as this is the civilized way
-interface ILPStakeLockerFactory {
-    function newLocker(
-        address _stakedAsset,
-        address _liquidAsset,
-        address _globals
-    ) external returns (address);
-}
 
 // @title ILPStakeLocker interfaces with the staked asset locker of the liquidity pool.
 interface ILPStakeLocker {
@@ -126,7 +114,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         stakedAsset = _stakedAsset;
         ILiquidAsset = IERC20(_liquidAsset);
         fundsToken = ILiquidAsset;
-        IStakeLockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
+        IStakeLockerFactory = IStakeLockerFactory(_stakedAssetLockerFactory);
         MapleGlobals = IGlobals(_mapleGlobals);
         poolDelegate = tx.origin;
         liquidAssetDecimals = ERC20(liquidAsset).decimals();
