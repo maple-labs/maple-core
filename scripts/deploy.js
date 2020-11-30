@@ -21,11 +21,11 @@ async function main() {
     mapleToken.address,
   ]);
 
-  const LPStakeLockerFactory = await deploy("LPStakeLockerFactory");
+  const StakeLockerFactory = await deploy("StakeLockerFactory");
 
-  const liquidAssetLockerFactory = await deploy("LiquidAssetLockerFactory");
+  const LiquidityLockerFactory = await deploy("LiquidityLockerFactory");
 
-  const LPFactory = await deploy("LPFactory");
+  const LiquidityPoolFactory = await deploy("LiquidityPoolFactory");
 
   const mapleTreasury = await deploy("MapleTreasury", [
     mapleToken.address,
@@ -61,10 +61,10 @@ async function main() {
   );
 
   const CollateralLockerFactory = await deploy(
-    "LoanVaultCollateralLockerFactory"
+    "CollateralLockerFactory"
   );
 
-  const FundingLockerFactory = await deploy("LoanVaultFundingLockerFactory");
+  const FundingLockerFactory = await deploy("FundingLockerFactory");
 
   const LVFactory = await deploy("LoanVaultFactory", [
     mapleGlobals.address,
@@ -80,7 +80,7 @@ async function main() {
     CollateralLockerFactory.address
   );
 
-  await mapleGlobals.setLiquidityPoolFactory(LPFactory.address);
+  await mapleGlobals.setLiquidityPoolFactory(LiquidityPoolFactory.address);
 
   await mapleGlobals.setLoanVaultFactory(LVFactory.address);
 }

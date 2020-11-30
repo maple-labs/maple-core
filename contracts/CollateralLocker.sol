@@ -2,7 +2,7 @@ pragma solidity 0.7.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract LoanVaultCollateralLocker {
+contract CollateralLocker {
 
     /// @notice Address the loan is funded with.
     address public immutable collateralAsset;
@@ -16,7 +16,7 @@ contract LoanVaultCollateralLocker {
     }
 
     modifier isLoanVault() {
-        require(msg.sender == loanVault, "LoanVaultCollateralLocker::ERR_ISLOANVAULT_CHECK");
+        require(msg.sender == loanVault, "CollateralLocker::ERR_ISLOANVAULT_CHECK");
         _;
     }
     

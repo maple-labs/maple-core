@@ -3,7 +3,7 @@ const { expect, assert } = require("chai");
 const globalAddress = require("../../contracts/localhost/addresses/MapleGlobals.address");
 const globalABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
 const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
-const LPFactoryAddress = require("../../contracts/localhost/addresses/LPFactory.address.js");
+const LPFactoryAddress = require("../../contracts/localhost/addresses/LiquidityPoolFactory.address.js");
 const LVFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address.js");
 
 
