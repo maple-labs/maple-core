@@ -68,7 +68,7 @@ workflows:
           filters:
             branches:
               only:
-                - chore/circleci
+                - "chore/circleci"
     jobs:
       - dependencies
       - test:
