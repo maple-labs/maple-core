@@ -39,9 +39,6 @@ jobs:
           # Must be absolute path or relative path from working_directory
           at: ~/project
       - run:
-          name: Install hardhat globally
-          command: yarn add -D hardhat
-      - run:
           name: Run mbs chain
           command: cd ~/project && yarn chain >> /dev/null
           background: true
