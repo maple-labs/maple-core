@@ -9,9 +9,9 @@ const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUS
 const MPLGlobalsABI = require("../../contracts/localhost/abis/MapleGlobals.abi.js");
 const MPLGlobalsAddress = require("../../contracts/localhost/addresses/MapleGlobals.address.js");
 
-const StakeLockerFactoryABI = require("../../contracts/localhost/abis/LPStakeLockerFactory.abi.js");
-const StakeLockerFactoryAddress = require("../../contracts/localhost/addresses/LPStakeLockerFactory.address.js");
-const StakeLockerABI = require("../../contracts/localhost/abis/LPStakeLocker.abi.js");
+const StakeLockerFactoryABI = require("../../contracts/localhost/abis/StakeLockerFactory.abi.js");
+const StakeLockerFactoryAddress = require("../../contracts/localhost/addresses/StakeLockerFactory.address.js");
+const StakeLockerABI = require("../../contracts/localhost/abis/StakeLocker.abi.js");
 const LiquidityLockerFactoryABI = require("../../contracts/localhost/abis/LiquidityLockerFactory.abi.js");
 const LiquidityLockerFactoryAddress = require("../../contracts/localhost/addresses/LiquidityLockerFactory.address.js");
 const LiquidityLockerABI = require("../../contracts/localhost/abis/LiquidityLocker.abi.js");
@@ -136,6 +136,7 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
   });
 
   it("delegate can unstake BEFORE FINALIZE", async function () {
+    
     const DAIStakeLocker = new ethers.Contract(
       DAIStakeLockerAddress,
       StakeLockerABI,
@@ -388,7 +389,7 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
     fdtbal = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
     bptbal1 = BigInt(await DAIBPool.balanceOf(accounts[5]));
     await expect(DAIStakeLocker.unstake(fdtbal)).to.be.revertedWith(
-      "LPStakelocker: not enough unstakeable balance"
+      "Stakelocker:ERR_AMT_REQUESTED_UNAVAILABLE"
     );
 
     fdtbal2 = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
@@ -400,6 +401,13 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
   });
 
   it("can third party unstake with zero unstakeDelay?, did he get his BPTs back?", async function () {
+    
+    // DAIStakeLockerAddress = await DAILP.stakeLockerAddress();
+
+    // console.log('test 3rd party ...')
+    // console.log(DAIStakeLockerAddress);
+    // console.log(DAIBPoolAddress)
+
     const DAIStakeLocker = new ethers.Contract(
       DAIStakeLockerAddress,
       StakeLockerABI,
@@ -432,7 +440,7 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
       ethers.provider.getSigner(0)
     );
     await expect(DAIStakeLocker.unstake(100)).to.be.revertedWith(
-      "LPStakeLocker:ERR DELEGATE STAKE LOCKED"
+      "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
     );
   });
 
@@ -443,7 +451,7 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
       ethers.provider.getSigner(0)
     );
     await expect(DAIStakeLocker.transfer(accounts[2], 100)).to.be.revertedWith(
-      "LPStakeLocker:ERR DELEGATE STAKE LOCKED"
+      "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
     );
   });
 
@@ -475,6 +483,13 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
 
   it("Check FDT capability in DAI stake locker", async function () {
     //DUPLICATE SOME OF THESE DAI LOCKER TESTS TO RUN ON USDC TOOOO!!
+    
+    // DAIStakeLockerAddress = await DAILP.stakeLockerAddress();
+
+    // console.log('test check FDT cap ...')
+    // console.log(DAIStakeLockerAddress);
+    // console.log(DAIBPoolAddress)
+    
     const DAIStakeLocker = new ethers.Contract(
       DAIStakeLockerAddress,
       StakeLockerABI,
@@ -511,10 +526,10 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
     );
     //MAYBE FIGURE OUT WHY THIS WAS HAVING MYSTERIOUS PROBLEMS
     await expect(USDCStakeLocker.deleteLP()).to.be.revertedWith(
-      "LPStakeLocker:ERR UNAUTHORIZED"
+      "StakeLocker:ERR_UNAUTHORIZED"
     );
     await expect(USDCStakeLocker.finalizeLP()).to.be.revertedWith(
-      "LPStakeLocker:ERR UNAUTHORIZED"
+      "StakeLocker:ERR_UNAUTHORIZED"
     );
   });
 

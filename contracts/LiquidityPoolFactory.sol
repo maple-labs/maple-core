@@ -17,7 +17,7 @@ contract LiquidityPoolFactory {
     /// @param _stakeAsset The asset which stakers deposit into the liquidity pool for liquidation during defaults.
     /// @param _stakeLockerFactory The factory from which to create the StakeLocker.
     /// @param _liquidityLockerFactory The factory from which to create the LiquidityLocker.
-    /// @param name The name of the liquidity pool's token (minted when investors deposit _liquidAsset).
+    /// @param name The name of the liquidity pool's token (minted when investors deposit _liquidityAsset).
     /// @param symbol The ticker of the liquidity pool's token.
     /// @param _mapleGlobals Address of the MapleGlobals.sol contract.
     /// @return Address of the instantiated liquidity pool.

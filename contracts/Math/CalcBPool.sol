@@ -27,26 +27,26 @@ library CalcBPool {
     function BPTVal(
         address _BPoolAddy,
         address _staker,
-        address _liquidAssetContract,
-        address _stakedAssetLocker
+        address _liquidityAssetContract,
+        address _stakeAssetLocker
     ) internal view returns (uint256) {
-        //calculates the value of BPT in unites of _liquidAssetContract, in 'wei' (decimals) for this token
+        //calculates the value of BPT in unites of _liquidityAssetContract, in 'wei' (decimals) for this token
         IBPool _IBPool = IBPool(_BPoolAddy);
         IERC20 _IBPoolERC20 = IERC20(_BPoolAddy);
-        uint256 _FDTBalBPT = IERC20(_stakedAssetLocker).balanceOf(_staker); //bal of FDTs that are 1:1 with BPTs
+        uint256 _FDTBalBPT = IERC20(_stakeAssetLocker).balanceOf(_staker); //bal of FDTs that are 1:1 with BPTs
         //the number of BPT staked per _staker is the same as his balance of staked asset locker tokens.
         //this is used to prove it exists and is staked currently.
         uint256 _BPTtotal = _IBPoolERC20.totalSupply();
-        uint256 _liquidAssetBal = _IBPool.getBalance(_liquidAssetContract);
-        uint256 _liquidAssetWeight = _IBPool.getNormalizedWeight(_liquidAssetContract);
+        uint256 _liquidityAssetBal = _IBPool.getBalance(_liquidityAssetContract);
+        uint256 _liquidityAssetWeight = _IBPool.getNormalizedWeight(_liquidityAssetContract);
         uint256 _val =
             SafeMath.div(
-                bdiv(_FDTBalBPT, _BPTtotal) * bdiv(_liquidAssetBal, _liquidAssetWeight),
+                bdiv(_FDTBalBPT, _BPTtotal) * bdiv(_liquidityAssetBal, _liquidityAssetWeight),
                 _ONE
             );
         //we have to divide out the extra _ONE with normal safemath
         //the two divisions must be separate, as coins that are lower decimals(like usdc) will underflow and give 0
-        //due to the fact that the _liquidAssetWeight is a synthetic float from bpool, IE  x*10^18 where 0<x<1
+        //due to the fact that the _liquidityAssetWeight is a synthetic float from bpool, IE  x*10^18 where 0<x<1
         //the result here is
         return _val;
     }

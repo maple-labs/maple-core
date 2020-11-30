@@ -22,7 +22,7 @@ contract MapleGlobals {
     /// @return Represents the USD value a pool delegate must stake (in BPTs) when insantiating a liquidity pool.
     uint256 public stakeAmountRequired;
 
-    /// @return Parameter for unstake delay, with relation to LiquidityPoolStakedAssetLocker withdrawals.
+    /// @return Parameter for unstake delay, with relation to StakeLocker withdrawals.
     uint256 public unstakeDelay;
 
     /// @return Amount of time to allow borrower to drawdown on their loan after funding period ends.

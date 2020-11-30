@@ -31,12 +31,12 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     IERC20 private fundsToken;
 
     // An interface for the asset used to stake the StakeLocker for this LiquidityPool.
-    IERC20 private IStakedAsset;
+    IERC20 private IStakeAsset;
 
     // An interface for the factory used to instantiate a StakeLocker for this LiquidityPool.
     IStakeLockerFactory private StakeLockerFactory;
 
-    // An interface for the locker which escrows StakedAsset.
+    // An interface for the locker which escrows StakeAsset.
     IStakeLocker private StakeLocker;
 
     // An interface for the MapleGlobals contract.
@@ -173,8 +173,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         ILiquidityLocker(liquidityLockerAddress).fundLoan(_loanVault, _amt);
     }
 
-    /*these are to convert between FDT of 18 decim and liquidasset locker of 0 to 256 decimals
-    if we change the decimals on the FDT to match liquidasset this would not be necessary
+    /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
+    if we change the decimals on the FDT to match liquidityasset this would not be necessary
     but that will cause frontend interface complications!
     if we dont support decimals > 18, that would half this code, but some jerk probably has a higher decimal coin
     */
