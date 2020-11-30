@@ -62,13 +62,6 @@ jobs:
 workflows:
   version: 2
   test_all:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - "chore/circleci"
     jobs:
       - dependencies
       - test:
