@@ -13,16 +13,11 @@ const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address.js
 const WBTCABI = require("../../contracts/localhost/abis/WBTC.abi.js");
 const LVFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address.js");
 const LVFactoryABI = require("../../contracts/localhost/abis/LoanVaultFactory.abi.js");
-const FLFAddress = require("../../contracts/localhost/addresses/LoanVaultFundingLockerFactory.address.js");
-const FLFABI = require("../../contracts/localhost/abis/LoanVaultFundingLockerFactory.abi.js");
-const CLFAddress = require("../../contracts/localhost/addresses/CollateralLockerFactory.address.js");
-const CLFABI = require("../../contracts/localhost/abis/CollateralLockerFactory.abi.js");
-const LALFAddress = require("../../contracts/localhost/addresses/LiquidityLockerFactory.address.js");
-const LALFABI = require("../../contracts/localhost/abis/LiquidityLockerFactory.abi.js");
+const FLFAddress = require("../../contracts/localhost/addresses/FundingLockerFactory.address.js");
+const FLFABI = require("../../contracts/localhost/abis/FundingLockerFactory.abi.js");
 const GlobalsAddress = require("../../contracts/localhost/addresses/MapleGlobals.address.js");
 const GlobalsABI = require("../../contracts/localhost/abis/MapleGlobals.abi.js");
 const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi.js");
-const LoanVaultFundingLockerFactoryAbi = require("../../contracts/localhost/abis/LoanVaultFundingLockerFactory.abi.js");
 
 describe("fundLoan() in LoanVault.sol", function () {
 

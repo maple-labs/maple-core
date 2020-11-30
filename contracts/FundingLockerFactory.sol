@@ -1,9 +1,9 @@
 pragma solidity 0.7.0;
 
-import "./LoanVaultFundingLocker.sol";
+import "./FundingLocker.sol";
 import "./interface/ILoanVaultFactory.sol";
 
-contract LoanVaultFundingLockerFactory {
+contract FundingLockerFactory {
 
     // Mapping of FundingLocker contracts to the LoanVault it's attached with.
     mapping(address => address) private lockerOwner;
@@ -20,10 +20,10 @@ contract LoanVaultFundingLockerFactory {
     function newLocker(address _fundingAsset) public returns (address) {
         require(
             !deployedLocker[msg.sender], 
-            "LoanVaultFundingLockerFactory::newLocker:ERR_MSG_SENDER_ALREADY_DEPLOYED_FUNDING_LOCKER"
+            "FundingLockerFactory::newLocker:ERR_MSG_SENDER_ALREADY_DEPLOYED_FUNDING_LOCKER"
         );
         deployedLocker[msg.sender] = true;
-        address _fundingLocker = address(new LoanVaultFundingLocker(_fundingAsset, msg.sender));
+        address _fundingLocker = address(new FundingLocker(_fundingAsset, msg.sender));
         lockerOwner[_fundingLocker] = msg.sender;
         isLocker[_fundingLocker] = true;
         return _fundingLocker;
