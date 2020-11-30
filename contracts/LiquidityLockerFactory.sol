@@ -23,9 +23,9 @@ contract LiquidityLockerFactory {
         return _liquidityLocker;
     }
 
-    // @notice Returns the address of the locker's parent liquidity pool.
-    // @param _locker The address of the locker.
-    // @return The owner of the locker.
+    /// @notice Returns the address of the LiquidityLocker's owner (should be a LiquidityPool).
+    /// @param _locker Address of the LiquidityLocker.
+    /// @return Owner of the LiquidityLocker.
     function getOwner(address _locker) public view returns (address) {
         return ownerOfLocker[_locker];
     }

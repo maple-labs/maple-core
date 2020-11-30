@@ -12,6 +12,7 @@ import "./interface/ICollateralLockerFactory.sol";
 
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
+    
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
     using SafeMath for uint256;

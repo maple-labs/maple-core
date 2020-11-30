@@ -20,10 +20,10 @@ contract LoanVaultFactory {
     /// @notice The MapleGlobals.sol contract.
     address public mapleGlobals;
     
-    /// @notice The LoanVaultFundingLockerFactory to use for this particular LoanVaultFactory.
+    /// @notice The LoanVaultFundingLockerFactory to use for this LoanVaultFactory.
     address public fundingLockerFactory;
     
-    /// @notice The LoanVaultCollateralLockerFactory to use for this particular LoanVaultFactory.
+    /// @notice The CollateralLockerFactory to use for this LoanVaultFactory.
     address public collateralLockerFactory;
 
     constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) {

@@ -61,7 +61,7 @@ async function main() {
   );
 
   const CollateralLockerFactory = await deploy(
-    "LoanVaultCollateralLockerFactory"
+    "CollateralLockerFactory"
   );
 
   const FundingLockerFactory = await deploy("LoanVaultFundingLockerFactory");
