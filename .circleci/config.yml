@@ -48,10 +48,6 @@ jobs:
       - run:
           name: Run tests for maple-core
           command: cd ~/project && yarn all:test
-
-  teardown:
-    <<: *defaults
-    steps:
       - run:
           name: Stop mbs chain
           command: pkill node
@@ -64,6 +60,3 @@ workflows:
       - test:
           requires:
             - dependencies
-      - teardown:
-          requires:
-            - test
