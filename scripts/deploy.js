@@ -25,7 +25,7 @@ async function main() {
 
   const LiquidityLockerFactory = await deploy("LiquidityLockerFactory");
 
-  const LPFactory = await deploy("LPFactory");
+  const LiquidityPoolFactory = await deploy("LiquidityPoolFactory");
 
   const mapleTreasury = await deploy("MapleTreasury", [
     mapleToken.address,
@@ -80,7 +80,7 @@ async function main() {
     CollateralLockerFactory.address
   );
 
-  await mapleGlobals.setLiquidityPoolFactory(LPFactory.address);
+  await mapleGlobals.setLiquidityPoolFactory(LiquidityPoolFactory.address);
 
   await mapleGlobals.setLoanVaultFactory(LVFactory.address);
 }

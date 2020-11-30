@@ -19,8 +19,8 @@ const LiquidityLockerABI = require("../../contracts/localhost/abis/LiquidityLock
 const BPoolCreatorAddress = require("../../contracts/localhost/addresses/BCreator.address.js");
 const BPoolCreatorABI = require("../../contracts/localhost/abis/BCreator.abi.js");
 const BPoolABI = require("../../contracts/localhost/abis/BPool.abi.js");
-const LPFactoryABI = require("../../contracts/localhost/abis/LPFactory.abi.js");
-const LPFactoryAddress = require("../../contracts/localhost/addresses/LPFactory.address.js");
+const LPFactoryABI = require("../../contracts/localhost/abis/LiquidityPoolFactory.abi.js");
+const LPFactoryAddress = require("../../contracts/localhost/addresses/LiquidityPoolFactory.address.js");
 const LPABI = require("../../contracts/localhost/abis/LiquidityPool.abi.js");
 const LVFactoryABI = require("../../contracts/localhost/abis/LoanVaultFactory.abi.js");
 const LVFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address.js");
@@ -269,13 +269,13 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
     expect(USDCPool).to.equal(USDCLPAddress);
   });
 
-  it("Check DAI LP is recognized by LPFactory.isLPool()", async function () {
-    const isPool = await LPFactory.isLPool(DAILPAddress);
+  it("Check DAI LP is recognized by LPFactory.isLiquidityPool()", async function () {
+    const isPool = await LPFactory.isLiquidityPool(DAILPAddress);
     expect(isPool).to.equal(true);
   });
 
-  it("Check USDC LP is recognized by LPFactory.isLPool()", async function () {
-    const isPool = await LPFactory.isLPool(USDCLPAddress);
+  it("Check USDC LP is recognized by LPFactory.isLiquidityPool()", async function () {
+    const isPool = await LPFactory.isLiquidityPool(USDCLPAddress);
     expect(isPool).to.equal(true);
   });
 
