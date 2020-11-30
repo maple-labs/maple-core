@@ -19,28 +19,27 @@ import "./interface/ILiquidityLockerFactory.sol";
 //TODO IMPLEMENT WITHDRAWL FUNCTIONS
 //TODO IMPLEMENT DELETE FUNCTIONS CALLING stakedAssetLocker deleteLP()
 
-// @title LP is the core liquidity pool contract.
+/// @title LiquidityPool is the core contract for liquidity pools.
 contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
+
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
     using SafeMath for uint256;
-    //TODO REMOVE REDUNDANT VARIABLES HERE IF THERE ARE ANY
-    // The dividend token for this contract's FundsDistributionToken.
+    
+    // An interface for this contract's FundsDistributionToken, stored in two separate variables.
     IERC20 private ILiquidAsset;
-
-    //FUNDS TOKEN IS ILiquidAsset
     IERC20 private fundsToken;
 
-    // The factory for instantiating staked asset lockers.
-    IStakeLockerFactory private StakeLockerFactory;
-
-    // The staked asset for this liquidity pool (the Balancer Pool).
+    // An interface for the asset used to stake the StakeLocker for this LiquidityPool.
     IERC20 private IStakedAsset;
 
-    // The staked asset locker which escrows the staked asset.
+    // An interface for the factory used to instantiate a StakeLocker for this LiquidityPool.
+    IStakeLockerFactory private StakeLockerFactory;
+
+    // An interface for the locker which escrows StakedAsset.
     IStakeLocker private StakeLocker;
 
-    // The maple globals contract.
+    // An interface for MapleGlobals contract.
     IGlobals private MapleGlobals;
 
     // @notice The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract.
