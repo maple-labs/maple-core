@@ -12,7 +12,6 @@ import "./interface/ICollateralLockerFactory.sol";
 
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
-
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
     using SafeMath for uint256;
@@ -50,20 +49,20 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     address public borrower;
 
     /// @notice The loan specifications.
-    uint public aprBips;
-    uint public numberOfPayments;
-    uint public paymentIntervalSeconds;
-    uint public minRaise;
-    uint public collateralBipsRatio;
-    uint public fundingPeriodSeconds;
-    uint public loanCreatedTimestamp;
-    
+    uint256 public aprBips;
+    uint256 public numberOfPayments;
+    uint256 public paymentIntervalSeconds;
+    uint256 public minRaise;
+    uint256 public collateralBipsRatio;
+    uint256 public fundingPeriodSeconds;
+    uint256 public loanCreatedTimestamp;
+
     /// @notice The repayment calculator for this loan.
     address public repaymentCalculator;
 
     /// @notice The premium calculator for this loan.
     address public premiumCalculator;
-    
+
     /// @notice The current state of this loan, as defined in the State enum below.
     State public loanState;
 
@@ -82,10 +81,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     }
 
     /// @notice Fired when user calls fundLoan()
-    event LoanFunded(
-        uint _amountFunded,
-        address indexed _fundedBy
-    );
+    event LoanFunded(uint256 _amountFunded, address indexed _fundedBy);
 
     /// @notice Constructor for loan vault.
     /// @param _assetRequested The asset borrower is requesting funding in.
@@ -107,10 +103,15 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         address _fundingLockerFactory,
         address _collateralLockerFactory,
         address _mapleGlobals,
-        uint[6] memory _specifications,
-        address _repaymentCalculator
-    ) FundsDistributionToken('LoanVault', 'LVT') {
-
+        uint256[6] memory _specifications,
+        address _repaymentCalculator,
+        string memory _tUUID
+    )
+        FundsDistributionToken(
+            string(abi.encodePacked("Maple Loan Vault Token ", _tUUID)),
+            string(abi.encodePacked("ML", _tUUID))
+        )
+    {
         require(
             address(_assetRequested) != address(0),
             "LoanVault::constructor:ERR_INVALID_FUNDS_TOKEN_ADDRESS"
@@ -143,13 +144,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             _specifications[1].mod(_specifications[2]) == 0,
             "LoanVault::constructor:ERR_INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION"
         );
-        require(_specifications[3] > 0,
-            "LoanVault::constructor:ERR_MIN_RAISE_EQUALS_ZERO"
-        );
-        require(
-            _specifications[5] > 0, 
-            "LoanVault::constructor:ERR_FUNDING_PERIOD_EQUALS_ZERO"
-        );
+        require(_specifications[3] > 0, "LoanVault::constructor:ERR_MIN_RAISE_EQUALS_ZERO");
+        require(_specifications[5] > 0, "LoanVault::constructor:ERR_FUNDING_PERIOD_EQUALS_ZERO");
 
         // Update state variables.
         aprBips = _specifications[0];
@@ -168,17 +164,14 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
      * @notice Fund this loan and mint LoanTokens.
      * @param _amount Amount of _assetRequested to fund the loan for.
      * @param _mintedTokenReceiver The address to mint LoanTokens for.
-    */
-    function fundLoan(uint _amount, address _mintedTokenReceiver) external isState(State.Live) {
+     */
+    function fundLoan(uint256 _amount, address _mintedTokenReceiver) external isState(State.Live) {
         // TODO: Consider testing decimal precision difference: RequestedAsset <> FundsToken
         require(
             IRequestedAsset.transferFrom(msg.sender, fundingLocker, _amount),
             "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
         );
-        emit LoanFunded(
-            _amount,
-            _mintedTokenReceiver
-        );
+        emit LoanFunded(_amount, _mintedTokenReceiver);
         _mint(_mintedTokenReceiver, _amount);
     }
 
@@ -221,5 +214,4 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             _distributeFunds(newFunds.toUint256Safe());
         }
     }
-
 }
