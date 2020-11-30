@@ -114,7 +114,7 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
 
   it("Can not finalize DAI pool without stake", async function () {
     await expect(DAILP.finalize()).to.be.revertedWith(
-      "FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE"
+      "LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE"
     );
     isfin = await DAILP.isFinalized();
     expect(isfin.toString()).to.equal("false");
@@ -160,7 +160,7 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
     const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
     await DAI.approve(DAILP.address, moneyDAI);
     await expect(DAILP.deposit(moneyDAI)).to.be.revertedWith(
-      "LiquidityPool: IS NOT FINALIZED"
+      "LiquidityPool:ERR_NOT_FINALIZED"
     );
   });
 
@@ -171,7 +171,7 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
     const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
     await USDC.approve(USDCLP.address, moneyUSDC);
     await expect(USDCLP.deposit(moneyUSDC)).to.be.revertedWith(
-      "LiquidityPool: IS NOT FINALIZED"
+      "LiquidityPool:ERR_NOT_FINALIZED"
     );
   });
 
@@ -183,7 +183,7 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
 
   it("Can not finalize USDC pool without stake", async function () {
     await expect(USDCLP.finalize()).to.be.revertedWith(
-      "FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE"
+      "LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE"
     );
     isfin = await USDCLP.isFinalized();
     expect(isfin.toString()).to.equal("false");
@@ -309,7 +309,7 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
     const moneyUSDC = BigInt(money) * BigInt(10) ** dec;
     const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
     expect(USDCLP.deposit(moneyUSDC)).to.revertedWith(
-      "LiquidityPool::deposit:ERR_ALLOWANCE_LESS_THEN__AMT"
+      "LiquidityPool::deposit:ERR_ALLOWANCE_LESS_THEN_AMT"
     );
   });
 
@@ -319,7 +319,7 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
     const moneyDAI = BigInt(money) * BigInt(10) ** dec;
     const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
     expect(DAILP.deposit(moneyDAI)).to.revertedWith(
-      "LiquidityPool::deposit:ERR_ALLOWANCE_LESS_THEN__AMT"
+      "LiquidityPool::deposit:ERR_ALLOWANCE_LESS_THEN_AMT"
     );
   });
 

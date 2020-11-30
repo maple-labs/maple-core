@@ -16,8 +16,8 @@ import "./interface/IStakeLockerFactory.sol";
 import "./interface/ILiquidityLocker.sol";
 import "./interface/ILiquidityLockerFactory.sol";
 
-//TODO IMPLEMENT WITHDRAWL FUNCTIONS
-//TODO IMPLEMENT DELETE FUNCTIONS CALLING stakedAssetLocker deleteLP()
+// TODO: Implement the withdraw() function, so investors can withdraw LiquidityAsset from LP.
+// TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
 /// @title LiquidityPool is the core contract for liquidity pools.
 contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
@@ -80,7 +80,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         string memory name,
         string memory symbol,
         address _mapleGlobals
-    ) public FundsDistributionToken(name, symbol) {
+    ) FundsDistributionToken(name, symbol) {
 
         require(
             address(_liquidityAsset) != address(0),
@@ -94,14 +94,14 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         ILiquidityAsset = IERC20(_liquidityAsset);
         fundsToken = ILiquidityAsset;
 
-        // Assign misc. state variables
+        // Assign misc. state variables.
         stakeAsset = _stakeAsset;
         StakeLockerFactory = IStakeLockerFactory(_stakeLockerFactory);
         MapleGlobals = IGlobals(_mapleGlobals);
         poolDelegate = tx.origin;
 
         // Initialize the LiquidityLocker and StakeLocker.
-        stakeLockerAddress = makeStakeLocker(_stakeAsset);
+        stakeLockerAddress = createStakeLocker(_stakeAsset);
         liquidityLockerAddress = address(
             ILiquidityLockerFactory(_liquidityLockerFactory).newLocker(liquidityAsset)
         );
@@ -109,31 +109,33 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     }
 
     modifier finalized() {
-        require(isFinalized, "LiquidityPool: IS NOT FINALIZED");
+        require(isFinalized, "LiquidityPool:ERR_NOT_FINALIZED");
         _;
     }
     modifier notDefunct() {
-        require(!isDefunct, "LiquidityPool: IS DEFUNCT");
+        require(!isDefunct, "LiquidityPool:ERR_IS_DEFUNCT");
         _;
     }
     modifier isDelegate() {
-        require(msg.sender == poolDelegate, "LiquidityPool: ERR UNAUTH");
+        require(msg.sender == poolDelegate, "LiquidityPool:ERR_MSG_SENDER_NOT_DELEGATE");
         _;
     }
 
-    // @notice creates stake locker
-    function makeStakeLocker(address _stakedAsset) private returns (address) {
+    /// @notice Deploys and assigns a StakeLocker for this LiquidityPool.
+    /// @param _stakeAsset Address of the asset used for staking.
+    function createStakeLocker(address _stakeAsset) private returns (address) {
+        // TODO: Test this require() function.
         require(
-            IBPool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&
-                IBPool(_stakedAsset).isBound(liquidityAsset) &&
-                IBPool(_stakedAsset).isFinalized() &&
-                (IBPool(_stakedAsset).getNumTokens() == 2),
-            "FDT_LP.makeStakeLocker: BALANCER_POOL_NOT_VALID"
+            IBPool(_stakeAsset).isBound(MapleGlobals.mapleToken()) &&
+                IBPool(_stakeAsset).isBound(liquidityAsset) &&
+                IBPool(_stakeAsset).isFinalized() &&
+                (IBPool(_stakeAsset).getNumTokens() == 2),
+                "LiquidityPool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
         );
-        address _stakedAssetLocker =
-            StakeLockerFactory.newLocker(_stakedAsset, liquidityAsset, address(MapleGlobals));
-        StakeLocker = IStakeLocker(_stakedAssetLocker);
-        return _stakedAssetLocker;
+        address _stakeLocker =
+            StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
+        StakeLocker = IStakeLocker(_stakeLocker);
+        return _stakeLocker;
     }
 
     /**
@@ -144,7 +146,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         require(
             CalcBPool.BPTVal(stakeAsset, poolDelegate, liquidityAsset, stakeLockerAddress) >
                 _minStake.mul(_ONELiquidityAsset),
-            "FDT_LP.makeStakeLocker: NOT_ENOUGH_STAKE"
+                "LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE"
         );
         isFinalized = true;
         StakeLocker.finalizeLP();
@@ -156,7 +158,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     function deposit(uint256 _amt) external notDefunct finalized {
         require(
             ILiquidityAsset.allowance(msg.sender, address(this)) >= _amt,
-            "LiquidityPool::deposit:ERR_ALLOWANCE_LESS_THEN__AMT"
+            "LiquidityPool::deposit:ERR_ALLOWANCE_LESS_THEN_AMT"
         );
         ILiquidityAsset.transferFrom(msg.sender, liquidityLockerAddress, _amt);
         uint256 _mintAmt = liq2FDT(_amt);
