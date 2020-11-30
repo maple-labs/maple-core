@@ -3,6 +3,7 @@ pragma solidity 0.7.0;
 import "./LoanVault.sol";
 import "./interface/IGlobals.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./library/TokenUUID.sol";
 
 /// @title LoanVaultFactory instantiates LoanVault contracts.
 contract LoanVaultFactory {
@@ -77,6 +78,7 @@ contract LoanVaultFactory {
         );
         
         // Deploy loan vault contract.
+	string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated+1);
         LoanVault vault = new LoanVault(
             _assetRequested,
             _assetCollateral,
@@ -84,7 +86,8 @@ contract LoanVaultFactory {
             collateralLockerFactory,
             mapleGlobals,
             _specifications,
-            IGlobals(mapleGlobals).interestStructureCalculators(_interestStructure)
+            IGlobals(mapleGlobals).interestStructureCalculators(_interestStructure),
+	    _tUUID
         );
 
         // Update LoanVaultFactory identification mappings.
