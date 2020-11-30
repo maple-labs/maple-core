@@ -11,37 +11,13 @@ import "./interface/IBPool.sol";
 import "./LiquidAssetLockerFactory.sol";
 import "./interface/IGlobals.sol";
 import "./interface/ILoanVaultFactory.sol";
+import "./interface/IStakeLocker.sol";
 import "./interface/IStakeLockerFactory.sol";
+import "./interface/ILiquidityLocker.sol";
+import "./interface/ILiquidityLockerFactory.sol";
 
 //TODO IMPLEMENT WITHDRAWL FUNCTIONS
 //TODO IMPLEMENT DELETE FUNCTIONS CALLING stakedAssetLocker deleteLP()
-
-// @title ILPStakeLocker interfaces with the staked asset locker of the liquidity pool.
-interface ILPStakeLocker {
-    function stake(uint256 _amountStakedAsset) external returns (uint256);
-
-    function unstake(uint256 _amountStakedAsset) external returns (uint256);
-
-    function withdrawUnstaked(uint256 _amountUnstaked) external returns (uint256);
-
-    function withdrawInterest() external returns (uint256);
-
-    function deleteLP() external;
-
-    function finalizeLP() external;
-}
-
-interface ILiquidAssetLockerFactory {
-    function newLocker(address _liquidAsset) external returns (address);
-
-    function isLiquidAssetLocker(address _locker) external returns (bool);
-
-    function fundLoan(address _loanVault, uint256 _amt) external;
-}
-
-interface ILiquidAssetLocker {
-    function fundLoan(address _loanVault, uint256 _amt) external;
-}
 
 // @title LP is the core liquidity pool contract.
 contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
@@ -56,13 +32,13 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     IERC20 private fundsToken;
 
     // The factory for instantiating staked asset lockers.
-    ILPStakeLockerFactory private IStakeLockerFactory;
+    IStakeLockerFactory private StakeLockerFactory;
 
     // The staked asset for this liquidity pool (the Balancer Pool).
     IERC20 private IStakedAsset;
 
     // The staked asset locker which escrows the staked asset.
-    ILPStakeLocker private IStakedAssetLocker;
+    IStakeLocker private StakeLocker;
 
     // The maple globals contract.
     IGlobals private MapleGlobals;
@@ -114,14 +90,14 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         stakedAsset = _stakedAsset;
         ILiquidAsset = IERC20(_liquidAsset);
         fundsToken = ILiquidAsset;
-        IStakeLockerFactory = IStakeLockerFactory(_stakedAssetLockerFactory);
+        StakeLockerFactory = IStakeLockerFactory(_stakedAssetLockerFactory);
         MapleGlobals = IGlobals(_mapleGlobals);
         poolDelegate = tx.origin;
         liquidAssetDecimals = ERC20(liquidAsset).decimals();
         _ONELiquidAsset = 10**(liquidAssetDecimals);
         stakedAssetLocker = makeStakeLocker(_stakedAsset);
         LiquidAssetLocker = address(
-            ILiquidAssetLockerFactory(_LiquidAssetLockerFactory).newLocker(liquidAsset)
+            ILiquidityLockerFactory(_LiquidAssetLockerFactory).newLocker(liquidAsset)
         );
     }
 
@@ -148,8 +124,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
             "FDT_LP.makeStakeLocker: BALANCER_POOL_NOT_VALID"
         );
         address _stakedAssetLocker =
-            IStakeLockerFactory.newLocker(_stakedAsset, liquidAsset, address(MapleGlobals));
-        IStakedAssetLocker = ILPStakeLocker(_stakedAssetLocker);
+            StakeLockerFactory.newLocker(_stakedAsset, liquidAsset, address(MapleGlobals));
+        StakeLocker = IStakeLocker(_stakedAssetLocker);
         return _stakedAssetLocker;
     }
 
@@ -165,7 +141,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         );
 
         isFinalized = true;
-        IStakedAssetLocker.finalizeLP();
+        StakeLocker.finalizeLP();
     }
 
     // @notice deposit in liquidasset get equal parts FDT. muste approve this contract for it to work
@@ -186,7 +162,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
             ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault),
             "LiquidityPool:ERR_IS_NOT_LOAN_VAULT"
         );
-        ILiquidAssetLocker(LiquidAssetLocker).fundLoan(_loanVault, _amt);
+        ILiquidityLocker(LiquidAssetLocker).fundLoan(_loanVault, _amt);
     }
 
     /*these are to convert between FDT of 18 decim and liquidasset locker of 0 to 256 decimals
