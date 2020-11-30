@@ -9,17 +9,23 @@ import "./Token/FundsDistributionToken.sol";
 import "./Math/CalcBPool.sol";
 import "./interface/IBPool.sol";
 import "./LiquidAssetLockerFactory.sol";
+import "./interface/IGlobals.sol";
+import "./interface/ILoanVaultFactory.sol";
 
-// @title IMapleGlobals interacts with the core MapleGlobals.sol contract.
-interface IMapleGlobals {
-    function mapleToken() external view returns (address);
-
-    function stakeAmountRequired() external view returns (uint256);
-}
+//TODO IMPLEMENT WITHDRAWL FUNCTIONS
+//TODO IMPLEMENT DELETE FUNCTIONS CALLING stakedAssetLocker deleteLP()
 
 // @title ILPStakeLockerFactory is responsbile for instantiating/initializing a staked asset locker.
+//this shoiuldnt even be here but it is easier to have it here now and write it here now where i am using it.
+//It will be in a separate file when it is done
+//same goes for all of these interfaces
+//TODO: put the interfaces in their own files as this is the civilized way
 interface ILPStakeLockerFactory {
-    function newLocker(address _stakedAsset, address _liquidAsset) external returns (address);
+    function newLocker(
+        address _stakedAsset,
+        address _liquidAsset,
+        address _globals
+    ) external returns (address);
 }
 
 // @title ILPStakeLocker interfaces with the staked asset locker of the liquidity pool.
@@ -31,12 +37,22 @@ interface ILPStakeLocker {
     function withdrawUnstaked(uint256 _amountUnstaked) external returns (uint256);
 
     function withdrawInterest() external returns (uint256);
+
+    function deleteLP() external;
+
+    function finalizeLP() external;
 }
 
 interface ILiquidAssetLockerFactory {
     function newLocker(address _liquidAsset) external returns (address);
 
     function isLiquidAssetLocker(address _locker) external returns (bool);
+
+    function fundLoan(address _loanVault, uint256 _amt) external;
+}
+
+interface ILiquidAssetLocker {
+    function fundLoan(address _loanVault, uint256 _amt) external;
 }
 
 // @title LP is the core liquidity pool contract.
@@ -44,7 +60,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
     using SafeMath for uint256;
-
+    //TODO REMOVE REDUNDANT VARIABLES HERE IF THERE ARE ANY
     // The dividend token for this contract's FundsDistributionToken.
     IERC20 private ILiquidAsset;
 
@@ -61,7 +77,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     ILPStakeLocker private IStakedAssetLocker;
 
     // The maple globals contract.
-    IMapleGlobals private MapleGlobals;
+    IGlobals private MapleGlobals;
 
     // @notice The amount of LiquidAsset tokens (dividends) currently present and accounted for in this contract.
     uint256 public fundsTokenBalance;
@@ -82,8 +98,13 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 
     // @notice true if the Liquidity Pool is fully set up and delegate meets staking criteria.
     bool public isFinalized;
+
+    // @notice set to true when the pool is closed so delegate can remove his stake
+    bool public isDefunct;
+
     //@notice decimals() for liquid asset
     uint8 private liquidAssetDecimals;
+
     // This is 10^k where k = liquidAsset decimals, IE, it is one liquid asset unit in 'wei'
     uint256 private immutable _ONELiquidAsset;
 
@@ -106,7 +127,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         ILiquidAsset = IERC20(_liquidAsset);
         fundsToken = ILiquidAsset;
         IStakeLockerFactory = ILPStakeLockerFactory(_stakedAssetLockerFactory);
-        MapleGlobals = IMapleGlobals(_mapleGlobals);
+        MapleGlobals = IGlobals(_mapleGlobals);
         poolDelegate = tx.origin;
         liquidAssetDecimals = ERC20(liquidAsset).decimals();
         _ONELiquidAsset = 10**(liquidAssetDecimals);
@@ -116,6 +137,20 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         );
     }
 
+    modifier finalized() {
+        require(isFinalized, "LiquidityPool: IS NOT FINALIZED");
+        _;
+    }
+    modifier notDefunct() {
+        require(!isDefunct, "LiquidityPool: IS DEFUNCT");
+        _;
+    }
+    modifier isDelegate() {
+        require(msg.sender == poolDelegate, "LiquidityPool: ERR UNAUTH");
+        _;
+    }
+
+    // @notice creates stake locker
     function makeStakeLocker(address _stakedAsset) private returns (address) {
         require(
             IBPool(_stakedAsset).isBound(MapleGlobals.mapleToken()) &&
@@ -124,7 +159,9 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
                 (IBPool(_stakedAsset).getNumTokens() == 2),
             "FDT_LP.makeStakeLocker: BALANCER_POOL_NOT_VALID"
         );
-        address _stakedAssetLocker = IStakeLockerFactory.newLocker(_stakedAsset, liquidAsset);
+        address _stakedAssetLocker =
+            IStakeLockerFactory.newLocker(_stakedAsset, liquidAsset, address(MapleGlobals));
+        IStakedAssetLocker = ILPStakeLocker(_stakedAssetLocker);
         return _stakedAssetLocker;
     }
 
@@ -140,11 +177,12 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         );
 
         isFinalized = true;
+        IStakedAssetLocker.finalizeLP();
     }
 
     // @notice deposit in liquidasset get equal parts FDT. muste approve this contract for it to work
     // @param _amt is ammount to deposit
-    function deposit(uint256 _amt) external {
+    function deposit(uint256 _amt) external notDefunct finalized {
         //this means tether cna not be used.
         require(
             ILiquidAsset.allowance(msg.sender, address(this)) >= _amt,
@@ -153,6 +191,14 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         ILiquidAsset.transferFrom(msg.sender, LiquidAssetLocker, _amt);
         uint256 _mintAmt = liq2FDT(_amt);
         _mint(msg.sender, _mintAmt);
+    }
+
+    function fundLoan(address _loanVault, uint256 _amt) external notDefunct finalized isDelegate {
+        require(
+            ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault),
+            "LiquidityPool:ERR_IS_NOT_LOAN_VAULT"
+        );
+        ILiquidAssetLocker(LiquidAssetLocker).fundLoan(_loanVault, _amt);
     }
 
     /*these are to convert between FDT of 18 decim and liquidasset locker of 0 to 256 decimals
@@ -169,6 +215,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         return _out;
     }
 
+    //TODO: make these more efficient nad remove the one below if not being used after qithdrawl is implemented
     function FDT2liq(uint256 _amt) internal view returns (uint256 _out) {
         if (liquidAssetDecimals > 18) {
             _out = _amt.mul(10**(liquidAssetDecimals - 18));
@@ -182,7 +229,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @notice Withdraws all available funds for a token holder
      */
-    function withdrawFunds() external override {
+    function withdrawFunds() public override {
+        //must be public rather than external
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
