@@ -52,6 +52,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @notice The loan specifications.
     uint256 public aprBips;
     uint256 public numberOfPayments;
+    uint256 public termDays;
     uint256 public paymentIntervalSeconds;
     uint256 public minRaise;
     uint256 public collateralBipsRatio;
@@ -150,6 +151,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         // Update state variables.
         aprBips = _specifications[0];
+        termDays = _specifications[1];
         numberOfPayments = _specifications[1].div(_specifications[2]);
         paymentIntervalSeconds = _specifications[2].mul(1 days);
         minRaise = _specifications[3];

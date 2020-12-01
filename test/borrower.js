@@ -316,7 +316,6 @@ describe("Borrower Journey", function () {
     )
 
     const DECIMAL_PRECISION_REQUEST_ASSET = await RequestedAsset.decimals();
-
     const FUNDING_LOCKER_BALANCE = await LoanVault.getFundingLockerBalance();
     const MIN_RAISE = await LoanVault.minRaise();
     
@@ -333,6 +332,24 @@ describe("Borrower Journey", function () {
     // Min Raise
     console.log(
       parseInt(MIN_RAISE["_hex"]) / 10**DECIMAL_PRECISION_REQUEST_ASSET
+    )
+
+    const TERM_LENGTH = await LoanVault.termDays();
+
+    // Term Length (DAYS)
+    console.log(
+      parseInt(TERM_LENGTH["_hex"])
+    )
+
+    const FUNDING_PERIOD_SECONDS = await LoanVault.fundingPeriodSeconds();
+    const LOAN_CREATED_ON = await LoanVault.loanCreatedTimestamp();
+    const LOAN_FUNDING_ENDS = parseInt(LOAN_CREATED_ON["_hex"]) + parseInt(FUNDING_PERIOD_SECONDS["_hex"])
+
+    const SECONDS_REMAINING_FUNDING_PERIOD = LOAN_FUNDING_ENDS - (Date.now() / 1000)
+
+    // Offer Period Remaining (DAYS)
+    console.log(
+      SECONDS_REMAINING_FUNDING_PERIOD / 86400
     )
 
   });
