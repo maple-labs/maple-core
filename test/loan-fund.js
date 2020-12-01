@@ -247,8 +247,6 @@ describe("fundLoan() in LoanVault.sol", function () {
       LoanVaultABI,
       ethers.provider.getSigner(0)
     );
-    
-    // const fundingLockerAddress = await LoanVault.fundingLocker();
 
     const drawdownAmount_50USD = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(50)
@@ -257,16 +255,27 @@ describe("fundLoan() in LoanVault.sol", function () {
     const drawdownAmount_100USD = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(100)
     )
+    const drawdownAmount_500USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(500)
+    )
+
+    const drawdownAmount_1000USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(1000)
+    )
 
     const drawdownAmount_5000USD = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(5000)
     )
+    const drawdownAmount_10000USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(10000)
+    )
 
     console.log(parseInt(drawdownAmount_50USD["_hex"]));
-
     console.log(parseInt(drawdownAmount_100USD["_hex"]));
-
+    console.log(parseInt(drawdownAmount_500USD["_hex"]));
+    console.log(parseInt(drawdownAmount_1000USD["_hex"]));
     console.log(parseInt(drawdownAmount_5000USD["_hex"]));
+    console.log(parseInt(drawdownAmount_10000USD["_hex"]));
 
   });
 
