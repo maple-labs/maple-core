@@ -240,12 +240,12 @@ describe("fundLoan() in LoanVault.sol", function () {
       BigNumber.from(10).pow(18).mul(10000)
     )
 
-    console.log(parseInt(drawdownAmount_50USD["_hex"]));
-    console.log(parseInt(drawdownAmount_100USD["_hex"]));
-    console.log(parseInt(drawdownAmount_500USD["_hex"]));
-    console.log(parseInt(drawdownAmount_1000USD["_hex"]));
-    console.log(parseInt(drawdownAmount_5000USD["_hex"]));
-    console.log(parseInt(drawdownAmount_10000USD["_hex"]));
+    expect(parseInt(drawdownAmount_50USD["_hex"])).to.not.equals(0)
+    expect(parseInt(drawdownAmount_100USD["_hex"])).to.not.equals(0)
+    expect(parseInt(drawdownAmount_500USD["_hex"])).to.not.equals(0)
+    expect(parseInt(drawdownAmount_1000USD["_hex"])).to.not.equals(0)
+    expect(parseInt(drawdownAmount_5000USD["_hex"])).to.not.equals(0)
+    expect(parseInt(drawdownAmount_10000USD["_hex"])).to.not.equals(0)
 
 
   });
