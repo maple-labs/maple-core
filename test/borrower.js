@@ -165,31 +165,24 @@ describe("Borrower Journey", function () {
       
     }
 
-    // NOTE: Wei is not needed for these calculations, for borrower information panels.
+    const LOAN_AMOUNT = 100000; // 100,000 DAI
+    const APR_BIPS = 1250; // 12.50%
+    const TERM_DAYS = 180;
+    const PAYMENT_INTERVAL_DAYS = 30;
 
-    // 100000 = 100,000 DAI
-    // 500 = 5% APR
-    // 180 = 180 Day Term
-    // 30 = 30 Day Payment Frequency
-    // 'BULLET' = Interest Structure
     let exampleBulletTotalOwed = getTotalAmountOwed(
-      100000,
-      500,
-      180,
-      30,
+      LOAN_AMOUNT,
+      APR_BIPS,
+      TERM_DAYS,
+      PAYMENT_INTERVAL_DAYS,
       'BULLET'
     )
 
-    // 1500000 = 1,500,000 USDC
-    // 1250 = 12.5% APR
-    // 360 = 360 Day Term
-    // 90 = 90 Day Payment Frequency
-    // 'AMORTIZATION' = Interest Structure
     let exampleAmortizationTotalOwed = getTotalAmountOwed(
-      1500000,
-      1250,
-      360,
-      90,
+      LOAN_AMOUNT,
+      APR_BIPS,
+      TERM_DAYS,
+      PAYMENT_INTERVAL_DAYS,
       'AMORTIZATION'
     )
 
@@ -197,6 +190,128 @@ describe("Borrower Journey", function () {
       parseInt(exampleBulletTotalOwed["_hex"]),
       parseInt(exampleAmortizationTotalOwed["_hex"])
     )
+
+  });
+
+  it("C - Create a loan through the factory", async function () {
+
+    const LoanVaultFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address");
+    const LoanVaultFactoryABI = require("../../contracts/localhost/abis/LoanVaultFactory.abi");
+
+    let LoanVaultFactory;
+
+    LoanVaultFactory = new ethers.Contract(
+      LoanVaultFactoryAddress,
+      LoanVaultFactoryABI,
+      ethers.provider.getSigner(0)
+    );
+
+    // ERC-20 contracts for tokens
+    const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address");
+    const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address");
+    const WETHAddress = require("../../contracts/localhost/addresses/WETH9.address");
+    const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address");
+    
+    const ERC20ABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+
+    DAI = new ethers.Contract(DAIAddress, ERC20ABI, ethers.provider.getSigner(0));
+    USDC = new ethers.Contract(USDCAddress, ERC20ABI, ethers.provider.getSigner(0));
+    WETH = new ethers.Contract(WETHAddress, ERC20ABI, ethers.provider.getSigner(0));
+    WBTC = new ethers.Contract(WBTCAddress, ERC20ABI, ethers.provider.getSigner(0));
+
+  
+    const REQUESTED_ASSET = DAIAddress;
+    const COLLATERAL_ASSET = WETHAddress;
+    const INTEREST_STRUCTURE = 'BULLET' // 'BULLET' or 'AMORTIZATION'
+
+    const APR_BIPS = 500; // 5%
+    const TERM_DAYS = 90;
+    const PAYMENT_INTERVAL_DAYS = 30;
+    const MIN_RAISE = BigNumber.from(
+      10 // Base 10
+    ).pow(
+      18 // Decimial precision of REQUEST_ASSET (DAI = 18, USDC = 6, WETH = 18, WBTC = 8)
+    ).mul(
+      1000 // Amount of loan request (1000 = 1,000 DAI)
+    );
+    const COLLATERAL_BIPS_RATIO = 5000; // 50%
+    const FUNDING_PERIOD_DAYS = 7;
+
+    await LoanVaultFactory.createLoanVault(
+      REQUESTED_ASSET,
+      COLLATERAL_ASSET,
+      [
+        APR_BIPS, 
+        TERM_DAYS, 
+        PAYMENT_INTERVAL_DAYS, 
+        MIN_RAISE, 
+        COLLATERAL_BIPS_RATIO, 
+        FUNDING_PERIOD_DAYS
+      ],
+      ethers.utils.formatBytes32String(INTEREST_STRUCTURE)
+    );
+
+  });
+
+  it("D - Fetch important LoanVault information", async function () {
+
+    const LoanVaultFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address");
+    const LoanVaultFactoryABI = require("../../contracts/localhost/abis/LoanVaultFactory.abi");
+
+    let LoanVaultFactory;
+
+    LoanVaultFactory = new ethers.Contract(
+      LoanVaultFactoryAddress,
+      LoanVaultFactoryABI,
+      ethers.provider.getSigner(0)
+    );
+
+    // ERC-20 contracts for tokens
+    const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address");
+    const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address");
+    const WETHAddress = require("../../contracts/localhost/addresses/WETH9.address");
+    const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address");
+    
+    const ERC20ABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+
+    DAI = new ethers.Contract(DAIAddress, ERC20ABI, ethers.provider.getSigner(0));
+    USDC = new ethers.Contract(USDCAddress, ERC20ABI, ethers.provider.getSigner(0));
+    WETH = new ethers.Contract(WETHAddress, ERC20ABI, ethers.provider.getSigner(0));
+    WBTC = new ethers.Contract(WBTCAddress, ERC20ABI, ethers.provider.getSigner(0));
+
+  
+    const REQUESTED_ASSET = DAIAddress;
+    const COLLATERAL_ASSET = WETHAddress;
+    const INTEREST_STRUCTURE = 'BULLET' // 'BULLET' or 'AMORTIZATION'
+
+    const APR_BIPS = 500; // 5%
+    const TERM_DAYS = 90;
+    const PAYMENT_INTERVAL_DAYS = 30;
+    
+    const MIN_RAISE = BigNumber.from(
+      10 // Base 10
+    ).pow(
+      18 // Decimial precision of REQUESTED_ASSET (DAI = 18, USDC = 6, WETH = 18, WBTC = 8)
+    ).mul(
+      1000 // Amount of loan request (1000 = 1,000 DAI)
+    );
+
+    const COLLATERAL_BIPS_RATIO = 5000; // 50%
+    const FUNDING_PERIOD_DAYS = 7;
+
+    await LoanVaultFactory.createLoanVault(
+      REQUESTED_ASSET,
+      COLLATERAL_ASSET,
+      [
+        APR_BIPS, 
+        TERM_DAYS, 
+        PAYMENT_INTERVAL_DAYS, 
+        MIN_RAISE, 
+        COLLATERAL_BIPS_RATIO, 
+        FUNDING_PERIOD_DAYS
+      ],
+      ethers.utils.formatBytes32String(INTEREST_STRUCTURE)
+    );
 
   });
 

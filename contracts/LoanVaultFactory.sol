@@ -41,10 +41,10 @@ contract LoanVaultFactory {
     /// @notice Fired when user calls createLoanVault()
     event LoanVaultCreated(
         uint _loanVaultID,
+		address _loanVaultAddress,
         address indexed _borrower,
         address indexed _assetRequested,
         address _assetCollateral,
-		address _loanVaultAddress,
         uint[6] _specifications,
         bytes32 _interestStructure
     );
@@ -97,10 +97,10 @@ contract LoanVaultFactory {
         // Emit event.
         emit LoanVaultCreated(
             loanVaultsCreated,
+            address(vault),
             msg.sender,
             _assetRequested,
             _assetCollateral,
-            address(vault),
             _specifications,
             _interestStructure
         );
