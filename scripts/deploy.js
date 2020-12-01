@@ -38,14 +38,12 @@ async function main() {
     mapleTreasury.address
   );
 
-  await mapleGlobals.addCollateralToken(DAIAddress);
-  await mapleGlobals.addBorrowToken(DAIAddress);
-  await mapleGlobals.addCollateralToken(USDCAddress);
   await mapleGlobals.addBorrowToken(USDCAddress);
+  await mapleGlobals.addBorrowToken(DAIAddress);
+  await mapleGlobals.addCollateralToken(DAIAddress);
+  await mapleGlobals.addCollateralToken(USDCAddress);
   await mapleGlobals.addCollateralToken(WETHAddress);
-  await mapleGlobals.addBorrowToken(WETHAddress);
   await mapleGlobals.addCollateralToken(WBTCAddress);
-  await mapleGlobals.addBorrowToken(WBTCAddress);
 
   // TODO: Create repayment calculators, use bunk ones temporarily.
   const BUNK_ADDRESS_AMORTIZATION =

@@ -1,4 +1,7 @@
 pragma solidity 0.7.0;
+pragma experimental ABIEncoderV2;
+
+import "./interface/IERC20Symbol.sol";
 
 contract MapleGlobals {
     /// @return governor is responsible for management of global Maple variables.
@@ -32,7 +35,9 @@ contract MapleGlobals {
     mapping(address => bool) public isValidBorrowToken;
     mapping(address => bool) public isValidCollateral;
     address[] public validBorrowTokenAddresses;
+    string[] public validBorrowTokenSymbols;
     address[] public validCollateralTokenAddresses;
+    string[] public validCollateralTokenSymbols;
 
     // Mapping of bytes32 interest structure IDs to address of the corresponding interestStructureCalculators.
     mapping(bytes32 => address) public interestStructureCalculators;
@@ -64,6 +69,20 @@ contract MapleGlobals {
         drawdownGracePeriod = 1 days;
     }
 
+    function getValidTokens() view public returns(
+        string[] memory _validBorrowTokenSymbols,
+        address[] memory _validBorrowTokenAddresses,
+        string[] memory _validCollateralTokenSymbols,
+        address[] memory _validCollateralTokenAddresses
+    ) {
+        return (
+            validBorrowTokenSymbols,
+            validBorrowTokenAddresses,
+            validCollateralTokenSymbols,
+            validCollateralTokenAddresses
+        );
+    }
+
     function setLiquidityPoolFactory(address _factory) external isGovernor {
         liquidityPoolFactory = _factory;
     }
@@ -80,6 +99,7 @@ contract MapleGlobals {
         require(!isValidCollateral[_token], "MapleGloblas::addCollateralToken:ERR_ALREADY_ADDED");
         isValidCollateral[_token] = true;
         validCollateralTokenAddresses.push(_token);
+        validCollateralTokenSymbols.push(IERC20Symbol(_token).symbol());
     }
 
     /**
@@ -90,6 +110,7 @@ contract MapleGlobals {
         require(!isValidBorrowToken[_token], "MapleGloblas::addBorrowTokens:ERR_ALREADY_ADDED");
         isValidBorrowToken[_token] = true;
         validBorrowTokenAddresses.push(_token);
+        validBorrowTokenSymbols.push(IERC20Symbol(_token).symbol());
     }
 
     /**
