@@ -176,6 +176,12 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         _mint(_mintedTokenReceiver, _amount);
     }
 
+    /// @notice Returns the balance of _requestedAsset in the FundingLocker.
+    /// @return The balance of FundingLocker.
+    function getFundingLockerBalance() view public returns(uint) {
+        return IRequestedAsset.balanceOf(fundingLocker);
+    }
+
     /**
      * @notice Withdraws all available funds for a token holder
      */
