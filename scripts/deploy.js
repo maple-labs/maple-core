@@ -5,6 +5,8 @@ const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUS
 const WETHAddress = require("../../contracts/localhost/addresses/WETH9.address.js");
 const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address.js");
 const uniswapRouter = require("../../contracts/localhost/addresses/UniswapV2Router02.address.js");
+const ChainLinkFactoryABI = require("../../contracts/localhost/abis/ChainLinkEmulatorFactory.abi.js");
+const ChainLinkFactoryAddress = require("../../contracts/localhost/addresses/ChainLinkEmulatorFactory.address.js");
 
 async function main() {
   const mapleToken = await deploy("MapleToken", [
@@ -81,6 +83,21 @@ async function main() {
   await mapleGlobals.setLiquidityPoolFactory(LiquidityPoolFactory.address);
 
   await mapleGlobals.setLoanVaultFactory(LVFactory.address);
+
+  ChainLinkFactory = new ethers.Contract(
+    ChainLinkFactoryAddress,
+    ChainLinkFactoryABI,
+    ethers.provider.getSigner(0)
+  );
+
+  const ETH_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle("ETH / USD");
+  const BTC_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle("BTC / USD");
+  const DAI_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle("DAI / USD");
+  await mapleGlobals.assignPriceFeed(USDCAddress, DAI_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(DAIAddress, DAI_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WBTCAddress, BTC_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WETHAddress, ETH_USD_ORACLE_ADDRESS);
+  
 }
 
 main()

@@ -9,6 +9,8 @@ import "./interface/IGlobals.sol";
 import "./interface/IFundingLocker.sol";
 import "./interface/IFundingLockerFactory.sol";
 import "./interface/ICollateralLockerFactory.sol";
+import "./interface/IERC20Details.sol";
+import "hardhat/console.sol";
 
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
@@ -199,15 +201,17 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         loanState = State.Active;
 
-        // Instantiate collateral locker, fetch deposit required, transfer collateral from borrower to locker.
+        // Deploy a collateral locker.
         collateralLocker = ICollateralLockerFactory(collateralLockerFactory).newLocker(assetCollateral);
+
+        // Fetch amount of collateral required for drawdown.
         uint collateralAmountToPost = collateralRequiredForDrawdown(_drawdownAmount);
         require(
             ICollateralAsset.transferFrom(borrower, collateralLocker, collateralAmountToPost), 
             "LoanVault::endFunding:ERR_COLLATERAL_TRANSFER_FROM_APPROVAL_OR_BALANCE"
         );
 
-        // Transfer funding amount from FundingLocker to Borrower, then remaining funds to LoanVault.
+        // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to LoanVault.
         require(
             IFundingLocker(fundingLocker).pull(borrower, _drawdownAmount), 
             "LoanVault::endFunding:CRITICAL_ERR_PULL"
@@ -221,8 +225,29 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @notice Viewer helper for calculating collateral required to drawdown funding.
     /// @param _drawdownAmount The amount of fundingAsset to drawdown from FundingLocker.
     /// @return The amount of collateralAsset required to post for given _amount.
-    function collateralRequiredForDrawdown(uint _drawdownAmount) internal view returns(uint) {
-        return _drawdownAmount.mul(collateralAtDesiredRaise).div(desiredRaise);
+    function collateralRequiredForDrawdown(uint _drawdownAmount) public view returns(uint) {
+
+        // Fetch value of collateral and funding asset.
+        uint requestPrice = MapleGlobals.getPrice(assetRequested);
+        uint collateralPrice = MapleGlobals.getPrice(assetCollateral);
+
+        /*
+            Current values fed into ChainLink oracles (8 decimals, based on Kovan values)
+            DAI_USD  == 100232161
+            USDC_USD == 100232161
+            WETH_USD == 59452607912
+            WBTC_USD == 1895510185012
+
+            requestPrice(DAI || USDC) = 100232161
+            collateralPrice(wBTC) = 1895510185012
+            collateralPrice(wETH) = 59452607912
+        */
+        
+        uint collateralRequiredUSD = requestPrice.mul(_drawdownAmount).mul(collateralBipsRatio).div(10000);
+        uint collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
+        uint collateralRequiredFIN = collateralRequiredWEI.div(10**(18 - IERC20Details(assetCollateral).decimals()));
+
+        return collateralRequiredFIN;
     }
 
     /**

@@ -1,7 +1,8 @@
 pragma solidity 0.7.0;
 pragma experimental ABIEncoderV2;
 
-import "./interface/IERC20Symbol.sol";
+import "./interface/IERC20Details.sol";
+import "./interface/IPriceFeed.sol";
 
 contract MapleGlobals {
     /// @return governor is responsible for management of global Maple variables.
@@ -38,6 +39,9 @@ contract MapleGlobals {
     string[] public validBorrowTokenSymbols;
     address[] public validCollateralTokenAddresses;
     string[] public validCollateralTokenSymbols;
+
+    // Mapping of asset, to the associated pricefeed.
+    mapping(address => address) public tokenPriceFeed;
 
     // Mapping of bytes32 interest structure IDs to address of the corresponding interestStructureCalculators.
     mapping(bytes32 => address) public interestStructureCalculators;
@@ -91,6 +95,14 @@ contract MapleGlobals {
         loanVaultFactory = _factory;
     }
 
+    function assignPriceFeed(address _asset, address _oracle) external isGovernor {
+        tokenPriceFeed[_asset] = _oracle;
+    }
+
+    function getPrice(address _asset) external view returns(uint) {
+        return IPriceFeed(tokenPriceFeed[_asset]).price();
+    }
+
     /**
         @notice Governor can add a valid token, used as collateral.
         @param _token Address of the valid token.
@@ -99,7 +111,7 @@ contract MapleGlobals {
         require(!isValidCollateral[_token], "MapleGloblas::addCollateralToken:ERR_ALREADY_ADDED");
         isValidCollateral[_token] = true;
         validCollateralTokenAddresses.push(_token);
-        validCollateralTokenSymbols.push(IERC20Symbol(_token).symbol());
+        validCollateralTokenSymbols.push(IERC20Details(_token).symbol());
     }
 
     /**
@@ -110,7 +122,7 @@ contract MapleGlobals {
         require(!isValidBorrowToken[_token], "MapleGloblas::addBorrowTokens:ERR_ALREADY_ADDED");
         isValidBorrowToken[_token] = true;
         validBorrowTokenAddresses.push(_token);
-        validBorrowTokenSymbols.push(IERC20Symbol(_token).symbol());
+        validBorrowTokenSymbols.push(IERC20Details(_token).symbol());
     }
 
     /**

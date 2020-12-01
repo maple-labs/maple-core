@@ -34,4 +34,6 @@ interface IGlobals {
     function loanVaultFactory() external view returns (address);
 
     function liquidityPoolFactory() external view returns (address);
+
+    function getPrice(address) external view returns (uint);
 }

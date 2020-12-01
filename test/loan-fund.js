@@ -81,11 +81,11 @@ describe("fundLoan() in LoanVault.sol", function () {
     // Note: consider networkVersion=1 interactions w.r.t. async flow
     const preIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
 
-    // 5% APR, 90 Day Term, 30 Day Interval, 1000 DAI, 
+    // 5% APR, 90 Day Term, 30 Day Interval, 1000 DAI, 20% Collateral, 7 Day Funding Period
     await LoanVaultFactory.createLoanVault(
       DAIAddress,
-      WETHAddress,
-      [5000, 90, 30, 1000000000000, 0, 7], 
+      WBTCAddress,
+      [5000, 90, 30, 1000000000000, 2000, 7], 
       ethers.utils.formatBytes32String('BULLET')
     )
     
@@ -207,6 +207,66 @@ describe("fundLoan() in LoanVault.sol", function () {
     ).to.equals(
       BigNumber.from(10).pow(18).mul(100).toHexString()
     )
+
+  });
+
+  it("test drawdown calculation endpoint", async function () {
+
+    LoanVault = new ethers.Contract(
+      vaultAddress,
+      LoanVaultABI,
+      ethers.provider.getSigner(0)
+    );
+    
+    // const fundingLockerAddress = await LoanVault.fundingLocker();
+
+    const drawdownAmount_50USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(50)
+    )
+
+    const drawdownAmount_100USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(100)
+    )
+
+    const drawdownAmount_5000USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(5000)
+    )
+
+    console.log(parseInt(drawdownAmount_50USD["_hex"]));
+
+    console.log(parseInt(drawdownAmount_100USD["_hex"]));
+
+    console.log(parseInt(drawdownAmount_5000USD["_hex"]));
+
+  });
+
+  it("test drawdown functionality", async function () {
+
+    LoanVault = new ethers.Contract(
+      vaultAddress,
+      LoanVaultABI,
+      ethers.provider.getSigner(0)
+    );
+    
+    // const fundingLockerAddress = await LoanVault.fundingLocker();
+
+    const drawdownAmount_50USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(50)
+    )
+
+    const drawdownAmount_100USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(100)
+    )
+
+    const drawdownAmount_5000USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(5000)
+    )
+
+    console.log(parseInt(drawdownAmount_50USD["_hex"]));
+
+    console.log(parseInt(drawdownAmount_100USD["_hex"]));
+
+    console.log(parseInt(drawdownAmount_5000USD["_hex"]));
 
   });
 
