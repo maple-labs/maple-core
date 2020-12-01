@@ -217,36 +217,6 @@ describe("fundLoan() in LoanVault.sol", function () {
       LoanVaultABI,
       ethers.provider.getSigner(0)
     );
-    
-    // const fundingLockerAddress = await LoanVault.fundingLocker();
-
-    const drawdownAmount_50USD = await LoanVault.collateralRequiredForDrawdown(
-      BigNumber.from(10).pow(18).mul(50)
-    )
-
-    const drawdownAmount_100USD = await LoanVault.collateralRequiredForDrawdown(
-      BigNumber.from(10).pow(18).mul(100)
-    )
-
-    const drawdownAmount_5000USD = await LoanVault.collateralRequiredForDrawdown(
-      BigNumber.from(10).pow(18).mul(5000)
-    )
-
-    console.log(parseInt(drawdownAmount_50USD["_hex"]));
-
-    console.log(parseInt(drawdownAmount_100USD["_hex"]));
-
-    console.log(parseInt(drawdownAmount_5000USD["_hex"]));
-
-  });
-
-  it("test drawdown functionality", async function () {
-
-    LoanVault = new ethers.Contract(
-      vaultAddress,
-      LoanVaultABI,
-      ethers.provider.getSigner(0)
-    );
 
     const drawdownAmount_50USD = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(50)
@@ -277,6 +247,13 @@ describe("fundLoan() in LoanVault.sol", function () {
     console.log(parseInt(drawdownAmount_5000USD["_hex"]));
     console.log(parseInt(drawdownAmount_10000USD["_hex"]));
 
+
+  });
+
+  it("test drawdown functionality", async function () {
+
+    // TODO: Add in this test next.
+    
   });
 
 });
