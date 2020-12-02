@@ -81,6 +81,10 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         require(msg.sender == parentLP, "StakeLocker:ERR_UNAUTHORIZED");
         _;
     }
+    modifier isGovernor() {
+        require(msg.sender == IMapleGlobals.governor(), "msg.sender is not Governor");
+        _;
+    }
 
     /**
      * @notice Deposit stakeAsset and mint an equal number of FundsDistributionTokens to the user
@@ -119,6 +123,10 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     function finalizeLP() external isLP {
         isLPFinalized = true;
+    }
+
+    function withdrawETH(address payable _to) external isGovernor {
+        _to.transfer(address(this).balance);
     }
 
     /** @notice updates data structure that stores the information used to calculate unstake delay
