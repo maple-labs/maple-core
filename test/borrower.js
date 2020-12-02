@@ -415,6 +415,7 @@ describe("Borrower Journey", function () {
       loanVaultAddress
     )
 
+    // Note: Front-end wants to check greater than or equal to.
     expect(parseInt(USER_APPROVAL_TO_LOAN_VAULT["_hex"])).to.be.equals(
       parseInt(COLLATERAL_DRAWDOWN_AMOUNT_BASE["_hex"])
     )
@@ -443,13 +444,14 @@ describe("Borrower Journey", function () {
 
     const REQUESTED_AMOUNT_DECIMALS = await RequestedAsset.decimals();
 
+    
+    // User enters amount they want to drawdown.
+    const USER_ENTERED_DRAWDOWN_AMOUNT = 1000;
+
     // Fire this function when user goes to drawdown the USER_INPUT_DRAWDOWN_AMOUNT.
-
-    const USER_ENTERED_DRAWDOWN_AMOUNT = 1000; // 1000 DAI
-
-    await LoanVault.drawdown(BigNumber.from(10).pow(
-      REQUESTED_AMOUNT_DECIMALS
-    ).mul(USER_ENTERED_DRAWDOWN_AMOUNT));
+    await LoanVault.drawdown(
+      BigNumber.from(10).pow(REQUESTED_AMOUNT_DECIMALS).mul(USER_ENTERED_DRAWDOWN_AMOUNT)
+    );
 
   });
 
