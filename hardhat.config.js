@@ -1,5 +1,6 @@
 require('@nomiclabs/hardhat-waffle')
-require('hardhat-gas-reporter');
+require('hardhat-gas-reporter');//maybe comment out, coverage plugin distorts gas useage
+require("solidity-coverage");
 
 const { utils } = require('ethers')
 const fs = require('fs')

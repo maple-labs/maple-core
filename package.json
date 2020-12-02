@@ -13,7 +13,8 @@
     "balance": "hardhat balance",
     "docs": "npx solidity-docgen --solc-module solc -i ./contracts -o ./docs -t ./docs",
     "lint": "npx solhint contracts/**/*.sol",
-    "pretty": "npx prettier --write contracts/**/*.sol&&npx prettier --write ./{test,scripts}/*.js"
+    "pretty": "npx prettier --write contracts/**/*.sol&&npx prettier --write ./{test,scripts}/*.js",
+    "coverage": "npx hardhat coverage"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
   "keywords": [
@@ -40,7 +41,8 @@
     "prettier": "^2.1.2",
     "prettier-plugin-solidity": "^1.0.0-alpha.59",
     "solhint": "^3.3.1",
-    "solhint-plugin-prettier": "0.0.5"
+    "solhint-plugin-prettier": "0.0.5",
+    "solidity-coverage": "^0.7.12"
   },
   "dependencies": {
     "@maplelabs/hardhat-scripts": "^1.1.0",
