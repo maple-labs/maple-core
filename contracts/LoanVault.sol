@@ -126,6 +126,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         fundingLockerFactory = _fundingLockerFactory;
         collateralLockerFactory = _collateralLockerFactory;
         IRequestedAsset = IERC20(_assetRequested);
+        ICollateralAsset = IERC20(_assetCollateral);
         MapleGlobals = IGlobals(_mapleGlobals);
         fundsToken = IRequestedAsset;
         borrower = tx.origin;
@@ -204,10 +205,9 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         // Deploy a collateral locker.
         collateralLocker = ICollateralLockerFactory(collateralLockerFactory).newLocker(assetCollateral);
 
-        // Fetch amount of collateral required for drawdown.
-        uint collateralAmountToPost = collateralRequiredForDrawdown(_drawdownAmount);
+        // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
         require(
-            ICollateralAsset.transferFrom(borrower, collateralLocker, collateralAmountToPost), 
+            ICollateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(_drawdownAmount)), 
             "LoanVault::endFunding:ERR_COLLATERAL_TRANSFER_FROM_APPROVAL_OR_BALANCE"
         );
 
@@ -242,7 +242,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             collateralPrice(wBTC) = 1895510185012
             collateralPrice(wETH) = 59452607912
         */
-        
+
         uint collateralRequiredUSD = requestPrice.mul(_drawdownAmount).mul(collateralBipsRatio).div(10000);
         uint collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
         uint collateralRequiredFIN = collateralRequiredWEI.div(10**(18 - IERC20Details(assetCollateral).decimals()));
