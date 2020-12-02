@@ -10,7 +10,6 @@ import "./interface/IFundingLocker.sol";
 import "./interface/IFundingLockerFactory.sol";
 import "./interface/ICollateralLockerFactory.sol";
 import "./interface/IERC20Details.sol";
-import "hardhat/console.sol";
 
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
