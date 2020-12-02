@@ -7,7 +7,6 @@ import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./interface/ILiquidityPool.sol";
 import "./interface/IGlobals.sol";
-import "hardhat/console.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
@@ -77,7 +76,6 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     //TODO: Identify why an error is thrown when console.log() is not present in this modifier.
     modifier isLP() {
-        console.log("msg.sender", msg.sender == parentLP);
         require(msg.sender == parentLP, "StakeLocker:ERR_UNAUTHORIZED");
         _;
     }
