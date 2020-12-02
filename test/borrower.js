@@ -21,16 +21,16 @@ describe("Borrower Journey", function () {
     const List = await MapleGlobals.getValidTokens();
 
     // These two arrays are related, in order.
-    console.log(
-      List["_validBorrowTokenSymbols"],
-      List["_validBorrowTokenAddresses"]
-    )
+    // console.log(
+    //   List["_validBorrowTokenSymbols"],
+    //   List["_validBorrowTokenAddresses"]
+    // )
     
     // These two arrays are related, in order.
-    console.log(
-      List["_validCollateralTokenSymbols"],
-      List["_validCollateralTokenAddresses"]
-    )
+    // console.log(
+    //   List["_validCollateralTokenSymbols"],
+    //   List["_validCollateralTokenAddresses"]
+    // )
 
   });
 
@@ -188,10 +188,10 @@ describe("Borrower Journey", function () {
       'AMORTIZATION'
     )
 
-    console.log(
-      parseInt(exampleBulletTotalOwed["_hex"]),
-      parseInt(exampleAmortizationTotalOwed["_hex"])
-    )
+    // console.log(
+    //   parseInt(exampleBulletTotalOwed["_hex"]),
+    //   parseInt(exampleAmortizationTotalOwed["_hex"])
+    // )
 
   });
 
@@ -320,26 +320,26 @@ describe("Borrower Journey", function () {
     const MIN_RAISE = await LoanVault.minRaise();
     
     // Percentage of Target
-    console.log(
-      parseInt(FUNDING_LOCKER_BALANCE["_hex"]) / parseInt(MIN_RAISE["_hex"]) * 100
-    )
+    // console.log(
+    //   parseInt(FUNDING_LOCKER_BALANCE["_hex"]) / parseInt(MIN_RAISE["_hex"]) * 100
+    // )
 
     // Funding Locker Balance
-    console.log(
-      parseInt(FUNDING_LOCKER_BALANCE["_hex"]) / 10**DECIMAL_PRECISION_REQUEST_ASSET
-    )
+    // console.log(
+    //   parseInt(FUNDING_LOCKER_BALANCE["_hex"]) / 10**DECIMAL_PRECISION_REQUEST_ASSET
+    // )
 
     // Min Raise
-    console.log(
-      parseInt(MIN_RAISE["_hex"]) / 10**DECIMAL_PRECISION_REQUEST_ASSET
-    )
+    // console.log(
+    //   parseInt(MIN_RAISE["_hex"]) / 10**DECIMAL_PRECISION_REQUEST_ASSET
+    // )
 
     const TERM_LENGTH = await LoanVault.termDays();
 
     // Term Length (DAYS)
-    console.log(
-      parseInt(TERM_LENGTH["_hex"])
-    )
+    // console.log(
+    //   parseInt(TERM_LENGTH["_hex"])
+    // )
 
     const FUNDING_PERIOD_SECONDS = await LoanVault.fundingPeriodSeconds();
     const LOAN_CREATED_ON = await LoanVault.loanCreatedTimestamp();
@@ -348,9 +348,9 @@ describe("Borrower Journey", function () {
     const SECONDS_REMAINING_FUNDING_PERIOD = LOAN_FUNDING_ENDS - (Date.now() / 1000)
 
     // Offer Period Remaining (DAYS)
-    console.log(
-      SECONDS_REMAINING_FUNDING_PERIOD / 86400
-    )
+    // console.log(
+    //   SECONDS_REMAINING_FUNDING_PERIOD / 86400
+    // )
 
   });
 

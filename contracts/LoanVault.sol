@@ -9,6 +9,7 @@ import "./interface/IGlobals.sol";
 import "./interface/IFundingLocker.sol";
 import "./interface/IFundingLockerFactory.sol";
 import "./interface/ICollateralLockerFactory.sol";
+import "./interface/IERC20Details.sol";
 
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
@@ -124,6 +125,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         fundingLockerFactory = _fundingLockerFactory;
         collateralLockerFactory = _collateralLockerFactory;
         IRequestedAsset = IERC20(_assetRequested);
+        ICollateralAsset = IERC20(_assetCollateral);
         MapleGlobals = IGlobals(_mapleGlobals);
         fundsToken = IRequestedAsset;
         borrower = tx.origin;
@@ -182,6 +184,69 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @return The balance of FundingLocker.
     function getFundingLockerBalance() view public returns(uint) {
         return IRequestedAsset.balanceOf(fundingLocker);
+    }
+
+    /// @notice End funding period by claiming funds, posting collateral, transitioning loanState from Funding to Active.
+    /// @param _drawdownAmount Amount of fundingAsset borrower will claim, remainder is returned to LoanVault.
+    function drawdown(uint _drawdownAmount) external isState(State.Live) isBorrower {
+
+        require(
+            _drawdownAmount >= minRaise, 
+            "LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE"
+        );
+        require(
+            _drawdownAmount <= IRequestedAsset.balanceOf(fundingLocker), 
+            "LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE"
+        );
+
+        loanState = State.Active;
+
+        // Deploy a collateral locker.
+        collateralLocker = ICollateralLockerFactory(collateralLockerFactory).newLocker(assetCollateral);
+
+        // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
+        require(
+            ICollateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(_drawdownAmount)), 
+            "LoanVault::endFunding:ERR_COLLATERAL_TRANSFER_FROM_APPROVAL_OR_BALANCE"
+        );
+
+        // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to LoanVault.
+        require(
+            IFundingLocker(fundingLocker).pull(borrower, _drawdownAmount), 
+            "LoanVault::endFunding:CRITICAL_ERR_PULL"
+        );
+        require(
+            IFundingLocker(fundingLocker).drain(),
+            "LoanVault::endFunding:ERR_DRAIN"
+        );
+    }
+
+    /// @notice Viewer helper for calculating collateral required to drawdown funding.
+    /// @param _drawdownAmount The amount of fundingAsset to drawdown from FundingLocker.
+    /// @return The amount of collateralAsset required to post for given _amount.
+    function collateralRequiredForDrawdown(uint _drawdownAmount) public view returns(uint) {
+
+        // Fetch value of collateral and funding asset.
+        uint requestPrice = MapleGlobals.getPrice(assetRequested);
+        uint collateralPrice = MapleGlobals.getPrice(assetCollateral);
+
+        /*
+            Current values fed into ChainLink oracles (8 decimals, based on Kovan values)
+            DAI_USD  == 100232161
+            USDC_USD == 100232161
+            WETH_USD == 59452607912
+            WBTC_USD == 1895510185012
+
+            requestPrice(DAI || USDC) = 100232161
+            collateralPrice(wBTC) = 1895510185012
+            collateralPrice(wETH) = 59452607912
+        */
+
+        uint collateralRequiredUSD = requestPrice.mul(_drawdownAmount).mul(collateralBipsRatio).div(10000);
+        uint collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
+        uint collateralRequiredFIN = collateralRequiredWEI.div(10**(18 - IERC20Details(assetCollateral).decimals()));
+
+        return collateralRequiredFIN;
     }
 
     /**

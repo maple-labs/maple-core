@@ -36,7 +36,8 @@ function mnemonic() {
 module.exports = {
   defaultNetwork,
   gasReporter: {
-    showMethodSig: true
+    showMethodSig: true,
+    currency: 'KRW'
   },
 
   // don't forget to set your provider like:
