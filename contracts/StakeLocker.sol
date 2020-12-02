@@ -11,7 +11,6 @@ import "hardhat/console.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
-    
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
 
@@ -46,7 +45,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     // TODO: Consider if this variable is needed, redundant to IParentLP.
     /// @notice The parent liquidity pool.
-    address public immutable parentLP; 
+    address public immutable parentLP;
 
     // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
     constructor(
@@ -65,6 +64,9 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         IMapleGlobals = IGlobals(_globals);
     }
 
+    event Stake(uint256 _ammount, address _staker);
+    event Unstake(uint256 _ammount, address _staker);
+
     modifier delegateLock() {
         require(
             msg.sender != IParentLP.poolDelegate() || isLPDefunct || !isLPFinalized,
@@ -74,9 +76,9 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     }
 
     //TODO: Identify why an error is thrown when console.log() is not present in this modifier.
-    modifier isLP() { 
-        console.log("msg.sender",msg.sender==parentLP);
-        require(msg.sender==parentLP, "StakeLocker:ERR_UNAUTHORIZED");
+    modifier isLP() {
+        console.log("msg.sender", msg.sender == parentLP);
+        require(msg.sender == parentLP, "StakeLocker:ERR_UNAUTHORIZED");
         _;
     }
 
@@ -91,6 +93,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         );
         _updateStakeDate(msg.sender, _amt);
         _mint(msg.sender, _amt);
+        emit Stake(_amt, msg.sender);
     }
 
     function unstake(uint256 _amt) external delegateLock {
@@ -106,6 +109,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
             "StakeLocker:ERR_STAKE_ASSET_BALANCE_DEPLETED"
         );
         _burn(address(this), _amt);
+        emit Unstake(_amt, msg.sender);
     }
 
     //TODO: Make sure LP gets the delete function implemented.
@@ -151,8 +155,8 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         return _out;
     }
 
-	// TODO: Make this handle transfer of time lock more properly, parameterize _updateStakeDate
-    //      to these ends to save code. 
+    // TODO: Make this handle transfer of time lock more properly, parameterize _updateStakeDate
+    //      to these ends to save code.
     //      can improve this so the updated age of tokens reflects their age in the senders wallets
     //      right now it simply is equivalent to the age update if the receiver was making a new stake.
     function _transfer(
@@ -162,7 +166,6 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     ) internal override delegateLock {
         super._transfer(from, to, value);
         _updateStakeDate(to, value);
-	
     }
 
     /**
@@ -178,7 +181,6 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
         _updateFundsTokenBalance();
     }
-    
 
     /**
      * @dev Updates the current funds token balance
@@ -205,5 +207,4 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
             _distributeFunds(newFunds.toUint256Safe());
         }
     }
-
 }
