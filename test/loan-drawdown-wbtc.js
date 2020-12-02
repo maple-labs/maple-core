@@ -117,7 +117,7 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
       BigNumber.from(10).pow(18).mul(500)
     )
 
-    console.log(parseInt(drawdownAmount_500DAI["_hex"]))
+    // console.log(parseInt(drawdownAmount_500DAI["_hex"]))
 
   });
 

@@ -117,7 +117,7 @@ describe("create 1000 USDC loan, fund 500 USDC, drawdown 50% wETH collateralized
       BigNumber.from(10).pow(18).mul(500)
     )
 
-    console.log(parseInt(drawdownAmount_500USDC["_hex"]))
+    // console.log(parseInt(drawdownAmount_500USDC["_hex"]))
 
   });
 
@@ -196,7 +196,7 @@ describe("create 1000 USDC loan, fund 500 USDC, drawdown 50% wETH collateralized
     const POST_LOANVAULT_BALANCE = await USDC.balanceOf(vaultAddress);
 
     // Confirm the state of various contracts.
-    
+
     const LoanVaultState = await LoanVault.loanState();
 
     expect(LoanVaultState).to.equals(1);
