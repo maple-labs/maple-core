@@ -63,8 +63,8 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         IMapleGlobals = IGlobals(_globals);
     }
 
-    event Stake(uint256 _ammount, address _staker);
-    event Unstake(uint256 _ammount, address _staker);
+    event Stake(uint256 _amount, address _staker);
+    event Unstake(uint256 _amount, address _staker);
 
     modifier delegateLock() {
         require(
@@ -129,7 +129,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     /** @notice updates data structure that stores the information used to calculate unstake delay
      * @param _addy address of staker
-     * @param _amt ammount he is staking
+     * @param _amt amount he is staking
      */
     function _updateStakeDate(address _addy, uint256 _amt) internal {
         if (stakeDate[_addy] == 0) {
@@ -147,7 +147,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @dev view function returning your unstakeable balance.
      * @param _addy wallet address
-     * @return uint ammount of BPTs that may be unstaked
+     * @return uint amount of BPTs that may be unstaked
      */
     function getUnstakeableBalance(address _addy) public view returns (uint256) {
         uint256 _bal = balanceOf(_addy);
