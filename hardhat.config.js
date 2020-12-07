@@ -1,6 +1,6 @@
 require('@nomiclabs/hardhat-waffle')
 require('hardhat-gas-reporter');
-
+require("solidity-coverage");
 const { utils } = require('ethers')
 const fs = require('fs')
 
