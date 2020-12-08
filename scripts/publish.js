@@ -1,7 +1,7 @@
 const { publish } = require("@maplelabs/hardhat-scripts");
 
 async function main() {
-  const directories = ["../contracts"];
+  const directories = ["../maple-webapp/src/contracts"];
   publish(directories);
 }
 
