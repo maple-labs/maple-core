@@ -21,16 +21,16 @@ describe("Borrower Journey", function () {
     const List = await MapleGlobals.getValidTokens();
 
     // These two arrays are related, in order.
-    console.log(
-      List["_validBorrowTokenSymbols"],
-      List["_validBorrowTokenAddresses"]
-    )
+    // console.log(
+    //   List["_validBorrowTokenSymbols"],
+    //   List["_validBorrowTokenAddresses"]
+    // )
     
     // These two arrays are related, in order.
-    console.log(
-      List["_validCollateralTokenSymbols"],
-      List["_validCollateralTokenAddresses"]
-    )
+    // console.log(
+    //   List["_validCollateralTokenSymbols"],
+    //   List["_validCollateralTokenAddresses"]
+    // )
 
   });
 
@@ -188,10 +188,10 @@ describe("Borrower Journey", function () {
       'AMORTIZATION'
     )
 
-    console.log(
-      parseInt(exampleBulletTotalOwed["_hex"]),
-      parseInt(exampleAmortizationTotalOwed["_hex"])
-    )
+    // console.log(
+    //   parseInt(exampleBulletTotalOwed["_hex"]),
+    //   parseInt(exampleAmortizationTotalOwed["_hex"])
+    // )
 
   });
 
@@ -234,7 +234,7 @@ describe("Borrower Journey", function () {
     const MIN_RAISE = BigNumber.from(
       10 // Base 10
     ).pow(
-      18 // Decimial precision of REQUEST_ASSET (DAI = 18, USDC = 6, WETH = 18, WBTC = 8)
+      18 // Decimial precision of REQUEST_ASSET (DAI = 18, USDC = 6)
     ).mul(
       1000 // Amount of loan request (1000 = 1,000 DAI)
     );
@@ -279,18 +279,20 @@ describe("Borrower Journey", function () {
       ethers.provider.getSigner(1)
     )
 
+    const AMOUNT_TO_FUND_LOAN = 1500; // Over-fund loan by 500 DAI
+
     // Mint tokens to accounts[1]
-    await RequestedAsset.mintSpecial(accounts[1], 750);
+    await RequestedAsset.mintSpecial(accounts[1], AMOUNT_TO_FUND_LOAN);
 
     // Approve loan vault
     await RequestedAsset.approve(
       loanVaultAddress,
-      BigNumber.from(10).pow(18).mul(750)
+      BigNumber.from(10).pow(18).mul(AMOUNT_TO_FUND_LOAN)
     )
 
     // Fund the loan
     await LoanVault.fundLoan(
-      BigNumber.from(10).pow(18).mul(750), // Funding amount.
+      BigNumber.from(10).pow(18).mul(AMOUNT_TO_FUND_LOAN), // Funding amount.
       accounts[1] // Mint loan tokens for this adddress.
     )
 
@@ -320,26 +322,26 @@ describe("Borrower Journey", function () {
     const MIN_RAISE = await LoanVault.minRaise();
     
     // Percentage of Target
-    console.log(
-      parseInt(FUNDING_LOCKER_BALANCE["_hex"]) / parseInt(MIN_RAISE["_hex"]) * 100
-    )
+    // console.log(
+    //   parseInt(FUNDING_LOCKER_BALANCE["_hex"]) / parseInt(MIN_RAISE["_hex"]) * 100
+    // )
 
     // Funding Locker Balance
-    console.log(
-      parseInt(FUNDING_LOCKER_BALANCE["_hex"]) / 10**DECIMAL_PRECISION_REQUEST_ASSET
-    )
+    // console.log(
+    //   parseInt(FUNDING_LOCKER_BALANCE["_hex"]) / 10**DECIMAL_PRECISION_REQUEST_ASSET
+    // )
 
     // Min Raise
-    console.log(
-      parseInt(MIN_RAISE["_hex"]) / 10**DECIMAL_PRECISION_REQUEST_ASSET
-    )
+    // console.log(
+    //   parseInt(MIN_RAISE["_hex"]) / 10**DECIMAL_PRECISION_REQUEST_ASSET
+    // )
 
     const TERM_LENGTH = await LoanVault.termDays();
 
     // Term Length (DAYS)
-    console.log(
-      parseInt(TERM_LENGTH["_hex"])
-    )
+    // console.log(
+    //   parseInt(TERM_LENGTH["_hex"])
+    // )
 
     const FUNDING_PERIOD_SECONDS = await LoanVault.fundingPeriodSeconds();
     const LOAN_CREATED_ON = await LoanVault.loanCreatedTimestamp();
@@ -348,9 +350,108 @@ describe("Borrower Journey", function () {
     const SECONDS_REMAINING_FUNDING_PERIOD = LOAN_FUNDING_ENDS - (Date.now() / 1000)
 
     // Offer Period Remaining (DAYS)
-    console.log(
-      SECONDS_REMAINING_FUNDING_PERIOD / 86400
+    // console.log(
+    //   SECONDS_REMAINING_FUNDING_PERIOD / 86400
+    // )
+
+  });
+
+  it("F - Fetch collateral required for drawdown, facilitate approve() calls", async function () {
+    
+    const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi");
+    const ERC20ABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+
+    // Determine how to pull `loanVaultAddress` to feed into object below.
+    LoanVault = new ethers.Contract(
+      loanVaultAddress,
+      LoanVaultABI,
+      ethers.provider.getSigner(0)
+    );
+
+    const REQUESTED_ASSET_ADDRESS = await LoanVault.assetRequested();
+    const COLLATERAL_ASSET_ADDRESS = await LoanVault.assetCollateral();
+    const BORROWER_ADDRESS = await LoanVault.borrower();
+    
+    RequestedAsset = new ethers.Contract(
+      REQUESTED_ASSET_ADDRESS,
+      ERC20ABI,
+      ethers.provider.getSigner(0)
     )
+    CollateralAsset = new ethers.Contract(
+      COLLATERAL_ASSET_ADDRESS,
+      ERC20ABI,
+      ethers.provider.getSigner(0)
+    )
+
+    const REQUESTED_AMOUNT_DECIMALS = await RequestedAsset.decimals();
+    const COLLATERAL_AMOUNT_DECIMALS = await CollateralAsset.decimals();
+
+
+    // User inputs this number.
+    const USER_ENTERED_DRAWDOWN_AMOUNT = 10000;
+
+    const COLLATERAL_DRAWDOWN_AMOUNT_BASE = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(REQUESTED_AMOUNT_DECIMALS).mul(USER_ENTERED_DRAWDOWN_AMOUNT)
+    )
+
+    // Output this number to front-end, may need to round to two or three nearest digits.
+    const COLLATERAL_REQUIRED = parseInt(COLLATERAL_DRAWDOWN_AMOUNT_BASE["_hex"]) / 10**COLLATERAL_AMOUNT_DECIMALS;
+
+    // Use this for "infinite" approval amount calls.
+    await CollateralAsset.approve(
+      loanVaultAddress,
+      BigNumber.from(10).pow(64)
+    )
+
+    // Use this for precise approval amount calls (would need some buffer in case price falls).
+    await CollateralAsset.approve(
+      loanVaultAddress,
+      COLLATERAL_DRAWDOWN_AMOUNT_BASE
+    )
+
+    // Confirm user has enough approval to call drawdown() for USER_ENTERED_DRAWDOWN_AMOUNT.
+    const USER_APPROVAL_TO_LOAN_VAULT = await CollateralAsset.allowance(
+      BORROWER_ADDRESS, // User's address, could pull from different source for front-end.
+      loanVaultAddress
+    )
+
+    // Note: Front-end wants to check greater than or equal to.
+    expect(parseInt(USER_APPROVAL_TO_LOAN_VAULT["_hex"])).to.be.equals(
+      parseInt(COLLATERAL_DRAWDOWN_AMOUNT_BASE["_hex"])
+    )
+
+  });
+
+  it("H - Allow the borrower to drawdown loan", async function () {
+    
+    const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi");
+    const ERC20ABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+
+    // Determine how to pull `loanVaultAddress` to feed into object below.
+    LoanVault = new ethers.Contract(
+      loanVaultAddress,
+      LoanVaultABI,
+      ethers.provider.getSigner(0)
+    );
+
+    const REQUESTED_ASSET_ADDRESS = await LoanVault.assetRequested();
+    
+    RequestedAsset = new ethers.Contract(
+      REQUESTED_ASSET_ADDRESS,
+      ERC20ABI,
+      ethers.provider.getSigner(0)
+    )
+
+    const REQUESTED_AMOUNT_DECIMALS = await RequestedAsset.decimals();
+
+    
+    // User enters amount they want to drawdown.
+    const USER_ENTERED_DRAWDOWN_AMOUNT = 1000;
+
+    // Fire this function when user goes to drawdown the USER_INPUT_DRAWDOWN_AMOUNT.
+    await LoanVault.drawdown(
+      BigNumber.from(10).pow(REQUESTED_AMOUNT_DECIMALS).mul(USER_ENTERED_DRAWDOWN_AMOUNT)
+    );
 
   });
 

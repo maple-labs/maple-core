@@ -5,8 +5,52 @@ const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUS
 const WETHAddress = require("../../contracts/localhost/addresses/WETH9.address.js");
 const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address.js");
 const uniswapRouter = require("../../contracts/localhost/addresses/UniswapV2Router02.address.js");
+const ChainLinkFactoryAddress = require("../../contracts/localhost/addresses/ChainLinkEmulatorFactory.address.js");
+const ChainLinkFactoryABI = require("../../contracts/localhost/abis/ChainLinkEmulatorFactory.abi.js");
+
+const ChainLinkEmulatorABI = require("../../contracts/localhost/abis/ChainLinkEmulator.abi.js");
 
 async function main() {
+
+  ChainLinkFactory = new ethers.Contract(
+    ChainLinkFactoryAddress,
+    ChainLinkFactoryABI,
+    ethers.provider.getSigner(0)
+  );
+
+  const PAIR_ONE = "ETH / USD";
+  const PAIR_TWO = "BTC / USD";
+  const PAIR_THREE = "DAI / USD";
+
+  await ChainLinkFactory.newAgg(PAIR_ONE);
+  await ChainLinkFactory.newAgg(PAIR_TWO);
+  await ChainLinkFactory.newAgg(PAIR_THREE);
+
+  const ETH_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_ONE);
+  const BTC_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_TWO);
+  const DAI_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_THREE);
+
+  ETH_USD_ORACLE = new ethers.Contract(
+    ETH_USD_ORACLE_ADDRESS,
+    ChainLinkEmulatorABI,
+    ethers.provider.getSigner(0)
+  );
+  BTC_USD_ORACLE = new ethers.Contract(
+    BTC_USD_ORACLE_ADDRESS,
+    ChainLinkEmulatorABI,
+    ethers.provider.getSigner(0)
+  );
+  DAI_USD_ORACLE = new ethers.Contract(
+    DAI_USD_ORACLE_ADDRESS,
+    ChainLinkEmulatorABI,
+    ethers.provider.getSigner(0)
+  );
+  
+  // Note: All ChainLink price feeds use 8 decimals for precision.
+  await ETH_USD_ORACLE.setPrice("59452607912");
+  await BTC_USD_ORACLE.setPrice("1895510185012");
+  await DAI_USD_ORACLE.setPrice("100232161");
+
   const mapleToken = await deploy("MapleToken", [
     "MapleToken",
     "MPL",
@@ -81,6 +125,12 @@ async function main() {
   await mapleGlobals.setLiquidityPoolFactory(LiquidityPoolFactory.address);
 
   await mapleGlobals.setLoanVaultFactory(LVFactory.address);
+
+  await mapleGlobals.assignPriceFeed(USDCAddress, DAI_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(DAIAddress, DAI_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WBTCAddress, BTC_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WETHAddress, ETH_USD_ORACLE_ADDRESS);
+  
 }
 
 main()

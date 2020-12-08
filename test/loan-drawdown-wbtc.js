@@ -19,20 +19,13 @@ const GlobalsAddress = require("../../contracts/localhost/addresses/MapleGlobals
 const GlobalsABI = require("../../contracts/localhost/abis/MapleGlobals.abi.js");
 const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi.js");
 
-describe("fundLoan() in LoanVault.sol", function () {
+describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized loan", function () {
 
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000020";
 
-  let DAI,
-    USDC,
-    MPL,
-    WETH,
-    WBTC,
-    LoanVaultFactory,
-    FundingLockerFactory,
-    CollateralLockerFactory,
-    Globals,
-    accounts;
+  let DAI,USDC,MPL,WETH,WBTC;
+  let LoanVaultFactory,FundingLockerFactory,CollateralLockerFactory;
+  let Globals,accounts;
 
   before(async () => {
     accounts = await ethers.provider.listAccounts();
@@ -74,7 +67,7 @@ describe("fundLoan() in LoanVault.sol", function () {
 
   let vaultAddress;
 
-  it("createLoanVault() with signer(0)", async function () {
+  it("createLoanVault(), requesting 1000 DAI", async function () {
 
     
     // Grab preIncrementor to get LoanVaultID
@@ -93,32 +86,10 @@ describe("fundLoan() in LoanVault.sol", function () {
 
   });
 
-  it("approve() loanVault to assetRequested with signer(1)", async function () {
+  it("fund loan for 500 DAI", async function () {
 
-    await DAI_EXT_1.approve(
-      vaultAddress,
-      BigNumber.from(10).pow(18).mul(5)
-    )
-
-    const allowance = await DAI_EXT_1.allowance(
-      accounts[1],
-      vaultAddress
-    )
-
-    expect(
-      allowance["_hex"]
-    ).to.equals(
-      BigNumber.from(10).pow(18).mul(5).toHexString()
-    )
-
-  });
-
-  it("confirm balance fail fundLoan() with signer(1)", async function () {
-
-    // Unapprove vault and transfer out any DAI from accounts[1]
-    await DAI_EXT_1.approve(vaultAddress, 0)
-    const transferOutAmount = await DAI.balanceOf(accounts[1]);
-    await DAI_EXT_1.transfer(BUNK_ADDRESS, BigNumber.from(transferOutAmount["_hex"]).toString());
+    await DAI_EXT_1.mintSpecial(accounts[1], 500)
+    await DAI_EXT_1.approve(vaultAddress,BigNumber.from(10).pow(18).mul(500))
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -126,91 +97,15 @@ describe("fundLoan() in LoanVault.sol", function () {
       ethers.provider.getSigner(1)
     );
 
-    // Attempt to fund with 100 DAI
-    await expect(
-      LoanVault.fundLoan(
-        BigNumber.from(10).pow(18).mul(100),
-        accounts[1]
-      )
-    ).to.be.revertedWith("ERC20: transfer amount exceeds balance")
-
-    // Mint 100 DAI and attempt to fund
-    await DAI.mintSpecial(accounts[1], 100)
-
-    await expect(
-      LoanVault.fundLoan(
-        BigNumber.from(10).pow(18).mul(100),
-        accounts[1]
-      )
-    ).to.be.revertedWith("ERC20: transfer amount exceeds allowance")
-
-  });
-
-  it("fundLoan() with signer(1)", async function () {
-
-    // Mint 100 DAI and attempt to fund
-    await DAI.mintSpecial(accounts[1], 100)
-
-    LoanVault = new ethers.Contract(
-      vaultAddress,
-      LoanVaultABI,
-      ethers.provider.getSigner(1)
-    );
-    
-    // Approve loanVault for 100 DAI
-    await DAI_EXT_1.approve(
-      vaultAddress, 
-      BigNumber.from(10).pow(18).mul(100)
-    )
-
-    // Attempt to fund with 100 DAI
+    // Fund loan with 500 DAI
     await LoanVault.fundLoan(
-      BigNumber.from(10).pow(18).mul(100),
+      BigNumber.from(10).pow(18).mul(500),
       accounts[1]
     )
 
   });
 
-  it("confirm loanTokens minted for signer(1)", async function () {
-
-    LoanVault = new ethers.Contract(
-      vaultAddress,
-      LoanVaultABI,
-      ethers.provider.getSigner(1)
-    );
-
-    // Confirm new LoanToken balance is 100(10**18)
-    const tokenBalance = await LoanVault.balanceOf(accounts[1])
-    
-    expect(
-      tokenBalance["_hex"]
-    ).to.equals(
-      BigNumber.from(10).pow(18).mul(100).toHexString()
-    )
-
-  });
-
-  it("confirm fundingLocker has funding", async function () {
-
-    LoanVault = new ethers.Contract(
-      vaultAddress,
-      LoanVaultABI,
-      ethers.provider.getSigner(1)
-    );
-    
-    const fundingLockerAddress = await LoanVault.fundingLocker();
-
-    const fundingLockerBalance = await DAI.balanceOf(fundingLockerAddress);
-    
-    expect(
-      fundingLockerBalance["_hex"]
-    ).to.equals(
-      BigNumber.from(10).pow(18).mul(100).toHexString()
-    )
-
-  });
-
-  it("test drawdown calculation endpoint", async function () {
+  it("view collateral amount required", async function () {
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -218,41 +113,105 @@ describe("fundLoan() in LoanVault.sol", function () {
       ethers.provider.getSigner(0)
     );
 
-    const drawdownAmount_50USD = await LoanVault.collateralRequiredForDrawdown(
-      BigNumber.from(10).pow(18).mul(50)
-    )
-
-    const drawdownAmount_100USD = await LoanVault.collateralRequiredForDrawdown(
-      BigNumber.from(10).pow(18).mul(100)
-    )
-    const drawdownAmount_500USD = await LoanVault.collateralRequiredForDrawdown(
+    const drawdownAmount_500DAI = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(500)
     )
 
-    const drawdownAmount_1000USD = await LoanVault.collateralRequiredForDrawdown(
-      BigNumber.from(10).pow(18).mul(1000)
-    )
-
-    const drawdownAmount_5000USD = await LoanVault.collateralRequiredForDrawdown(
-      BigNumber.from(10).pow(18).mul(5000)
-    )
-    const drawdownAmount_10000USD = await LoanVault.collateralRequiredForDrawdown(
-      BigNumber.from(10).pow(18).mul(10000)
-    )
-
-    expect(parseInt(drawdownAmount_50USD["_hex"])).to.not.equals(0)
-    expect(parseInt(drawdownAmount_100USD["_hex"])).to.not.equals(0)
-    expect(parseInt(drawdownAmount_500USD["_hex"])).to.not.equals(0)
-    expect(parseInt(drawdownAmount_1000USD["_hex"])).to.not.equals(0)
-    expect(parseInt(drawdownAmount_5000USD["_hex"])).to.not.equals(0)
-    expect(parseInt(drawdownAmount_10000USD["_hex"])).to.not.equals(0)
-
+    // console.log(parseInt(drawdownAmount_500DAI["_hex"]))
 
   });
 
-  it("test drawdown functionality", async function () {
+  it("drawdown 500 DAI and commence the loan (failure)", async function () {
 
-    // TODO: Add in this test next.
+    LoanVault = new ethers.Contract(
+      vaultAddress,
+      LoanVaultABI,
+      ethers.provider.getSigner(0)
+    );
+
+    const drawdownAmount_500DAI = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(500)
+    )
+
+    await WBTC.approve(
+      vaultAddress,
+      BigNumber.from(10).pow(8).mul(Math.round(parseInt(drawdownAmount_500DAI["_hex"]) / 10**6)).mul(100)
+    )
+    
+    await expect(
+      LoanVault.drawdown(BigNumber.from(10).pow(18).mul(1000))
+    ).to.be.revertedWith("LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE");
+
+    await expect(
+      LoanVault.drawdown(BigNumber.from(10).pow(18).mul(500))
+    ).to.be.revertedWith("LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE");
+    
+  });
+
+  it("fund 1000 more DAI", async function () {
+
+    await DAI_EXT_1.mintSpecial(accounts[1], 1000)
+    await DAI_EXT_1.approve(vaultAddress,BigNumber.from(10).pow(18).mul(1000))
+
+    LoanVault = new ethers.Contract(
+      vaultAddress,
+      LoanVaultABI,
+      ethers.provider.getSigner(1)
+    );
+
+    // Fund loan with 1000 USDC
+    await LoanVault.fundLoan(
+      BigNumber.from(10).pow(18).mul(1000),
+      accounts[1]
+    )
+    
+  });
+
+  it("drawdown 1000 DAI and commence loan", async function () {
+
+    LoanVault = new ethers.Contract(
+      vaultAddress,
+      LoanVaultABI,
+      ethers.provider.getSigner(0)
+    );
+
+    const drawdownAmount_1000DAI = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(1000)
+    )
+
+    await WBTC.approve(
+      vaultAddress,
+      BigNumber.from(10).pow(8).mul(Math.round(parseInt(drawdownAmount_1000DAI["_hex"]) / 10**4)).mul(10000)
+    )
+    
+    
+    const PRE_LOCKER_BALANCE = await LoanVault.getFundingLockerBalance();
+    const PRE_BORROWER_BALANCE = await DAI.balanceOf(accounts[0]);
+    const PRE_LOANVAULT_BALANCE = await DAI.balanceOf(vaultAddress);
+
+    await LoanVault.drawdown(BigNumber.from(10).pow(18).mul(1000));
+    
+    const POST_LOCKER_BALANCE = await LoanVault.getFundingLockerBalance();
+    const POST_BORROWER_BALANCE = await DAI.balanceOf(accounts[0]);
+    const POST_LOANVAULT_BALANCE = await DAI.balanceOf(vaultAddress);
+
+    // Confirm the state of various contracts.
+    
+    const LoanVaultState = await LoanVault.loanState();
+
+    expect(LoanVaultState).to.equals(1);
+
+    expect(
+      parseInt(POST_BORROWER_BALANCE["_hex"]) - parseInt(PRE_BORROWER_BALANCE["_hex"])
+    ).to.be.greaterThan(parseInt(BigNumber.from(10).pow(18).mul(1000)["_hex"]));
+
+    expect(
+      parseInt(PRE_LOCKER_BALANCE["_hex"]) - parseInt(POST_LOCKER_BALANCE["_hex"])
+    ).to.equals(parseInt(BigNumber.from(10).pow(18).mul(1500)["_hex"]));
+
+    expect(
+      parseInt(POST_LOANVAULT_BALANCE["_hex"]) - parseInt(PRE_LOANVAULT_BALANCE["_hex"])
+    ).to.equals(parseInt(BigNumber.from(10).pow(18).mul(500)["_hex"]));
     
   });
 
