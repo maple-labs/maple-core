@@ -53,16 +53,16 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     uint8 private liquidityAssetDecimals;
 
     // 10^k where k = liquidityAssetDecimals, representing one LiquidityAsset unit in 'wei'.
-    uint256 private immutable _ONELiquidityAsset;
+    uint256 private _ONELiquidityAsset;
 
     /// @notice The LiquidityLocker owned by this contract.
-    address public immutable liquidityLockerAddress;
+    address public liquidityLockerAddress;
 
     /// @notice The asset deposited by stakers into the StakeLocker, for liquidation during default events.
     address public stakeAsset;
 
     /// @notice Address of the StakeLocker, escrowing the staked asset.
-    address public immutable stakeLockerAddress;
+    address public stakeLockerAddress;
 
     /// @notice The pool delegate, who maintains full authority over this LiquidityPool.
     address public poolDelegate;
@@ -108,9 +108,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         );
 
         // TODO: Consider removing this if statement, currently enables one-click pool creation and finalization.
-        // if (MapleGlobals.stakeAmountRequired() == 0) {
-        //     finalize();
-        // }
+        if(MapleGlobals.stakeAmountRequired() == 0) {finalize();}
 
     }
 
