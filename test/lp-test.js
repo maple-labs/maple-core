@@ -62,20 +62,14 @@ describe("LiquidityPool + LiquidityLocker + StakeLocker", function () {
     await LPFactory.createLiquidityPool(
       DAIAddress,
       DAIBPoolAddress,
-      StakeLockerFactoryAddress,
-      LiquidityLockerFactoryAddress,
       "Maple DAI LP",
-      "LPDAI",
-      MPLGlobalsAddress
+      "LPDAI"
     );
     await LPFactory.createLiquidityPool(
       USDCAddress,
       USDCBPoolAddress,
-      StakeLockerFactoryAddress,
-      LiquidityLockerFactoryAddress,
       "Maple USDC LP",
-      "LPUSDC",
-      MPLGlobalsAddress
+      "LPUSDC"
     );
     DAILPAddress = await LPFactory.getLiquidityPool(0);
     USDCLPAddress = await LPFactory.getLiquidityPool(1);
