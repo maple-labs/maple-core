@@ -7,3 +7,6 @@ artifacts
 package-lock.json
 exports
 yarn.lock
+
+coverage
+coverage.json

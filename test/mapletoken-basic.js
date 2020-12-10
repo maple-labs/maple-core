@@ -13,8 +13,8 @@ describe("Maple Token", function () {
   let fundToken, fundTokenExternal;
   let governor;
   before(async () => {
-    accounts = await ethers.provider.listAccounts();
-    const governor = accounts[0];
+    const accounts = await ethers.provider.listAccounts();
+    governor = accounts[0];
     mapleToken = new ethers.Contract(
       mapleTokenAddress,
       mapleTokenABI,
