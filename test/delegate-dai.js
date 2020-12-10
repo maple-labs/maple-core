@@ -78,7 +78,7 @@ describe("Pool Delegate Journey - DAI", function () {
       ethers.provider.getSigner(0)
     );
 
-    // Mint 1mm DAI (auto-handles the wei conversion).
+    // Mint DAI (auto-handles the wei conversion).
     await DAI.mintSpecial(accounts[1], FundingAmount);
 
   });
