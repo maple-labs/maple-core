@@ -53,16 +53,16 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     uint8 private liquidityAssetDecimals;
 
     // 10^k where k = liquidityAssetDecimals, representing one LiquidityAsset unit in 'wei'.
-    uint256 private _ONELiquidityAsset;
+    uint256 private immutable _ONELiquidityAsset;
 
     /// @notice The LiquidityLocker owned by this contract.
-    address public liquidityLockerAddress;
+    address public immutable liquidityLockerAddress;
 
     /// @notice The asset deposited by stakers into the StakeLocker, for liquidation during default events.
     address public stakeAsset;
 
     /// @notice Address of the StakeLocker, escrowing the staked asset.
-    address public stakeLockerAddress;
+    address public immutable stakeLockerAddress;
 
     /// @notice The pool delegate, who maintains full authority over this LiquidityPool.
     address public poolDelegate;
