@@ -108,7 +108,9 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         );
 
         // TODO: Consider removing this if statement, currently enables one-click pool creation and finalization.
-        if(MapleGlobals.stakeAmountRequired() == 0) {finalize();}
+        // if (MapleGlobals.stakeAmountRequired() == 0) {
+        //     finalize();
+        // }
 
     }
 
