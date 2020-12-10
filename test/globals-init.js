@@ -32,7 +32,7 @@ describe("MapleGlobals.sol Initialization", function () {
     expect(establishmentFeeFetch).to.equal(200);
     expect(treasuryFeeFetch).to.equal(20);
     expect(gracePeriodFetch).to.equal(432000);
-    expect(stakeRequiredFetch).to.equal(25000);
+    expect(stakeRequiredFetch).to.equal(0);
     expect(unstakeDelay).to.equal(7776000);
   });
 
