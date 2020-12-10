@@ -113,7 +113,7 @@ describe("MapleGlobals.sol Interactions", function () {
       ethers.provider.getSigner(1)
     );
 
-    await mapleGlobals2.setGovernor(accounts[0]);
+    await mapleGlobals2.setGovernor(accounts[0],{gasLimit: 6000000});
     const governorFetch = await mapleGlobals2.governor();
     expect(governorFetch).to.equal(accounts[0]);
   });

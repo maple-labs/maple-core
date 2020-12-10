@@ -253,7 +253,8 @@ describe("Borrower Journey", function () {
         COLLATERAL_BIPS_RATIO, 
         FUNDING_PERIOD_DAYS
       ],
-      ethers.utils.formatBytes32String(INTEREST_STRUCTURE)
+      ethers.utils.formatBytes32String(INTEREST_STRUCTURE),
+      {gasLimit: 6000000}
     );
 
     loanVaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
@@ -294,7 +295,8 @@ describe("Borrower Journey", function () {
     // Fund the loan
     await LoanVault.fundLoan(
       BigNumber.from(10).pow(18).mul(AMOUNT_TO_FUND_LOAN), // Funding amount.
-      accounts[1] // Mint loan tokens for this adddress.
+      accounts[1], // Mint loan tokens for this adddress.
+      {gasLimit: 6000000} 
     )
 
   });
