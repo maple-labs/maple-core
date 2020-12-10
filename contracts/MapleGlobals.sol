@@ -69,7 +69,7 @@ contract MapleGlobals {
         establishmentFeeBasisPoints = 200;
         treasuryFeeBasisPoints = 20;
         gracePeriod = 5 days;
-        stakeAmountRequired = 25000;
+        stakeAmountRequired = 0;
         unstakeDelay = 90 days;
         drawdownGracePeriod = 1 days;
     }
