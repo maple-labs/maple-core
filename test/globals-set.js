@@ -53,9 +53,9 @@ describe("MapleGlobals.sol Interactions", function () {
     const stakeRequiredFetch = await mapleGlobals.stakeAmountRequired();
     expect(stakeRequiredFetch).to.equal(35000);
 
-    await mapleGlobals.setStakeRequired(25000);
+    await mapleGlobals.setStakeRequired(0);
     const stakeRequiredRevert = await mapleGlobals.stakeAmountRequired();
-    expect(stakeRequiredRevert).to.equal(25000);
+    expect(stakeRequiredRevert).to.equal(0);
 
     await mapleGlobals.setUnstakeDelay(1000);
     const unstakeDelayFetch = await mapleGlobals.unstakeDelay();
@@ -131,7 +131,7 @@ describe("MapleGlobals.sol Interactions", function () {
     expect(establishmentFeeFetch).to.equal(200);
     expect(treasuryFeeFetch).to.equal(20);
     expect(gracePeriodFetch).to.equal(432000);
-    expect(stakeRequiredFetch).to.equal(25000);
+    expect(stakeRequiredFetch).to.equal(0);
     expect(unstakeDelay).to.equal(7776000);
   });
 
