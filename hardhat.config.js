@@ -1,3 +1,4 @@
+require('dotenv').config({path: '../../../.env'})
 require('@nomiclabs/hardhat-waffle')
 require('hardhat-gas-reporter');
 require("solidity-coverage");
@@ -53,6 +54,13 @@ module.exports = {
         (you can put in a mnemonic here to set the deployer locally)
       */
     },
+    private: {
+      url: process.env.MAPLE_KALEIDO_URL,
+      accounts: {
+        mnemonic: process.env.MAPLE_MNEMONIC,
+      }
+    },
+
     coverage: {
       url: "http://localhost:8555",
     },

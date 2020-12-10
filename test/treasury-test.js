@@ -1,20 +1,22 @@
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
+const artpath = '../../contracts/' + network.name + '/';
 
-const mintableDAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
-const mintableDAIABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi.js");
-const treasuryAddress = require("../../contracts/localhost/addresses/MapleTreasury.address.js");
-const treasuryABI = require("../../contracts/localhost/abis/MapleTreasury.abi.js");
-const fundsTokenAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
-const fundsTokenABI = require("../../contracts/localhost/abis/MintableTokenUSDC.abi.js");
-const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address.js");
-const mapleTokenABI = require("../../contracts/localhost/abis/MapleToken.abi.js");
-const uniswapRouterAddress = require("../../contracts/localhost/addresses/UniswapV2Router02.address");
-const uniswapRouterABI = require("../../contracts/localhost/abis/UniswapV2Router02.abi");
-const uniswapFactoryAddress = require("../../contracts/localhost/addresses/UniswapV2Factory.address.js");
-const uniswapFactoryABI = require("../../contracts/localhost/abis/UniswapV2Factory.abi.js");
-const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address.js");
-const WBTCABI = require("../../contracts/localhost/abis/WBTC.abi.js");
+
+const mintableDAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+const mintableDAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
+const treasuryAddress = require(artpath + "addresses/MapleTreasury.address.js");
+const treasuryABI = require(artpath + "abis/MapleTreasury.abi.js");
+const fundsTokenAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
+const fundsTokenABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
+const mapleTokenAddress = require(artpath + "addresses/MapleToken.address.js");
+const mapleTokenABI = require(artpath + "abis/MapleToken.abi.js");
+const uniswapRouterAddress = require(artpath + "addresses/UniswapV2Router02.address");
+const uniswapRouterABI = require(artpath + "abis/UniswapV2Router02.abi");
+const uniswapFactoryAddress = require(artpath + "addresses/UniswapV2Factory.address.js");
+const uniswapFactoryABI = require(artpath + "abis/UniswapV2Factory.abi.js");
+const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
+const WBTCABI = require(artpath + "abis/WBTC.abi.js");
 
 describe("MapleTreasury.sol", function () {
   let mintableDAI,

@@ -1,29 +1,31 @@
 const { expect } = require("chai");
 const BigNumber = require("bignumber.js"); // TODO: Adjust this test to use the ether.js BigNumber type.
+const artpath = '../../contracts/' + network.name + '/';
 
-const DAIABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi.js");
-const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
-const USDCABI = require("../../contracts/localhost/abis/MintableTokenUSDC.abi.js");
-const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
 
-const MPLGlobalsABI = require("../../contracts/localhost/abis/MapleGlobals.abi.js");
-const MPLGlobalsAddress = require("../../contracts/localhost/addresses/MapleGlobals.address.js");
+const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
+const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+const USDCABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
+const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
 
-const StakeLockerFactoryABI = require("../../contracts/localhost/abis/StakeLockerFactory.abi.js");
-const StakeLockerFactoryAddress = require("../../contracts/localhost/addresses/StakeLockerFactory.address.js");
-const StakeLockerABI = require("../../contracts/localhost/abis/StakeLocker.abi.js");
-const LiquidityLockerFactoryABI = require("../../contracts/localhost/abis/LiquidityLockerFactory.abi.js");
-const LiquidityLockerFactoryAddress = require("../../contracts/localhost/addresses/LiquidityLockerFactory.address.js");
-const LiquidityLockerABI = require("../../contracts/localhost/abis/LiquidityLocker.abi.js");
+const MPLGlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
+const MPLGlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
 
-const BPoolCreatorAddress = require("../../contracts/localhost/addresses/BCreator.address.js");
-const BPoolCreatorABI = require("../../contracts/localhost/abis/BCreator.abi.js");
-const BPoolABI = require("../../contracts/localhost/abis/BPool.abi.js");
-const LPFactoryABI = require("../../contracts/localhost/abis/LiquidityPoolFactory.abi.js");
-const LPFactoryAddress = require("../../contracts/localhost/addresses/LiquidityPoolFactory.address.js");
-const LPABI = require("../../contracts/localhost/abis/LiquidityPool.abi.js");
-const LVFactoryABI = require("../../contracts/localhost/abis/LoanVaultFactory.abi.js");
-const LVFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address.js");
+const StakeLockerFactoryABI = require(artpath + "abis/StakeLockerFactory.abi.js");
+const StakeLockerFactoryAddress = require(artpath + "addresses/StakeLockerFactory.address.js");
+const StakeLockerABI = require(artpath + "abis/StakeLocker.abi.js");
+const LiquidityLockerFactoryABI = require(artpath + "abis/LiquidityLockerFactory.abi.js");
+const LiquidityLockerFactoryAddress = require(artpath + "addresses/LiquidityLockerFactory.address.js");
+const LiquidityLockerABI = require(artpath + "abis/LiquidityLocker.abi.js");
+
+const BPoolCreatorAddress = require(artpath + "addresses/BCreator.address.js");
+const BPoolCreatorABI = require(artpath + "abis/BCreator.abi.js");
+const BPoolABI = require(artpath + "abis/BPool.abi.js");
+const LPFactoryABI = require(artpath + "abis/LiquidityPoolFactory.abi.js");
+const LPFactoryAddress = require(artpath + "addresses/LiquidityPoolFactory.address.js");
+const LPABI = require(artpath + "abis/LiquidityPool.abi.js");
+const LVFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
+const LVFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address.js");
 
 // TODO: Adjust this test to use the ether.js BigNumber type.
 

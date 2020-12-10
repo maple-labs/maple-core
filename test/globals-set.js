@@ -1,14 +1,15 @@
 const { expect, assert, should } = require("chai");
+const artpath = '../../contracts/' + network.name + '/';
 
-const globalAddress = require("../../contracts/localhost/addresses/MapleGlobals.address");
-const gloablABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
-const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
+const globalAddress = require(artpath + "addresses/MapleGlobals.address");
+const gloablABI = require(artpath + "abis/MapleGlobals.abi");
+const mapleTokenAddress = require(artpath + "addresses/MapleToken.address");
 
-const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
-const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
-const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address.js");
-const WETHAddress = require("../../contracts/localhost/addresses/WETH9.address.js");
-const OracleABI = require("../../contracts/localhost/abis/ChainLinkEmulator.abi.js");
+const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
+const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
+const WETHAddress = require(artpath + "addresses/WETH9.address.js");
+const OracleABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 
 describe("MapleGlobals.sol Interactions", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
