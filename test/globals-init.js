@@ -1,10 +1,12 @@
 const { expect, assert } = require("chai");
+const artpath = '../../contracts/' + network.name + '/';
 
-const globalAddress = require("../../contracts/localhost/addresses/MapleGlobals.address");
-const globalABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
-const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
-const LPFactoryAddress = require("../../contracts/localhost/addresses/LiquidityPoolFactory.address.js");
-const LVFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address.js");
+
+const globalAddress = require(artpath + "addresses/MapleGlobals.address");
+const globalABI = require(artpath + "abis/MapleGlobals.abi");
+const mapleTokenAddress = require(artpath + "addresses/MapleToken.address");
+const LPFactoryAddress = require(artpath + "addresses/LiquidityPoolFactory.address.js");
+const LVFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address.js");
 
 
 describe("MapleGlobals.sol Initialization", function () {

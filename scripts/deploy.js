@@ -1,14 +1,15 @@
 const { deploy } = require("@maplelabs/hardhat-scripts");
+const artpath = '../../contracts/' + network.name + '/';
 
-const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
-const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
-const WETHAddress = require("../../contracts/localhost/addresses/WETH9.address.js");
-const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address.js");
-const uniswapRouter = require("../../contracts/localhost/addresses/UniswapV2Router02.address.js");
-const ChainLinkFactoryAddress = require("../../contracts/localhost/addresses/ChainLinkEmulatorFactory.address.js");
-const ChainLinkFactoryABI = require("../../contracts/localhost/abis/ChainLinkEmulatorFactory.abi.js");
+const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
+const WETHAddress = require(artpath + "addresses/WETH9.address.js");
+const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
+const uniswapRouter = require(artpath + "addresses/UniswapV2Router02.address.js");
+const ChainLinkFactoryAddress = require(artpath + "addresses/ChainLinkEmulatorFactory.address.js");
+const ChainLinkFactoryABI = require(artpath + "abis/ChainLinkEmulatorFactory.abi.js");
 
-const ChainLinkEmulatorABI = require("../../contracts/localhost/abis/ChainLinkEmulator.abi.js");
+const ChainLinkEmulatorABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 
 async function main() {
 

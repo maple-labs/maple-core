@@ -1,17 +1,20 @@
 const { expect, assert } = require("chai");
 const BigNumber = require("bignumber.js");
+const artpath = "../../contracts/" + network.name + "/";
 
-const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address.js");
-const mapleTokenABI = require("../../contracts/localhost/abis/MapleToken.abi.js");
-const fundTokenAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
-const fundTokenABI = require("../../contracts/localhost/abis/MintableTokenUSDC.abi.js");
-const governor = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+const mapleTokenAddress = require(artpath + "addresses/MapleToken.address.js");
+const mapleTokenABI = require(artpath + "abis/MapleToken.abi.js");
+const fundTokenAddress = require(artpath +
+  "addresses/MintableTokenUSDC.address.js");
+const fundTokenABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
 
 describe("Maple Token", function () {
   let mapleToken, mapleTokenExternal;
   let fundToken, fundTokenExternal;
-
+  let governor;
   before(async () => {
+    const accounts = await ethers.provider.listAccounts();
+    governor = accounts[0];
     mapleToken = new ethers.Contract(
       mapleTokenAddress,
       mapleTokenABI,

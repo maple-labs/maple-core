@@ -1,5 +1,6 @@
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
+const artpath = '../../contracts/' + network.name + '/';
 
 describe("Borrower Journey", function () {
 
@@ -7,8 +8,8 @@ describe("Borrower Journey", function () {
 
   it("A - Fetch the list of borrowTokens / collateralTokens", async function () {
 
-    const MapleGlobalsAddress = require("../../contracts/localhost/addresses/MapleGlobals.address");
-    const MapleGlobalsABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
+    const MapleGlobalsAddress = require(artpath + "addresses/MapleGlobals.address");
+    const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi");
 
     let MapleGlobals;
 
@@ -197,8 +198,8 @@ describe("Borrower Journey", function () {
 
   it("C - Create a loan through the factory", async function () {
 
-    const LoanVaultFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address");
-    const LoanVaultFactoryABI = require("../../contracts/localhost/abis/LoanVaultFactory.abi");
+    const LoanVaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address");
+    const LoanVaultFactoryABI = require(artpath + "abis/LoanVaultFactory.abi");
 
     let LoanVaultFactory;
 
@@ -211,12 +212,12 @@ describe("Borrower Journey", function () {
     const preIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
 
     // ERC-20 contracts for tokens
-    const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address");
-    const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address");
-    const WETHAddress = require("../../contracts/localhost/addresses/WETH9.address");
-    const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address");
+    const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address");
+    const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address");
+    const WETHAddress = require(artpath + "addresses/WETH9.address");
+    const WBTCAddress = require(artpath + "addresses/WBTC.address");
     
-    const ERC20ABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+    const ERC20ABI = require(artpath + "abis/MintableTokenDAI.abi");
 
     DAI = new ethers.Contract(DAIAddress, ERC20ABI, ethers.provider.getSigner(0));
     USDC = new ethers.Contract(USDCAddress, ERC20ABI, ethers.provider.getSigner(0));
@@ -252,7 +253,8 @@ describe("Borrower Journey", function () {
         COLLATERAL_BIPS_RATIO, 
         FUNDING_PERIOD_DAYS
       ],
-      ethers.utils.formatBytes32String(INTEREST_STRUCTURE)
+      ethers.utils.formatBytes32String(INTEREST_STRUCTURE),
+      {gasLimit: 6000000}
     );
 
     loanVaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
@@ -261,8 +263,8 @@ describe("Borrower Journey", function () {
 
   it("D - Simulate other users funding the loan", async function () {
 
-    const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi");
-    const ERC20ABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+    const LoanVaultABI = require(artpath + "abis/LoanVault.abi");
+    const ERC20ABI = require(artpath + "abis/MintableTokenDAI.abi");
     const accounts = await ethers.provider.listAccounts();
 
     LoanVault = new ethers.Contract(
@@ -293,15 +295,16 @@ describe("Borrower Journey", function () {
     // Fund the loan
     await LoanVault.fundLoan(
       BigNumber.from(10).pow(18).mul(AMOUNT_TO_FUND_LOAN), // Funding amount.
-      accounts[1] // Mint loan tokens for this adddress.
+      accounts[1], // Mint loan tokens for this adddress.
+      {gasLimit: 6000000} 
     )
 
   });
 
   it("E - Fetch important LoanVault information", async function () {
 
-    const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi");
-    const ERC20ABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+    const LoanVaultABI = require(artpath + "abis/LoanVault.abi");
+    const ERC20ABI = require(artpath + "abis/MintableTokenDAI.abi");
     
     LoanVault = new ethers.Contract(
       loanVaultAddress,
@@ -358,8 +361,8 @@ describe("Borrower Journey", function () {
 
   it("F - Fetch collateral required for drawdown, facilitate approve() calls", async function () {
     
-    const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi");
-    const ERC20ABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+    const LoanVaultABI = require(artpath + "abis/LoanVault.abi");
+    const ERC20ABI = require(artpath + "abis/MintableTokenDAI.abi");
 
     // Determine how to pull `loanVaultAddress` to feed into object below.
     LoanVault = new ethers.Contract(
@@ -424,8 +427,8 @@ describe("Borrower Journey", function () {
 
   it("H - Allow the borrower to drawdown loan", async function () {
     
-    const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi");
-    const ERC20ABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+    const LoanVaultABI = require(artpath + "abis/LoanVault.abi");
+    const ERC20ABI = require(artpath + "abis/MintableTokenDAI.abi");
 
     // Determine how to pull `loanVaultAddress` to feed into object below.
     LoanVault = new ethers.Contract(
