@@ -7,6 +7,31 @@ describe("Pool Delegate Journey - DAI", function () {
   let LiquidityPoolAddress;
   let FundingAmount = 1000;
 
+  it("Z - Fetch the list of liquidityTokens for pool creation", async function () {
+
+    const MapleGlobalsAddress = require(artpath + "addresses/MapleGlobals.address");
+    const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi");
+
+    let MapleGlobals;
+
+    MapleGlobals = new ethers.Contract(
+      MapleGlobalsAddress,
+      MapleGlobalsABI,
+      ethers.provider.getSigner(0)
+    );
+
+    const List = await MapleGlobals.getValidTokens();
+
+    // The _validBorrowTokenAddresses / _validBorrowTokenSymbols list
+    // can be used to generate a dropdown for viable "LIQUIDITY_ASSET" options.
+
+    // console.log(
+    //   List["_validBorrowTokenSymbols"],
+    //   List["_validBorrowTokenAddresses"]
+    // )
+
+  });
+
   it("A - Create a liquidity pool with DAI", async function () {
 
     const LiquidityPoolFactoryAddress = require(artpath + "addresses/LiquidityPoolFactory.address");
@@ -35,7 +60,7 @@ describe("Pool Delegate Journey - DAI", function () {
     const preIncrementorValue = await LiquidityPoolFactory.liquidityPoolsCreated();
 
     // Provide the following parameters in a form.
-    const LIQUIDITY_ASSET = DAIAddress; // [DAIAddress, USDCAddress] are 2 options
+    const LIQUIDITY_ASSET = DAIAddress; // [DAIAddress, USDCAddress] are 2 options, see Z for more.
     const STAKE_ASSET = BPoolAddress;
     const POOL_NAME = "LPDAI";
     const POOL_SYMBOL = "LPDAI";
