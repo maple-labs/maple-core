@@ -1,5 +1,6 @@
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
+const artpath = '../../contracts/' + network.name + '/';
 
 describe("Pool Delegate Journey - DAI", function () {
 
@@ -33,13 +34,13 @@ describe("Pool Delegate Journey - DAI", function () {
 
   it("A - Create a liquidity pool with DAI", async function () {
 
-    const LiquidityPoolFactoryAddress = require("../../contracts/localhost/addresses/LiquidityPoolFactory.address");
-    const LiquidityPoolFactoryABI = require("../../contracts/localhost/abis/LiquidityPoolFactory.abi");
+    const LiquidityPoolFactoryAddress = require(artpath + "addresses/LiquidityPoolFactory.address");
+    const LiquidityPoolFactoryABI = require(artpath + "abis/LiquidityPoolFactory.abi");
 
-    const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
-    const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
-    const BPoolCreatorAddress = require("../../contracts/localhost/addresses/BCreator.address.js");
-    const BPoolCreatorABI = require("../../contracts/localhost/abis/BCreator.abi.js");
+    const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+    const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
+    const BPoolCreatorAddress = require(artpath + "addresses/BCreator.address.js");
+    const BPoolCreatorABI = require(artpath + "abis/BCreator.abi.js");
 
     const BPoolCreator = new ethers.Contract(
       BPoolCreatorAddress,
@@ -78,7 +79,7 @@ describe("Pool Delegate Journey - DAI", function () {
 
   it("B - Finalize the liquidity pool (enables deposits, confirms staking if any)", async function () {
 
-    const LiquidityPoolABI = require("../../contracts/localhost/abis/LiquidityPool.abi.js");
+    const LiquidityPoolABI = require(artpath + "abis/LiquidityPool.abi.js");
 
     LiquidityPool = new ethers.Contract(
       LiquidityPoolAddress,
@@ -93,8 +94,8 @@ describe("Pool Delegate Journey - DAI", function () {
 
   it("C - Mint the pool delegate some DAI", async function () {
 
-    const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
-    const DAIABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+    const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+    const DAIABI = require(artpath + "abis/MintableTokenDAI.abi");
     const accounts = await ethers.provider.listAccounts();
     
     DAI = new ethers.Contract(
@@ -110,9 +111,9 @@ describe("Pool Delegate Journey - DAI", function () {
 
   it("D - Fund the liquidity pool with DAI", async function () {
 
-    const LiquidityPoolABI = require("../../contracts/localhost/abis/LiquidityPool.abi.js");
-    const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
-    const DAIABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi");
+    const LiquidityPoolABI = require(artpath + "abis/LiquidityPool.abi.js");
+    const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+    const DAIABI = require(artpath + "abis/MintableTokenDAI.abi");
 
     DAI = new ethers.Contract(
       DAIAddress,
