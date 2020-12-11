@@ -60,9 +60,9 @@ module.exports = {
       gas: 9500000,
       gasPrice: 0,
       chainId: 367662372,
-      url: process.env.MAPLE_KALEIDO_URL || null,
+      url: process.env.MAPLE_KALEIDO_URL || "",
       accounts: {
-        mnemonic: process.env.MAPLE_MNEMONIC || null,
+        mnemonic: process.env.MAPLE_MNEMONIC || "",
       },
     },
 
