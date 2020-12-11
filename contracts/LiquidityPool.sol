@@ -15,7 +15,6 @@ import "./interface/IStakeLocker.sol";
 import "./interface/IStakeLockerFactory.sol";
 import "./interface/ILiquidityLocker.sol";
 import "./interface/ILiquidityLockerFactory.sol";
-import "hardhat/console.sol";
 
 // TODO: Implement the withdraw() function, so investors can withdraw LiquidityAsset from LP.
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
@@ -107,11 +106,6 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
             ILiquidityLockerFactory(_liquidityLockerFactory).newLocker(liquidityAsset)
         );
 
-        // TODO: Consider removing this if statement, currently enables one-click pool creation and finalization.
-        // if (MapleGlobals.stakeAmountRequired() == 0) {
-        //     finalize();
-        // }
-
     }
 
     modifier finalized() {
@@ -149,7 +143,6 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
      */
     function finalize() public {
         uint256 _minStake = MapleGlobals.stakeAmountRequired();
-        console.log(_minStake);
         require(
             CalcBPool.BPTVal(stakeAsset, poolDelegate, liquidityAsset, stakeLockerAddress) >=
                 _minStake.mul(_ONELiquidityAsset),
