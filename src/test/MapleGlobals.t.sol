@@ -2,8 +2,10 @@ pragma solidity ^0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "ds-test/test.sol";
+
 import "lib/openzeppelin-contracts/src/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/src/token/ERC20/IERC20.sol";
+
 import "../MapleToken.sol";
 import "../MapleGlobals.sol";
 
