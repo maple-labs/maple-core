@@ -2,6 +2,7 @@ pragma solidity ^0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "ds-test/test.sol";
+import "ds-value/value.sol";
 
 import "lib/openzeppelin-contracts/src/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/src/token/ERC20/IERC20.sol";
@@ -44,6 +45,8 @@ contract LoanVaultTest is DSTest {
     MapleGlobals            globals;
     FundingLockerFactory    fundingLockerFactory;
     CollateralLockerFactory collateralLockerFactory;
+    DSValue                 ethOracle;
+    DSValue                 daiOracle;
     LoanVaultFactory        loanVaultFactory;
     Borrower                ali;
     Lender                  bob;
@@ -61,18 +64,25 @@ contract LoanVaultTest is DSTest {
         globals                 = new MapleGlobals(address(this), address(mapleToken));
         fundingLockerFactory    = new FundingLockerFactory();
         collateralLockerFactory = new CollateralLockerFactory();
+        ethOracle               = new DSValue();
+        daiOracle               = new DSValue();
         loanVaultFactory        = new LoanVaultFactory(
             address(globals), 
             address(fundingLockerFactory), 
             address(collateralLockerFactory)
         );
 
+        ethOracle.poke(bytes32(500 * WAD));  // Set ETH price to $600
+        daiOracle.poke(bytes32(1 * WAD));    // Set DAI price to $1
+
         globals.addValidInterestStructure("BULLET", address(1));  // Add dummy interest calculator
         globals.addCollateralToken(WETH);
         globals.addBorrowToken(DAI);
+        globals.assignPriceFeed(WETH, address(ethOracle));
+        globals.assignPriceFeed(DAI, address(daiOracle));
 
         ali = new Borrower();
-        bob   = new Lender();
+        bob = new Lender();
 
         // Mint 500 DAI into Bob's account
         assertEq(IERC20(DAI).balanceOf(address(bob)), 0);
@@ -134,7 +144,7 @@ contract LoanVaultTest is DSTest {
         bob.fundLoan(loanVault, 500 * WAD, address(ali));
 
         uint256 reqCollateral = loanVault.collateralRequiredForDrawdown(500 * WAD);
-        assertEq(reqCollateral, 1);
+        assertEq(reqCollateral, 0.2 ether);
     }
 }
 

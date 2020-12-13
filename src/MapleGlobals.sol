@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import "lib/ds-value/src/value.sol";
 import "./interface/IPriceFeed.sol";
 import "./interface/IERC20Details.sol";
 
@@ -129,8 +130,8 @@ contract MapleGlobals {
         tokenPriceFeed[_asset] = _oracle;
     }
 
-    function getPrice(address _asset) external view returns(uint) {
-        return IPriceFeed(tokenPriceFeed[_asset]).price();
+    function getPrice(address _asset) external returns(uint256) {
+        return uint256(DSValue(tokenPriceFeed[_asset]).read()); // Temporary for testing until we can test against link oracles
     }
 
     /**
