@@ -126,10 +126,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     function createStakeLocker(address _stakeAsset) private returns (address) {
         // TODO: Test this require() function.
         require(
-            IBPool(_stakeAsset).isBound(MapleGlobals.mapleToken()) &&
-                IBPool(_stakeAsset).isBound(liquidityAsset) &&
-                IBPool(_stakeAsset).isFinalized() &&
-                (IBPool(_stakeAsset).getNumTokens() == 2),
+            IBPool(_stakeAsset).isBound(MapleGlobals.mapleToken()) && IBPool(_stakeAsset).isFinalized(),
                 "LiquidityPool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
         );
         address _stakeLocker = StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
@@ -154,12 +151,13 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         @return uint, [2] = If enough stake is present from Pool Delegate for finalization.
     */
     function getInitialStakeRequirements() public view returns(uint, uint, bool) {
-        uint256 _minStake = MapleGlobals.stakeAmountRequired();
+        address pool = MapleGlobals.mapleBPool();
+        uint256 minStake = MapleGlobals.stakeAmountRequired();
         return (
-            _minStake.mul(_ONELiquidityAsset), 
-            CalcBPool.BPTVal(stakeAsset, poolDelegate, liquidityAsset, stakeLockerAddress),
-            CalcBPool.BPTVal(stakeAsset, poolDelegate, liquidityAsset, stakeLockerAddress) >=
-            _minStake.mul(_ONELiquidityAsset)
+            minStake,
+            CalcBPool.getSwapOutValue(pool, poolDelegate, stakeLockerAddress),
+            CalcBPool.getSwapOutValue(pool, poolDelegate, stakeLockerAddress) >=
+            minStake.mul(_ONELiquidityAsset)
         );
     }
 

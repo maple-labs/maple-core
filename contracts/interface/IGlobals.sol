@@ -22,6 +22,8 @@ interface IGlobals {
 
     function isValidCollateral(address) external view returns (bool);
 
+    function mapleBPool() external view returns (address);
+
     function validBorrowTokenAddresses() external view returns (address[] memory);
 
     function validCollateralTokenAddresses() external view returns (address[] memory);

@@ -127,6 +127,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       ethers.provider.getSigner(0)
     );
 
+    // All liquidity pools will use getBPoolAddress(0) as the Balancer Pool w/ 
     BPoolAddressDAI = await BPoolCreator.getBPoolAddress(0);
     BPoolAddressUSDC = await BPoolCreator.getBPoolAddress(1);
 
@@ -152,7 +153,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
 
     // Create USDC pool (these variables could be used in a form).
     LIQUIDITY_ASSET = USDCAddress;
-    STAKE_ASSET = BPoolAddressUSDC;
+    STAKE_ASSET = BPoolAddressDAI;
     POOL_NAME = "MAPLEALPHA/USDC"
     POOL_SYMBOL = "LP-USDC-" + INDEX_USDC.toString();
 
@@ -164,9 +165,6 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     );
 
     LiquidityPoolAddressUSDC = await LiquidityPoolFactory.getLiquidityPool(INDEX_USDC);
-
-    console.log(LiquidityPoolAddressDAI)
-    console.log(LiquidityPoolAddressUSDC)
     
     LiquidityPoolDAI = new ethers.Contract(
       LiquidityPoolAddressDAI,

@@ -52,6 +52,9 @@ contract MapleGlobals {
     address public loanVaultFactory;
     address public liquidityPoolFactory;
 
+    /// @return Official balancer pool for staking.
+    address public mapleBPool;
+
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
         _;
@@ -94,6 +97,10 @@ contract MapleGlobals {
 
     function setLoanVaultFactory(address _factory) external isGovernor {
         loanVaultFactory = _factory;
+    }
+
+    function setMapleBPool(address _pool) external isGovernor {
+        mapleBPool = _pool;
     }
 
     function assignPriceFeed(address _asset, address _oracle) external isGovernor {
