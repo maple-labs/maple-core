@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.0;
 
 import "./StakeLocker.sol";
+import "hardhat/console.sol";
 
 contract StakeLockerFactory {
+
     // Mapping data structure for owners of staked asset lockers.
     mapping(address => address) private lockerPool;
 
@@ -21,8 +22,8 @@ contract StakeLockerFactory {
     ) external returns (address) {
         address _ownerLP = address(msg.sender);
         address locker = address(new StakeLocker(_stakeAsset, _liquidityAsset, _ownerLP, _globals));
-        lockerPool[address(locker)] = _ownerLP; //address of LP contract that sent it, not poolManager
-        return address(locker);
+        lockerPool[locker] = _ownerLP; //address of LP contract that sent it, not poolManagers
+        return locker;
     }
 
     // @notice Returns the address of the locker's parent liquidity pool.
@@ -31,4 +32,5 @@ contract StakeLockerFactory {
     function getPool(address _locker) public view returns (address) {
         return lockerPool[_locker];
     }
+
 }

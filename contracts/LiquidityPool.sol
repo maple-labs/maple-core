@@ -132,8 +132,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
                 (IBPool(_stakeAsset).getNumTokens() == 2),
                 "LiquidityPool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
         );
-        address _stakeLocker =
-            StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
+        address _stakeLocker = StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
         StakeLocker = IStakeLocker(_stakeLocker);
         return _stakeLocker;
     }
@@ -142,14 +141,26 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
      * @notice Confirm poolDelegate's stake amount held in StakeLocker and finalize this LiquidityPool.
      */
     function finalize() public {
-        uint256 _minStake = MapleGlobals.stakeAmountRequired();
-        require(
-            CalcBPool.BPTVal(stakeAsset, poolDelegate, liquidityAsset, stakeLockerAddress) >=
-                _minStake.mul(_ONELiquidityAsset),
-                "LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE"
-        );
+        (,,bool _stakePresent) = getInitialStakeRequirements();
+        require(_stakePresent,"LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE");
         isFinalized = true;
         StakeLocker.finalizeLP();
+    }
+
+    /**
+        @notice Returns information on the stake requirements.
+        @return uint, [0] = Amount of stake required.
+        @return uint, [1] = Current amount of stake present.
+        @return uint, [2] = If enough stake is present from Pool Delegate for finalization.
+    */
+    function getInitialStakeRequirements() public view returns(uint, uint, bool) {
+        uint256 _minStake = MapleGlobals.stakeAmountRequired();
+        return (
+            _minStake.mul(_ONELiquidityAsset), 
+            CalcBPool.BPTVal(stakeAsset, poolDelegate, liquidityAsset, stakeLockerAddress),
+            CalcBPool.BPTVal(stakeAsset, poolDelegate, liquidityAsset, stakeLockerAddress) >=
+            _minStake.mul(_ONELiquidityAsset)
+        );
     }
 
     // Note: Tether is unusable as a LiquidityAsset!
