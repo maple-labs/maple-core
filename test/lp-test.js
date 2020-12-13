@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const BigNumber = require("bignumber.js"); // TODO: Adjust this test to use the ether.js BigNumber type.
+const { BigNumber } = require("ethers");
 const artpath = '../../contracts/' + network.name + '/';
 
 
@@ -35,69 +35,13 @@ const LVFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address.j
 describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
 
   let LiquidityPoolAddressDAI, LiquidityPoolAddressUSDC;
-  let LiquidityPoolUSDC, LiquidityPoolDAI;
-  let BPoolDAI, BPoolUSDC;
-  let DAILP, USDCLP;
-  
+  let LiquidityPoolDAI, LiquidityPoolUSDC;
+  let StakeLockerDAI, StakeLockerUSDC;
+  let MapleBPool;
+  let accounts;
+
   before(async () => {
     accounts = await ethers.provider.listAccounts();
-    MPLGlobals = new ethers.Contract(
-      MPLGlobalsAddress,
-      MPLGlobalsABI,
-      ethers.provider.getSigner(0)
-    );
-    LPFactory = new ethers.Contract(
-      LPFactoryAddress,
-      LPFactoryABI,
-      ethers.provider.getSigner(0)
-    );
-    StakeLockerFactory = new ethers.Contract(
-      StakeLockerFactoryAddress,
-      StakeLockerFactoryABI,
-      ethers.provider.getSigner(0)
-    );
-    USDC = new ethers.Contract(USDCAddress, USDCABI, ethers.provider.getSigner(0));
-    DAI = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(0));
-    const BPoolCreator = new ethers.Contract(
-      BPoolCreatorAddress,
-      BPoolCreatorABI,
-      ethers.provider.getSigner(0)
-    );
-    DAIBPoolAddress = await BPoolCreator.getBPoolAddress(0);
-    USDCBPoolAddress = await BPoolCreator.getBPoolAddress(1);
-    BPoolDAI = DAIBPoolAddress;
-    BPoolUSDC = USDCBPoolAddress;
-    await LPFactory.createLiquidityPool(
-      DAIAddress,
-      DAIBPoolAddress,
-      "Maple DAI LP",
-      "LPDAI"
-    );
-    await LPFactory.createLiquidityPool(
-      USDCAddress,
-      USDCBPoolAddress,
-      "Maple USDC LP",
-      "LPUSDC"
-    );
-    DAILPAddress = await LPFactory.getLiquidityPool(0);
-    USDCLPAddress = await LPFactory.getLiquidityPool(1);
-    DAILP = new ethers.Contract(
-      DAILPAddress,
-      LPABI,
-      ethers.provider.getSigner(0)
-    );
-    USDCLP = new ethers.Contract(
-      USDCLPAddress,
-      LPABI,
-      ethers.provider.getSigner(0)
-    );
-    LALockerFactory = new ethers.Contract(
-      LiquidityLockerFactoryAddress,
-      LiquidityLockerFactoryABI,
-      ethers.provider.getSigner(0)
-    );
-    DAIStakeLockerAddress = await DAILP.stakeLockerAddress();
-    USDCStakeLockerAddress = await USDCLP.stakeLockerAddress();
   });
 
   it("A - Create two stablecoin liquidity pools, DAI & USDC", async function () {
@@ -115,28 +59,21 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
     const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
 
-    // Get balancer pool addresses to assign.
-    // BPoolCreator.getBPoolAddress(0) --> DAI Liquidity Pool
-    // BPoolCreator.getBPoolAddress(1) --> USDC Liquidity Pool
-    const BPoolCreatorAddress = require(artpath + "addresses/BCreator.address.js");
-    const BPoolCreatorABI = require(artpath + "abis/BCreator.abi.js");
-
-    const BPoolCreator = new ethers.Contract(
-      BPoolCreatorAddress,
-      BPoolCreatorABI,
+    // Get official Maple balancer pool.
+    MapleGlobals = new ethers.Contract(
+      MapleGlobalsAddress,
+      MapleGlobalsABI,
       ethers.provider.getSigner(0)
     );
 
-    // All liquidity pools will use getBPoolAddress(0) as the Balancer Pool w/ 
-    BPoolAddressDAI = await BPoolCreator.getBPoolAddress(0);
-    BPoolAddressUSDC = await BPoolCreator.getBPoolAddress(1);
+    MapleBPool = await MapleGlobals.mapleBPool();
 
     // For fetching the address of the pool (do not use this pattern in production).
     const INDEX_DAI = await LiquidityPoolFactory.liquidityPoolsCreated();
 
     // Create DAI pool (these variables could be used in a form).
     let LIQUIDITY_ASSET = DAIAddress; // [DAIAddress, USDCAddress] are 2 options, see Z for more.
-    let STAKE_ASSET = BPoolAddressDAI;
+    let STAKE_ASSET = MapleBPool;
     let POOL_NAME = "MAPLEALPHA/DAI";
     let POOL_SYMBOL = "LP-DAI-" + INDEX_DAI.toString();
 
@@ -153,7 +90,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
 
     // Create USDC pool (these variables could be used in a form).
     LIQUIDITY_ASSET = USDCAddress;
-    STAKE_ASSET = BPoolAddressDAI;
+    STAKE_ASSET = MapleBPool;
     POOL_NAME = "MAPLEALPHA/USDC"
     POOL_SYMBOL = "LP-USDC-" + INDEX_USDC.toString();
 
@@ -178,6 +115,8 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       ethers.provider.getSigner(0)
     );
 
+    StakeLockerDAI = await LiquidityPoolDAI.stakeLockerAddress();
+    StakeLockerUSDC = await LiquidityPoolUSDC.stakeLockerAddress();
 
   });
 
@@ -232,7 +171,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       ethers.provider.getSigner(0)
     );
 
-    await MapleGlobals.setStakeRequired(100);
+    await MapleGlobals.setStakeRequired(100000 * 10**6);
 
   });
 
@@ -278,50 +217,36 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
 
     let BPTStakeRequiredDAI = await LiquidityPoolDAI.getInitialStakeRequirements();
 
-    console.log(parseInt(BPTStakeRequiredDAI[0]["_hex"]))
-    console.log(parseInt(BPTStakeRequiredDAI[1]["_hex"]))
-    
-    const DAIBPool = new ethers.Contract(
-      DAIBPoolAddress,
+    expect(!BPTStakeRequiredDAI[2])
+
+    BPool = new ethers.Contract(
+      MapleBPool,
       BPoolABI,
       ethers.provider.getSigner(0)
     );
-    const DAIStakeLocker = new ethers.Contract(
-      DAIStakeLockerAddress,
+
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
       StakeLockerABI,
       ethers.provider.getSigner(0)
     );
-    await DAIBPool.approve(DAIStakeLockerAddress, "100000000000000000");
-    await DAIStakeLocker.stake("100000000000000000");
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    // Get stake required.
+
+    // Stake 20% of the supply (should be enough for pulling out)
+    // TODO: Implement calculator to fetch exact amount of poolAmountIn needed for staking.
+    await BPool.approve(StakeLockerDAI, BigNumber.from(10).pow(18).mul(20));
+    await StakeLockerDAIPool.stake(BigNumber.from(10).pow(18).mul(20));
 
     BPTStakeRequiredDAI = await LiquidityPoolDAI.getInitialStakeRequirements();
 
-    console.log(parseInt(BPTStakeRequiredDAI[0]["_hex"]))
-    console.log(parseInt(BPTStakeRequiredDAI[1]["_hex"]))
-
-    // // If STAKE_REQUIRED == 0, finalization will pass without any stake deposited.
-    // // If STAKE_REQUIRED > 0, finalization will fail without any stake deposited. 
-    // if (parseInt(STAKE_REQUIRED["_hex"]) == 0) {
-    //   expect(true);
-    // }
-    // else {
-    //   const DAIBPool = new ethers.Contract(
-    //     DAIBPoolAddress,
-    //     BPoolABI,
-    //     ethers.provider.getSigner(0)
-    //   );
-    //   const DAILocker = new ethers.Contract(
-    //     DAIStakeLockerAddress,
-    //     StakeLockerABI,
-    //     ethers.provider.getSigner(0)
-    //   );
-    //   await DAIBPool.approve(DAIStakeLockerAddress, "100000000000000000");
-    //   await DAILocker.stake("100000000000000000");
-
-    //   // amountRequiredToFinalize ???
-
-    //   await LiquidityPoolDAI.finalize();
-    // }
+    expect(BPTStakeRequiredDAI[2])
 
   });
 

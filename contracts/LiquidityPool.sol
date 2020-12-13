@@ -15,6 +15,7 @@ import "./interface/IStakeLocker.sol";
 import "./interface/IStakeLockerFactory.sol";
 import "./interface/ILiquidityLocker.sol";
 import "./interface/ILiquidityLockerFactory.sol";
+import "hardhat/console.sol";
 
 // TODO: Implement the withdraw() function, so investors can withdraw LiquidityAsset from LP.
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
@@ -124,13 +125,14 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     /// @notice Deploys and assigns a StakeLocker for this LiquidityPool.
     /// @param _stakeAsset Address of the asset used for staking.
     function createStakeLocker(address _stakeAsset) private returns (address) {
-        // TODO: Test this require() function.
         require(
             IBPool(_stakeAsset).isBound(MapleGlobals.mapleToken()) && IBPool(_stakeAsset).isFinalized(),
                 "LiquidityPool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
         );
+        console.log(_stakeAsset);
         address _stakeLocker = StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
         StakeLocker = IStakeLocker(_stakeLocker);
+        console.log(_stakeLocker);
         return _stakeLocker;
     }
 
@@ -152,12 +154,12 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     */
     function getInitialStakeRequirements() public view returns(uint, uint, bool) {
         address pool = MapleGlobals.mapleBPool();
+        address pair = MapleGlobals.mapleBPoolAssetPair();
         uint256 minStake = MapleGlobals.stakeAmountRequired();
         return (
             minStake,
-            CalcBPool.getSwapOutValue(pool, poolDelegate, stakeLockerAddress),
-            CalcBPool.getSwapOutValue(pool, poolDelegate, stakeLockerAddress) >=
-            minStake.mul(_ONELiquidityAsset)
+            CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress),
+            CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress) >= minStake
         );
     }
 
