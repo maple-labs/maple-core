@@ -10,6 +10,7 @@ import "./interface/IFundingLocker.sol";
 import "./interface/IFundingLockerFactory.sol";
 import "./interface/ICollateralLockerFactory.sol";
 import "./interface/IERC20Details.sol";
+import "./interface/IRepaymentCalculator.sol";
 
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
@@ -60,11 +61,20 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     uint256 public fundingPeriodSeconds;
     uint256 public loanCreatedTimestamp;
 
-    /// @notice The repayment calculator for this loan.
-    address public repaymentCalculator;
-
     /// @notice The premium calculator for this loan.
     address public premiumCalculator;
+
+    /// @notice The principal owed (initially the drawdown amount). This reduces overtime.
+    uint256 public principalOwed;
+
+    /// @notice The amount the borrower drew down, historical reference for calculators.
+    uint256 public drawdownAmount;
+
+    // The repayment calculator for this loan.
+    IRepaymentCalculator private repaymentCalculator;
+
+    /// @notice The unix timestamp due date of next payment.
+    uint256 public nextPaymentDue;
 
     /// @notice The current state of this loan, as defined in the State enum below.
     State public loanState;
@@ -159,7 +169,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         minRaise = _specifications[3];
         collateralBipsRatio = _specifications[4];
         fundingPeriodSeconds = _specifications[5].mul(1 days);
-        repaymentCalculator = _repaymentCalculator;
+        repaymentCalculator = IRepaymentCalculator(_repaymentCalculator);
+        nextPaymentDue = loanCreatedTimestamp.add(paymentIntervalSeconds);
 
         // Deploy a funding locker.
         fundingLocker = IFundingLockerFactory(fundingLockerFactory).newLocker(assetRequested);
@@ -199,6 +210,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE"
         );
 
+        // Update the principal owed and drawdown amount for this loan.
+        principalOwed = _drawdownAmount;
+        drawdownAmount = _drawdownAmount;
+
         loanState = State.Active;
 
         // Deploy a collateral locker.
@@ -220,6 +235,18 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::endFunding:ERR_DRAIN"
         );
     }
+
+    /// @notice Returns the next payment amounts.
+    /// @return [0] = Principal + Interest, [1] = Principal, [2] = Interest, [3] Due By Timestamp
+    function getNextPayment() public view returns(uint, uint, uint, uint) {
+        (
+            uint _total, 
+            uint _interest, 
+            uint _principal
+        ) = repaymentCalculator.getNextPayment(address(this));
+        return (_total, _interest, _principal, nextPaymentDue);
+    }
+
 
     /// @notice Viewer helper for calculating collateral required to drawdown funding.
     /// @param _drawdownAmount The amount of fundingAsset to drawdown from FundingLocker.

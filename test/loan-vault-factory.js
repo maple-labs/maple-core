@@ -24,6 +24,9 @@ const GlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
 const GlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
 const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
 
+const BulletCalcAddress = require(artpath + "addresses/MapleGlobals.address.js");
+const AmortizationCalcAddress = require(artpath + "addresses/MapleGlobals.address.js");
+
 describe("LoanVaultFactory.sol / LoanVault.sol", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
   const BUNK_ADDRESS_AMORTIZATION =
