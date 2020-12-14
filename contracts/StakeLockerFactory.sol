@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: MIT
-// SPDX-License-Identifier: MIT
 
 pragma solidity 0.7.0;
 
 import "./StakeLocker.sol";
+import "hardhat/console.sol";
 
 contract StakeLockerFactory {
-    // Mapping data structure for owners of staked asset lockers.
-    mapping(address => address) private lockerPool;
+
+    // Mapping of StakeLocker contracts to owners of StakeLockers.
+    mapping(address => address) private ownerOfLocker;
+
+    // Mapping for validation of lockers, confirmed when initialized through this contract.
+    mapping(address => bool) private isLocker;
 
     // @notice Creates a new locker.
     // @param _stakeAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
@@ -19,16 +23,25 @@ contract StakeLockerFactory {
         address _liquidityAsset,
         address _globals
     ) external returns (address) {
-        address _ownerLP = address(msg.sender);
-        address locker = address(new StakeLocker(_stakeAsset, _liquidityAsset, _ownerLP, _globals));
-        lockerPool[address(locker)] = _ownerLP; //address of LP contract that sent it, not poolManager
-        return address(locker);
+        address _owner = address(msg.sender);
+        address _stakeLocker = address(new StakeLocker(_stakeAsset, _liquidityAsset, _owner, _globals));
+        ownerOfLocker[_stakeLocker] = _owner; //address of LP contract that sent it, not poolManagers
+        isLocker[_stakeLocker] = true;
+        return _stakeLocker;
     }
 
-    // @notice Returns the address of the locker's parent liquidity pool.
-    // @param _locker The address of the locker.
-    // @return The owner of the locker.
-    function getPool(address _locker) public view returns (address) {
-        return lockerPool[_locker];
+    /// @notice Returns the address of the StakeLocker's owner (should be a LiquidityPool).
+    /// @param _locker Address of the StakeLocker.
+    /// @return Owner of the StakeLocker.
+    function getOwner(address _locker) public view returns (address) {
+        return ownerOfLocker[_locker];
     }
+
+    /// @notice Validates if the provided address is a LiqudityLocker created through this factory.
+    /// @param _locker Address of the StakeLocker that needs validation.
+    /// @return true if _locker is a valid StakeLocker.
+    function isStakeLocker(address _locker) external view returns (bool) {
+        return isLocker[_locker];
+    }
+
 }

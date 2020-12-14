@@ -79,7 +79,8 @@ contract LoanVaultFactory {
         );
         
         // Deploy loan vault contract.
-	string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated+1);
+	    string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated+1);
+
         LoanVault vault = new LoanVault(
             _assetRequested,
             _assetCollateral,
@@ -88,7 +89,7 @@ contract LoanVaultFactory {
             mapleGlobals,
             _specifications,
             IGlobals(mapleGlobals).interestStructureCalculators(_interestStructure),
-	    _tUUID
+	        _tUUID
         );
 
         // Update LoanVaultFactory identification mappings.

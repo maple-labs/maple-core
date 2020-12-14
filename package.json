@@ -14,7 +14,8 @@
     "docs": "npx solidity-docgen --solc-module solc -i ./contracts -o ./docs -t ./docs",
     "lint": "npx solhint contracts/**/*.sol",
     "pretty": "npx prettier --write contracts/**/*.sol&&npx prettier --write ./{test,scripts}/*.js",
-    "coverage": "npx hardhat coverage --network coverage"
+    "coverage": "npx hardhat coverage --network coverage",
+    "setup": "hardhat run scripts/setup.js"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
   "keywords": [
