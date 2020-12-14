@@ -180,10 +180,6 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     /// @notice Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
     /// @param _amt The amount of LiquidityAsset to deposit, in wei.
     function deposit(uint256 _amt) external notDefunct finalized {
-        require(
-            ILiquidityAsset.allowance(msg.sender, address(this)) >= _amt,
-            "LiquidityPool::deposit:ERR_ALLOWANCE_LESS_THEN_AMT"
-        );
         ILiquidityAsset.transferFrom(msg.sender, liquidityLockerAddress, _amt);
         uint256 _mintAmt = liq2FDT(_amt);
         _mint(msg.sender, _mintAmt);

@@ -141,8 +141,8 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     const USDC_LIQUIDITY_LOCKER_ADDRESS = await LiquidityPoolUSDC.liquidityLockerAddress();
 
     // Check the StakeLockerFactory
-    const DAI_STAKE_LOCKER_OWNER = await StakeLockerFactory.getPool(DAI_STAKE_LOCKER_ADDRESS);
-    const USDC_STAKE_LOCKER_OWNER = await StakeLockerFactory.getPool(USDC_STAKE_LOCKER_ADDRESS);
+    const DAI_STAKE_LOCKER_OWNER = await StakeLockerFactory.getOwner(DAI_STAKE_LOCKER_ADDRESS);
+    const USDC_STAKE_LOCKER_OWNER = await StakeLockerFactory.getOwner(USDC_STAKE_LOCKER_ADDRESS);
     expect(DAI_STAKE_LOCKER_OWNER).to.equal(LiquidityPoolAddressDAI);
     expect(USDC_STAKE_LOCKER_OWNER).to.equal(LiquidityPoolAddressUSDC);
 
@@ -151,6 +151,17 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     const USDC_LIQUIDITY_LOCKER_OWNER = await LiquidityLockerFactory.getOwner(USDC_LIQUIDITY_LOCKER_ADDRESS);
     expect(DAI_LIQUIDITY_LOCKER_OWNER).to.equal(LiquidityPoolAddressDAI);
     expect(USDC_LIQUIDITY_LOCKER_OWNER).to.equal(LiquidityPoolAddressUSDC);
+
+    // Check that both LiquidityLocker and StakeLocker isValidLocker
+    const VALID_DAI_STAKE_LOCKER = await StakeLockerFactory.isStakeLocker(DAI_STAKE_LOCKER_ADDRESS)
+    const VALID_USDC_STAKE_LOCKER = await StakeLockerFactory.isStakeLocker(USDC_STAKE_LOCKER_ADDRESS)
+    const VALID_DAI_LIQUIDITY_LOCKER = await LiquidityLockerFactory.isLiquidityLocker(DAI_LIQUIDITY_LOCKER_ADDRESS)
+    const VALID_USDC_LIQUIDITY_LOCKER = await LiquidityLockerFactory.isLiquidityLocker(USDC_LIQUIDITY_LOCKER_ADDRESS)
+
+    expect(VALID_DAI_STAKE_LOCKER)
+    expect(VALID_USDC_STAKE_LOCKER)
+    expect(VALID_DAI_LIQUIDITY_LOCKER)
+    expect(VALID_USDC_LIQUIDITY_LOCKER)
 
   });
 
@@ -247,13 +258,13 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
 
     // Get stake required.
 
-    // Stake 20% of the supply (should be enough for pulling out)
+    // Stake 5% of the supply (should be enough for pulling out)
     // TODO: Complete calculator to fetch exact amount of poolAmountIn needed for staking.
-    await BPool.approve(StakeLockerDAI, BigNumber.from(10).pow(18).mul(20));
-    await StakeLockerDAIPool.stake(BigNumber.from(10).pow(18).mul(20));
+    await BPool.approve(StakeLockerDAI, BigNumber.from(10).pow(18).mul(5));
+    await StakeLockerDAIPool.stake(BigNumber.from(10).pow(18).mul(5));
 
-    await BPool.approve(StakeLockerUSDC, BigNumber.from(10).pow(18).mul(20));
-    await StakeLockerUSDCPool.stake(BigNumber.from(10).pow(18).mul(20));
+    await BPool.approve(StakeLockerUSDC, BigNumber.from(10).pow(18).mul(5));
+    await StakeLockerUSDCPool.stake(BigNumber.from(10).pow(18).mul(5));
 
     BPTStakeRequiredDAI = await LiquidityPoolDAI.getInitialStakeRequirements();
     BPTStakeRequiredUSDC = await LiquidityPoolUSDC.getInitialStakeRequirements();
@@ -357,7 +368,381 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
 
   });
 
-  it("Z - Reset global stake requirement to 0", async function () {
+  it("K - Random user can not transfer LiquidityLocker assets", async function () {
+    
+    LiquidityLockerDAIPool = new ethers.Contract(
+      LiquidityLockerDAI,
+      LiquidityLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    LiquidityLockerUSDCPool = new ethers.Contract(
+      LiquidityLockerUSDC,
+      LiquidityLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    await expect(
+      LiquidityLockerDAIPool.transfer(accounts[0], 0)
+    ).to.be.revertedWith(
+      "LiquidityLocker:ERR_MSG_SENDER_NOT_OWNER"
+    );
+
+    await expect(
+      LiquidityLockerUSDCPool.transfer(accounts[0], 0)
+    ).to.be.revertedWith(
+      "LiquidityLocker:ERR_MSG_SENDER_NOT_OWNER"
+    );
+
+  });
+
+  it("L - Provide liquidity to pools, ensure proper amount of FDTs minted", async function () {
+    
+    DAI = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(0));
+    USDC = new ethers.Contract(USDCAddress, USDCABI, ethers.provider.getSigner(0));
+
+    const DEPOSIT_AMT = 1000;
+    const DAI_DEPOSIT_AMT = BigNumber.from(10).pow(18).mul(DEPOSIT_AMT); // 1000 DAI deposit
+    const USDC_DEPOSIT_AMT = BigNumber.from(10).pow(6).mul(DEPOSIT_AMT); // 1000 USDC deposit
+
+    await DAI.approve(LiquidityPoolAddressDAI, DAI_DEPOSIT_AMT)
+    await USDC.approve(LiquidityPoolAddressUSDC, USDC_DEPOSIT_AMT)
+    await LiquidityPoolDAI.deposit(DAI_DEPOSIT_AMT)
+    await LiquidityPoolUSDC.deposit(USDC_DEPOSIT_AMT)
+
+    const FDTBalanceDAILP = await LiquidityPoolDAI.balanceOf(accounts[0])
+    const FDTBalanceUSDCLP = await LiquidityPoolUSDC.balanceOf(accounts[0])
+    
+    // FDTs = 18 decimals, USDC = 6 decimals
+    expect(parseInt(FDTBalanceDAILP["_hex"])).to.equals(parseInt(DAI_DEPOSIT_AMT["_hex"]))
+    expect(parseInt(FDTBalanceUSDCLP["_hex"])).to.equals(parseInt(BigNumber.from(10).pow(18).mul(DEPOSIT_AMT)))
+
+  });
+
+  it("M - Outside party can stake BPTs within StakeLocker", async function () {
+
+    BPool = new ethers.Contract(
+      MapleBPool,
+      BPoolABI,
+      ethers.provider.getSigner(3)
+    );
+
+    USDC = new ethers.Contract(
+      USDCAddress,
+      USDCABI,
+      ethers.provider.getSigner(3)
+    )
+
+    await USDC.mintSpecial(accounts[3], 15000);
+    await USDC.approve(MapleBPool, BigNumber.from(10).pow(6).mul(10000))
+
+    await BPool.joinswapExternAmountIn(USDCAddress, BigNumber.from(10).pow(6).mul(10000), 0);
+
+    const poolSharesMinted = await BPool.balanceOf(accounts[3])
+    const poolSharesMintedFix = parseInt(poolSharesMinted["_hex"])
+
+    await BPool.approve(StakeLockerDAI, poolSharesMintedFix / 2)
+    await BPool.approve(StakeLockerUSDC, poolSharesMintedFix / 2)
+
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
+      StakeLockerABI,
+      ethers.provider.getSigner(3)
+    );
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(3)
+    );
+
+    await StakeLockerDAIPool.stake(poolSharesMintedFix / 2);
+    await StakeLockerUSDCPool.stake(poolSharesMintedFix / 2);
+
+  });
+
+  it("N - Prevent unstaking when outside party attempts unstake (unstakeDelay)", async function () {
+
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
+      StakeLockerABI,
+      ethers.provider.getSigner(3)
+    );
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(3)
+    );
+
+    MapleGlobals = new ethers.Contract(
+      MapleGlobalsAddress,
+      MapleGlobalsABI,
+      ethers.provider.getSigner(0) // getSigner(0) == Admin
+    );
+
+    await MapleGlobals.setUnstakeDelay("999999999999999999");
+
+    const FDTBalanceDAILP = await StakeLockerDAIPool.balanceOf(accounts[3])
+    const FDTBalanceUSDCLP = await StakeLockerUSDCPool.balanceOf(accounts[3])
+
+    await expect(
+      StakeLockerDAIPool.unstake(FDTBalanceDAILP)
+    ).to.be.revertedWith(
+      "Stakelocker:ERR_AMT_REQUESTED_UNAVAILABLE"
+    );
+    await expect(
+      StakeLockerUSDCPool.unstake(FDTBalanceUSDCLP)
+    ).to.be.revertedWith(
+      "Stakelocker:ERR_AMT_REQUESTED_UNAVAILABLE"
+    );
+
+    await MapleGlobals.setUnstakeDelay("0");
+
+  });
+
+  it("O - Outside party can unstake when unstakeDelay == 0, receives BPTs in return", async function () {
+    
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
+      StakeLockerABI,
+      ethers.provider.getSigner(3)
+    );
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(3)
+    );
+
+    BPool = new ethers.Contract(
+      MapleBPool,
+      BPoolABI,
+      ethers.provider.getSigner(3)
+    );
+
+    const FDTBalanceDAIStakeLocker = await StakeLockerDAIPool.balanceOf(accounts[3])
+    const FDTBalanceUSDCStakeLocker = await StakeLockerUSDCPool.balanceOf(accounts[3])
+
+    const preBPTBalanceDAI = await BPool.balanceOf(accounts[3])
+    const preBPTBalanceUSDC = await BPool.balanceOf(accounts[3])
+
+    await StakeLockerDAIPool.unstake(parseInt(FDTBalanceDAIStakeLocker["_hex"]) / 2);
+    await StakeLockerUSDCPool.unstake(parseInt(FDTBalanceUSDCStakeLocker["_hex"]) / 2);
+
+    const postBPTBalanceDAI = await BPool.balanceOf(accounts[3])
+    const postBPTBalanceUSDC = await BPool.balanceOf(accounts[3])
+    
+    // TODO: Correct precision / decimals.
+    expect(
+      parseInt(preBPTBalanceDAI["_hex"])
+    ).to.be.lessThan(
+      parseInt(postBPTBalanceDAI["_hex"])
+    )
+    expect(
+      parseInt(preBPTBalanceUSDC["_hex"])
+    ).to.be.lessThan(
+      parseInt(postBPTBalanceUSDC["_hex"])
+    )
+
+  });
+
+  it("P - Check isDefunct() for pools equals false", async function () {
+
+    DAIPoolDefunct = await LiquidityPoolDAI.isDefunct();
+    USDCPoolDefunct = await LiquidityPoolUSDC.isDefunct();
+
+    expect(!DAIPoolDefunct)
+    expect(!USDCPoolDefunct)
+    
+  });
+
+  it("Q - Delegate may not unstake after finalization", async function () {
+    
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
+      StakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    await expect(
+      StakeLockerDAIPool.unstake(1)
+    ).to.be.revertedWith(
+      "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
+    );
+
+    await expect(
+      StakeLockerUSDCPool.unstake(1)
+    ).to.be.revertedWith(
+      "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
+    );
+
+  });
+
+  it("R - Pool delegate may not transfer FDTs", async function () {
+
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
+      StakeLockerABI,
+      ethers.provider.getSigner(0) // getSigner(0) = Pool Delegate
+    );
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    await expect(
+      StakeLockerDAIPool.transfer(accounts[2], 100)
+    ).to.be.revertedWith(
+      "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
+    );
+    
+    await expect(
+      StakeLockerUSDCPool.transfer(accounts[2], 100)
+    ).to.be.revertedWith(
+      "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
+    );
+
+  });
+
+  it("S - Support partial unstake from a StakeLocker", async function () {
+    
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
+      StakeLockerABI,
+      ethers.provider.getSigner(3)
+    );
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(3)
+    );
+
+    BPool = new ethers.Contract(
+      MapleBPool,
+      BPoolABI,
+      ethers.provider.getSigner(3)
+    );
+
+    MapleGlobals = new ethers.Contract(
+      MapleGlobalsAddress,
+      MapleGlobalsABI,
+      ethers.provider.getSigner(0) // getSigner(0) == Admin
+    );
+
+    // Set stake delay above 0.
+    const STAKE_DELAY = 10;
+    await MapleGlobals.setUnstakeDelay(0);
+
+    const BPTBalance = await BPool.balanceOf(accounts[3]);
+    const WithdrawableBPTDAI = await StakeLockerDAIPool.getUnstakeableBalance(accounts[3]);
+    const WithdrawableBPTUSDC = await StakeLockerUSDCPool.getUnstakeableBalance(accounts[3]);
+
+    await StakeLockerDAIPool.unstake(parseInt(WithdrawableBPTDAI["_hex"] / 2));
+    await StakeLockerUSDCPool.unstake(parseInt(WithdrawableBPTUSDC["_hex"] / 2));
+
+    // ~ SAVE LINES BELOW FOR FUTURE REFERENCE ~
+
+    // await new Promise((r) => setTimeout(r, 2000));
+    // this is because the denominator has a +1 to prevent div by 0
+    // double precision arithmatic truncation error means we will get inaccuracy after about 15 digits
+    // expect(Math.abs(ubal / bal - 2 / (stakeDelay + 1)) < 10 ** -15);
+
+  });
+
+  it("T - Users may withdraw interest via withdrawFunds() FDT(ERC-2222) in StakeLockers", async function () {
+    
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
+      StakeLockerABI,
+      ethers.provider.getSigner(3)
+    );
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(3)
+    );
+
+    DAI = new ethers.Contract(
+      DAIAddress,
+      DAIABI,
+      ethers.provider.getSigner(3)
+    )
+
+    USDC = new ethers.Contract(
+      USDCAddress,
+      USDCABI,
+      ethers.provider.getSigner(3)
+    )
+
+    // Mint the StakeLockers the respective tokens.
+    await DAI.mintSpecial(StakeLockerDAI, 15000);
+    await USDC.mintSpecial(StakeLockerUSDC, 15000);
+    
+    await StakeLockerDAIPool.updateFundsReceived();
+    await StakeLockerUSDCPool.updateFundsReceived();
+    
+    await StakeLockerDAIPool.withdrawFunds();
+    await StakeLockerUSDCPool.withdrawFunds();
+
+    // TODO: More tests on precise accounting here.
+
+  });
+
+  it("U - Prevent non-admin users from calling admin commands for lockers", async function () {
+    
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
+      StakeLockerABI,
+      ethers.provider.getSigner(2)
+    );
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(2)
+    );
+
+    await expect(
+      StakeLockerDAIPool.deleteLP()
+    ).to.be.revertedWith(
+      "StakeLocker:ERR_UNAUTHORIZED"
+    );
+
+    await expect(
+      StakeLockerDAIPool.finalizeLP()
+    ).to.be.revertedWith(
+      "StakeLocker:ERR_UNAUTHORIZED"
+    );
+
+    await expect(
+      StakeLockerUSDCPool.deleteLP()
+    ).to.be.revertedWith(
+      "StakeLocker:ERR_UNAUTHORIZED"
+    );
+
+    await expect(
+      StakeLockerUSDCPool.finalizeLP()
+    ).to.be.revertedWith(
+      "StakeLocker:ERR_UNAUTHORIZED"
+    );
+
+  });
+
+  // TODO:  Create a new test suite for funding loans.
+  //        This file should be restricuted to pool and locker instantiation.
+
+  it("V - Reset global stake requirement to 0", async function () {
 
     MapleGlobals = new ethers.Contract(
       MapleGlobalsAddress,
@@ -368,320 +753,5 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     await MapleGlobals.setStakeRequired(0);
 
   });
-
-  // it("DAI LiquidityLocker created, known to factory and LP?", async function () {
-  //   const DAILockerLP = await DAILP.liquidityLockerAddress();
-  //   const DAIisLock = await LALockerFactory.isLiquidityLocker(DAILockerLP);
-  //   expect(DAIisLock).to.equal(true);
-  // });
-
-  // it("USDC LiquidityLocker created, known to factory and LP?", async function () {
-  //   const USDCLockerLP = await USDCLP.liquidityLockerAddress();
-  //   const USDCisLock = await LALockerFactory.isLiquidityLocker(USDCLockerLP);
-  //   expect(USDCisLock).to.equal(true);
-  // });
-
-  // it("Mapping DAI locker to parent pool", async function () {
-  //   const DAILockerAddress = await DAILP.liquidityLockerAddress();
-  //   const DAIPool = await LALockerFactory.getOwner(DAILockerAddress);
-  //   expect(DAIPool).to.equal(DAILPAddress);
-  // });
-
-  // it("Mapping USDC locker to parent pool", async function () {
-  //   const USDCLockerAddress = await USDCLP.liquidityLockerAddress();
-  //   const USDCPool = await LALockerFactory.getOwner(USDCLockerAddress);
-  //   expect(USDCPool).to.equal(USDCLPAddress);
-  // });
-
-  // it("Check DAI LP is recognized by LPFactory.isLiquidityPool()", async function () {
-  //   const isPool = await LPFactory.isLiquidityPool(DAILPAddress);
-  //   expect(isPool).to.equal(true);
-  // });
-
-  // it("Check USDC LP is recognized by LPFactory.isLiquidityPool()", async function () {
-  //   const isPool = await LPFactory.isLiquidityPool(USDCLPAddress);
-  //   expect(isPool).to.equal(true);
-  // });
-
-  // it("Random guy can not USDC Liquid Asset Locker Spend", async function () {
-  //   const USDCLockerAddress = await USDCLP.liquidityLockerAddress();
-  //   const USDCLALocker = new ethers.Contract(
-  //     USDCLockerAddress,
-  //     LiquidityLockerABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   await expect(USDCLALocker.transfer(accounts[0], 0)).to.be.revertedWith(
-  //     "LiquidityLocker:ERR_MSG_SENDER_NOT_OWNER"
-  //   );
-  // });
-
-  // it("Random guy can not DAI Liquid Asset Locker Spend", async function () {
-  //   const DAILockerAddress = await DAILP.liquidityLockerAddress();
-  //   const DAILALocker = new ethers.Contract(
-  //     DAILockerAddress,
-  //     LiquidityLockerABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   await expect(DAILALocker.transfer(accounts[0], 0)).to.be.revertedWith(
-  //     "LiquidityLocker:ERR_MSG_SENDER_NOT_OWNER"
-  //   );
-  // });
-
-  // it("DEPOSIT INTO USDC LP WITHOUT allowance, revert", async function () {
-  //   const money = 100;
-  //   const dec = BigInt(await USDC.decimals());
-  //   const moneyUSDC = BigInt(money) * BigInt(10) ** dec;
-  //   const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
-  //   expect(USDCLP.deposit(moneyUSDC)).to.revertedWith(
-  //     "LiquidityPool::deposit:ERR_ALLOWANCE_LESS_THEN_AMT"
-  //   );
-  // });
-
-  // it("DEPOSIT INTO DAI LP WITHOUT allowance, revert", async function () {
-  //   const money = 100;
-  //   const dec = BigInt(await DAI.decimals());
-  //   const moneyDAI = BigInt(money) * BigInt(10) ** dec;
-  //   const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
-  //   expect(DAILP.deposit(moneyDAI)).to.revertedWith(
-  //     "LiquidityPool::deposit:ERR_ALLOWANCE_LESS_THEN_AMT"
-  //   );
-  // });
-
-  // it("DEPOSIT INTO USDC LP, Check if depositor is issued appropriate balance of FDT", async function () {
-  //   const money = 100;
-  //   const dec = BigInt(await USDC.decimals());
-  //   const moneyUSDC = BigInt(money) * BigInt(10) ** dec;
-  //   const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
-  //   await USDC.approve(USDCLP.address, moneyUSDC);
-  //   await USDCLP.deposit(moneyUSDC);
-  //   const USDCFDTbal = BigInt(await USDCLP.balanceOf(accounts[0]));
-  //   expect(USDCFDTbal.toString()).to.equal(moneyInWEI.toString());
-  // });
-
-  // it("DEPOSIT INTO DAI LP, Check if depositor is issued appropriate balance of FDT", async function () {
-  //   const money = 100;
-  //   const dec = BigInt(await DAI.decimals());
-  //   const moneyDAI = BigInt(money) * BigInt(10) ** dec;
-  //   const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
-  //   await DAI.approve(DAILP.address, moneyDAI);
-  //   await DAILP.deposit(moneyDAI);
-  //   const DAIFDTbal = BigInt(await DAILP.balanceOf(accounts[0]));
-  //   expect(DAIFDTbal.toString()).to.equal(moneyInWEI.toString());
-  // });
-
-  // it("Customer/third party stake some DAI", async function () {
-  //   const DAIBPool = new ethers.Contract(
-  //     DAIBPoolAddress,
-  //     BPoolABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   const DAIStakeLocker = new ethers.Contract(
-  //     DAIStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   DAIacct5 = new ethers.Contract(
-  //     DAIAddress,
-  //     DAIABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   usdstake = BigInt(1000);
-  //   DAIstake = BigInt(10 ** 18) * usdstake;
-  //   await DAI.transfer(accounts[5], DAIstake);
-  //   await DAIacct5.approve(DAIBPoolAddress, DAIstake);
-  //   await DAIBPool.joinswapExternAmountIn(DAIAddress, DAIstake, 0);
-  //   bptbal = BigInt(await DAIBPool.balanceOf(accounts[5]));
-  //   await DAIBPool.approve(DAIStakeLockerAddress, bptbal);
-  //   await DAIStakeLocker.stake(bptbal);
-  //   fdtbal = await DAIStakeLocker.balanceOf(accounts[5]);
-  //   expect(fdtbal.toString()).to.equal(bptbal.toString());
-  // });
-
-  // it("third party CANT unstake with unsatisfied unstakeDelay?", async function () {
-  //   const DAIStakeLocker = new ethers.Contract(
-  //     DAIStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   const DAIBPool = new ethers.Contract(
-  //     DAIBPoolAddress,
-  //     BPoolABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   await MPLGlobals.setUnstakeDelay("999999999999999999");
-  //   fdtbal = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
-  //   bptbal1 = BigInt(await DAIBPool.balanceOf(accounts[5]));
-  //   await expect(DAIStakeLocker.unstake(fdtbal)).to.be.revertedWith(
-  //     "Stakelocker:ERR_AMT_REQUESTED_UNAVAILABLE"
-  //   );
-
-  //   fdtbal2 = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
-  //   bptbal2 = BigInt(await DAIBPool.balanceOf(accounts[5]));
-  //   bptbaldiff = bptbal2 - bptbal1;
-  //   expect(bptbaldiff.toString()).to.equal("0");
-  //   expect(fdtbal2.toString()).to.equal(fdtbal.toString());
-  //   await MPLGlobals.setUnstakeDelay("0");
-  // });
-
-  // it("can third party unstake with zero unstakeDelay?, did he get his BPTs back?", async function () {
-    
-  //   // DAIStakeLockerAddress = await DAILP.stakeLockerAddress();
-
-  //   // console.log('test 3rd party ...')
-  //   // console.log(DAIStakeLockerAddress);
-  //   // console.log(DAIBPoolAddress)
-
-  //   const DAIStakeLocker = new ethers.Contract(
-  //     DAIStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   const DAIBPool = new ethers.Contract(
-  //     DAIBPoolAddress,
-  //     BPoolABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   fdtbal = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
-  //   bptbal1 = BigInt(await DAIBPool.balanceOf(accounts[5]));
-  //   await DAIStakeLocker.unstake(fdtbal);
-  //   bptbal2 = BigInt(await DAIBPool.balanceOf(accounts[5]));
-  //   bptbaldiff = bptbal2 - bptbal1;
-  //   fdtbal2 = BigInt(await DAIStakeLocker.balanceOf(accounts[5]));
-  //   expect(bptbaldiff.toString()).to.equal(fdtbal.toString());
-  //   expect(fdtbal2.toString()).to.equal("0");
-  // });
-
-  // it("check isDefunct() DAI LP", async function () {
-  //   defunct = await DAILP.isDefunct();
-  //   expect(defunct).to.equal(false);
-  // });
-
-  // it("delegate can not unstake", async function () {
-  //   const DAIStakeLocker = new ethers.Contract(
-  //     DAIStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   await expect(DAIStakeLocker.unstake(100)).to.be.revertedWith(
-  //     "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
-  //   );
-  // });
-
-  // it("delegate can not transfer FDTs", async function () {
-  //   const DAIStakeLocker = new ethers.Contract(
-  //     DAIStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   await expect(DAIStakeLocker.transfer(accounts[2], 100)).to.be.revertedWith(
-  //     "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
-  //   );
-  // });
-
-  // it("Check partial unstake ability.", async function () {
-  //   const DAIStakeLocker = new ethers.Contract(
-  //     DAIStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   const DAIBPool = new ethers.Contract(
-  //     DAIBPoolAddress,
-  //     BPoolABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   const stakeDelay = 10;
-  //   await MPLGlobals.setUnstakeDelay(stakeDelay);
-
-  //   bptbal = BigInt(await DAIBPool.balanceOf(accounts[5]));
-  //   await DAIBPool.approve(DAIStakeLockerAddress, bptbal);
-  //   await DAIStakeLocker.stake(bptbal);
-  //   await new Promise((r) => setTimeout(r, 2000));
-  //   await MPLGlobals.setUnstakeDelay(stakeDelay); //generic tx to issue a new block so next view can see it
-  //   const ubal = await DAIStakeLocker.getUnstakeableBalance(accounts[5]);
-  //   const bal = await DAIStakeLocker.balanceOf(accounts[5]);
-  //   // this is because the denominator has a +1 to prevent div by 0
-  //   // double precision arithmatic truncation error means we will get inaccuracy after about 15 digits
-  //   expect(Math.abs(ubal / bal - 2 / (stakeDelay + 1)) < 10 ** -15);
-  // });
-
-  // it("Check FDT capability in DAI stake locker", async function () {
-  //   //DUPLICATE SOME OF THESE DAI LOCKER TESTS TO RUN ON USDC TOOOO!!
-    
-  //   // DAIStakeLockerAddress = await DAILP.stakeLockerAddress();
-
-  //   // console.log('test check FDT cap ...')
-  //   // console.log(DAIStakeLockerAddress);
-  //   // console.log(DAIBPoolAddress)
-    
-  //   const DAIStakeLocker = new ethers.Contract(
-  //     DAIStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   const DAIBPool = new ethers.Contract(
-  //     DAIBPoolAddress,
-  //     BPoolABI,
-  //     ethers.provider.getSigner(5)
-  //   );
-  //   bptbal = BigInt(await DAIBPool.balanceOf(accounts[5]));
-  //   await DAIBPool.approve(DAIStakeLockerAddress, bptbal);
-  //   await DAIStakeLocker.stake(bptbal);
-  //   DAIReward = BigInt(10000) * BigInt(10 ** 18);
-  //   await DAI.transfer(DAIStakeLockerAddress, DAIReward);
-  //   await DAIStakeLocker.updateFundsReceived();
-  //   DAIbal0 = BigInt(await DAI.balanceOf(accounts[5]));
-  //   await DAIStakeLocker.withdrawFunds();
-  //   DAIbal1 = BigInt(await DAI.balanceOf(accounts[5]));
-  //   baldiff = DAIbal1 - DAIbal0;
-  //   FDTbal = await DAIStakeLocker.balanceOf(accounts[5]);
-  //   totalFDT = await DAIStakeLocker.totalSupply();
-  //   ratio = BigNumber(FDTbal / totalFDT);
-  //   expectedDAI = BigNumber(ratio * BigNumber(DAIReward));
-  //   //the expected dai is off due to roundoff. i must not be using bignumber correctly here
-  //   expect(expectedDAI / BigNumber(baldiff)).to.equal(1);
-  // });
-
-  // it("Check that random people can not call admin commands on stake lockers", async function () {
-  //   const USDCStakeLocker = new ethers.Contract(
-  //     USDCStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(2)
-  //   );
-  //   //MAYBE FIGURE OUT WHY THIS WAS HAVING MYSTERIOUS PROBLEMS
-  //   await expect(USDCStakeLocker.deleteLP()).to.be.revertedWith(
-  //     "StakeLocker:ERR_UNAUTHORIZED"
-  //   );
-  //   await expect(USDCStakeLocker.finalizeLP()).to.be.revertedWith(
-  //     "StakeLocker:ERR_UNAUTHORIZED"
-  //   );
-  // });
-
-  // it("Execute fundloan()", async function () {
-
-  //   // TODO: Implement this properly later.
-
-  //   // LVF = new ethers.Contract(
-  //   //   LVFactoryAddress,
-  //   //   LVFactoryABI,
-  //   //   ethers.provider.getSigner(0)
-  //   // );
-  //   // const LV1 = await LVF.getLoanVault(0);
-  //   // await DAILP.fundLoan(LV1, 100);
-  // });
-
-  // it("check if you can execute fundLoan on a random address", async function () {
-  //   await expect(DAILP.fundLoan(accounts[1], 100)).to.be.revertedWith(
-  //     "LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID"
-  //   );
-  // });
-
-  // it("revert stake requirement", async function() {
-  //   MPLGlobals = new ethers.Contract(
-  //     MPLGlobalsAddress,
-  //     MPLGlobalsABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   await MPLGlobals.setStakeRequired(0);
-  // });
 
 });
