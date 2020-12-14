@@ -7,7 +7,6 @@ import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./interface/ILiquidityPool.sol";
 import "./interface/IGlobals.sol";
-import "hardhat/console.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
@@ -54,7 +53,6 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         address _parentLP,
         address _globals
     ) FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") {
-        console.log(_stakeAsset);
         liquidityAsset = _liquidityAsset;
         stakeAsset = _stakeAsset;
         parentLP = _parentLP;
@@ -91,9 +89,6 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
      * @param _amt Amount of stakeAsset(BPTs) to stake
      */
     function stake(uint256 _amt) external {
-        console.log(msg.sender);
-        console.log(address(IStakeAsset));
-        console.log(address(this));
         require(
             IStakeAsset.transferFrom(msg.sender, address(this), _amt),
             "StakeLocker:ERR_INSUFFICIENT_APPROVED_FUNDS"

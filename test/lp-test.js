@@ -2,7 +2,6 @@ const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 const artpath = '../../contracts/' + network.name + '/';
 
-
 const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const USDCABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
@@ -30,13 +29,12 @@ const LiquidityPoolABI = require(artpath + "abis/LiquidityPool.abi.js");
 const LVFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
 const LVFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address.js");
 
-// TODO: Adjust this test to use the ether.js BigNumber type.
-
 describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
 
   let LiquidityPoolAddressDAI, LiquidityPoolAddressUSDC;
   let LiquidityPoolDAI, LiquidityPoolUSDC;
   let StakeLockerDAI, StakeLockerUSDC;
+  let LiquidityLockerDAI, LiquidityLockerUSDC;
   let MapleBPool;
   let accounts;
 
@@ -117,6 +115,9 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
 
     StakeLockerDAI = await LiquidityPoolDAI.stakeLockerAddress();
     StakeLockerUSDC = await LiquidityPoolUSDC.stakeLockerAddress();
+
+    LiquidityLockerDAI = await LiquidityPoolDAI.liquidityLockerAddress();
+    LiquidityLockerUSDC = await LiquidityPoolUSDC.liquidityLockerAddress();
 
   });
 
@@ -216,8 +217,15 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
   it("F - Stake the pools, if necessary", async function () {
 
     let BPTStakeRequiredDAI = await LiquidityPoolDAI.getInitialStakeRequirements();
+    let BPTStakeRequiredUSDC = await LiquidityPoolUSDC.getInitialStakeRequirements();
 
     expect(!BPTStakeRequiredDAI[2])
+    expect(!BPTStakeRequiredUSDC[2])
+
+    // console.log(parseInt(BPTStakeRequiredDAI[0]["_hex"]))
+    // console.log(parseInt(BPTStakeRequiredDAI[1]["_hex"]))
+    // console.log(parseInt(BPTStakeRequiredDAI[3]["_hex"]))
+    // console.log(parseInt(BPTStakeRequiredDAI[4]["_hex"]))
 
     BPool = new ethers.Contract(
       MapleBPool,
@@ -240,13 +248,112 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     // Get stake required.
 
     // Stake 20% of the supply (should be enough for pulling out)
-    // TODO: Implement calculator to fetch exact amount of poolAmountIn needed for staking.
+    // TODO: Complete calculator to fetch exact amount of poolAmountIn needed for staking.
     await BPool.approve(StakeLockerDAI, BigNumber.from(10).pow(18).mul(20));
     await StakeLockerDAIPool.stake(BigNumber.from(10).pow(18).mul(20));
 
+    await BPool.approve(StakeLockerUSDC, BigNumber.from(10).pow(18).mul(20));
+    await StakeLockerUSDCPool.stake(BigNumber.from(10).pow(18).mul(20));
+
     BPTStakeRequiredDAI = await LiquidityPoolDAI.getInitialStakeRequirements();
+    BPTStakeRequiredUSDC = await LiquidityPoolUSDC.getInitialStakeRequirements();
+
+    // console.log(parseInt(BPTStakeRequiredUSDC[0]["_hex"]))
+    // console.log(parseInt(BPTStakeRequiredUSDC[1]["_hex"]))
+    // console.log(parseInt(BPTStakeRequiredUSDC[3]["_hex"]))
+    // console.log(parseInt(BPTStakeRequiredUSDC[4]["_hex"]))
+
 
     expect(BPTStakeRequiredDAI[2])
+    expect(BPTStakeRequiredUSDC[2])
+
+    // console.log(parseInt(BPTStakeRequiredDAI[0]["_hex"]))
+    // console.log(parseInt(BPTStakeRequiredDAI[1]["_hex"]))
+    // console.log(parseInt(BPTStakeRequiredDAI[3]["_hex"]))
+    // console.log(parseInt(BPTStakeRequiredDAI[4]["_hex"]))
+
+  });
+
+  it("G - Allow delegate to unstake partial before finalization", async function () {
+
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
+      StakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    BPool = new ethers.Contract(
+      MapleBPool,
+      BPoolABI,
+      ethers.provider.getSigner(0)
+    );
+
+    // Unstake 1 wei BPT
+    await StakeLockerDAIPool.unstake(1);
+    await StakeLockerUSDCPool.unstake(1);
+
+  });
+
+  it("H - Prevent liquidity locker deposits before finalization", async function () {
+
+    await expect(
+      LiquidityPoolDAI.deposit(1)
+    ).to.be.revertedWith("LiquidityPool:ERR_NOT_FINALIZED")
+    
+    await expect(
+      LiquidityPoolUSDC.deposit(1)
+    ).to.be.revertedWith("LiquidityPool:ERR_NOT_FINALIZED")
+
+  });
+
+  it("I - Finalize liquidity pools (enable deposits)", async function () {
+
+    await LiquidityPoolDAI.finalize();
+    await LiquidityPoolUSDC.finalize();
+
+  });
+
+  it("J - Accounting, ensure BPT balance is same as StakeLocker balance", async function () {
+
+    StakeLockerDAIPool = new ethers.Contract(
+      StakeLockerDAI,
+      StakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    StakeLockerUSDCPool = new ethers.Contract(
+      StakeLockerUSDC,
+      StakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    BPool = new ethers.Contract(
+      MapleBPool,
+      BPoolABI,
+      ethers.provider.getSigner(0)
+    );
+
+    const StakeLockerFDTBalanceDAI = await StakeLockerDAIPool.balanceOf(accounts[0])
+    const StakeLockerFDTBalanceUSDC = await StakeLockerDAIPool.balanceOf(accounts[0])
+    const BPoolBalanceDAI = await BPool.balanceOf(StakeLockerDAI)
+    const BPoolBalanceUSDC = await BPool.balanceOf(StakeLockerUSDC)
+
+    expect(
+      parseInt(StakeLockerFDTBalanceDAI["_hex"])
+    ).to.equals(
+      parseInt(BPoolBalanceDAI["_hex"])
+    )
+    expect(
+      parseInt(StakeLockerFDTBalanceUSDC["_hex"])
+    ).to.equals(
+      parseInt(BPoolBalanceUSDC["_hex"])
+    )
 
   });
 
@@ -261,134 +368,6 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     await MapleGlobals.setStakeRequired(0);
 
   });
-
-
-
-  // it("Can deposit stake DAI", async function () {
-  //   const DAIBPool = new ethers.Contract(
-  //     DAIBPoolAddress,
-  //     BPoolABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   const DAILocker = new ethers.Contract(
-  //     DAIStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   await DAIBPool.approve(DAIStakeLockerAddress, "100000000000000000000");
-  //   await DAILocker.stake("100000000000000000000");
-  // });
-
-  // it("delegate can unstake BEFORE FINALIZE", async function () {
-    
-  //   const DAIStakeLocker = new ethers.Contract(
-  //     DAIStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   const DAIBPool = new ethers.Contract(
-  //     DAIBPoolAddress,
-  //     BPoolABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-
-  //   const daibal = await DAIBPool.balanceOf(accounts[0]);
-  //   await DAIStakeLocker.unstake(100);
-  //   const daibal2 = await DAIBPool.balanceOf(accounts[0]);
-  //   expect(daibal2 - daibal).to.equal(100);
-  // });
-
-  // it("Can not deposit into DAI liquidity pool before it is finalized", async function () {
-  //   const money = 1;
-  //   const dec = BigInt(await DAI.decimals());
-  //   const moneyDAI = BigInt(money) * BigInt(10) ** dec;
-  //   const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
-  //   await DAI.approve(DAILP.address, moneyDAI);
-  //   await expect(DAILP.deposit(moneyDAI)).to.be.revertedWith(
-  //     "LiquidityPool:ERR_NOT_FINALIZED"
-  //   );
-  // });
-
-  // it("Can not deposit into USDC liquidity pool before it is finalized", async function () {
-  //   const money = 1;
-  //   const dec = BigInt(await USDC.decimals());
-  //   const moneyUSDC = BigInt(money) * BigInt(10) ** dec;
-  //   const moneyInWEI = BigInt(money) * BigInt(10) ** BigInt(18);
-  //   await USDC.approve(USDCLP.address, moneyUSDC);
-  //   await expect(USDCLP.deposit(moneyUSDC)).to.be.revertedWith(
-  //     "LiquidityPool:ERR_NOT_FINALIZED"
-  //   );
-  // });
-
-  // it("Can finalize DAI pool with stake", async function () {
-  //   await DAILP.finalize();
-  //   isfin = await DAILP.isFinalized();
-  //   expect(isfin.toString()).to.equal("true");
-  // });
-
-  // it("Can not finalize USDC pool without stake", async function () {
-  //   await expect(USDCLP.finalize()).to.be.revertedWith(
-  //     "LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE"
-  //   );
-  //   isfin = await USDCLP.isFinalized();
-  //   expect(isfin.toString()).to.equal("false");
-  // });
-
-  // it("Can deposit stake USDC", async function () {
-  //   const USDCBPool = new ethers.Contract(
-  //     USDCBPoolAddress,
-  //     BPoolABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   const USDCLocker = new ethers.Contract(
-  //     USDCStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   await USDCBPool.approve(USDCStakeLockerAddress, "100000000000000000000");
-  //   await USDCLocker.stake("100000000000000000000");
-  // });
-
-  // it("Can finalize USDC pool with stake", async function () {
-  //   await USDCLP.finalize();
-  //   isfin = await USDCLP.isFinalized();
-  //   expect(isfin.toString()).to.equal("true");
-  // });
-
-  // //keep these two at bottom or do multiple times
-  // it("DAI BPT bal of stakeLocker is same as stakeLocker total token supply", async function () {
-  //   DAIStakeLockerAddress = DAILP.stakeLockerAddress();
-  //   const DAILocker = new ethers.Contract(
-  //     DAIStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   const DAIBPool = new ethers.Contract(
-  //     DAIBPoolAddress,
-  //     BPoolABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   const totalsup = await DAILocker.totalSupply();
-  //   const BPTbal = await DAIBPool.balanceOf(DAIStakeLockerAddress);
-  //   expect(BPTbal).to.equal(totalsup);
-  // });
-
-  // it("USDC BPT bal of stakeLocker is same as stakeLocker total token supply", async function () {
-  //   USDCStakeLockerAddress = USDCLP.stakeLockerAddress();
-  //   const USDCLocker = new ethers.Contract(
-  //     USDCStakeLockerAddress,
-  //     StakeLockerABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   const USDCBPool = new ethers.Contract(
-  //     USDCBPoolAddress,
-  //     BPoolABI,
-  //     ethers.provider.getSigner(0)
-  //   );
-  //   const totalsup = await USDCLocker.totalSupply();
-  //   const BPTbal = await USDCBPool.balanceOf(USDCStakeLockerAddress);
-  //   expect(BPTbal).to.equal(totalsup);
-  // });
 
   // it("DAI LiquidityLocker created, known to factory and LP?", async function () {
   //   const DAILockerLP = await DAILP.liquidityLockerAddress();

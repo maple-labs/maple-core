@@ -61,21 +61,13 @@ library CalcBPool {
     /// @param _pair is the asset paired 50/50 with MPL in the official Maple Balancer pool.
     /// @param _staker is the staker who deposited to the StakeLocker.
     /// @param _stakeLockerAddress is the address of the StakeLocker.
+    /// @return uint, USDC swap out value of _staker BPTs.
     function getSwapOutValue(
         address _pool,
         address _pair,
         address _staker,
         address _stakeLockerAddress
     ) internal view returns (uint256) {
-
-        // poolAmountIn = calcPoolInGivenSingleOut(
-        //                         outRecord.balance,
-        //                         outRecord.denorm,
-        //                         _totalSupply,
-        //                         _totalWeight,
-        //                         tokenAmountOut,
-        //                         _swapFee
-        //                     );
 
         // Fetch balancer pool token information.
         IBPool bPool = IBPool(_pool);
@@ -84,12 +76,6 @@ library CalcBPool {
         uint poolSupply = bPool.totalSupply();
         uint totalWeight = bPool.getTotalDenormalizedWeight();
         uint swapFee = bPool.getSwapFee();
-
-        console.log("tokenBalanceOut", tokenBalanceOut);
-        console.log("tokenWeightOut", tokenWeightOut);
-        console.log("poolSupply", poolSupply);
-        console.log("totalWeight", totalWeight);
-        console.log("swapFee", swapFee);
 
         // Fetch amount staked in _stakeLockerAddress by _staker.
         uint256 poolAmountIn = IERC20(_stakeLockerAddress).balanceOf(_staker);
@@ -109,5 +95,48 @@ library CalcBPool {
         console.log("tokenAmountOut", tokenAmountOut);
 
         return tokenAmountOut;
+    }
+
+    /// @notice Calculates the pool shares required for supplied tokenAmountOut (USDC).
+    /// @param _pool is the official Maple Balancer pool.
+    /// @param _pair is the asset paired 50/50 with MPL in the official Maple Balancer pool.
+    /// @param _staker is the staker who deposited to the StakeLocker.
+    /// @param _stakeLockerAddress is the address of the StakeLocker.
+    /// @param _tokenAmountOutRequired is the amount of USDC out required.
+    /// @return uint, [0] = poolAmountIn required
+    /// @return uint, [1] = poolAmountIn currently staked.
+    function getPoolSharesRequired(
+        address _pool,
+        address _pair,
+        address _staker,
+        address _stakeLockerAddress,
+        uint _tokenAmountOutRequired
+    ) internal view returns (uint256, uint256) {
+
+        // Fetch balancer pool token information.
+        IBPool bPool = IBPool(_pool);
+        uint tokenBalanceOut = bPool.getBalance(_pair);
+        uint tokenWeightOut = bPool.getDenormalizedWeight(_pair);
+        uint poolSupply = bPool.totalSupply();
+        uint totalWeight = bPool.getTotalDenormalizedWeight();
+        uint swapFee = bPool.getSwapFee();
+
+        // Returns amount of BPTs required to extract tokenAmountOut.
+        uint poolAmountInRequired = bPool.calcSingleOutGivenPoolIn(
+            tokenBalanceOut,
+            tokenWeightOut,
+            poolSupply,
+            totalWeight,
+            _tokenAmountOutRequired,
+            swapFee
+        );
+
+        // Fetch amount staked in _stakeLockerAddress by _staker.
+        uint256 stakerBalance = IERC20(_stakeLockerAddress).balanceOf(_staker);
+
+        console.log("poolAmountInRequired", poolAmountInRequired);
+        console.log("stakerBalance", stakerBalance);
+
+        return (poolAmountInRequired, stakerBalance.div(_ONE));
     }
 }

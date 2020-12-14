@@ -140,7 +140,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
      * @notice Confirm poolDelegate's stake amount held in StakeLocker and finalize this LiquidityPool.
      */
     function finalize() public {
-        (,,bool _stakePresent) = getInitialStakeRequirements();
+        (,,bool _stakePresent,,) = getInitialStakeRequirements();
         require(_stakePresent,"LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE");
         isFinalized = true;
         StakeLocker.finalizeLP();
@@ -149,17 +149,30 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     /**
         @notice Returns information on the stake requirements.
         @return uint, [0] = Amount of stake required.
-        @return uint, [1] = Current amount of stake present.
-        @return uint, [2] = If enough stake is present from Pool Delegate for finalization.
+        @return uint, [1] = Current swap out value of stake present.
+        @return bool, [2] = If enough stake is present from Pool Delegate for finalization.
+        @return uint, [3] = Amount of pool shares required.
+        @return uint, [4] = Amount of pool shares present.
     */
-    function getInitialStakeRequirements() public view returns(uint, uint, bool) {
+    function getInitialStakeRequirements() public view returns(uint, uint, bool, uint, uint) {
         address pool = MapleGlobals.mapleBPool();
         address pair = MapleGlobals.mapleBPoolAssetPair();
         uint256 minStake = MapleGlobals.stakeAmountRequired();
+
+        // TODO: Resolve the dissonance between poolSharesRequired / minstake / getSwapOutValue
+        (uint _poolAmountInRequired, uint _poolAmountPresent) = CalcBPool.getPoolSharesRequired(
+            pool, 
+            pair, 
+            poolDelegate, 
+            stakeLockerAddress, 
+            minStake
+        );
         return (
             minStake,
             CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress),
-            CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress) >= minStake
+            CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress) >= minStake,
+            _poolAmountInRequired,
+            _poolAmountPresent
         );
     }
 

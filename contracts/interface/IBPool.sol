@@ -29,4 +29,13 @@ interface IBPool {
         uint swapFee
     ) external pure returns (uint);
 
+    function calcPoolInGivenSingleOut(
+        uint tokenBalanceOut,
+        uint tokenWeightOut,
+        uint poolSupply,
+        uint totalWeight,
+        uint tokenAmountOut,
+        uint swapFee
+    ) external pure returns (uint);
+
 }
