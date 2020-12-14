@@ -58,6 +58,9 @@ contract MapleGlobals {
     address public loanVaultFactory;
     address public liquidityPoolFactory;
 
+    /// @return Validation data structure for pool delegates (prevent invalid addresses from creating pools).
+    mapping(address => bool) public validPoolDelegate;
+
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
         _;
@@ -104,6 +107,10 @@ contract MapleGlobals {
 
     function setMapleBPool(address _pool) external isGovernor {
         mapleBPool = _pool;
+    }
+
+    function setPoolDelegateWhitelist(address _delegate, bool _validity) external isGovernor {
+        validPoolDelegate[_delegate] = _validity;
     }
 
     function setMapleBPoolAssetPair(address _pair) external isGovernor {
