@@ -1,21 +1,33 @@
-const { expect } = require('chai')
+const { expect } = require("chai");
 const { BigNumber } = require("ethers");
-const artpath = '../../contracts/' + network.name + '/';
+const artpath = "../../contracts/" + network.name + "/";
 
-const BCreatorABI = require(artpath + 'abis/BCreator.abi.js')
-const BCreatorAddress = require(artpath + 'addresses/BCreator.address.js')
+const BCreatorABI = require(artpath + "abis/BCreator.abi.js");
+const BCreatorAddress = require(artpath + "addresses/BCreator.address.js");
 
-const USDCAddress = require(artpath + 'addresses/MintableTokenUSDC.address.js')
+const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
+const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+const WETHAddress = require(artpath + "addresses/WETH9.address.js");
+const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 
-const MapleGlobalsAddress = require(artpath + 'addresses/MapleGlobals.address.js')
-const MapleGlobalsABI = require(artpath + 'abis/MapleGlobals.abi.js')
-const LoanVaultFactoryAddress = require(artpath + 'addresses/LoanVaultFactory.address.js');
-const LiquidityPoolFactoryAddress = require(artpath + "addresses/LiquidityPoolFactory.address");
-const CollateralLockerFactoryAddress = require(artpath + "addresses/CollateralLockerFactory.address.js");
-const mapleTreasuryAddress = require(artpath + "addresses/MapleTreasury.address.js");
-const FundingLockerFactoryAddress = require(artpath + "addresses/FundingLockerFactory.address.js");
-const ChainLinkFactoryAddress = require(artpath + "addresses/ChainLinkEmulatorFactory.address.js");
-const ChainLinkFactoryABI = require(artpath + "abis/ChainLinkEmulatorFactory.abi.js");
+const MapleGlobalsAddress = require(artpath +
+  "addresses/MapleGlobals.address.js");
+const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
+const LoanVaultFactoryAddress = require(artpath +
+  "addresses/LoanVaultFactory.address.js");
+const LoanVaultFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
+const LiquidityPoolFactoryAddress = require(artpath +
+  "addresses/LiquidityPoolFactory.address");
+const CollateralLockerFactoryAddress = require(artpath +
+  "addresses/CollateralLockerFactory.address.js");
+const mapleTreasuryAddress = require(artpath +
+  "addresses/MapleTreasury.address.js");
+const FundingLockerFactoryAddress = require(artpath +
+  "addresses/FundingLockerFactory.address.js");
+const ChainLinkFactoryAddress = require(artpath +
+  "addresses/ChainLinkEmulatorFactory.address.js");
+const ChainLinkFactoryABI = require(artpath +
+  "abis/ChainLinkEmulatorFactory.abi.js");
 
 const ChainLinkEmulatorABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 async function main() {
@@ -24,16 +36,20 @@ async function main() {
     ChainLinkFactoryABI,
     ethers.provider.getSigner(0)
   );
-  
+
   // Fetch the official Maple balancer pool address.
-  BCreator = new ethers.Contract(BCreatorAddress, BCreatorABI, ethers.provider.getSigner(0))
-  MapleBPoolAddress = await BCreator.getBPoolAddress(0)
+  BCreator = new ethers.Contract(
+    BCreatorAddress,
+    BCreatorABI,
+    ethers.provider.getSigner(0)
+  );
+  MapleBPoolAddress = await BCreator.getBPoolAddress(0);
 
   mapleGlobals = new ethers.Contract(
-    MapleGlobalsAddress, 
-    MapleGlobalsABI, 
+    MapleGlobalsAddress,
+    MapleGlobalsABI,
     ethers.provider.getSigner(0)
-  )
+  );
 
   await mapleGlobals.setMapleBPool(MapleBPoolAddress);
   await mapleGlobals.setMapleBPoolAssetPair(USDCAddress);
@@ -64,7 +80,6 @@ async function main() {
   await mapleGlobals.assignPriceFeed(WBTCAddress, BTC_USD_ORACLE_ADDRESS);
   await mapleGlobals.assignPriceFeed(WETHAddress, ETH_USD_ORACLE_ADDRESS);
 
-
   const updateGlobals = await mapleGlobals.setMapleTreasury(
     mapleTreasuryAddress
   );
@@ -89,7 +104,11 @@ async function main() {
     BUNK_ADDRESS_BULLET
   );
 
-
+  const LVFactory = new ethers.Contract(
+    LoanVaultFactoryAddress,
+    LoanVaultFactoryABI,
+    ethers.provider.getSigner(0)
+  );
 
   const updateFundingLockerFactory = await LVFactory.setFundingLockerFactory(
     FundingLockerFactoryAddress
@@ -101,12 +120,11 @@ async function main() {
 
   await mapleGlobals.setLiquidityPoolFactory(LiquidityPoolFactoryAddress);
   await mapleGlobals.setLoanVaultFactory(LoanVaultFactoryAddress);
-
 }
 
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error(error)
-    process.exit(1)
-  })
+    console.error(error);
+    process.exit(1);
+  });
