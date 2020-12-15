@@ -8,7 +8,7 @@ const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const uniswapRouter = require(artpath + "addresses/UniswapV2Router02.address.js");
 const ChainLinkFactoryAddress = require(artpath + "addresses/ChainLinkEmulatorFactory.address.js");
 const ChainLinkFactoryABI = require(artpath + "abis/ChainLinkEmulatorFactory.abi.js");
-const MapleTokenAddress = require(artpath + "addresses/MapleGlobals.address.js");
+const MapleTokenAddress = require(artpath + "addresses/MapleToken.address.js");
 const ChainLinkEmulatorABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 
 async function main() {
