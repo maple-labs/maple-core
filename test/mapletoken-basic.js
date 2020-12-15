@@ -42,7 +42,7 @@ describe("Maple Token", function () {
     const balanceOfGovernor = await mapleToken.balanceOf(governor);
     const supply = await mapleToken.totalSupply();
 
-    expect(balanceOfGovernor / 10 ** decimals).to.equal(9999000);
+    expect(balanceOfGovernor / 10 ** decimals).to.equal(9900000);
     expect(supply._hex / 10 ** decimals).to.equal(10000000);
   });
 
@@ -176,7 +176,7 @@ describe("Maple Token", function () {
     expect(withdrawableFundsOfAccountOne).to.equal(
       accumulativeFundsOfAccountOne
     );
-    expect(withdrawableFundsOfGovernor).to.equal(99987999);
+    expect(withdrawableFundsOfGovernor).to.equal(98997999);
     expect(withdrawableFundsOfAccountOne).to.equal(1999);
   });
 
@@ -198,8 +198,8 @@ describe("Maple Token", function () {
     const accumulativeFundsOfGovernor = await mapleToken.accumulativeFundsOf(
       governor
     );
-    expect(withdrawnFundsOfGovernor).to.equal(99987999);
-    expect(accumulativeFundsOfGovernor).to.equal(99987999);
+    expect(withdrawnFundsOfGovernor).to.equal(98997999);
+    expect(accumulativeFundsOfGovernor).to.equal(98997999);
     expect(withdrawableFundsOfGovernor).to.equal(0);
 
     expect(await mapleTokenExternal.withdrawFunds());

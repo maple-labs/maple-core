@@ -2,6 +2,7 @@
 pragma solidity 0.7.0;
 
 import "./LiquidityPool.sol";
+import "./interface/IGlobals.sol";
 
 contract LiquidityPoolFactory {
 
@@ -13,35 +14,65 @@ contract LiquidityPoolFactory {
     /// @notice Incrementor for number of LPs created.
     uint256 public liquidityPoolsCreated;
 
+    /// @notice The MapleGlobals.sol contract.
+    address public mapleGlobals;
+    
+    /// @notice The StakeLockerFactory to use for this LiquidityPoolFactory.
+    address public stakeLockerFactory;
+    
+    /// @notice The LiquidityLockerFactory to use for this LiquidityPoolFactory.
+    address public liquidityLockerFactory;
+
+    constructor(address _mapleGlobals, address _stakeLockerFactory, address _liquidityLockerFactory) {
+        mapleGlobals = _mapleGlobals;
+        stakeLockerFactory = _stakeLockerFactory;
+        liquidityLockerFactory = _liquidityLockerFactory;
+    }
+
+    event PoolCreated(
+        address indexed _delegate,
+        address _liquidityAsset,
+        address _stakeAsset,
+        string name,
+        string symbol,
+        uint indexed _id
+    );
+
     /// @notice Instantiates a liquidity pool contract on-chain.
     /// @param _liquidityAsset The primary asset which lenders deposit into the liquidity pool for investment.
     /// @param _stakeAsset The asset which stakers deposit into the liquidity pool for liquidation during defaults.
-    /// @param _stakeLockerFactory The factory from which to create the StakeLocker.
-    /// @param _liquidityLockerFactory The factory from which to create the LiquidityLocker.
     /// @param name The name of the liquidity pool's token (minted when investors deposit _liquidityAsset).
     /// @param symbol The ticker of the liquidity pool's token.
-    /// @param _mapleGlobals Address of the MapleGlobals.sol contract.
     /// @return Address of the instantiated liquidity pool.
     function createLiquidityPool(
         address _liquidityAsset,
         address _stakeAsset,
-        address _stakeLockerFactory,
-        address _liquidityLockerFactory,
         string memory name,
-        string memory symbol,
-        address _mapleGlobals
+        string memory symbol
     ) public returns (address) {
+        require(
+            IGlobals(mapleGlobals).validPoolDelegate(msg.sender),
+            "LiquidityPoolFactory::createLiquidityPool:ERR_MSG_SENDER_NOT_WHITELISTED"
+        );
         LiquidityPool lpool = new LiquidityPool(
             _liquidityAsset,
             _stakeAsset,
-            _stakeLockerFactory,
-            _liquidityLockerFactory,
+            stakeLockerFactory,
+            liquidityLockerFactory,
             name,
             symbol,
-            _mapleGlobals
+            mapleGlobals
         );
         _liquidityPools[liquidityPoolsCreated] = address(lpool);
         _isLiquidityPool[address(lpool)] = true;
+        emit PoolCreated(
+            msg.sender,
+            _stakeAsset,
+            _stakeAsset,
+            name,
+            symbol,
+            liquidityPoolsCreated
+        );
         liquidityPoolsCreated++;
         return address(lpool);
     }

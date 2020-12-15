@@ -15,6 +15,7 @@ import "./interface/IStakeLocker.sol";
 import "./interface/IStakeLockerFactory.sol";
 import "./interface/ILiquidityLocker.sol";
 import "./interface/ILiquidityLockerFactory.sol";
+import "hardhat/console.sol";
 
 // TODO: Implement the withdraw() function, so investors can withdraw LiquidityAsset from LP.
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
@@ -124,42 +125,61 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     /// @notice Deploys and assigns a StakeLocker for this LiquidityPool.
     /// @param _stakeAsset Address of the asset used for staking.
     function createStakeLocker(address _stakeAsset) private returns (address) {
-        // TODO: Test this require() function.
         require(
-            IBPool(_stakeAsset).isBound(MapleGlobals.mapleToken()) &&
-                IBPool(_stakeAsset).isBound(liquidityAsset) &&
-                IBPool(_stakeAsset).isFinalized() &&
-                (IBPool(_stakeAsset).getNumTokens() == 2),
+            IBPool(_stakeAsset).isBound(MapleGlobals.mapleToken()) && IBPool(_stakeAsset).isFinalized(),
                 "LiquidityPool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
         );
-        address _stakeLocker =
-            StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
+        console.log(_stakeAsset);
+        address _stakeLocker = StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
         StakeLocker = IStakeLocker(_stakeLocker);
+        console.log(_stakeLocker);
         return _stakeLocker;
     }
 
     /**
      * @notice Confirm poolDelegate's stake amount held in StakeLocker and finalize this LiquidityPool.
      */
-    function finalize() external {
-        uint256 _minStake = MapleGlobals.stakeAmountRequired();
-        require(
-            CalcBPool.BPTVal(stakeAsset, poolDelegate, liquidityAsset, stakeLockerAddress) >
-                _minStake.mul(_ONELiquidityAsset),
-                "LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE"
-        );
+    function finalize() public {
+        (,,bool _stakePresent,,) = getInitialStakeRequirements();
+        require(_stakePresent,"LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE");
         isFinalized = true;
         StakeLocker.finalizeLP();
+    }
+
+    /**
+        @notice Returns information on the stake requirements.
+        @return uint, [0] = Amount of stake required.
+        @return uint, [1] = Current swap out value of stake present.
+        @return bool, [2] = If enough stake is present from Pool Delegate for finalization.
+        @return uint, [3] = Amount of pool shares required.
+        @return uint, [4] = Amount of pool shares present.
+    */
+    function getInitialStakeRequirements() public view returns(uint, uint, bool, uint, uint) {
+        address pool = MapleGlobals.mapleBPool();
+        address pair = MapleGlobals.mapleBPoolAssetPair();
+        uint256 minStake = MapleGlobals.stakeAmountRequired();
+
+        // TODO: Resolve the dissonance between poolSharesRequired / minstake / getSwapOutValue
+        (uint _poolAmountInRequired, uint _poolAmountPresent) = CalcBPool.getPoolSharesRequired(
+            pool, 
+            pair, 
+            poolDelegate, 
+            stakeLockerAddress, 
+            minStake
+        );
+        return (
+            minStake,
+            CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress),
+            CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress) >= minStake,
+            _poolAmountInRequired,
+            _poolAmountPresent
+        );
     }
 
     // Note: Tether is unusable as a LiquidityAsset!
     /// @notice Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
     /// @param _amt The amount of LiquidityAsset to deposit, in wei.
     function deposit(uint256 _amt) external notDefunct finalized {
-        require(
-            ILiquidityAsset.allowance(msg.sender, address(this)) >= _amt,
-            "LiquidityPool::deposit:ERR_ALLOWANCE_LESS_THEN_AMT"
-        );
         ILiquidityAsset.transferFrom(msg.sender, liquidityLockerAddress, _amt);
         uint256 _mintAmt = liq2FDT(_amt);
         _mint(msg.sender, _mintAmt);

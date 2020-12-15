@@ -24,7 +24,13 @@ contract MapleGlobals {
     /// @return Represents the amount of time a borrower has to make a missed payment before a default can be triggered.
     uint256 public gracePeriod;
 
-    /// @return Represents the USD value a pool delegate must stake (in BPTs) when insantiating a liquidity pool.
+    /// @return Official balancer pool for staking.
+    address public mapleBPool;
+
+    /// @return Asset paired 50/50 with MPL in balancer pool (e.g. USDC).
+    address public mapleBPoolAssetPair;
+
+    /// @return Represents the mapleBPoolSwapOutAsset value (in wei) required when instantiating a liquidity pool.
     uint256 public stakeAmountRequired;
 
     /// @return Parameter for unstake delay, with relation to StakeLocker withdrawals.
@@ -52,6 +58,9 @@ contract MapleGlobals {
     address public loanVaultFactory;
     address public liquidityPoolFactory;
 
+    /// @return Validation data structure for pool delegates (prevent invalid addresses from creating pools).
+    mapping(address => bool) public validPoolDelegate;
+
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
         _;
@@ -69,7 +78,7 @@ contract MapleGlobals {
         establishmentFeeBasisPoints = 200;
         treasuryFeeBasisPoints = 20;
         gracePeriod = 5 days;
-        stakeAmountRequired = 25000;
+        stakeAmountRequired = 0;
         unstakeDelay = 90 days;
         drawdownGracePeriod = 1 days;
     }
@@ -94,6 +103,18 @@ contract MapleGlobals {
 
     function setLoanVaultFactory(address _factory) external isGovernor {
         loanVaultFactory = _factory;
+    }
+
+    function setMapleBPool(address _pool) external isGovernor {
+        mapleBPool = _pool;
+    }
+
+    function setPoolDelegateWhitelist(address _delegate, bool _validity) external isGovernor {
+        validPoolDelegate[_delegate] = _validity;
+    }
+
+    function setMapleBPoolAssetPair(address _pair) external isGovernor {
+        mapleBPoolAssetPair = _pair;
     }
 
     function assignPriceFeed(address _asset, address _oracle) external isGovernor {

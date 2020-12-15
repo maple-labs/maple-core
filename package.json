@@ -16,8 +16,8 @@
     "pretty": "npx prettier --write contracts/**/*.sol&&npx prettier --write ./{test,scripts}/*.js",
     "coverage": "npx hardhat coverage --network coverage",
     "migrate-token": "npx hardhat run scripts/migrate0.js",
-    "migrate": "npx hardhat run scripts/migrate1.js"
-
+    "migrate": "npx hardhat run scripts/migrate1.js",
+    "setup": "hardhat run scripts/setup.js"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
   "keywords": [
