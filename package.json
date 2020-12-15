@@ -2,7 +2,7 @@
   "name": "maple-core",
   "version": "1.0.0",
   "scripts": {
-    "chain": "hardhat node",
+    "chain": "hardhat node --hostname 0.0.0.0 --port 8545",
     "test": "hardhat test",
     "test:globals": "yarn deploy && hardhat test test/globals-init.js && hardhat test test/globals-set.js && yarn deploy",
     "test:token": "yarn deploy && hardhat test test/mapletoken-basic.js",
