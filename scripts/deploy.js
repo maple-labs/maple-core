@@ -78,7 +78,7 @@ async function main() {
     uniswapRouter,
     mapleGlobals.address,
   ]);
-
+/*
   const updateGlobals = await mapleGlobals.setMapleTreasury(
     mapleTreasury.address
   );
@@ -101,7 +101,7 @@ async function main() {
   const updateGlobalsRepaymentCalcBullet = await mapleGlobals.setInterestStructureCalculator(
     ethers.utils.formatBytes32String("BULLET"),
     BUNK_ADDRESS_BULLET
-  );
+  );*/
 
   const CollateralLockerFactory = await deploy(
     "CollateralLockerFactory"
