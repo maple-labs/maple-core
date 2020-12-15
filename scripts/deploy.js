@@ -12,7 +12,7 @@ const ChainLinkFactoryABI = require(artpath + "abis/ChainLinkEmulatorFactory.abi
 const ChainLinkEmulatorABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 
 async function main() {
-
+/*
   ChainLinkFactory = new ethers.Contract(
     ChainLinkFactoryAddress,
     ChainLinkFactoryABI,
@@ -51,6 +51,7 @@ async function main() {
   await ETH_USD_ORACLE.setPrice("59452607912");
   await BTC_USD_ORACLE.setPrice("1895510185012");
   await DAI_USD_ORACLE.setPrice("100232161");
+*/
 
   const mapleToken = await deploy("MapleToken", [
     "MapleToken",
@@ -105,8 +106,8 @@ async function main() {
   const updateGlobalsRepaymentCalcBullet = await mapleGlobals.setInterestStructureCalculator(
     ethers.utils.formatBytes32String("BULLET"),
     BUNK_ADDRESS_BULLET
-  );*/
-
+  );
+*/
   const CollateralLockerFactory = await deploy(
     "CollateralLockerFactory"
   );
@@ -119,7 +120,7 @@ async function main() {
     CollateralLockerFactory.address,
   ]);
 
-  const updateFundingLockerFactory = await LVFactory.setFundingLockerFactory(
+/*  const updateFundingLockerFactory = await LVFactory.setFundingLockerFactory(
     FundingLockerFactory.address
   );
 
@@ -128,12 +129,12 @@ async function main() {
   );
 
   await mapleGlobals.setLiquidityPoolFactory(LiquidityPoolFactory.address);
-  await mapleGlobals.setLoanVaultFactory(LVFactory.address);
+  await mapleGlobals.setLoanVaultFactory(LVFactory.address);*/
 
-  await mapleGlobals.assignPriceFeed(USDCAddress, DAI_USD_ORACLE_ADDRESS);
+/*  await mapleGlobals.assignPriceFeed(USDCAddress, DAI_USD_ORACLE_ADDRESS);
   await mapleGlobals.assignPriceFeed(DAIAddress, DAI_USD_ORACLE_ADDRESS);
   await mapleGlobals.assignPriceFeed(WBTCAddress, BTC_USD_ORACLE_ADDRESS);
-  await mapleGlobals.assignPriceFeed(WETHAddress, ETH_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WETHAddress, ETH_USD_ORACLE_ADDRESS);*/
   
 }
 

@@ -9,6 +9,11 @@ const USDCAddress = require(artpath + 'addresses/MintableTokenUSDC.address.js')
 
 const MapleGlobalsAddress = require(artpath + 'addresses/MapleGlobals.address.js')
 const MapleGlobalsABI = require(artpath + 'abis/MapleGlobals.abi.js')
+const LoanVaultFactoryAddress = require(artpath + 'addresses/LoanVaultFactory.address.js');
+const LiquidityPoolFactoryAddress = require(artpath + "addresses/LiquidityPoolFactory.address");
+const CollateralLockerFactoryAddress = require(artpath + "addresses/CollateralLockerFactory.address.js");
+const mapleTreasuryAddress = require(artpath + "addresses/MapleTreasury.address.js");
+const FundingLockerFactoryAddress = require(artpath + "addresses/FundingLockerFactory.address.js");
 
 async function main() {
   
@@ -37,6 +42,53 @@ async function main() {
   await Globals.setPoolDelegateWhitelist(accounts[6], true);
   await Globals.setPoolDelegateWhitelist(accounts[7], true);
   await Globals.setPoolDelegateWhitelist(accounts[8], true);
+
+  const ETH_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_ONE);
+  const BTC_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_TWO);
+  const DAI_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_THREE);
+
+  await mapleGlobals.assignPriceFeed(USDCAddress, DAI_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(DAIAddress, DAI_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WBTCAddress, BTC_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WETHAddress, ETH_USD_ORACLE_ADDRESS);
+
+
+  const updateGlobals = await mapleGlobals.setMapleTreasury(
+    mapleTreasuryAddress
+  );
+
+  await mapleGlobals.addBorrowToken(USDCAddress);
+  await mapleGlobals.addBorrowToken(DAIAddress);
+  await mapleGlobals.addCollateralToken(DAIAddress);
+  await mapleGlobals.addCollateralToken(USDCAddress);
+  await mapleGlobals.addCollateralToken(WETHAddress);
+  await mapleGlobals.addCollateralToken(WBTCAddress);
+
+  // TODO: Create repayment calculators, use bunk ones temporarily.
+  const BUNK_ADDRESS_AMORTIZATION =
+    "0x0000000000000000000000000000000000000001";
+  const BUNK_ADDRESS_BULLET = "0x0000000000000000000000000000000000000002";
+  const updateGlobalsRepaymentCalcAmortization = await mapleGlobals.setInterestStructureCalculator(
+    ethers.utils.formatBytes32String("AMORTIZATION"),
+    BUNK_ADDRESS_AMORTIZATION
+  );
+  const updateGlobalsRepaymentCalcBullet = await mapleGlobals.setInterestStructureCalculator(
+    ethers.utils.formatBytes32String("BULLET"),
+    BUNK_ADDRESS_BULLET
+  );
+
+
+
+  const updateFundingLockerFactory = await LVFactory.setFundingLockerFactory(
+    FundingLockerFactoryAddress
+  );
+
+  const updateCollateralLockerFactory = await LVFactory.setCollateralLockerFactory(
+    CollateralLockerFactoryAddress
+  );
+
+  await mapleGlobals.setLiquidityPoolFactory(LiquidityPoolFactoryAddress);
+  await mapleGlobals.setLoanVaultFactory(LoanVaultFactoryAddress);
 
 }
 
