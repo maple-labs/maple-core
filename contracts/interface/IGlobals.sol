@@ -26,6 +26,8 @@ interface IGlobals {
 
     function mapleBPoolAssetPair() external view returns (address);
 
+    function validPoolDelegate(address) external view returns (bool);
+
     function validBorrowTokenAddresses() external view returns (address[] memory);
 
     function validCollateralTokenAddresses() external view returns (address[] memory);

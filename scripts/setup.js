@@ -25,6 +25,19 @@ async function main() {
   await Globals.setMapleBPool(MapleBPoolAddress);
   await Globals.setMapleBPoolAssetPair(USDCAddress);
 
+  // Update the MapleGlobals pool delegate whitelist.
+  const accounts = await ethers.provider.listAccounts();
+
+  await Globals.setPoolDelegateWhitelist(accounts[0], true);
+  await Globals.setPoolDelegateWhitelist(accounts[1], true);
+  await Globals.setPoolDelegateWhitelist(accounts[2], true);
+  await Globals.setPoolDelegateWhitelist(accounts[3], true);
+  await Globals.setPoolDelegateWhitelist(accounts[4], true);
+  await Globals.setPoolDelegateWhitelist(accounts[5], true);
+  await Globals.setPoolDelegateWhitelist(accounts[6], true);
+  await Globals.setPoolDelegateWhitelist(accounts[7], true);
+  await Globals.setPoolDelegateWhitelist(accounts[8], true);
+
 }
 
 main()

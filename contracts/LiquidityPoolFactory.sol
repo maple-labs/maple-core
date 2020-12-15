@@ -2,6 +2,7 @@
 pragma solidity 0.7.0;
 
 import "./LiquidityPool.sol";
+import "./interface/IGlobals.sol";
 
 contract LiquidityPoolFactory {
 
@@ -49,6 +50,10 @@ contract LiquidityPoolFactory {
         string memory name,
         string memory symbol
     ) public returns (address) {
+        require(
+            IGlobals(mapleGlobals).validPoolDelegate(msg.sender),
+            "LiquidityPoolFactory::createLiquidityPool:ERR_MSG_SENDER_NOT_WHITELISTED"
+        );
         LiquidityPool lpool = new LiquidityPool(
             _liquidityAsset,
             _stakeAsset,
