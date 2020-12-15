@@ -64,7 +64,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @notice The premium calculator for this loan.
     address public premiumCalculator;
 
-    /// @notice The principal owed (initially the drawdown amount). This reduces overtime.
+    /// @notice The principal owed (initially the drawdown amount).
     uint256 public principalOwed;
 
     /// @notice The amount the borrower drew down, historical reference for calculators.

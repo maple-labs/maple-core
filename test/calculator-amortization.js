@@ -142,10 +142,10 @@ describe("Calculator - Amortization Repayment", function () {
 
     const PAYMENT_INFO = await LoanVault.getNextPayment();
 
-    // console.log(parseInt(PAYMENT_INFO[0]["_hex"])); // Total
-    // console.log(parseInt(PAYMENT_INFO[1]["_hex"])); // Interest
-    // console.log(parseInt(PAYMENT_INFO[2]["_hex"])); // Principal
-    // console.log(parseInt(PAYMENT_INFO[3]["_hex"])); // Due By
+    console.log(parseInt(PAYMENT_INFO[0]["_hex"])); // Total
+    console.log(parseInt(PAYMENT_INFO[1]["_hex"])); // Interest
+    console.log(parseInt(PAYMENT_INFO[2]["_hex"])); // Principal
+    console.log(parseInt(PAYMENT_INFO[3]["_hex"])); // Due By
 
     expect(true);
 
