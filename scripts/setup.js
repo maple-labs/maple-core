@@ -92,7 +92,7 @@ async function main() {
   await mapleGlobals.addCollateralToken(WBTCAddress);
 
   // TODO: Create repayment calculators, use bunk ones temporarily.
-  const BUNK_ADDRESS_AMORTIZATION =
+/*  const BUNK_ADDRESS_AMORTIZATION =
     "0x0000000000000000000000000000000000000001";
   const BUNK_ADDRESS_BULLET = "0x0000000000000000000000000000000000000002";
   const updateGlobalsRepaymentCalcAmortization = await mapleGlobals.setInterestStructureCalculator(
@@ -102,7 +102,21 @@ async function main() {
   const updateGlobalsRepaymentCalcBullet = await mapleGlobals.setInterestStructureCalculator(
     ethers.utils.formatBytes32String("BULLET"),
     BUNK_ADDRESS_BULLET
+  );*/
+
+  const AmortizationRepaymentCalculator = await deploy("AmortizationRepaymentCalculator");
+  const BulletRepaymentCalculator = await deploy("BulletRepaymentCalculator");
+
+  await mapleGlobals.setInterestStructureCalculator(
+    ethers.utils.formatBytes32String("AMORTIZATION"),
+    AmortizationRepaymentCalculator.address
   );
+  await mapleGlobals.setInterestStructureCalculator(
+    ethers.utils.formatBytes32String("BULLET"),
+    BulletRepaymentCalculator.address
+  );
+
+
 
   const LVFactory = new ethers.Contract(
     LoanVaultFactoryAddress,
