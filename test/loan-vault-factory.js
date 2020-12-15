@@ -26,9 +26,6 @@ const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
 
 describe("LoanVaultFactory.sol / LoanVault.sol", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
-  const BUNK_ADDRESS_AMORTIZATION =
-    "0x0000000000000000000000000000000000000001";
-  const BUNK_ADDRESS_BULLET = "0x0000000000000000000000000000000000000002";
 
   let DAI,
     USDC,
@@ -226,6 +223,20 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
   });
 
   it("confirm loanVault borrower, other state vars, and specifications", async function () {
+    
+    Globals = new ethers.Contract(
+      GlobalsAddress,
+      GlobalsABI,
+      ethers.provider.getSigner(0)
+    );
+
+    const BULLET_CALC_ADDRESS = await Globals.interestStructureCalculators(
+      ethers.utils.formatBytes32String('BULLET')
+    )
+    const AMORTIZATION_CALC_ADDRESS = await Globals.interestStructureCalculators(
+      ethers.utils.formatBytes32String('AMORTIZATION')
+    )
+
     LoanVault = new ethers.Contract(
       vaultAddress,
       LoanVaultABI,
@@ -235,6 +246,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
     const accounts = await ethers.provider.listAccounts();
     const borrower = await LoanVault.borrower();
     expect(borrower).to.equals(accounts[0]);
+
     /**
       await LoanVaultFactory.createLoanVault(
         DAIAddress,
@@ -261,7 +273,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
     expect(parseInt(MIN_RAISE["_hex"])).to.equals(1000000000000);
     expect(parseInt(COLLATERAL_BIPS_RATIO["_hex"])).to.equals(0);
     expect(parseInt(FUNDING_PERIOD_SECONDS["_hex"])).to.equals(604800);
-    expect(REPAYMENT_CALCULATOR).to.equals(BUNK_ADDRESS_AMORTIZATION);
+    expect(REPAYMENT_CALCULATOR).to.equals(AMORTIZATION_CALC_ADDRESS);
     expect(LOAN_STATE).to.equals(0);
 
     // Ensure that the LoanVault was issued and assigned a valid FundingLocker.
