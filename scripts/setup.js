@@ -91,19 +91,6 @@ async function main() {
   await mapleGlobals.addCollateralToken(WETHAddress);
   await mapleGlobals.addCollateralToken(WBTCAddress);
 
-/*  const AmortizationRepaymentCalculator = await deploy("AmortizationRepaymentCalculator");
-  const BulletRepaymentCalculator = await deploy("BulletRepaymentCalculator");
-
-  await mapleGlobals.setInterestStructureCalculator(
-    ethers.utils.formatBytes32String("AMORTIZATION"),
-    AmortizationRepaymentCalculator.address
-  );
-  await mapleGlobals.setInterestStructureCalculator(
-    ethers.utils.formatBytes32String("BULLET"),
-    BulletRepaymentCalculator.address
-  );
-*/
-
 
   const LVFactory = new ethers.Contract(
     LoanVaultFactoryAddress,
