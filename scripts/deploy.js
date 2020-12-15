@@ -103,7 +103,7 @@ async function main() {
   );
   await mapleGlobals.setInterestStructureCalculator(
     ethers.utils.formatBytes32String("BULLET"),
-    BulletRepaymentCalculator.BUNK_ADDRESS_BULLET
+    BulletRepaymentCalculator.address
   );
 
   const CollateralLockerFactory = await deploy(

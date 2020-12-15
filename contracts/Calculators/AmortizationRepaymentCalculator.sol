@@ -22,8 +22,8 @@ contract AmortizationRepaymentCalculator {
     // Represents amortization by flattening the total interest owed for equal interest payments.
     uint interestAnnual = drawdownAmount.mul(aprBips).div(10000).mul(paymentIntervalDays).div(365);
     uint interestPartial = ((50 * 10**18) / paymentsRemaining).add(50 * 10**18);
-    uint principal = principalOwed.mul(paymentsRemaining);
     uint interest = interestAnnual.mul(interestPartial).div(100 * 10**18);
+    uint principal = principalOwed.div(paymentsRemaining);
 
     return (interest.add(principal), principal, interest);
 

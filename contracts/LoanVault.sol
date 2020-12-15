@@ -71,7 +71,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     uint256 public drawdownAmount;
 
     // The repayment calculator for this loan.
-    IRepaymentCalculator private repaymentCalculator;
+    IRepaymentCalculator public repaymentCalculator;
 
     /// @notice The unix timestamp due date of next payment.
     uint256 public nextPaymentDue;
@@ -241,10 +241,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     function getNextPayment() public view returns(uint, uint, uint, uint) {
         (
             uint _total, 
-            uint _interest, 
-            uint _principal
+            uint _principal,
+            uint _interest
         ) = repaymentCalculator.getNextPayment(address(this));
-        return (_total, _interest, _principal, nextPaymentDue);
+        return (_total, _principal, _interest, nextPaymentDue);
     }
 
 

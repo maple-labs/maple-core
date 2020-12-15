@@ -2,68 +2,25 @@ const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
 const artpath = '../../contracts/' + network.name + '/';
 
+
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
 const USDCABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
-const MPLAddress = require(artpath + "addresses/MapleToken.address.js");
-const MPLABI = require(artpath + "abis/MapleToken.abi.js");
 const WETHAddress = require(artpath + "addresses/WETH9.address.js");
 const WETHABI = require(artpath + "abis/WETH9.abi.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const WBTCABI = require(artpath + "abis/WBTC.abi.js");
-const LVFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address.js");
-const LVFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
-const FLFAddress = require(artpath + "addresses/FundingLockerFactory.address.js");
-const FLFABI = require(artpath + "abis/FundingLockerFactory.abi.js");
-const GlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
-const GlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
+
 const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
 
 describe("Calculator - Bullet Repayment", function () {
 
-  const BUNK_ADDRESS = "0x0000000000000000000000000000000000000020";
-
-  let DAI,USDC,MPL,WETH,WBTC;
-  let LoanVaultFactory,FundingLockerFactory,CollateralLockerFactory;
-  let Globals,accounts;
+  let WBTC;
+  let accounts;
 
   before(async () => {
     accounts = await ethers.provider.listAccounts();
-    DAI = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(0));
-    DAI_EXT_1 = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(1));
-    DAI_EXT_2 = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(2));
-    USDC = new ethers.Contract(
-      USDCAddress,
-      USDCABI,
-      ethers.provider.getSigner(0)
-    );
-    MPL = new ethers.Contract(MPLAddress, MPLABI, ethers.provider.getSigner(0));
-    WETH = new ethers.Contract(
-      WETHAddress,
-      WETHABI,
-      ethers.provider.getSigner(0)
-    );
-    WBTC = new ethers.Contract(
-      WBTCAddress,
-      WBTCABI,
-      ethers.provider.getSigner(0)
-    );
-    LoanVaultFactory = new ethers.Contract(
-      LVFactoryAddress,
-      LVFactoryABI,
-      ethers.provider.getSigner(0)
-    );
-    FundingLockerFactory = new ethers.Contract(
-      FLFAddress,
-      FLFABI,
-      ethers.provider.getSigner(0)
-    );
-    Globals = new ethers.Contract(
-      GlobalsAddress,
-      GlobalsABI,
-      ethers.provider.getSigner(0)
-    );
   });
 
   let vaultAddress, abstractMinRaise;
@@ -131,7 +88,7 @@ describe("Calculator - Bullet Repayment", function () {
 
     vaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
 
-    DAI = new ethers.Contract(DAIAddress, ERC20ABI, ethers.provider.getSigner(0));
+    DAI_EXT_1 = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(1));
     await DAI_EXT_1.mintSpecial(accounts[1], ABSTRACT_AMOUNT_MIN_RAISE)
     await DAI_EXT_1.approve(vaultAddress, MIN_RAISE)
 
@@ -161,6 +118,12 @@ describe("Calculator - Bullet Repayment", function () {
     const MIN_RAISE = await LoanVault.minRaise();
     const COLLATERAL_REQUIRED = await LoanVault.collateralRequiredForDrawdown(MIN_RAISE);
 
+    WBTC = new ethers.Contract(
+      WBTCAddress,
+      WBTCABI,
+      ethers.provider.getSigner(0)
+    );
+    
     await WBTC.approve(
       vaultAddress,
       BigNumber.from(10).pow(8).mul(Math.round(parseInt(COLLATERAL_REQUIRED["_hex"]) / 10**4)).mul(10000)
@@ -183,10 +146,10 @@ describe("Calculator - Bullet Repayment", function () {
 
     const PAYMENT_INFO = await LoanVault.getNextPayment();
 
-    // console.log(parseInt(PAYMENT_INFO[0]["_hex"])); // Total
-    // console.log(parseInt(PAYMENT_INFO[1]["_hex"])); // Interest
-    // console.log(parseInt(PAYMENT_INFO[2]["_hex"])); // Principal
-    // console.log(parseInt(PAYMENT_INFO[3]["_hex"])); // Due By
+    console.log(parseInt(PAYMENT_INFO[0]["_hex"])); // Total
+    console.log(parseInt(PAYMENT_INFO[1]["_hex"])); // Interest
+    console.log(parseInt(PAYMENT_INFO[2]["_hex"])); // Principal
+    console.log(parseInt(PAYMENT_INFO[3]["_hex"])); // Due By
 
     expect(true);
 
