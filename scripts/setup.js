@@ -14,34 +14,46 @@ const LiquidityPoolFactoryAddress = require(artpath + "addresses/LiquidityPoolFa
 const CollateralLockerFactoryAddress = require(artpath + "addresses/CollateralLockerFactory.address.js");
 const mapleTreasuryAddress = require(artpath + "addresses/MapleTreasury.address.js");
 const FundingLockerFactoryAddress = require(artpath + "addresses/FundingLockerFactory.address.js");
+const ChainLinkFactoryAddress = require(artpath + "addresses/ChainLinkEmulatorFactory.address.js");
+const ChainLinkFactoryABI = require(artpath + "abis/ChainLinkEmulatorFactory.abi.js");
 
+const ChainLinkEmulatorABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 async function main() {
+  ChainLinkFactory = new ethers.Contract(
+    ChainLinkFactoryAddress,
+    ChainLinkFactoryABI,
+    ethers.provider.getSigner(0)
+  );
   
   // Fetch the official Maple balancer pool address.
   BCreator = new ethers.Contract(BCreatorAddress, BCreatorABI, ethers.provider.getSigner(0))
   MapleBPoolAddress = await BCreator.getBPoolAddress(0)
 
-  Globals = new ethers.Contract(
+  mapleGlobals = new ethers.Contract(
     MapleGlobalsAddress, 
     MapleGlobalsABI, 
     ethers.provider.getSigner(0)
   )
 
-  await Globals.setMapleBPool(MapleBPoolAddress);
-  await Globals.setMapleBPoolAssetPair(USDCAddress);
+  await mapleGlobals.setMapleBPool(MapleBPoolAddress);
+  await mapleGlobals.setMapleBPoolAssetPair(USDCAddress);
 
   // Update the MapleGlobals pool delegate whitelist.
   const accounts = await ethers.provider.listAccounts();
 
-  await Globals.setPoolDelegateWhitelist(accounts[0], true);
-  await Globals.setPoolDelegateWhitelist(accounts[1], true);
-  await Globals.setPoolDelegateWhitelist(accounts[2], true);
-  await Globals.setPoolDelegateWhitelist(accounts[3], true);
-  await Globals.setPoolDelegateWhitelist(accounts[4], true);
-  await Globals.setPoolDelegateWhitelist(accounts[5], true);
-  await Globals.setPoolDelegateWhitelist(accounts[6], true);
-  await Globals.setPoolDelegateWhitelist(accounts[7], true);
-  await Globals.setPoolDelegateWhitelist(accounts[8], true);
+  await mapleGlobals.setPoolDelegateWhitelist(accounts[0], true);
+  await mapleGlobals.setPoolDelegateWhitelist(accounts[1], true);
+  await mapleGlobals.setPoolDelegateWhitelist(accounts[2], true);
+  await mapleGlobals.setPoolDelegateWhitelist(accounts[3], true);
+  await mapleGlobals.setPoolDelegateWhitelist(accounts[4], true);
+  await mapleGlobals.setPoolDelegateWhitelist(accounts[5], true);
+  await mapleGlobals.setPoolDelegateWhitelist(accounts[6], true);
+  await mapleGlobals.setPoolDelegateWhitelist(accounts[7], true);
+  await mapleGlobals.setPoolDelegateWhitelist(accounts[8], true);
+
+  const PAIR_ONE = "ETH / USD";
+  const PAIR_TWO = "BTC / USD";
+  const PAIR_THREE = "DAI / USD";
 
   const ETH_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_ONE);
   const BTC_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_TWO);
