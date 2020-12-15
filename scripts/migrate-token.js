@@ -1,17 +1,13 @@
-
 const { deploy } = require("@maplelabs/hardhat-scripts");
-const artpath = '../../contracts/' + network.name + '/';
+const artpath = "../../contracts/" + network.name + "/";
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
 
-
 async function main() {
-
   const mapleToken = await deploy("MapleToken", [
     "MapleToken",
     "MPL",
     USDCAddress,
   ]);
-
 }
 
 main()
