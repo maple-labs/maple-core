@@ -12,14 +12,6 @@ async function main() {
     USDCAddress,
   ]);
 
-  // Governor = accounts[0]
-  const accounts = await ethers.provider.listAccounts();
-
-  const mapleGlobals = await deploy("MapleGlobals", [
-    accounts[0],
-    mapleToken.address,
-  ]);
-
 }
 
 main()

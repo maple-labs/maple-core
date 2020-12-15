@@ -8,23 +8,23 @@ const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const uniswapRouter = require(artpath + "addresses/UniswapV2Router02.address.js");
 const ChainLinkFactoryAddress = require(artpath + "addresses/ChainLinkEmulatorFactory.address.js");
 const ChainLinkFactoryABI = require(artpath + "abis/ChainLinkEmulatorFactory.abi.js");
-
+const MapleTokenAddress = require(artpath + "addresses/MapleGlobals.address.js");
 const ChainLinkEmulatorABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 
 async function main() {
 
-  const mapleToken = await deploy("MapleToken", [
+/*  const mapleToken = await deploy("MapleToken", [
     "MapleToken",
     "MPL",
     USDCAddress,
-  ]);
+  ]);*/
 
   // Governor = accounts[0]
   const accounts = await ethers.provider.listAccounts();
 
   const mapleGlobals = await deploy("MapleGlobals", [
     accounts[0],
-    mapleToken.address,
+    MapleTokenAddress,
   ]);
 
   const StakeLockerFactory = await deploy("StakeLockerFactory");
@@ -38,7 +38,7 @@ async function main() {
   ]);
 
   const mapleTreasury = await deploy("MapleTreasury", [
-    mapleToken.address,
+    MapleTokenAddress,
     USDCAddress,
     uniswapRouter,
     mapleGlobals.address,
