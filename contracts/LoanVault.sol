@@ -244,7 +244,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
     /// @notice Make the next payment for this loan.
     function makePayment() public isState(State.Live) isBorrower {
-        if (block.timestamp < nextPaymentDue) {
+        if (block.timestamp <= nextPaymentDue) {
             (
                 uint _paymentAmount,
                 uint _principal,
@@ -258,45 +258,12 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             principalPaid = principalPaid.add(_principal);
             interestPaid = interestPaid.add(_interest);
         }
-        else if (block.timestamp < nextPaymentDue.add(MapleGlobals.gracePeriod())) {
+        else if (block.timestamp <= nextPaymentDue.add(MapleGlobals.gracePeriod())) {
             // TODO: Handle late payments within grace period.
         }
         else {
             // TODO: Trigger default, or other action as per business requirements.
         }
-    }
-
-    /// @notice Make the next payment for this loan.
-    function claimPayment() public isState(State.Live) isBorrower {
-        if (block.timestamp < nextPaymentDue) {
-            (
-                uint _paymentAmount,
-                uint _principal,
-                uint _interest
-            ) = repaymentCalculator.getNextPayment(address(this));
-            require(
-                IRequestedAsset.transferFrom(msg.sender, address(this), _paymentAmount),
-                "LoanVault::makePayment:ERR_LACK_APPROVAL_OR_BALANCE"
-            ); 
-            principalOwed = principalOwed.sub(_principal);
-            principalPaid = principalPaid.add(_principal);
-            interestPaid = interestPaid.add(_interest);
-        }
-        else if (block.timestamp < nextPaymentDue.add(MapleGlobals.gracePeriod())) {
-            // TODO: Handle late payments within grace period.
-        }
-        else {
-            // TODO: Trigger default, or other action as per business requirements.
-        }
-    }
-
-    /// @notice Make a late payment for this loan.
-    function makeLatePayment() public isState(State.Live) isBorrower {
-        (uint _paymentAmount,,) = repaymentCalculator.getNextPayment(address(this));
-         require(
-            IRequestedAsset.transferFrom(msg.sender, address(this), _paymentAmount),
-            "LoanVault::makePayment:ERR_LACK_APPROVAL_OR_BALANCE"
-        ); 
     }
 
     /// @notice Returns the next payment amounts.
