@@ -7,7 +7,7 @@
     "test:globals": "yarn deploy && hardhat test test/globals-init.js && hardhat test test/globals-set.js && yarn deploy",
     "test:token": "yarn deploy && hardhat test test/mapletoken-basic.js",
     "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.js && hardhat run scripts/publish.js",
+    "deploy": "yarn migrate-token&& yarn migrate",
     "watch": "node scripts/watch.js",
     "accounts": "hardhat accounts",
     "balance": "hardhat balance",
@@ -15,6 +15,8 @@
     "lint": "npx solhint contracts/**/*.sol",
     "pretty": "npx prettier --write contracts/**/*.sol&&npx prettier --write ./{test,scripts}/*.js",
     "coverage": "npx hardhat coverage --network coverage",
+    "migrate-token": "npx hardhat run scripts/migrate-token.js&& hardhat run scripts/publish.js",
+    "migrate": "npx hardhat run scripts/deploy.js&& hardhat run scripts/publish.js",
     "setup": "hardhat run scripts/setup.js"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
