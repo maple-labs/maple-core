@@ -73,11 +73,19 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     /// @notice True when the pool is closed, enabling poolDelegate to withdraw their stake.
     bool public isDefunct;
 
+    /// @notice The fee for stakers.
+    uint public stakingFeeBasisPoints;
+
+    /// @notice The fee for delegates.
+    uint public delegateFeeBasisPoints;
+
     constructor(
         address _liquidityAsset,
         address _stakeAsset,
         address _stakeLockerFactory,
         address _liquidityLockerFactory,
+        uint _stakingFeeBasisPoints,
+        uint _delegateFeeBasisPoints,
         string memory name,
         string memory symbol,
         address _mapleGlobals
@@ -100,6 +108,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         StakeLockerFactory = IStakeLockerFactory(_stakeLockerFactory);
         MapleGlobals = IGlobals(_mapleGlobals);
         poolDelegate = tx.origin;
+        stakingFeeBasisPoints = _stakingFeeBasisPoints;
+        delegateFeeBasisPoints = _delegateFeeBasisPoints;
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLockerAddress = createStakeLocker(_stakeAsset);

@@ -72,12 +72,16 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     // Create DAI pool (these variables could be used in a form).
     let LIQUIDITY_ASSET = DAIAddress; // [DAIAddress, USDCAddress] are 2 options, see Z for more.
     let STAKE_ASSET = MapleBPool;
+    let STAKING_FEE_BASIS_POINTS = 0;
+    let DELEGATE_FEE_BASIS_POINTS = 0;
     let POOL_NAME = "MAPLEALPHA/DAI";
     let POOL_SYMBOL = "LP-DAI-" + INDEX_DAI.toString();
 
     await LiquidityPoolFactory.createLiquidityPool(
       LIQUIDITY_ASSET,
       STAKE_ASSET,
+      STAKING_FEE_BASIS_POINTS,
+      DELEGATE_FEE_BASIS_POINTS,
       POOL_NAME,
       POOL_SYMBOL
     );
@@ -89,12 +93,16 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     // Create USDC pool (these variables could be used in a form).
     LIQUIDITY_ASSET = USDCAddress;
     STAKE_ASSET = MapleBPool;
+    STAKING_FEE_BASIS_POINTS = 0;
+    DELEGATE_FEE_BASIS_POINTS = 0;
     POOL_NAME = "MAPLEALPHA/USDC"
     POOL_SYMBOL = "LP-USDC-" + INDEX_USDC.toString();
 
     await LiquidityPoolFactory.createLiquidityPool(
       LIQUIDITY_ASSET,
       STAKE_ASSET,
+      STAKING_FEE_BASIS_POINTS,
+      DELEGATE_FEE_BASIS_POINTS,
       POOL_NAME,
       POOL_SYMBOL
     );

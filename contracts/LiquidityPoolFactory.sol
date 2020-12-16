@@ -33,6 +33,8 @@ contract LiquidityPoolFactory {
         address indexed _delegate,
         address _liquidityAsset,
         address _stakeAsset,
+        uint _stakingFeeBasisPoints,
+        uint _delegateFeeBasisPoints,
         string name,
         string symbol,
         uint indexed _id
@@ -47,6 +49,8 @@ contract LiquidityPoolFactory {
     function createLiquidityPool(
         address _liquidityAsset,
         address _stakeAsset,
+        uint _stakingFeeBasisPoints,
+        uint _delegateFeeBasisPoints,
         string memory name,
         string memory symbol
     ) public returns (address) {
@@ -59,6 +63,8 @@ contract LiquidityPoolFactory {
             _stakeAsset,
             stakeLockerFactory,
             liquidityLockerFactory,
+            _stakingFeeBasisPoints,
+            _delegateFeeBasisPoints,
             name,
             symbol,
             mapleGlobals
@@ -67,8 +73,10 @@ contract LiquidityPoolFactory {
         _isLiquidityPool[address(lpool)] = true;
         emit PoolCreated(
             msg.sender,
+            _liquidityAsset,
             _stakeAsset,
-            _stakeAsset,
+            _stakingFeeBasisPoints,
+            _delegateFeeBasisPoints,
             name,
             symbol,
             liquidityPoolsCreated
