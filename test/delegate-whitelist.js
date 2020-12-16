@@ -72,6 +72,8 @@ describe("Pool Delegate Whitelist", function () {
 
     const LIQUIDITY_ASSET = DAIAddress;
     const STAKE_ASSET = BPoolAddress;
+    const STAKING_FEE_BASIS_POINTS = 0;
+    const DELEGATE_FEE_BASIS_POINTS = 0;
     const POOL_NAME = "LPDAI";
     const POOL_SYMBOL = "LPDAI";
 
@@ -79,6 +81,8 @@ describe("Pool Delegate Whitelist", function () {
       LiquidityPoolFactory.createLiquidityPool(
         LIQUIDITY_ASSET,
         STAKE_ASSET,
+        STAKING_FEE_BASIS_POINTS,
+        DELEGATE_FEE_BASIS_POINTS,
         POOL_NAME,
         POOL_SYMBOL
       )
@@ -107,12 +111,16 @@ describe("Pool Delegate Whitelist", function () {
 
     const LIQUIDITY_ASSET = USDCAddress;
     const STAKE_ASSET = BPoolAddress;
+    const STAKING_FEE_BASIS_POINTS = 0;
+    const DELEGATE_FEE_BASIS_POINTS = 0;
     const POOL_NAME = "LPDAI";
     const POOL_SYMBOL = "LPDAI";
 
     await LiquidityPoolFactory.createLiquidityPool(
       LIQUIDITY_ASSET,
       STAKE_ASSET,
+      STAKING_FEE_BASIS_POINTS,
+      DELEGATE_FEE_BASIS_POINTS,
       POOL_NAME,
       POOL_SYMBOL
     )
