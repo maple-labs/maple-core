@@ -248,7 +248,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     }
 
     /// @notice Make the next payment for this loan.
-    function makePayment() public isState(State.Live) isBorrower {
+    function makePayment() public isState(State.Active) isBorrower {
         if (block.timestamp <= nextPaymentDue) {
 
             (
