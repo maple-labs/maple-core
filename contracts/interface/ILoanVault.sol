@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.7.0;
 
 interface ILoanVault {
@@ -23,7 +24,9 @@ interface ILoanVault {
     function collateralBipsRatio() external view returns (uint256);
     function fundingPeriodSeconds() external view returns (uint256);
     function loanCreatedTimestamp() external view returns (uint256);
-
+    function principalOwed() external view returns (uint256);
+    function drawdownAmount() external view returns (uint256);
+    
     // Functions
     function fundLoan(uint, address) external;
 

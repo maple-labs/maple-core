@@ -7,13 +7,17 @@
     "test:globals": "yarn deploy && hardhat test test/globals-init.js && hardhat test test/globals-set.js && yarn deploy",
     "test:token": "yarn deploy && hardhat test test/mapletoken-basic.js",
     "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.js && hardhat run scripts/publish.js",
+    "deploy": "yarn migrate-token&& yarn migrate",
     "watch": "node scripts/watch.js",
     "accounts": "hardhat accounts",
     "balance": "hardhat balance",
     "docs": "npx solidity-docgen --solc-module solc -i ./contracts -o ./docs -t ./docs",
     "lint": "npx solhint contracts/**/*.sol",
-    "pretty": "npx prettier --write contracts/**/*.sol&&npx prettier --write ./{test,scripts}/*.js"
+    "pretty": "npx prettier --write contracts/**/*.sol&&npx prettier --write ./{test,scripts}/*.js",
+    "coverage": "npx hardhat coverage --network coverage",
+    "migrate-token": "npx hardhat run scripts/migrate-token.js&& hardhat run scripts/publish.js",
+    "migrate": "npx hardhat run scripts/deploy.js&& hardhat run scripts/publish.js",
+    "setup": "hardhat run scripts/setup.js"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
   "keywords": [
@@ -31,6 +35,7 @@
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "chai": "^4.2.0",
+    "dotenv": "^8.2.0",
     "ethereum-waffle": "^3.1.1",
     "ethers": "^5.0.18",
     "hardhat": "^2.0.0",
@@ -38,9 +43,10 @@
     "husky": "^4.3.0",
     "node-watch": "^0.7.0",
     "prettier": "^2.1.2",
-    "prettier-plugin-solidity": "^1.0.0-alpha.59",
+    "prettier-plugin-solidity": "^1.0.0-beta.1",
     "solhint": "^3.3.1",
-    "solhint-plugin-prettier": "0.0.5"
+    "solhint-plugin-prettier": "0.0.5",
+    "solidity-coverage": "^0.7.12"
   },
   "dependencies": {
     "@maplelabs/hardhat-scripts": "^1.1.0",

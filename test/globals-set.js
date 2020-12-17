@@ -1,8 +1,15 @@
 const { expect, assert, should } = require("chai");
+const artpath = '../../contracts/' + network.name + '/';
 
-const globalAddress = require("../../contracts/localhost/addresses/MapleGlobals.address");
-const gloablABI = require("../../contracts/localhost/abis/MapleGlobals.abi");
-const mapleTokenAddress = require("../../contracts/localhost/addresses/MapleToken.address");
+const globalAddress = require(artpath + "addresses/MapleGlobals.address");
+const gloablABI = require(artpath + "abis/MapleGlobals.abi");
+const mapleTokenAddress = require(artpath + "addresses/MapleToken.address");
+
+const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
+const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
+const WETHAddress = require(artpath + "addresses/WETH9.address.js");
+const OracleABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 
 describe("MapleGlobals.sol Interactions", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -47,9 +54,9 @@ describe("MapleGlobals.sol Interactions", function () {
     const stakeRequiredFetch = await mapleGlobals.stakeAmountRequired();
     expect(stakeRequiredFetch).to.equal(35000);
 
-    await mapleGlobals.setStakeRequired(25000);
+    await mapleGlobals.setStakeRequired(0);
     const stakeRequiredRevert = await mapleGlobals.stakeAmountRequired();
-    expect(stakeRequiredRevert).to.equal(25000);
+    expect(stakeRequiredRevert).to.equal(0);
 
     await mapleGlobals.setUnstakeDelay(1000);
     const unstakeDelayFetch = await mapleGlobals.unstakeDelay();
@@ -106,7 +113,7 @@ describe("MapleGlobals.sol Interactions", function () {
       ethers.provider.getSigner(1)
     );
 
-    await mapleGlobals2.setGovernor(accounts[0]);
+    await mapleGlobals2.setGovernor(accounts[0],{gasLimit: 6000000});
     const governorFetch = await mapleGlobals2.governor();
     expect(governorFetch).to.equal(accounts[0]);
   });
@@ -125,8 +132,40 @@ describe("MapleGlobals.sol Interactions", function () {
     expect(establishmentFeeFetch).to.equal(200);
     expect(treasuryFeeFetch).to.equal(20);
     expect(gracePeriodFetch).to.equal(432000);
-    expect(stakeRequiredFetch).to.equal(25000);
+    expect(stakeRequiredFetch).to.equal(0);
     expect(unstakeDelay).to.equal(7776000);
+  });
+
+  it("test priceFeed data not null", async function () {
+    const ETH_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(WETHAddress);
+    const WBTC_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(WBTCAddress);
+    const DAI_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(DAIAddress);
+    const USDC_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(USDCAddress);
+    ETH_USD = new ethers.Contract(ETH_USD_ORACLE_ADDRESS, OracleABI, ethers.provider.getSigner(0));
+    WBTC_USD = new ethers.Contract(WBTC_USD_ORACLE_ADDRESS, OracleABI, ethers.provider.getSigner(0));
+    DAI_USD = new ethers.Contract(DAI_USD_ORACLE_ADDRESS, OracleABI, ethers.provider.getSigner(0));
+    USDC_USD = new ethers.Contract(USDC_USD_ORACLE_ADDRESS, OracleABI, ethers.provider.getSigner(0));
+    
+    const ETH_USD_PRICE = await ETH_USD.price();
+    const WBTC_USD_PRICE = await WBTC_USD.price();
+    const DAI_USD_PRICE = await DAI_USD.price();
+    const USDC_USD_PRICE = await USDC_USD.price();
+
+    expect(parseInt(ETH_USD_PRICE["_hex"])).to.not.equals(0);
+    expect(parseInt(WBTC_USD_PRICE["_hex"])).to.not.equals(0);
+    expect(parseInt(DAI_USD_PRICE["_hex"])).to.not.equals(0);
+    expect(parseInt(USDC_USD_PRICE["_hex"])).to.not.equals(0);
+
+    const ETH_USD_PRICE_GLOBALS = await mapleGlobals.getPrice(WETHAddress);
+    const WBTC_USD_PRICE_GLOBALS = await mapleGlobals.getPrice(WBTCAddress);
+    const DAI_USD_PRICE_GLOBALS = await mapleGlobals.getPrice(DAIAddress);
+    const USDC_USD_PRICE_GLOBALS = await mapleGlobals.getPrice(USDCAddress);
+
+    expect(parseInt(ETH_USD_PRICE_GLOBALS["_hex"])).to.not.equals(0);
+    expect(parseInt(WBTC_USD_PRICE_GLOBALS["_hex"])).to.not.equals(0);
+    expect(parseInt(DAI_USD_PRICE_GLOBALS["_hex"])).to.not.equals(0);
+    expect(parseInt(USDC_USD_PRICE_GLOBALS["_hex"])).to.not.equals(0);
+
   });
   
 });

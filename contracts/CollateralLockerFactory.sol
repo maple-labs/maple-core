@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.7.0;
 
-import "./LoanVaultCollateralLocker.sol";
+import "./CollateralLocker.sol";
 import "./interface/ILoanVaultFactory.sol";
 
-contract LoanVaultCollateralLockerFactory {
+contract CollateralLockerFactory {
 
     // Mapping of CollateralLocker contracts to the LoanVault it's attached with.
     mapping(address => address) private lockerOwner;
@@ -20,10 +21,10 @@ contract LoanVaultCollateralLockerFactory {
     function newLocker(address _collateralAsset) external returns (address) {
         require(
             !deployedLocker[msg.sender], 
-            "LoanVaultCollateralLockerFactory::newLocker:ERR_MSG_SENDER_ALREADY_DEPLOYED_FUNDING_LOCKER"
+            "CollateralLockerFactory::newLocker:ERR_MSG_SENDER_ALREADY_DEPLOYED_FUNDING_LOCKER"
         );
         deployedLocker[msg.sender] = true;
-        address _collateralLocker = address(new LoanVaultCollateralLocker(_collateralAsset, msg.sender));
+        address _collateralLocker = address(new CollateralLocker(_collateralAsset, msg.sender));
         lockerOwner[_collateralLocker] = msg.sender;
         isLocker[_collateralLocker] = true;
         return _collateralLocker;

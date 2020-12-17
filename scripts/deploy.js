@@ -1,70 +1,66 @@
 const { deploy } = require("@maplelabs/hardhat-scripts");
+const artpath = '../../contracts/' + network.name + '/';
 
-const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
-const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
-const WETHAddress = require("../../contracts/localhost/addresses/WETH9.address.js");
-const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address.js");
-const uniswapRouter = require("../../contracts/localhost/addresses/UniswapV2Router02.address.js");
+const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
+const WETHAddress = require(artpath + "addresses/WETH9.address.js");
+const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
+const uniswapRouter = require(artpath + "addresses/UniswapV2Router02.address.js");
+const ChainLinkFactoryAddress = require(artpath + "addresses/ChainLinkEmulatorFactory.address.js");
+const ChainLinkFactoryABI = require(artpath + "abis/ChainLinkEmulatorFactory.abi.js");
+const MapleTokenAddress = require(artpath + "addresses/MapleToken.address.js");
+const ChainLinkEmulatorABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 
 async function main() {
-  const mapleToken = await deploy("MapleToken", [
+
+/*  const mapleToken = await deploy("MapleToken", [
     "MapleToken",
     "MPL",
     USDCAddress,
-  ]);
+  ]);*/
 
   // Governor = accounts[0]
   const accounts = await ethers.provider.listAccounts();
 
   const mapleGlobals = await deploy("MapleGlobals", [
     accounts[0],
-    mapleToken.address,
+    MapleTokenAddress,
   ]);
 
-  const LPStakeLockerFactory = await deploy("LPStakeLockerFactory");
+  const StakeLockerFactory = await deploy("StakeLockerFactory");
 
-  const liquidAssetLockerFactory = await deploy("LiquidAssetLockerFactory");
+  const LiquidityLockerFactory = await deploy("LiquidityLockerFactory");
 
-  const LPFactory = await deploy("LPFactory");
+  const LiquidityPoolFactory = await deploy("LiquidityPoolFactory", [
+    mapleGlobals.address,
+    StakeLockerFactory.address,
+    LiquidityLockerFactory.address,
+  ]);
 
   const mapleTreasury = await deploy("MapleTreasury", [
-    mapleToken.address,
+    MapleTokenAddress,
     USDCAddress,
     uniswapRouter,
     mapleGlobals.address,
   ]);
 
-  const updateGlobals = await mapleGlobals.setMapleTreasury(
-    mapleTreasury.address
-  );
+  const AmortizationRepaymentCalculator = await deploy("AmortizationRepaymentCalculator");
+  const BulletRepaymentCalculator = await deploy("BulletRepaymentCalculator");
 
-  await mapleGlobals.addCollateralToken(DAIAddress);
-  await mapleGlobals.addBorrowToken(DAIAddress);
-  await mapleGlobals.addCollateralToken(USDCAddress);
-  await mapleGlobals.addBorrowToken(USDCAddress);
-  await mapleGlobals.addCollateralToken(WETHAddress);
-  await mapleGlobals.addBorrowToken(WETHAddress);
-  await mapleGlobals.addCollateralToken(WBTCAddress);
-  await mapleGlobals.addBorrowToken(WBTCAddress);
-
-  // TODO: Create repayment calculators, use bunk ones temporarily.
-  const BUNK_ADDRESS_AMORTIZATION =
-    "0x0000000000000000000000000000000000000001";
-  const BUNK_ADDRESS_BULLET = "0x0000000000000000000000000000000000000002";
-  const updateGlobalsRepaymentCalcAmortization = await mapleGlobals.setInterestStructureCalculator(
+  await mapleGlobals.setInterestStructureCalculator(
     ethers.utils.formatBytes32String("AMORTIZATION"),
-    BUNK_ADDRESS_AMORTIZATION
+    AmortizationRepaymentCalculator.address
   );
-  const updateGlobalsRepaymentCalcBullet = await mapleGlobals.setInterestStructureCalculator(
+  await mapleGlobals.setInterestStructureCalculator(
     ethers.utils.formatBytes32String("BULLET"),
-    BUNK_ADDRESS_BULLET
+    BulletRepaymentCalculator.address
   );
 
   const CollateralLockerFactory = await deploy(
-    "LoanVaultCollateralLockerFactory"
+    "CollateralLockerFactory"
   );
 
-  const FundingLockerFactory = await deploy("LoanVaultFundingLockerFactory");
+  const FundingLockerFactory = await deploy("FundingLockerFactory");
 
   const LVFactory = await deploy("LoanVaultFactory", [
     mapleGlobals.address,
@@ -72,17 +68,7 @@ async function main() {
     CollateralLockerFactory.address,
   ]);
 
-  const updateFundingLockerFactory = await LVFactory.setFundingLockerFactory(
-    FundingLockerFactory.address
-  );
-
-  const updateCollateralLockerFactory = await LVFactory.setCollateralLockerFactory(
-    CollateralLockerFactory.address
-  );
-
-  await mapleGlobals.setLiquidityPoolFactory(LPFactory.address);
-
-  await mapleGlobals.setLoanVaultFactory(LVFactory.address);
+ 
 }
 
 main()

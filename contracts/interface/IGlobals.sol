@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.7.0;
 
 interface IGlobals {
@@ -21,6 +22,12 @@ interface IGlobals {
 
     function isValidCollateral(address) external view returns (bool);
 
+    function mapleBPool() external view returns (address);
+
+    function mapleBPoolAssetPair() external view returns (address);
+
+    function validPoolDelegate(address) external view returns (bool);
+
     function validBorrowTokenAddresses() external view returns (address[] memory);
 
     function validCollateralTokenAddresses() external view returns (address[] memory);
@@ -34,4 +41,6 @@ interface IGlobals {
     function loanVaultFactory() external view returns (address);
 
     function liquidityPoolFactory() external view returns (address);
+
+    function getPrice(address) external view returns (uint);
 }

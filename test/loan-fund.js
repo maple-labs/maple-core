@@ -1,28 +1,24 @@
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
+const artpath = '../../contracts/' + network.name + '/';
 
-const DAIAddress = require("../../contracts/localhost/addresses/MintableTokenDAI.address.js");
-const DAIABI = require("../../contracts/localhost/abis/MintableTokenDAI.abi.js");
-const USDCAddress = require("../../contracts/localhost/addresses/MintableTokenUSDC.address.js");
-const USDCABI = require("../../contracts/localhost/abis/MintableTokenUSDC.abi.js");
-const MPLAddress = require("../../contracts/localhost/addresses/MapleToken.address.js");
-const MPLABI = require("../../contracts/localhost/abis/MapleToken.abi.js");
-const WETHAddress = require("../../contracts/localhost/addresses/WETH9.address.js");
-const WETHABI = require("../../contracts/localhost/abis/WETH9.abi.js");
-const WBTCAddress = require("../../contracts/localhost/addresses/WBTC.address.js");
-const WBTCABI = require("../../contracts/localhost/abis/WBTC.abi.js");
-const LVFactoryAddress = require("../../contracts/localhost/addresses/LoanVaultFactory.address.js");
-const LVFactoryABI = require("../../contracts/localhost/abis/LoanVaultFactory.abi.js");
-const FLFAddress = require("../../contracts/localhost/addresses/LoanVaultFundingLockerFactory.address.js");
-const FLFABI = require("../../contracts/localhost/abis/LoanVaultFundingLockerFactory.abi.js");
-const CLFAddress = require("../../contracts/localhost/addresses/LoanVaultCollateralLockerFactory.address.js");
-const CLFABI = require("../../contracts/localhost/abis/LoanVaultCollateralLockerFactory.abi.js");
-const LALFAddress = require("../../contracts/localhost/addresses/LiquidAssetLockerFactory.address.js");
-const LALFABI = require("../../contracts/localhost/abis/LiquidAssetLockerFactory.abi.js");
-const GlobalsAddress = require("../../contracts/localhost/addresses/MapleGlobals.address.js");
-const GlobalsABI = require("../../contracts/localhost/abis/MapleGlobals.abi.js");
-const LoanVaultABI = require("../../contracts/localhost/abis/LoanVault.abi.js");
-const LoanVaultFundingLockerFactoryAbi = require("../../contracts/localhost/abis/LoanVaultFundingLockerFactory.abi.js");
+const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
+const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
+const USDCABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
+const MPLAddress = require(artpath + "addresses/MapleToken.address.js");
+const MPLABI = require(artpath + "abis/MapleToken.abi.js");
+const WETHAddress = require(artpath + "addresses/WETH9.address.js");
+const WETHABI = require(artpath + "abis/WETH9.abi.js");
+const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
+const WBTCABI = require(artpath + "abis/WBTC.abi.js");
+const LVFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address.js");
+const LVFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
+const FLFAddress = require(artpath + "addresses/FundingLockerFactory.address.js");
+const FLFABI = require(artpath + "abis/FundingLockerFactory.abi.js");
+const GlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
+const GlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
+const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
 
 describe("fundLoan() in LoanVault.sol", function () {
 
@@ -86,11 +82,11 @@ describe("fundLoan() in LoanVault.sol", function () {
     // Note: consider networkVersion=1 interactions w.r.t. async flow
     const preIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
 
-    // 5% APR, 90 Day Term, 30 Day Interval, 1000 DAI, 
+    // 5% APR, 90 Day Term, 30 Day Interval, 1000 DAI, 20% Collateral, 7 Day Funding Period
     await LoanVaultFactory.createLoanVault(
       DAIAddress,
-      WETHAddress,
-      [5000, 90, 30, 1000000000000, 0, 7], 
+      WBTCAddress,
+      [500, 90, 30, BigNumber.from(10).pow(18).mul(1000), 2000, 7], 
       ethers.utils.formatBytes32String('BULLET')
     )
     
@@ -213,6 +209,52 @@ describe("fundLoan() in LoanVault.sol", function () {
       BigNumber.from(10).pow(18).mul(100).toHexString()
     )
 
+  });
+
+  it("test drawdown calculation endpoint", async function () {
+
+    LoanVault = new ethers.Contract(
+      vaultAddress,
+      LoanVaultABI,
+      ethers.provider.getSigner(0)
+    );
+
+    const drawdownAmount_50USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(50)
+    )
+
+    const drawdownAmount_100USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(100)
+    )
+    const drawdownAmount_500USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(500)
+    )
+
+    const drawdownAmount_1000USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(1000)
+    )
+
+    const drawdownAmount_5000USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(5000)
+    )
+    const drawdownAmount_10000USD = await LoanVault.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(18).mul(10000)
+    )
+
+    expect(parseInt(drawdownAmount_50USD["_hex"])).to.not.equals(0)
+    expect(parseInt(drawdownAmount_100USD["_hex"])).to.not.equals(0)
+    expect(parseInt(drawdownAmount_500USD["_hex"])).to.not.equals(0)
+    expect(parseInt(drawdownAmount_1000USD["_hex"])).to.not.equals(0)
+    expect(parseInt(drawdownAmount_5000USD["_hex"])).to.not.equals(0)
+    expect(parseInt(drawdownAmount_10000USD["_hex"])).to.not.equals(0)
+
+
+  });
+
+  it("test drawdown functionality", async function () {
+
+    // TODO: Add in this test next.
+    
   });
 
 });

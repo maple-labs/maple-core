@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.7.0;
 
 import "./LoanVault.sol";
 import "./interface/IGlobals.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./library/TokenUUID.sol";
 
 /// @title LoanVaultFactory instantiates LoanVault contracts.
 contract LoanVaultFactory {
@@ -19,10 +21,10 @@ contract LoanVaultFactory {
     /// @notice The MapleGlobals.sol contract.
     address public mapleGlobals;
     
-    /// @notice The LoanVaultFundingLockerFactory to use for this particular LoanVaultFactory.
+    /// @notice The FundingLockerFactory to use for this LoanVaultFactory.
     address public fundingLockerFactory;
     
-    /// @notice The LoanVaultCollateralLockerFactory to use for this particular LoanVaultFactory.
+    /// @notice The CollateralLockerFactory to use for this LoanVaultFactory.
     address public collateralLockerFactory;
 
     constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) {
@@ -40,10 +42,10 @@ contract LoanVaultFactory {
     /// @notice Fired when user calls createLoanVault()
     event LoanVaultCreated(
         uint _loanVaultID,
+		address _loanVaultAddress,
         address indexed _borrower,
         address indexed _assetRequested,
         address _assetCollateral,
-		address _loanVaultAddress,
         uint[6] _specifications,
         bytes32 _interestStructure
     );
@@ -77,6 +79,8 @@ contract LoanVaultFactory {
         );
         
         // Deploy loan vault contract.
+	    string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated+1);
+
         LoanVault vault = new LoanVault(
             _assetRequested,
             _assetCollateral,
@@ -84,7 +88,8 @@ contract LoanVaultFactory {
             collateralLockerFactory,
             mapleGlobals,
             _specifications,
-            IGlobals(mapleGlobals).interestStructureCalculators(_interestStructure)
+            IGlobals(mapleGlobals).interestStructureCalculators(_interestStructure),
+	        _tUUID
         );
 
         // Update LoanVaultFactory identification mappings.
@@ -94,10 +99,10 @@ contract LoanVaultFactory {
         // Emit event.
         emit LoanVaultCreated(
             loanVaultsCreated,
+            address(vault),
             msg.sender,
             _assetRequested,
             _assetCollateral,
-            address(vault),
             _specifications,
             _interestStructure
         );

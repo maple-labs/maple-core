@@ -1,4 +1,9 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.7.0;
+pragma experimental ABIEncoderV2;
+
+import "./interface/IPriceFeed.sol";
+import "./interface/IERC20Details.sol";
 
 contract MapleGlobals {
     /// @return governor is responsible for management of global Maple variables.
@@ -19,10 +24,16 @@ contract MapleGlobals {
     /// @return Represents the amount of time a borrower has to make a missed payment before a default can be triggered.
     uint256 public gracePeriod;
 
-    /// @return Represents the USD value a pool delegate must stake (in BPTs) when insantiating a liquidity pool.
+    /// @return Official balancer pool for staking.
+    address public mapleBPool;
+
+    /// @return Asset paired 50/50 with MPL in balancer pool (e.g. USDC).
+    address public mapleBPoolAssetPair;
+
+    /// @return Represents the mapleBPoolSwapOutAsset value (in wei) required when instantiating a liquidity pool.
     uint256 public stakeAmountRequired;
 
-    /// @return Parameter for unstake delay, with relation to LiquidityPoolStakedAssetLocker withdrawals.
+    /// @return Parameter for unstake delay, with relation to StakeLocker withdrawals.
     uint256 public unstakeDelay;
 
     /// @return Amount of time to allow borrower to drawdown on their loan after funding period ends.
@@ -32,7 +43,12 @@ contract MapleGlobals {
     mapping(address => bool) public isValidBorrowToken;
     mapping(address => bool) public isValidCollateral;
     address[] public validBorrowTokenAddresses;
+    string[] public validBorrowTokenSymbols;
     address[] public validCollateralTokenAddresses;
+    string[] public validCollateralTokenSymbols;
+
+    // Mapping of asset, to the associated pricefeed.
+    mapping(address => address) public tokenPriceFeed;
 
     // Mapping of bytes32 interest structure IDs to address of the corresponding interestStructureCalculators.
     mapping(bytes32 => address) public interestStructureCalculators;
@@ -41,6 +57,9 @@ contract MapleGlobals {
     // @return primary factory addresses
     address public loanVaultFactory;
     address public liquidityPoolFactory;
+
+    /// @return Validation data structure for pool delegates (prevent invalid addresses from creating pools).
+    mapping(address => bool) public validPoolDelegate;
 
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
@@ -59,9 +78,23 @@ contract MapleGlobals {
         establishmentFeeBasisPoints = 200;
         treasuryFeeBasisPoints = 20;
         gracePeriod = 5 days;
-        stakeAmountRequired = 25000;
+        stakeAmountRequired = 0;
         unstakeDelay = 90 days;
         drawdownGracePeriod = 1 days;
+    }
+
+    function getValidTokens() view public returns(
+        string[] memory _validBorrowTokenSymbols,
+        address[] memory _validBorrowTokenAddresses,
+        string[] memory _validCollateralTokenSymbols,
+        address[] memory _validCollateralTokenAddresses
+    ) {
+        return (
+            validBorrowTokenSymbols,
+            validBorrowTokenAddresses,
+            validCollateralTokenSymbols,
+            validCollateralTokenAddresses
+        );
     }
 
     function setLiquidityPoolFactory(address _factory) external isGovernor {
@@ -72,6 +105,26 @@ contract MapleGlobals {
         loanVaultFactory = _factory;
     }
 
+    function setMapleBPool(address _pool) external isGovernor {
+        mapleBPool = _pool;
+    }
+
+    function setPoolDelegateWhitelist(address _delegate, bool _validity) external isGovernor {
+        validPoolDelegate[_delegate] = _validity;
+    }
+
+    function setMapleBPoolAssetPair(address _pair) external isGovernor {
+        mapleBPoolAssetPair = _pair;
+    }
+
+    function assignPriceFeed(address _asset, address _oracle) external isGovernor {
+        tokenPriceFeed[_asset] = _oracle;
+    }
+
+    function getPrice(address _asset) external view returns(uint) {
+        return IPriceFeed(tokenPriceFeed[_asset]).price();
+    }
+
     /**
         @notice Governor can add a valid token, used as collateral.
         @param _token Address of the valid token.
@@ -80,6 +133,7 @@ contract MapleGlobals {
         require(!isValidCollateral[_token], "MapleGloblas::addCollateralToken:ERR_ALREADY_ADDED");
         isValidCollateral[_token] = true;
         validCollateralTokenAddresses.push(_token);
+        validCollateralTokenSymbols.push(IERC20Details(_token).symbol());
     }
 
     /**
@@ -90,6 +144,7 @@ contract MapleGlobals {
         require(!isValidBorrowToken[_token], "MapleGloblas::addBorrowTokens:ERR_ALREADY_ADDED");
         isValidBorrowToken[_token] = true;
         validBorrowTokenAddresses.push(_token);
+        validBorrowTokenSymbols.push(IERC20Details(_token).symbol());
     }
 
     /**
