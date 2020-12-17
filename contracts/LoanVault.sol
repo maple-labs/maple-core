@@ -8,6 +8,7 @@ import "./Token/FundsDistributionToken.sol";
 import "./interface/IGlobals.sol";
 import "./interface/IFundingLocker.sol";
 import "./interface/IFundingLockerFactory.sol";
+import "./interface/ICollateralLocker.sol";
 import "./interface/ICollateralLockerFactory.sol";
 import "./interface/IERC20Details.sol";
 import "./interface/IRepaymentCalculator.sol";
@@ -70,8 +71,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     // Accounting variables.
     uint256 public principalPaid;
     uint256 public interestPaid;
-    mapping(address => uint) principalClaimed;
-    mapping(address => uint) interestClaimed;
 
     /// @notice The amount the borrower drew down, historical reference for calculators.
     uint256 public drawdownAmount;
@@ -87,7 +86,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
     // Live = Created
     // Active = Drawndown
-    enum State { Live, Active }
+    enum State { Live, Active, Matured }
 
     modifier isState(State _state) {
         require(loanState == _state, "LoanVault::ERR_FAIL_STATE_CHECK");
@@ -203,6 +202,12 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         return IRequestedAsset.balanceOf(fundingLocker);
     }
 
+    /// @notice Returns the balance of _collateralAsset in the CollateralLocker.
+    /// @return The balance of CollateralLocker.
+    function getCollateralLockerBalance() view public returns(uint) {
+        return ICollateralAsset.balanceOf(collateralLocker);
+    }
+
     /// @notice End funding period by claiming funds, posting collateral, transitioning loanState from Funding to Active.
     /// @param _drawdownAmount Amount of fundingAsset borrower will claim, remainder is returned to LoanVault.
     function drawdown(uint _drawdownAmount) external isState(State.Live) isBorrower {
@@ -245,24 +250,36 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @notice Make the next payment for this loan.
     function makePayment() public isState(State.Live) isBorrower {
         if (block.timestamp <= nextPaymentDue) {
+
             (
                 uint _paymentAmount,
                 uint _principal,
                 uint _interest
             ) = repaymentCalculator.getNextPayment(address(this));
+
             require(
                 IRequestedAsset.transferFrom(msg.sender, address(this), _paymentAmount),
                 "LoanVault::makePayment:ERR_LACK_APPROVAL_OR_BALANCE"
-            ); 
+            );
+
+            // Update internal accounting variables.
             principalOwed = principalOwed.sub(_principal);
             principalPaid = principalPaid.add(_principal);
             interestPaid = interestPaid.add(_interest);
+            nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
+            numberOfPayments--;
         }
         else if (block.timestamp <= nextPaymentDue.add(MapleGlobals.gracePeriod())) {
             // TODO: Handle late payments within grace period.
         }
         else {
             // TODO: Trigger default, or other action as per business requirements.
+        }
+
+        // Handle final payment.
+        if (numberOfPayments == 0) {
+            loanState = State.Matured;
+            ICollateralLocker(collateralLocker).pull(borrower, getCollateralLockerBalance());
         }
     }
 
