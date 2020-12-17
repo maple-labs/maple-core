@@ -275,7 +275,6 @@ describe("Calculator - Amortization Repayment", function () {
       ethers.provider.getSigner(0) // getSigner(0) == Borrower
     );
 
-
     // Fetch collateral amount required and approve loan vault.
     const MIN_RAISE_ONCHAIN = await LoanVault.minRaise();
     const COLLATERAL_REQUIRED = await LoanVault.collateralRequiredForDrawdown(MIN_RAISE_ONCHAIN);
