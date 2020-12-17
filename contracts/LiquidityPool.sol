@@ -89,7 +89,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         address _stakeAsset,
         address _stakeLockerFactory,
         address _liquidityLockerFactory,
-	address _loanTokenLockerFactory;
+        address _loanTokenLockerFactory,
         uint256 _stakingFeeBasisPoints,
         uint256 _delegateFeeBasisPoints,
         string memory name,
@@ -115,6 +115,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         poolDelegate = tx.origin;
         stakingFeeBasisPoints = _stakingFeeBasisPoints;
         delegateFeeBasisPoints = _delegateFeeBasisPoints;
+        loanTokenLockerFactory = ILoanTokenLockerFactory(_loanTokenLockerFactory);
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLockerAddress = createStakeLocker(_stakeAsset);
