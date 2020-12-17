@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.7.0;
 import "./LoanTokenLocker.sol";
 
@@ -8,16 +9,19 @@ contract LoanTokenLockerFactory {
     //Mapping to tell us if an address is a locker
     mapping(address => bool) private isLocker;
 
+    address[] public lockers;
+
     // @notice Creates a new locker.
     // @param _liquidAsset The address of the dividend token, also the primary investment asset of the LP.
     // @return The address of the newly created locker.
     // TODO: Consider whether this needs to be external or public.
     //TODO ADD MODIFIER LETTING ONLY LIQUIDITY POOLS RUN THIS (not critical, but good)
-    function newLocker() external returns (address) {
+    function newLocker(address _loanToken) external returns (address) {
         address _LPaddy = address(msg.sender);
-        address _tokenLocker = address(new LoanTokenLocker(_LPaddy));
+        address _tokenLocker = address(new LoanTokenLocker(_loanToken, _LPaddy));
         lockerPool[_tokenLocker] = _LPaddy;
         isLocker[_tokenLocker] = true;
+        lockers.push(_tokenLocker);
         return _tokenLocker;
     }
 

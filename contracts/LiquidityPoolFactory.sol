@@ -5,7 +5,6 @@ import "./LiquidityPool.sol";
 import "./interface/IGlobals.sol";
 
 contract LiquidityPoolFactory {
-
     // TODO: Consider adjusting LiquidityPools mapping to an array.
     // Mappings for liquidity pool contracts, and their validation.
     mapping(uint256 => address) private _liquidityPools;
@@ -16,28 +15,36 @@ contract LiquidityPoolFactory {
 
     /// @notice The MapleGlobals.sol contract.
     address public mapleGlobals;
-    
+
     /// @notice The StakeLockerFactory to use for this LiquidityPoolFactory.
     address public stakeLockerFactory;
-    
+
     /// @notice The LiquidityLockerFactory to use for this LiquidityPoolFactory.
     address public liquidityLockerFactory;
 
-    constructor(address _mapleGlobals, address _stakeLockerFactory, address _liquidityLockerFactory) {
+    address public loanTokenLockerFactory;
+
+    constructor(
+        address _mapleGlobals,
+        address _stakeLockerFactory,
+        address _liquidityLockerFactory,
+        address _loanTokenLockerFactory
+    ) {
         mapleGlobals = _mapleGlobals;
         stakeLockerFactory = _stakeLockerFactory;
         liquidityLockerFactory = _liquidityLockerFactory;
+        loanTokenLockerFactory = _loanTokenLockerFactory;
     }
 
     event PoolCreated(
         address indexed _delegate,
         address _liquidityAsset,
         address _stakeAsset,
-        uint _stakingFeeBasisPoints,
-        uint _delegateFeeBasisPoints,
+        uint256 _stakingFeeBasisPoints,
+        uint256 _delegateFeeBasisPoints,
         string name,
         string symbol,
-        uint indexed _id
+        uint256 indexed _id
     );
 
     /// @notice Instantiates a liquidity pool contract on-chain.
@@ -49,8 +56,8 @@ contract LiquidityPoolFactory {
     function createLiquidityPool(
         address _liquidityAsset,
         address _stakeAsset,
-        uint _stakingFeeBasisPoints,
-        uint _delegateFeeBasisPoints,
+        uint256 _stakingFeeBasisPoints,
+        uint256 _delegateFeeBasisPoints,
         string memory name,
         string memory symbol
     ) public returns (address) {
@@ -58,17 +65,19 @@ contract LiquidityPoolFactory {
             IGlobals(mapleGlobals).validPoolDelegate(msg.sender),
             "LiquidityPoolFactory::createLiquidityPool:ERR_MSG_SENDER_NOT_WHITELISTED"
         );
-        LiquidityPool lpool = new LiquidityPool(
-            _liquidityAsset,
-            _stakeAsset,
-            stakeLockerFactory,
-            liquidityLockerFactory,
-            _stakingFeeBasisPoints,
-            _delegateFeeBasisPoints,
-            name,
-            symbol,
-            mapleGlobals
-        );
+        LiquidityPool lpool =
+            new LiquidityPool(
+                _liquidityAsset,
+                _stakeAsset,
+                stakeLockerFactory,
+                liquidityLockerFactory,
+                loanTokenLockerFactory,
+                _stakingFeeBasisPoints,
+                _delegateFeeBasisPoints,
+                name,
+                symbol,
+                mapleGlobals
+            );
         _liquidityPools[liquidityPoolsCreated] = address(lpool);
         _isLiquidityPool[address(lpool)] = true;
         emit PoolCreated(
