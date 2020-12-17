@@ -95,4 +95,9 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
   it("should not create new locker when one exists", async () => {
     expect(await LP.loanTokenToLocker(LVAddress)).to.equal(LoanTokenLocker);
   });
+  it("cant fund a random address", async () => {
+    await expect(LP.fundLoan(accounts[5], 10)).to.be.revertedWith(
+      "LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID"
+    );
+  });
 });
