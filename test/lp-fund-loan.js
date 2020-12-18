@@ -75,7 +75,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       "LiquidityPool:ERR_MSG_SENDER_NOT_DELEGATE"
     );
   });
-  it("Check that loan tokens go to their respective locker, and new lockers are not created when one exists", async function () {
+  it("Check that loan tokens go to their respective locker", async function () {
     LP = new ethers.Contract(
       LPaddress,
       LiquidityPoolABI,
@@ -93,6 +93,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     expect(bal2 - bal1 == 10);
   });
   it("should not create new locker when one exists", async () => {
+    await LP.fundLoan(LVAddress, 10);
     expect(await LP.loanTokenToLocker(LVAddress)).to.equal(LoanTokenLocker);
   });
   it("cant fund a random address", async () => {
