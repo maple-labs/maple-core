@@ -44,8 +44,6 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     // An interface for the MapleGlobals contract.
     IGlobals private MapleGlobals;
 
-    ILoanTokenLockerFactory private loanTokenLockerFactory;
-
     /// @notice The amount of LiquidityAsset tokens (dividends) currently present and accounted for in this contract.
     uint256 public fundsTokenBalance;
 
@@ -89,7 +87,6 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         address _stakeAsset,
         address _stakeLockerFactory,
         address _liquidityLockerFactory,
-        address _loanTokenLockerFactory,
         uint256 _stakingFeeBasisPoints,
         uint256 _delegateFeeBasisPoints,
         string memory name,
@@ -115,7 +112,6 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         poolDelegate = tx.origin;
         stakingFeeBasisPoints = _stakingFeeBasisPoints;
         delegateFeeBasisPoints = _delegateFeeBasisPoints;
-        loanTokenLockerFactory = ILoanTokenLockerFactory(_loanTokenLockerFactory);
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLockerAddress = createStakeLocker(_stakeAsset);
@@ -205,13 +201,18 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         _mint(msg.sender, _mintAmt);
     }
 
-    function fundLoan(address _loanVault, uint256 _amt) external notDefunct finalized isDelegate {
+    function fundLoan(
+        address _loanVault,
+        address _loanTokenLockerFactory,
+        uint256 _amt
+    ) external notDefunct finalized isDelegate {
         require(
             ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault),
             "LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID"
         );
         if (loanTokenToLocker[_loanVault] == address(0)) {
-            loanTokenToLocker[_loanVault] = loanTokenLockerFactory.newLocker(_loanVault);
+            loanTokenToLocker[_loanVault] = ILoanTokenLockerFactory(_loanTokenLockerFactory)
+                .newLocker(_loanVault);
         }
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
             _loanVault,

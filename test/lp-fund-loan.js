@@ -14,6 +14,8 @@ const MPLGlobalsAddress = require(artpath +
 const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
 const MapleGlobalsAddress = require(artpath +
   "addresses/MapleGlobals.address.js");
+const LoanTokenLockerFactoryAddress = require(artpath +
+  "addresses/LoanTokenLockerFactory.address.js");
 
 const LPFactoryABI = require(artpath + "abis/LiquidityPoolFactory.abi.js");
 const LPFactoryAddress = require(artpath +
@@ -61,7 +63,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     LVAddress = await LVFactory.getLoanVault(
       (await LVFactory.loanVaultsCreated()) - 1
     );
-    await LP.fundLoan(LVAddress, 10);
+    await LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10);
     LoanTokenLocker = await LP.loanTokenToLocker(LVAddress);
   });
   it("make sure random guy cant call fundLoan in LP", async function () {
@@ -71,9 +73,9 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       ethers.provider.getSigner(1)
     );
 
-    await expect(LP.fundLoan(LVAddress, 10)).to.be.revertedWith(
-      "LiquidityPool:ERR_MSG_SENDER_NOT_DELEGATE"
-    );
+    await expect(
+      LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10)
+    ).to.be.revertedWith("LiquidityPool:ERR_MSG_SENDER_NOT_DELEGATE");
   });
   it("Check that loan tokens go to their respective locker", async function () {
     LP = new ethers.Contract(
@@ -88,17 +90,17 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       ethers.provider.getSigner(0)
     );
     const bal1 = await LoanVault.balanceOf(LoanTokenLocker);
-    await LP.fundLoan(LVAddress, 10);
+    await LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10);
     const bal2 = await LoanVault.balanceOf(LoanTokenLocker);
     expect(bal2 - bal1 == 10);
   });
   it("should not create new locker when one exists", async () => {
-    await LP.fundLoan(LVAddress, 10);
+    await LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10);
     expect(await LP.loanTokenToLocker(LVAddress)).to.equal(LoanTokenLocker);
   });
   it("cant fund a random address", async () => {
-    await expect(LP.fundLoan(accounts[5], 10)).to.be.revertedWith(
-      "LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID"
-    );
+    await expect(
+      LP.fundLoan(accounts[5], LoanTokenLockerFactoryAddress, 10)
+    ).to.be.revertedWith("LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID");
   });
 });

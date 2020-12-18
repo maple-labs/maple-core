@@ -39,7 +39,6 @@ async function main() {
     mapleGlobals.address,
     StakeLockerFactory.address,
     LiquidityLockerFactory.address,
-    LoanTokenLockerFactory.address,
   ]);
 
   const mapleTreasury = await deploy("MapleTreasury", [

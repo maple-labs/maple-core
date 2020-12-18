@@ -22,18 +22,14 @@ contract LiquidityPoolFactory {
     /// @notice The LiquidityLockerFactory to use for this LiquidityPoolFactory.
     address public liquidityLockerFactory;
 
-    address public loanTokenLockerFactory;
-
     constructor(
         address _mapleGlobals,
         address _stakeLockerFactory,
-        address _liquidityLockerFactory,
-        address _loanTokenLockerFactory
+        address _liquidityLockerFactory
     ) {
         mapleGlobals = _mapleGlobals;
         stakeLockerFactory = _stakeLockerFactory;
         liquidityLockerFactory = _liquidityLockerFactory;
-        loanTokenLockerFactory = _loanTokenLockerFactory;
     }
 
     event PoolCreated(
@@ -71,7 +67,6 @@ contract LiquidityPoolFactory {
                 _stakeAsset,
                 stakeLockerFactory,
                 liquidityLockerFactory,
-                loanTokenLockerFactory,
                 _stakingFeeBasisPoints,
                 _delegateFeeBasisPoints,
                 name,
