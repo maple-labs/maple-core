@@ -179,7 +179,7 @@ describe("Calculator - Amortization Repayment", function () {
   });
 
 
-  xit("D - Test calculator for non 18-decimal precision, USDC(6)", async function () {
+  it("D - Test calculator for non 18-decimal precision, USDC(6)", async function () {
 
     // TODO: Identify the error raised in this test.
     
@@ -263,6 +263,7 @@ describe("Calculator - Amortization Repayment", function () {
       ethers.provider.getSigner(0) // getSigner(0) == Borrower
     );
 
+
     // Fetch collateral amount required and approve loan vault.
     const MIN_RAISE_ONCHAIN = await LoanVault.minRaise();
     const COLLATERAL_REQUIRED = await LoanVault.collateralRequiredForDrawdown(MIN_RAISE_ONCHAIN);
@@ -277,7 +278,6 @@ describe("Calculator - Amortization Repayment", function () {
       vaultAddress,
       BigNumber.from(10).pow(8).mul(Math.round(parseInt(COLLATERAL_REQUIRED["_hex"]) / 10**4)).mul(10000)
     )
-
     // Drawdown for the MIN_RAISE, pow(6) is USDC decimal precision
     await LoanVault.drawdown(
       MIN_RAISE
