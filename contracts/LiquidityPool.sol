@@ -15,18 +15,19 @@ import "./interface/IStakeLocker.sol";
 import "./interface/IStakeLockerFactory.sol";
 import "./interface/ILiquidityLocker.sol";
 import "./interface/ILiquidityLockerFactory.sol";
-import "hardhat/console.sol";
+import "./interface/ILoanTokenLockerFactory.sol";
+
+//import "hardhat/console.sol";
 
 // TODO: Implement the withdraw() function, so investors can withdraw LiquidityAsset from LP.
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
 /// @title LiquidityPool is the core contract for liquidity pools.
 contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
-
     using SafeMathInt for int256;
     using SignedSafeMath for int256;
     using SafeMath for uint256;
-    
+
     // An interface for this contract's FundsDistributionToken, stored in two separate variables.
     IERC20 private ILiquidityAsset;
     IERC20 private fundsToken;
@@ -74,23 +75,24 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     bool public isDefunct;
 
     /// @notice The fee for stakers.
-    uint public stakingFeeBasisPoints;
+    uint256 public stakingFeeBasisPoints;
 
     /// @notice The fee for delegates.
-    uint public delegateFeeBasisPoints;
+    uint256 public delegateFeeBasisPoints;
+
+    mapping(address => address) public loanTokenToLocker;
 
     constructor(
         address _liquidityAsset,
         address _stakeAsset,
         address _stakeLockerFactory,
         address _liquidityLockerFactory,
-        uint _stakingFeeBasisPoints,
-        uint _delegateFeeBasisPoints,
+        uint256 _stakingFeeBasisPoints,
+        uint256 _delegateFeeBasisPoints,
         string memory name,
         string memory symbol,
         address _mapleGlobals
     ) FundsDistributionToken(name, symbol) {
-
         require(
             address(_liquidityAsset) != address(0),
             "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
@@ -116,7 +118,6 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         liquidityLockerAddress = address(
             ILiquidityLockerFactory(_liquidityLockerFactory).newLocker(liquidityAsset)
         );
-
     }
 
     modifier finalized() {
@@ -136,13 +137,13 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     /// @param _stakeAsset Address of the asset used for staking.
     function createStakeLocker(address _stakeAsset) private returns (address) {
         require(
-            IBPool(_stakeAsset).isBound(MapleGlobals.mapleToken()) && IBPool(_stakeAsset).isFinalized(),
-                "LiquidityPool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
+            IBPool(_stakeAsset).isBound(MapleGlobals.mapleToken()) &&
+                IBPool(_stakeAsset).isFinalized(),
+            "LiquidityPool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
         );
-        console.log(_stakeAsset);
-        address _stakeLocker = StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
+        address _stakeLocker =
+            StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
         StakeLocker = IStakeLocker(_stakeLocker);
-        console.log(_stakeLocker);
         return _stakeLocker;
     }
 
@@ -150,8 +151,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
      * @notice Confirm poolDelegate's stake amount held in StakeLocker and finalize this LiquidityPool.
      */
     function finalize() public {
-        (,,bool _stakePresent,,) = getInitialStakeRequirements();
-        require(_stakePresent,"LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE");
+        (, , bool _stakePresent, , ) = getInitialStakeRequirements();
+        require(_stakePresent, "LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE");
         isFinalized = true;
         StakeLocker.finalizeLP();
     }
@@ -164,19 +165,24 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         @return uint, [3] = Amount of pool shares required.
         @return uint, [4] = Amount of pool shares present.
     */
-    function getInitialStakeRequirements() public view returns(uint, uint, bool, uint, uint) {
+    function getInitialStakeRequirements()
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            bool,
+            uint256,
+            uint256
+        )
+    {
         address pool = MapleGlobals.mapleBPool();
         address pair = MapleGlobals.mapleBPoolAssetPair();
         uint256 minStake = MapleGlobals.stakeAmountRequired();
 
         // TODO: Resolve the dissonance between poolSharesRequired / minstake / getSwapOutValue
-        (uint _poolAmountInRequired, uint _poolAmountPresent) = CalcBPool.getPoolSharesRequired(
-            pool, 
-            pair, 
-            poolDelegate, 
-            stakeLockerAddress, 
-            minStake
-        );
+        (uint256 _poolAmountInRequired, uint256 _poolAmountPresent) =
+            CalcBPool.getPoolSharesRequired(pool, pair, poolDelegate, stakeLockerAddress, minStake);
         return (
             minStake,
             CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress),
@@ -195,12 +201,24 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         _mint(msg.sender, _mintAmt);
     }
 
-    function fundLoan(address _loanVault, uint256 _amt) external notDefunct finalized isDelegate {
+    function fundLoan(
+        address _loanVault,
+        address _loanTokenLockerFactory,
+        uint256 _amt
+    ) external notDefunct finalized isDelegate {
         require(
             ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault),
             "LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID"
         );
-        ILiquidityLocker(liquidityLockerAddress).fundLoan(_loanVault, _amt);
+        if (loanTokenToLocker[_loanVault] == address(0)) {
+            loanTokenToLocker[_loanVault] = ILoanTokenLockerFactory(_loanTokenLockerFactory)
+                .newLocker(_loanVault);
+        }
+        ILiquidityLocker(liquidityLockerAddress).fundLoan(
+            _loanVault,
+            loanTokenToLocker[_loanVault],
+            _amt
+        );
     }
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
@@ -217,7 +235,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         return _out;
     }
 
-    // TODO: Optimize FDT2liq and liq2FDT 
+    // TODO: Optimize FDT2liq and liq2FDT
     // TODO: Consider removing the one below if not being used after withdraw() is implemented.
     function FDT2liq(uint256 _amt) internal view returns (uint256 _out) {
         if (liquidityAssetDecimals > 18) {

@@ -12,17 +12,17 @@ contract LiquidityLocker {
     address public liquidityAsset;
 
     /// @notice The LiquidityPool that owns this LiquidityLocker, for authorization purposes.
-    address public immutable owner;
+    address public immutable ownerLP;
 
     // TODO: Consider checking if the _liquidityPool (owner) is a valid LiquidityPool via LPFactory.
     constructor(address _liquidityAsset, address _liquidityPool) {
         liquidityAsset = _liquidityAsset;
-        owner = _liquidityPool;
+        ownerLP = _liquidityPool;
         ILiquidityAsset = IERC20(_liquidityAsset);
     }
     
     modifier isOwner() {
-        require(msg.sender == owner, "LiquidityLocker:ERR_MSG_SENDER_NOT_OWNER");
+        require(msg.sender == ownerLP, "LiquidityLocker:ERR_MSG_SENDER_NOT_OWNER");
         _;
     }
 
@@ -39,8 +39,8 @@ contract LiquidityLocker {
     /// @notice Fund a particular loan using available LiquidityAsset.
     /// @param _loanVault The address of the LoanVault to fund.
     /// @param _amt The amount of LiquidityAsset to fund.
-    function fundLoan(address _loanVault, uint256 _amt) external isOwner {
+    function fundLoan(address _loanVault,address _loanTokenLocker, uint256 _amt) external isOwner {
         ILiquidityAsset.approve(_loanVault, _amt);
-        ILoanVault(_loanVault).fundLoan(_amt, owner);
+        ILoanVault(_loanVault).fundLoan(_amt, _loanTokenLocker);
     }
 }
