@@ -34,6 +34,10 @@ interface IGlobals {
 
     function interestStructureCalculators(bytes32) external view returns (address);
 
+    function lateFeeCalculators(bytes32) external view returns (address);
+
+    function premiumCalculators(bytes32) external view returns (address);
+
     function validInterestStructures() external view returns (bytes32[] memory);
 
     function unstakeDelay() external view returns (uint256);

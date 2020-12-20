@@ -12,6 +12,8 @@ import "./interface/ICollateralLocker.sol";
 import "./interface/ICollateralLockerFactory.sol";
 import "./interface/IERC20Details.sol";
 import "./interface/IRepaymentCalculator.sol";
+import "./interface/ILateFeeCalculator.sol";
+import "./interface/IPremiumCalculator.sol";
 
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
@@ -62,9 +64,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     uint256 public fundingPeriodSeconds;
     uint256 public loanCreatedTimestamp;
 
-    /// @notice The premium calculator for this loan.
-    address public premiumCalculator;
-
     /// @notice The principal owed (initially the drawdown amount).
     uint256 public principalOwed;
 
@@ -77,6 +76,12 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
     // The repayment calculator for this loan.
     IRepaymentCalculator public repaymentCalculator;
+
+    // The late fee calculator for this loan.
+    ILateFeeCalculator public lateFeeCalculator;
+
+    // The premium calculator for this loan.
+    IPremiumCalculator public premiumCalculator;
 
     /// @notice The unix timestamp due date of next payment.
     uint256 public nextPaymentDue;
@@ -114,7 +119,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     ///        _specifications[3] = MIN_RAISE
     ///        _specifications[4] = COLLATERAL_BIPS_RATIO
     ///        _specifications[5] = FUNDING_PERIOD_DAYS
-    /// @param _repaymentCalculator The calculator used for interest and principal repayment calculations.
+    /// @param _calculators The calculators used for the loan.
+    ///        _calculators[0] = Repayment Calculator
+    ///        _calculators[1] = LateFee Calculator
+    ///        _calculators[2] = Premium Calculator
     constructor(
         address _assetRequested,
         address _assetCollateral,
@@ -122,7 +130,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         address _collateralLockerFactory,
         address _mapleGlobals,
         uint256[6] memory _specifications,
-        address _repaymentCalculator,
+        address[3] memory _calculators,
         string memory _tUUID
     )
         FundsDistributionToken(
@@ -174,7 +182,9 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         minRaise = _specifications[3];
         collateralBipsRatio = _specifications[4];
         fundingPeriodSeconds = _specifications[5].mul(1 days);
-        repaymentCalculator = IRepaymentCalculator(_repaymentCalculator);
+        repaymentCalculator = IRepaymentCalculator(_calculators[0]);
+        lateFeeCalculator = ILateFeeCalculator(_calculators[1]);
+        premiumCalculator = IPremiumCalculator(_calculators[2]);
         nextPaymentDue = loanCreatedTimestamp.add(paymentIntervalSeconds);
 
         // Deploy a funding locker.

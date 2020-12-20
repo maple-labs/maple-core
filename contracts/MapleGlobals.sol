@@ -54,6 +54,14 @@ contract MapleGlobals {
     mapping(bytes32 => address) public interestStructureCalculators;
     bytes32[] public validInterestStructures;
 
+    // Mapping of bytes32 late fee calculator IDs to address of the corresponding lateFeeCalculator.
+    mapping(bytes32 => address) public lateFeeCalculators;
+    bytes32[] public validLateFeeCalculators;
+
+    // Mapping of bytes32 premium calculator IDs to address of the corresponding premiumCalculator.
+    mapping(bytes32 => address) public premiumCalculators;
+    bytes32[] public validPremiumCalculators;
+
     // @return primary factory addresses
     address public loanVaultFactory;
     address public liquidityPoolFactory;
@@ -148,25 +156,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can adjust the accepted payment intervals.
-        @param _type The bytes32 name identifying the interest structure (e.g. "BULLET")
-        @param _calculator Address of the calculator.
-     */
-    function addValidInterestStructure(bytes32 _type, address _calculator) external isGovernor {
-        require(
-            _calculator != address(0),
-            "MapleGloblas::addValidInterestStructure:ERR_NULL_ADDRESS_SUPPLIED_FOR_CALCULATOR"
-        );
-        require(
-            interestStructureCalculators[_type] == address(0),
-            "MapleGloblas::addValidInterestStructure:ERR_ALREADY_ADDED"
-        );
-        interestStructureCalculators[_type] = _calculator;
-        validInterestStructures.push(_type);
-    }
-
-    /**
-        @notice Governor can adjust the grace period.
+        @notice Governor can set an interest structure calculator.
         @param _interestStructure Name of the interest structure (e.g. "BULLET")
         @param _calculator Address of the corresponding calculator for repayments, etc.
      */
@@ -176,6 +166,32 @@ contract MapleGlobals {
     {
         interestStructureCalculators[_interestStructure] = _calculator;
         validInterestStructures.push(_interestStructure);
+    }
+
+    /**
+        @notice Governor can set an interest structure calculator.
+        @param _lateFeeType Name of the interest structure (e.g. "NULL")
+        @param _calculator Address of the corresponding calculator.
+     */
+    function setLateFeeCalculator(bytes32 _lateFeeType, address _calculator)
+        public
+        isGovernor
+    {
+        lateFeeCalculators[_lateFeeType] = _calculator;
+        validLateFeeCalculators.push(_lateFeeType);
+    }
+
+    /**
+        @notice Governor can set a premium calculator.
+        @param _premiumType Name of the premium type (e.g. "FLAT")
+        @param _calculator Address of the corresponding calculator.
+     */
+    function setPremiumCalculator(bytes32 _premiumType, address _calculator)
+        public
+        isGovernor
+    {
+        premiumCalculators[_premiumType] = _calculator;
+        validPremiumCalculators.push(_premiumType);
     }
 
     /**
