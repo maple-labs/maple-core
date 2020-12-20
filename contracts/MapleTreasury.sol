@@ -48,8 +48,8 @@ contract MapleTreasury {
   event ERC20Conversion(
     address _asset,
     address _by,
-    uint _amountIn,
-    uint _amountOut
+    uint256 _amountIn,
+    uint256 _amountOut
   );
 
   /// @notice Fired when ETH is converted to fundsToken and transferred to mapleToken.
@@ -58,14 +58,14 @@ contract MapleTreasury {
   /// @param _amountOut The amount of fundsToken received for ETH conversion.
   event ETHConversion(
     address _by,
-    uint _amountIn,
-    uint _amountOut
+    uint256 _amountIn,
+    uint256 _amountOut
   );
 
   /// @notice Fired when fundsToken is passed through to mapleToken.
   event PassThrough(
     address _by,
-    uint _amount
+    uint256 _amount
   );
 
   /// @notice Fired when fundsToken is passed through to mapleToken.
@@ -144,11 +144,11 @@ contract MapleTreasury {
   */
 
   /// @notice Convert ETH through Uniswap via bilateral transaction (two asset path).
-  function convertETH(uint _amountOut, uint _amountIn) isGovernor public {
+  function convertETH(uint256 _amountOut, uint256 _amountIn) isGovernor public {
     address[] memory path = new address[](2);
     path[0] = IUniswapRouter(uniswapRouter).WETH();
     path[1] = fundsToken;
-    uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapETHForExactTokens{value: _amountIn}(
+    uint256[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapETHForExactTokens{value: _amountIn}(
       _amountOut,
       path,
       mapleToken,

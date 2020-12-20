@@ -24,7 +24,7 @@ contract CollateralLocker {
     /// @notice Transfers _amount of collateralAsset to _destination.
     /// @param _destination Desintation to transfer fundingAsset to.
     /// @param _amount Amount of fundingAsset to transfer.
-    function pull(address _destination, uint _amount) isLoanVault public returns(bool) {
+    function pull(address _destination, uint256 _amount) isLoanVault public returns(bool) {
         return IERC20(collateralAsset).transfer(_destination, _amount);
     }
     

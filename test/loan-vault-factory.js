@@ -107,6 +107,36 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         [5000, 0, 0, 0, 0, 0],
         [
           ethers.utils.formatBytes32String('BULLET'),
+          ethers.utils.formatBytes32String('NALL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
+      )
+    ).to.be.revertedWith(
+      "LoanVaultFactory::createLoanVault:ERR_NULL_LATE_FEE_CALC"
+    );
+
+    await expect(
+      LoanVaultFactory.createLoanVault(
+        DAIAddress,
+        WETHAddress,
+        [5000, 0, 0, 0, 0, 0],
+        [
+          ethers.utils.formatBytes32String('BULLET'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLOT')
+        ]
+      )
+    ).to.be.revertedWith(
+      "LoanVaultFactory::createLoanVault:ERR_NULL_PREMIUM_CALC"
+    );
+
+    await expect(
+      LoanVaultFactory.createLoanVault(
+        DAIAddress,
+        WETHAddress,
+        [5000, 0, 0, 0, 0, 0],
+        [
+          ethers.utils.formatBytes32String('BULLET'),
           ethers.utils.formatBytes32String('NULL'),
           ethers.utils.formatBytes32String('FLAT')
         ]

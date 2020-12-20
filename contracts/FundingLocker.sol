@@ -24,13 +24,13 @@ contract FundingLocker {
     /// @notice Transfers _amount of fundingAsset to _destination.
     /// @param _destination Desintation to transfer fundingAsset to.
     /// @param _amount Amount of fundingAsset to transfer.
-    function pull(address _destination, uint _amount) isLoanVault public returns(bool) {
+    function pull(address _destination, uint256 _amount) isLoanVault public returns(bool) {
         return IERC20(fundingAsset).transfer(_destination, _amount);
     }
 
     /// @notice Transfers the remainder of fundingAsset to LoanVault;
     function drain() isLoanVault public returns(bool) {
-        uint transferAmount = IERC20(fundingAsset).balanceOf(address(this));
+        uint256 transferAmount = IERC20(fundingAsset).balanceOf(address(this));
         return IERC20(fundingAsset).transfer(loanVault, transferAmount);
     }
     

@@ -41,7 +41,7 @@ contract LoanVaultFactory {
 
     /// @notice Fired when user calls createLoanVault()
     event LoanVaultCreated(
-        uint _loanVaultID,
+        uint256 _loanVaultID,
 		address _loanVaultAddress,
         address indexed _borrower,
         address indexed _assetRequested,

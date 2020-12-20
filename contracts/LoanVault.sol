@@ -220,7 +220,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
     /// @notice End funding period by claiming funds, posting collateral, transitioning loanState from Funding to Active.
     /// @param _drawdownAmount Amount of fundingAsset borrower will claim, remainder is returned to LoanVault.
-    function drawdown(uint _drawdownAmount) external isState(State.Live) isBorrower {
+    function drawdown(uint256 _drawdownAmount) external isState(State.Live) isBorrower {
 
         require(
             _drawdownAmount >= minRaise, 
@@ -262,9 +262,9 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         if (block.timestamp <= nextPaymentDue) {
 
             (
-                uint _paymentAmount,
-                uint _principal,
-                uint _interest
+                uint256 _paymentAmount,
+                uint256 _principal,
+                uint256 _interest
             ) = repaymentCalculator.getNextPayment(address(this));
 
             require(
@@ -280,13 +280,36 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             numberOfPayments--;
         }
         else if (block.timestamp <= nextPaymentDue.add(MapleGlobals.gracePeriod())) {
-            // TODO: Handle late payments within grace period.
+            (
+                uint256 _paymentAmount,
+                uint256 _principal,
+                uint256 _interest
+            ) = repaymentCalculator.getNextPayment(address(this));
+            // TODO: Identify whether _principalExtra is needed for lateFee (if only interest needeD).
+            (
+                uint256 _paymentAmountExtra,
+                uint256 _principalExtra,
+                uint256 _interestExtra
+            ) = lateFeeCalculator.getLateFee(address(this));
+
+            require(
+                IRequestedAsset.transferFrom(msg.sender, address(this), _paymentAmount.add(_paymentAmountExtra)),
+                "LoanVault::makePayment:ERR_LACK_APPROVAL_OR_BALANCE"
+            );
+
+            // Update internal accounting variables.
+            principalOwed = principalOwed.sub(_principal);
+            principalPaid = principalPaid.add(_principal).add(_principalExtra);
+            interestPaid = interestPaid.add(_interest).add(_interestExtra);
+            nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
+            numberOfPayments--;
         }
         else {
             // TODO: Trigger default, or other action as per business requirements.
         }
 
         // Handle final payment.
+        // TODO: Identify any other variables worth resetting on final payment.
         if (numberOfPayments == 0) {
             loanState = State.Matured;
             ICollateralLocker(collateralLocker).pull(borrower, getCollateralLockerBalance());
@@ -295,24 +318,58 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
     /// @notice Returns the next payment amounts.
     /// @return [0] = Principal + Interest, [1] = Principal, [2] = Interest, [3] Due By Timestamp
-    function getNextPayment() public view returns(uint, uint, uint, uint) {
+    function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
         (
-            uint _total, 
-            uint _principal,
-            uint _interest
+            uint256 _total, 
+            uint256 _principal,
+            uint256 _interest
         ) = repaymentCalculator.getNextPayment(address(this));
         return (_total, _principal, _interest, nextPaymentDue);
+    }
+
+    /// @notice Makes the full payment for this loan, a.k.a. "calling" the loan.
+    function makeFullPayment() public isState(State.Active) isBorrower {
+        (
+            uint256 _total, 
+            uint256 _principal,
+            uint256 _interest
+        ) = premiumCalculator.getPremiumPayment(address(this));
+
+        require(
+            IRequestedAsset.transferFrom(msg.sender, address(this), _total),
+            "LoanVault::makeFullPayment:ERR_LACK_APPROVAL_OR_BALANCE"
+        );
+
+        loanState = State.Matured;
+
+        // Update internal accounting variables.
+        // TODO: Identify any other variables worth resetting on full payment.
+        principalOwed = 0;
+        numberOfPayments = 0;
+        principalPaid = principalPaid.add(_principal);
+        interestPaid = interestPaid.add(_interest);
+    }
+
+    /// @notice Returns the full payment amounts.
+    /// @return [0] = Principal + Interest, [1] = Principal, [2] = Interest
+    function getFullPayment() public view returns(uint256, uint256, uint256) {
+        (
+            uint256 _total, 
+            uint256 _principal,
+            uint256 _interest
+        ) = repaymentCalculator.getNextPayment(address(this));
+        return (_total, _principal, _interest);
     }
 
 
     /// @notice Viewer helper for calculating collateral required to drawdown funding.
     /// @param _drawdownAmount The amount of fundingAsset to drawdown from FundingLocker.
     /// @return The amount of collateralAsset required to post for given _amount.
-    function collateralRequiredForDrawdown(uint _drawdownAmount) public view returns(uint) {
+    function collateralRequiredForDrawdown(uint256 _drawdownAmount) public view returns(uint256) {
 
         // Fetch value of collateral and funding asset.
-        uint requestPrice = MapleGlobals.getPrice(assetRequested);
-        uint collateralPrice = MapleGlobals.getPrice(assetCollateral);
+        uint256 requestPrice = MapleGlobals.getPrice(assetRequested);
+        uint256 collateralPrice = MapleGlobals.getPrice(assetCollateral);
 
         /*
             Current values fed into ChainLink oracles (8 decimals, based on Kovan values)
@@ -326,9 +383,9 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             collateralPrice(wETH) = 59452607912
         */
 
-        uint collateralRequiredUSD = requestPrice.mul(_drawdownAmount).mul(collateralBipsRatio).div(10000);
-        uint collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
-        uint collateralRequiredFIN = collateralRequiredWEI.div(10**(18 - IERC20Details(assetCollateral).decimals()));
+        uint256 collateralRequiredUSD = requestPrice.mul(_drawdownAmount).mul(collateralBipsRatio).div(10000);
+        uint256 collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
+        uint256 collateralRequiredFIN = collateralRequiredWEI.div(10**(18 - IERC20Details(assetCollateral).decimals()));
 
         return collateralRequiredFIN;
     }

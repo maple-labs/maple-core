@@ -6,36 +6,36 @@ interface IBPool {
 
     function isBound(address) external view returns (bool);
 
-    function getNumTokens() external view returns (uint);
+    function getNumTokens() external view returns (uint256);
 
-    function getBalance(address) external view returns (uint);
+    function getBalance(address) external view returns (uint256);
 
-    function getNormalizedWeight(address) external view returns (uint);
+    function getNormalizedWeight(address) external view returns (uint256);
 
-    function getDenormalizedWeight(address) external view returns (uint);
+    function getDenormalizedWeight(address) external view returns (uint256);
 
-    function getTotalDenormalizedWeight() external view returns (uint);
+    function getTotalDenormalizedWeight() external view returns (uint256);
 
-    function getSwapFee() external view returns (uint);
+    function getSwapFee() external view returns (uint256);
 
-    function totalSupply() external view returns (uint);
+    function totalSupply() external view returns (uint256);
 
     function calcSingleOutGivenPoolIn(
-        uint tokenBalanceOut,
-        uint tokenWeightOut,
-        uint poolSupply,
-        uint totalWeight,
-        uint poolAmountIn,
-        uint swapFee
-    ) external pure returns (uint);
+        uint256 tokenBalanceOut,
+        uint256 tokenWeightOut,
+        uint256 poolSupply,
+        uint256 totalWeight,
+        uint256 poolAmountIn,
+        uint256 swapFee
+    ) external pure returns (uint256);
 
     function calcPoolInGivenSingleOut(
-        uint tokenBalanceOut,
-        uint tokenWeightOut,
-        uint poolSupply,
-        uint totalWeight,
-        uint tokenAmountOut,
-        uint swapFee
-    ) external pure returns (uint);
+        uint256 tokenBalanceOut,
+        uint256 tokenWeightOut,
+        uint256 poolSupply,
+        uint256 totalWeight,
+        uint256 tokenAmountOut,
+        uint256 swapFee
+    ) external pure returns (uint256);
 
 }
