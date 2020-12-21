@@ -29,7 +29,7 @@ describe("Calculator - Bullet Repayment", function () {
   let vaultAddress, abstractMinRaise;
   let collateralAssetSymbol, requestedAssetSymbol;
 
-  it("A - Issue and fund a bullet loan", async function () {
+  xit("A - Issue and fund a bullet loan", async function () {
 
     const LoanVaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address");
     const LoanVaultFactoryABI = require(artpath + "abis/LoanVaultFactory.abi");
@@ -121,7 +121,7 @@ describe("Calculator - Bullet Repayment", function () {
 
   });
 
-  it("B - Borrower draws down the loan", async function () {
+  xit("B - Borrower draws down the loan", async function () {
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -151,7 +151,7 @@ describe("Calculator - Bullet Repayment", function () {
 
   });
 
-  it("C - Iterate through payments", async function () {
+  xit("C - Iterate through payments", async function () {
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -307,6 +307,8 @@ describe("Calculator - Bullet Repayment", function () {
     await LoanVault.drawdown(
       MIN_RAISE
     );
+    
+    // TODO: Create tests for first payment and full payment.
 
     // Make first payment.
     USDC = new ethers.Contract(
