@@ -72,8 +72,14 @@ workflows:
             - dependencies
   deploy_kaleido:
     jobs:
+      - dependencies
+      - test:
+          requires:
+            - dependencies
       - deploy_kaleido:
+          requires:
+              - test
           filters:
             branches:
               only:
-                - master
+                - fake-master
