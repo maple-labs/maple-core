@@ -34,9 +34,14 @@ contract LiquidityPool is IERC20, ERC20 {
 
     // An interface for the factory used to instantiate a StakeLocker for this LiquidityPool.
     IStakeLockerFactory private StakeLockerFactory;
+    struct Loan {
+        address loanVault;
+        uint256 principalPaid;
+        uint256 interestPaid;
+    }
 
     //@notice list of funded loans
-    address[] public fundedLoans;
+    Loan[] public fundedLoans;
 
     // An interface for the locker which escrows StakeAsset.
     IStakeLocker private StakeLocker;
@@ -210,7 +215,7 @@ contract LiquidityPool is IERC20, ERC20 {
         if (loanTokenToLocker[_loanVault] == address(0)) {
             loanTokenToLocker[_loanVault] = ILoanTokenLockerFactory(_loanTokenLockerFactory)
                 .newLocker(_loanVault);
-            fundedLoans.push(_loanVault);
+            fundedLoans.push(Loan(_loanVault, 0, 0));
         }
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
             _loanVault,
@@ -221,16 +226,31 @@ contract LiquidityPool is IERC20, ERC20 {
 
     function claimRepayments() external {
         for (uint256 i = 0; i < fundedLoans.length; i++) {
-            claimRepayment(fundedLoans[i]);
+            claimRepayment(i);
         }
     }
 
-    function claimRepayment(address _loanVault) public finalized {
-        ILoanVault _LV = ILoanVault(_loanVault);
-        ILoanTokenLocker(loanTokenToLocker[_loanVault]).fetch();
+    function claimRepayment(uint _ind) private finalized {
+	Loan memory _loan = fundedLoans[_ind];
+        ILoanVault _LV = ILoanVault(_loan.loanVault);
+        ILoanTokenLocker(loanTokenToLocker[_loan.loanVault]).fetch();
         _LV.updateFundsReceived(); //maybe this is better called from LoanVault?
-        _LV.withdrawFunds();  
-        IERC20(_loanVault).transfer(loanTokenToLocker[_loanVault], IERC20(_loanVault).balanceOf(address(this)));
+        uint256  _newInterest = _LV.interestPaid() - _loan.interestPaid;
+        uint256 _newPrincipal = _LV.principalPaid() - _loan.principalPaid;
+        uint256 _bal = ILiquidityAsset.balanceOf(address(this)); //this is a bad thing to do, should get the withdraw function to give us this
+        _loan.interestPaid = _LV.interestPaid();
+        _loan.principalPaid = _LV.principalPaid(); //update the values
+        uint256 _interest =
+            _bal.mul(_newInterest.mul(_ONELiquidityAsset).div(_newPrincipal)).div(
+                _ONELiquidityAsset
+            );
+        uint256 _principal = _bal.sub(_interest);
+        ILiquidityAsset.transfer(liquidityLockerAddress, _principal);
+        ILiquidityAsset.transfer(stakeLockerAddress, _interest);
+        IERC20(_loan.loanVault).transfer(
+            loanTokenToLocker[_loan.loanVault],
+            IERC20(_loan.loanVault).balanceOf(address(this))
+        );
     }
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
