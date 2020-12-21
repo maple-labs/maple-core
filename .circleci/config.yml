@@ -4,9 +4,9 @@ aliases:
   - &defaults
     docker:
       - image: circleci/node:10
-        environment:
-          MAPLE_KALEIDO_URL: $MAPLE_KALEIDO_URL
-          MAPLE_KALEIDO_MNEMONIC: $MAPLE_KALEIDO_MNEMONIC
+        # environment:
+        #   MAPLE_KALEIDO_URL: $MAPLE_KALEIDO_URL
+        #   MAPLE_KALEIDO_MNEMONIC: $MAPLE_KALEIDO_MNEMONIC
 
 jobs:
   dependencies:
@@ -61,10 +61,11 @@ jobs:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: ~/project
-      # - run:
-      #     name: List Environment Variables
-      #     command: |
-      #       ls -al
+      - run:
+          name: List Environment Variables
+          command: |
+            echo $MAPLE_KALEIDO_URL
+            echo $MAPLE_KALEIDO_MNEMONIC
       # - run:
       #     name: Cat file
       #     command: |
@@ -77,7 +78,10 @@ jobs:
       #       echo "export MAPLE_KALEIDO_MNEMONIC=${MAPLE_KALEIDO_MNEMONIC}" > .env.production
       - run:
           name: Deploy contracts to Kaleido
-          command: MAPLE_KALEIDO_URL=${MAPLE_KALEIDO_URL} MAPLE_KALEIDO_MNEMONIC=${MAPLE_KALEIDO_MNEMONIC} yarn kaleido:all:migrate
+          environment: 
+            MAPLE_KALEIDO_URL: $MAPLE_KALEIDO_URL
+            MAPLE_KALEIDO_MNEMONIC: $MAPLE_KALEIDO_MNEMONIC
+          command: yarn kaleido:all:migrate
       
 
 workflows:
