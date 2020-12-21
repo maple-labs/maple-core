@@ -59,11 +59,11 @@ jobs:
           # Must be absolute path or relative path from working_directory
           at: ~/project
       - run:
-        name: Test file structure
-        command: cd ~/project/packages/contracts/private && ls -al
+          name: Test file structure
+          command: cd ~/project/packages/contracts/private && ls -al
       - run:
-        name: Remove file structure
-        command: rm -rf ~/project/packages/contracts/private
+          name: Remove file structure
+          command: rm -rf ~/project/packages/contracts/private
       - run:
           name: Deploy contracts to Kaleido
           command: yarn kaleido:all:migrate
