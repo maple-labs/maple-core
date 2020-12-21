@@ -51,6 +51,16 @@ jobs:
       - run:
           name: Stop mbs chain
           command: pkill node
+  
+  deploy_kaleido:
+    <<: *defaults
+    steps:
+      # - attach_workspace:
+      #     # Must be absolute path or relative path from working_directory
+      #     at: ~/project
+      - run:
+          name: echo
+          command: echo "test branch deploy"
 
 workflows:
   version: 2
@@ -60,3 +70,10 @@ workflows:
       - test:
           requires:
             - dependencies
+  deploy_kaleido:
+    jobs:
+      - deploy_kaleido:
+          filters:
+            branches:
+              only:
+                - master
