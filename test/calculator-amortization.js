@@ -185,7 +185,7 @@ describe("Calculator - Amortization Repayment", function () {
   });
 
 
-  xit("D - Test calculator for non 18-decimal precision, USDC(6)", async function () {
+  it("D - Test calculator for non 18-decimal precision, USDC(6)", async function () {
 
     // TODO: Identify the error raised in this test.
     
@@ -296,7 +296,36 @@ describe("Calculator - Amortization Repayment", function () {
       MIN_RAISE
     );
 
-    // TODO: Create tests for first payment and full payment.
+    // Make first payment.
+    USDC = new ethers.Contract(
+      USDCAddress,
+      USDCABI,
+      ethers.provider.getSigner(0)
+    );
+
+    PAYMENT_INFO = await LoanVault.getNextPayment();
+    await USDC.approve(vaultAddress, PAYMENT_INFO[0]);
+    await LoanVault.makePayment();
+
+    // Make remaining payments.
+    PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+    PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"])
+    
+    while (PAYMENTS_REMAINING > 0) {
+      PAYMENT_INFO = await LoanVault.getNextPayment();
+      await USDC.approve(vaultAddress, PAYMENT_INFO[0]);
+      await LoanVault.makePayment();
+      PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+      PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"])
+    }
+
+    PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+    PRINCIPAL_OWED = await LoanVault.principalOwed();
+    PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"])
+    PRINCIPAL_OWED = parseInt(PRINCIPAL_OWED["_hex"])
+
+    expect(PAYMENTS_REMAINING).to.equals(0);
+    expect(PRINCIPAL_OWED).to.equals(0);
 
   });
 

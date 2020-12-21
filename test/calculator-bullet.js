@@ -29,7 +29,7 @@ describe("Calculator - Bullet Repayment", function () {
   let vaultAddress, abstractMinRaise;
   let collateralAssetSymbol, requestedAssetSymbol;
 
-  xit("A - Issue and fund a bullet loan", async function () {
+  it("A - Issue and fund a bullet loan", async function () {
 
     const LoanVaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address");
     const LoanVaultFactoryABI = require(artpath + "abis/LoanVaultFactory.abi");
@@ -121,7 +121,7 @@ describe("Calculator - Bullet Repayment", function () {
 
   });
 
-  xit("B - Borrower draws down the loan", async function () {
+  it("B - Borrower draws down the loan", async function () {
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -151,7 +151,7 @@ describe("Calculator - Bullet Repayment", function () {
 
   });
 
-  xit("C - Iterate through payments", async function () {
+  it("C - Iterate through payments", async function () {
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -307,8 +307,38 @@ describe("Calculator - Bullet Repayment", function () {
     await LoanVault.drawdown(
       MIN_RAISE
     );
+
+    // Make first payment.
+    USDC = new ethers.Contract(
+      USDCAddress,
+      USDCABI,
+      ethers.provider.getSigner(0)
+    );
+
+    PAYMENT_INFO = await LoanVault.getNextPayment();
+    await USDC.approve(vaultAddress, PAYMENT_INFO[0]);
+    await LoanVault.makePayment();
+
+    // Make remaining payments.
+    PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+    PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"])
     
-    // TODO: Create tests for first payment and full payment.
+    while (PAYMENTS_REMAINING > 0) {
+      PAYMENT_INFO = await LoanVault.getNextPayment();
+      await USDC.approve(vaultAddress, PAYMENT_INFO[0]);
+      await LoanVault.makePayment();
+      PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+      PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"])
+    }
+
+    PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+    PRINCIPAL_OWED = await LoanVault.principalOwed();
+    PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"])
+    PRINCIPAL_OWED = parseInt(PRINCIPAL_OWED["_hex"])
+
+    expect(PAYMENTS_REMAINING).to.equals(0);
+    expect(PRINCIPAL_OWED).to.equals(0);
+
 
   });
 
