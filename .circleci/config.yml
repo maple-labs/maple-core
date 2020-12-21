@@ -75,9 +75,9 @@ jobs:
       #       touch .env.production
       #       echo "export MAPLE_KALEIDO_URL=${MAPLE_KALEIDO_URL}" > .env.production
       #       echo "export MAPLE_KALEIDO_MNEMONIC=${MAPLE_KALEIDO_MNEMONIC}" > .env.production
-      # - run:
-      #     name: Deploy contracts to Kaleido
-      #     command: yarn test-env
+      - run:
+          name: Deploy contracts to Kaleido
+          command: MAPLE_KALEIDO_URL=${MAPLE_KALEIDO_URL} MAPLE_KALEIDO_MNEMONIC=${MAPLE_KALEIDO_MNEMONIC} yarn kaleido:all:migrate
       
 
 workflows:
@@ -90,8 +90,8 @@ workflows:
       #       - dependencies
       - deploy_kaleido:
           context: kaleido
-          # requires:
-          #     - dependencies
+          requires:
+              - dependencies
           filters:
             branches:
               only:
