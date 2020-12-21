@@ -4,9 +4,9 @@ aliases:
   - &defaults
     docker:
       - image: circleci/node:10
-          environment:
-            - MAPLE_KALEIDO_URL: $MAPLE_KALEIDO_URL
-            - MAPLE_KALEIDO_MNEMONIC: $MAPLE_KALEIDO_MNEMONIC
+        environment:
+          MAPLE_KALEIDO_URL: $MAPLE_KALEIDO_URL
+          MAPLE_KALEIDO_MNEMONIC: $MAPLE_KALEIDO_MNEMONIC
 
 jobs:
   dependencies:
