@@ -80,7 +80,7 @@ jobs:
           name: Deploy contracts to Kaleido
           environment: 
             MAPLE_KALEIDO_URL: $MAPLE_KALEIDO_URL
-            MAPLE_KALEIDO_MNEMONIC: $MAPLE_KALEIDO_MNEMONIC
+            MAPLE_MNEMONIC: $MAPLE_MNEMONIC
           command: yarn kaleido:all:migrate
       
 
