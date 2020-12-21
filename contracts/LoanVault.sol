@@ -350,14 +350,14 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         interestPaid = interestPaid.add(_interest);
     }
 
-    /// @notice Returns the full payment amounts.
+    /// @notice Returns the payment amount when paying off the loan early.
     /// @return [0] = Principal + Interest, [1] = Principal, [2] = Interest
     function getFullPayment() public view returns(uint256, uint256, uint256) {
         (
             uint256 _total, 
             uint256 _principal,
             uint256 _interest
-        ) = repaymentCalculator.getNextPayment(address(this));
+        ) = premiumCalculator.getPremiumPayment(address(this));
         return (_total, _principal, _interest);
     }
 

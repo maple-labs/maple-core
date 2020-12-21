@@ -303,6 +303,8 @@ describe("Calculator - Bullet Repayment", function () {
       BigNumber.from(10).pow(8).mul(Math.round(parseInt(COLLATERAL_REQUIRED["_hex"]) / 10**4)).mul(10000)
     )
 
+    // ERROR: Identify why it's failing here.
+
     // Drawdown for the MIN_RAISE, pow(6) is USDC decimal precision
     await LoanVault.drawdown(
       MIN_RAISE

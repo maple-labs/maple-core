@@ -102,8 +102,8 @@ contract LoanVaultFactory {
             _specifications,
             [
                 IGlobals(mapleGlobals).interestStructureCalculators(_calculators[0]),
-                IGlobals(mapleGlobals).interestStructureCalculators(_calculators[1]),
-                IGlobals(mapleGlobals).interestStructureCalculators(_calculators[2])
+                IGlobals(mapleGlobals).lateFeeCalculators(_calculators[1]),
+                IGlobals(mapleGlobals).premiumCalculators(_calculators[2])
             ],
 	        _tUUID
         );

@@ -92,11 +92,25 @@ describe("MapleGlobals.sol Interactions", function () {
       "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
-    const BUNK_ADDRESS_AMORTIZATION = "0x0000000000000000000000000000000000000003";
+    const BUNK_ADDRESS= "0x0000000000000000000000000000000000000003";
 
     await expect(mapleGlobals.setInterestStructureCalculator(
       ethers.utils.formatBytes32String('AMORTIZATION'),
-      BUNK_ADDRESS_AMORTIZATION
+      BUNK_ADDRESS
+    )).to.be.revertedWith(
+      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
+    );
+
+    await expect(mapleGlobals.setLateFeeCalculator(
+      ethers.utils.formatBytes32String('NEW_LATE'),
+      BUNK_ADDRESS
+    )).to.be.revertedWith(
+      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
+    );
+
+    await expect(mapleGlobals.setPremiumCalculator(
+      ethers.utils.formatBytes32String('NEW_PREM'),
+      BUNK_ADDRESS
     )).to.be.revertedWith(
       "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
