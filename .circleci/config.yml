@@ -116,10 +116,3 @@ workflows:
             branches:
               only:
                 - fake-master
-  # deploy_kaleido:
-  #   jobs:
-  #     - dependencies
-  #     - test:
-  #         requires:
-  #           - dependencies
-      
