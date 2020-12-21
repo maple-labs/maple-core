@@ -210,8 +210,8 @@ describe("Calculator - Amortization Repayment", function () {
     const REQUESTED_ASSET = USDCAddress; // Update symbol variable below when changing this.
     requestedAssetSymbol = 'USDC';
 
-    const COLLATERAL_ASSET = WETHAddress; // Update symbol variable below when changing this.
-    collateralAssetSymbol = 'WETH';
+    const COLLATERAL_ASSET = WBTCAddress; // Update symbol variable below when changing this.
+    collateralAssetSymbol = 'WBTC';
 
     const INTEREST_STRUCTURE = 'AMORTIZATION' // 'BULLET' or 'AMORTIZATION'
     const LATE_FEE_TYPE = 'NULL' // 'NULL' only option
@@ -290,13 +290,13 @@ describe("Calculator - Amortization Repayment", function () {
       vaultAddress,
       BigNumber.from(10).pow(8).mul(Math.round(parseInt(COLLATERAL_REQUIRED["_hex"]) / 10**4)).mul(10000)
     )
-
-    // ERROR: Identify why it's failing here.
     
     // Drawdown for the MIN_RAISE, pow(6) is USDC decimal precision
     await LoanVault.drawdown(
       MIN_RAISE
     );
+
+    // TODO: Create tests for first payment and full payment.
 
   });
 

@@ -29,7 +29,7 @@ describe("Calculator - Bullet Repayment", function () {
   let vaultAddress, abstractMinRaise;
   let collateralAssetSymbol, requestedAssetSymbol;
 
-  it("A - Issue and fund a bullet loan", async function () {
+  xit("A - Issue and fund a bullet loan", async function () {
 
     const LoanVaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address");
     const LoanVaultFactoryABI = require(artpath + "abis/LoanVaultFactory.abi");
@@ -121,7 +121,7 @@ describe("Calculator - Bullet Repayment", function () {
 
   });
 
-  it("B - Borrower draws down the loan", async function () {
+  xit("B - Borrower draws down the loan", async function () {
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -151,7 +151,7 @@ describe("Calculator - Bullet Repayment", function () {
 
   });
 
-  it("C - Iterate through payments", async function () {
+  xit("C - Iterate through payments", async function () {
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -198,7 +198,7 @@ describe("Calculator - Bullet Repayment", function () {
 
   });
 
-  xit("D - Test calculator for non 18-decimal precision, USDC(6)", async function () {
+  it("D - Test calculator for non 18-decimal precision, USDC(6)", async function () {
 
     // TODO: Identify the error raised in this test.
     
@@ -223,8 +223,8 @@ describe("Calculator - Bullet Repayment", function () {
     const REQUESTED_ASSET = USDCAddress; // Update symbol variable below when changing this.
     requestedAssetSymbol = 'USDC';
 
-    const COLLATERAL_ASSET = WETHAddress; // Update symbol variable below when changing this.
-    collateralAssetSymbol = 'WETH';
+    const COLLATERAL_ASSET = WBTCAddress; // Update symbol variable below when changing this.
+    collateralAssetSymbol = 'WBTC';
 
     const INTEREST_STRUCTURE = 'BULLET' // 'BULLET' or 'AMORTIZATION'
     const LATE_FEE_TYPE = 'NULL' // 'NULL' only option
@@ -303,12 +303,12 @@ describe("Calculator - Bullet Repayment", function () {
       BigNumber.from(10).pow(8).mul(Math.round(parseInt(COLLATERAL_REQUIRED["_hex"]) / 10**4)).mul(10000)
     )
 
-    // ERROR: Identify why it's failing here.
-
     // Drawdown for the MIN_RAISE, pow(6) is USDC decimal precision
     await LoanVault.drawdown(
       MIN_RAISE
     );
+    
+    // TODO: Create tests for first payment and full payment.
 
   });
 
