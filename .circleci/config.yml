@@ -61,8 +61,9 @@ jobs:
       - run:
           name: Setup Environment Variables
           command: |
-            echo "export MAPLE_KALEIDO_URL=$MAPLE_KALEIDO_URL" >> $BASH_ENV
-            echo "export MAPLE_KALEIDO_MNEMONIC=$MAPLE_KALEIDO_MNEMONIC" >> $BASH_ENV
+            touch .env.production
+            echo "MAPLE_KALEIDO_URL=$MAPLE_KALEIDO_URL" > .env.production
+            echo "MAPLE_KALEIDO_MNEMONIC=$MAPLE_KALEIDO_MNEMONIC" > .env.production
       - run:
           name: Test file structure
           command: cd ~/project/packages/contracts/private && ls -al
@@ -93,10 +94,3 @@ workflows:
             branches:
               only:
                 - fake-master
-  # deploy_kaleido:
-  #   jobs:
-  #     - dependencies
-  #     - test:
-  #         requires:
-  #           - dependencies
-      
