@@ -62,23 +62,22 @@ jobs:
           # Must be absolute path or relative path from working_directory
           at: ~/project
       - run:
-          name: Setup Environment Variables
+          name: List Environment Variables
           command: |
-            touch .env.production
-            echo "export MAPLE_KALEIDO_URL=${MAPLE_KALEIDO_URL}" > .env.production
-            echo "export MAPLE_KALEIDO_MNEMONIC=${MAPLE_KALEIDO_MNEMONIC}" > .env.production
+            ls -al
       - run:
-          name: Test file structure
-          command: cd ~/project/packages/contracts/private && ls -al
+          name: Cat file
+          command: |
+            cat .env
       # - run:
-      #     name: Remove file structure
-      #     command: rm -rf ~/project/packages/contracts/private
-      - run:
-          name: Deploy contracts to Kaleido
-          command: yarn kaleido:all:migrate
-      - run:
-          name: List files
-          command: cd ~/project/packages/contracts/private && ls -al
+      #     name: Setup Environment Variables
+      #     command: |
+      #       touch .env.production
+      #       echo "export MAPLE_KALEIDO_URL=${MAPLE_KALEIDO_URL}" > .env.production
+      #       echo "export MAPLE_KALEIDO_MNEMONIC=${MAPLE_KALEIDO_MNEMONIC}" > .env.production
+      # - run:
+      #     name: Deploy contracts to Kaleido
+      #     command: yarn test-env
       
 
 workflows:
@@ -91,8 +90,8 @@ workflows:
       #       - dependencies
       - deploy_kaleido:
           context: kaleido
-          requires:
-              - dependencies
+          # requires:
+          #     - dependencies
           filters:
             branches:
               only:
