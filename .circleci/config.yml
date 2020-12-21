@@ -60,9 +60,7 @@ jobs:
       #     at: ~/project
       - run:
           name: echo
-          command: echo ${MAPLE_KALEIDO_URL}
-          command: echo ${MAPLE_KALEIDO_MNEMONIC}
-          command: branch ${CIRCLE_BRANCH}
+          command: echo ${MAPLE_KALEIDO_URL} ${MAPLE_KALEIDO_MNEMONIC} ${CIRCLE_BRANCH}
 
 workflows:
   version: 2
