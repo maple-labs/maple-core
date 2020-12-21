@@ -73,15 +73,18 @@ jobs:
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
-            echo 'export MAPLE_KALEIDO_URL=$MAPLE_KALEIDO_URL' >> $BASH_ENV
-            echo 'export MAPLE_MNEMONIC=$MAPLE_MNEMONIC' >> $BASH_ENV
+            echo 'export MAPLE_KALEIDO_URL="https://k0q0qsqmvq:xh2VHshO-Ob6sndrMXhm6NGz56S0OYVqVwgJE9qu1U4@k0s29o7nzg-k0c3v4u0b9-rpc.kr0-aws.kaleido.io/"' >> $BASH_ENV
+            echo 'export MAPLE_MNEMONIC="net arrange patient enter stand stomach rug doctor service giraffe surface path"' >> $BASH_ENV
             source $BASH_ENV
       - run:
           name: List env vars
           command: cd ~/project/packages/maple-core && yarn test-env
       - run:
           name: Deploy contracts to Kaleido
-          command: cd ~/project && yarn kaleido:all:migrate
+          command: |
+            echo $MAPLE_KALEIDO_URL
+            echo $MAPLE_MNEMONIC
+            cd ~/project && yarn kaleido:all:migrate
       
 
 workflows:
