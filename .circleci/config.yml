@@ -115,4 +115,4 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - fake-master
