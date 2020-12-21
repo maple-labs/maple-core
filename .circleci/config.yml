@@ -84,7 +84,7 @@ jobs:
           command: |
             echo $MAPLE_KALEIDO_URL
             echo $MAPLE_MNEMONIC
-            cd ~/project && yarn kaleido:all:migrate
+            cd ~/project && ls -al && yarn kaleido:all:migrate
       
 
 workflows:
