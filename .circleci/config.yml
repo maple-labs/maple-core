@@ -81,7 +81,7 @@ jobs:
           environment: 
             MAPLE_KALEIDO_URL: $MAPLE_KALEIDO_URL
             MAPLE_MNEMONIC: $MAPLE_MNEMONIC
-          command: yarn kaleido:all:migrate
+          command: cd ~/project/packages/maple-core && yarn test-env
       
 
 workflows:

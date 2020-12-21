@@ -20,8 +20,6 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 // Select the network you want to deploy to here:
 //
 
-console.log({env: process.env});
-
 const defaultNetwork = "localhost";
 
 function mnemonic() {
