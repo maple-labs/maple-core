@@ -60,13 +60,15 @@ jobs:
       #     at: ~/project
       - run:
           name: echo
-          command: echo "test branch deploy"
+          command: echo ${MAPLE_KALEIDO_URL}
+          command: echo ${MAPLE_KALEIDO_MNEMONIC}
+          command: branch ${CIRCLE_BRANCH}
 
 workflows:
   version: 2
   test_all:
     jobs:
-      # - dependencies
+      - dependencies
       # - test:
       #     requires:
       #       - dependencies
