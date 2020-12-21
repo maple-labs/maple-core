@@ -59,7 +59,7 @@ jobs:
       #     # Must be absolute path or relative path from working_directory
       #     at: ~/project
       - run:
-          name: echo
+          name: echo env vars
           command: echo ${MAPLE_KALEIDO_URL} ${MAPLE_KALEIDO_MNEMONIC} ${CIRCLE_BRANCH}
 
 workflows:
@@ -71,6 +71,7 @@ workflows:
       #     requires:
       #       - dependencies
       - deploy_kaleido:
+          context: kaleido
           # requires:
           #     - test
           filters:
