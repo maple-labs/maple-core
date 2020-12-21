@@ -71,11 +71,11 @@ library CalcBPool {
 
         // Fetch balancer pool token information.
         IBPool bPool = IBPool(_pool);
-        uint tokenBalanceOut = bPool.getBalance(_pair);
-        uint tokenWeightOut = bPool.getDenormalizedWeight(_pair);
-        uint poolSupply = bPool.totalSupply();
-        uint totalWeight = bPool.getTotalDenormalizedWeight();
-        uint swapFee = bPool.getSwapFee();
+        uint256 tokenBalanceOut = bPool.getBalance(_pair);
+        uint256 tokenWeightOut = bPool.getDenormalizedWeight(_pair);
+        uint256 poolSupply = bPool.totalSupply();
+        uint256 totalWeight = bPool.getTotalDenormalizedWeight();
+        uint256 swapFee = bPool.getSwapFee();
 
         // Fetch amount staked in _stakeLockerAddress by _staker.
         uint256 poolAmountIn = IERC20(_stakeLockerAddress).balanceOf(_staker);
@@ -83,7 +83,7 @@ library CalcBPool {
         console.log("poolAmountIn", poolAmountIn);
 
         // Returns amount of BPTs required to extract tokenAmountOut.
-        uint tokenAmountOut = bPool.calcSingleOutGivenPoolIn(
+        uint256 tokenAmountOut = bPool.calcSingleOutGivenPoolIn(
             tokenBalanceOut,
             tokenWeightOut,
             poolSupply,
@@ -110,19 +110,19 @@ library CalcBPool {
         address _pair,
         address _staker,
         address _stakeLockerAddress,
-        uint _tokenAmountOutRequired
+        uint256 _tokenAmountOutRequired
     ) internal view returns (uint256, uint256) {
 
         // Fetch balancer pool token information.
         IBPool bPool = IBPool(_pool);
-        uint tokenBalanceOut = bPool.getBalance(_pair);
-        uint tokenWeightOut = bPool.getDenormalizedWeight(_pair);
-        uint poolSupply = bPool.totalSupply();
-        uint totalWeight = bPool.getTotalDenormalizedWeight();
-        uint swapFee = bPool.getSwapFee();
+        uint256 tokenBalanceOut = bPool.getBalance(_pair);
+        uint256 tokenWeightOut = bPool.getDenormalizedWeight(_pair);
+        uint256 poolSupply = bPool.totalSupply();
+        uint256 totalWeight = bPool.getTotalDenormalizedWeight();
+        uint256 swapFee = bPool.getSwapFee();
 
         // Returns amount of BPTs required to extract tokenAmountOut.
-        uint poolAmountInRequired = bPool.calcSingleOutGivenPoolIn(
+        uint256 poolAmountInRequired = bPool.calcSingleOutGivenPoolIn(
             tokenBalanceOut,
             tokenWeightOut,
             poolSupply,

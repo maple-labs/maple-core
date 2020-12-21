@@ -62,6 +62,20 @@ async function main() {
     BulletRepaymentCalculator.address
   );
 
+  const LateFeeNullCalculator = await deploy("LateFeeNullCalculator");
+  
+  await mapleGlobals.setLateFeeCalculator(
+    ethers.utils.formatBytes32String("NULL"),
+    LateFeeNullCalculator.address
+  );
+
+  const PremiumFlatCalculator = await deploy("PremiumFlatCalculator", [200]); // 2% FEE on Principal
+
+  await mapleGlobals.setPremiumCalculator(
+    ethers.utils.formatBytes32String("FLAT"),
+    PremiumFlatCalculator.address
+  );
+
   const CollateralLockerFactory = await deploy("CollateralLockerFactory");
 
   const FundingLockerFactory = await deploy("FundingLockerFactory");

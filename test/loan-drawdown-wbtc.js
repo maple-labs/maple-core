@@ -80,7 +80,11 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
       DAIAddress,
       WBTCAddress,
       [500, 90, 30, BigNumber.from(10).pow(18).mul(1000), 2000, 7], 
-      ethers.utils.formatBytes32String('BULLET')
+      [
+        ethers.utils.formatBytes32String('BULLET'),
+        ethers.utils.formatBytes32String('NULL'),
+        ethers.utils.formatBytes32String('FLAT')
+      ]
     )
     
     vaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);

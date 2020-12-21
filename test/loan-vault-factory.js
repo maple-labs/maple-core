@@ -90,7 +90,11 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
-        ethers.utils.formatBytes32String("BALLET")
+        [
+          ethers.utils.formatBytes32String('BALLET'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
       )
     ).to.be.revertedWith(
       "LoanVaultFactory::createLoanVault:ERR_NULL_INTEREST_STRUCTURE_CALC"
@@ -101,7 +105,41 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
-        ethers.utils.formatBytes32String("BULLET")
+        [
+          ethers.utils.formatBytes32String('BULLET'),
+          ethers.utils.formatBytes32String('NALL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
+      )
+    ).to.be.revertedWith(
+      "LoanVaultFactory::createLoanVault:ERR_NULL_LATE_FEE_CALC"
+    );
+
+    await expect(
+      LoanVaultFactory.createLoanVault(
+        DAIAddress,
+        WETHAddress,
+        [5000, 0, 0, 0, 0, 0],
+        [
+          ethers.utils.formatBytes32String('BULLET'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLOT')
+        ]
+      )
+    ).to.be.revertedWith(
+      "LoanVaultFactory::createLoanVault:ERR_NULL_PREMIUM_CALC"
+    );
+
+    await expect(
+      LoanVaultFactory.createLoanVault(
+        DAIAddress,
+        WETHAddress,
+        [5000, 0, 0, 0, 0, 0],
+        [
+          ethers.utils.formatBytes32String('BULLET'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
       )
     ).to.be.revertedWith(
       "LoanVault::constructor:ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO"
@@ -112,7 +150,11 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         BUNK_ADDRESS,
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
-        ethers.utils.formatBytes32String("BULLET")
+        [
+          ethers.utils.formatBytes32String('BULLET'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
       )
     ).to.be.revertedWith(
       "LoanVault::constructor:ERR_INVALID_FUNDS_TOKEN_ADDRESS"
@@ -123,7 +165,11 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         BUNK_ADDRESS,
         [5000, 0, 0, 0, 0, 0],
-        ethers.utils.formatBytes32String("AMORTIZATION")
+        [
+          ethers.utils.formatBytes32String('AMORTIZATION'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
       )
     ).to.be.revertedWith(
       "LoanVaultFactory::createLoanVault:ERR_NULL_ASSET_COLLATERAL"
@@ -134,7 +180,11 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
-        ethers.utils.formatBytes32String("BULLET")
+        [
+          ethers.utils.formatBytes32String('BULLET'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
       )
     ).to.be.revertedWith(
       "LoanVault::constructor:ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO"
@@ -145,7 +195,11 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 1, 0, 0, 0, 0],
-        ethers.utils.formatBytes32String("AMORTIZATION")
+        [
+          ethers.utils.formatBytes32String('AMORTIZATION'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
       )
     ).to.be.revertedWith(
       "LoanVault::constructor:ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO"
@@ -156,7 +210,11 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 30, 29, 1000000000000, 0, 0],
-        ethers.utils.formatBytes32String("BULLET")
+        [
+          ethers.utils.formatBytes32String('BULLET'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
       )
     ).to.be.revertedWith(
       "LoanVault::constructor:ERR_INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION"
@@ -167,7 +225,11 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 30, 30, 0, 0, 0],
-        ethers.utils.formatBytes32String("BULLET")
+        [
+          ethers.utils.formatBytes32String('BULLET'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
       )
     ).to.be.revertedWith("LoanVault::constructor:ERR_MIN_RAISE_EQUALS_ZERO");
 
@@ -176,7 +238,11 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 90, 30, 1000000000000, 0, 0],
-        ethers.utils.formatBytes32String("AMORTIZATION")
+        [
+          ethers.utils.formatBytes32String('AMORTIZATION'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
       )
     ).to.be.revertedWith(
       "LoanVault::constructor:ERR_FUNDING_PERIOD_EQUALS_ZERO"
@@ -191,7 +257,11 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
       DAIAddress,
       WETHAddress,
       [5000, 90, 30, 1000000000000, 0, 7],
-      ethers.utils.formatBytes32String("AMORTIZATION")
+      [
+        ethers.utils.formatBytes32String('AMORTIZATION'),
+        ethers.utils.formatBytes32String('NULL'),
+        ethers.utils.formatBytes32String('FLAT')
+      ]
     );
 
     const postIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
@@ -252,7 +322,11 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 90, 30, 1000000000000, 0, 7], 
-        ethers.utils.formatBytes32String('AMORTIZATION')
+        [
+          ethers.utils.formatBytes32String('AMORTIZATION'),
+          ethers.utils.formatBytes32String('NULL'),
+          ethers.utils.formatBytes32String('FLAT')
+        ]
       )
     */
 

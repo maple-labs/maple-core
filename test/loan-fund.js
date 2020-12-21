@@ -87,7 +87,11 @@ describe("fundLoan() in LoanVault.sol", function () {
       DAIAddress,
       WBTCAddress,
       [500, 90, 30, BigNumber.from(10).pow(18).mul(1000), 2000, 7], 
-      ethers.utils.formatBytes32String('BULLET')
+      [
+        ethers.utils.formatBytes32String('BULLET'),
+        ethers.utils.formatBytes32String('NULL'),
+        ethers.utils.formatBytes32String('FLAT')
+      ]
     )
     
     vaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);

@@ -58,7 +58,11 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       DAIAddress,
       WETHAddress,
       [5000, 90, 1, 1000000000000, 0, 7],
-      ethers.utils.formatBytes32String("AMORTIZATION")
+      [
+        ethers.utils.formatBytes32String('AMORTIZATION'),
+        ethers.utils.formatBytes32String('NULL'),
+        ethers.utils.formatBytes32String('FLAT')
+      ]
     );
     LVAddress = await LVFactory.getLoanVault(
       (await LVFactory.loanVaultsCreated()) - 1

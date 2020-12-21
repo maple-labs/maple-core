@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity 0.7.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-//import "./interface/ILoanVault.sol";
-
 contract LoanTokenLocker {
-    // parent LP address for authorization purposes
-    address public immutable ownerLP;
+
+    /// @notice The LoanToken this vault is holding.
     address public immutable loanToken;
 
-    constructor(address _loanToken, address _LPaddy) {
-        ownerLP = _LPaddy;
+    /// @notice The owner of this Locker (a liquidity pool).
+    address public immutable owner;
+
+    constructor(address _loanToken, address _owner) {
         loanToken = _loanToken;
+        owner = _owner;
     }
 
     modifier isOwner() {
-        //check if the LP is an LP as known to the factory?
-        require(msg.sender == ownerLP, "ERR:LoanTokenLocker: IS NOT OWNER POOL");
+        require(msg.sender == owner, "LoanTokenLocker:ERR_MSG_SENDER_NOT_OWNER");
         _;
     }
 }

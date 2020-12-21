@@ -228,6 +228,8 @@ describe("Borrower Journey", function () {
     const REQUESTED_ASSET = DAIAddress;
     const COLLATERAL_ASSET = WETHAddress;
     const INTEREST_STRUCTURE = 'BULLET' // 'BULLET' or 'AMORTIZATION'
+    const LATE_FEE_TYPE = 'NULL' // 'NULL' only option
+    const PREMIUM_TYPE = 'FLAT' // 'FLAT' only option
 
     const APR_BIPS = 500; // 5%
     const TERM_DAYS = 90;
@@ -253,7 +255,11 @@ describe("Borrower Journey", function () {
         COLLATERAL_BIPS_RATIO, 
         FUNDING_PERIOD_DAYS
       ],
-      ethers.utils.formatBytes32String(INTEREST_STRUCTURE),
+      [
+        ethers.utils.formatBytes32String(INTEREST_STRUCTURE),
+        ethers.utils.formatBytes32String(LATE_FEE_TYPE),
+        ethers.utils.formatBytes32String(PREMIUM_TYPE)
+      ],
       {gasLimit: 6000000}
     );
 

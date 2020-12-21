@@ -81,7 +81,11 @@ describe("create 1000 USDC loan, fund 500 USDC, drawdown 50% wETH collateralized
       USDCAddress,
       WETHAddress,
       [500, 90, 30, BigNumber.from(10).pow(6).mul(1000), 5000, 7], 
-      ethers.utils.formatBytes32String('BULLET')
+      [
+        ethers.utils.formatBytes32String('BULLET'),
+        ethers.utils.formatBytes32String('NULL'),
+        ethers.utils.formatBytes32String('FLAT')
+      ]
     )
     
     vaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);

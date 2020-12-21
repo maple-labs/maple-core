@@ -41,13 +41,13 @@ contract LoanVaultFactory {
 
     /// @notice Fired when user calls createLoanVault()
     event LoanVaultCreated(
-        uint _loanVaultID,
+        uint256 _loanVaultID,
 		address _loanVaultAddress,
         address indexed _borrower,
         address indexed _assetRequested,
         address _assetCollateral,
         uint[6] _specifications,
-        bytes32 _interestStructure
+        bytes32[3] _calculators
     );
 
     /// @notice Instantiates a LoanVault
@@ -60,12 +60,16 @@ contract LoanVaultFactory {
     ///        _specifications[3] = MIN_RAISE
     ///        _specifications[4] = COLLATERAL_BIPS_RATIO
     ///        _specifications[5] = FUNDING_PERIOD_DAYS
+    /// @param _calculators The calculators used for the loan.
+    ///        _calculators[0] = Repayment ("Interest Structure") Calculator
+    ///        _calculators[1] = LateFee Calculator
+    ///        _calculators[2] = Premium Calculator
     /// @return The address of the newly instantiated LoanVault.
     function createLoanVault(
         address _assetRequested,
         address _assetCollateral,
         uint[6] memory _specifications,
-        bytes32 _interestStructure
+        bytes32[3] memory _calculators
     ) public returns (address) {
 
         // Pre-checks.
@@ -74,8 +78,16 @@ contract LoanVaultFactory {
             "LoanVaultFactory::createLoanVault:ERR_NULL_ASSET_COLLATERAL"
         );
         require(
-            IGlobals(mapleGlobals).interestStructureCalculators(_interestStructure) != address(0),
+            IGlobals(mapleGlobals).interestStructureCalculators(_calculators[0]) != address(0),
             "LoanVaultFactory::createLoanVault:ERR_NULL_INTEREST_STRUCTURE_CALC"
+        );
+        require(
+            IGlobals(mapleGlobals).lateFeeCalculators(_calculators[1]) != address(0),
+            "LoanVaultFactory::createLoanVault:ERR_NULL_LATE_FEE_CALC"
+        );
+        require(
+            IGlobals(mapleGlobals).premiumCalculators(_calculators[2]) != address(0),
+            "LoanVaultFactory::createLoanVault:ERR_NULL_PREMIUM_CALC"
         );
         
         // Deploy loan vault contract.
@@ -88,7 +100,11 @@ contract LoanVaultFactory {
             collateralLockerFactory,
             mapleGlobals,
             _specifications,
-            IGlobals(mapleGlobals).interestStructureCalculators(_interestStructure),
+            [
+                IGlobals(mapleGlobals).interestStructureCalculators(_calculators[0]),
+                IGlobals(mapleGlobals).lateFeeCalculators(_calculators[1]),
+                IGlobals(mapleGlobals).premiumCalculators(_calculators[2])
+            ],
 	        _tUUID
         );
 
@@ -104,7 +120,7 @@ contract LoanVaultFactory {
             _assetRequested,
             _assetCollateral,
             _specifications,
-            _interestStructure
+            [_calculators[0], _calculators[1], _calculators[2]]
         );
 
         // Increment loanVaultCreated (IDs), return loan vault address.
