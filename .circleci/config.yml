@@ -82,8 +82,8 @@ workflows:
       #       - dependencies
       - deploy_kaleido:
           context: kaleido
-          # requires:
-          #     - test
+          requires:
+              - dependencies
           filters:
             branches:
               only:
