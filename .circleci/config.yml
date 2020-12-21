@@ -55,18 +55,28 @@ jobs:
   deploy_kaleido:
     <<: *defaults
     steps:
-      # - attach_workspace:
-      #     # Must be absolute path or relative path from working_directory
-      #     at: ~/project
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: ~/project
       - run:
-          name: echo env vars
-          command: echo ${MAPLE_KALEIDO_URL} ${MAPLE_KALEIDO_MNEMONIC} ${CIRCLE_BRANCH}
+        name: Test file structure
+        command: cd ~/project/packages/contracts/private && ls -al
+      - run:
+        name: Remove file structure
+        command: rm -rf ~/project/packages/contracts/private
+      - run:
+          name: Deploy contracts to Kaleido
+          command: yarn kaleido:all:migrate
+      - run:
+          name: List files
+          command: cd ~/project/packages/contracts/private && ls -al
+      
 
 workflows:
   version: 2
   test_all:
     jobs:
-      # - dependencies
+      - dependencies
       # - test:
       #     requires:
       #       - dependencies
