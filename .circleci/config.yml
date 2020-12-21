@@ -93,7 +93,7 @@ workflows:
   version: 2
   test_all:
     jobs:
-      - dependencies
+      # - dependencies
       # - test:
       #     requires:
       #       - dependencies
