@@ -93,10 +93,10 @@ workflows:
   version: 2
   test_all:
     jobs:
-      - dependencies
-      - test:
-          requires:
-            - dependencies
+      # - dependencies
+      # - test:
+      #     requires:
+      #       - dependencies
       - deploy_kaleido:
           context: kaleido
           requires:
