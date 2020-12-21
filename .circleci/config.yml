@@ -61,14 +61,14 @@ jobs:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: ~/project
-      - run:
-          name: List Environment Variables
-          command: |
-            ls -al
-      - run:
-          name: Cat file
-          command: |
-            cat .env
+      # - run:
+      #     name: List Environment Variables
+      #     command: |
+      #       ls -al
+      # - run:
+      #     name: Cat file
+      #     command: |
+      #       cat .env
       # - run:
       #     name: Setup Environment Variables
       #     command: |
