@@ -16,21 +16,18 @@ import "./interface/IStakeLockerFactory.sol";
 import "./interface/ILiquidityLocker.sol";
 import "./interface/ILiquidityLockerFactory.sol";
 import "./interface/ILoanTokenLockerFactory.sol";
-
-//import "hardhat/console.sol";
+import "./interface/ILoanTokenLocker.sol";
+import "./interface/ILoanVault.sol";
 
 // TODO: Implement the withdraw() function, so investors can withdraw LiquidityAsset from LP.
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
 /// @title LiquidityPool is the core contract for liquidity pools.
-contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
-    using SafeMathInt for int256;
-    using SignedSafeMath for int256;
+contract LiquidityPool is IERC20, ERC20 {
     using SafeMath for uint256;
 
-    // An interface for this contract's FundsDistributionToken, stored in two separate variables.
+    // An interface for this contract's liquidity asset, stored in two separate variables.
     IERC20 private ILiquidityAsset;
-    IERC20 private fundsToken;
 
     // An interface for the asset used to stake the StakeLocker for this LiquidityPool.
     IERC20 private IStakeAsset;
@@ -38,14 +35,14 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     // An interface for the factory used to instantiate a StakeLocker for this LiquidityPool.
     IStakeLockerFactory private StakeLockerFactory;
 
+    //@notice list of funded loans
+    address[] public fundedLoans;
+
     // An interface for the locker which escrows StakeAsset.
     IStakeLocker private StakeLocker;
 
     // An interface for the MapleGlobals contract.
     IGlobals private MapleGlobals;
-
-    /// @notice The amount of LiquidityAsset tokens (dividends) currently present and accounted for in this contract.
-    uint256 public fundsTokenBalance;
 
     /// @notice The asset deposited by lenders into the LiquidityLocker, for funding loans.
     address public liquidityAsset;
@@ -93,8 +90,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         string memory name,
         string memory symbol,
         address _mapleGlobals
-    ) FundsDistributionToken(name, symbol) public {
-
+    ) ERC20(name, symbol) {
         require(
             address(_liquidityAsset) != address(0),
             "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
@@ -105,7 +101,6 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         liquidityAssetDecimals = ERC20(liquidityAsset).decimals();
         _ONELiquidityAsset = 10**(liquidityAssetDecimals);
         ILiquidityAsset = IERC20(_liquidityAsset);
-        fundsToken = ILiquidityAsset;
 
         // Assign misc. state variables.
         stakeAsset = _stakeAsset;
@@ -215,12 +210,27 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         if (loanTokenToLocker[_loanVault] == address(0)) {
             loanTokenToLocker[_loanVault] = ILoanTokenLockerFactory(_loanTokenLockerFactory)
                 .newLocker(_loanVault);
+            fundedLoans.push(_loanVault);
         }
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
             _loanVault,
             loanTokenToLocker[_loanVault],
             _amt
         );
+    }
+
+    function claimRepayments() external {
+        for (uint256 i = 0; i < fundedLoans.length; i++) {
+            claimRepayment(fundedLoans[i]);
+        }
+    }
+
+    function claimRepayment(address _loanVault) public finalized {
+        ILoanVault _LV = ILoanVault(_loanVault);
+        ILoanTokenLocker(loanTokenToLocker[_loanVault]).fetch();
+        _LV.updateFundsReceived(); //maybe this is better called from LoanVault?
+        _LV.withdrawFunds();  
+        IERC20(_loanVault).transfer(loanTokenToLocker[_loanVault], IERC20(_loanVault).balanceOf(address(this)));
     }
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals

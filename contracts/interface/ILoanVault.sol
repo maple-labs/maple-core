@@ -29,5 +29,6 @@ interface ILoanVault {
     
     // Functions
     function fundLoan(uint256, address) external;
-
+    function updateFundsReceived() external;
+    function withdrawFunds() external;
 }
