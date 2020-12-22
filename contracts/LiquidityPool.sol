@@ -52,6 +52,9 @@ contract LiquidityPool is IERC20, ERC20 {
     /// @notice The asset deposited by lenders into the LiquidityLocker, for funding loans.
     address public liquidityAsset;
 
+    // @notice the fraction of interest allocated to the stakers
+    uint256 stakerFeeBips;
+
     // decimals() precision for the liquidityAsset.
     uint8 private liquidityAssetDecimals;
 
@@ -226,18 +229,23 @@ contract LiquidityPool is IERC20, ERC20 {
 
     function claimRepayments() external {
         for (uint256 i = 0; i < fundedLoans.length; i++) {
-            claimRepayment(i);
+            //danger, this will break if the loanstate enum changes
+            if (uint256(ILoanVault(fundedLoans[i].loanVault).loanState()) == 1) {
+                claimRepayment(i);
+            }
         }
     }
 
-    function claimRepayment(uint _ind) private finalized {
-	Loan memory _loan = fundedLoans[_ind];
+    function claimRepayment(uint256 _ind) internal {
+        Loan memory _loan = fundedLoans[_ind];
         ILoanVault _LV = ILoanVault(_loan.loanVault);
         ILoanTokenLocker(loanTokenToLocker[_loan.loanVault]).fetch();
-        _LV.updateFundsReceived(); //maybe this is better called from LoanVault?
-        uint256  _newInterest = _LV.interestPaid() - _loan.interestPaid;
+        uint256 _newInterest = _LV.interestPaid() - _loan.interestPaid;
         uint256 _newPrincipal = _LV.principalPaid() - _loan.principalPaid;
-        uint256 _bal = ILiquidityAsset.balanceOf(address(this)); //this is a bad thing to do, should get the withdraw function to give us this
+        _LV.updateFundsReceived(); //should be done in LV probably instead
+        _LV.withdrawFunds();
+        //this is a bad thing to do, should get the withdraw function to give us this, or something
+        uint256 _bal = ILiquidityAsset.balanceOf(address(this));
         _loan.interestPaid = _LV.interestPaid();
         _loan.principalPaid = _LV.principalPaid(); //update the values
         uint256 _interest =
@@ -245,12 +253,20 @@ contract LiquidityPool is IERC20, ERC20 {
                 _ONELiquidityAsset
             );
         uint256 _principal = _bal.sub(_interest);
-        ILiquidityAsset.transfer(liquidityLockerAddress, _principal);
-        ILiquidityAsset.transfer(stakeLockerAddress, _interest);
+        uint256 _stakersShare = _interest.mul(stakerFeeBips).div(10000);
+        ILiquidityAsset.transfer(
+            liquidityLockerAddress,
+            _interest.add(_principal).sub(_stakersShare)
+        );
+        ILiquidityAsset.transfer(stakeLockerAddress, _stakersShare);
         IERC20(_loan.loanVault).transfer(
             loanTokenToLocker[_loan.loanVault],
             IERC20(_loan.loanVault).balanceOf(address(this))
         );
+    }
+
+    function setStakerFeeBips(uint256 _feeBips) public isDelegate {
+        stakerFeeBips = _feeBips;
     }
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
