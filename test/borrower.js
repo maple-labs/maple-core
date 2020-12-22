@@ -1,6 +1,6 @@
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
-const artpath = '../../contracts/' + network.name + '/';
+const artpath = '../../src/' + network.name + '/';
 
 describe("Borrower Journey", function () {
 

@@ -1,5 +1,5 @@
 const { deploy } = require("@maplelabs/hardhat-scripts");
-const artpath = "../../contracts/" + network.name + "/";
+const artpath = "../../src/" + network.name + "/";
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
 
 async function main() {

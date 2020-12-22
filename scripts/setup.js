@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
-const artpath = "../../contracts/" + network.name + "/";
+const artpath = "../../src/" + network.name + "/";
 
 const BCreatorABI = require(artpath + "abis/BCreator.abi.js");
 const BCreatorAddress = require(artpath + "addresses/BCreator.address.js");

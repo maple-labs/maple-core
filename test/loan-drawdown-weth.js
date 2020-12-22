@@ -1,7 +1,7 @@
 
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
-const artpath = '../../contracts/' + network.name + '/';
+const artpath = '../../src/' + network.name + '/';
 
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
