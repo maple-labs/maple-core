@@ -1,6 +1,6 @@
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
-const artpath = '../../src/' + network.name + '/';
+const artpath = "../../contracts/" + network.name + '/';
 
 
 const mintableDAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");

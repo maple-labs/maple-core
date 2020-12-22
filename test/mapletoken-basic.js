@@ -1,6 +1,6 @@
 const { expect, assert } = require("chai");
 const BigNumber = require("bignumber.js");
-const artpath = "../../src/" + network.name + "/";
+const artpath = "../../contracts/" + network.name + "/";
 
 const mapleTokenAddress = require(artpath + "addresses/MapleToken.address.js");
 const mapleTokenABI = require(artpath + "abis/MapleToken.abi.js");

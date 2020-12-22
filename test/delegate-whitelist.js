@@ -1,5 +1,5 @@
 const { expect, assert } = require("chai");
-const artpath = '../../src/' + network.name + '/';
+const artpath = "../../contracts/" + network.name + '/';
 
 const MapleGlobalsAddress = require(artpath + "addresses/MapleGlobals.address");
 const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi");
