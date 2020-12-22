@@ -258,7 +258,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     }
 
     /// @notice Make the next payment for this loan.
-    function makePayment() public isState(State.Active) isBorrower {
+    function makePayment() public isState(State.Active) {
         if (block.timestamp <= nextPaymentDue) {
 
             (
@@ -328,7 +328,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     }
 
     /// @notice Makes the full payment for this loan, a.k.a. "calling" the loan.
-    function makeFullPayment() public isState(State.Active) isBorrower {
+    function makeFullPayment() public isState(State.Active) {
         (
             uint256 _total, 
             uint256 _principal,
