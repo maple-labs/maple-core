@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.11;
+pragma solidity >=0.6.11;
 import "../library/TokenUUID.sol";
 
 //generates UUID for various tokens in the platform

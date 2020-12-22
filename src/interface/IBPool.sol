@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.11;
+pragma solidity >=0.6.11;
 
 interface IBPool {
     function isFinalized() external view returns (bool);

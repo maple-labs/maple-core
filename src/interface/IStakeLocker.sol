@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.11;
+pragma solidity >=0.6.11;
 
 interface IStakeLocker {
     function stake(uint256 _amountStakedAsset) external returns (uint256);
