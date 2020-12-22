@@ -11,7 +11,7 @@ contract LoanTokenLocker {
     /// @notice The owner of this Locker (a liquidity pool).
     address public immutable owner;
 
-    constructor(address _loanToken, address _owner) {
+    constructor(address _loanToken, address _owner) public {
         loanToken = _loanToken;
         owner = _owner;
     }

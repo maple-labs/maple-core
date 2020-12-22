@@ -3,7 +3,7 @@
 pragma solidity 0.6.11;
 
 import "./StakeLocker.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract StakeLockerFactory {
 

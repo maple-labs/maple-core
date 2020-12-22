@@ -75,7 +75,9 @@ contract LoanVaultTest is DSTest {
         ethOracle.poke(bytes32(500 * WAD));  // Set ETH price to $600
         daiOracle.poke(bytes32(1 * WAD));    // Set DAI price to $1
 
-        globals.addValidInterestStructure("BULLET", address(1));  // Add dummy interest calculator
+        globals.setInterestStructureCalculator("BULLET", address(1));  // Add dummy interest calculator
+        globals.setLateFeeCalculator("NULL", address(2));  // Add dummy late fee calculator
+        globals.setPremiumCalculator("FLAT", address(3));  // Add dummy premium calculator
         globals.addCollateralToken(WETH);
         globals.addBorrowToken(DAI);
         globals.assignPriceFeed(WETH, address(ethOracle));
@@ -96,29 +98,33 @@ contract LoanVaultTest is DSTest {
 
     function test_create_loan_vault() public {
         uint256[6] memory specifications = [500, 90, 30, uint256(1000 * WAD), 2000, 7];
+        bytes32[3] memory calculators = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
 
-        LoanVault loanVault = LoanVault(loanVaultFactory.createLoanVault(DAI, WETH, specifications, "BULLET"));
+        LoanVault loanVault = LoanVault(loanVaultFactory.createLoanVault(DAI, WETH, specifications, calculators));
     
-        assertEq(loanVault.assetRequested(),          DAI);
-        assertEq(loanVault.assetCollateral(),         WETH);
-        assertEq(loanVault.fundingLockerFactory(),    address(fundingLockerFactory));
-        assertEq(loanVault.collateralLockerFactory(), address(collateralLockerFactory));
-        assertEq(loanVault.borrower(),                tx.origin);
-        assertEq(loanVault.loanCreatedTimestamp(),    now);
-        assertEq(loanVault.aprBips(),                 specifications[0]);
-        assertEq(loanVault.termDays(),                specifications[1]);
-        assertEq(loanVault.numberOfPayments(),        specifications[1] / specifications[2]);
-        assertEq(loanVault.paymentIntervalSeconds(),  specifications[2] * 1 days);
-        assertEq(loanVault.minRaise(),                specifications[3]);
-        assertEq(loanVault.collateralBipsRatio(),     specifications[4]);
-        assertEq(loanVault.fundingPeriodSeconds(),    specifications[5] * 1 days);
-        assertEq(loanVault.repaymentCalculator(),     address(1));
+        assertEq(loanVault.assetRequested(),               DAI);
+        assertEq(loanVault.assetCollateral(),              WETH);
+        assertEq(loanVault.fundingLockerFactory(),         address(fundingLockerFactory));
+        assertEq(loanVault.collateralLockerFactory(),      address(collateralLockerFactory));
+        assertEq(loanVault.borrower(),                     tx.origin);
+        assertEq(loanVault.loanCreatedTimestamp(),         now);
+        assertEq(loanVault.aprBips(),                      specifications[0]);
+        assertEq(loanVault.termDays(),                     specifications[1]);
+        assertEq(loanVault.numberOfPayments(),             specifications[1] / specifications[2]);
+        assertEq(loanVault.paymentIntervalSeconds(),       specifications[2] * 1 days);
+        assertEq(loanVault.minRaise(),                     specifications[3]);
+        assertEq(loanVault.collateralBipsRatio(),          specifications[4]);
+        assertEq(loanVault.fundingPeriodSeconds(),         specifications[5] * 1 days);
+        assertEq(address(loanVault.repaymentCalculator()), address(1));
+        assertEq(address(loanVault.lateFeeCalculator()),   address(2));
+        assertEq(address(loanVault.premiumCalculator()),   address(3));
     }
 
     function test_fund_loan() public {
         uint256[6] memory specifications = [500, 90, 30, uint256(1000 * WAD), 2000, 7];
+        bytes32[3] memory calculators = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
 
-        LoanVault loanVault   = LoanVault(loanVaultFactory.createLoanVault(DAI, WETH, specifications, "BULLET"));
+        LoanVault loanVault   = LoanVault(loanVaultFactory.createLoanVault(DAI, WETH, specifications, calculators));
         address fundingLocker = loanVault.fundingLocker();
 
         bob.approve(DAI, address(loanVault), 500 * WAD);
@@ -136,8 +142,9 @@ contract LoanVaultTest is DSTest {
 
     function test_collateral_required() public {
         uint256[6] memory specifications = [500, 90, 30, uint256(1000 * WAD), 2000, 7];
+        bytes32[3] memory calculators = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
 
-        LoanVault loanVault = LoanVault(loanVaultFactory.createLoanVault(DAI, WETH, specifications, "BULLET"));
+        LoanVault loanVault = LoanVault(loanVaultFactory.createLoanVault(DAI, WETH, specifications, calculators));
 
         bob.approve(DAI, address(loanVault), 500 * WAD);
     
