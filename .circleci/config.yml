@@ -1,4 +1,7 @@
-version: 2
+version: 2.1
+
+orbs:
+  gcp-cli: circleci/gcp-cli@2.1.0
 
 aliases:
   - &defaults
@@ -55,6 +58,8 @@ jobs:
           name: Stop mbs chain
           command: pkill node
   
+
+  
   deploy_kaleido:
     <<: *defaults
     steps:
@@ -86,28 +91,35 @@ jobs:
       #       echo $MAPLE_KALEIDO_URL
       #       echo $MAPLE_MNEMONIC
       #       cd ~/project && ls -al && yarn kaleido:all:migrate
+      # - run:
+      #     name: Install google cloud SDK
+      #     command: |
+      #       echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+      #       sudo apt-get install apt-transport-https ca-certificates gnupg
+      #       curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+      #       sudo apt-get update && sudo apt-get install google-cloud-sdk
+      #       gcloud init
       - run:
-          name: Install google cloud SDK
-          command: |
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            sudo apt-get install apt-transport-https ca-certificates gnupg
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install google-cloud-sdk
-            gcloud init
+            name: check
+            command: echo "check"
       
 
 workflows:
   version: 2
   test_all:
     jobs:
-      - dependencies
+      # - dependencies
       # - test:
       #     requires:
       #       - dependencies
+      - gcp-cli/install_and_initialize_cli:
+          context: google-cloud
+          executor: gcp-cli/default
       - deploy_kaleido:
           context: kaleido
           requires:
-              - dependencies
+              # - dependencies
+              - gcp-cli/install_and_initialize_cli
           filters:
             branches:
               only:
