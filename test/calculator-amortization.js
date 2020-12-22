@@ -185,7 +185,7 @@ describe("Calculator - Amortization Repayment", function () {
   });
 
 
-  xit("D - Test calculator for non 18-decimal precision, USDC(6)", async function () {
+  it("D - Test calculator for non 18-decimal precision, USDC(6)", async function () {
 
     // TODO: Identify the error raised in this test.
     
@@ -210,8 +210,8 @@ describe("Calculator - Amortization Repayment", function () {
     const REQUESTED_ASSET = USDCAddress; // Update symbol variable below when changing this.
     requestedAssetSymbol = 'USDC';
 
-    const COLLATERAL_ASSET = WETHAddress; // Update symbol variable below when changing this.
-    collateralAssetSymbol = 'WETH';
+    const COLLATERAL_ASSET = WBTCAddress; // Update symbol variable below when changing this.
+    collateralAssetSymbol = 'WBTC';
 
     const INTEREST_STRUCTURE = 'AMORTIZATION' // 'BULLET' or 'AMORTIZATION'
     const LATE_FEE_TYPE = 'NULL' // 'NULL' only option
@@ -290,13 +290,42 @@ describe("Calculator - Amortization Repayment", function () {
       vaultAddress,
       BigNumber.from(10).pow(8).mul(Math.round(parseInt(COLLATERAL_REQUIRED["_hex"]) / 10**4)).mul(10000)
     )
-
-    // ERROR: Identify why it's failing here.
     
     // Drawdown for the MIN_RAISE, pow(6) is USDC decimal precision
     await LoanVault.drawdown(
       MIN_RAISE
     );
+
+    // Make first payment.
+    USDC = new ethers.Contract(
+      USDCAddress,
+      USDCABI,
+      ethers.provider.getSigner(0)
+    );
+
+    PAYMENT_INFO = await LoanVault.getNextPayment();
+    await USDC.approve(vaultAddress, PAYMENT_INFO[0]);
+    await LoanVault.makePayment();
+
+    // Make remaining payments.
+    PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+    PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"])
+    
+    while (PAYMENTS_REMAINING > 0) {
+      PAYMENT_INFO = await LoanVault.getNextPayment();
+      await USDC.approve(vaultAddress, PAYMENT_INFO[0]);
+      await LoanVault.makePayment();
+      PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+      PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"])
+    }
+
+    PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+    PRINCIPAL_OWED = await LoanVault.principalOwed();
+    PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"])
+    PRINCIPAL_OWED = parseInt(PRINCIPAL_OWED["_hex"])
+
+    expect(PAYMENTS_REMAINING).to.equals(0);
+    expect(PRINCIPAL_OWED).to.equals(0);
 
   });
 
