@@ -17,8 +17,7 @@
     "coverage": "npx hardhat coverage --network coverage",
     "migrate-token": "npx hardhat run scripts/migrate-token.js&& hardhat run scripts/publish.js",
     "migrate": "npx hardhat run scripts/deploy.js&& hardhat run scripts/publish.js",
-    "setup": "hardhat run scripts/setup.js",
-    "test-env": "node scripts/test-env.js"
+    "setup": "hardhat run scripts/setup.js"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
   "keywords": [
