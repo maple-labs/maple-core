@@ -28,7 +28,8 @@ jobs:
       - run: 
           name: Run unit tests
           command: |
-            ls -al
+            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
+            source $BASH_ENV
             chmod +x test.sh
             ./test.sh
 
