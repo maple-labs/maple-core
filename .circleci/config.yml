@@ -94,17 +94,17 @@ jobs:
       - run:
           name: Upload files to Bucket
           command: |
-            cd ~/project/contracts && ls -al
-            gsutil -m rsync -r ~/project/contracts gs://maple-artifacts/test-contracts
+            gsutil -m rsync -r ~/project/packages/contracts/private gs://maple-artifacts/contract-artifacts/kaleido/$CIRCLE_BUILD_NUM
+            gsutil -m rsync -r ~/project/packages/contracts/private gs://maple-artifacts/contract-artifacts/kaleido/current
 
 workflows:
   version: 2
   test_all:
     jobs:
       - dependencies
-      - test:
-          requires:
-            - dependencies
+      # - test:
+      #     requires:
+      #       - dependencies
       - deploy_kaleido:
           context: kaleido
           requires:
@@ -116,7 +116,7 @@ workflows:
       - upload_kaleido_artifacts:
           context: google-cloud
           requires:
-              - deploy_kaleido
+              - dependencies
           filters:
             branches:
               only:
