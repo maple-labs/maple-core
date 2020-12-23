@@ -101,16 +101,10 @@ jobs:
     executor:
       name: gcp-cli/google
     steps:
-      - run:
-          name: echo env vars
-          command: |
-            echo $GCLOUD_SERVICE_KEY > ${HOME}/gcloud-service-key.json
-            cat ${HOME}/gcloud-service-key.json
-    # steps:
-      # - attach_workspace:
-      #     # Must be absolute path or relative path from working_directory
-      #     at: ~/project
-      # - gcp-cli/initialize
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: ~/project
+      - gcp-cli/initialize
 
 workflows:
   version: 2
