@@ -224,11 +224,11 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         require(
             _drawdownAmount >= minRaise, 
-            "LoanVault::drawdown::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE"
+            "LoanVault::drawdown:ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE"
         );
         require(
             _drawdownAmount <= IRequestedAsset.balanceOf(fundingLocker), 
-            "LoanVault::drawdown::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE"
+            "LoanVault::drawdown:ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE"
         );
 
         // Update the principal owed and drawdown amount for this loan.
