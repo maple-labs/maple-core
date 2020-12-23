@@ -52,9 +52,6 @@ contract LiquidityPool is IERC20, ERC20 {
     /// @notice The asset deposited by lenders into the LiquidityLocker, for funding loans.
     address public liquidityAsset;
 
-    // @notice the fraction of interest allocated to the stakers
-    uint256 stakerFeeBips;
-
     // decimals() precision for the liquidityAsset.
     uint8 private liquidityAssetDecimals;
 
@@ -253,7 +250,7 @@ contract LiquidityPool is IERC20, ERC20 {
                 _ONELiquidityAsset
             );
         uint256 _principal = _bal.sub(_interest);
-        uint256 _stakersShare = _interest.mul(stakerFeeBips).div(10000);
+        uint256 _stakersShare = _interest.mul(stakingFeeBasisPoints).div(10000);
         ILiquidityAsset.transfer(
             liquidityLockerAddress,
             _interest.add(_principal).sub(_stakersShare)
@@ -265,9 +262,6 @@ contract LiquidityPool is IERC20, ERC20 {
         );
     }
 
-    function setStakerFeeBips(uint256 _feeBips) public isDelegate {
-        stakerFeeBips = _feeBips;
-    }
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
     if we change the decimals on the FDT to match liquidityasset this would not be necessary
