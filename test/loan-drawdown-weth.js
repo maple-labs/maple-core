@@ -147,11 +147,11 @@ describe("create 1000 USDC loan, fund 500 USDC, drawdown 50% wETH collateralized
     
     await expect(
       LoanVault.drawdown(BigNumber.from(10).pow(6).mul(1000))
-    ).to.be.revertedWith("LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE");
+    ).to.be.revertedWith("LoanVault::drawdown::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE");
 
     await expect(
       LoanVault.drawdown(BigNumber.from(10).pow(6).mul(500))
-    ).to.be.revertedWith("LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE");
+    ).to.be.revertedWith("LoanVault::drawdown::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE");
     
   });
 
