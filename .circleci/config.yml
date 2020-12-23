@@ -40,6 +40,11 @@ jobs:
             echo "test"
             chmod +x test-script.sh
             ./test-script.sh
+            echo 'export ETH_RPC_URL=$ETH_RPC_URL'
+            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
+            source $BASH_ENV
+            echo $ETH_RPC_URL
+            echo $(seth chain)
       # - run: 
       #     name: Run unit tests
       #     command: |
