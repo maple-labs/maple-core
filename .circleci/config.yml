@@ -22,6 +22,7 @@ jobs:
           name: Test run bash
           command: |
             echo "test"
+            chmod +x test-script.sh
             ./test-script.sh
       # - run: 
       #     name: Install dependencies and run tests
