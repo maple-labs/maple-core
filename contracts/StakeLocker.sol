@@ -177,7 +177,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @notice Withdraws all available funds for a token holder
      */
-    function withdrawFunds() public override {
+    function withdrawFunds() public /* override */ {
         //must be public so it can be called insdie here
         uint256 withdrawableFunds = _prepareWithdraw();
         require(

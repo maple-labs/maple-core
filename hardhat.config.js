@@ -97,7 +97,7 @@ module.exports = {
     },
   },
   solidity: {
-    version: "0.6.11",
+    version: "0.7.0",
     settings: {
       optimizer: {
         enabled: true,
@@ -106,7 +106,7 @@ module.exports = {
     },
   },
   solc: {
-    version: "0.6.11",
+    version: "0.7.0",
     optimizer: {
       enabled: true,
       runs: 200,

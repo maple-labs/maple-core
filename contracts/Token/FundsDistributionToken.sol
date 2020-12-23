@@ -8,7 +8,7 @@ import "./IFundsDistributionToken.sol";
 import "../Math/SafeMathUint.sol";
 import "../Math/SafeMathInt.sol";
 
-abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
+contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
     using SafeMath for uint256;
     using SafeMathUint for uint256;
     using SignedSafeMath for int256;

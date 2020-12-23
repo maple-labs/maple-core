@@ -250,7 +250,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @notice Withdraws all available funds for a token holder
      */
-    function withdrawFunds() public override {
+    function withdrawFunds() public /* override */ {
         //must be public rather than external
         uint256 withdrawableFunds = _prepareWithdraw();
 

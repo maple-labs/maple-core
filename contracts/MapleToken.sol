@@ -39,7 +39,7 @@ contract MapleToken is IFundsDistributionToken, FundsDistributionToken {
 	 * @notice Withdraws all available funds for a token holder
 	 */
 	function withdrawFunds() 
-		external override
+		external /* override */
 	{
 		uint256 withdrawableFunds = _prepareWithdraw();
 		
