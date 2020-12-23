@@ -9,40 +9,6 @@ aliases:
       - image: circleci/node:10
 
 jobs:
-  unit-test:
-    docker:
-      - image: nixos/nix:latest
-    steps:
-      - run:
-          name: Checkout maple-core
-          command: |
-            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-core.git .
-            git checkout $CIRCLE_BRANCH
-      - run:
-          name: Set up Cachix
-          command: |
-            nix-env -iA nixpkgs.cachix nixpkgs.bash
-      - run: 
-          name: Install dependencies
-          command: |
-            . "$HOME/.nix-profile/etc/profile.d/nix.sh"
-            nix-env -iA nixpkgs.cachix nixpkgs.bash
-            nix-env -iA dapp hevm seth -if https://github.com/dapphub/dapptools/tarball/master --substituters https://dapp.cachix.org --trusted-public-keys dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs=
-            nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_11
-            # cachix use maker
-            cachix use dapp
-            dapp update
-            
-      - run: 
-          name: Run unit tests
-          command: |
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ls -al
-            chmod +x test.sh
-            ./test.sh
-
-
   dependencies:
     <<: *defaults
     steps:
@@ -68,6 +34,37 @@ jobs:
           root: ~/project
           paths:
             - "./*"
+  unit-test:
+    docker:
+      - image: nixos/nix:latest
+    steps:
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: ~/project
+      - run:
+          name: Set up Cachix
+          command: |
+            nix-env -iA nixpkgs.cachix nixpkgs.bash
+      - run: 
+          name: Install dependencies
+          command: |
+            . "$HOME/.nix-profile/etc/profile.d/nix.sh"
+            nix-env -iA nixpkgs.cachix nixpkgs.bash
+            nix-env -iA dapp hevm seth -if https://github.com/dapphub/dapptools/tarball/master --substituters https://dapp.cachix.org --trusted-public-keys dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs=
+            nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_11
+            # cachix use maker
+            cachix use dapp
+            dapp update
+            
+      - run: 
+          name: Run unit tests
+          command: |
+            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
+            source $BASH_ENV
+            cd ~/project/packages/maple-core
+            ls -al
+            chmod +x test.sh
+            ./test.sh
 
   integration-test:
     <<: *defaults
