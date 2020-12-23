@@ -199,6 +199,10 @@ contract MapleGlobals {
         @param _establishmentFeeBasisPoints The fee, 50 = 0.50%
      */
     function setEstablishmentFee(uint256 _establishmentFeeBasisPoints) public isGovernor {
+        require(
+            _establishmentFeeBasisPoints < 10000, 
+            "MapleGlobals::setEstablishmentFee:ERR_INPUT_GREATER_OR_EQUAL_TO_10000"
+        );
         establishmentFeeBasisPoints = _establishmentFeeBasisPoints;
     }
 

@@ -246,9 +246,21 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::endFunding:ERR_COLLATERAL_TRANSFER_FROM_APPROVAL_OR_BALANCE"
         );
 
-        // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to LoanVault.
+        // Transfer funding amount from FundingLocker to Treasury (for fee) and remainder to Borrower.
+        // Then drain remaining funds to LoanVault.
+        uint fee = MapleGlobals.establishmentFeeBasisPoints();
         require(
-            IFundingLocker(fundingLocker).pull(borrower, _drawdownAmount), 
+            IFundingLocker(fundingLocker).pull(
+                MapleGlobals.mapleTreasury(), 
+                _drawdownAmount.mul(fee).div(10000)
+            ), 
+            "LoanVault::endFunding:CRITICAL_ERR_PULL"
+        );
+        require(
+            IFundingLocker(fundingLocker).pull(
+                borrower, 
+                _drawdownAmount.mul(10000 - fee).div(10000)
+            ), 
             "LoanVault::endFunding:CRITICAL_ERR_PULL"
         );
         require(
