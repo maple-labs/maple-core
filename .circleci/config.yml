@@ -33,8 +33,10 @@ jobs:
           command: |
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
+            echo $(seth chain)
+            echo $ETH_RPC_URL
             chmod +x test.sh
-            nix-shell --run ./test.sh
+            ./test.sh
 
 
   dependencies:
