@@ -13,11 +13,16 @@ jobs:
     docker:
       - image: nixorg/nix:circleci
     steps:
+      - run:
+          name: Checkout maple-core
+          command: |
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-core.git .
+            git checkout $CIRCLE_BRANCH
       - run: 
           name: Install nix/dapptools and update submodules
           command: |
             . "$HOME/.nix-profile/etc/profile.d/nix.sh"
-            nix-env -iA dapp hevm seth solc -if https://github.com/dapphub/dapptools/tarball/master --substituters https://dapp.cachix.org --trusted-public-keys dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs=
+            nix-env -iA dapp hevm seth -if https://github.com/dapphub/dapptools/tarball/master --substituters https://dapp.cachix.org --trusted-public-keys dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs=
             nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_11
             dapp update
       - run: 
