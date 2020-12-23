@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../interface/IBPool.sol";
 import "../interface/IGlobals.sol";
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 //we might want to do this with functions built into BPool
 //these functions will give us the ammount out if they cashed out
@@ -80,7 +80,7 @@ library CalcBPool {
         // Fetch amount staked in _stakeLockerAddress by _staker.
         uint256 poolAmountIn = IERC20(_stakeLockerAddress).balanceOf(_staker);
         
-        console.log("poolAmountIn", poolAmountIn);
+        // console.log("poolAmountIn", poolAmountIn);
 
         // Returns amount of BPTs required to extract tokenAmountOut.
         uint256 tokenAmountOut = bPool.calcSingleOutGivenPoolIn(
@@ -92,7 +92,7 @@ library CalcBPool {
             swapFee
         );
 
-        console.log("tokenAmountOut", tokenAmountOut);
+        // console.log("tokenAmountOut", tokenAmountOut);
 
         return tokenAmountOut;
     }
@@ -134,8 +134,8 @@ library CalcBPool {
         // Fetch amount staked in _stakeLockerAddress by _staker.
         uint256 stakerBalance = IERC20(_stakeLockerAddress).balanceOf(_staker);
 
-        console.log("poolAmountInRequired", poolAmountInRequired);
-        console.log("stakerBalance", stakerBalance);
+        // console.log("poolAmountInRequired", poolAmountInRequired);
+        // console.log("stakerBalance", stakerBalance);
 
         return (poolAmountInRequired, stakerBalance.div(_ONE));
     }

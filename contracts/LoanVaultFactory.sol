@@ -3,7 +3,7 @@ pragma solidity >=0.6.11;
 
 import "./LoanVault.sol";
 import "./interface/IGlobals.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./library/TokenUUID.sol";
 
 /// @title LoanVaultFactory instantiates LoanVault contracts.
@@ -27,7 +27,7 @@ contract LoanVaultFactory {
     /// @notice The CollateralLockerFactory to use for this LoanVaultFactory.
     address public collateralLockerFactory;
 
-    constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) {
+    constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) public {
         mapleGlobals = _mapleGlobals;
         fundingLockerFactory = _fundingLockerFactory;
         collateralLockerFactory = _collateralLockerFactory;

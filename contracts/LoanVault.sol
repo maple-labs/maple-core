@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.11;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./interface/IGlobals.sol";
@@ -138,6 +138,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             string(abi.encodePacked("Maple Loan Vault Token ", _tUUID)),
             string(abi.encodePacked("ML", _tUUID))
         )
+        public
     {
         require(
             address(_assetRequested) != address(0),

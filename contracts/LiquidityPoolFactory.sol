@@ -23,10 +23,10 @@ contract LiquidityPoolFactory {
     address public liquidityLockerFactory;
 
     constructor(
-        address _mapleGlobals,
-        address _stakeLockerFactory,
+        address _mapleGlobals, 
+        address _stakeLockerFactory, 
         address _liquidityLockerFactory
-    ) {
+    ) public {
         mapleGlobals = _mapleGlobals;
         stakeLockerFactory = _stakeLockerFactory;
         liquidityLockerFactory = _liquidityLockerFactory;

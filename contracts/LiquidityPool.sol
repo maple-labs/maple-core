@@ -2,8 +2,8 @@
 
 pragma solidity >=0.6.11;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./Math/CalcBPool.sol";
@@ -92,7 +92,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         string memory name,
         string memory symbol,
         address _mapleGlobals
-    ) FundsDistributionToken(name, symbol) {
+    ) FundsDistributionToken(name, symbol) public {
+
         require(
             address(_liquidityAsset) != address(0),
             "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
