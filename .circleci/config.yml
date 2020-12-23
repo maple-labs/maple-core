@@ -114,9 +114,6 @@ workflows:
       # - test:
       #     requires:
       #       - dependencies
-      # - gcp-cli/install_and_initialize_cli:
-      #     context: google-cloud
-      #     executor: gcp-cli/default
       # - deploy_kaleido:
       #     context: kaleido
       #     requires:
