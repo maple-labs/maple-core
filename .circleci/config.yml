@@ -7,9 +7,6 @@ aliases:
   - &defaults
     docker:
       - image: circleci/node:10
-        # environment:
-        #   MAPLE_KALEIDO_URL: $MAPLE_KALEIDO_URL
-        #   MAPLE_KALEIDO_MNEMONIC: $MAPLE_KALEIDO_MNEMONIC
 
 jobs:
   dependencies:
@@ -57,8 +54,6 @@ jobs:
       - run:
           name: Stop mbs chain
           command: pkill node
-  
-
   
   deploy_kaleido:
     <<: *defaults
