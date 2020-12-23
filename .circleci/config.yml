@@ -27,7 +27,10 @@ jobs:
             dapp update
       - run: 
           name: Run unit tests
-          command: nix-shell --pure --argstr url ${ETH_RPC_URL} --run './test.sh'
+          command: |
+            ls -al
+            chmod +x test.sh
+            ./test.sh
 
 
   dependencies:
