@@ -105,6 +105,10 @@ jobs:
           # Must be absolute path or relative path from working_directory
           at: ~/project
       - gcp-cli/initialize
+      - run:
+          name: Upload files to Bucket
+          command: gsutil -m rsync -r ~/project gs://maple-artifacts/test
+
 
 workflows:
   version: 2
