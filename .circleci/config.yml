@@ -1,7 +1,6 @@
 version: 2.1
 
 orbs:
-  # gcs: t3n/gcs@0.1.3
   gcp-cli: circleci/gcp-cli@1
 
 aliases:
@@ -83,19 +82,6 @@ jobs:
             echo $MAPLE_KALEIDO_URL
             echo $MAPLE_MNEMONIC
             cd ~/project && ls -al && yarn kaleido:all:migrate
-
-  # upload_kaleido_artifacts: (uncertified)
-  #   docker:
-  #     - image: google/cloud-sdk
-  #   steps:
-  #     - attach_workspace:
-  #         # Must be absolute path or relative path from working_directory
-  #         at: ~/project
-  #     - gcs/gcs-rsync:
-  #         bucket: maple-artifacts
-  #         source: ~/project/contracts
-  #         destination: "preview/$CIRCLE_BRANCH"
-  #         options: -r
   
   upload_kaleido_artifacts:
     executor:
@@ -107,29 +93,30 @@ jobs:
       - gcp-cli/initialize
       - run:
           name: Upload files to Bucket
-          command: gsutil -m rsync -r ~/project gs://maple-artifacts/test
-
+          command: |
+            cd ~/project/contracts && ls -al
+            gsutil -m rsync -r ~/project/contracts gs://maple-artifacts/test-contracts
 
 workflows:
   version: 2
   test_all:
     jobs:
-      # - dependencies
-      # - test:
-      #     requires:
-      #       - dependencies
-      # - deploy_kaleido:
-      #     context: kaleido
-      #     requires:
-      #         - dependencies
-      #     filters:
-      #       branches:
-      #         only:
-      #           - fake-master
+      - dependencies
+      - test:
+          requires:
+            - dependencies
+      - deploy_kaleido:
+          context: kaleido
+          requires:
+              - dependencies
+          filters:
+            branches:
+              only:
+                - fake-master
       - upload_kaleido_artifacts:
           context: google-cloud
-          # requires:
-          #     - deploy_kaleido
+          requires:
+              - deploy_kaleido
           filters:
             branches:
               only:
