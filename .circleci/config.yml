@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  gcp-cli: circleci/gcp-cli@2.1.0
+  gcs: t3n/gcs@0.1.3
 
 aliases:
   - &defaults
@@ -66,60 +66,60 @@ jobs:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: ~/project
-      # - run:
-      #     name: List Environment Variables
-      #     command: |
-      #       echo $MAPLE_KALEIDO_URL
-      #       echo $MAPLE_KALEIDO_MNEMONIC
-      # - run:
-      #     name: Cat file
-      #     command: |
-      #       cat .env
-      # - run:
-      #     name: Update PATH and Define Environment Variable at Runtime
-      #     command: |
-      #       echo 'export MAPLE_KALEIDO_URL="https://k0eb0l1bwr:NAGmuxR1tN-FEKxFSmNPD1T8hPjVW8UyW9VfJzkQNpQ@k0pchgke6s-k0geod7q6g-rpc.kr0-aws.kaleido.io/"' >> $BASH_ENV
-      #       echo 'export MAPLE_MNEMONIC="net arrange patient enter stand stomach rug doctor service giraffe surface path"' >> $BASH_ENV
-      #       echo 'export NODE_ENV="private"' >> $BASH_ENV
-      #       source $BASH_ENV
-      # - run:
-      #     name: List env vars
-      #     command: cd ~/project/packages/maple-core && yarn test-env
-      # - run:
-      #     name: Deploy contracts to Kaleido
-      #     command: |
-      #       echo $MAPLE_KALEIDO_URL
-      #       echo $MAPLE_MNEMONIC
-      #       cd ~/project && ls -al && yarn kaleido:all:migrate
-      # - run:
-      #     name: Install google cloud SDK
-      #     command: |
-      #       echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-      #       sudo apt-get install apt-transport-https ca-certificates gnupg
-      #       curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-      #       sudo apt-get update && sudo apt-get install google-cloud-sdk
-      #       gcloud init
       - run:
-            name: check
-            command: echo "check"
+          name: Update PATH and Define Environment Variable at Runtime
+          command: |
+            echo 'export MAPLE_KALEIDO_URL="https://k0eb0l1bwr:NAGmuxR1tN-FEKxFSmNPD1T8hPjVW8UyW9VfJzkQNpQ@k0pchgke6s-k0geod7q6g-rpc.kr0-aws.kaleido.io/"' >> $BASH_ENV
+            echo 'export MAPLE_MNEMONIC="net arrange patient enter stand stomach rug doctor service giraffe surface path"' >> $BASH_ENV
+            echo 'export NODE_ENV="private"' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: List env vars
+          command: cd ~/project/packages/maple-core && yarn test-env
+      - run:
+          name: Deploy contracts to Kaleido
+          command: |
+            echo $MAPLE_KALEIDO_URL
+            echo $MAPLE_MNEMONIC
+            cd ~/project && ls -al && yarn kaleido:all:migrate
+
+  upload_kaleido_artifacts:
+    docker:
+      - image: google/cloud-sdk
+    steps:
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: ~/project
+      - gcs/gcs-rsync:
+          bucket: maple-artifacts
+          source: ~/project/contracts
+          destination: "preview/$CIRCLE_BRANCH"
+          options: -r
       
 
 workflows:
   version: 2
   test_all:
     jobs:
-      # - dependencies
-      # - test:
-      #     requires:
-      #       - dependencies
+      - dependencies
+      - test:
+          requires:
+            - dependencies
       - gcp-cli/install_and_initialize_cli:
           context: google-cloud
           executor: gcp-cli/default
       - deploy_kaleido:
           context: kaleido
           requires:
-              # - dependencies
-              - gcp-cli/install_and_initialize_cli
+              - dependencies
+          filters:
+            branches:
+              only:
+                - fake-master
+      - upload_kaleido_artifacts:
+          context: google-cloud
+          requires:
+              - deploy_kaleido
           filters:
             branches:
               only:
