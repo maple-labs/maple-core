@@ -21,7 +21,7 @@ jobs:
       - run: 
           name: Install dependencies
           command: |
-            . "$HOME/.nix-profile/etc/profile.d/nix.sh"
+            # . "$HOME/.nix-profile/etc/profile.d/nix.sh"
             nix-env -iA dapp hevm seth -if https://github.com/dapphub/dapptools/tarball/master --substituters https://dapp.cachix.org --trusted-public-keys dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs=
             nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_11
             dapp update
@@ -30,8 +30,6 @@ jobs:
           command: |
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
-            pwd
-            ls -al
             ./test.sh
             nix-shell --pure --argstr url ${ETH_RPC_URL} --run './test.sh'
 
