@@ -69,8 +69,10 @@ jobs:
       - run:
           name: Update PATH and Define Environment Variable at Runtime
           command: |
-            echo 'export MAPLE_KALEIDO_URL="https://k0eb0l1bwr:NAGmuxR1tN-FEKxFSmNPD1T8hPjVW8UyW9VfJzkQNpQ@k0pchgke6s-k0geod7q6g-rpc.kr0-aws.kaleido.io/"' >> $BASH_ENV
-            echo 'export MAPLE_MNEMONIC="net arrange patient enter stand stomach rug doctor service giraffe surface path"' >> $BASH_ENV
+            # echo 'export MAPLE_KALEIDO_URL="https://k0eb0l1bwr:NAGmuxR1tN-FEKxFSmNPD1T8hPjVW8UyW9VfJzkQNpQ@k0pchgke6s-k0geod7q6g-rpc.kr0-aws.kaleido.io/"' >> $BASH_ENV
+            # echo 'export MAPLE_MNEMONIC="net arrange patient enter stand stomach rug doctor service giraffe surface path"' >> $BASH_ENV
+            echo 'export MAPLE_KALEIDO_URL=$MAPLE_KALEIDO_URL' >> $BASH_ENV
+            echo 'export MAPLE_MNEMONIC=$MAPLE_MNEMONIC' >> $BASH_ENV
             echo 'export NODE_ENV="private"' >> $BASH_ENV
             source $BASH_ENV
       - run:
@@ -102,9 +104,9 @@ workflows:
   test_all:
     jobs:
       - dependencies
-      # - test:
-      #     requires:
-      #       - dependencies
+      - test:
+          requires:
+            - dependencies
       - deploy_kaleido:
           context: kaleido
           requires:
@@ -117,6 +119,7 @@ workflows:
           context: google-cloud
           requires:
               - dependencies
+              - deploy_kaleido
           filters:
             branches:
               only:
