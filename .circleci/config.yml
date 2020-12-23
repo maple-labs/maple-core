@@ -15,7 +15,7 @@ jobs:
     steps:
       - run:
           name: Test run bash
-          command:
+          command: |
             echo "test"
             ./test-script.sh
       # - run:
