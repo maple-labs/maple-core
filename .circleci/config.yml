@@ -14,15 +14,15 @@ jobs:
       - image: nixorg/nix:circleci
     steps:
       - run:
+          name: Checkout maple-core
+          command: |
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-core.git .
+            git checkout $CIRCLE_BRANCH
+      - run:
           name: Test run bash
           command: |
             echo "test"
             ./test-script.sh
-      # - run:
-      #     name: Checkout maple-core
-      #     command: |
-      #       GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-core.git .
-      #       git checkout $CIRCLE_BRANCH
       # - run: 
       #     name: Install dependencies and run tests
       #     command: |
