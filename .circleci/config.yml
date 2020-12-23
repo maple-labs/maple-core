@@ -14,12 +14,15 @@ jobs:
       - image: nixorg/nix:circleci
     steps:
       - run: 
-          name: Install nix
+          name: Install nix/dapptools and update submodules
           command: |
             . "$HOME/.nix-profile/etc/profile.d/nix.sh"
-            nix-env -iA dapp hevm seth solc -if https://github.com/dapphub/dapptools/tarball/master --substituters https://dapp.cachix.org --trusted-public-keys dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs=
+            # nix-env -iA dapp hevm seth solc -if https://github.com/dapphub/dapptools/tarball/master --substituters https://dapp.cachix.org --trusted-public-keys dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs=
             nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_11
             dapp update
+      - run: 
+          name: Run unit tests
+          command: |
             make unit-test
 
 
