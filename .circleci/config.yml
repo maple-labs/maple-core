@@ -105,7 +105,7 @@ workflows:
           filters:
             branches:
               only:
-                - fake-master
+                - master
       - upload_kaleido_artifacts:
           context: google-cloud
           requires:
@@ -115,4 +115,4 @@ workflows:
           filters:
             branches:
               only:
-                - fake-master
+                - master
