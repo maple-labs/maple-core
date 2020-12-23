@@ -16,7 +16,8 @@ jobs:
       - run: 
           name: Install nix
           command: |
-            nix-env -iA nixpkgs.cachix
+            . "$HOME/.nix-profile/etc/profile.d/nix.sh"
+            nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_11
 
 
   dependencies:
