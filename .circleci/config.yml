@@ -45,6 +45,8 @@ jobs:
             source $BASH_ENV
             echo $ETH_RPC_URL
             echo $(seth chain)
+            chmod +x test.sh
+            ./test.sh
       # - run: 
       #     name: Run unit tests
       #     command: |
