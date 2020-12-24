@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./interface/IGlobals.sol";
@@ -137,6 +137,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             string(abi.encodePacked("Maple Loan Vault Token ", _tUUID)),
             string(abi.encodePacked("ML", _tUUID))
         )
+        public
     {
         require(
             address(_assetRequested) != address(0),
@@ -393,7 +394,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @notice Withdraws all available funds for a token holder
      */
-    function withdrawFunds() external override {
+    function withdrawFunds() external /* override */ {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./interface/IGlobals.sol";
 import "./interface/IUniswapRouter.sol";
 import "./interface/IMapleToken.sol";
@@ -33,7 +33,7 @@ contract MapleTreasury {
     address _fundsToken, 
     address _uniswapRouter,
     address _mapleGlobals
-  ) {
+  ) public {
     mapleToken = _mapleToken;
     fundsToken = _fundsToken;
     uniswapRouter = _uniswapRouter;

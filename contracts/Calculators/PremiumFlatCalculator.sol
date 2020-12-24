@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "../interface/ILoanVault.sol";
 
 contract PremiumFlatCalculator {
@@ -11,7 +11,7 @@ contract PremiumFlatCalculator {
   /// @notice The amount of principal to charge extra as a premium for calling the loan.
   uint256 public premiumBips;
 
-  constructor(uint256 _premiumBips) {
+  constructor(uint256 _premiumBips) public {
       premiumBips = _premiumBips;
   }
 

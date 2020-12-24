@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract MapleToken is IFundsDistributionToken, FundsDistributionToken {
 
@@ -28,6 +28,7 @@ contract MapleToken is IFundsDistributionToken, FundsDistributionToken {
 		IERC20 _fundsToken
 	)  
 		FundsDistributionToken(name, symbol)
+		public 
 	{
 		require(address(_fundsToken) != address(0), "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS");
         _mint(msg.sender, 10000000 * (10 ** uint256(decimals())));
@@ -38,7 +39,7 @@ contract MapleToken is IFundsDistributionToken, FundsDistributionToken {
 	 * @notice Withdraws all available funds for a token holder
 	 */
 	function withdrawFunds() 
-		external override
+		external /* override */
 	{
 		uint256 withdrawableFunds = _prepareWithdraw();
 		

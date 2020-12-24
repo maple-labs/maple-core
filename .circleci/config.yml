@@ -9,6 +9,33 @@ aliases:
       - image: circleci/node:10
 
 jobs:
+  unit_test:
+    docker:
+      - image: nixorg/nix:circleci
+    steps:
+      - run:
+          name: Checkout maple-core
+          command: |
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-core.git .
+            git checkout $CIRCLE_BRANCH
+      - run: 
+          name: Install dependencies and run tests
+          command: |
+            nix-channel --add \
+            https://nixos.org/channels/nixpkgs-unstable nixpkgs && \
+            nix-channel --update
+            nix-env -iA nixpkgs.gnugrep nixpkgs.findutils
+            nix-env -iA dapp hevm seth solc -if https://github.com/dapphub/dapptools/tarball/master --substituters https://dapp.cachix.org --trusted-public-keys dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs=
+            nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_11
+            dapp update
+      - run:
+          name: Run unit tests
+          command: |
+            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
+            source $BASH_ENV
+            chmod +x test.sh
+            ./test.sh
+
   dependencies:
     <<: *defaults
     steps:
@@ -35,7 +62,7 @@ jobs:
           paths:
             - "./*"
 
-  test:
+  integration_test:
     <<: *defaults
     steps:
       - attach_workspace:
@@ -93,15 +120,17 @@ workflows:
   version: 2
   test_all:
     jobs:
+      - unit_test:
+          context: seth
       - dependencies
-      - test:
+      - integration_test:
           requires:
             - dependencies
       - deploy_kaleido:
           context: kaleido
           requires:
               - dependencies
-              - test
+              - integration_test
           filters:
             branches:
               only:
@@ -109,8 +138,9 @@ workflows:
       - upload_kaleido_artifacts:
           context: google-cloud
           requires:
+              - unit_test
               - dependencies
-              - test
+              - integration_test
               - deploy_kaleido
           filters:
             branches:

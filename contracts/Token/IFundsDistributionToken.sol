@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 
 interface IFundsDistributionToken {
     /**
@@ -10,9 +10,10 @@ interface IFundsDistributionToken {
     function withdrawableFundsOf(address owner) external view returns (uint256);
 
     /**
-     * @dev Withdraws all available funds for a FundsDistributionToken holder.
+     * @dev Withdraws all available funds for a FundsDistributionToken holder. 
+     * TODO: Implement this function
      */
-    function withdrawFunds() external;
+    // function withdrawFunds() external;
 
     /**
      * @dev This event emits when new funds are distributed

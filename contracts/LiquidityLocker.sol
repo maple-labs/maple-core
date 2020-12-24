@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./interface/ILoanVault.sol";
 
 contract LiquidityLocker {
@@ -15,7 +15,7 @@ contract LiquidityLocker {
     address public immutable ownerLP;
 
     // TODO: Consider checking if the _liquidityPool (owner) is a valid LiquidityPool via LPFactory.
-    constructor(address _liquidityAsset, address _liquidityPool) {
+    constructor(address _liquidityAsset, address _liquidityPool) public {
         liquidityAsset = _liquidityAsset;
         ownerLP = _liquidityPool;
         ILiquidityAsset = IERC20(_liquidityAsset);

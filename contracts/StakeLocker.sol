@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./Token/IFundsDistributionToken.sol";
 import "./Token/FundsDistributionToken.sol";
 import "./interface/ILiquidityPool.sol";
@@ -52,7 +52,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         address _liquidityAsset,
         address _parentLP,
         address _globals
-    ) FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") {
+    ) FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") public {
         liquidityAsset = _liquidityAsset;
         stakeAsset = _stakeAsset;
         parentLP = _parentLP;
@@ -177,7 +177,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @notice Withdraws all available funds for a token holder
      */
-    function withdrawFunds() public override {
+    function withdrawFunds() public /* override */ {
         //must be public so it can be called insdie here
         uint256 withdrawableFunds = _prepareWithdraw();
         require(

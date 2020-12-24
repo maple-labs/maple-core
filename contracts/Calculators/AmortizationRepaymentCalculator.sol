@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "../interface/ILoanVault.sol";
 
 contract AmortizationRepaymentCalculator {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "./interface/IPriceFeed.sol";
@@ -80,7 +80,7 @@ contract MapleGlobals {
         @param _governor The administrator's address.
         @param _mapleToken The address of the ERC-2222 token for the Maple protocol.
     */
-    constructor(address _governor, address _mapleToken) {
+    constructor(address _governor, address _mapleToken) public {
         governor = _governor;
         mapleToken = _mapleToken;
         establishmentFeeBasisPoints = 200;

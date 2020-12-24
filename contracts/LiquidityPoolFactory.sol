@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 
 import "./LiquidityPool.sol";
 import "./interface/IGlobals.sol";
@@ -23,10 +23,10 @@ contract LiquidityPoolFactory {
     address public liquidityLockerFactory;
 
     constructor(
-        address _mapleGlobals,
-        address _stakeLockerFactory,
+        address _mapleGlobals, 
+        address _stakeLockerFactory, 
         address _liquidityLockerFactory
-    ) {
+    ) public {
         mapleGlobals = _mapleGlobals;
         stakeLockerFactory = _stakeLockerFactory;
         liquidityLockerFactory = _liquidityLockerFactory;

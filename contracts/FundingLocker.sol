@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.11;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract FundingLocker {
 
@@ -11,7 +11,7 @@ contract FundingLocker {
     /// @notice LoanVault this FundingLocker is attached to.
     address public immutable loanVault;
 
-    constructor(address _fundingAsset, address _loanVault) {
+    constructor(address _fundingAsset, address _loanVault) public {
         fundingAsset = _fundingAsset;
         loanVault = _loanVault;
     }
