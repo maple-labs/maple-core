@@ -18,12 +18,6 @@ jobs:
           command: |
             GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-core.git .
             git checkout $CIRCLE_BRANCH
-      - run:
-          name: Test run bash
-          command: |
-            echo "test"
-            chmod +x test-script.sh
-            ./test-script.sh
       - run: 
           name: Install dependencies and run tests
           command: |
@@ -35,28 +29,12 @@ jobs:
             nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_11
             dapp update
       - run:
-          name: Test run bash
+          name: Run unit tests
           command: |
-            echo "test"
-            chmod +x test-script.sh
-            ./test-script.sh
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL'
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
-            echo $ETH_RPC_URL
-            echo $(seth chain)
             chmod +x test.sh
             ./test.sh
-      # - run: 
-      #     name: Run unit tests
-      #     command: |
-      #       echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-      #       source $BASH_ENV
-      #       echo $(seth chain)
-      #       echo $ETH_RPC_URL
-      #       chmod +x test.sh
-      #       ./test.sh
-
 
   dependencies:
     <<: *defaults
