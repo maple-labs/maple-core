@@ -1,4 +1,7 @@
-version: 2
+version: 2.1
+
+orbs:
+  gcp-cli: circleci/gcp-cli@1
 
 aliases:
   - &defaults
@@ -51,6 +54,40 @@ jobs:
       - run:
           name: Stop mbs chain
           command: pkill node
+  
+  deploy_kaleido:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: ~/project
+      - run:
+          name: Update PATH and Define Environment Variable at Runtime
+          command: |
+            echo 'export MAPLE_KALEIDO_URL=$MAPLE_KALEIDO_URL' >> $BASH_ENV
+            echo 'export MAPLE_MNEMONIC=$MAPLE_MNEMONIC' >> $BASH_ENV
+            echo 'export NODE_ENV="private"' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Deploy contracts to Kaleido
+          command: |
+            echo $MAPLE_KALEIDO_URL
+            echo $MAPLE_MNEMONIC
+            cd ~/project && yarn kaleido:all:migrate
+  
+  upload_kaleido_artifacts:
+    executor:
+      name: gcp-cli/google
+    steps:
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: ~/project
+      - gcp-cli/initialize
+      - run:
+          name: Upload files to gcloud bucket
+          command: |
+            gsutil -m rsync -r ~/project/packages/contracts/private gs://maple-artifacts/contract-artifacts/kaleido/$CIRCLE_BUILD_NUM
+            gsutil -m rsync -r ~/project/packages/contracts/private gs://maple-artifacts/contract-artifacts/kaleido/current
 
 workflows:
   version: 2
@@ -60,3 +97,22 @@ workflows:
       - test:
           requires:
             - dependencies
+      - deploy_kaleido:
+          context: kaleido
+          requires:
+              - dependencies
+              - test
+          filters:
+            branches:
+              only:
+                - master
+      - upload_kaleido_artifacts:
+          context: google-cloud
+          requires:
+              - dependencies
+              - test
+              - deploy_kaleido
+          filters:
+            branches:
+              only:
+                - master
