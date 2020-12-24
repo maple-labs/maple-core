@@ -225,11 +225,11 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         require(
             _drawdownAmount >= minRaise, 
-            "LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE"
+            "LoanVault::drawdown:ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE"
         );
         require(
             _drawdownAmount <= IRequestedAsset.balanceOf(fundingLocker), 
-            "LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE"
+            "LoanVault::drawdown:ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE"
         );
 
         // Update the principal owed and drawdown amount for this loan.
@@ -244,17 +244,30 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
         require(
             ICollateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(_drawdownAmount)), 
-            "LoanVault::endFunding:ERR_COLLATERAL_TRANSFER_FROM_APPROVAL_OR_BALANCE"
+            "LoanVault::drawdown:ERR_COLLATERAL_TRANSFER_FROM_APPROVAL_OR_BALANCE"
         );
 
-        // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to LoanVault.
+        // Transfer funding amount from FundingLocker to Treasury (for fee) and remainder to Borrower.
+        // Then drain remaining funds to LoanVault.
+        uint fee = MapleGlobals.establishmentFeeBasisPoints();
+        
         require(
-            IFundingLocker(fundingLocker).pull(borrower, _drawdownAmount), 
-            "LoanVault::endFunding:CRITICAL_ERR_PULL"
+           IFundingLocker(fundingLocker).pull(
+                MapleGlobals.mapleTreasury(), 
+                _drawdownAmount.mul(fee).div(10000)
+            ), 
+            "LoanVault::drawdown:CRITICAL_ERR_PULL"
+        );
+        require(
+            IFundingLocker(fundingLocker).pull(
+                borrower, 
+                _drawdownAmount.mul(10000 - fee).div(10000)
+            ), 
+            "LoanVault::drawdown:CRITICAL_ERR_PULL"
         );
         require(
             IFundingLocker(fundingLocker).drain(),
-            "LoanVault::endFunding:ERR_DRAIN"
+            "LoanVault::drawdown:ERR_DRAIN"
         );
     }
 

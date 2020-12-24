@@ -66,6 +66,12 @@ describe("MapleGlobals.sol Interactions", function () {
     const unstakeDelayRevert = await mapleGlobals.unstakeDelay();
     expect(unstakeDelayRevert).to.equal(7776000);
 
+    await expect(
+      mapleGlobals.setEstablishmentFee(10000)
+    ).to.be.revertedWith(
+      "MapleGlobals::setEstablishmentFee:ERR_INPUT_GREATER_OR_EQUAL_TO_10000"
+    )
+
     await mapleGlobals.setGovernor(accounts[1]);
     const governorFetch = await mapleGlobals.governor();
     expect(governorFetch).to.equal(accounts[1]);

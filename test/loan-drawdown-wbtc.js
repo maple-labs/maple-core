@@ -19,6 +19,7 @@ const FLFABI = require(artpath + "abis/FundingLockerFactory.abi.js");
 const GlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
 const GlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
 const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
+const TreasuryAddress = require(artpath + "addresses/MapleTreasury.address.js");
 
 describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized loan", function () {
 
@@ -145,11 +146,11 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
     
     await expect(
       LoanVault.drawdown(BigNumber.from(10).pow(18).mul(1000))
-    ).to.be.revertedWith("LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE");
+    ).to.be.revertedWith("LoanVault::drawdown:ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE");
 
     await expect(
       LoanVault.drawdown(BigNumber.from(10).pow(18).mul(500))
-    ).to.be.revertedWith("LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE");
+    ).to.be.revertedWith("LoanVault::drawdown:ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE");
     
   });
 
@@ -193,17 +194,25 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
     const PRE_LOCKER_BALANCE = await LoanVault.getFundingLockerBalance();
     const PRE_BORROWER_BALANCE = await DAI.balanceOf(accounts[0]);
     const PRE_LOANVAULT_BALANCE = await DAI.balanceOf(vaultAddress);
+    const PRE_TREASURY_BALANCE = await DAI.balanceOf(TreasuryAddress);
 
     await LoanVault.drawdown(BigNumber.from(10).pow(18).mul(1000));
     
     const POST_LOCKER_BALANCE = await LoanVault.getFundingLockerBalance();
     const POST_BORROWER_BALANCE = await DAI.balanceOf(accounts[0]);
     const POST_LOANVAULT_BALANCE = await DAI.balanceOf(vaultAddress);
+    const POST_TREASURY_BALANCE = await DAI.balanceOf(TreasuryAddress);
+
+    // Confirm that establishment fee has been taken and deposited to Treasury.
+    const ESTABLISHMENT_FEE = await Globals.establishmentFeeBasisPoints();
+    expect(
+      parseInt(POST_TREASURY_BALANCE["_hex"]) - parseInt(PRE_TREASURY_BALANCE["_hex"])
+    ).to.equals(
+      BigNumber.from(10).pow(18).mul(1000) * parseInt(ESTABLISHMENT_FEE["_hex"]) / 10000
+    )
 
     // Confirm the state of various contracts.
-    
     const LoanVaultState = await LoanVault.loanState();
-
     expect(LoanVaultState).to.equals(1);
 
     // TODO: Implement handles for larger precisions (currently failing with 100mm+ DAI balance).
