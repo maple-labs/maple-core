@@ -47,7 +47,8 @@ contract LoanVaultFactory {
         address indexed _assetRequested,
         address _assetCollateral,
         uint[6] _specifications,
-        bytes32[3] _calculators
+        bytes32[3] _calculators,
+        string _tUUID
     );
 
     /// @notice Instantiates a LoanVault
@@ -120,7 +121,8 @@ contract LoanVaultFactory {
             _assetRequested,
             _assetCollateral,
             _specifications,
-            [_calculators[0], _calculators[1], _calculators[2]]
+            [_calculators[0], _calculators[1], _calculators[2]],
+            _tUUID
         );
 
         // Increment loanVaultCreated (IDs), return loan vault address.
