@@ -14,7 +14,6 @@ import "./interface/IERC20Details.sol";
 import "./interface/IRepaymentCalculator.sol";
 import "./interface/ILateFeeCalculator.sol";
 import "./interface/IPremiumCalculator.sol";
-import "hardhat/console.sol";
 
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
@@ -224,7 +223,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /// @param _drawdownAmount Amount of fundingAsset borrower will claim, remainder is returned to LoanVault.
     function drawdown(uint256 _drawdownAmount) external isState(State.Live) isBorrower {
 
-        console.log('a');
         require(
             _drawdownAmount >= minRaise, 
             "LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE"
@@ -240,34 +238,24 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         loanState = State.Active;
 
-        console.log('b');
         // Deploy a collateral locker.
         collateralLocker = ICollateralLockerFactory(collateralLockerFactory).newLocker(assetCollateral);
 
-        console.log('c');
         // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
-        console.log(collateralRequiredForDrawdown(_drawdownAmount));
-        console.log(borrower);
-        console.log(collateralLocker);
-        console.log(ICollateralAsset.balanceOf(borrower));
-        console.log(ICollateralAsset.allowance(borrower, collateralLocker));
         require(
             ICollateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(_drawdownAmount)), 
             "LoanVault::endFunding:ERR_COLLATERAL_TRANSFER_FROM_APPROVAL_OR_BALANCE"
         );
 
-        console.log('d');
         // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to LoanVault.
         require(
             IFundingLocker(fundingLocker).pull(borrower, _drawdownAmount), 
             "LoanVault::endFunding:CRITICAL_ERR_PULL"
         );
-        console.log('e');
         require(
             IFundingLocker(fundingLocker).drain(),
             "LoanVault::endFunding:ERR_DRAIN"
         );
-        console.log('f');
     }
 
     /// @notice Make the next payment for this loan.
