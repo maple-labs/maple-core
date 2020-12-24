@@ -135,6 +135,7 @@ workflows:
             branches:
               only:
                 - master
+                - sc-1034-set-up-unit-testing
       - upload_kaleido_artifacts:
           context: google-cloud
           requires:
@@ -146,3 +147,4 @@ workflows:
             branches:
               only:
                 - master
+                - sc-1034-set-up-unit-testing
