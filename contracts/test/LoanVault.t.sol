@@ -1,7 +1,7 @@
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "ds-test/test.sol";
+import "lib/ds-test/contracts/test.sol";
 
 import "../mocks/value.sol";
 import "../mocks/token.sol";
