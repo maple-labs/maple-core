@@ -161,7 +161,7 @@ contract LoanVaultTest is DSTest {
         assertEq(loanVault.fundingLockerFactory(),         address(fundingLockerFactory));
         assertEq(loanVault.collateralLockerFactory(),      address(collateralLockerFactory));
         assertEq(loanVault.borrower(),                     address(ali));
-        assertEq(loanVault.loanCreatedTimestamp(),         now);
+        assertEq(loanVault.loanCreatedTimestamp(),         block.timestamp);
         assertEq(loanVault.aprBips(),                      specifications[0]);
         assertEq(loanVault.termDays(),                     specifications[1]);
         assertEq(loanVault.numberOfPayments(),             specifications[1] / specifications[2]);
@@ -172,7 +172,7 @@ contract LoanVaultTest is DSTest {
         assertEq(address(loanVault.repaymentCalculator()), address(bulletCalc));
         assertEq(address(loanVault.lateFeeCalculator()),   address(lateFeeCalc));
         assertEq(address(loanVault.premiumCalculator()),   address(premiumCalc));
-        assertEq(loanVault.nextPaymentDue(),               now + loanVault.paymentIntervalSeconds());
+        assertEq(loanVault.nextPaymentDue(),               block.timestamp + loanVault.paymentIntervalSeconds());
     }
 
     function test_fund_loan() public {
@@ -264,8 +264,8 @@ contract LoanVaultTest is DSTest {
         address collateralLocker = loanVault.collateralLocker();
         address fundingLocker    = loanVault.fundingLocker();
 
-        assertEq(loanVault.nextPaymentDue(), now + loanVault.paymentIntervalSeconds());
+        assertEq(loanVault.nextPaymentDue(), block.timestamp + loanVault.paymentIntervalSeconds());
 
-        hevm.warp(now + loanVault.paymentIntervalSeconds()); // Warp to second that next payment is due
+        hevm.warp(block.timestamp + loanVault.paymentIntervalSeconds()); // Warp to second that next payment is due
     }
 }
