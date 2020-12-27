@@ -63,6 +63,7 @@ contract LiquidityPoolFactory {
         );
         LiquidityPool lpool =
             new LiquidityPool(
+                msg.sender,
                 _liquidityAsset,
                 _stakeAsset,
                 stakeLockerFactory,
