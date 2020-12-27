@@ -83,6 +83,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     mapping(address => address) public loanTokenToLocker;
 
     constructor(
+        address _poolDelegate,
         address _liquidityAsset,
         address _stakeAsset,
         address _stakeLockerFactory,
@@ -110,7 +111,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         stakeAsset = _stakeAsset;
         StakeLockerFactory = IStakeLockerFactory(_stakeLockerFactory);
         MapleGlobals = IGlobals(_mapleGlobals);
-        poolDelegate = tx.origin;
+        poolDelegate = _poolDelegate;
         stakingFeeBasisPoints = _stakingFeeBasisPoints;
         delegateFeeBasisPoints = _delegateFeeBasisPoints;
 

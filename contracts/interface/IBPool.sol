@@ -2,6 +2,15 @@
 pragma solidity >=0.6.11;
 
 interface IBPool {
+
+    function INIT_POOL_SUPPLY() external view returns (uint256);
+
+    function bind(address, uint256, uint256) external;
+
+    function balanceOf(address) external view returns (uint256);
+
+    function finalize() external;
+
     function isFinalized() external view returns (bool);
 
     function isBound(address) external view returns (bool);

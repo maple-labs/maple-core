@@ -107,6 +107,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     event LoanFunded(uint256 _amountFunded, address indexed _fundedBy);
 
     /// @notice Constructor for loan vault.
+    /// @param _borrower Address of borrower
     /// @param _assetRequested The asset borrower is requesting funding in.
     /// @param _assetCollateral The asset provided as collateral by the borrower.
     /// @param _fundingLockerFactory Factory to instantiate FundingLocker through.
@@ -124,6 +125,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     ///        _calculators[1] = LateFee Calculator
     ///        _calculators[2] = Premium Calculator
     constructor(
+        address _borrower,
         address _assetRequested,
         address _assetCollateral,
         address _fundingLockerFactory,
@@ -144,6 +146,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::constructor:ERR_INVALID_FUNDS_TOKEN_ADDRESS"
         );
 
+        borrower = _borrower;
         assetRequested = _assetRequested;
         assetCollateral = _assetCollateral;
         fundingLockerFactory = _fundingLockerFactory;
@@ -152,7 +155,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         ICollateralAsset = IERC20(_assetCollateral);
         MapleGlobals = IGlobals(_mapleGlobals);
         fundsToken = IRequestedAsset;
-        borrower = tx.origin;
         loanCreatedTimestamp = block.timestamp;
 
         // Perform validity cross-checks.
