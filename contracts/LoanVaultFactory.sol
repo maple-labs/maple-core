@@ -102,6 +102,7 @@ contract LoanVaultFactory {
 	    string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated+1);
 
         LoanVault vault = new LoanVault(
+            msg.sender,
             _assetRequested,
             _assetCollateral,
             fundingLockerFactory,
