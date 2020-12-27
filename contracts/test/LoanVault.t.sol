@@ -76,8 +76,6 @@ contract LoanVaultTest is DSTest {
 
     uint256 constant WAD = 10 ** 18;
 
-    enum State { Live, Active, Matured }
-
     Hevm                      hevm;
     ERC20                     fundsToken;
     MapleToken                mapleToken;
@@ -150,7 +148,7 @@ contract LoanVaultTest is DSTest {
         assertEq(IERC20(DAI).balanceOf(address(bob)), 5000 ether);
     }
 
-    function test_create_loan_vault() public {
+    function test_createLoanVault() public {
         uint256[6] memory specifications = [500, 90, 30, uint256(1000 ether), 2000, 7];
         bytes32[3] memory calculators = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
 
@@ -175,7 +173,7 @@ contract LoanVaultTest is DSTest {
         assertEq(loanVault.nextPaymentDue(),               block.timestamp + loanVault.paymentIntervalSeconds());
     }
 
-    function test_fund_loan() public {
+    function test_fundLoan() public {
         uint256[6] memory specifications = [500, 90, 30, uint256(1000 ether), 2000, 7];
         bytes32[3] memory calculators = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
 
@@ -206,7 +204,7 @@ contract LoanVaultTest is DSTest {
         bob.fundLoan(loanVault, 5000 ether, address(ali));
     }
 
-    function test_collateral_required() public {
+    function test_collateralRequiredForDrawdown() public {
         LoanVault loanVault = createAndFundLoan();
 
         uint256 reqCollateral = loanVault.collateralRequiredForDrawdown(1000 ether);
