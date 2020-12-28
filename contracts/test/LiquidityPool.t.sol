@@ -64,9 +64,11 @@ contract LP {
         string memory sig = "deposit(uint256)";
         (ok,) = address(lPool).call(abi.encodeWithSignature(sig, amt));
     }
+
+    function approve(address token, address who, uint256 amt) external {
+        IERC20(token).approve(who, amt);
+    }
 }
-
-
 
 contract LiquidityPoolTest is DSTest {
 
@@ -159,38 +161,51 @@ contract LiquidityPoolTest is DSTest {
         address stakeLocker = lPool.stakeLockerAddress();
 
         ali.approve(address(bPool), stakeLocker, uint(-1));
-        assertEq(bPool.balanceOf(address(ali)), 100 * WAD);
-        assertEq(bPool.balanceOf(stakeLocker), 0);
+        assertEq(bPool.balanceOf(address(ali)),               100 * WAD);
+        assertEq(bPool.balanceOf(stakeLocker),                0);
         assertEq(IERC20(stakeLocker).balanceOf(address(ali)), 0);
 
-        ali.stake(lPool.stakeLockerAddress(), bPool.balanceOf(address(ali)));
+        ali.stake(lPool.stakeLockerAddress(), bPool.balanceOf(address(ali)) / 2);
 
-        assertEq(bPool.balanceOf(address(ali)), 0);
-        assertEq(bPool.balanceOf(stakeLocker), 100 * WAD);
-        assertEq(IERC20(stakeLocker).balanceOf(address(ali)), 100 * WAD);
+        assertEq(bPool.balanceOf(address(ali)),               50 * WAD);
+        assertEq(bPool.balanceOf(stakeLocker),                50 * WAD);
+        assertEq(IERC20(stakeLocker).balanceOf(address(ali)), 50 * WAD);
 
         lPool.finalize();
     }
 
     function test_deposit() public {
-        address stakeLocker = lPool.stakeLockerAddress();
+        address stakeLocker     = lPool.stakeLockerAddress();
+        address liquidityLocker = lPool.liquidityLockerAddress();
 
         ali.approve(address(bPool), stakeLocker, uint(-1));
-        ali.stake(lPool.stakeLockerAddress(), bPool.balanceOf(address(ali)));
+        ali.stake(lPool.stakeLockerAddress(), bPool.balanceOf(address(ali)) / 2);
 
         // Mint 100 DAI into this LP account
-        assertEq(IERC20(DAI).balanceOf(address(this)), 0);
+        assertEq(IERC20(DAI).balanceOf(address(bob)), 0);
         hevm.store(
             DAI,
-            keccak256(abi.encode(address(this), uint256(2))),
+            keccak256(abi.encode(address(bob), uint256(2))),
             bytes32(uint256(100 ether))
         );
-        assertEq(IERC20(DAI).balanceOf(address(this)), 100 ether);
+        assertEq(IERC20(DAI).balanceOf(address(bob)), 100 ether);
 
         assertTrue(!bob.try_deposit(address(lPool), 100 ether)); // Not finalized
 
         lPool.finalize();
 
+        assertTrue(!bob.try_deposit(address(lPool), 100 ether)); // Not approved
+
+        bob.approve(DAI, address(lPool), uint(-1));
+
+        assertEq(IERC20(DAI).balanceOf(address(bob)),    100 ether);
+        assertEq(IERC20(DAI).balanceOf(liquidityLocker), 0);
+        assertEq(lPool.balanceOf(address(bob)),          0);
+
         assertTrue(bob.try_deposit(address(lPool), 100 ether));
+
+        assertEq(IERC20(DAI).balanceOf(address(bob)),    0);
+        assertEq(IERC20(DAI).balanceOf(liquidityLocker), 100 ether);
+        assertEq(lPool.balanceOf(address(bob)),          100 ether);
     }
 }
