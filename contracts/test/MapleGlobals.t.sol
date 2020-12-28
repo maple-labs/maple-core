@@ -22,13 +22,13 @@ contract MapleGlobalsTest is TestUtil {
     }
 
     function test_setters() public {
-        assertEq(globals.establishmentFeeBasisPoints(), 200);
-        globals.setEstablishmentFee(50);
-        assertEq(globals.establishmentFeeBasisPoints(), 50);
+        assertEq(globals.investorFee(), 50);
+        globals.setInvestorFee(45);
+        assertEq(globals.investorFee(), 45);
 
-        assertEq(globals.treasuryFeeBasisPoints(), 20);
-        globals.setTreasurySplit(30);
-        assertEq(globals.treasuryFeeBasisPoints(), 30);
+        assertEq(globals.treasuryFee(), 50);
+        globals.setTreasuryFee(30);
+        assertEq(globals.treasuryFee(), 30);
 
         assertEq(globals.gracePeriod(), 5 days);
         globals.setGracePeriod(1 days);
