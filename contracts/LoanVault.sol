@@ -269,16 +269,13 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         // Pull investorFee into this LoanVault.
         require(
-           IFundingLocker(fundingLocker).pull(
-                address(this), 
-                feePaid
-            ), 
+            IFundingLocker(fundingLocker).pull(address(this), feePaid), 
             "LoanVault::drawdown:CRITICAL_ERR_PULL"
         );
 
         // Transfer drawdown amount to Borrower.
         require(
-           IFundingLocker(fundingLocker).pull(
+            IFundingLocker(fundingLocker).pull(
                 borrower, 
                 _drawdownAmount.mul(10000 - investorFee - treasuryFee).div(10000)
             ), 
