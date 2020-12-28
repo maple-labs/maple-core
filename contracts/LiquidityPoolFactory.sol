@@ -33,6 +33,7 @@ contract LiquidityPoolFactory {
     }
 
     event PoolCreated(
+        address indexed _pool,
         address indexed _delegate,
         address _liquidityAsset,
         address _stakeAsset,
@@ -77,6 +78,7 @@ contract LiquidityPoolFactory {
         _liquidityPools[liquidityPoolsCreated] = address(lpool);
         _isLiquidityPool[address(lpool)] = true;
         emit PoolCreated(
+            address(lpool),
             msg.sender,
             _liquidityAsset,
             _stakeAsset,
