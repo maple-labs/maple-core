@@ -4,7 +4,6 @@ pragma solidity >=0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract LoanTokenLocker {
-
     /// @notice The LoanToken this vault is holding.
     address public immutable loanToken;
 
@@ -19,5 +18,9 @@ contract LoanTokenLocker {
     modifier isOwner() {
         require(msg.sender == owner, "LoanTokenLocker:ERR_MSG_SENDER_NOT_OWNER");
         _;
+    }
+
+    function fetch() external isOwner {
+        IERC20(loanToken).transfer(owner, IERC20(loanToken).balanceOf(address(this)));
     }
 }

@@ -14,7 +14,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     using SignedSafeMath for int256;
 
     //map address to date value
-    mapping(address => uint256) private stakeDate;
+    mapping(address => uint256) private stakeDate; // Consider making public
 
     // The primary investment asset for the LP, and the dividend token for this contract.
     IERC20 private ILiquidityAsset;
