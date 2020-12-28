@@ -3,10 +3,10 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "./Token/IFundsDistributionToken.sol";
-import "./Token/FundsDistributionToken.sol";
-import "./interface/ILiquidityPool.sol";
-import "./interface/IGlobals.sol";
+import "./token/IFundsDistributionToken.sol";
+import "./token/FundsDistributionToken.sol";
+import "./interfaces/ILiquidityPool.sol";
+import "./interfaces/IGlobals.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
