@@ -82,6 +82,8 @@ contract LiquidityPool is IERC20, ERC20 {
     /// @notice The fee for delegates.
     uint256 public delegateFeeBasisPoints;
 
+    CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
+
     mapping(address => address) public loanTokenToLocker;
 
     constructor(
@@ -95,7 +97,7 @@ contract LiquidityPool is IERC20, ERC20 {
         string memory name,
         string memory symbol,
         address _mapleGlobals
-    ) ERC20(name, symbol) {
+    ) ERC20(name, symbol) public {
         require(
             address(_liquidityAsset) != address(0),
             "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
@@ -120,6 +122,9 @@ contract LiquidityPool is IERC20, ERC20 {
         liquidityLockerAddress = address(
             ILiquidityLockerFactory(_liquidityLockerFactory).newLocker(liquidityAsset)
         );
+
+        // Initialize Balancer pool calculator
+        calcBPool = new CalcBPool();
     }
 
     modifier finalized() {
@@ -184,11 +189,11 @@ contract LiquidityPool is IERC20, ERC20 {
 
         // TODO: Resolve the dissonance between poolSharesRequired / minstake / getSwapOutValue
         (uint256 _poolAmountInRequired, uint256 _poolAmountPresent) =
-            CalcBPool.getPoolSharesRequired(pool, pair, poolDelegate, stakeLockerAddress, minStake);
+            calcBPool.getPoolSharesRequired(pool, pair, poolDelegate, stakeLockerAddress, minStake);
         return (
             minStake,
-            CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress),
-            CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress) >= minStake,
+            calcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress),
+            calcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress) >= minStake,
             _poolAmountInRequired,
             _poolAmountPresent
         );
@@ -286,46 +291,5 @@ contract LiquidityPool is IERC20, ERC20 {
             _out = _amt.div(10**(18 - liquidityAssetDecimals));
         }
         return _out;
-    }
-
-    /**
-     * @notice Withdraws all available funds for a token holder
-     */
-    function withdrawFunds() public /* override */ {
-        //must be public rather than external
-        uint256 withdrawableFunds = _prepareWithdraw();
-
-        require(
-            fundsToken.transfer(msg.sender, withdrawableFunds),
-            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
-        );
-
-        _updateFundsTokenBalance();
-    }
-
-    /**
-     * @dev Updates the current funds token balance
-     * and returns the difference of new and previous funds token balances
-     * @return A int256 representing the difference of the new and previous funds token balance
-     */
-    function _updateFundsTokenBalance() internal returns (int256) {
-        uint256 _prevFundsTokenBalance = fundsTokenBalance;
-
-        fundsTokenBalance = fundsToken.balanceOf(address(this));
-
-        return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
-    }
-
-    /**
-     * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
-     * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
-     * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
-     */
-    function updateFundsReceived() external {
-        int256 newFunds = _updateFundsTokenBalance();
-
-        if (newFunds > 0) {
-            _distributeFunds(newFunds.toUint256Safe());
-        }
     }
 }
