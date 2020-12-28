@@ -62,6 +62,8 @@ contract Lender {
     }
 }
 
+contract Treasury { }
+
 contract LoanVaultTest is TestUtil {
 
     ERC20                     fundsToken;
@@ -77,6 +79,7 @@ contract LoanVaultTest is TestUtil {
     LoanVaultFactory          loanVaultFactory;
     Borrower                  ali;
     Lender                    bob;
+    Treasury                  trs;
 
     function setUp() public {
 
@@ -109,6 +112,8 @@ contract LoanVaultTest is TestUtil {
 
         ali = new Borrower();
         bob = new Lender();
+        trs = new Treasury();
+        globals.setMapleTreasury(address(trs));
 
         mint("WETH", address(ali), 10 ether);
         mint("DAI",  address(bob), 5000 ether);
@@ -199,6 +204,11 @@ contract LoanVaultTest is TestUtil {
         assertEq(loanVault.principalOwed(),                          0);  // Principal owed
         assertEq(uint256(loanVault.loanState()),                     0);  // Loan state: Live
 
+        // Fee related variables pre-check.
+        assertEq(loanVault.feePaid(),                                0);  // feePaid amount
+        assertEq(loanVault.excessReturned(),                         0);  // excessReturned amount
+        assertEq(IERC20(DAI).balanceOf(address(trs)),                0);  // Treasury reqAsset balance
+
         assertTrue(ali.try_drawdown(address(loanVault), 1000 ether));     // Borrow draws down 1000 DAI
 
         address collateralLocker = loanVault.collateralLocker();
@@ -207,11 +217,18 @@ contract LoanVaultTest is TestUtil {
         assertEq(IERC20(WETH).balanceOf(collateralLocker),   0.4 ether);  // Collateral locker collateral balance
         assertEq(IERC20(loanVault).balanceOf(address(ali)), 5000 ether);  // Borrower loanVault token balance
         assertEq(IERC20(DAI).balanceOf(fundingLocker),               0);  // Funding locker reqAssset balance
-        assertEq(IERC20(DAI).balanceOf(address(loanVault)), 4000 ether);  // Loan vault reqAsset balance
-        assertEq(IERC20(DAI).balanceOf(address(ali)),       1000 ether);  // Lender reqAsset balance
+        assertEq(IERC20(DAI).balanceOf(address(loanVault)), 4005 ether);  // Loan vault reqAsset balance
+        assertEq(IERC20(DAI).balanceOf(address(ali)),        990 ether);  // Lender reqAsset balance
         assertEq(loanVault.drawdownAmount(),                1000 ether);  // Drawdown amount
         assertEq(loanVault.principalOwed(),                 1000 ether);  // Principal owed
         assertEq(uint256(loanVault.loanState()),                     1);  // Loan state: Active
+
+        
+        // Fee related variables post-check.
+        assertEq(loanVault.feePaid(),                          5 ether);  // Drawdown amount
+        assertEq(loanVault.excessReturned(),                4000 ether);  // Principal owed
+        assertEq(IERC20(DAI).balanceOf(address(trs)),          5 ether);  // Treasury reqAsset balance
+
     }
 
     function test_makePayment() public {
