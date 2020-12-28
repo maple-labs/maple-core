@@ -5,8 +5,8 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
 import "./IFundsDistributionToken.sol";
-import "../Math/SafeMathUint.sol";
-import "../Math/SafeMathInt.sol";
+import "../math/SafeMathUint.sol";
+import "../math/SafeMathInt.sol";
 
 contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
     using SafeMath for uint256;

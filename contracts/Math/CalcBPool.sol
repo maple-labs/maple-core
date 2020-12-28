@@ -3,8 +3,8 @@ pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "../interface/IBPool.sol";
-import "../interface/IGlobals.sol";
+import "../interfaces/IBPool.sol";
+import "../interfaces/IGlobals.sol";
 // import "hardhat/console.sol";
 
 //we might want to do this with functions built into BPool

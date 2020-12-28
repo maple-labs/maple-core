@@ -4,20 +4,20 @@ pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import "./Token/IFundsDistributionToken.sol";
-import "./Token/FundsDistributionToken.sol";
-import "./Math/CalcBPool.sol";
-import "./interface/IBPool.sol";
+import "./token/IFundsDistributionToken.sol";
+import "./token/FundsDistributionToken.sol";
+import "./math/CalcBPool.sol";
+import "./interfaces/IBPool.sol";
 import "./LiquidityLockerFactory.sol";
-import "./interface/IGlobals.sol";
-import "./interface/ILoanVaultFactory.sol";
-import "./interface/IStakeLocker.sol";
-import "./interface/IStakeLockerFactory.sol";
-import "./interface/ILiquidityLocker.sol";
-import "./interface/ILiquidityLockerFactory.sol";
-import "./interface/ILoanTokenLockerFactory.sol";
-import "./interface/ILoanTokenLocker.sol";
-import "./interface/ILoanVault.sol";
+import "./interfaces/IGlobals.sol";
+import "./interfaces/ILoanVaultFactory.sol";
+import "./interfaces/IStakeLocker.sol";
+import "./interfaces/IStakeLockerFactory.sol";
+import "./interfaces/ILiquidityLocker.sol";
+import "./interfaces/ILiquidityLockerFactory.sol";
+import "./interfaces/ILoanTokenLockerFactory.sol";
+import "./interfaces/ILoanTokenLocker.sol";
+import "./interfaces/ILoanVault.sol";
 
 // TODO: Implement the withdraw() function, so investors can withdraw LiquidityAsset from LP.
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.

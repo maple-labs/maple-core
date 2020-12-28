@@ -2,7 +2,7 @@
 pragma solidity >=0.6.11;
 
 import "./LiquidityPool.sol";
-import "./interface/IGlobals.sol";
+import "./interfaces/IGlobals.sol";
 
 contract LiquidityPoolFactory {
     // TODO: Consider adjusting LiquidityPools mapping to an array.
