@@ -16,36 +16,38 @@ import "./interface/IStakeLockerFactory.sol";
 import "./interface/ILiquidityLocker.sol";
 import "./interface/ILiquidityLockerFactory.sol";
 import "./interface/ILoanTokenLockerFactory.sol";
-
-//import "hardhat/console.sol";
+import "./interface/ILoanTokenLocker.sol";
+import "./interface/ILoanVault.sol";
 
 // TODO: Implement the withdraw() function, so investors can withdraw LiquidityAsset from LP.
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
 /// @title LiquidityPool is the core contract for liquidity pools.
-contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
-    using SafeMathInt for int256;
-    using SignedSafeMath for int256;
+contract LiquidityPool is IERC20, ERC20 {
     using SafeMath for uint256;
 
-    // An interface for this contract's FundsDistributionToken, stored in two separate variables.
+    // An interface for this contract's liquidity asset, stored in two separate variables.
     IERC20 private ILiquidityAsset;
-    IERC20 private fundsToken;
 
     // An interface for the asset used to stake the StakeLocker for this LiquidityPool.
     IERC20 private IStakeAsset;
 
     // An interface for the factory used to instantiate a StakeLocker for this LiquidityPool.
     IStakeLockerFactory private StakeLockerFactory;
+    struct Loan {
+        address loanVault;
+        uint256 principalPaid;
+        uint256 interestPaid;
+    }
+
+    //@notice list of funded loans
+    Loan[] public fundedLoans;
 
     // An interface for the locker which escrows StakeAsset.
     IStakeLocker private StakeLocker;
 
     // An interface for the MapleGlobals contract.
     IGlobals private MapleGlobals;
-
-    /// @notice The amount of LiquidityAsset tokens (dividends) currently present and accounted for in this contract.
-    uint256 public fundsTokenBalance;
 
     /// @notice The asset deposited by lenders into the LiquidityLocker, for funding loans.
     address public liquidityAsset;
@@ -80,6 +82,8 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
     /// @notice The fee for delegates.
     uint256 public delegateFeeBasisPoints;
 
+    CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
+
     mapping(address => address) public loanTokenToLocker;
 
     constructor(
@@ -93,8 +97,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         string memory name,
         string memory symbol,
         address _mapleGlobals
-    ) FundsDistributionToken(name, symbol) public {
-
+    ) ERC20(name, symbol) public {
         require(
             address(_liquidityAsset) != address(0),
             "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
@@ -105,7 +108,6 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         liquidityAssetDecimals = ERC20(liquidityAsset).decimals();
         _ONELiquidityAsset = 10**(liquidityAssetDecimals);
         ILiquidityAsset = IERC20(_liquidityAsset);
-        fundsToken = ILiquidityAsset;
 
         // Assign misc. state variables.
         stakeAsset = _stakeAsset;
@@ -120,6 +122,9 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         liquidityLockerAddress = address(
             ILiquidityLockerFactory(_liquidityLockerFactory).newLocker(liquidityAsset)
         );
+
+        // Initialize Balancer pool calculator
+        calcBPool = new CalcBPool();
     }
 
     modifier finalized() {
@@ -184,11 +189,11 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
 
         // TODO: Resolve the dissonance between poolSharesRequired / minstake / getSwapOutValue
         (uint256 _poolAmountInRequired, uint256 _poolAmountPresent) =
-            CalcBPool.getPoolSharesRequired(pool, pair, poolDelegate, stakeLockerAddress, minStake);
+            calcBPool.getPoolSharesRequired(pool, pair, poolDelegate, stakeLockerAddress, minStake);
         return (
             minStake,
-            CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress),
-            CalcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress) >= minStake,
+            calcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress),
+            calcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress) >= minStake,
             _poolAmountInRequired,
             _poolAmountPresent
         );
@@ -215,6 +220,7 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
         if (loanTokenToLocker[_loanVault] == address(0)) {
             loanTokenToLocker[_loanVault] = ILoanTokenLockerFactory(_loanTokenLockerFactory)
                 .newLocker(_loanVault);
+            fundedLoans.push(Loan(_loanVault, 0, 0));
         }
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
             _loanVault,
@@ -222,6 +228,45 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
             _amt
         );
     }
+
+    function claimRepayments() external {
+        for (uint256 i = 0; i < fundedLoans.length; i++) {
+            //danger, this will break if the loanstate enum changes
+            if (uint256(ILoanVault(fundedLoans[i].loanVault).loanState()) == 1) {
+                claimRepayment(i);
+            }
+        }
+    }
+
+    function claimRepayment(uint256 _ind) internal {
+        Loan memory _loan = fundedLoans[_ind];
+        ILoanVault _LV = ILoanVault(_loan.loanVault);
+        ILoanTokenLocker(loanTokenToLocker[_loan.loanVault]).fetch();
+        uint256 _newInterest = _LV.interestPaid() - _loan.interestPaid;
+        uint256 _newPrincipal = _LV.principalPaid() - _loan.principalPaid;
+        _LV.updateFundsReceived(); //should be done in LV probably instead
+        _LV.withdrawFunds();
+        //this is a bad thing to do, should get the withdraw function to give us this, or something
+        uint256 _bal = ILiquidityAsset.balanceOf(address(this));
+        _loan.interestPaid = _LV.interestPaid();
+        _loan.principalPaid = _LV.principalPaid(); //update the values
+        uint256 _interest =
+            _bal.mul(_newInterest.mul(_ONELiquidityAsset).div(_newPrincipal)).div(
+                _ONELiquidityAsset
+            );
+        uint256 _principal = _bal.sub(_interest);
+        uint256 _stakersShare = _interest.mul(stakingFeeBasisPoints).div(10000);
+        ILiquidityAsset.transfer(
+            liquidityLockerAddress,
+            _interest.add(_principal).sub(_stakersShare)
+        );
+        ILiquidityAsset.transfer(stakeLockerAddress, _stakersShare);
+        IERC20(_loan.loanVault).transfer(
+            loanTokenToLocker[_loan.loanVault],
+            IERC20(_loan.loanVault).balanceOf(address(this))
+        );
+    }
+
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
     if we change the decimals on the FDT to match liquidityasset this would not be necessary
@@ -246,46 +291,5 @@ contract LiquidityPool is IFundsDistributionToken, FundsDistributionToken {
             _out = _amt.div(10**(18 - liquidityAssetDecimals));
         }
         return _out;
-    }
-
-    /**
-     * @notice Withdraws all available funds for a token holder
-     */
-    function withdrawFunds() public /* override */ {
-        //must be public rather than external
-        uint256 withdrawableFunds = _prepareWithdraw();
-
-        require(
-            fundsToken.transfer(msg.sender, withdrawableFunds),
-            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
-        );
-
-        _updateFundsTokenBalance();
-    }
-
-    /**
-     * @dev Updates the current funds token balance
-     * and returns the difference of new and previous funds token balances
-     * @return A int256 representing the difference of the new and previous funds token balance
-     */
-    function _updateFundsTokenBalance() internal returns (int256) {
-        uint256 _prevFundsTokenBalance = fundsTokenBalance;
-
-        fundsTokenBalance = fundsToken.balanceOf(address(this));
-
-        return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
-    }
-
-    /**
-     * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
-     * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
-     * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
-     */
-    function updateFundsReceived() external {
-        int256 newFunds = _updateFundsTokenBalance();
-
-        if (newFunds > 0) {
-            _distributeFunds(newFunds.toUint256Safe());
-        }
     }
 }

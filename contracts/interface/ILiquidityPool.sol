@@ -7,4 +7,6 @@ interface ILiquidityPool {
     function isDefunct() external view returns (bool);
 
     function isFinalized() external view returns (bool);
+
+    function deposit(uint256) external;
 }
