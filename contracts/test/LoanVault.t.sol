@@ -1,12 +1,10 @@
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "lib/ds-test/contracts/test.sol";
+import "./TestUtil.sol";
 
 import "../mocks/value.sol";
 import "../mocks/token.sol";
-
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import "../Calculators/BulletRepaymentCalculator.sol";
 import "../Calculators/LateFeeNullCalculator.sol";
@@ -17,11 +15,6 @@ import "../MapleGlobals.sol";
 import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
 import "../LoanVaultFactory.sol";
-
-interface Hevm {
-    function warp(uint256) external;
-    function store(address,bytes32,bytes32) external;
-}
 
 contract Borrower {
     function try_drawdown(address loanVault, uint256 amt) external returns (bool ok) {
@@ -69,14 +62,8 @@ contract Lender {
     }
 }
 
-contract LoanVaultTest is DSTest {
+contract LoanVaultTest is TestUtil {
 
-    address DAI  = address(new DSToken("DAI"));
-    address WETH = address(new DSToken("WETH"));
-
-    uint256 constant WAD = 10 ** 18;
-
-    Hevm                      hevm;
     ERC20                     fundsToken;
     MapleToken                mapleToken;
     MapleGlobals              globals;
@@ -91,13 +78,7 @@ contract LoanVaultTest is DSTest {
     Borrower                  ali;
     Lender                    bob;
 
-    // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
-    bytes20 constant CHEAT_CODE =
-        bytes20(uint160(uint256(keccak256('hevm cheat code'))));
-
     function setUp() public {
-
-        hevm = Hevm(address(CHEAT_CODE));
 
         fundsToken              = new ERC20("FundsToken", "FT");
         mapleToken              = new MapleToken("MapleToken", "MAPL", IERC20(fundsToken));
@@ -129,23 +110,8 @@ contract LoanVaultTest is DSTest {
         ali = new Borrower();
         bob = new Lender();
 
-        // Mint 1000 WETH into Ali's account
-        assertEq(IERC20(WETH).balanceOf(address(ali)), 0);
-        hevm.store(
-            WETH,
-            keccak256(abi.encode(address(ali), uint256(2))),
-            bytes32(uint256(10 ether))
-        );
-        assertEq(IERC20(WETH).balanceOf(address(ali)), 10 ether);
-
-        // Mint 5000 DAI into Bob's account
-        assertEq(IERC20(DAI).balanceOf(address(bob)), 0);
-        hevm.store(
-            DAI,
-            keccak256(abi.encode(address(bob), uint256(2))),
-            bytes32(uint256(5000 ether))
-        );
-        assertEq(IERC20(DAI).balanceOf(address(bob)), 5000 ether);
+        mint("WETH", address(ali), 10 ether);
+        mint("DAI",  address(bob), 5000 ether);
     }
 
     function test_createLoanVault() public {
