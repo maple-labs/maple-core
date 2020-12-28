@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "./Token/IFundsDistributionToken.sol";
-import "./Token/FundsDistributionToken.sol";
+import "./token/IFundsDistributionToken.sol";
+import "./token/FundsDistributionToken.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract MapleToken is IFundsDistributionToken, FundsDistributionToken {

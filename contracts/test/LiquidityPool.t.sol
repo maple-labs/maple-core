@@ -6,9 +6,9 @@ import "./TestUtil.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
-import "../interface/IBPool.sol";
-import "../interface/ILiquidityPool.sol";
-import "../interface/ILiquidityPoolFactory.sol";
+import "../interfaces/IBPool.sol";
+import "../interfaces/ILiquidityPool.sol";
+import "../interfaces/ILiquidityPoolFactory.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 

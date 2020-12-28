@@ -6,7 +6,7 @@ import "./TestUtil.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
-import "../interface/IBPool.sol";
+import "../interfaces/IBPool.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 

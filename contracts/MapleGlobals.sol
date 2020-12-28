@@ -2,8 +2,8 @@
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "./interface/IPriceFeed.sol";
-import "./interface/IERC20Details.sol";
+import "./interfaces/IPriceFeed.sol";
+import "./interfaces/IERC20Details.sol";
 
 contract MapleGlobals {
     /// @return governor is responsible for management of global Maple variables.

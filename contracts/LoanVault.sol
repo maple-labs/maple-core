@@ -3,17 +3,17 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "./Token/IFundsDistributionToken.sol";
-import "./Token/FundsDistributionToken.sol";
-import "./interface/IGlobals.sol";
-import "./interface/IFundingLocker.sol";
-import "./interface/IFundingLockerFactory.sol";
-import "./interface/ICollateralLocker.sol";
-import "./interface/ICollateralLockerFactory.sol";
-import "./interface/IERC20Details.sol";
-import "./interface/IRepaymentCalculator.sol";
-import "./interface/ILateFeeCalculator.sol";
-import "./interface/IPremiumCalculator.sol";
+import "./token/IFundsDistributionToken.sol";
+import "./token/FundsDistributionToken.sol";
+import "./interfaces/IGlobals.sol";
+import "./interfaces/IFundingLocker.sol";
+import "./interfaces/IFundingLockerFactory.sol";
+import "./interfaces/ICollateralLocker.sol";
+import "./interfaces/ICollateralLockerFactory.sol";
+import "./interfaces/IERC20Details.sol";
+import "./interfaces/IRepaymentCalculator.sol";
+import "./interfaces/ILateFeeCalculator.sol";
+import "./interfaces/IPremiumCalculator.sol";
 
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
