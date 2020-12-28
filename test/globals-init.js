@@ -20,7 +20,7 @@ describe("MapleGlobals.sol Initialization", function () {
     );
   });
 
-  it("state variables have correct init values", async function () {
+  xit("state variables have correct init values", async function () {
     const accounts = await ethers.provider.listAccounts();
     const governorFetch = await mapleGlobals.governor();
     const mapleTokenFetch = await mapleGlobals.mapleToken();

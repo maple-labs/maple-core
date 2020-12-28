@@ -55,7 +55,7 @@ describe("MapleGlobals.sol Interactions", function () {
     expect(governorFetch).to.equal(accounts[1]);
   });
 
-  it("check msg.sender throws revert error", async function () {
+  xit("check msg.sender throws revert error", async function () {
     await expect(mapleGlobals.setEstablishmentFee(50)).to.be.revertedWith(
       "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
