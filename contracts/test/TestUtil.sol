@@ -26,7 +26,7 @@ contract TestUtil is DSTest {
 
     uint256 constant WAD = 10 ** 18;
 
-    bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256('hevm cheat code'))));
+    bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
     constructor() public {
         hevm = Hevm(address(CHEAT_CODE));

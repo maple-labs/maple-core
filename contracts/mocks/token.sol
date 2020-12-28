@@ -24,7 +24,7 @@
 
 pragma solidity >=0.4.23;
 
-import "../Math/math.sol";
+import "../math/math.sol";
 
 
 contract DSToken is DSMath {

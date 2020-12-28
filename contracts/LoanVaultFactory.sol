@@ -2,7 +2,7 @@
 pragma solidity >=0.6.11;
 
 import "./LoanVault.sol";
-import "./interface/IGlobals.sol";
+import "./interfaces/IGlobals.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./library/TokenUUID.sol";
 import "./interface/ICalcGeneral.sol";
