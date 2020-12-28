@@ -1,7 +1,7 @@
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "lib/ds-test/contracts/test.sol";
+import "./TestUtil.sol";
 
 import "../mocks/value.sol";
 import "../mocks/token.sol";
@@ -18,11 +18,6 @@ import "../StakeLockerFactory.sol";
 import "../LiquidityPoolFactory.sol";
 import "../LiquidityLockerFactory.sol";
 import "../LiquidityPool.sol";
-
-interface Hevm {
-    function warp(uint256) external;
-    function store(address,bytes32,bytes32) external;
-}
 
 interface IBPoolFactory {
     function newBPool() external returns (address);
@@ -70,15 +65,8 @@ contract LP {
     }
 }
 
-contract LiquidityPoolTest is DSTest {
+contract LiquidityPoolTest is TestUtil {
 
-    address constant DAI           = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address constant USDC          = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address constant BPOOL_FACTORY = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd; // Balancer pool factory
-
-    uint256 constant WAD = 10 ** 18;
-
-    Hevm                   hevm;
     ERC20                  fundsToken;
     MapleToken             mapleToken;
     MapleGlobals           globals;
@@ -92,13 +80,7 @@ contract LiquidityPoolTest is DSTest {
     LP                     bob;
     IBPool                 bPool;
 
-    // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
-    bytes20 constant CHEAT_CODE =
-        bytes20(uint160(uint256(keccak256('hevm cheat code'))));
-
     function setUp() public {
-
-        hevm = Hevm(address(CHEAT_CODE));
 
         fundsToken             = new ERC20("FundsToken", "FT");
         mapleToken             = new MapleToken("MapleToken", "MAPL", IERC20(fundsToken));
@@ -112,13 +94,7 @@ contract LiquidityPoolTest is DSTest {
         bob                    = new LP();
 
         // Mint 50m USDC into this account
-        assertEq(IERC20(USDC).balanceOf(address(this)), 0);
-        hevm.store(
-            USDC,
-            keccak256(abi.encode(address(this), uint256(9))),
-            bytes32(uint256(50_000_000 * 10 ** 6))
-        );
-        assertEq(IERC20(USDC).balanceOf(address(this)), 50_000_000 * 10 ** 6);
+        mint("USDC", address(this), 50_000_000 * 10 ** 6);
 
         // Initialize MPL/USDC Balancer pool (without finalizing)
         bPool = IBPool(IBPoolFactory(BPOOL_FACTORY).newBPool());
@@ -182,13 +158,7 @@ contract LiquidityPoolTest is DSTest {
         ali.stake(lPool.stakeLockerAddress(), bPool.balanceOf(address(ali)) / 2);
 
         // Mint 100 DAI into this LP account
-        assertEq(IERC20(DAI).balanceOf(address(bob)), 0);
-        hevm.store(
-            DAI,
-            keccak256(abi.encode(address(bob), uint256(2))),
-            bytes32(uint256(100 ether))
-        );
-        assertEq(IERC20(DAI).balanceOf(address(bob)), 100 ether);
+        mint("DAI", address(bob), 100 ether);
 
         assertTrue(!bob.try_deposit(address(lPool), 100 ether)); // Not finalized
 
