@@ -49,6 +49,14 @@ contract PoolDelegate {
             symbol 
         );
     }
+
+    function approve(address token, address who, uint256 amt) external {
+        IERC20(token).approve(who, amt);
+    }
+
+    function stake(address stakeLocker, uint256 amt) external {
+        IStakeLocker(stakeLocker).stake(amt);
+    }
 }
 
 contract LP {
@@ -130,6 +138,8 @@ contract LiquidityPoolTest is DSTest {
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
         assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
 
+        bPool.transfer(address(ali), bPool.balanceOf(address(this)));
+
         lPool = LiquidityPool(ali.createLiquidityPool(
             address(liquidityPoolFactory),
             DAI,
@@ -145,7 +155,29 @@ contract LiquidityPoolTest is DSTest {
         globals.setStakeRequired(100 * 10 ** 6);
     }
 
+    function test_stake_and_finalize() public {
+        address stakeLocker = lPool.stakeLockerAddress();
+
+        ali.approve(address(bPool), stakeLocker, uint(-1));
+        assertEq(bPool.balanceOf(address(ali)), 100 * WAD);
+        assertEq(bPool.balanceOf(stakeLocker), 0);
+        assertEq(IERC20(stakeLocker).balanceOf(address(ali)), 0);
+
+        ali.stake(lPool.stakeLockerAddress(), bPool.balanceOf(address(ali)));
+
+        assertEq(bPool.balanceOf(address(ali)), 0);
+        assertEq(bPool.balanceOf(stakeLocker), 100 * WAD);
+        assertEq(IERC20(stakeLocker).balanceOf(address(ali)), 100 * WAD);
+
+        lPool.finalize();
+    }
+
     function test_deposit() public {
+        address stakeLocker = lPool.stakeLockerAddress();
+
+        ali.approve(address(bPool), stakeLocker, uint(-1));
+        ali.stake(lPool.stakeLockerAddress(), bPool.balanceOf(address(ali)));
+
         // Mint 100 DAI into this LP account
         assertEq(IERC20(DAI).balanceOf(address(this)), 0);
         hevm.store(
@@ -155,7 +187,7 @@ contract LiquidityPoolTest is DSTest {
         );
         assertEq(IERC20(DAI).balanceOf(address(this)), 100 ether);
 
-        // assertTrue(!bob.try_deposit(address(lPool), 100 ether)); // Not finalized
+        assertTrue(!bob.try_deposit(address(lPool), 100 ether)); // Not finalized
 
         lPool.finalize();
 
