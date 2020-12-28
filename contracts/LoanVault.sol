@@ -264,17 +264,17 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::drawdown:CRITICAL_ERR_PULL"
         );
 
+        // Update investorFee locally.
+        feePaid = _drawdownAmount.mul(investorFee).div(10000);
+
         // Pull investorFee into this LoanVault.
         require(
            IFundingLocker(fundingLocker).pull(
                 address(this), 
-                _drawdownAmount.mul(investorFee).div(10000)
+                feePaid
             ), 
             "LoanVault::drawdown:CRITICAL_ERR_PULL"
         );
-
-        // Update investorFee locally.
-        feePaid = _drawdownAmount.mul(investorFee).div(10000);
 
         // Transfer drawdown amount to Borrower.
         require(
