@@ -11,7 +11,7 @@ import "../interface/IGlobals.sol";
 //these functions will give us the ammount out if they cashed out
 //this would not be the same as how much money they put in as it includes slippage and fees
 
-library CalcBPool {
+contract CalcBPool {
 
     using SafeMath for uint256;
     uint256 constant _ONE = 10**18;
@@ -33,7 +33,7 @@ library CalcBPool {
         address _pair,
         address _staker,
         address _stakeLockerAddress
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
 
         //calculates the value of BPT in unites of _liquidityAssetContract, in 'wei' (decimals) for this token
 
@@ -67,7 +67,7 @@ library CalcBPool {
         address _pair,
         address _staker,
         address _stakeLockerAddress
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
 
         // Fetch balancer pool token information.
         IBPool bPool = IBPool(_pool);
@@ -111,7 +111,7 @@ library CalcBPool {
         address _staker,
         address _stakeLockerAddress,
         uint256 _tokenAmountOutRequired
-    ) internal view returns (uint256, uint256) {
+    ) external view returns (uint256, uint256) {
 
         // Fetch balancer pool token information.
         IBPool bPool = IBPool(_pool);

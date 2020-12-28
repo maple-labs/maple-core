@@ -2,7 +2,10 @@
 pragma solidity >=0.6.11;
 
 interface IStakeLocker {
-    function stake(uint256 _amountStakedAsset) external returns (uint256);
+
+    function stakeDate(address) external returns (uint256);
+
+    function stake(uint256) external;
 
     function unstake(uint256 _amountStakedAsset) external returns (uint256);
 
