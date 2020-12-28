@@ -1,7 +1,7 @@
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "lib/ds-test/contracts/test.sol";
+import "./TestUtil.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -9,15 +9,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../MapleToken.sol";
 import "../MapleGlobals.sol";
 
-interface Hevm {
-    function warp(uint256) external;
-    function store(address,bytes32,bytes32) external;
-}
-
-contract MapleGlobalsTest is DSTest {
-
-    address constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+contract MapleGlobalsTest is TestUtil {
 
     ERC20        fundsToken;
     MapleToken   mapleToken;
