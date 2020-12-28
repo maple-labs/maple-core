@@ -15,12 +15,6 @@ contract MapleGlobals {
     /// @return mapleTreasury is the Treasury which all fees pass through for conversion, prior to distribution.
     address public mapleTreasury;
 
-    /// @return Represents the fees, in basis points, distributed to the lender when a borrower's loan is funded.
-    uint256 public establishmentFeeBasisPoints;
-
-    /// @return Represents the fees, in basis points, distributed to the Mapletoken when a borrower's loan is funded.
-    uint256 public treasuryFeeBasisPoints;
-
     /// @return Represents the amount of time a borrower has to make a missed payment before a default can be triggered.
     uint256 public gracePeriod;
 
@@ -38,6 +32,10 @@ contract MapleGlobals {
 
     /// @return Amount of time to allow borrower to drawdown on their loan after funding period ends.
     uint256 public drawdownGracePeriod;
+
+    /// @return Establishment fee variables.
+    uint256 public investorFee;
+    uint256 public treasuryFee;
 
     // Validitying mapping of assets that borrowers can request or use as collateral.
     mapping(address => bool) public isValidBorrowToken;
@@ -73,12 +71,12 @@ contract MapleGlobals {
     constructor(address _governor, address _mapleToken) public {
         governor = _governor;
         mapleToken = _mapleToken;
-        establishmentFeeBasisPoints = 200;
-        treasuryFeeBasisPoints = 20;
         gracePeriod = 5 days;
         stakeAmountRequired = 0;
         unstakeDelay = 90 days;
         drawdownGracePeriod = 1 days;
+        investorFee = 50;
+        treasuryFee = 50;
     }
 
     function getValidTokens() view public returns(
@@ -150,11 +148,19 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can adjust the establishment fee.
-        @param _establishmentFeeBasisPoints The fee, 50 = 0.50%
+        @notice Governor can adjust investorFee (in basis points).
+        @param _fee The fee, 50 = 0.50%
      */
-    function setEstablishmentFee(uint256 _establishmentFeeBasisPoints) public isGovernor {
-        establishmentFeeBasisPoints = _establishmentFeeBasisPoints;
+    function setInvestorFee(uint256 _fee) public isGovernor {
+        investorFee = _fee;
+    }
+
+    /**
+        @notice Governor can adjust treasuryFee (in basis points).
+        @param _fee The fee, 50 = 0.50%
+     */
+    function setTreasuryFee(uint256 _fee) public isGovernor {
+        treasuryFee = _fee;
     }
 
     /**
@@ -163,14 +169,6 @@ contract MapleGlobals {
      */
     function setMapleTreasury(address _mapleTreasury) public isGovernor {
         mapleTreasury = _mapleTreasury;
-    }
-
-    /**
-        @notice Governor can adjust the treasury fee.
-        @param _treasuryFeeBasisPoints The fee, 50 = 0.50%
-     */
-    function setTreasurySplit(uint256 _treasuryFeeBasisPoints) public isGovernor {
-        treasuryFeeBasisPoints = _treasuryFeeBasisPoints;
     }
 
     /**

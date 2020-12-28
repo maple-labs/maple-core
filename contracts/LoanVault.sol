@@ -70,6 +70,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     // Accounting variables.
     uint256 public principalPaid;
     uint256 public interestPaid;
+    uint256 public feePaid;
+    uint256 public excessReturned;
 
     /// @notice The amount the borrower drew down, historical reference for calculators.
     uint256 public drawdownAmount;
@@ -250,14 +252,45 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         );
 
         // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to LoanVault.
+        uint treasuryFee = MapleGlobals.treasuryFee();
+        uint investorFee = MapleGlobals.investorFee();
+
+        // Send treasuryFee directly to MapleTreasury
         require(
-            IFundingLocker(fundingLocker).pull(borrower, _drawdownAmount), 
-            "LoanVault::endFunding:CRITICAL_ERR_PULL"
+           IFundingLocker(fundingLocker).pull(
+                MapleGlobals.mapleTreasury(), 
+                _drawdownAmount.mul(treasuryFee).div(10000)
+            ), 
+            "LoanVault::drawdown:CRITICAL_ERR_PULL"
         );
+
+        // Update investorFee locally.
+        feePaid = _drawdownAmount.mul(investorFee).div(10000);
+
+        // Pull investorFee into this LoanVault.
+        require(
+            IFundingLocker(fundingLocker).pull(address(this), feePaid), 
+            "LoanVault::drawdown:CRITICAL_ERR_PULL"
+        );
+
+        // Transfer drawdown amount to Borrower.
+        require(
+            IFundingLocker(fundingLocker).pull(
+                borrower, 
+                _drawdownAmount.mul(10000 - investorFee - treasuryFee).div(10000)
+            ), 
+            "LoanVault::drawdown:CRITICAL_ERR_PULL"
+        );
+
+        // Update excessReturned locally.
+        excessReturned = IRequestedAsset.balanceOf(fundingLocker);
+
+        // Drain remaining funds from FundingLocker.
         require(
             IFundingLocker(fundingLocker).drain(),
             "LoanVault::endFunding:ERR_DRAIN"
         );
+
     }
 
     /// @notice Make the next payment for this loan.
