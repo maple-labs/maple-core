@@ -39,7 +39,7 @@ contract LiquidityLocker {
     /// @notice Fund a particular loan using available LiquidityAsset.
     /// @param _loanVault The address of the LoanVault to fund.
     /// @param _amt The amount of LiquidityAsset to fund.
-    function fundLoan(address _loanVault,address _loanTokenLocker, uint256 _amt) external isOwner {
+    function fundLoan(address _loanVault, address _loanTokenLocker, uint256 _amt) external isOwner {
         ILiquidityAsset.approve(_loanVault, _amt);
         ILoanVault(_loanVault).fundLoan(_amt, _loanTokenLocker);
     }

@@ -37,7 +37,7 @@ contract LiquidityPool is IERC20, ERC20 {
     IStakeLockerFactory private StakeLockerFactory;
 
     // Struct for tracking investments.
-    struct FundedLoan {
+    struct Loan {
         address loanVaultFunded;
         address loanTokenLocker;
         uint256 amountFunded;
@@ -55,12 +55,9 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 amountFunded
     );
 
-    /// @notice Investments this liquidity pool has made into loans.
-    FundedLoan[] public fundedLoans;
-
     /// @notice Data structure to reference loan token lockers.
-    /// @dev loanTokenLockers[LOAN_VAULT][LOCKER_FACTORY] = LOCKER
-    mapping(address => mapping(address => address)) public loanTokenLockers;
+    /// @dev loans[LOAN_VAULT][LOCKER_FACTORY] = LOCKER
+    mapping(address => mapping(address => Loan)) public loans;
 
     // An interface for the locker which escrows StakeAsset.
     IStakeLocker private StakeLocker;
@@ -157,8 +154,6 @@ contract LiquidityPool is IERC20, ERC20 {
         _;
     }
 
-    function numFundedLoans() public view returns(uint) { return fundedLoans.length; }
-
     /// @notice Deploys and assigns a StakeLocker for this LiquidityPool.
     /// @param _stakeAsset Address of the asset used for staking.
     function createStakeLocker(address _stakeAsset) private returns (address) {
@@ -238,51 +233,47 @@ contract LiquidityPool is IERC20, ERC20 {
             "LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID"
         );
         // Instantiate locker if it doesn't exist with this factory type.
-        if (loanTokenLockers[_loanVault][_loanTokenLockerFactory] == address(0)) {
-            loanTokenLockers[_loanVault][_loanTokenLockerFactory] = ILoanTokenLockerFactory(
+        if (loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker == address(0)) {
+            address _loanTokenLocker = ILoanTokenLockerFactory(
                 _loanTokenLockerFactory
             ).newLocker(_loanVault);
-            // Store data in fundedLoans array with a FundedLoan struct.
-            fundedLoans.push(
-                FundedLoan(
-                    _loanVault, 
-                    loanTokenLockers[_loanVault][_loanTokenLockerFactory],
-                    _amt,
-                    0,0,0,0
-                )
+            // Store data in loans mapping with a Loan struct.
+            loans[_loanVault][_loanTokenLockerFactory] = Loan(
+                _loanVault, 
+                _loanTokenLocker,
+                _amt,
+                0,0,0,0
             );
-            // Emit event.
-            emit LoanFunded(_loanVault, loanTokenLockers[_loanVault][_loanTokenLockerFactory], _amt);
         } else {
-            
+            loans[_loanVault][_loanTokenLockerFactory].amountFunded += _amt;
         }
+        emit LoanFunded(_loanVault, loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker, _amt);
         // Fund loan.
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
             _loanVault,
-            loanTokenLockers[_loanVault][_loanTokenLockerFactory],
+            loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker,
             _amt
         );
     }
 
     /// @notice Claim available funds through a LoanToken.
-    /// @param _id The index of FundedLoans to reference for claiming.
     /// @return uint[0]: Total amount claimed.
     ///         uint[1]: Principal portion claimed.
     ///         uint[2]: Interest portion claimed.
     ///         uint[3]: Fee portion claimed.
     ///         uint[4]: Excess portion claimed.
     ///         uint[5]: TODO: Liquidation portion claimed.
-    function claim(uint256 _id) internal returns(uint, uint, uint, uint, uint/* TODO: uint*/) {
+    function claim(address _loanVault, address _loanTokenLockerFactory) internal returns(uint, uint, uint, uint, uint/* TODO: uint*/) {
 
-        // Grab "info" from fundedLoans data structure.
-        FundedLoan memory info = fundedLoans[_id];
+        // Grab "info" from loans data structure.
+        Loan memory info = loans[_loanVault][_loanTokenLockerFactory];
 
         // Create interface for LoanVault.
         ILoanVault vault = ILoanVault(info.loanVaultFunded);
 
         // Pull tokens from TokenLocker.
         ILoanTokenLocker(
-            loanTokenLockers[info.loanVaultFunded][info.loanTokenLocker]
+            loans[info.loanVaultFunded][info.loanTokenLocker].loanTokenLocker
         ).fetch();
 
         // Calculate deltas, or "net new" values.
@@ -299,7 +290,7 @@ contract LiquidityPool is IERC20, ERC20 {
         // Fetch amount claimed from calling withdrawFunds()
         uint256 balance = ILiquidityAsset.balanceOf(address(this));
 
-        // Update "info" in fundedLoans data structure.
+        // Update "info" in loans data structure.
         info.interestPaid   = vault.interestPaid();
         info.principalPaid  = vault.principalPaid();
         info.feePaid        = vault.feePaid();
@@ -330,7 +321,7 @@ contract LiquidityPool is IERC20, ERC20 {
 
         // Return tokens to locker.
         IERC20(info.loanVaultFunded).transfer(
-            loanTokenLockers[info.loanVaultFunded][info.loanTokenLocker],
+            loans[info.loanVaultFunded][info.loanTokenLocker].loanTokenLocker,
             IERC20(info.loanVaultFunded).balanceOf(address(this))
         );
     }
