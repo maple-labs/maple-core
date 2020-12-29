@@ -565,6 +565,10 @@ contract LoanVaultTest is TestUtil {
         assertEq(loanVault.numberOfPayments(),               3);
         assertEq(loanVault.nextPaymentDue(),              _due);
 
+        // Warp to *300 seconds* after next payment is due
+        hevm.warp(loanVault.nextPaymentDue() + globals.gracePeriod());
+        assertEq(block.timestamp, loanVault.nextPaymentDue() + globals.gracePeriod());
+
         // Make payment.
         assertTrue(ali.try_makePayment(address(loanVault)));
 
@@ -581,6 +585,10 @@ contract LoanVaultTest is TestUtil {
         // Approve 2nd of 3 payments.
         (_amt, _pri, _int, _due) = loanVault.getNextPayment();
         ali.approve(DAI, address(loanVault), _amt);
+
+        // Warp to *300 seconds* after next payment is due
+        hevm.warp(loanVault.nextPaymentDue() + globals.gracePeriod());
+        assertEq(block.timestamp, loanVault.nextPaymentDue() + globals.gracePeriod());
         
         // Make payment.
         assertTrue(ali.try_makePayment(address(loanVault)));
@@ -604,6 +612,10 @@ contract LoanVaultTest is TestUtil {
         address collateralAsset = loanVault.assetCollateral();
         uint _delta = IERC20(collateralAsset).balanceOf(address(ali));
         assertEq(IERC20(collateralAsset).balanceOf(collateralLocker), reqCollateral);
+
+        // Warp to *300 seconds* after next payment is due
+        hevm.warp(loanVault.nextPaymentDue() + globals.gracePeriod());
+        assertEq(block.timestamp, loanVault.nextPaymentDue() + globals.gracePeriod());
         
         // Make payment.
         assertTrue(ali.try_makePayment(address(loanVault)));
