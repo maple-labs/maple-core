@@ -77,6 +77,14 @@ contract LP {
     function approve(address token, address who, uint256 amt) external {
         IERC20(token).approve(who, amt);
     }
+
+    function withdraw(address lPool, uint256 amt) external {
+        LiquidityPool(lPool).withdraw(amt);
+    }
+
+    function withdraw(address lPool) external {
+        LiquidityPool(lPool).withdraw();
+    }
 }
 
 contract LiquidityPoolTest is TestUtil {
@@ -100,6 +108,8 @@ contract LiquidityPoolTest is TestUtil {
     PremiumFlatCalculator     premiumCalc;
     PoolDelegate              ali;
     LP                        bob;
+    LP                        che;
+    LP                        dan;
     IBPool                    bPool;
 
     function setUp() public {
@@ -121,6 +131,8 @@ contract LiquidityPoolTest is TestUtil {
         premiumCalc    = new PremiumFlatCalculator(500); // Flat 5% premium
         ali            = new PoolDelegate();
         bob            = new LP();
+        che            = new LP();
+        dan            = new LP();
 
         ethOracle.poke(500 ether);  // Set ETH price to $600
         daiOracle.poke(1 ether);    // Set DAI price to $1
@@ -333,5 +345,79 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(IERC20(DAI).balanceOf(liqLocker),              40 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 60 ether);  // Balance of Funding Locker
         assertEq(IERC20(vault).balanceOf(loanTokenLocker),      15 ether);  // LoanToken balance of LT Locker
+    }
+
+    function test_withdraw() public {
+
+        /*******************************/
+        /*** Finalize liquidity pool ***/
+        /*******************************/
+        address stakeLocker = liqPool.stakeLockerAddress();
+        address liqLocker   = liqPool.liquidityLockerAddress();
+
+        ali.approve(address(bPool), stakeLocker, uint(-1));
+        ali.stake(liqPool.stakeLockerAddress(), bPool.balanceOf(address(ali)) / 2);
+
+        liqPool.finalize();
+
+        /**************************************************/
+        /*** Mint and deposit funds into liquidity pool ***/
+        /**************************************************/
+        mint("DAI", address(bob), 100 ether);
+        mint("DAI", address(che), 100 ether);
+        mint("DAI", address(dan), 100 ether);
+
+        bob.approve(DAI, address(liqPool), uint(-1));
+        che.approve(DAI, address(liqPool), uint(-1));
+        dan.approve(DAI, address(liqPool), uint(-1));
+
+        assertTrue(bob.try_deposit(address(liqPool), 10 ether));  // 10%
+        assertTrue(che.try_deposit(address(liqPool), 30 ether));  // 30%
+        assertTrue(dan.try_deposit(address(liqPool), 60 ether));  // 60%
+
+        globals.setLoanVaultFactory(address(loanVFactory));
+
+        /*******************************************/
+        /*** Create new LTLFactory and LoanVault ***/
+        /*******************************************/
+        LoanTokenLockerFactory ltlFactory2 = new LoanTokenLockerFactory();
+
+        // Create Loan Vault
+        uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
+        bytes32[3] memory calcs = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
+
+        LoanVault vault2 = LoanVault(loanVFactory.createLoanVault(DAI, WETH, specs, calcs));
+
+        address fundingLocker  = vault.fundingLocker();
+        address fundingLocker2 = vault2.fundingLocker();
+
+        /******************/
+        /*** Fund Loans ***/
+        /******************/
+        assertEq(IERC20(DAI).balanceOf(liqLocker),              100 ether);  // Balance of Liquidity Locker
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),         0);  // Balance of Funding Locker
+
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory),  20 ether));  // Fund loan for 20 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory),  25 ether));  // Fund same loan for 25 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory2), 15 ether));  // Fund new loan same vault for 15 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault2), address(ltlFactory2), 15 ether));  // Fund new loan new vault for 15 DAI
+
+        (, address ltLocker,,,,,)  = liqPool.loans(address(vault),  address(ltlFactory));
+        (, address ltLocker2,,,,,) = liqPool.loans(address(vault),  address(ltlFactory2));
+        (, address ltLocker3,,,,,) = liqPool.loans(address(vault2), address(ltlFactory2));
+
+        assertEq(IERC20(DAI).balanceOf(liqLocker),               25 ether);  // Balance of Liquidity Locker
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  60 ether);  // Balance of Funding Locker
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 15 ether);  // Balance of Funding Locker of vault 2
+        assertEq(IERC20(vault).balanceOf(ltLocker),              45 ether);  // LoanToken balance of LT Locker
+        assertEq(IERC20(vault).balanceOf(ltLocker2),             15 ether);  // LoanToken balance of LT Locker 2
+        assertEq(IERC20(vault2).balanceOf(ltLocker3),            15 ether);  // LoanToken balance of LT Locker 3
+
+        assertEq(IERC20(DAI).balanceOf(address(bob)), 90 ether);
+        bob.withdraw(address(liqPool));
+        assertEq(IERC20(DAI).balanceOf(address(bob)), 100 ether); // Paid back initial share of 10% of pool
+        // che.withdraw(address(liqPool));                        // Can't withdraw because not enough funds are in liqLocker
+        // dan.withdraw(address(liqPool));
+        assertTrue(false);
     }
 }

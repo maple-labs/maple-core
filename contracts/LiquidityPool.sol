@@ -27,6 +27,10 @@ contract LiquidityPool is IERC20, ERC20 {
 
     using SafeMath for uint256;
 
+    uint256 constant WAD = 10 ** 18;
+
+    uint256 public principalSum; // Sum of all outstanding principal on loans
+
     // An interface for this contract's liquidity asset, stored in two separate variables.
     IERC20 private ILiquidityAsset;
 
@@ -226,6 +230,20 @@ contract LiquidityPool is IERC20, ERC20 {
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
     }
 
+    function withdraw(uint256 _amt) external notDefunct finalized {}
+
+    event Debug(uint, uint);
+    function withdraw() external notDefunct finalized {
+        uint256 share = balanceOf(msg.sender) * WAD / totalSupply();
+        uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
+        uint256 due   = share * (principalSum + bal) / WAD;
+        require(IERC20(liquidityLockerAddress).transfer(msg.sender, due), "LiquidityPool::ERR_WITHDRAW_TRANSFER");
+        emit Debug(0, share);
+        emit Debug(1, bal);
+        emit Debug(2, due);
+        emit Debug(3, principalSum);
+    }
+
     function fundLoan(
         address _loanVault,
         address _loanTokenLockerFactory,
@@ -251,15 +269,18 @@ contract LiquidityPool is IERC20, ERC20 {
         } else {
             loans[_loanVault][_loanTokenLockerFactory].amountFunded += _amt;
         }
+        
         // Fund loan.
+        principalSum += _amt;
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
             _loanVault,
             loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker,
             _amt
         );
-
+        
         emit LoanFunded(_loanVault, loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker, _amt);
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
+        
     }
 
     /// @notice Claim available funds through a LoanToken.
