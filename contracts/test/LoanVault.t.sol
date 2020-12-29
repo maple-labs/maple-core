@@ -232,21 +232,45 @@ contract LoanVaultTest is TestUtil {
     }
 
     function test_makePayment() public {
+
         LoanVault loanVault = createAndFundLoan();
 
         assertEq(uint256(loanVault.loanState()), 0);  // Loan state: Live
 
         assertTrue(!ali.try_makePayment(address(loanVault)));  // Can't makePayment when State != Active
 
+        // Approve collatearl and drawdown loan.
         ali.approve(WETH, address(loanVault), 0.4 ether);
-
         assertTrue(ali.try_drawdown(address(loanVault), 1000 ether));     // Borrow draws down 1000 DAI
 
         address collateralLocker = loanVault.collateralLocker();
         address fundingLocker    = loanVault.fundingLocker();
 
+        // Warp to *300 seconds* before next payment is due
         assertEq(loanVault.nextPaymentDue(), block.timestamp + loanVault.paymentIntervalSeconds());
+        hevm.warp(loanVault.nextPaymentDue() - 300);
+        assertEq(block.timestamp, loanVault.nextPaymentDue() - 300);
 
-        hevm.warp(block.timestamp + loanVault.paymentIntervalSeconds()); // Warp to second that next payment is due
+        // Make payment.
+        (uint _amt,,,) = loanVault.getNextPayment();
+        ali.approve(DAI, address(loanVault), _amt);
+        assertTrue(ali.try_makePayment(address(loanVault)));
     }
+
+    // function test_makePaymentFor(address _vault) public {
+
+    //     // Create loanVault object and ensure it's accepting payments.
+    //     LoanVault loanVault = LoanVault(_vault);
+    //     assertEq(uint256(loanVault.loanState()), 1);  // Loan state: (1) Active
+
+    //     // Warp to *300 seconds* before next payment is due
+    //     hevm.warp(loanVault.nextPaymentDue() - 300);
+    //     assertEq(block.timestamp, loanVault.nextPaymentDue() - 300);
+
+    //     // Make payment.
+    //     (uint _amt,,,) = loanVault.getNextPayment();
+    //     ali.approve(DAI, _vault, _amt);
+    //     assertTrue(ali.try_makePayment(_vault));
+    // }
+
 }
