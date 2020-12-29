@@ -199,12 +199,12 @@ contract LoanVaultTest is TestUtil {
         assertTrue(!ali.try_drawdown(address(loanVault), 5000 ether + 1));  // Can't drawdown more than fundingLocker balance
 
         address fundingLocker = loanVault.fundingLocker();
+        uint preBalance = IERC20(DAI).balanceOf(address(ali));
 
         assertEq(IERC20(WETH).balanceOf(address(ali)),        10 ether);  // Borrower collateral balance
         assertEq(IERC20(loanVault).balanceOf(address(ali)), 5000 ether);  // Borrower loanVault token balance
         assertEq(IERC20(DAI).balanceOf(fundingLocker),      5000 ether);  // Funding locker reqAssset balance
         assertEq(IERC20(DAI).balanceOf(address(loanVault)),          0);  // Loan vault reqAsset balance
-        assertEq(IERC20(DAI).balanceOf(address(ali)),                0);  // Lender reqAsset balance
         assertEq(loanVault.drawdownAmount(),                         0);  // Drawdown amount
         assertEq(loanVault.principalOwed(),                          0);  // Principal owed
         assertEq(uint256(loanVault.loanState()),                     0);  // Loan state: Live
@@ -223,7 +223,7 @@ contract LoanVaultTest is TestUtil {
         assertEq(IERC20(loanVault).balanceOf(address(ali)), 5000 ether);  // Borrower loanVault token balance
         assertEq(IERC20(DAI).balanceOf(fundingLocker),               0);  // Funding locker reqAssset balance
         assertEq(IERC20(DAI).balanceOf(address(loanVault)), 4005 ether);  // Loan vault reqAsset balance
-        assertEq(IERC20(DAI).balanceOf(address(ali)),        990 ether);  // Lender reqAsset balance
+        assertEq(IERC20(DAI).balanceOf(address(ali)),        990 ether + preBalance);  // Lender reqAsset balance
         assertEq(loanVault.drawdownAmount(),                1000 ether);  // Drawdown amount
         assertEq(loanVault.principalOwed(),                 1000 ether);  // Principal owed
         assertEq(uint256(loanVault.loanState()),                     1);  // Loan state: Active
