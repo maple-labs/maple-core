@@ -24,6 +24,7 @@ import "./interfaces/ILoanVault.sol";
 
 /// @title LiquidityPool is the core contract for liquidity pools.
 contract LiquidityPool is IERC20, ERC20 {
+
     using SafeMath for uint256;
 
     // An interface for this contract's liquidity asset, stored in two separate variables.
@@ -34,14 +35,31 @@ contract LiquidityPool is IERC20, ERC20 {
 
     // An interface for the factory used to instantiate a StakeLocker for this LiquidityPool.
     IStakeLockerFactory private StakeLockerFactory;
-    struct Loan {
-        address loanVault;
+
+    // Struct for tracking investments.
+    struct FundedLoan {
+        address loanVaultFunded;
+        address loanTokenLocker;
+        uint256 amountFunded;
         uint256 principalPaid;
         uint256 interestPaid;
+        uint256 feePaid;
+        uint256 excessReturned;
     }
 
-    //@notice list of funded loans
-    Loan[] public fundedLoans;
+    /// @notice Fires when this liquidity pool funds a loan.
+    event LoanFunded(
+        address loanVaultFunded,
+        address loanTokenLocker,
+        uint256 amountFunded
+    );
+
+    /// @notice Investments this liquidity pool has made into loans.
+    FundedLoan[] public fundedLoans;
+
+    /// @notice Data structure to reference loan token lockers.
+    /// @dev loanTokenLockers[LOAN_VAULT][LOCKER_FACTORY] = LOCKER
+    mapping(address => mapping(address => address)) public loanTokenLockers;
 
     // An interface for the locker which escrows StakeAsset.
     IStakeLocker private StakeLocker;
@@ -83,8 +101,6 @@ contract LiquidityPool is IERC20, ERC20 {
     uint256 public delegateFeeBasisPoints;
 
     CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
-
-    mapping(address => address) public loanTokenToLocker;
 
     constructor(
         address _poolDelegate,
@@ -213,35 +229,53 @@ contract LiquidityPool is IERC20, ERC20 {
         address _loanTokenLockerFactory,
         uint256 _amt
     ) external notDefunct finalized isDelegate {
+        // Auth check on loanVaultFactory "kernel"
         require(
             ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault),
             "LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID"
         );
-        if (loanTokenToLocker[_loanVault] == address(0)) {
-            loanTokenToLocker[_loanVault] = ILoanTokenLockerFactory(_loanTokenLockerFactory)
-                .newLocker(_loanVault);
-            fundedLoans.push(Loan(_loanVault, 0, 0));
+        if (loanTokenLockers[_loanVault][_loanTokenLockerFactory] == address(0)) {
+            // Instantiate locker if it doesn't exist with this factory type.
+            loanTokenLockers[_loanVault][_loanTokenLockerFactory] = ILoanTokenLockerFactory(
+                _loanTokenLockerFactory
+            ).newLocker(_loanVault);
+            // Store data in fundedLoans array with a FundedLoan struct.
+            fundedLoans.push(
+                FundedLoan(
+                    _loanVault, 
+                    loanTokenLockers[_loanVault][_loanTokenLockerFactory],
+                    _amt,
+                    0,0,0,0
+                )
+            );
+            // Emit event.
+            emit LoanFunded(_loanVault, loanTokenLockers[_loanVault][_loanTokenLockerFactory], _amt);
         }
+        // Fund loan.
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
             _loanVault,
-            loanTokenToLocker[_loanVault],
+            loanTokenLockers[_loanVault][_loanTokenLockerFactory],
             _amt
         );
     }
 
+    // TODO: simplify to "claim" / remove repayments terminology
     function claimRepayments() external {
         for (uint256 i = 0; i < fundedLoans.length; i++) {
             //danger, this will break if the loanstate enum changes
-            if (uint256(ILoanVault(fundedLoans[i].loanVault).loanState()) == 1) {
+            if (uint256(ILoanVault(fundedLoans[i].loanVaultFunded).loanState()) == 1) {
                 claimRepayment(i);
             }
         }
     }
 
+    // TODO: simplify to "claim" / remove repayments terminology
     function claimRepayment(uint256 _ind) internal {
-        Loan memory _loan = fundedLoans[_ind];
-        ILoanVault _LV = ILoanVault(_loan.loanVault);
-        ILoanTokenLocker(loanTokenToLocker[_loan.loanVault]).fetch();
+        FundedLoan memory _loan = fundedLoans[_ind];
+        ILoanVault _LV = ILoanVault(_loan.loanVaultFunded);
+        ILoanTokenLocker(
+            loanTokenLockers[_loan.loanVaultFunded][_loan.loanTokenLocker]
+        ).fetch();
         uint256 _newInterest = _LV.interestPaid() - _loan.interestPaid;
         uint256 _newPrincipal = _LV.principalPaid() - _loan.principalPaid;
         _LV.updateFundsReceived(); //should be done in LV probably instead
@@ -261,9 +295,9 @@ contract LiquidityPool is IERC20, ERC20 {
             _interest.add(_principal).sub(_stakersShare)
         );
         ILiquidityAsset.transfer(stakeLockerAddress, _stakersShare);
-        IERC20(_loan.loanVault).transfer(
-            loanTokenToLocker[_loan.loanVault],
-            IERC20(_loan.loanVault).balanceOf(address(this))
+        IERC20(_loan.loanVaultFunded).transfer(
+            loanTokenLockers[_loan.loanVaultFunded][_loan.loanTokenLocker],
+            IERC20(_loan.loanVaultFunded).balanceOf(address(this))
         );
     }
 
