@@ -24,6 +24,7 @@ import "./interfaces/ILoanVault.sol";
 
 /// @title LiquidityPool is the core contract for liquidity pools.
 contract LiquidityPool is IERC20, ERC20 {
+
     using SafeMath for uint256;
 
     // An interface for this contract's liquidity asset, stored in two separate variables.
@@ -34,14 +35,29 @@ contract LiquidityPool is IERC20, ERC20 {
 
     // An interface for the factory used to instantiate a StakeLocker for this LiquidityPool.
     IStakeLockerFactory private StakeLockerFactory;
+
+    // Struct for tracking investments.
     struct Loan {
-        address loanVault;
+        address loanVaultFunded;
+        address loanTokenLocker;
+        uint256 amountFunded;
         uint256 principalPaid;
         uint256 interestPaid;
+        uint256 feePaid;
+        uint256 excessReturned;
+        // TODO: uint256 liquidationClaimed;
     }
 
-    //@notice list of funded loans
-    Loan[] public fundedLoans;
+    /// @notice Fires when this liquidity pool funds a loan.
+    event LoanFunded(
+        address loanVaultFunded,
+        address loanTokenLocker,
+        uint256 amountFunded
+    );
+
+    /// @notice Data structure to reference loan token lockers.
+    /// @dev loans[LOAN_VAULT][LOCKER_FACTORY] = LOCKER
+    mapping(address => mapping(address => Loan)) public loans;
 
     // An interface for the locker which escrows StakeAsset.
     IStakeLocker private StakeLocker;
@@ -76,15 +92,13 @@ contract LiquidityPool is IERC20, ERC20 {
     /// @notice True when the pool is closed, enabling poolDelegate to withdraw their stake.
     bool public isDefunct;
 
-    /// @notice The fee for stakers.
-    uint256 public stakingFeeBasisPoints;
+    /// @notice The fee for stakers (in basis points).
+    uint256 public stakingFee;
 
-    /// @notice The fee for delegates.
-    uint256 public delegateFeeBasisPoints;
+    /// @notice The fee for delegates (in basis points).
+    uint256 public delegateFee;
 
     CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
-
-    mapping(address => address) public loanTokenToLocker;
 
     constructor(
         address _poolDelegate,
@@ -92,8 +106,8 @@ contract LiquidityPool is IERC20, ERC20 {
         address _stakeAsset,
         address _stakeLockerFactory,
         address _liquidityLockerFactory,
-        uint256 _stakingFeeBasisPoints,
-        uint256 _delegateFeeBasisPoints,
+        uint256 _stakingFee,
+        uint256 _delegateFee,
         string memory name,
         string memory symbol,
         address _mapleGlobals
@@ -114,8 +128,8 @@ contract LiquidityPool is IERC20, ERC20 {
         StakeLockerFactory = IStakeLockerFactory(_stakeLockerFactory);
         MapleGlobals = IGlobals(_mapleGlobals);
         poolDelegate = _poolDelegate;
-        stakingFeeBasisPoints = _stakingFeeBasisPoints;
-        delegateFeeBasisPoints = _delegateFeeBasisPoints;
+        stakingFee = _stakingFee;
+        delegateFee = _delegateFee;
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLockerAddress = createStakeLocker(_stakeAsset);
@@ -213,60 +227,104 @@ contract LiquidityPool is IERC20, ERC20 {
         address _loanTokenLockerFactory,
         uint256 _amt
     ) external notDefunct finalized isDelegate {
+        // Auth check on loanVaultFactory "kernel"
         require(
             ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault),
             "LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID"
         );
-        if (loanTokenToLocker[_loanVault] == address(0)) {
-            loanTokenToLocker[_loanVault] = ILoanTokenLockerFactory(_loanTokenLockerFactory)
-                .newLocker(_loanVault);
-            fundedLoans.push(Loan(_loanVault, 0, 0));
+        // Instantiate locker if it doesn't exist with this factory type.
+        if (loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker == address(0)) {
+            address _loanTokenLocker = ILoanTokenLockerFactory(
+                _loanTokenLockerFactory
+            ).newLocker(_loanVault);
+            // Store data in loans mapping with a Loan struct.
+            loans[_loanVault][_loanTokenLockerFactory] = Loan(
+                _loanVault, 
+                _loanTokenLocker,
+                _amt,
+                0,0,0,0
+            );
+        } else {
+            loans[_loanVault][_loanTokenLockerFactory].amountFunded += _amt;
         }
+        emit LoanFunded(_loanVault, loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker, _amt);
+        // Fund loan.
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
             _loanVault,
-            loanTokenToLocker[_loanVault],
+            loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker,
             _amt
         );
     }
 
-    function claimRepayments() external {
-        for (uint256 i = 0; i < fundedLoans.length; i++) {
-            //danger, this will break if the loanstate enum changes
-            if (uint256(ILoanVault(fundedLoans[i].loanVault).loanState()) == 1) {
-                claimRepayment(i);
-            }
-        }
-    }
+    /// @notice Claim available funds through a LoanToken.
+    /// @return uint[0]: Total amount claimed.
+    ///         uint[1]: Principal portion claimed.
+    ///         uint[2]: Interest portion claimed.
+    ///         uint[3]: Fee portion claimed.
+    ///         uint[4]: Excess portion claimed.
+    ///         uint[5]: TODO: Liquidation portion claimed.
+    function claim(address _loanVault, address _loanTokenLockerFactory) internal returns(uint, uint, uint, uint, uint/* TODO: uint*/) {
 
-    function claimRepayment(uint256 _ind) internal {
-        Loan memory _loan = fundedLoans[_ind];
-        ILoanVault _LV = ILoanVault(_loan.loanVault);
-        ILoanTokenLocker(loanTokenToLocker[_loan.loanVault]).fetch();
-        uint256 _newInterest = _LV.interestPaid() - _loan.interestPaid;
-        uint256 _newPrincipal = _LV.principalPaid() - _loan.principalPaid;
-        _LV.updateFundsReceived(); //should be done in LV probably instead
-        _LV.withdrawFunds();
-        //this is a bad thing to do, should get the withdraw function to give us this, or something
-        uint256 _bal = ILiquidityAsset.balanceOf(address(this));
-        _loan.interestPaid = _LV.interestPaid();
-        _loan.principalPaid = _LV.principalPaid(); //update the values
-        uint256 _interest =
-            _bal.mul(_newInterest.mul(_ONELiquidityAsset).div(_newPrincipal)).div(
-                _ONELiquidityAsset
-            );
-        uint256 _principal = _bal.sub(_interest);
-        uint256 _stakersShare = _interest.mul(stakingFeeBasisPoints).div(10000);
-        ILiquidityAsset.transfer(
-            liquidityLockerAddress,
-            _interest.add(_principal).sub(_stakersShare)
-        );
-        ILiquidityAsset.transfer(stakeLockerAddress, _stakersShare);
-        IERC20(_loan.loanVault).transfer(
-            loanTokenToLocker[_loan.loanVault],
-            IERC20(_loan.loanVault).balanceOf(address(this))
+        // Grab "info" from loans data structure.
+        Loan memory info = loans[_loanVault][_loanTokenLockerFactory];
+
+        // Create interface for LoanVault.
+        ILoanVault vault = ILoanVault(info.loanVaultFunded);
+
+        // Pull tokens from TokenLocker.
+        ILoanTokenLocker(
+            loans[info.loanVaultFunded][info.loanTokenLocker].loanTokenLocker
+        ).fetch();
+
+        // Calculate deltas, or "net new" values.
+        uint256 newInterest  = vault.interestPaid() - info.interestPaid;
+        uint256 newPrincipal = vault.principalPaid() - info.principalPaid;
+        uint256 newFee       = vault.feePaid() - info.feePaid;
+        uint256 newExcess    = vault.excessReturned() - info.excessReturned;
+
+        // Update ERC2222 internal accounting for LoanVault.
+        vault.updateFundsReceived();
+        vault.withdrawFunds();
+
+        // TODO: ERC-2222 could have return value in withdrawFunds(), 2 lines above.
+        // Fetch amount claimed from calling withdrawFunds()
+        uint256 balance = ILiquidityAsset.balanceOf(address(this));
+
+        // Update "info" in loans data structure.
+        info.interestPaid   = vault.interestPaid();
+        info.principalPaid  = vault.principalPaid();
+        info.feePaid        = vault.feePaid();
+        info.excessReturned = vault.excessReturned();
+
+        uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess);
+
+        uint256 interest  = newInterest.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 principal = newPrincipal.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 fee       = newFee.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 excess    = newExcess.mul(1 ether).div(sum).div(1 ether).mul(balance);
+
+        // Distribute "interest" to appropriate parties.
+        uint256 toPoolDelegate    = interest.mul(delegateFee).div(10000);
+        uint256 toStakeLocker     = interest.mul(stakingFee).div(10000);
+        uint256 toLiquidityLocker = interest.mul(10000 - stakingFee - delegateFee).div(10000);
+
+        require(ILiquidityAsset.transfer(poolDelegate,           toPoolDelegate));
+        require(ILiquidityAsset.transfer(stakeLockerAddress,     toStakeLocker));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, toLiquidityLocker));
+
+        // Distribute "principal" and "excess" to liquidityLocker.
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, principal));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, excess));
+
+        // Distribute "fee" to poolDelegate.
+        require(ILiquidityAsset.transfer(poolDelegate, fee));
+
+        // Return tokens to locker.
+        IERC20(info.loanVaultFunded).transfer(
+            loans[info.loanVaultFunded][info.loanTokenLocker].loanTokenLocker,
+            IERC20(info.loanVaultFunded).balanceOf(address(this))
         );
     }
-
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
     if we change the decimals on the FDT to match liquidityasset this would not be necessary
