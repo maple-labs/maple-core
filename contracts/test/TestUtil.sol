@@ -3,9 +3,15 @@ pragma solidity >=0.6.11;
 import "lib/ds-test/contracts/test.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
+import "./interfaces/ILoanVault.sol";
+
 interface Hevm {
     function warp(uint256) external;
     function store(address,bytes32,bytes32) external;
+}
+
+interface User {
+    function approve(address, uint256) external;
 }
 
 contract TestUtil is DSTest {
@@ -52,5 +58,25 @@ contract TestUtil is DSTest {
         );
 
         assertEq(IERC20(addr).balanceOf(who), bal + amt); // Assert new balance
+    }
+
+    // Make payment on any given LoanVault.
+    function makePayment(address _vault, address _borrower) public {
+
+        // Create loanVault object and ensure it's accepting payments.
+        LoanVault loanVault = LoanVault(_vault);
+        assertEq(uint256(loanVault.loanState()), 1);  // Loan state: (1) Active
+
+        // Warp to *300 seconds* before next payment is due
+        hevm.warp(loanVault.nextPaymentDue() - 300);
+        assertEq(block.timestamp, loanVault.nextPaymentDue() - 300);
+
+        // Make payment.
+        address _assetRequested = loanVault.assetRequested();
+        (uint _amt,,,) = loanVault.getNextPayment();
+
+        User(_borrower).approve(_assetRequested, _vault, _amt);
+
+        assertTrue(ali.try_makePayment(_vault));
     }
 }
