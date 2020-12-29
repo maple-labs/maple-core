@@ -251,13 +251,32 @@ contract LoanVaultTest is TestUtil {
         hevm.warp(loanVault.nextPaymentDue() - 300);
         assertEq(block.timestamp, loanVault.nextPaymentDue() - 300);
 
-        // Make payment.
-        (uint _amt,,,) = loanVault.getNextPayment();
+        assertTrue(!ali.try_makePayment(address(loanVault)));  // Can't makePayment with lack of approval
+
+        // Approve payment.
+        (uint _amt, uint _pri, uint _int, uint _due) = loanVault.getNextPayment();
         ali.approve(DAI, address(loanVault), _amt);
 
         // Before state
+        assertEq(uint256(loanVault.loanState()),             1);    // Loan state is Active, accepting payments
+        assertEq(loanVault.principalOwed(),         1000 ether);    // Initial drawdown amount.
+        assertEq(loanVault.principalPaid(),                  0);
+        assertEq(loanVault.interestPaid(),                   0);
+        assertEq(loanVault.numberOfPayments(),               3);
+        assertEq(loanVault.nextPaymentDue(),              _due);
+
+        // Make payment.
         assertTrue(ali.try_makePayment(address(loanVault)));
+
+        uint _nextPaymentDue = _due + loanVault.paymentIntervalSeconds();
+        
         // After state
+        assertEq(uint256(loanVault.loanState()),                1);    // Loan state is Active (unless final payment, then 2)
+        assertEq(loanVault.principalOwed(),            1000 ether);    // Initial drawdown amount.
+        assertEq(loanVault.principalPaid(),                  _pri);
+        assertEq(loanVault.interestPaid(),                   _int);
+        assertEq(loanVault.numberOfPayments(),                  2);
+        assertEq(loanVault.nextPaymentDue(),      _nextPaymentDue);
     }
 
 }
