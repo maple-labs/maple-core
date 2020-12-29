@@ -48,17 +48,9 @@ contract MapleGlobals {
     // Mapping of asset, to the associated pricefeed.
     mapping(address => address) public tokenPriceFeed;
 
-    // Mapping of bytes32 interest structure IDs to address of the corresponding interestStructureCalculators.
-    mapping(bytes32 => address) public interestStructureCalculators;
-    bytes32[] public validInterestStructures;
-
-    // Mapping of bytes32 late fee calculator IDs to address of the corresponding lateFeeCalculator.
-    mapping(bytes32 => address) public lateFeeCalculators;
-    bytes32[] public validLateFeeCalculators;
-
-    // Mapping of bytes32 premium calculator IDs to address of the corresponding premiumCalculator.
-    mapping(bytes32 => address) public premiumCalculators;
-    bytes32[] public validPremiumCalculators;
+    mapping(address => bool) public isValidCalculator;
+    address[] public validCalculators;
+    mapping(address => bytes32) public calculatorType;
 
     // @return primary factory addresses
     address public loanVaultFactory;
@@ -89,12 +81,16 @@ contract MapleGlobals {
         treasuryFee = 50;
     }
 
-    function getValidTokens() view public returns(
-        string[] memory _validBorrowTokenSymbols,
-        address[] memory _validBorrowTokenAddresses,
-        string[] memory _validCollateralTokenSymbols,
-        address[] memory _validCollateralTokenAddresses
-    ) {
+    function getValidTokens()
+        public
+        view
+        returns (
+            string[] memory _validBorrowTokenSymbols,
+            address[] memory _validBorrowTokenAddresses,
+            string[] memory _validCollateralTokenSymbols,
+            address[] memory _validCollateralTokenAddresses
+        )
+    {
         return (
             validBorrowTokenSymbols,
             validBorrowTokenAddresses,
@@ -127,7 +123,7 @@ contract MapleGlobals {
         tokenPriceFeed[_asset] = _oracle;
     }
 
-    function getPrice(address _asset) external view returns(uint) {
+    function getPrice(address _asset) external view returns (uint256) {
         return IPriceFeed(tokenPriceFeed[_asset]).price();
     }
 
@@ -153,43 +149,15 @@ contract MapleGlobals {
         validBorrowTokenSymbols.push(IERC20Details(_token).symbol());
     }
 
-    /**
-        @notice Governor can set an interest structure calculator.
-        @param _interestStructure Name of the interest structure (e.g. "BULLET")
-        @param _calculator Address of the corresponding calculator for repayments, etc.
-     */
-    function setInterestStructureCalculator(bytes32 _interestStructure, address _calculator)
-        public
-        isGovernor
-    {
-        interestStructureCalculators[_interestStructure] = _calculator;
-        validInterestStructures.push(_interestStructure);
-    }
-
-    /**
-        @notice Governor can set an interest structure calculator.
-        @param _lateFeeType Name of the interest structure (e.g. "NULL")
-        @param _calculator Address of the corresponding calculator.
-     */
-    function setLateFeeCalculator(bytes32 _lateFeeType, address _calculator)
-        public
-        isGovernor
-    {
-        lateFeeCalculators[_lateFeeType] = _calculator;
-        validLateFeeCalculators.push(_lateFeeType);
-    }
-
-    /**
-        @notice Governor can set a premium calculator.
-        @param _premiumType Name of the premium type (e.g. "FLAT")
-        @param _calculator Address of the corresponding calculator.
-     */
-    function setPremiumCalculator(bytes32 _premiumType, address _calculator)
-        public
-        isGovernor
-    {
-        premiumCalculators[_premiumType] = _calculator;
-        validPremiumCalculators.push(_premiumType);
+    function addCalculator(address _calculator, bytes32 _type) public isGovernor {
+        isValidCalculator[_calculator] = true;
+        validCalculators.push(_calculator); //tbh this is not needed and i dont wana put it here
+        //valid types are LATEFEE INTEREST and PREMIUM
+	//should probably be using an enum for this but i am not sure it will
+        //improve memory footprint due to the way mappings are packed
+        calculatorType[_calculator] = _type; //tbh i wouldnt even have this,
+        // but it can allow you to disable a calculator and controls for
+        //the possibility of a broken interface mismatching calculators
     }
 
     /**
