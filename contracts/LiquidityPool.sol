@@ -45,6 +45,7 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 interestPaid;
         uint256 feePaid;
         uint256 excessReturned;
+        // TODO: uint256 liquidationClaimed;
     }
 
     /// @notice Fires when this liquidity pool funds a loan.
@@ -94,11 +95,11 @@ contract LiquidityPool is IERC20, ERC20 {
     /// @notice True when the pool is closed, enabling poolDelegate to withdraw their stake.
     bool public isDefunct;
 
-    /// @notice The fee for stakers.
-    uint256 public stakingFeeBasisPoints;
+    /// @notice The fee for stakers (in basis points).
+    uint256 public stakingFee;
 
-    /// @notice The fee for delegates.
-    uint256 public delegateFeeBasisPoints;
+    /// @notice The fee for delegates (in basis points).
+    uint256 public delegateFee;
 
     CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
 
@@ -108,8 +109,8 @@ contract LiquidityPool is IERC20, ERC20 {
         address _stakeAsset,
         address _stakeLockerFactory,
         address _liquidityLockerFactory,
-        uint256 _stakingFeeBasisPoints,
-        uint256 _delegateFeeBasisPoints,
+        uint256 _stakingFee,
+        uint256 _delegateFee,
         string memory name,
         string memory symbol,
         address _mapleGlobals
@@ -130,8 +131,8 @@ contract LiquidityPool is IERC20, ERC20 {
         StakeLockerFactory = IStakeLockerFactory(_stakeLockerFactory);
         MapleGlobals = IGlobals(_mapleGlobals);
         poolDelegate = _poolDelegate;
-        stakingFeeBasisPoints = _stakingFeeBasisPoints;
-        delegateFeeBasisPoints = _delegateFeeBasisPoints;
+        stakingFee = _stakingFee;
+        delegateFee = _delegateFee;
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLockerAddress = createStakeLocker(_stakeAsset);
@@ -259,46 +260,76 @@ contract LiquidityPool is IERC20, ERC20 {
         );
     }
 
-    // TODO: simplify to "claim" / remove repayments terminology
-    function claimRepayments() external {
-        for (uint256 i = 0; i < fundedLoans.length; i++) {
-            //danger, this will break if the loanstate enum changes
-            if (uint256(ILoanVault(fundedLoans[i].loanVaultFunded).loanState()) == 1) {
-                claimRepayment(i);
-            }
-        }
-    }
+    /// @notice Claim available funds through a LoanToken.
+    /// @param _id The index of FundedLoans to reference for claiming.
+    /// @return uint[0]: Total amount claimed.
+    ///         uint[1]: Principal portion claimed.
+    ///         uint[2]: Interest portion claimed.
+    ///         uint[3]: Fee portion claimed.
+    ///         uint[4]: Excess portion claimed.
+    ///         uint[5]: TODO: Liquidation portion claimed.
+    function claim(uint256 _id) internal returns(uint, uint, uint, uint, uint/* TODO: uint*/) {
 
-    // TODO: simplify to "claim" / remove repayments terminology
-    function claimRepayment(uint256 _ind) internal {
-        FundedLoan memory _loan = fundedLoans[_ind];
-        ILoanVault _LV = ILoanVault(_loan.loanVaultFunded);
+        // Grab "info" from fundedLoans data structure.
+        FundedLoan memory info = fundedLoans[_id];
+
+        // Create interface for LoanVault.
+        ILoanVault vault = ILoanVault(info.loanVaultFunded);
+
+        // Pull tokens from TokenLocker.
         ILoanTokenLocker(
-            loanTokenLockers[_loan.loanVaultFunded][_loan.loanTokenLocker]
+            loanTokenLockers[info.loanVaultFunded][info.loanTokenLocker]
         ).fetch();
-        uint256 _newInterest = _LV.interestPaid() - _loan.interestPaid;
-        uint256 _newPrincipal = _LV.principalPaid() - _loan.principalPaid;
-        _LV.updateFundsReceived(); //should be done in LV probably instead
-        _LV.withdrawFunds();
-        //this is a bad thing to do, should get the withdraw function to give us this, or something
-        uint256 _bal = ILiquidityAsset.balanceOf(address(this));
-        _loan.interestPaid = _LV.interestPaid();
-        _loan.principalPaid = _LV.principalPaid(); //update the values
-        uint256 _interest =
-            _bal.mul(_newInterest.mul(_ONELiquidityAsset).div(_newPrincipal)).div(
-                _ONELiquidityAsset
-            );
-        uint256 _principal = _bal.sub(_interest);
-        uint256 _stakersShare = _interest.mul(stakingFeeBasisPoints).div(10000);
-        ILiquidityAsset.transfer(
-            liquidityLockerAddress,
-            _interest.add(_principal).sub(_stakersShare)
+
+        // Calculate deltas, or "net new" values.
+        uint256 newInterest     = vault.interestPaid() - info.interestPaid;
+        uint256 newPrincipal    = vault.principalPaid() - info.principalPaid;
+        uint256 newFee          = vault.feePaid() - info.feePaid;
+        uint256 newExcess       = vault.excessReturned() - info.excessReturned;
+
+        // Update ERC2222 internal accounting for LoanVault.
+        vault.updateFundsReceived();
+        vault.withdrawFunds();
+
+        // TODO: ERC-2222 could have return value in withdrawFunds(), 2 lines above.
+        // Fetch amount claimed from calling withdrawFunds()
+        uint256 balance = ILiquidityAsset.balanceOf(address(this));
+
+        // Update "info" in fundedLoans data structure.
+        info.interestPaid       = vault.interestPaid();
+        info.principalPaid      = vault.principalPaid();
+        info.feePaid            = vault.feePaid();
+        info.excessReturned     = vault.excessReturned();
+
+        uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess);
+
+        uint256 interest    = newInterest.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 principal   = newPrincipal.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 fee         = newFee.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 excess      = newExcess.mul(1 ether).div(sum).div(1 ether).mul(balance);
+
+        // Distribute "interest" to appropriate parties.
+        uint256 toPoolDelegate      = interest.mul(delegateFee).div(10000);
+        uint256 toStakeLocker       = interest.mul(stakingFee).div(10000);
+        uint256 toLiquidityLocker   = interest.mul(10000 - stakingFee - delegateFee).div(10000);
+
+        require(ILiquidityAsset.transfer(poolDelegate,              toPoolDelegate));
+        require(ILiquidityAsset.transfer(stakeLockerAddress,        toStakeLocker));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress,    toLiquidityLocker));
+
+        // Distribute "principal" and "excess" to liquidityLocker.
+        require(ILiquidityAsset.transfer(liquidityLockerAddress,    principal));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress,    excess));
+
+        // Distribute "fee" to poolDelegate.
+        require(ILiquidityAsset.transfer(poolDelegate,              fee));
+
+        // Return tokens to locker.
+        IERC20(info.loanVaultFunded).transfer(
+            loanTokenLockers[info.loanVaultFunded][info.loanTokenLocker],
+            IERC20(info.loanVaultFunded).balanceOf(address(this))
         );
-        ILiquidityAsset.transfer(stakeLockerAddress, _stakersShare);
-        IERC20(_loan.loanVaultFunded).transfer(
-            loanTokenLockers[_loan.loanVaultFunded][_loan.loanTokenLocker],
-            IERC20(_loan.loanVaultFunded).balanceOf(address(this))
-        );
+
     }
 
 
