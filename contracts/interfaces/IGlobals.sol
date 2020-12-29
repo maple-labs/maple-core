@@ -47,4 +47,7 @@ interface IGlobals {
     function liquidityPoolFactory() external view returns (address);
 
     function getPrice(address) external view returns (uint256);
+
+    function isValidCalculator(address) external view returns (bool);
+
 }

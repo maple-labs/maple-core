@@ -5,9 +5,10 @@ import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "../interfaces/ILoanVault.sol";
 
 contract BulletRepaymentCalculator {
-
+	bytes32 public calcType = 'INTEREST';
+	bytes32 public name = 'BULLET';
 	using SafeMath for uint256;
-
+	
   /// @dev Returns the total value of next payment, and interest/principal amount.
   /// @return (uint256,uint256,uint256) [0] = Principal + Interest, [1] = Principal, [2] = Interest
   function getNextPayment(address _loanVault) view public returns(uint256, uint256, uint256) {

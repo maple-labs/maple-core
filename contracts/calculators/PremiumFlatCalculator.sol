@@ -5,7 +5,8 @@ import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "../interfaces/ILoanVault.sol";
 
 contract PremiumFlatCalculator {
-
+	bytes32 public calcType = 'PREMIUM';
+	bytes32 public name = 'FLAT';	
 	using SafeMath for uint256;
 
   /// @notice The amount of principal to charge extra as a premium for calling the loan.

@@ -49,8 +49,6 @@ contract MapleGlobals {
     mapping(address => address) public tokenPriceFeed;
 
     mapping(address => bool) public isValidCalculator;
-    address[] public validCalculators;
-    mapping(address => bytes32) public calculatorType;
 
     // @return primary factory addresses
     address public loanVaultFactory;
@@ -149,15 +147,12 @@ contract MapleGlobals {
         validBorrowTokenSymbols.push(IERC20Details(_token).symbol());
     }
 
-    function addCalculator(address _calculator, bytes32 _type) public isGovernor {
+    function addCalculator(address _calculator) public isGovernor {
         isValidCalculator[_calculator] = true;
-        validCalculators.push(_calculator); //tbh this is not needed and i dont wana put it here
-        //valid types are LATEFEE INTEREST and PREMIUM
-	//should probably be using an enum for this but i am not sure it will
-        //improve memory footprint due to the way mappings are packed
-        calculatorType[_calculator] = _type; //tbh i wouldnt even have this,
-        // but it can allow you to disable a calculator and controls for
-        //the possibility of a broken interface mismatching calculators
+    }
+    function removeCalculator(address _calculator) public isGovernor {
+        isValidCalculator[_calculator] = false;
+	//maybe not even have this function 
     }
 
     /**

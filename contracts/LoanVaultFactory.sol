@@ -5,29 +5,33 @@ import "./LoanVault.sol";
 import "./interfaces/IGlobals.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./library/TokenUUID.sol";
+import "./interfaces/ICalcGeneral.sol";
 
 /// @title LoanVaultFactory instantiates LoanVault contracts.
 contract LoanVaultFactory {
-
-	using SafeMath for uint256;
+    using SafeMath for uint256;
 
     // Data structures for loan vaults.
     mapping(uint256 => address) private loanVaults;
     mapping(address => bool) private _isLoanVault;
-    
+
     /// @notice Incrementor for number of loan vaults created.
     uint256 public loanVaultsCreated;
 
     /// @notice The MapleGlobals.sol contract.
     address public mapleGlobals;
-    
+
     /// @notice The FundingLockerFactory to use for this LoanVaultFactory.
     address public fundingLockerFactory;
-    
+
     /// @notice The CollateralLockerFactory to use for this LoanVaultFactory.
     address public collateralLockerFactory;
 
-    constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) public {
+    constructor(
+        address _mapleGlobals,
+        address _fundingLockerFactory,
+        address _collateralLockerFactory
+    ) public {
         mapleGlobals = _mapleGlobals;
         fundingLockerFactory = _fundingLockerFactory;
         collateralLockerFactory = _collateralLockerFactory;
@@ -35,19 +39,21 @@ contract LoanVaultFactory {
 
     // Authorization to call Treasury functions.
     modifier isGovernor() {
-        require(msg.sender == IGlobals(mapleGlobals).governor(), "LoanVaultFactory::ERR_MSG_SENDER_NOT_GOVERNOR");
+        require(
+            msg.sender == IGlobals(mapleGlobals).governor(),
+            "LoanVaultFactory::ERR_MSG_SENDER_NOT_GOVERNOR"
+        );
         _;
     }
 
     /// @notice Fired when user calls createLoanVault()
     event LoanVaultCreated(
         uint256 _loanVaultID,
-		address _loanVaultAddress,
+        address _loanVaultAddress,
         address indexed _borrower,
         address indexed _assetRequested,
         address _assetCollateral,
-        uint[6] _specifications,
-        bytes32[3] _calculators
+        uint256[6] _specifications
     );
 
     /// @notice Instantiates a LoanVault
@@ -68,46 +74,48 @@ contract LoanVaultFactory {
     function createLoanVault(
         address _assetRequested,
         address _assetCollateral,
-        uint[6] memory _specifications,
-        bytes32[3] memory _calculators
+        uint256[6] memory _specifications,
+        address[3] memory _calculators
     ) public returns (address) {
-
         // Pre-checks.
+        address _interestCalculator = _calculators[0];
+        address _lateFeeCalculator = _calculators[1];
+        address _premiumCalculator = _calculators[2];
         require(
-            _assetCollateral!= address(0),
+            _assetCollateral != address(0),
             "LoanVaultFactory::createLoanVault:ERR_NULL_ASSET_COLLATERAL"
         );
         require(
-            IGlobals(mapleGlobals).interestStructureCalculators(_calculators[0]) != address(0),
+            IGlobals(mapleGlobals).isValidCalculator(_interestCalculator) &&
+                ICalcGeneral(_interestCalculator).calcType() == "INTEREST",
             "LoanVaultFactory::createLoanVault:ERR_NULL_INTEREST_STRUCTURE_CALC"
         );
         require(
-            IGlobals(mapleGlobals).lateFeeCalculators(_calculators[1]) != address(0),
+            IGlobals(mapleGlobals).isValidCalculator(_lateFeeCalculator) &&
+                ICalcGeneral(_lateFeeCalculator).calcType() == "LATEFEE",
             "LoanVaultFactory::createLoanVault:ERR_NULL_LATE_FEE_CALC"
         );
         require(
-            IGlobals(mapleGlobals).premiumCalculators(_calculators[2]) != address(0),
+            IGlobals(mapleGlobals).isValidCalculator(_premiumCalculator) &&
+                ICalcGeneral(_premiumCalculator).calcType() == "PREMIUM",
             "LoanVaultFactory::createLoanVault:ERR_NULL_PREMIUM_CALC"
         );
-        
-        // Deploy loan vault contract.
-	    string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated+1);
 
-        LoanVault vault = new LoanVault(
-            msg.sender,
-            _assetRequested,
-            _assetCollateral,
-            fundingLockerFactory,
-            collateralLockerFactory,
-            mapleGlobals,
-            _specifications,
-            [
-                IGlobals(mapleGlobals).interestStructureCalculators(_calculators[0]),
-                IGlobals(mapleGlobals).lateFeeCalculators(_calculators[1]),
-                IGlobals(mapleGlobals).premiumCalculators(_calculators[2])
-            ],
-	        _tUUID
-        );
+        // Deploy loan vault contract.
+        string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated + 1);
+
+        LoanVault vault =
+            new LoanVault(
+                msg.sender,
+                _assetRequested,
+                _assetCollateral,
+                fundingLockerFactory,
+                collateralLockerFactory,
+                mapleGlobals,
+                _specifications,
+                [_interestCalculator, _lateFeeCalculator, _premiumCalculator],
+                _tUUID
+            );
 
         // Update LoanVaultFactory identification mappings.
         loanVaults[loanVaultsCreated] = address(vault);
@@ -120,8 +128,7 @@ contract LoanVaultFactory {
             msg.sender,
             _assetRequested,
             _assetCollateral,
-            _specifications,
-            [_calculators[0], _calculators[1], _calculators[2]]
+            _specifications
         );
 
         // Increment loanVaultCreated (IDs), return loan vault address.
@@ -148,7 +155,7 @@ contract LoanVaultFactory {
     function setFundingLockerFactory(address _fundingLockerFactory) public isGovernor {
         fundingLockerFactory = _fundingLockerFactory;
     }
-    
+
     /// @dev Governor can adjust the fundingLockerFactory.
     /// @param _collateralLockerFactory The new collateralLockerFactory address.
     function setCollateralLockerFactory(address _collateralLockerFactory) public isGovernor {
