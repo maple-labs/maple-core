@@ -28,8 +28,8 @@ contract PoolDelegate {
         address liquidityPoolFactory, 
         address liquidityAsset,
         address stakeAsset,
-        uint256 stakingFeeBasisPoints,
-        uint256 delegateFeeBasisPoints,
+        uint256 stakingFee,
+        uint256 delegateFee,
         string memory name,
         string memory symbol
     ) 
@@ -38,8 +38,8 @@ contract PoolDelegate {
         liquidityPool = ILiquidityPoolFactory(liquidityPoolFactory).createLiquidityPool(
             liquidityAsset,
             stakeAsset,
-            stakingFeeBasisPoints,
-            delegateFeeBasisPoints,
+            stakingFee,
+            delegateFee,
             name,
             symbol 
         );
