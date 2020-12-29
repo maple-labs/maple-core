@@ -6,6 +6,7 @@ import "./TestUtil.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
+import "../calculators/AmortizationRepaymentCalculator.sol";
 import "../calculators/BulletRepaymentCalculator.sol";
 import "../calculators/LateFeeNullCalculator.sol";
 import "../calculators/PremiumFlatCalculator.sol";
@@ -66,20 +67,21 @@ contract Treasury { }
 
 contract LoanVaultTest is TestUtil {
 
-    ERC20                     fundsToken;
-    MapleToken                mapleToken;
-    MapleGlobals              globals;
-    FundingLockerFactory      fundingLockerFactory;
-    CollateralLockerFactory   collateralLockerFactory;
-    DSValue                   ethOracle;
-    DSValue                   daiOracle;
-    BulletRepaymentCalculator bulletCalc;
-    LateFeeNullCalculator     lateFeeCalc;
-    PremiumFlatCalculator     premiumCalc;
-    LoanVaultFactory          loanVaultFactory;
-    Borrower                  ali;
-    Lender                    bob;
-    Treasury                  trs;
+    ERC20                           fundsToken;
+    MapleToken                      mapleToken;
+    MapleGlobals                    globals;
+    FundingLockerFactory            fundingLockerFactory;
+    CollateralLockerFactory         collateralLockerFactory;
+    DSValue                         ethOracle;
+    DSValue                         daiOracle;
+    AmortizationRepaymentCalculator amortiCalc;
+    BulletRepaymentCalculator       bulletCalc;
+    LateFeeNullCalculator           lateFeeCalc;
+    PremiumFlatCalculator           premiumCalc;
+    LoanVaultFactory                loanVaultFactory;
+    Borrower                        ali;
+    Lender                          bob;
+    Treasury                        trs;
 
     function setUp() public {
 
@@ -91,6 +93,7 @@ contract LoanVaultTest is TestUtil {
         ethOracle               = new DSValue();
         daiOracle               = new DSValue();
         bulletCalc              = new BulletRepaymentCalculator();
+        amortiCalc              = new AmortizationRepaymentCalculator();
         lateFeeCalc             = new LateFeeNullCalculator();
         premiumCalc             = new PremiumFlatCalculator(500); // Flat 5% premium
         loanVaultFactory        = new LoanVaultFactory(
@@ -103,6 +106,7 @@ contract LoanVaultTest is TestUtil {
         daiOracle.poke(1 ether);    // Set DAI price to $1
 
         globals.setInterestStructureCalculator("BULLET", address(bulletCalc));
+        globals.setInterestStructureCalculator("AMORTIZATION", address(amortiCalc));
         globals.setLateFeeCalculator("NULL", address(lateFeeCalc));
         globals.setPremiumCalculator("FLAT", address(premiumCalc));
         globals.addCollateralToken(WETH);
@@ -117,6 +121,7 @@ contract LoanVaultTest is TestUtil {
 
         mint("WETH", address(ali), 10 ether);
         mint("DAI",  address(bob), 5000 ether);
+        mint("DAI",  address(ali), 500 ether);
     }
 
     function test_createLoanVault() public {
@@ -164,9 +169,9 @@ contract LoanVaultTest is TestUtil {
         assertEq(IERC20(DAI).balanceOf(address(bob)),                    0);
     }
 
-    function createAndFundLoan() internal returns (LoanVault loanVault) {
+    function createAndFundLoan(bytes32 _interestStructure) internal returns (LoanVault loanVault) {
         uint256[6] memory specifications = [500, 90, 30, uint256(1000 ether), 2000, 7];
-        bytes32[3] memory calculators = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
+        bytes32[3] memory calculators = [_interestStructure, bytes32("NULL"), bytes32("FLAT")];
 
         loanVault = ali.createLoanVault(loanVaultFactory, DAI, WETH, specifications, calculators);
 
@@ -176,14 +181,14 @@ contract LoanVaultTest is TestUtil {
     }
 
     function test_collateralRequiredForDrawdown() public {
-        LoanVault loanVault = createAndFundLoan();
+        LoanVault loanVault = createAndFundLoan(bytes32("BULLET"));
 
         uint256 reqCollateral = loanVault.collateralRequiredForDrawdown(1000 ether);
         assertEq(reqCollateral, 0.4 ether);
     }
 
     function test_drawdown() public {
-        LoanVault loanVault = createAndFundLoan();
+        LoanVault loanVault = createAndFundLoan(bytes32("BULLET"));
 
         assertTrue(!bob.try_drawdown(address(loanVault), 1000 ether));  // Non-borrower can't drawdown
         assertTrue(!ali.try_drawdown(address(loanVault), 1000 ether));  // Can't drawdown without approving collateral
@@ -231,9 +236,9 @@ contract LoanVaultTest is TestUtil {
 
     }
 
-    function test_makePayment() public {
+    function test_makePaymentBullet() public {
 
-        LoanVault loanVault = createAndFundLoan();
+        LoanVault loanVault = createAndFundLoan(bytes32("BULLET"));
 
         assertEq(uint256(loanVault.loanState()), 0);  // Loan state: Live
 
@@ -253,7 +258,7 @@ contract LoanVaultTest is TestUtil {
 
         assertTrue(!ali.try_makePayment(address(loanVault)));  // Can't makePayment with lack of approval
 
-        // Approve payment.
+        // Approve 1st of 3 payments.
         (uint _amt, uint _pri, uint _int, uint _due) = loanVault.getNextPayment();
         ali.approve(DAI, address(loanVault), _amt);
 
@@ -269,14 +274,60 @@ contract LoanVaultTest is TestUtil {
         assertTrue(ali.try_makePayment(address(loanVault)));
 
         uint _nextPaymentDue = _due + loanVault.paymentIntervalSeconds();
+
+        // After state
+        assertEq(uint256(loanVault.loanState()),                  1);    // Loan state is Active (unless final payment, then 2)
+        assertEq(loanVault.principalOwed(),              1000 ether);    // Initial drawdown amount.
+        assertEq(loanVault.principalPaid(),                    _pri);
+        assertEq(loanVault.interestPaid(),                     _int);
+        assertEq(loanVault.numberOfPayments(),                    2);
+        assertEq(loanVault.nextPaymentDue(),        _nextPaymentDue);
+
+        // Approve 2nd of 3 payments.
+        (_amt, _pri, _int, _due) = loanVault.getNextPayment();
+        ali.approve(DAI, address(loanVault), _amt);
+        
+        // Make payment.
+        assertTrue(ali.try_makePayment(address(loanVault)));
+
+        _nextPaymentDue = _due + loanVault.paymentIntervalSeconds();
         
         // After state
         assertEq(uint256(loanVault.loanState()),                1);    // Loan state is Active (unless final payment, then 2)
         assertEq(loanVault.principalOwed(),            1000 ether);    // Initial drawdown amount.
         assertEq(loanVault.principalPaid(),                  _pri);
-        assertEq(loanVault.interestPaid(),                   _int);
-        assertEq(loanVault.numberOfPayments(),                  2);
+        assertEq(loanVault.interestPaid(),               _int * 2);
+        assertEq(loanVault.numberOfPayments(),                  1);
         assertEq(loanVault.nextPaymentDue(),      _nextPaymentDue);
+        assertEq(loanVault.nextPaymentDue(),      _nextPaymentDue);
+
+        // Approve 3nd of 3 payments.
+        (_amt, _pri, _int, _due) = loanVault.getNextPayment();
+        ali.approve(DAI, address(loanVault), _amt);
+        
+        // Check collateral locker balance.
+        uint256 reqCollateral = loanVault.collateralRequiredForDrawdown(1000 ether);
+        address collateralAsset = loanVault.assetCollateral();
+        uint _delta = IERC20(collateralAsset).balanceOf(address(ali));
+        assertEq(IERC20(collateralAsset).balanceOf(collateralLocker), reqCollateral);
+        
+        // Make payment.
+        assertTrue(ali.try_makePayment(address(loanVault)));
+
+        _nextPaymentDue = _due + loanVault.paymentIntervalSeconds();
+        
+        // After state, state variables.
+        assertEq(uint256(loanVault.loanState()),                2);    // Loan state is Matured (final payment)
+        assertEq(loanVault.principalOwed(),                     0);    // Final payment, all principal paid for Bullet
+        assertEq(loanVault.principalPaid(),                  _pri);
+        assertEq(loanVault.interestPaid(),               _int * 3);
+        assertEq(loanVault.numberOfPayments(),                  0);
+        assertEq(loanVault.nextPaymentDue(),      _nextPaymentDue);
+
+        // Collateral locker after state.
+        assertEq(IERC20(collateralAsset).balanceOf(collateralLocker),               0);
+        assertEq(IERC20(collateralAsset).balanceOf(address(ali)),       _delta + reqCollateral);
+
     }
 
 }
