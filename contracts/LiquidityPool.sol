@@ -234,8 +234,8 @@ contract LiquidityPool is IERC20, ERC20 {
             ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault),
             "LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID"
         );
+        // Instantiate locker if it doesn't exist with this factory type.
         if (loanTokenLockers[_loanVault][_loanTokenLockerFactory] == address(0)) {
-            // Instantiate locker if it doesn't exist with this factory type.
             loanTokenLockers[_loanVault][_loanTokenLockerFactory] = ILoanTokenLockerFactory(
                 _loanTokenLockerFactory
             ).newLocker(_loanVault);
