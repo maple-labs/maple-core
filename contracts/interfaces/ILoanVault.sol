@@ -28,6 +28,8 @@ interface ILoanVault {
     function drawdownAmount() external view returns (uint256);
     function principalPaid() external view returns (uint256);
     function interestPaid() external view returns (uint256);
+    function feePaid() external view returns (uint256);
+    function excessReturned() external view returns (uint256);
     
     // Functions
     function fundLoan(uint256, address) external;
