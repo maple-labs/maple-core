@@ -157,6 +157,8 @@ contract LiquidityPool is IERC20, ERC20 {
         _;
     }
 
+    function numFundedLoans() public view returns(uint) { return fundedLoans.length; }
+
     /// @notice Deploys and assigns a StakeLocker for this LiquidityPool.
     /// @param _stakeAsset Address of the asset used for staking.
     function createStakeLocker(address _stakeAsset) private returns (address) {
@@ -251,6 +253,8 @@ contract LiquidityPool is IERC20, ERC20 {
             );
             // Emit event.
             emit LoanFunded(_loanVault, loanTokenLockers[_loanVault][_loanTokenLockerFactory], _amt);
+        } else {
+            
         }
         // Fund loan.
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
@@ -282,10 +286,10 @@ contract LiquidityPool is IERC20, ERC20 {
         ).fetch();
 
         // Calculate deltas, or "net new" values.
-        uint256 newInterest     = vault.interestPaid() - info.interestPaid;
-        uint256 newPrincipal    = vault.principalPaid() - info.principalPaid;
-        uint256 newFee          = vault.feePaid() - info.feePaid;
-        uint256 newExcess       = vault.excessReturned() - info.excessReturned;
+        uint256 newInterest  = vault.interestPaid() - info.interestPaid;
+        uint256 newPrincipal = vault.principalPaid() - info.principalPaid;
+        uint256 newFee       = vault.feePaid() - info.feePaid;
+        uint256 newExcess    = vault.excessReturned() - info.excessReturned;
 
         // Update ERC2222 internal accounting for LoanVault.
         vault.updateFundsReceived();
@@ -296,42 +300,40 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 balance = ILiquidityAsset.balanceOf(address(this));
 
         // Update "info" in fundedLoans data structure.
-        info.interestPaid       = vault.interestPaid();
-        info.principalPaid      = vault.principalPaid();
-        info.feePaid            = vault.feePaid();
-        info.excessReturned     = vault.excessReturned();
+        info.interestPaid   = vault.interestPaid();
+        info.principalPaid  = vault.principalPaid();
+        info.feePaid        = vault.feePaid();
+        info.excessReturned = vault.excessReturned();
 
         uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess);
 
-        uint256 interest    = newInterest.mul(1 ether).div(sum).div(1 ether).mul(balance);
-        uint256 principal   = newPrincipal.mul(1 ether).div(sum).div(1 ether).mul(balance);
-        uint256 fee         = newFee.mul(1 ether).div(sum).div(1 ether).mul(balance);
-        uint256 excess      = newExcess.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 interest  = newInterest.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 principal = newPrincipal.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 fee       = newFee.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 excess    = newExcess.mul(1 ether).div(sum).div(1 ether).mul(balance);
 
         // Distribute "interest" to appropriate parties.
-        uint256 toPoolDelegate      = interest.mul(delegateFee).div(10000);
-        uint256 toStakeLocker       = interest.mul(stakingFee).div(10000);
-        uint256 toLiquidityLocker   = interest.mul(10000 - stakingFee - delegateFee).div(10000);
+        uint256 toPoolDelegate    = interest.mul(delegateFee).div(10000);
+        uint256 toStakeLocker     = interest.mul(stakingFee).div(10000);
+        uint256 toLiquidityLocker = interest.mul(10000 - stakingFee - delegateFee).div(10000);
 
-        require(ILiquidityAsset.transfer(poolDelegate,              toPoolDelegate));
-        require(ILiquidityAsset.transfer(stakeLockerAddress,        toStakeLocker));
-        require(ILiquidityAsset.transfer(liquidityLockerAddress,    toLiquidityLocker));
+        require(ILiquidityAsset.transfer(poolDelegate,           toPoolDelegate));
+        require(ILiquidityAsset.transfer(stakeLockerAddress,     toStakeLocker));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, toLiquidityLocker));
 
         // Distribute "principal" and "excess" to liquidityLocker.
-        require(ILiquidityAsset.transfer(liquidityLockerAddress,    principal));
-        require(ILiquidityAsset.transfer(liquidityLockerAddress,    excess));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, principal));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, excess));
 
         // Distribute "fee" to poolDelegate.
-        require(ILiquidityAsset.transfer(poolDelegate,              fee));
+        require(ILiquidityAsset.transfer(poolDelegate, fee));
 
         // Return tokens to locker.
         IERC20(info.loanVaultFunded).transfer(
             loanTokenLockers[info.loanVaultFunded][info.loanTokenLocker],
             IERC20(info.loanVaultFunded).balanceOf(address(this))
         );
-
     }
-
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
     if we change the decimals on the FDT to match liquidityasset this would not be necessary
