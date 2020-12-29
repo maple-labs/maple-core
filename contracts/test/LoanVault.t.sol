@@ -325,7 +325,7 @@ contract LoanVaultTest is TestUtil {
         assertEq(loanVault.nextPaymentDue(),      _nextPaymentDue);
 
         // Collateral locker after state.
-        assertEq(IERC20(collateralAsset).balanceOf(collateralLocker),               0);
+        assertEq(IERC20(collateralAsset).balanceOf(collateralLocker),                       0);
         assertEq(IERC20(collateralAsset).balanceOf(address(ali)),       _delta + reqCollateral);
 
     }
