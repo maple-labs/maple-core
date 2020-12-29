@@ -2,7 +2,7 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "../interfaces/ILoanVault.sol";
+import "./interfaces/ILoanVault.sol";
 
 contract PremiumFlatCalculator {
 	bytes32 public calcType = 'PREMIUM';

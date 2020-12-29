@@ -6,9 +6,9 @@ import "./TestUtil.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
-import "../calculators/BulletRepaymentCalculator.sol";
-import "../calculators/LateFeeNullCalculator.sol";
-import "../calculators/PremiumFlatCalculator.sol";
+import "../BulletRepaymentCalculator.sol";
+import "../LateFeeNullCalculator.sol";
+import "../PremiumFlatCalculator.sol";
 
 import "../MapleToken.sol";
 import "../MapleGlobals.sol";
