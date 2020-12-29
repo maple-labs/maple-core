@@ -46,7 +46,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     accounts = await ethers.provider.listAccounts();
   });
 
-  it("fundLoan() from liquidity pool", async function () {
+  xit("fundLoan() from liquidity pool", async function () {
     LiquidityPoolFactory = new ethers.Contract(
       LPFactoryAddress,
       LPFactoryABI,
@@ -79,7 +79,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     await LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10);
     LoanTokenLocker = await LP.loanTokenToLocker(LVAddress);
   });
-  it("make sure random guy cant call fundLoan in LP", async function () {
+  xit("make sure random guy cant call fundLoan in LP", async function () {
     LP = new ethers.Contract(
       LPaddress,
       LiquidityPoolABI,
@@ -90,7 +90,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10)
     ).to.be.revertedWith("LiquidityPool:ERR_MSG_SENDER_NOT_DELEGATE");
   });
-  it("Check that loan tokens go to their respective locker", async function () {
+  xit("Check that loan tokens go to their respective locker", async function () {
     LP = new ethers.Contract(
       LPaddress,
       LiquidityPoolABI,
@@ -107,11 +107,11 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     const bal2 = await LoanVault.balanceOf(LoanTokenLocker);
     expect(bal2 - bal1 == 10);
   });
-  it("should not create new locker when one exists", async () => {
+  xit("should not create new locker when one exists", async () => {
     await LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10);
     expect(await LP.loanTokenToLocker(LVAddress)).to.equal(LoanTokenLocker);
   });
-  it("cant fund a random address", async () => {
+  xit("cant fund a random address", async () => {
     await expect(
       LP.fundLoan(accounts[5], LoanTokenLockerFactoryAddress, 10)
     ).to.be.revertedWith("LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID");
