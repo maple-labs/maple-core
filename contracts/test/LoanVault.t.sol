@@ -254,8 +254,10 @@ contract LoanVaultTest is TestUtil {
         // Make payment.
         (uint _amt,,,) = loanVault.getNextPayment();
         ali.approve(DAI, address(loanVault), _amt);
+
+        // Before state
         assertTrue(ali.try_makePayment(address(loanVault)));
-        
+        // After state
     }
 
 }

@@ -26,8 +26,8 @@ contract PoolDelegate {
         address liquidityPoolFactory, 
         address liquidityAsset,
         address stakeAsset,
-        uint256 stakingFeeBasisPoints,
-        uint256 delegateFeeBasisPoints,
+        uint256 stakingFee,
+        uint256 delegateFee,
         string memory name,
         string memory symbol
     ) 
@@ -35,7 +35,7 @@ contract PoolDelegate {
     {
         string memory sig = "createLiquidityPool(address,address,uint256,uint256,string,string)";
         (ok,) = address(liquidityPoolFactory).call(
-            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, stakingFeeBasisPoints, delegateFeeBasisPoints, name, symbol)
+            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, stakingFee, delegateFee, name, symbol)
         );
     }
 }
@@ -163,11 +163,11 @@ contract LiquidityPoolFactoryTest is TestUtil {
         assertTrue(liquidityPoolFactory.isLiquidityPool(address(lPool)));
         assertEq(liquidityPoolFactory.liquidityPoolsCreated(), 1);
 
-        assertEq(lPool.liquidityAsset(),              DAI);
-        assertEq(lPool.stakeAsset(),                  address(bPool));
-        assertEq(lPool.poolDelegate(),                address(ali));
-        assertEq(lPool.stakingFeeBasisPoints(),       500);
-        assertEq(lPool.delegateFeeBasisPoints(),      100);
+        assertEq(lPool.liquidityAsset(),    DAI);
+        assertEq(lPool.stakeAsset(),        address(bPool));
+        assertEq(lPool.poolDelegate(),      address(ali));
+        assertEq(lPool.stakingFee(),        500);
+        assertEq(lPool.delegateFee(),       100);
 
         assertTrue(lPool.stakeLockerAddress()     != address(0));
         assertTrue(lPool.liquidityLockerAddress() != address(0));
