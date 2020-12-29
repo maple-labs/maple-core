@@ -299,7 +299,6 @@ contract LoanVaultTest is TestUtil {
         assertEq(loanVault.interestPaid(),               _int * 2);
         assertEq(loanVault.numberOfPayments(),                  1);
         assertEq(loanVault.nextPaymentDue(),      _nextPaymentDue);
-        assertEq(loanVault.nextPaymentDue(),      _nextPaymentDue);
 
         // Approve 3nd of 3 payments.
         (_amt, _pri, _int, _due) = loanVault.getNextPayment();
@@ -326,7 +325,102 @@ contract LoanVaultTest is TestUtil {
 
         // Collateral locker after state.
         assertEq(IERC20(collateralAsset).balanceOf(collateralLocker),                       0);
-        assertEq(IERC20(collateralAsset).balanceOf(address(ali)),       _delta + reqCollateral);
+        assertEq(IERC20(collateralAsset).balanceOf(address(ali)),      _delta + reqCollateral);
+
+    }
+
+    function test_makePaymentAmortization() public {
+
+        LoanVault loanVault = createAndFundLoan(bytes32("AMORTIZATION"));
+
+        assertEq(uint256(loanVault.loanState()), 0);  // Loan state: Live
+
+        assertTrue(!ali.try_makePayment(address(loanVault)));  // Can't makePayment when State != Active
+
+        // Approve collatearl and drawdown loan.
+        ali.approve(WETH, address(loanVault), 0.4 ether);
+        assertTrue(ali.try_drawdown(address(loanVault), 1000 ether));     // Borrow draws down 1000 DAI
+
+        address collateralLocker = loanVault.collateralLocker();
+        address fundingLocker    = loanVault.fundingLocker();
+
+        // Warp to *300 seconds* before next payment is due
+        assertEq(loanVault.nextPaymentDue(), block.timestamp + loanVault.paymentIntervalSeconds());
+        hevm.warp(loanVault.nextPaymentDue() - 300);
+        assertEq(block.timestamp, loanVault.nextPaymentDue() - 300);
+
+        assertTrue(!ali.try_makePayment(address(loanVault)));  // Can't makePayment with lack of approval
+
+        // Approve 1st of 3 payments.
+        (uint _amt, uint _pri, uint _int, uint _due) = loanVault.getNextPayment();
+        ali.approve(DAI, address(loanVault), _amt);
+
+        // Before state
+        assertEq(uint256(loanVault.loanState()),             1);    // Loan state is Active, accepting payments
+        assertEq(loanVault.principalOwed(),         1000 ether);    // Initial drawdown amount.
+        assertEq(loanVault.principalPaid(),                  0);
+        assertEq(loanVault.interestPaid(),                   0);
+        assertEq(loanVault.numberOfPayments(),               3);
+        assertEq(loanVault.nextPaymentDue(),              _due);
+
+        // Make payment.
+        assertTrue(ali.try_makePayment(address(loanVault)));
+
+        uint _nextPaymentDue = _due + loanVault.paymentIntervalSeconds();
+
+        // After state
+        assertEq(uint256(loanVault.loanState()),                  1);    // Loan state is Active (unless final payment, then 2)
+        assertEq(loanVault.principalOwed(),       1000 ether - _pri);    
+        assertEq(loanVault.principalPaid(),                    _pri);
+        assertEq(loanVault.interestPaid(),                     _int);
+        assertEq(loanVault.numberOfPayments(),                    2);
+        assertEq(loanVault.nextPaymentDue(),        _nextPaymentDue);
+
+        // Approve 2nd of 3 payments.
+        uint _intTwo;
+        (_amt, _pri, _intTwo, _due) = loanVault.getNextPayment();
+        ali.approve(DAI, address(loanVault), _amt);
+        
+        // Make payment.
+        assertTrue(ali.try_makePayment(address(loanVault)));
+
+        _nextPaymentDue = _due + loanVault.paymentIntervalSeconds();
+        
+        // After state
+        assertEq(uint256(loanVault.loanState()),                        1);    // Loan state is Active (unless final payment, then 2)
+        assertEq(loanVault.principalOwed(),         1000 ether - _pri * 2);    // Initial drawdown amount.
+        assertEq(loanVault.principalPaid(),         1000 ether - _pri - 1);
+        assertEq(loanVault.interestPaid(),                 _int + _intTwo);
+        assertEq(loanVault.numberOfPayments(),                          1);
+        assertEq(loanVault.nextPaymentDue(),              _nextPaymentDue);
+
+        // Approve 3nd of 3 payments.
+        uint _intThree;
+        (_amt, _pri, _intThree, _due) = loanVault.getNextPayment();
+        ali.approve(DAI, address(loanVault), _amt);
+        
+        // Check collateral locker balance.
+        uint256 reqCollateral = loanVault.collateralRequiredForDrawdown(1000 ether);
+        address collateralAsset = loanVault.assetCollateral();
+        uint _delta = IERC20(collateralAsset).balanceOf(address(ali));
+        assertEq(IERC20(collateralAsset).balanceOf(collateralLocker), reqCollateral);
+        
+        // Make payment.
+        assertTrue(ali.try_makePayment(address(loanVault)));
+
+        _nextPaymentDue = _due + loanVault.paymentIntervalSeconds();
+        
+        // After state, state variables.
+        assertEq(uint256(loanVault.loanState()),                         2); // Loan state is Matured (final payment)
+        assertEq(loanVault.principalOwed(),                              0); // Final payment, all principal paid for Bullet
+        assertEq(loanVault.principalPaid(),                     1000 ether);
+        assertEq(loanVault.interestPaid(),      _int + _intTwo + _intThree);
+        assertEq(loanVault.numberOfPayments(),                           0);
+        assertEq(loanVault.nextPaymentDue(),               _nextPaymentDue);
+
+        // Collateral locker after state.
+        assertEq(IERC20(collateralAsset).balanceOf(collateralLocker),                       0);
+        assertEq(IERC20(collateralAsset).balanceOf(address(ali)),      _delta + reqCollateral);
 
     }
 
