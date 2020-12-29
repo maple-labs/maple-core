@@ -255,22 +255,7 @@ contract LoanVaultTest is TestUtil {
         (uint _amt,,,) = loanVault.getNextPayment();
         ali.approve(DAI, address(loanVault), _amt);
         assertTrue(ali.try_makePayment(address(loanVault)));
+        
     }
-
-    // function test_makePaymentFor(address _vault) public {
-
-    //     // Create loanVault object and ensure it's accepting payments.
-    //     LoanVault loanVault = LoanVault(_vault);
-    //     assertEq(uint256(loanVault.loanState()), 1);  // Loan state: (1) Active
-
-    //     // Warp to *300 seconds* before next payment is due
-    //     hevm.warp(loanVault.nextPaymentDue() - 300);
-    //     assertEq(block.timestamp, loanVault.nextPaymentDue() - 300);
-
-    //     // Make payment.
-    //     (uint _amt,,,) = loanVault.getNextPayment();
-    //     ali.approve(DAI, _vault, _amt);
-    //     assertTrue(ali.try_makePayment(_vault));
-    // }
 
 }
