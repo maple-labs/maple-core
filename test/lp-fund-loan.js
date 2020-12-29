@@ -70,7 +70,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     await LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10);
     LoanTokenLocker = await LP.loanTokenToLocker(LVAddress);
   });
-  it("make sure random guy cant call fundLoan in LP", async function () {
+  xit("make sure random guy cant call fundLoan in LP", async function () {
     LP = new ethers.Contract(
       LPaddress,
       LiquidityPoolABI,
@@ -102,7 +102,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     await LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10);
     expect(await LP.loanTokenToLocker(LVAddress)).to.equal(LoanTokenLocker);
   });
-  it("cant fund a random address", async () => {
+  xit("cant fund a random address", async () => {
     await expect(
       LP.fundLoan(accounts[5], LoanTokenLockerFactoryAddress, 10)
     ).to.be.revertedWith("LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID");
