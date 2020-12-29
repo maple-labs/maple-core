@@ -226,7 +226,7 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(liqPool.balanceOf(address(bob)),     100 ether);
     }
 
-    function test_fundLoan2() public {
+    function test_fundLoan() public {
         address stakeLocker   = liqPool.stakeLockerAddress();
         address liqLocker     = liqPool.liquidityLockerAddress();
         address fundingLocker = vault.fundingLocker();
