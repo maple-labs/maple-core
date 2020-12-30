@@ -1,5 +1,5 @@
 const { expect, assert, should } = require("chai");
-const artpath = '../../contracts/' + network.name + '/';
+const artpath = "../../contracts/" + network.name + "/";
 
 const globalAddress = require(artpath + "addresses/MapleGlobals.address");
 const gloablABI = require(artpath + "abis/MapleGlobals.abi");
@@ -29,7 +29,7 @@ describe("MapleGlobals.sol Interactions", function () {
     await mapleGlobals.setEstablishmentFee(50);
     const establishmentFeeFetch = await mapleGlobals.establishmentFeeBasisPoints();
     expect(establishmentFeeFetch).to.equal(50);
-    
+
     await mapleGlobals.setEstablishmentFee(200);
     const establishmentFeeRevert = await mapleGlobals.establishmentFeeBasisPoints();
     expect(establishmentFeeRevert).to.equal(200);
@@ -66,6 +66,7 @@ describe("MapleGlobals.sol Interactions", function () {
     const unstakeDelayRevert = await mapleGlobals.unstakeDelay();
     expect(unstakeDelayRevert).to.equal(7776000);
 
+
     await mapleGlobals.setGovernor(accounts[1]);
     const governorFetch = await mapleGlobals.governor();
     expect(governorFetch).to.equal(accounts[1]);
@@ -92,26 +93,9 @@ describe("MapleGlobals.sol Interactions", function () {
       "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
-    const BUNK_ADDRESS= "0x0000000000000000000000000000000000000003";
+    const BUNK_ADDRESS = "0x0000000000000000000000000000000000000003";
 
-    await expect(mapleGlobals.setInterestStructureCalculator(
-      ethers.utils.formatBytes32String('AMORTIZATION'),
-      BUNK_ADDRESS
-    )).to.be.revertedWith(
-      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
-    );
-
-    await expect(mapleGlobals.setLateFeeCalculator(
-      ethers.utils.formatBytes32String('NEW_LATE'),
-      BUNK_ADDRESS
-    )).to.be.revertedWith(
-      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
-    );
-
-    await expect(mapleGlobals.setPremiumCalculator(
-      ethers.utils.formatBytes32String('NEW_PREM'),
-      BUNK_ADDRESS
-    )).to.be.revertedWith(
+    await expect(mapleGlobals.addCalculator(BUNK_ADDRESS)).to.be.revertedWith(
       "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
@@ -127,7 +111,7 @@ describe("MapleGlobals.sol Interactions", function () {
       ethers.provider.getSigner(1)
     );
 
-    await mapleGlobals2.setGovernor(accounts[0],{gasLimit: 6000000});
+    await mapleGlobals2.setGovernor(accounts[0], { gasLimit: 6000000 });
     const governorFetch = await mapleGlobals2.governor();
     expect(governorFetch).to.equal(accounts[0]);
   });
@@ -151,15 +135,39 @@ describe("MapleGlobals.sol Interactions", function () {
   });
 
   it("test priceFeed data not null", async function () {
-    const ETH_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(WETHAddress);
-    const WBTC_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(WBTCAddress);
-    const DAI_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(DAIAddress);
-    const USDC_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(USDCAddress);
-    ETH_USD = new ethers.Contract(ETH_USD_ORACLE_ADDRESS, OracleABI, ethers.provider.getSigner(0));
-    WBTC_USD = new ethers.Contract(WBTC_USD_ORACLE_ADDRESS, OracleABI, ethers.provider.getSigner(0));
-    DAI_USD = new ethers.Contract(DAI_USD_ORACLE_ADDRESS, OracleABI, ethers.provider.getSigner(0));
-    USDC_USD = new ethers.Contract(USDC_USD_ORACLE_ADDRESS, OracleABI, ethers.provider.getSigner(0));
-    
+    const ETH_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(
+      WETHAddress
+    );
+    const WBTC_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(
+      WBTCAddress
+    );
+    const DAI_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(
+      DAIAddress
+    );
+    const USDC_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(
+      USDCAddress
+    );
+    ETH_USD = new ethers.Contract(
+      ETH_USD_ORACLE_ADDRESS,
+      OracleABI,
+      ethers.provider.getSigner(0)
+    );
+    WBTC_USD = new ethers.Contract(
+      WBTC_USD_ORACLE_ADDRESS,
+      OracleABI,
+      ethers.provider.getSigner(0)
+    );
+    DAI_USD = new ethers.Contract(
+      DAI_USD_ORACLE_ADDRESS,
+      OracleABI,
+      ethers.provider.getSigner(0)
+    );
+    USDC_USD = new ethers.Contract(
+      USDC_USD_ORACLE_ADDRESS,
+      OracleABI,
+      ethers.provider.getSigner(0)
+    );
+
     const ETH_USD_PRICE = await ETH_USD.price();
     const WBTC_USD_PRICE = await WBTC_USD.price();
     const DAI_USD_PRICE = await DAI_USD.price();
@@ -179,7 +187,5 @@ describe("MapleGlobals.sol Interactions", function () {
     expect(parseInt(WBTC_USD_PRICE_GLOBALS["_hex"])).to.not.equals(0);
     expect(parseInt(DAI_USD_PRICE_GLOBALS["_hex"])).to.not.equals(0);
     expect(parseInt(USDC_USD_PRICE_GLOBALS["_hex"])).to.not.equals(0);
-
   });
-  
 });

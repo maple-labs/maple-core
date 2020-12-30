@@ -2,6 +2,13 @@ const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
 const artpath = '../../contracts/' + network.name + '/';
 
+const AmortizationRepaymentCalculator = require(artpath + "addresses/AmortizationRepaymentCalculator.address.js");
+const BulletRepaymentCalculator = require(artpath + "addresses/BulletRepaymentCalculator.address.js");
+const LateFeeNullCalculator = require(artpath + "addresses/LateFeeNullCalculator.address.js");
+const PremiumFlatCalculator = require(artpath + "addresses/PremiumFlatCalculator.address.js");
+
+
+
 describe("Borrower Journey", function () {
 
   let loanVaultAddress;
@@ -256,9 +263,9 @@ describe("Borrower Journey", function () {
         FUNDING_PERIOD_DAYS
       ],
       [
-        ethers.utils.formatBytes32String(INTEREST_STRUCTURE),
-        ethers.utils.formatBytes32String(LATE_FEE_TYPE),
-        ethers.utils.formatBytes32String(PREMIUM_TYPE)
+	BulletRepaymentCalculator,
+	LateFeeNullCalculator,
+	PremiumFlatCalculator
       ],
       {gasLimit: 6000000}
     );

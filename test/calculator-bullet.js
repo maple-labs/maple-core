@@ -15,6 +15,12 @@ const WBTCABI = require(artpath + "abis/WBTC.abi.js");
 const globalAddress = require(artpath + "addresses/MapleGlobals.address");
 const globalABI = require(artpath + "abis/MapleGlobals.abi");
 
+const AmortizationRepaymentCalculator = require(artpath + "addresses/AmortizationRepaymentCalculator.address.js");
+const BulletRepaymentCalculator = require(artpath + "addresses/BulletRepaymentCalculator.address.js");
+const LateFeeNullCalculator = require(artpath + "addresses/LateFeeNullCalculator.address.js");
+const PremiumFlatCalculator = require(artpath + "addresses/PremiumFlatCalculator.address.js");
+
+
 const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
 
 describe("Calculator - Bullet Repayment", function () {
@@ -63,9 +69,6 @@ describe("Calculator - Bullet Repayment", function () {
     const COLLATERAL_ASSET = WBTCAddress; // Update symbol variable below when changing this.
     collateralAssetSymbol = 'WBTC';
 
-    const INTEREST_STRUCTURE = 'BULLET' // 'BULLET' or 'AMORTIZATION'
-    const LATE_FEE_TYPE = 'NULL' // 'NULL' only option
-    const PREMIUM_TYPE = 'FLAT' // 'FLAT' only option
 
     const APR_BIPS = 1250; // 5%
     const TERM_DAYS = 90;
@@ -94,9 +97,9 @@ describe("Calculator - Bullet Repayment", function () {
         FUNDING_PERIOD_DAYS
       ],
       [
-        ethers.utils.formatBytes32String(INTEREST_STRUCTURE),
-        ethers.utils.formatBytes32String(LATE_FEE_TYPE),
-        ethers.utils.formatBytes32String(PREMIUM_TYPE)
+	BulletRepaymentCalculator,
+        LateFeeNullCalculator,
+        PremiumFlatCalculator
       ],
       {gasLimit: 6000000}
     );
@@ -226,10 +229,6 @@ describe("Calculator - Bullet Repayment", function () {
     const COLLATERAL_ASSET = WBTCAddress; // Update symbol variable below when changing this.
     collateralAssetSymbol = 'WBTC';
 
-    const INTEREST_STRUCTURE = 'BULLET' // 'BULLET' or 'AMORTIZATION'
-    const LATE_FEE_TYPE = 'NULL' // 'NULL' only option
-    const PREMIUM_TYPE = 'FLAT' // 'FLAT' only option
-
     const APR_BIPS = 1250; // 12.5%
     const TERM_DAYS = 180;
     const PAYMENT_INTERVAL_DAYS = 30;
@@ -257,9 +256,9 @@ describe("Calculator - Bullet Repayment", function () {
         FUNDING_PERIOD_DAYS
       ],
       [
-        ethers.utils.formatBytes32String(INTEREST_STRUCTURE),
-        ethers.utils.formatBytes32String(LATE_FEE_TYPE),
-        ethers.utils.formatBytes32String(PREMIUM_TYPE)
+        BulletRepaymentCalculator,
+        LateFeeNullCalculator,
+        PremiumFlatCalculator
       ],
       {gasLimit: 6000000}
     );

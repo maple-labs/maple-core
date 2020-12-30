@@ -21,6 +21,13 @@ const GlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
 const GlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
 const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
 
+const AmortizationRepaymentCalculator = require(artpath + "addresses/AmortizationRepaymentCalculator.address.js");
+const BulletRepaymentCalculator = require(artpath + "addresses/BulletRepaymentCalculator.address.js");
+const LateFeeNullCalculator = require(artpath + "addresses/LateFeeNullCalculator.address.js");
+const PremiumFlatCalculator = require(artpath + "addresses/PremiumFlatCalculator.address.js");
+
+
+
 describe("create 1000 USDC loan, fund 500 USDC, drawdown 50% wETH collateralized loan", function () {
 
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000020";
@@ -82,9 +89,9 @@ describe("create 1000 USDC loan, fund 500 USDC, drawdown 50% wETH collateralized
       WETHAddress,
       [500, 90, 30, BigNumber.from(10).pow(6).mul(1000), 5000, 7], 
       [
-        ethers.utils.formatBytes32String('BULLET'),
-        ethers.utils.formatBytes32String('NULL'),
-        ethers.utils.formatBytes32String('FLAT')
+	BulletRepaymentCalculator,
+	LateFeeNullCalculator,
+	PremiumFlatCalculator
       ]
     )
     
