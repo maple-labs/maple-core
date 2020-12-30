@@ -1,19 +1,22 @@
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
-const artpath = '../../contracts/' + network.name + '/';
+const artpath = "../../contracts/" + network.name + "/";
 
-
-const mintableDAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
+const mintableDAIAddress = require(artpath +
+  "addresses/MintableTokenDAI.address.js");
 const mintableDAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
 const treasuryAddress = require(artpath + "addresses/MapleTreasury.address.js");
 const treasuryABI = require(artpath + "abis/MapleTreasury.abi.js");
-const fundsTokenAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
+const fundsTokenAddress = require(artpath +
+  "addresses/MintableTokenUSDC.address.js");
 const fundsTokenABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
 const mapleTokenAddress = require(artpath + "addresses/MapleToken.address.js");
 const mapleTokenABI = require(artpath + "abis/MapleToken.abi.js");
-const uniswapRouterAddress = require(artpath + "addresses/UniswapV2Router02.address");
+const uniswapRouterAddress = require(artpath +
+  "addresses/UniswapV2Router02.address");
 const uniswapRouterABI = require(artpath + "abis/UniswapV2Router02.abi");
-const uniswapFactoryAddress = require(artpath + "addresses/UniswapV2Factory.address.js");
+const uniswapFactoryAddress = require(artpath +
+  "addresses/UniswapV2Factory.address.js");
 const uniswapFactoryABI = require(artpath + "abis/UniswapV2Factory.abi.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const WBTCABI = require(artpath + "abis/WBTC.abi.js");

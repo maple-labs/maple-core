@@ -1,6 +1,6 @@
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
-const artpath = '../../contracts/' + network.name + '/';
+const artpath = "../../contracts/" + network.name + "/";
 
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
@@ -12,21 +12,26 @@ const WETHAddress = require(artpath + "addresses/WETH9.address.js");
 const WETHABI = require(artpath + "abis/WETH9.abi.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const WBTCABI = require(artpath + "abis/WBTC.abi.js");
-const LVFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address.js");
+const LVFactoryAddress = require(artpath +
+  "addresses/LoanVaultFactory.address.js");
 const LVFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
-const FLFAddress = require(artpath + "addresses/FundingLockerFactory.address.js");
+const FLFAddress = require(artpath +
+  "addresses/FundingLockerFactory.address.js");
 const FLFABI = require(artpath + "abis/FundingLockerFactory.abi.js");
 const GlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
 const GlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
 const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
 
-const AmortizationRepaymentCalculator = require(artpath + "addresses/AmortizationRepaymentCalculator.address.js");
-const BulletRepaymentCalculator = require(artpath + "addresses/BulletRepaymentCalculator.address.js");
-const LateFeeNullCalculator = require(artpath + "addresses/LateFeeNullCalculator.address.js");
-const PremiumFlatCalculator = require(artpath + "addresses/PremiumFlatCalculator.address.js");
+const AmortizationRepaymentCalculator = require(artpath +
+  "addresses/AmortizationRepaymentCalculator.address.js");
+const BulletRepaymentCalculator = require(artpath +
+  "addresses/BulletRepaymentCalculator.address.js");
+const LateFeeNullCalculator = require(artpath +
+  "addresses/LateFeeNullCalculator.address.js");
+const PremiumFlatCalculator = require(artpath +
+  "addresses/PremiumFlatCalculator.address.js");
 
 describe("fundLoan() in LoanVault.sol", function () {
-
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000020";
 
   let DAI,
@@ -43,8 +48,16 @@ describe("fundLoan() in LoanVault.sol", function () {
   before(async () => {
     accounts = await ethers.provider.listAccounts();
     DAI = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(0));
-    DAI_EXT_1 = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(1));
-    DAI_EXT_2 = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(2));
+    DAI_EXT_1 = new ethers.Contract(
+      DAIAddress,
+      DAIABI,
+      ethers.provider.getSigner(1)
+    );
+    DAI_EXT_2 = new ethers.Contract(
+      DAIAddress,
+      DAIABI,
+      ethers.provider.getSigner(2)
+    );
     USDC = new ethers.Contract(
       USDCAddress,
       USDCABI,
@@ -81,8 +94,6 @@ describe("fundLoan() in LoanVault.sol", function () {
   let vaultAddress;
 
   it("createLoanVault() with signer(0)", async function () {
-
-    
     // Grab preIncrementor to get LoanVaultID
     // Note: consider networkVersion=1 interactions w.r.t. async flow
     const preIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
@@ -91,44 +102,31 @@ describe("fundLoan() in LoanVault.sol", function () {
     await LoanVaultFactory.createLoanVault(
       DAIAddress,
       WBTCAddress,
-      [500, 90, 30, BigNumber.from(10).pow(18).mul(1000), 2000, 7], 
-      [
-	BulletRepaymentCalculator,
-	LateFeeNullCalculator,
-	PremiumFlatCalculator
-      ]
-    )
-    
-    vaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
+      [500, 90, 30, BigNumber.from(10).pow(18).mul(1000), 2000, 7],
+      [BulletRepaymentCalculator, LateFeeNullCalculator, PremiumFlatCalculator]
+    );
 
+    vaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
   });
 
   it("approve() loanVault to assetRequested with signer(1)", async function () {
+    await DAI_EXT_1.approve(vaultAddress, BigNumber.from(10).pow(18).mul(5));
 
-    await DAI_EXT_1.approve(
-      vaultAddress,
-      BigNumber.from(10).pow(18).mul(5)
-    )
+    const allowance = await DAI_EXT_1.allowance(accounts[1], vaultAddress);
 
-    const allowance = await DAI_EXT_1.allowance(
-      accounts[1],
-      vaultAddress
-    )
-
-    expect(
-      allowance["_hex"]
-    ).to.equals(
+    expect(allowance["_hex"]).to.equals(
       BigNumber.from(10).pow(18).mul(5).toHexString()
-    )
-
+    );
   });
 
   it("confirm balance fail fundLoan() with signer(1)", async function () {
-
     // Unapprove vault and transfer out any DAI from accounts[1]
-    await DAI_EXT_1.approve(vaultAddress, 0)
+    await DAI_EXT_1.approve(vaultAddress, 0);
     const transferOutAmount = await DAI.balanceOf(accounts[1]);
-    await DAI_EXT_1.transfer(BUNK_ADDRESS, BigNumber.from(transferOutAmount["_hex"]).toString());
+    await DAI_EXT_1.transfer(
+      BUNK_ADDRESS,
+      BigNumber.from(transferOutAmount["_hex"]).toString()
+    );
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -138,51 +136,35 @@ describe("fundLoan() in LoanVault.sol", function () {
 
     // Attempt to fund with 100 DAI
     await expect(
-      LoanVault.fundLoan(
-        BigNumber.from(10).pow(18).mul(100),
-        accounts[1]
-      )
-    ).to.be.revertedWith("ERC20: transfer amount exceeds balance")
+      LoanVault.fundLoan(BigNumber.from(10).pow(18).mul(100), accounts[1])
+    ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
 
     // Mint 100 DAI and attempt to fund
-    await DAI.mintSpecial(accounts[1], 100)
+    await DAI.mintSpecial(accounts[1], 100);
 
     await expect(
-      LoanVault.fundLoan(
-        BigNumber.from(10).pow(18).mul(100),
-        accounts[1]
-      )
-    ).to.be.revertedWith("ERC20: transfer amount exceeds allowance")
-
+      LoanVault.fundLoan(BigNumber.from(10).pow(18).mul(100), accounts[1])
+    ).to.be.revertedWith("ERC20: transfer amount exceeds allowance");
   });
 
   it("fundLoan() with signer(1)", async function () {
-
     // Mint 100 DAI and attempt to fund
-    await DAI.mintSpecial(accounts[1], 100)
+    await DAI.mintSpecial(accounts[1], 100);
 
     LoanVault = new ethers.Contract(
       vaultAddress,
       LoanVaultABI,
       ethers.provider.getSigner(1)
     );
-    
+
     // Approve loanVault for 100 DAI
-    await DAI_EXT_1.approve(
-      vaultAddress, 
-      BigNumber.from(10).pow(18).mul(100)
-    )
+    await DAI_EXT_1.approve(vaultAddress, BigNumber.from(10).pow(18).mul(100));
 
     // Attempt to fund with 100 DAI
-    await LoanVault.fundLoan(
-      BigNumber.from(10).pow(18).mul(100),
-      accounts[1]
-    )
-
+    await LoanVault.fundLoan(BigNumber.from(10).pow(18).mul(100), accounts[1]);
   });
 
   it("confirm loanTokens minted for signer(1)", async function () {
-
     LoanVault = new ethers.Contract(
       vaultAddress,
       LoanVaultABI,
@@ -190,38 +172,30 @@ describe("fundLoan() in LoanVault.sol", function () {
     );
 
     // Confirm new LoanToken balance is 100(10**18)
-    const tokenBalance = await LoanVault.balanceOf(accounts[1])
-    
-    expect(
-      tokenBalance["_hex"]
-    ).to.equals(
-      BigNumber.from(10).pow(18).mul(100).toHexString()
-    )
+    const tokenBalance = await LoanVault.balanceOf(accounts[1]);
 
+    expect(tokenBalance["_hex"]).to.equals(
+      BigNumber.from(10).pow(18).mul(100).toHexString()
+    );
   });
 
   it("confirm fundingLocker has funding", async function () {
-
     LoanVault = new ethers.Contract(
       vaultAddress,
       LoanVaultABI,
       ethers.provider.getSigner(1)
     );
-    
+
     const fundingLockerAddress = await LoanVault.fundingLocker();
 
     const fundingLockerBalance = await DAI.balanceOf(fundingLockerAddress);
-    
-    expect(
-      fundingLockerBalance["_hex"]
-    ).to.equals(
-      BigNumber.from(10).pow(18).mul(100).toHexString()
-    )
 
+    expect(fundingLockerBalance["_hex"]).to.equals(
+      BigNumber.from(10).pow(18).mul(100).toHexString()
+    );
   });
 
   it("test drawdown calculation endpoint", async function () {
-
     LoanVault = new ethers.Contract(
       vaultAddress,
       LoanVaultABI,
@@ -230,40 +204,35 @@ describe("fundLoan() in LoanVault.sol", function () {
 
     const drawdownAmount_50USD = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(50)
-    )
+    );
 
     const drawdownAmount_100USD = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(100)
-    )
+    );
     const drawdownAmount_500USD = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(500)
-    )
+    );
 
     const drawdownAmount_1000USD = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(1000)
-    )
+    );
 
     const drawdownAmount_5000USD = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(5000)
-    )
+    );
     const drawdownAmount_10000USD = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(10000)
-    )
+    );
 
-    expect(parseInt(drawdownAmount_50USD["_hex"])).to.not.equals(0)
-    expect(parseInt(drawdownAmount_100USD["_hex"])).to.not.equals(0)
-    expect(parseInt(drawdownAmount_500USD["_hex"])).to.not.equals(0)
-    expect(parseInt(drawdownAmount_1000USD["_hex"])).to.not.equals(0)
-    expect(parseInt(drawdownAmount_5000USD["_hex"])).to.not.equals(0)
-    expect(parseInt(drawdownAmount_10000USD["_hex"])).to.not.equals(0)
-
-
+    expect(parseInt(drawdownAmount_50USD["_hex"])).to.not.equals(0);
+    expect(parseInt(drawdownAmount_100USD["_hex"])).to.not.equals(0);
+    expect(parseInt(drawdownAmount_500USD["_hex"])).to.not.equals(0);
+    expect(parseInt(drawdownAmount_1000USD["_hex"])).to.not.equals(0);
+    expect(parseInt(drawdownAmount_5000USD["_hex"])).to.not.equals(0);
+    expect(parseInt(drawdownAmount_10000USD["_hex"])).to.not.equals(0);
   });
 
   it("test drawdown functionality", async function () {
-
     // TODO: Add in this test next.
-    
   });
-
 });

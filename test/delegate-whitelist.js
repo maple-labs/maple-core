@@ -1,11 +1,13 @@
 const { expect, assert } = require("chai");
-const artpath = '../../contracts/' + network.name + '/';
+const artpath = "../../contracts/" + network.name + "/";
 
 const MapleGlobalsAddress = require(artpath + "addresses/MapleGlobals.address");
 const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi");
-    
-const LiquidityPoolFactoryAddress = require(artpath + "addresses/LiquidityPoolFactory.address");
-const LiquidityPoolFactoryABI = require(artpath + "abis/LiquidityPoolFactory.abi");
+
+const LiquidityPoolFactoryAddress = require(artpath +
+  "addresses/LiquidityPoolFactory.address");
+const LiquidityPoolFactoryABI = require(artpath +
+  "abis/LiquidityPoolFactory.abi");
 
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
@@ -13,11 +15,9 @@ const BPoolCreatorAddress = require(artpath + "addresses/BCreator.address.js");
 const BPoolCreatorABI = require(artpath + "abis/BCreator.abi.js");
 
 describe("Pool Delegate Whitelist", function () {
-
   it("A - Governor can update validPoolDelegate in MapleGlobals", async function () {
-
     const accounts = await ethers.provider.listAccounts();
-    
+
     MapleGlobals = new ethers.Contract(
       MapleGlobalsAddress,
       MapleGlobalsABI,
@@ -28,16 +28,14 @@ describe("Pool Delegate Whitelist", function () {
 
     const validityCheckOne = await MapleGlobals.validPoolDelegate(accounts[1]);
     expect(!validityCheckOne);
-    
+
     await MapleGlobals.setPoolDelegateWhitelist(accounts[1], true);
 
     const validityCheckTwo = await MapleGlobals.validPoolDelegate(accounts[1]);
     expect(validityCheckTwo);
-
   });
 
   it("B - Non-governor may not update validPoolDelegate in MapleGlobals", async function () {
-    
     const accounts = await ethers.provider.listAccounts();
 
     MapleGlobals = new ethers.Contract(
@@ -48,14 +46,10 @@ describe("Pool Delegate Whitelist", function () {
 
     await expect(
       MapleGlobals.setPoolDelegateWhitelist(accounts[0], false)
-    ).to.be.revertedWith(
-      "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
-    )
-
+    ).to.be.revertedWith("MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
   });
 
   it("C - Invalid pool delegate is prevented from creating a liquidity pool", async function () {
-
     const BPoolCreator = new ethers.Contract(
       BPoolCreatorAddress,
       BPoolCreatorABI,
@@ -88,13 +82,10 @@ describe("Pool Delegate Whitelist", function () {
       )
     ).to.be.revertedWith(
       "LiquidityPoolFactory::createLiquidityPool:ERR_MSG_SENDER_NOT_WHITELISTED"
-    )
-
-
+    );
   });
 
   it("D - Valid pool delegate can create a liquidity pool", async function () {
-    
     const BPoolCreator = new ethers.Contract(
       BPoolCreatorAddress,
       BPoolCreatorABI,
@@ -123,8 +114,6 @@ describe("Pool Delegate Whitelist", function () {
       DELEGATE_FEE_BASIS_POINTS,
       POOL_NAME,
       POOL_SYMBOL
-    )
-
+    );
   });
-
 });

@@ -53,9 +53,8 @@ async function main() {
   );
   const BulletRepaymentCalculator = await deploy("BulletRepaymentCalculator");
 
-
   const LateFeeNullCalculator = await deploy("LateFeeNullCalculator");
-  
+
   const PremiumFlatCalculator = await deploy("PremiumFlatCalculator", [200]); // 2% FEE on Principal
 
   const CollateralLockerFactory = await deploy("CollateralLockerFactory");

@@ -30,11 +30,14 @@ const LVFactoryAddress = require(artpath +
 const LVFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
 const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
 
-const AmortizationRepaymentCalculator = require(artpath + "addresses/AmortizationRepaymentCalculator.address.js");
-const BulletRepaymentCalculator = require(artpath + "addresses/BulletRepaymentCalculator.address.js");
-const LateFeeNullCalculator = require(artpath + "addresses/LateFeeNullCalculator.address.js");
-const PremiumFlatCalculator = require(artpath + "addresses/PremiumFlatCalculator.address.js");
-
+const AmortizationRepaymentCalculator = require(artpath +
+  "addresses/AmortizationRepaymentCalculator.address.js");
+const BulletRepaymentCalculator = require(artpath +
+  "addresses/BulletRepaymentCalculator.address.js");
+const LateFeeNullCalculator = require(artpath +
+  "addresses/LateFeeNullCalculator.address.js");
+const PremiumFlatCalculator = require(artpath +
+  "addresses/PremiumFlatCalculator.address.js");
 
 describe("LiquidityPool claimRepayments", function () {
   let accounts;
@@ -99,9 +102,9 @@ describe("LiquidityPool claimRepayments", function () {
         FUNDING_PERIOD_DAYS,
       ],
       [
-	AmortizationRepaymentCalculator,
-	LateFeeNullCalculator,
-	PremiumFlatCalculator
+        AmortizationRepaymentCalculator,
+        LateFeeNullCalculator,
+        PremiumFlatCalculator,
       ],
       { gasLimit: 6000000 }
     );
@@ -125,7 +128,9 @@ describe("LiquidityPool claimRepayments", function () {
       LoanVaultABI,
       ethers.provider.getSigner(1)
     );
-    const COLLATERAL_REQUIRED = await LoanVault.collateralRequiredForDrawdown(MIN_RAISE);
+    const COLLATERAL_REQUIRED = await LoanVault.collateralRequiredForDrawdown(
+      MIN_RAISE
+    );
 
     // Fund loan for MIN_RAISE
     await LoanVault2.fundLoan(MIN_RAISE, accounts[1]);

@@ -1,13 +1,13 @@
 const { expect, assert } = require("chai");
-const artpath = '../../contracts/' + network.name + '/';
-
+const artpath = "../../contracts/" + network.name + "/";
 
 const globalAddress = require(artpath + "addresses/MapleGlobals.address");
 const globalABI = require(artpath + "abis/MapleGlobals.abi");
 const mapleTokenAddress = require(artpath + "addresses/MapleToken.address");
-const LPFactoryAddress = require(artpath + "addresses/LiquidityPoolFactory.address.js");
-const LVFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address.js");
-
+const LPFactoryAddress = require(artpath +
+  "addresses/LiquidityPoolFactory.address.js");
+const LVFactoryAddress = require(artpath +
+  "addresses/LoanVaultFactory.address.js");
 
 describe("MapleGlobals.sol Initialization", function () {
   let mapleGlobals;
@@ -38,10 +38,10 @@ describe("MapleGlobals.sol Initialization", function () {
     expect(unstakeDelay).to.equal(7776000);
   });
 
-   it("factory addresses set properly in globals", async function () {
-	const LPFaddress = await mapleGlobals.liquidityPoolFactory();
-	const LVFaddress = await mapleGlobals.loanVaultFactory();
-	expect(LPFaddress).to.equal(LPFactoryAddress);
-	expect(LVFaddress).to.equal(LVFactoryAddress);
-   })
+  it("factory addresses set properly in globals", async function () {
+    const LPFaddress = await mapleGlobals.liquidityPoolFactory();
+    const LVFaddress = await mapleGlobals.loanVaultFactory();
+    expect(LPFaddress).to.equal(LPFactoryAddress);
+    expect(LVFaddress).to.equal(LVFactoryAddress);
+  });
 });

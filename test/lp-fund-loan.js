@@ -2,10 +2,14 @@ const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 const artpath = "../../contracts/" + network.name + "/";
 
-const AmortizationRepaymentCalculator = require(artpath + "addresses/AmortizationRepaymentCalculator.address.js");
-const BulletRepaymentCalculator = require(artpath + "addresses/BulletRepaymentCalculator.address.js");
-const LateFeeNullCalculator = require(artpath + "addresses/LateFeeNullCalculator.address.js");
-const PremiumFlatCalculator = require(artpath + "addresses/PremiumFlatCalculator.address.js");
+const AmortizationRepaymentCalculator = require(artpath +
+  "addresses/AmortizationRepaymentCalculator.address.js");
+const BulletRepaymentCalculator = require(artpath +
+  "addresses/BulletRepaymentCalculator.address.js");
+const LateFeeNullCalculator = require(artpath +
+  "addresses/LateFeeNullCalculator.address.js");
+const PremiumFlatCalculator = require(artpath +
+  "addresses/PremiumFlatCalculator.address.js");
 
 const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
@@ -64,9 +68,9 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       WETHAddress,
       [5000, 90, 1, 1000000000000, 0, 7],
       [
-	AmortizationRepaymentCalculator,
-	LateFeeNullCalculator,
-	PremiumFlatCalculator
+        AmortizationRepaymentCalculator,
+        LateFeeNullCalculator,
+        PremiumFlatCalculator,
       ]
     );
     LVAddress = await LVFactory.getLoanVault(

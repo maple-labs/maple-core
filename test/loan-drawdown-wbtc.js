@@ -1,6 +1,6 @@
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
-const artpath = '../../contracts/' + network.name + '/';
+const artpath = "../../contracts/" + network.name + "/";
 
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
@@ -12,34 +12,45 @@ const WETHAddress = require(artpath + "addresses/WETH9.address.js");
 const WETHABI = require(artpath + "abis/WETH9.abi.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const WBTCABI = require(artpath + "abis/WBTC.abi.js");
-const LVFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address.js");
+const LVFactoryAddress = require(artpath +
+  "addresses/LoanVaultFactory.address.js");
 const LVFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
-const FLFAddress = require(artpath + "addresses/FundingLockerFactory.address.js");
+const FLFAddress = require(artpath +
+  "addresses/FundingLockerFactory.address.js");
 const FLFABI = require(artpath + "abis/FundingLockerFactory.abi.js");
 const GlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
 const GlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
 const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
 
-const AmortizationRepaymentCalculator = require(artpath + "addresses/AmortizationRepaymentCalculator.address.js");
-const BulletRepaymentCalculator = require(artpath + "addresses/BulletRepaymentCalculator.address.js");
-const LateFeeNullCalculator = require(artpath + "addresses/LateFeeNullCalculator.address.js");
-const PremiumFlatCalculator = require(artpath + "addresses/PremiumFlatCalculator.address.js");
-
-
+const AmortizationRepaymentCalculator = require(artpath +
+  "addresses/AmortizationRepaymentCalculator.address.js");
+const BulletRepaymentCalculator = require(artpath +
+  "addresses/BulletRepaymentCalculator.address.js");
+const LateFeeNullCalculator = require(artpath +
+  "addresses/LateFeeNullCalculator.address.js");
+const PremiumFlatCalculator = require(artpath +
+  "addresses/PremiumFlatCalculator.address.js");
 
 describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized loan", function () {
-
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000020";
 
-  let DAI,USDC,MPL,WETH,WBTC;
-  let LoanVaultFactory,FundingLockerFactory,CollateralLockerFactory;
-  let Globals,accounts;
+  let DAI, USDC, MPL, WETH, WBTC;
+  let LoanVaultFactory, FundingLockerFactory, CollateralLockerFactory;
+  let Globals, accounts;
 
   before(async () => {
     accounts = await ethers.provider.listAccounts();
     DAI = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(0));
-    DAI_EXT_1 = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(1));
-    DAI_EXT_2 = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(2));
+    DAI_EXT_1 = new ethers.Contract(
+      DAIAddress,
+      DAIABI,
+      ethers.provider.getSigner(1)
+    );
+    DAI_EXT_2 = new ethers.Contract(
+      DAIAddress,
+      DAIABI,
+      ethers.provider.getSigner(2)
+    );
     USDC = new ethers.Contract(
       USDCAddress,
       USDCABI,
@@ -76,8 +87,6 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
   let vaultAddress;
 
   it("createLoanVault(), requesting 1000 DAI", async function () {
-
-    
     // Grab preIncrementor to get LoanVaultID
     // Note: consider networkVersion=1 interactions w.r.t. async flow
     const preIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
@@ -86,22 +95,16 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
     await LoanVaultFactory.createLoanVault(
       DAIAddress,
       WBTCAddress,
-      [500, 90, 30, BigNumber.from(10).pow(18).mul(1000), 2000, 7], 
-      [
-	BulletRepaymentCalculator,
-	LateFeeNullCalculator,
-	PremiumFlatCalculator
-      ]
-    )
-    
-    vaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
+      [500, 90, 30, BigNumber.from(10).pow(18).mul(1000), 2000, 7],
+      [BulletRepaymentCalculator, LateFeeNullCalculator, PremiumFlatCalculator]
+    );
 
+    vaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
   });
 
   it("fund loan for 500 DAI", async function () {
-
-    await DAI_EXT_1.mintSpecial(accounts[1], 500)
-    await DAI_EXT_1.approve(vaultAddress,BigNumber.from(10).pow(18).mul(500))
+    await DAI_EXT_1.mintSpecial(accounts[1], 500);
+    await DAI_EXT_1.approve(vaultAddress, BigNumber.from(10).pow(18).mul(500));
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -110,15 +113,10 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
     );
 
     // Fund loan with 500 DAI
-    await LoanVault.fundLoan(
-      BigNumber.from(10).pow(18).mul(500),
-      accounts[1]
-    )
-
+    await LoanVault.fundLoan(BigNumber.from(10).pow(18).mul(500), accounts[1]);
   });
 
   it("view collateral amount required", async function () {
-
     LoanVault = new ethers.Contract(
       vaultAddress,
       LoanVaultABI,
@@ -127,14 +125,12 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
 
     const drawdownAmount_500DAI = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(500)
-    )
+    );
 
     // console.log(parseInt(drawdownAmount_500DAI["_hex"]))
-
   });
 
   it("drawdown 500 DAI and commence the loan (failure)", async function () {
-
     LoanVault = new ethers.Contract(
       vaultAddress,
       LoanVaultABI,
@@ -143,27 +139,32 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
 
     const drawdownAmount_500DAI = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(500)
-    )
+    );
 
     await WBTC.approve(
       vaultAddress,
-      BigNumber.from(10).pow(8).mul(Math.round(parseInt(drawdownAmount_500DAI["_hex"]) / 10**6)).mul(100)
-    )
-    
+      BigNumber.from(10)
+        .pow(8)
+        .mul(Math.round(parseInt(drawdownAmount_500DAI["_hex"]) / 10 ** 6))
+        .mul(100)
+    );
+
     await expect(
       LoanVault.drawdown(BigNumber.from(10).pow(18).mul(1000))
-    ).to.be.revertedWith("LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE");
+    ).to.be.revertedWith(
+      "LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE"
+    );
 
     await expect(
       LoanVault.drawdown(BigNumber.from(10).pow(18).mul(500))
-    ).to.be.revertedWith("LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE");
-    
+    ).to.be.revertedWith(
+      "LoanVault::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE"
+    );
   });
 
   it("fund 1000 more DAI", async function () {
-
-    await DAI_EXT_1.mintSpecial(accounts[1], 1000)
-    await DAI_EXT_1.approve(vaultAddress,BigNumber.from(10).pow(18).mul(1000))
+    await DAI_EXT_1.mintSpecial(accounts[1], 1000);
+    await DAI_EXT_1.approve(vaultAddress, BigNumber.from(10).pow(18).mul(1000));
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -172,15 +173,10 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
     );
 
     // Fund loan with 1000 USDC
-    await LoanVault.fundLoan(
-      BigNumber.from(10).pow(18).mul(1000),
-      accounts[1]
-    )
-    
+    await LoanVault.fundLoan(BigNumber.from(10).pow(18).mul(1000), accounts[1]);
   });
 
   it("drawdown 1000 DAI and commence loan", async function () {
-
     LoanVault = new ethers.Contract(
       vaultAddress,
       LoanVaultABI,
@@ -189,34 +185,36 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
 
     const drawdownAmount_1000DAI = await LoanVault.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(18).mul(1000)
-    )
+    );
 
     await WBTC.approve(
       vaultAddress,
-      BigNumber.from(10).pow(8).mul(Math.round(parseInt(drawdownAmount_1000DAI["_hex"]) / 10**4)).mul(10000)
-    )
-    
-    
+      BigNumber.from(10)
+        .pow(8)
+        .mul(Math.round(parseInt(drawdownAmount_1000DAI["_hex"]) / 10 ** 4))
+        .mul(10000)
+    );
+
     const PRE_LOCKER_BALANCE = await LoanVault.getFundingLockerBalance();
     const PRE_BORROWER_BALANCE = await DAI.balanceOf(accounts[0]);
     const PRE_LOANVAULT_BALANCE = await DAI.balanceOf(vaultAddress);
 
     await LoanVault.drawdown(BigNumber.from(10).pow(18).mul(1000));
-    
+
     const POST_LOCKER_BALANCE = await LoanVault.getFundingLockerBalance();
     const POST_BORROWER_BALANCE = await DAI.balanceOf(accounts[0]);
     const POST_LOANVAULT_BALANCE = await DAI.balanceOf(vaultAddress);
 
     // Confirm the state of various contracts.
-    
+
     const LoanVaultState = await LoanVault.loanState();
 
     expect(LoanVaultState).to.equals(1);
 
     // TODO: Implement handles for larger precisions (currently failing with 100mm+ DAI balance).
-    expect(
-      parseInt(POST_BORROWER_BALANCE["_hex"])
-    ).to.be.greaterThan(parseInt(PRE_BORROWER_BALANCE["_hex"]));
+    expect(parseInt(POST_BORROWER_BALANCE["_hex"])).to.be.greaterThan(
+      parseInt(PRE_BORROWER_BALANCE["_hex"])
+    );
 
     // expect(
     //   parseInt(POST_BORROWER_BALANCE["_hex"]) - parseInt(PRE_BORROWER_BALANCE["_hex"])
@@ -229,7 +227,5 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
     // expect(
     //   parseInt(POST_LOANVAULT_BALANCE["_hex"]) - parseInt(PRE_LOANVAULT_BALANCE["_hex"])
     // ).to.equals(parseInt(BigNumber.from(10).pow(18).mul(500)["_hex"]));
-    
   });
-
 });
