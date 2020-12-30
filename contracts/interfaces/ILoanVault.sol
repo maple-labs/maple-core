@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-interface ILoanVault {
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+interface ILoanVault is IERC20 {
     
     // State Variables
     function fundsTokenBalance() external view returns (uint256);

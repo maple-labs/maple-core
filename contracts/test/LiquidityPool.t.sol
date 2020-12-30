@@ -67,6 +67,10 @@ contract PoolDelegate {
     function stake(address stakeLocker, uint256 amt) external {
         IStakeLocker(stakeLocker).stake(amt);
     }
+
+    function claim(address lPool, address vault, address ltlf) external returns(uint, uint, uint, uint, uint) {
+        ILiquidityPool(lPool).claim(vault, ltlf);  
+    }
 }
 
 contract LP {
@@ -89,6 +93,8 @@ contract LP {
 }
 
 contract Borrower {
+
+    // TODO: remove the try_* for LoanVault specific functions
     function try_drawdown(address loanVault, uint256 amt) external returns (bool ok) {
         string memory sig = "drawdown(uint256)";
         (ok,) = address(loanVault).call(abi.encodeWithSignature(sig, amt));
@@ -101,6 +107,10 @@ contract Borrower {
 
     function makePayment(address loanVault) external {
         LoanVault(loanVault).makePayment();
+    }
+
+    function drawdown(address loanVault, uint256 _drawdownAmount) external {
+        LoanVault(loanVault).drawdown(_drawdownAmount);
     }
 
     function approve(address token, address who, uint256 amt) external {
@@ -448,7 +458,7 @@ contract LiquidityPoolTest is TestUtil {
         (,address ltl3,,,,,) = lp1.loans(address(vault2), address(ltlf1));  // ltl3 = LoanTokenLocker 3, for vault2 using ltlf1
         (,address ltl4,,,,,) = lp1.loans(address(vault2), address(ltlf2));  // ltl4 = LoanTokenLocker 4, for vault2 using ltlf2
 
-        // Pre-state checks
+        // Present state checks
         assertEq(IERC20(DAI).balanceOf(liqLocker),               7800 ether);  // 10000 DAI deposited - (1100 DAI + 1100 DAI)
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  1100 ether);  // Balance of vault fl
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 1100 ether);  // Balance of vault2 fl
@@ -466,17 +476,35 @@ contract LiquidityPoolTest is TestUtil {
         mint("WETH", address(fay), cReq2);
         eli.approve(WETH, address(vault),  cReq1);
         fay.approve(WETH, address(vault2), cReq2);
-        assertTrue(eli.try_drawdown(address(vault),  1000 ether));
-        assertTrue(fay.try_drawdown(address(vault2), 1000 ether));
+        eli.drawdown(address(vault),  1000 ether);
+        fay.drawdown(address(vault2), 1000 ether);
         
         /****************************/
         /*** Make 1 Payment (1/6) ***/
         /****************************/
+        (uint amt1_1,,,) =  vault.getNextPayment(); // DAI required for 1st payment on vault
+        (uint amt1_2,,,) = vault2.getNextPayment(); // DAI required for 1st payment on vault2
+        mint("DAI", address(eli), amt1_1);
+        mint("DAI", address(fay), amt1_2);
+        eli.approve(DAI, address(vault),  amt1_1);
+        fay.approve(DAI, address(vault2), amt1_2);
+        eli.makePayment(address(vault));
+        fay.makePayment(address(vault2));
         
         /*****************/
         /***  LP Claim ***/
         /*****************/
-        
+
+        // Pre-state checks
+
+        // LiquidityPool claim() across ltl1, ltl2, ltl3, ltl4
+        lpd.claim(address(lp1), address(vault),  address(ltlf1));
+        lpd.claim(address(lp1), address(vault),  address(ltlf2));
+        lpd.claim(address(lp1), address(vault2), address(ltlf1));
+        lpd.claim(address(lp1), address(vault2), address(ltlf2));
+
+        // Post-state checks
+
         /******************************/
         /*** Make 2 Payments (3/6)  ***/
         /******************************/

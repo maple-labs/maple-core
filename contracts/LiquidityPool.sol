@@ -269,7 +269,7 @@ contract LiquidityPool is IERC20, ERC20 {
         } else {
             loans[_loanVault][_loanTokenLockerFactory].amountFunded += _amt;
         }
-        
+
         // Fund loan.
         principalSum += _amt;
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
@@ -290,18 +290,18 @@ contract LiquidityPool is IERC20, ERC20 {
     ///         uint[3]: Fee portion claimed.
     ///         uint[4]: Excess portion claimed.
     ///         uint[5]: TODO: Liquidation portion claimed.
-    function claim(address _loanVault, address _loanTokenLockerFactory) internal returns(uint, uint, uint, uint, uint/* TODO: uint*/) {
+    function claim(address _loanVault, address _loanTokenLockerFactory) public returns(uint, uint, uint, uint, uint/* TODO: uint*/) {
 
         // Grab "info" from loans data structure.
         Loan memory info = loans[_loanVault][_loanTokenLockerFactory];
+        address _lvf = info.loanVaultFunded;
+        address _ltl = info.loanTokenLocker;
 
         // Create interface for LoanVault.
-        ILoanVault vault = ILoanVault(info.loanVaultFunded);
+        ILoanVault vault = ILoanVault(_lvf);
 
         // Pull tokens from TokenLocker.
-        ILoanTokenLocker(
-            loans[info.loanVaultFunded][info.loanTokenLocker].loanTokenLocker
-        ).fetch();
+        ILoanTokenLocker(_ltl).fetch();
 
         // Calculate deltas, or "net new" values.
         uint256 newInterest  = vault.interestPaid() - info.interestPaid;
@@ -312,6 +312,9 @@ contract LiquidityPool is IERC20, ERC20 {
         // Update ERC2222 internal accounting for LoanVault.
         vault.updateFundsReceived();
         vault.withdrawFunds();
+
+        // Return tokens to locker.
+        vault.transfer(_ltl, IERC20(_lvf).balanceOf(address(this)));
 
         // TODO: ERC-2222 could have return value in withdrawFunds(), 2 lines above.
         // Fetch amount claimed from calling withdrawFunds()
