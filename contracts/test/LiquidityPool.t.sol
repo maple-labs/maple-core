@@ -87,6 +87,40 @@ contract LP {
     }
 }
 
+contract Borrower {
+    function try_drawdown(address loanVault, uint256 amt) external returns (bool ok) {
+        string memory sig = "drawdown(uint256)";
+        (ok,) = address(loanVault).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_makePayment(address loanVault) external returns (bool ok) {
+        string memory sig = "makePayment()";
+        (ok,) = address(loanVault).call(abi.encodeWithSignature(sig));
+    }
+
+    function makePayment(address loanVault) external {
+        LoanVault(loanVault).makePayment();
+    }
+
+    function approve(address token, address who, uint256 amt) external {
+        IERC20(token).approve(who, amt);
+    }
+
+    function createLoanVault(
+        LoanVaultFactory loanVaultFactory,
+        address requestedAsset, 
+        address collateralAsset, 
+        uint256[6] memory specifications,
+        bytes32[3] memory calculators
+    ) 
+        external returns (LoanVault loanVault) 
+    {
+        loanVault = LoanVault(
+            loanVaultFactory.createLoanVault(requestedAsset, collateralAsset, specifications, calculators)
+        );
+    }
+}
+
 contract LiquidityPoolTest is TestUtil {
 
     ERC20                     fundsToken;
@@ -96,21 +130,25 @@ contract LiquidityPoolTest is TestUtil {
     CollateralLockerFactory   clFactory;
     LoanVaultFactory          loanVFactory;
     LoanVault                 vault;
+    LoanVault                 vault2;
     LiquidityPoolFactory      liqPoolFactory;
     StakeLockerFactory        stakeLFactory;
     LiquidityLockerFactory    liqLFactory; 
     LoanTokenLockerFactory    ltlFactory; 
+    LoanTokenLockerFactory    ltlFactory2; 
     LiquidityPool             liqPool; 
     DSValue                   ethOracle;
     DSValue                   daiOracle;
     BulletRepaymentCalculator bulletCalc;
     LateFeeNullCalculator     lateFeeCalc;
     PremiumFlatCalculator     premiumCalc;
+    IBPool                    bPool;
     PoolDelegate              ali;
     LP                        bob;
     LP                        che;
     LP                        dan;
-    IBPool                    bPool;
+    Borrower                  eli;
+    Borrower                  fay;
 
     function setUp() public {
 
@@ -124,6 +162,7 @@ contract LiquidityPoolTest is TestUtil {
         liqLFactory    = new LiquidityLockerFactory();
         liqPoolFactory = new LiquidityPoolFactory(address(globals), address(stakeLFactory), address(liqLFactory));
         ltlFactory     = new LoanTokenLockerFactory();
+        ltlFactory2    = new LoanTokenLockerFactory();
         ethOracle      = new DSValue();
         daiOracle      = new DSValue();
         bulletCalc     = new BulletRepaymentCalculator();
@@ -133,6 +172,8 @@ contract LiquidityPoolTest is TestUtil {
         bob            = new LP();
         che            = new LP();
         dan            = new LP();
+        eli            = new Borrower();
+        fay            = new Borrower();
 
         ethOracle.poke(500 ether);  // Set ETH price to $600
         daiOracle.poke(1 ether);    // Set DAI price to $1
@@ -189,7 +230,8 @@ contract LiquidityPoolTest is TestUtil {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
         bytes32[3] memory calcs = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
 
-        vault = LoanVault(loanVFactory.createLoanVault(DAI, WETH, specs, calcs));
+        vault  = eli.createLoanVault(loanVFactory, DAI, WETH, specs, calcs);
+        vault2 = fay.createLoanVault(loanVFactory, DAI, WETH, specs, calcs);
     }
 
     function test_stake_and_finalize() public {
@@ -347,6 +389,78 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(IERC20(vault).balanceOf(loanTokenLocker),      15 ether);  // LoanToken balance of LT Locker
     }
 
+    function test_claim() public {
+
+        /*******************************/
+        /*** Finalize liquidity pool ***/
+        /*******************************/
+        address stakeLocker = liqPool.stakeLockerAddress();
+        address liqLocker   = liqPool.liquidityLockerAddress();
+
+        ali.approve(address(bPool), stakeLocker, uint(-1));
+        ali.stake(liqPool.stakeLockerAddress(), bPool.balanceOf(address(ali)) / 2);
+
+        liqPool.finalize();
+
+        /**************************************************/
+        /*** Mint and deposit funds into liquidity pool ***/
+        /**************************************************/
+        mint("DAI", address(bob), 100 ether);
+        mint("DAI", address(che), 100 ether);
+        mint("DAI", address(dan), 100 ether);
+
+        bob.approve(DAI, address(liqPool), uint(-1));
+        che.approve(DAI, address(liqPool), uint(-1));
+        dan.approve(DAI, address(liqPool), uint(-1));
+
+        assertTrue(bob.try_deposit(address(liqPool), 10 ether));  // 10%
+        assertTrue(che.try_deposit(address(liqPool), 30 ether));  // 30%
+        assertTrue(dan.try_deposit(address(liqPool), 60 ether));  // 60%
+
+        globals.setLoanVaultFactory(address(loanVFactory));
+
+        /*******************************************/
+        /*** Create new LTLFactory and LoanVault ***/
+        /*******************************************/
+        LoanTokenLockerFactory ltlFactory2 = new LoanTokenLockerFactory();
+
+        // Create Loan Vault
+        uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
+        bytes32[3] memory calcs = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
+
+        LoanVault vault2 = LoanVault(loanVFactory.createLoanVault(DAI, WETH, specs, calcs));
+
+        address fundingLocker  = vault.fundingLocker();
+        address fundingLocker2 = vault2.fundingLocker();
+
+        /******************/
+        /*** Fund Loans ***/
+        /******************/
+        assertEq(IERC20(DAI).balanceOf(liqLocker),              100 ether);  // Balance of Liquidity Locker
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),         0);  // Balance of Funding Locker
+
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory),  20 ether));  // Fund loan for 20 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory),  25 ether));  // Fund same loan for 25 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory2), 15 ether));  // Fund new loan same vault for 15 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault2), address(ltlFactory2), 15 ether));  // Fund new loan new vault for 15 DAI
+
+        (, address ltLocker,,,,,)  = liqPool.loans(address(vault),  address(ltlFactory));
+        (, address ltLocker2,,,,,) = liqPool.loans(address(vault),  address(ltlFactory2));
+        (, address ltLocker3,,,,,) = liqPool.loans(address(vault2), address(ltlFactory2));
+
+        assertEq(IERC20(DAI).balanceOf(liqLocker),               25 ether);  // Balance of Liquidity Locker
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  60 ether);  // Balance of Funding Locker
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 15 ether);  // Balance of Funding Locker of vault 2
+        assertEq(IERC20(vault).balanceOf(ltLocker),              45 ether);  // LoanToken balance of LT Locker
+        assertEq(IERC20(vault).balanceOf(ltLocker2),             15 ether);  // LoanToken balance of LT Locker 2
+        assertEq(IERC20(vault2).balanceOf(ltLocker3),            15 ether);  // LoanToken balance of LT Locker 3
+
+        /*****************/
+        /*** Draw Down ***/
+        /*****************/
+        assertTrue(false);
+    }
+
     function test_withdraw() public {
 
         /*******************************/
@@ -420,4 +534,6 @@ contract LiquidityPoolTest is TestUtil {
         // dan.withdraw(address(liqPool));
         assertTrue(false);
     }
+
+
 }
