@@ -103,10 +103,10 @@ async function main() {
   await mapleGlobals.addCollateralToken(WETHAddress);
   await mapleGlobals.addCollateralToken(WBTCAddress);
 
-  await mapleGlobals.addCalculator(AmortizationRepaymentCalculator);
-  await mapleGlobals.addCalculator(BulletRepaymentCalculator);
-  await mapleGlobals.addCalculator(LateFeeNullCalculator);
-  await mapleGlobals.addCalculator(PremiumFlatCalculator);
+  await mapleGlobals.setCalculator(AmortizationRepaymentCalculator, true);
+  await mapleGlobals.setCalculator(BulletRepaymentCalculator, true);
+  await mapleGlobals.setCalculator(LateFeeNullCalculator, true);
+  await mapleGlobals.setCalculator(PremiumFlatCalculator, true);
 
   const LVFactory = new ethers.Contract(
     LoanVaultFactoryAddress,

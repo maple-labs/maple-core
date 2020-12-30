@@ -66,9 +66,9 @@ describe("MapleGlobals.sol Interactions", function () {
     const unstakeDelayRevert = await mapleGlobals.unstakeDelay();
     expect(unstakeDelayRevert).to.equal(7776000);
 
-    await mapleGlobals.addCalculator(BUNK_ADDRESS);
+    await mapleGlobals.setCalculator(BUNK_ADDRESS, true);
     expect(await mapleGlobals.isValidCalculator(BUNK_ADDRESS)).to.equal(true);
-    await mapleGlobals.removeCalculator(BUNK_ADDRESS);
+    await mapleGlobals.setCalculator(BUNK_ADDRESS, false);
     expect(await mapleGlobals.isValidCalculator(BUNK_ADDRESS)).to.equal(false);
 
     await mapleGlobals.setGovernor(accounts[1]);
@@ -99,7 +99,7 @@ describe("MapleGlobals.sol Interactions", function () {
 
     const BUNK_ADDRESS = "0x0000000000000000000000000000000000000003";
 
-    await expect(mapleGlobals.addCalculator(BUNK_ADDRESS)).to.be.revertedWith(
+    await expect(mapleGlobals.setCalculator(BUNK_ADDRESS, true)).to.be.revertedWith(
       "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 

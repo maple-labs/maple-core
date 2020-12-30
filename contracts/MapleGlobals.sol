@@ -145,12 +145,8 @@ contract MapleGlobals {
         validBorrowTokenSymbols.push(IERC20Details(_token).symbol());
     }
 
-    function addCalculator(address _calculator) public isGovernor {
-        isValidCalculator[_calculator] = true;
-    }
-    function removeCalculator(address _calculator) public isGovernor {
-        isValidCalculator[_calculator] = false;
-        //maybe not even have this function 
+    function setCalculator(address _calculator, bool valid) public isGovernor {
+        isValidCalculator[_calculator] = valid;
     }
 
     /**
