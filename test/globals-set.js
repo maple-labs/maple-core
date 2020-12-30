@@ -67,9 +67,9 @@ describe("MapleGlobals.sol Interactions", function () {
     expect(unstakeDelayRevert).to.equal(7776000);
 
     await mapleGlobals.addCalculator(BUNK_ADDRESS);
-    expect(mapleGlobals.isValidCalculator(BUNK_ADDRESS)).to.equal(true);
+    expect(await mapleGlobals.isValidCalculator(BUNK_ADDRESS)).to.equal(true);
     await mapleGlobals.removeCalculator(BUNK_ADDRESS);
-    expect(mapleGlobals.isValidCalculator(BUNK_ADDRESS)).to.equal(false);
+    expect(await mapleGlobals.isValidCalculator(BUNK_ADDRESS)).to.equal(false);
 
     await mapleGlobals.setGovernor(accounts[1]);
     const governorFetch = await mapleGlobals.governor();
