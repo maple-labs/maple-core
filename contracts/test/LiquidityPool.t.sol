@@ -517,6 +517,7 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(1, info2[3]);
         assertEq(1, info2[4]);
 
+        lpd.claim(address(lp1), address(vault),  address(ltlf1));
         lpd.claim(address(lp1), address(vault),  address(ltlf2));
         lpd.claim(address(lp1), address(vault2), address(ltlf1));
         lpd.claim(address(lp1), address(vault2), address(ltlf2));
