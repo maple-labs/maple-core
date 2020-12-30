@@ -425,7 +425,7 @@ contract LiquidityPoolTest is TestUtil {
         LoanTokenLockerFactory ltlFactory2 = new LoanTokenLockerFactory();
 
         // Create Loan Vault
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
+        uint256[6] memory specs = [500, 180, 30, uint256(1000 ether), 2000, 7];
         bytes32[3] memory calcs = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
 
         LoanVault vault2 = LoanVault(loanVFactory.createLoanVault(DAI, WETH, specs, calcs));
@@ -433,9 +433,9 @@ contract LiquidityPoolTest is TestUtil {
         address fundingLocker  = vault.fundingLocker();
         address fundingLocker2 = vault2.fundingLocker();
 
-        /******************/
-        /*** Fund Loans ***/
-        /******************/
+        /***************************/
+        /*** Fund Loans (Excess) ***/
+        /***************************/
         assertEq(IERC20(DAI).balanceOf(liqLocker),              100 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),         0);  // Balance of Funding Locker
 
@@ -458,7 +458,31 @@ contract LiquidityPoolTest is TestUtil {
         /*****************/
         /*** Draw Down ***/
         /*****************/
-        assertTrue(false);
+        
+        /****************************/
+        /*** Make 1 Payment (1/6) ***/
+        /****************************/
+        
+        /*****************/
+        /***  LP Claim ***/
+        /*****************/
+        
+        /******************************/
+        /*** Make 2 Payments (3/6)  ***/
+        /******************************/
+        
+        /*****************/
+        /***  LP Claim ***/
+        /*****************/
+        
+        /*********************************/
+        /*** Make (Early) Full Payment ***/
+        /*********************************/
+        
+        /*****************/
+        /***  LP Claim ***/
+        /*****************/
+
     }
 
     function test_withdraw() public {
