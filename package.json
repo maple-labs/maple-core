@@ -17,7 +17,8 @@
     "coverage": "npx hardhat coverage --network coverage",
     "migrate-token": "git submodule update --init --recursive && npx hardhat run scripts/migrate-token.js && hardhat run scripts/publish.js",
     "migrate": "git submodule update --init --recursive && npx hardhat run scripts/deploy.js&& hardhat run scripts/publish.js",
-    "setup": "hardhat run scripts/setup.js"
+    "setup": "hardhat run scripts/setup.js",
+    "kaleido:test": "HARDHAT_NETWORK=private hardhat test kaleidotest/*"
   },
   "repository": "git+https://github.com/maple-labs/maple-core.git",
   "keywords": [
@@ -43,7 +44,7 @@
     "husky": "^4.3.0",
     "node-watch": "^0.7.0",
     "prettier": "^2.1.2",
-    "prettier-plugin-solidity": "^1.0.0-beta.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.2",
     "solhint": "^3.3.1",
     "solhint-plugin-prettier": "0.0.5",
     "solidity-coverage": "^0.7.12"
