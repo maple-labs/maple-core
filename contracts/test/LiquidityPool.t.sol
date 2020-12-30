@@ -68,8 +68,8 @@ contract PoolDelegate {
         IStakeLocker(stakeLocker).stake(amt);
     }
 
-    function claim(address lPool, address vault, address ltlf) external returns(uint, uint, uint, uint, uint) {
-        ILiquidityPool(lPool).claim(vault, ltlf);  
+    function claim(address lPool, address vault, address ltlf) external returns(uint[5] memory) {
+        return ILiquidityPool(lPool).claim(vault, ltlf);  
     }
 }
 
@@ -498,7 +498,20 @@ contract LiquidityPoolTest is TestUtil {
         // Pre-state checks
 
         // LiquidityPool claim() across ltl1, ltl2, ltl3, ltl4
-        lpd.claim(address(lp1), address(vault),  address(ltlf1));
+        uint intPaid = vault.interestPaid();
+        uint priPaid = vault.principalPaid();
+        uint feePaid = vault.feePaid();
+        uint excPaid = vault.excessReturned();
+        uint[5] memory info = lpd.claim(address(lp1), address(vault),  address(ltlf1));
+        assertEq(1, intPaid);
+        assertEq(1, priPaid);
+        assertEq(1, feePaid);
+        assertEq(1, excPaid);
+        assertEq(1, info[0]);
+        assertEq(1, info[1]);
+        assertEq(1, info[2]);
+        assertEq(1, info[3]);
+        assertEq(1, info[4]);
         lpd.claim(address(lp1), address(vault),  address(ltlf2));
         lpd.claim(address(lp1), address(vault2), address(ltlf1));
         lpd.claim(address(lp1), address(vault2), address(ltlf2));

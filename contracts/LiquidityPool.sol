@@ -285,12 +285,12 @@ contract LiquidityPool is IERC20, ERC20 {
 
     /// @notice Claim available funds through a LoanToken.
     /// @return uint[0]: Total amount claimed.
-    ///         uint[1]: Principal portion claimed.
-    ///         uint[2]: Interest portion claimed.
+    ///         uint[1]: Interest portion claimed.
+    ///         uint[2]: Principal portion claimed.
     ///         uint[3]: Fee portion claimed.
     ///         uint[4]: Excess portion claimed.
     ///         uint[5]: TODO: Liquidation portion claimed.
-    function claim(address _loanVault, address _loanTokenLockerFactory) public returns(uint, uint, uint, uint, uint/* TODO: uint*/) {
+    function claim(address _loanVault, address _loanTokenLockerFactory) public returns(uint[5] memory) {
 
         // Grab "info" from loans data structure.
         Loan memory info = loans[_loanVault][_loanTokenLockerFactory];
@@ -320,27 +320,22 @@ contract LiquidityPool is IERC20, ERC20 {
         // Fetch amount claimed from calling withdrawFunds()
         uint256 balance = ILiquidityAsset.balanceOf(address(this));
 
-        // Update "info" in loans data structure.
-        info.interestPaid   = vault.interestPaid();
-        info.principalPaid  = vault.principalPaid();
-        info.feePaid        = vault.feePaid();
-        info.excessReturned = vault.excessReturned();
+        // Update loans data structure.
+        loans[_loanVault][_loanTokenLockerFactory].interestPaid   = vault.interestPaid();
+        loans[_loanVault][_loanTokenLockerFactory].principalPaid  = vault.principalPaid();
+        loans[_loanVault][_loanTokenLockerFactory].feePaid        = vault.feePaid();
+        loans[_loanVault][_loanTokenLockerFactory].excessReturned = vault.excessReturned();
 
         uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess);
 
-        uint256 interest  = newInterest.mul(1 ether).div(sum).div(1 ether).mul(balance);
-        uint256 principal = newPrincipal.mul(1 ether).div(sum).div(1 ether).mul(balance);
-        uint256 fee       = newFee.mul(1 ether).div(sum).div(1 ether).mul(balance);
-        uint256 excess    = newExcess.mul(1 ether).div(sum).div(1 ether).mul(balance);
+        uint256 interest  = newInterest.mul(1 ether).div(sum).mul(balance).div(1 ether);
+        uint256 principal = newPrincipal.mul(1 ether).div(sum).mul(balance).div(1 ether);
+        uint256 fee       = newFee.mul(1 ether).div(sum).mul(balance).div(1 ether);
+        uint256 excess    = newExcess.mul(1 ether).div(sum).mul(balance).div(1 ether);
 
-        // Distribute "interest" to appropriate parties.
-        uint256 toPoolDelegate    = interest.mul(delegateFee).div(10000);
-        uint256 toStakeLocker     = interest.mul(stakingFee).div(10000);
-        uint256 toLiquidityLocker = interest.mul(10000 - stakingFee - delegateFee).div(10000);
-
-        require(ILiquidityAsset.transfer(poolDelegate,           toPoolDelegate));
-        require(ILiquidityAsset.transfer(stakeLockerAddress,     toStakeLocker));
-        require(ILiquidityAsset.transfer(liquidityLockerAddress, toLiquidityLocker));
+        require(ILiquidityAsset.transfer(poolDelegate,           interest.mul(delegateFee).div(10000)));
+        require(ILiquidityAsset.transfer(stakeLockerAddress,     interest.mul(stakingFee).div(10000)));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, interest.mul(10000 - stakingFee - delegateFee).div(10000)));
 
         // Distribute "principal" and "excess" to liquidityLocker.
         require(ILiquidityAsset.transfer(liquidityLockerAddress, principal));
@@ -358,6 +353,8 @@ contract LiquidityPool is IERC20, ERC20 {
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
         emit BalanceUpdated(stakeLockerAddress,     address(ILiquidityAsset), ILiquidityAsset.balanceOf(stakeLockerAddress));
         emit BalanceUpdated(poolDelegate,           address(ILiquidityAsset), ILiquidityAsset.balanceOf(poolDelegate));
+        
+        return([sum, interest, principal, fee, excess]);
     }
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
