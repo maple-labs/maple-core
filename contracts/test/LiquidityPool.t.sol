@@ -439,10 +439,11 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(IERC20(DAI).balanceOf(liqLocker),              100 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),         0);  // Balance of Funding Locker
 
-        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory),  20 ether));  // Fund loan for 20 DAI
-        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory),  25 ether));  // Fund same loan for 25 DAI
-        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory2), 15 ether));  // Fund new loan same vault for 15 DAI
-        assertTrue(ali.try_fundLoan(address(liqPool), address(vault2), address(ltlFactory2), 15 ether));  // Fund new loan new vault for 15 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory),    20 ether));  // Fund loan for 20 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory),    25 ether));  // Fund same loan for 25 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault),  address(ltlFactory2),   15 ether));  // Fund new loan same vault for 15 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault2), address(ltlFactory2),   15 ether));  // Fund new loan new vault for 15 DAI
+        assertTrue(ali.try_fundLoan(address(liqPool), address(vault2), address(ltlFactory2), 1000 ether));  // Fund new loan new vault for 15 DAI
 
         (, address ltLocker,,,,,)  = liqPool.loans(address(vault),  address(ltlFactory));
         (, address ltLocker2,,,,,) = liqPool.loans(address(vault),  address(ltlFactory2));
