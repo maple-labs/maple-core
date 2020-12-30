@@ -66,14 +66,14 @@ describe("MapleGlobals.sol Interactions", function () {
     const unstakeDelayRevert = await mapleGlobals.unstakeDelay();
     expect(unstakeDelayRevert).to.equal(7776000);
 
-    await mapleGlobals.setGovernor(accounts[1]);
-    const governorFetch = await mapleGlobals.governor();
-    expect(governorFetch).to.equal(accounts[1]);
-
     await mapleGlobals.addCalculator(BUNK_ADDRESS);
     expect(mapleGlobals.isValidCalculator(BUNK_ADDRESS)).to.equal(true);
     await mapleGlobals.removeCalculator(BUNK_ADDRESS);
     expect(mapleGlobals.isValidCalculator(BUNK_ADDRESS)).to.equal(false);
+
+    await mapleGlobals.setGovernor(accounts[1]);
+    const governorFetch = await mapleGlobals.governor();
+    expect(governorFetch).to.equal(accounts[1]);
   });
 
   it("check msg.sender throws revert error", async function () {
