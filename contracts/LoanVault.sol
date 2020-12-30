@@ -124,7 +124,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     ///        _calculators[1] = LateFee Calculator
     ///        _calculators[2] = Premium Calculator
     constructor(
-	address _borrower,
         address _assetRequested,
         address _assetCollateral,
         address _fundingLockerFactory,
@@ -153,7 +152,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         ICollateralAsset = IERC20(_assetCollateral);
         MapleGlobals = IGlobals(_mapleGlobals);
         fundsToken = IRequestedAsset;
-        borrower = _borrower;
+        borrower = tx.origin;
         loanCreatedTimestamp = block.timestamp;
 
         // Perform validity cross-checks.

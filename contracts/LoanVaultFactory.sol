@@ -9,29 +9,26 @@ import "./interface/ICalcGeneral.sol";
 
 /// @title LoanVaultFactory instantiates LoanVault contracts.
 contract LoanVaultFactory {
-    using SafeMath for uint256;
+
+	using SafeMath for uint256;
 
     // Data structures for loan vaults.
     mapping(uint256 => address) private loanVaults;
     mapping(address => bool) private _isLoanVault;
-
+    
     /// @notice Incrementor for number of loan vaults created.
     uint256 public loanVaultsCreated;
 
     /// @notice The MapleGlobals.sol contract.
     address public mapleGlobals;
-
+    
     /// @notice The FundingLockerFactory to use for this LoanVaultFactory.
     address public fundingLockerFactory;
-
+    
     /// @notice The CollateralLockerFactory to use for this LoanVaultFactory.
     address public collateralLockerFactory;
 
-    constructor(
-        address _mapleGlobals,
-        address _fundingLockerFactory,
-        address _collateralLockerFactory
-    ) public {
+    constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) public {
         mapleGlobals = _mapleGlobals;
         fundingLockerFactory = _fundingLockerFactory;
         collateralLockerFactory = _collateralLockerFactory;
@@ -39,21 +36,19 @@ contract LoanVaultFactory {
 
     // Authorization to call Treasury functions.
     modifier isGovernor() {
-        require(
-            msg.sender == IGlobals(mapleGlobals).governor(),
-            "LoanVaultFactory::ERR_MSG_SENDER_NOT_GOVERNOR"
-        );
+        require(msg.sender == IGlobals(mapleGlobals).governor(), "LoanVaultFactory::ERR_MSG_SENDER_NOT_GOVERNOR");
         _;
     }
 
     /// @notice Fired when user calls createLoanVault()
     event LoanVaultCreated(
         uint256 _loanVaultID,
-        address _loanVaultAddress,
+		address _loanVaultAddress,
         address indexed _borrower,
         address indexed _assetRequested,
         address _assetCollateral,
-        uint256[6] _specifications
+        uint256[6] _specifications,
+        address[3] _calculators
     );
 
     /// @notice Instantiates a LoanVault
@@ -77,10 +72,12 @@ contract LoanVaultFactory {
         uint256[6] memory _specifications,
         address[3] memory _calculators
     ) public returns (address) {
+
         // Pre-checks.
         address _interestCalculator = _calculators[0];
         address _lateFeeCalculator = _calculators[1];
         address _premiumCalculator = _calculators[2];
+
         require(
             _assetCollateral != address(0),
             "LoanVaultFactory::createLoanVault:ERR_NULL_ASSET_COLLATERAL"
@@ -100,22 +97,20 @@ contract LoanVaultFactory {
                 ICalcGeneral(_premiumCalculator).calcType() == "PREMIUM",
             "LoanVaultFactory::createLoanVault:ERR_NULL_PREMIUM_CALC"
         );
-
+        
         // Deploy loan vault contract.
-        string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated + 1);
+	    string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated+1);
 
-        LoanVault vault =
-            new LoanVault(
-                msg.sender,
-                _assetRequested,
-                _assetCollateral,
-                fundingLockerFactory,
-                collateralLockerFactory,
-                mapleGlobals,
-                _specifications,
-                [_interestCalculator, _lateFeeCalculator, _premiumCalculator],
-                _tUUID
-            );
+        LoanVault vault = new LoanVault(
+            _assetRequested,
+            _assetCollateral,
+            fundingLockerFactory,
+            collateralLockerFactory,
+            mapleGlobals,
+            _specifications,
+            [_interestCalculator, _lateFeeCalculator, _premiumCalculator],
+	        _tUUID
+        );
 
         // Update LoanVaultFactory identification mappings.
         loanVaults[loanVaultsCreated] = address(vault);
@@ -128,7 +123,8 @@ contract LoanVaultFactory {
             msg.sender,
             _assetRequested,
             _assetCollateral,
-            _specifications
+            _specifications,
+            [_interestCalculator, _lateFeeCalculator, _premiumCalculator]
         );
 
         // Increment loanVaultCreated (IDs), return loan vault address.
@@ -155,7 +151,7 @@ contract LoanVaultFactory {
     function setFundingLockerFactory(address _fundingLockerFactory) public isGovernor {
         fundingLockerFactory = _fundingLockerFactory;
     }
-
+    
     /// @dev Governor can adjust the fundingLockerFactory.
     /// @param _collateralLockerFactory The new collateralLockerFactory address.
     function setCollateralLockerFactory(address _collateralLockerFactory) public isGovernor {
