@@ -2,10 +2,11 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "./interface/ILoanVault.sol";
+import "../interface/ILoanVault.sol";
 
 contract PremiumFlatCalculator {
-    using SafeMath for uint256;
+
+	using SafeMath for uint256;
 
     bytes32 public calcType = "PREMIUM";
     bytes32 public name = "FLAT";
@@ -19,19 +20,12 @@ contract PremiumFlatCalculator {
 
     /// @dev Returns the total payment, and interest/principal amount, for paying off the loan early.
     /// @return (uint,uint,uint) [0] = Principal + Interest, [1] = Principal, [2] = Interest
-    function getPremiumPayment(address _loanVault)
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        ILoanVault loan = ILoanVault(_loanVault);
-        uint256 principalOwed = loan.principalOwed();
-        uint256 interest = principalOwed.mul(premiumBips).div(10000);
+    function getPremiumPayment(address _loanVault) view public returns(uint256, uint256, uint256) {
 
-        return (interest.add(principalOwed), principalOwed, interest);
-    }
-}
+    ILoanVault loan = ILoanVault(_loanVault);
+    uint256 principalOwed = loan.principalOwed();
+    uint256 interest = principalOwed.mul(premiumBips).div(10000);
+    
+    return (interest.add(principalOwed), principalOwed, interest);
+  }
+} 
