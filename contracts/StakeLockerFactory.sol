@@ -13,11 +13,6 @@ contract StakeLockerFactory {
     // Mapping for validation of lockers, confirmed when initialized through this contract.
     mapping(address => bool) private isLocker;
 
-    event LockerCreated(
-        address _locker,
-        address _assetLocked
-    );
-
     // @notice Creates a new locker.
     // @param _stakeAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
     // @param _liquidityAsset The address of the dividend token, also the primary investment asset of the LP.
@@ -32,7 +27,6 @@ contract StakeLockerFactory {
         address _stakeLocker = address(new StakeLocker(_stakeAsset, _liquidityAsset, _owner, _globals));
         ownerOfLocker[_stakeLocker] = _owner; //address of LP contract that sent it, not poolManagers
         isLocker[_stakeLocker] = true;
-        emit LockerCreated(_stakeLocker);
         return _stakeLocker;
     }
 
