@@ -192,8 +192,9 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         premiumCalculator = IPremiumCalculator(_calculators[2]);
         nextPaymentDue = loanCreatedTimestamp.add(paymentIntervalSeconds);
 
-        // Deploy a funding locker.
-        fundingLocker = IFundingLockerFactory(fundingLockerFactory).newLocker(assetRequested);
+        // Deploy lockers
+        collateralLocker = ICollateralLockerFactory(collateralLockerFactory).newLocker(assetCollateral);
+        fundingLocker    = IFundingLockerFactory(fundingLockerFactory).newLocker(assetRequested);
     }
 
     /**
@@ -241,9 +242,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         drawdownAmount = _drawdownAmount;
 
         loanState = State.Active;
-
-        // Deploy a collateral locker.
-        collateralLocker = ICollateralLockerFactory(collateralLockerFactory).newLocker(assetCollateral);
 
         // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
         require(
