@@ -50,17 +50,7 @@ contract MapleGlobals {
     // Mapping of asset, to the associated pricefeed.
     mapping(address => address) public tokenPriceFeed;
 
-    // Mapping of bytes32 interest structure IDs to address of the corresponding interestStructureCalculators.
-    mapping(bytes32 => address) public interestStructureCalculators;
-    bytes32[] public validInterestStructures;
-
-    // Mapping of bytes32 late fee calculator IDs to address of the corresponding lateFeeCalculator.
-    mapping(bytes32 => address) public lateFeeCalculators;
-    bytes32[] public validLateFeeCalculators;
-
-    // Mapping of bytes32 premium calculator IDs to address of the corresponding premiumCalculator.
-    mapping(bytes32 => address) public premiumCalculators;
-    bytes32[] public validPremiumCalculators;
+    mapping(address => bool) public isValidCalculator;
 
     // @return primary factory addresses
     address public loanVaultFactory;
@@ -155,43 +145,8 @@ contract MapleGlobals {
         validBorrowTokenSymbols.push(IERC20Details(_token).symbol());
     }
 
-    /**
-        @notice Governor can set an interest structure calculator.
-        @param _interestStructure Name of the interest structure (e.g. "BULLET")
-        @param _calculator Address of the corresponding calculator for repayments, etc.
-     */
-    function setInterestStructureCalculator(bytes32 _interestStructure, address _calculator)
-        public
-        isGovernor
-    {
-        interestStructureCalculators[_interestStructure] = _calculator;
-        validInterestStructures.push(_interestStructure);
-    }
-
-    /**
-        @notice Governor can set an interest structure calculator.
-        @param _lateFeeType Name of the interest structure (e.g. "NULL")
-        @param _calculator Address of the corresponding calculator.
-     */
-    function setLateFeeCalculator(bytes32 _lateFeeType, address _calculator)
-        public
-        isGovernor
-    {
-        lateFeeCalculators[_lateFeeType] = _calculator;
-        validLateFeeCalculators.push(_lateFeeType);
-    }
-
-    /**
-        @notice Governor can set a premium calculator.
-        @param _premiumType Name of the premium type (e.g. "FLAT")
-        @param _calculator Address of the corresponding calculator.
-     */
-    function setPremiumCalculator(bytes32 _premiumType, address _calculator)
-        public
-        isGovernor
-    {
-        premiumCalculators[_premiumType] = _calculator;
-        validPremiumCalculators.push(_premiumType);
+    function setCalculator(address _calculator, bool valid) public isGovernor {
+        isValidCalculator[_calculator] = valid;
     }
 
     /**

@@ -7,7 +7,7 @@ async function main() {
 
   console.log(await UUIDTest.test(2));
   console.log(await UUIDTest.test(25));
-    console.log(await UUIDTest.test(26));
+  console.log(await UUIDTest.test(26));
   console.log(await UUIDTest.test(27));
 
   console.log(await UUIDTest.test(33423423));

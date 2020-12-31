@@ -5,6 +5,7 @@ import "./LoanVault.sol";
 import "./interface/IGlobals.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./library/TokenUUID.sol";
+import "./interface/ICalcGeneral.sol";
 
 /// @title LoanVaultFactory instantiates LoanVault contracts.
 contract LoanVaultFactory {
@@ -46,8 +47,8 @@ contract LoanVaultFactory {
         address indexed _borrower,
         address indexed _assetRequested,
         address _assetCollateral,
-        uint[6] _specifications,
-        bytes32[3] _calculators
+        uint256[6] _specifications,
+        address[3] _calculators
     );
 
     /// @notice Instantiates a LoanVault
@@ -68,25 +69,32 @@ contract LoanVaultFactory {
     function createLoanVault(
         address _assetRequested,
         address _assetCollateral,
-        uint[6] memory _specifications,
-        bytes32[3] memory _calculators
+        uint256[6] memory _specifications,
+        address[3] memory _calculators
     ) public returns (address) {
 
         // Pre-checks.
+        address _interestCalculator = _calculators[0];
+        address _lateFeeCalculator = _calculators[1];
+        address _premiumCalculator = _calculators[2];
+
         require(
-            _assetCollateral!= address(0),
+            _assetCollateral != address(0),
             "LoanVaultFactory::createLoanVault:ERR_NULL_ASSET_COLLATERAL"
         );
         require(
-            IGlobals(mapleGlobals).interestStructureCalculators(_calculators[0]) != address(0),
+            IGlobals(mapleGlobals).isValidCalculator(_interestCalculator) &&
+                ICalcGeneral(_interestCalculator).calcType() == "INTEREST",
             "LoanVaultFactory::createLoanVault:ERR_NULL_INTEREST_STRUCTURE_CALC"
         );
         require(
-            IGlobals(mapleGlobals).lateFeeCalculators(_calculators[1]) != address(0),
+            IGlobals(mapleGlobals).isValidCalculator(_lateFeeCalculator) &&
+                ICalcGeneral(_lateFeeCalculator).calcType() == "LATEFEE",
             "LoanVaultFactory::createLoanVault:ERR_NULL_LATE_FEE_CALC"
         );
         require(
-            IGlobals(mapleGlobals).premiumCalculators(_calculators[2]) != address(0),
+            IGlobals(mapleGlobals).isValidCalculator(_premiumCalculator) &&
+                ICalcGeneral(_premiumCalculator).calcType() == "PREMIUM",
             "LoanVaultFactory::createLoanVault:ERR_NULL_PREMIUM_CALC"
         );
         
@@ -100,11 +108,7 @@ contract LoanVaultFactory {
             collateralLockerFactory,
             mapleGlobals,
             _specifications,
-            [
-                IGlobals(mapleGlobals).interestStructureCalculators(_calculators[0]),
-                IGlobals(mapleGlobals).lateFeeCalculators(_calculators[1]),
-                IGlobals(mapleGlobals).premiumCalculators(_calculators[2])
-            ],
+            [_interestCalculator, _lateFeeCalculator, _premiumCalculator],
 	        _tUUID
         );
 
@@ -120,7 +124,7 @@ contract LoanVaultFactory {
             _assetRequested,
             _assetCollateral,
             _specifications,
-            [_calculators[0], _calculators[1], _calculators[2]]
+            [_interestCalculator, _lateFeeCalculator, _premiumCalculator]
         );
 
         // Increment loanVaultCreated (IDs), return loan vault address.

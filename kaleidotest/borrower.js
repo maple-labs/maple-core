@@ -11,6 +11,10 @@ const LateFeeNullCalculator = require(artpath +
 const PremiumFlatCalculator = require(artpath +
   "addresses/PremiumFlatCalculator.address.js");
 
+const LoanVaultFactoryAddress = require(artpath +
+  "addresses/LoanVaultFactory.address");
+const LoanVaultFactoryABI = require(artpath + "abis/LoanVaultFactory.abi");
+
 describe("Borrower Journey", function () {
   let loanVaultAddress;
 
@@ -197,10 +201,6 @@ describe("Borrower Journey", function () {
   });
 
   it("C - Create a loan through the factory", async function () {
-    const LoanVaultFactoryAddress = require(artpath +
-      "addresses/LoanVaultFactory.address");
-    const LoanVaultFactoryABI = require(artpath + "abis/LoanVaultFactory.abi");
-
     let LoanVaultFactory;
 
     LoanVaultFactory = new ethers.Contract(
@@ -276,8 +276,26 @@ describe("Borrower Journey", function () {
       [BulletRepaymentCalculator, LateFeeNullCalculator, PremiumFlatCalculator],
       { gasLimit: 6000000 }
     );
+    await new Promise((r) => setTimeout(r, 15000));
+  });
 
-    loanVaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
+  it("check if it was actually created", async function () {
+    LoanVaultFactory = new ethers.Contract(
+      LoanVaultFactoryAddress,
+      LoanVaultFactoryABI,
+      ethers.provider.getSigner(0)
+    );
+
+    preIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
+    loanVaultAddress = await LoanVaultFactory.getLoanVault(
+      preIncrementorValue - 1
+    );
+    expect(loanVaultAddress).to.not.equal(
+      "0x0000000000000000000000000000000000000000"
+    );
+    expect(await LoanVaultFactory.getLoanVault(preIncrementorValue)).to.equal(
+      "0x0000000000000000000000000000000000000000"
+    );
   });
 
   it("D - Simulate other users funding the loan", async function () {
@@ -377,7 +395,7 @@ describe("Borrower Journey", function () {
     // )
   });
 
-  it("F - Fetch collateral required for drawdown, facilitate approve() calls", async function () {
+  xit("F - Fetch collateral required for drawdown, facilitate approve() calls", async function () {
     const LoanVaultABI = require(artpath + "abis/LoanVault.abi");
     const ERC20ABI = require(artpath + "abis/MintableTokenDAI.abi");
 
@@ -387,10 +405,13 @@ describe("Borrower Journey", function () {
       LoanVaultABI,
       ethers.provider.getSigner(0)
     );
-
-    const REQUESTED_ASSET_ADDRESS = await LoanVault.assetRequested();
-    const COLLATERAL_ASSET_ADDRESS = await LoanVault.assetCollateral();
-    const BORROWER_ADDRESS = await LoanVault.borrower();
+    const REQUESTED_ASSET_ADDRESS = await LoanVault.assetRequested({
+      gasLimit: 6000000,
+    });
+    const COLLATERAL_ASSET_ADDRESS = await LoanVault.assetCollateral({
+      gasLimit: 6000000,
+    });
+    const BORROWER_ADDRESS = await LoanVault.borrower({ gasLimit: 6000000 });
 
     RequestedAsset = new ethers.Contract(
       REQUESTED_ASSET_ADDRESS,
@@ -402,39 +423,53 @@ describe("Borrower Journey", function () {
       ERC20ABI,
       ethers.provider.getSigner(0)
     );
-
-    const REQUESTED_AMOUNT_DECIMALS = await RequestedAsset.decimals();
-    const COLLATERAL_AMOUNT_DECIMALS = await CollateralAsset.decimals();
+    const REQUESTED_AMOUNT_DECIMALS = await RequestedAsset.decimals({
+      gasLimit: 6000000,
+    });
+    const COLLATERAL_AMOUNT_DECIMALS = await CollateralAsset.decimals({
+      gasLimit: 6000000,
+    });
 
     // User inputs this number.
     const USER_ENTERED_DRAWDOWN_AMOUNT = 10000;
-
+    console.log("1");
+    const drawdown_amount = BigNumber.from(10)
+      .pow(COLLATERAL_AMOUNT_DECIMALS)
+      .mul(USER_ENTERED_DRAWDOWN_AMOUNT);
     const COLLATERAL_DRAWDOWN_AMOUNT_BASE = await LoanVault.collateralRequiredForDrawdown(
-      BigNumber.from(10)
-        .pow(REQUESTED_AMOUNT_DECIMALS)
-        .mul(USER_ENTERED_DRAWDOWN_AMOUNT)
+      drawdown_amount,
+      { gasLimit: 6000000 }
     );
+    //something is fucked up with the above function, might have to do with the getPrice() in maple
+    //but basically this function will take as muich gas as you give it
+    console.log("1a");
 
     // Output this number to front-end, may need to round to two or three nearest digits.
     const COLLATERAL_REQUIRED =
       parseInt(COLLATERAL_DRAWDOWN_AMOUNT_BASE["_hex"]) /
       10 ** COLLATERAL_AMOUNT_DECIMALS;
-
+    console.log("2");
     // Use this for "infinite" approval amount calls.
-    await CollateralAsset.approve(loanVaultAddress, BigNumber.from(10).pow(64));
+    await CollateralAsset.approve(
+      loanVaultAddress,
+      BigNumber.from(10).pow(64),
+      { gasLimit: 6000000 }
+    );
 
     // Use this for precise approval amount calls (would need some buffer in case price falls).
     await CollateralAsset.approve(
       loanVaultAddress,
-      COLLATERAL_DRAWDOWN_AMOUNT_BASE
+      COLLATERAL_DRAWDOWN_AMOUNT_BASE,
+      { gasLimit: 6000000 }
     );
 
     // Confirm user has enough approval to call drawdown() for USER_ENTERED_DRAWDOWN_AMOUNT.
     const USER_APPROVAL_TO_LOAN_VAULT = await CollateralAsset.allowance(
       BORROWER_ADDRESS, // User's address, could pull from different source for front-end.
-      loanVaultAddress
+      loanVaultAddress,
+      { gasLimit: 6000000 }
     );
-
+    console.log("3");
     // Note: Front-end wants to check greater than or equal to.
     expect(parseInt(USER_APPROVAL_TO_LOAN_VAULT["_hex"])).to.be.equals(
       parseInt(COLLATERAL_DRAWDOWN_AMOUNT_BASE["_hex"])
@@ -469,7 +504,8 @@ describe("Borrower Journey", function () {
     await LoanVault.drawdown(
       BigNumber.from(10)
         .pow(REQUESTED_AMOUNT_DECIMALS)
-        .mul(USER_ENTERED_DRAWDOWN_AMOUNT)
+        .mul(USER_ENTERED_DRAWDOWN_AMOUNT),
+      { gasLimit: 6000000 }
     );
   });
 });

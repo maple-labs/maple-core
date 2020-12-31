@@ -65,6 +65,7 @@ module.exports = {
       accounts: {
         mnemonic: process.env.MAPLE_MNEMONIC || "",
       },
+      evmVersion: "byzantium",
     },
 
     coverage: {

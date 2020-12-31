@@ -10,6 +10,18 @@ const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const WETHAddress = require(artpath + "addresses/WETH9.address.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 
+const AmortizationRepaymentCalculator = require(artpath +
+  "addresses/AmortizationRepaymentCalculator.address.js");
+
+const BulletRepaymentCalculator = require(artpath +
+  "addresses/BulletRepaymentCalculator.address.js");
+
+const LateFeeNullCalculator = require(artpath +
+  "addresses/LateFeeNullCalculator.address.js");
+
+const PremiumFlatCalculator = require(artpath +
+  "addresses/PremiumFlatCalculator.address.js");
+
 const MapleGlobalsAddress = require(artpath +
   "addresses/MapleGlobals.address.js");
 const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
@@ -91,6 +103,10 @@ async function main() {
   await mapleGlobals.addCollateralToken(WETHAddress);
   await mapleGlobals.addCollateralToken(WBTCAddress);
 
+  await mapleGlobals.setCalculator(AmortizationRepaymentCalculator, true);
+  await mapleGlobals.setCalculator(BulletRepaymentCalculator, true);
+  await mapleGlobals.setCalculator(LateFeeNullCalculator, true);
+  await mapleGlobals.setCalculator(PremiumFlatCalculator, true);
 
   const LVFactory = new ethers.Contract(
     LoanVaultFactoryAddress,

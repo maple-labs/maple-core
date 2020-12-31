@@ -1,6 +1,6 @@
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
-const artpath = '../../contracts/' + network.name + '/';
+const artpath = "../../contracts/" + network.name + "/";
 
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
@@ -12,17 +12,30 @@ const WETHAddress = require(artpath + "addresses/WETH9.address.js");
 const WETHABI = require(artpath + "abis/WETH9.abi.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const WBTCABI = require(artpath + "abis/WBTC.abi.js");
-const LVFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address.js");
+const LVFactoryAddress = require(artpath +
+  "addresses/LoanVaultFactory.address.js");
 const LVFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
-const FLFAddress = require(artpath + "addresses/FundingLockerFactory.address.js");
+const FLFAddress = require(artpath +
+  "addresses/FundingLockerFactory.address.js");
 const FLFABI = require(artpath + "abis/FundingLockerFactory.abi.js");
-const CLFAddress = require(artpath + "addresses/CollateralLockerFactory.address.js");
+const CLFAddress = require(artpath +
+  "addresses/CollateralLockerFactory.address.js");
 const CLFABI = require(artpath + "abis/CollateralLockerFactory.abi.js");
-const LALFAddress = require(artpath + "addresses/LiquidityLockerFactory.address.js");
+const LALFAddress = require(artpath +
+  "addresses/LiquidityLockerFactory.address.js");
 const LALFABI = require(artpath + "abis/LiquidityLockerFactory.abi.js");
 const GlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
 const GlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
 const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
+
+const AmortizationRepaymentCalculator = require(artpath +
+  "addresses/AmortizationRepaymentCalculator.address.js");
+const BulletRepaymentCalculator = require(artpath +
+  "addresses/BulletRepaymentCalculator.address.js");
+const LateFeeNullCalculator = require(artpath +
+  "addresses/LateFeeNullCalculator.address.js");
+const PremiumFlatCalculator = require(artpath +
+  "addresses/PremiumFlatCalculator.address.js");
 
 describe("LoanVaultFactory.sol / LoanVault.sol", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -90,11 +103,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
-        [
-          ethers.utils.formatBytes32String('BALLET'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLAT')
-        ]
+        [BUNK_ADDRESS, LateFeeNullCalculator, PremiumFlatCalculator]
       )
     ).to.be.revertedWith(
       "LoanVaultFactory::createLoanVault:ERR_NULL_INTEREST_STRUCTURE_CALC"
@@ -105,11 +114,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
-        [
-          ethers.utils.formatBytes32String('BULLET'),
-          ethers.utils.formatBytes32String('NALL'),
-          ethers.utils.formatBytes32String('FLAT')
-        ]
+        [BulletRepaymentCalculator, BUNK_ADDRESS, PremiumFlatCalculator]
       )
     ).to.be.revertedWith(
       "LoanVaultFactory::createLoanVault:ERR_NULL_LATE_FEE_CALC"
@@ -120,11 +125,7 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
-        [
-          ethers.utils.formatBytes32String('BULLET'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLOT')
-        ]
+        [BulletRepaymentCalculator, LateFeeNullCalculator, BUNK_ADDRESS]
       )
     ).to.be.revertedWith(
       "LoanVaultFactory::createLoanVault:ERR_NULL_PREMIUM_CALC"
@@ -136,9 +137,9 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
         [
-          ethers.utils.formatBytes32String('BULLET'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLAT')
+          BulletRepaymentCalculator,
+          LateFeeNullCalculator,
+          PremiumFlatCalculator,
         ]
       )
     ).to.be.revertedWith(
@@ -151,9 +152,9 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
         [
-          ethers.utils.formatBytes32String('BULLET'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLAT')
+          BulletRepaymentCalculator,
+          LateFeeNullCalculator,
+          PremiumFlatCalculator,
         ]
       )
     ).to.be.revertedWith(
@@ -166,9 +167,9 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         BUNK_ADDRESS,
         [5000, 0, 0, 0, 0, 0],
         [
-          ethers.utils.formatBytes32String('AMORTIZATION'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLAT')
+          AmortizationRepaymentCalculator,
+          LateFeeNullCalculator,
+          PremiumFlatCalculator,
         ]
       )
     ).to.be.revertedWith(
@@ -181,9 +182,9 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
         [
-          ethers.utils.formatBytes32String('BULLET'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLAT')
+          BulletRepaymentCalculator,
+          LateFeeNullCalculator,
+          PremiumFlatCalculator,
         ]
       )
     ).to.be.revertedWith(
@@ -196,9 +197,9 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         WETHAddress,
         [5000, 1, 0, 0, 0, 0],
         [
-          ethers.utils.formatBytes32String('AMORTIZATION'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLAT')
+          AmortizationRepaymentCalculator,
+          LateFeeNullCalculator,
+          PremiumFlatCalculator,
         ]
       )
     ).to.be.revertedWith(
@@ -211,9 +212,9 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         WETHAddress,
         [5000, 30, 29, 1000000000000, 0, 0],
         [
-          ethers.utils.formatBytes32String('BULLET'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLAT')
+          BulletRepaymentCalculator,
+          LateFeeNullCalculator,
+          PremiumFlatCalculator,
         ]
       )
     ).to.be.revertedWith(
@@ -226,9 +227,9 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         WETHAddress,
         [5000, 30, 30, 0, 0, 0],
         [
-          ethers.utils.formatBytes32String('BULLET'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLAT')
+          BulletRepaymentCalculator,
+          LateFeeNullCalculator,
+          PremiumFlatCalculator,
         ]
       )
     ).to.be.revertedWith("LoanVault::constructor:ERR_MIN_RAISE_EQUALS_ZERO");
@@ -239,9 +240,9 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         WETHAddress,
         [5000, 90, 30, 1000000000000, 0, 0],
         [
-          ethers.utils.formatBytes32String('AMORTIZATION'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLAT')
+          AmortizationRepaymentCalculator,
+          LateFeeNullCalculator,
+          PremiumFlatCalculator,
         ]
       )
     ).to.be.revertedWith(
@@ -258,9 +259,9 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
       WETHAddress,
       [5000, 90, 30, 1000000000000, 0, 7],
       [
-        ethers.utils.formatBytes32String('AMORTIZATION'),
-        ethers.utils.formatBytes32String('NULL'),
-        ethers.utils.formatBytes32String('FLAT')
+        AmortizationRepaymentCalculator,
+        LateFeeNullCalculator,
+        PremiumFlatCalculator,
       ]
     );
 
@@ -293,19 +294,14 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
   });
 
   it("confirm loanVault borrower, other state vars, and specifications", async function () {
-    
     Globals = new ethers.Contract(
       GlobalsAddress,
       GlobalsABI,
       ethers.provider.getSigner(0)
     );
 
-    const BULLET_CALC_ADDRESS = await Globals.interestStructureCalculators(
-      ethers.utils.formatBytes32String('BULLET')
-    )
-    const AMORTIZATION_CALC_ADDRESS = await Globals.interestStructureCalculators(
-      ethers.utils.formatBytes32String('AMORTIZATION')
-    )
+    const BULLET_CALC_ADDRESS = BulletRepaymentCalculator;
+    const AMORTIZATION_CALC_ADDRESS = AmortizationRepaymentCalculator;
 
     LoanVault = new ethers.Contract(
       vaultAddress,
@@ -323,9 +319,9 @@ describe("LoanVaultFactory.sol / LoanVault.sol", function () {
         WETHAddress,
         [5000, 90, 30, 1000000000000, 0, 7], 
         [
-          ethers.utils.formatBytes32String('AMORTIZATION'),
-          ethers.utils.formatBytes32String('NULL'),
-          ethers.utils.formatBytes32String('FLAT')
+          AmortizationRepaymentCalculator,
+          LateFeeNullCalculator,
+          PremiumFlatCalculator
         ]
       )
     */
