@@ -42,13 +42,15 @@ contract LoanVaultFactory {
 
     /// @notice Fired when user calls createLoanVault()
     event LoanVaultCreated(
-        uint256 _loanVaultID,
-		address _loanVaultAddress,
-        address indexed _borrower,
-        address indexed _assetRequested,
-        address _assetCollateral,
-        uint256[6] _specifications,
-        address[3] _calculators
+        uint256 loanVaultID,
+		address loanVaultAddress,
+        address indexed borrower,
+        address indexed assetRequested,
+        address assetCollateral,
+        address collateralLocker,
+        address fundingLocker,
+        uint256[6] specifications,
+        address[3] calculators
     );
 
     /// @notice Instantiates a LoanVault
@@ -124,6 +126,8 @@ contract LoanVaultFactory {
             msg.sender,
             _assetRequested,
             _assetCollateral,
+            vault.collateralLocker(),
+            vault.fundingLocker(),
             _specifications,
             [_interestCalculator, _lateFeeCalculator, _premiumCalculator]
         );

@@ -55,6 +55,8 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 amountFunded
     );
 
+    event BalanceUpdated(address who, address token, uint256 balance);
+
     /// @notice Data structure to reference loan token lockers.
     /// @dev loans[LOAN_VAULT][LOCKER_FACTORY] = LOCKER
     mapping(address => mapping(address => Loan)) public loans;
@@ -220,6 +222,8 @@ contract LiquidityPool is IERC20, ERC20 {
         ILiquidityAsset.transferFrom(msg.sender, liquidityLockerAddress, _amt);
         uint256 _mintAmt = liq2FDT(_amt);
         _mint(msg.sender, _mintAmt);
+
+        emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
     }
 
     function fundLoan(
@@ -247,13 +251,15 @@ contract LiquidityPool is IERC20, ERC20 {
         } else {
             loans[_loanVault][_loanTokenLockerFactory].amountFunded += _amt;
         }
-        emit LoanFunded(_loanVault, loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker, _amt);
         // Fund loan.
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
             _loanVault,
             loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker,
             _amt
         );
+
+        emit LoanFunded(_loanVault, loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker, _amt);
+        emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
     }
 
     /// @notice Claim available funds through a LoanToken.
@@ -324,6 +330,10 @@ contract LiquidityPool is IERC20, ERC20 {
             loans[info.loanVaultFunded][info.loanTokenLocker].loanTokenLocker,
             IERC20(info.loanVaultFunded).balanceOf(address(this))
         );
+
+        emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
+        emit BalanceUpdated(stakeLockerAddress,     address(ILiquidityAsset), ILiquidityAsset.balanceOf(stakeLockerAddress));
+        emit BalanceUpdated(poolDelegate,           address(ILiquidityAsset), ILiquidityAsset.balanceOf(poolDelegate));
     }
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals

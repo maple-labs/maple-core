@@ -33,15 +33,17 @@ contract LiquidityPoolFactory {
     }
 
     event PoolCreated(
-        address indexed _pool,
-        address indexed _delegate,
-        address _liquidityAsset,
-        address _stakeAsset,
-        uint256 _stakingFee,
-        uint256 _delegateFee,
-        string name,
-        string symbol,
-        uint256 indexed _id
+        uint256 indexed id,
+        address indexed pool,
+        address indexed delegate,
+        address liquidityAsset,
+        address stakeAsset,
+        address liquidityLocker,
+        address stakeLocker, 
+        uint256 stakingFee,
+        uint256 delegateFee,
+        string  name,
+        string  symbol
     );
 
     /// @notice Instantiates a liquidity pool contract on-chain.
@@ -62,7 +64,7 @@ contract LiquidityPoolFactory {
             IGlobals(mapleGlobals).validPoolDelegate(msg.sender),
             "LiquidityPoolFactory::createLiquidityPool:ERR_MSG_SENDER_NOT_WHITELISTED"
         );
-        LiquidityPool lpool =
+        LiquidityPool lPool =
             new LiquidityPool(
                 msg.sender,
                 _liquidityAsset,
@@ -75,21 +77,23 @@ contract LiquidityPoolFactory {
                 symbol,
                 mapleGlobals
             );
-        _liquidityPools[liquidityPoolsCreated] = address(lpool);
-        _isLiquidityPool[address(lpool)] = true;
+        _liquidityPools[liquidityPoolsCreated] = address(lPool);
+        _isLiquidityPool[address(lPool)] = true;
         emit PoolCreated(
-            address(lpool),
+            liquidityPoolsCreated,
+            address(lPool),
             msg.sender,
             _liquidityAsset,
             _stakeAsset,
+            lPool.liquidityLockerAddress(),
+            lPool.stakeLockerAddress(),
             _stakingFee,
             _delegateFee,
             name,
-            symbol,
-            liquidityPoolsCreated
+            symbol
         );
         liquidityPoolsCreated++;
-        return address(lpool);
+        return address(lPool);
     }
 
     /// @notice Fetch address of a liquidity pool using the ID (incrementor).
