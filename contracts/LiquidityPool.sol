@@ -283,7 +283,6 @@ contract LiquidityPool is IERC20, ERC20 {
         } else {
             loans[_loanVault][_loanTokenLockerFactory].amountFunded += _amt;
         }
-
         // Fund loan.
         principalSum += _amt;
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
@@ -294,7 +293,6 @@ contract LiquidityPool is IERC20, ERC20 {
         
         emit LoanFunded(_loanVault, loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker, _amt);
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
-        
     }
 
     /// @notice Claim available funds through a LoanToken.
@@ -357,7 +355,6 @@ contract LiquidityPool is IERC20, ERC20 {
 
         // Distribute "fee" to poolDelegate.
         require(ILiquidityAsset.transfer(poolDelegate, fee));
-
         // Return tokens to locker.
         IERC20(info.loanVaultFunded).transfer(
             loans[info.loanVaultFunded][info.loanTokenLocker].loanTokenLocker,
