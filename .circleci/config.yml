@@ -101,6 +101,10 @@ jobs:
             echo $MAPLE_KALEIDO_URL
             echo $MAPLE_MNEMONIC
             cd ~/project && yarn kaleido:all:migrate
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - "./*"
   
   upload_kaleido_artifacts:
     executor:
