@@ -292,7 +292,7 @@ contract LiquidityPoolTest is TestUtil {
 
         /**************************************/
         /*** Stake Respective Stake Lockers ***/
-        /*************************************/
+        /**************************************/
         sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
         jon.stake(lp2.stakeLockerAddress(), bPool.balanceOf(address(jon)) / 2);
 
@@ -645,16 +645,20 @@ contract LiquidityPoolTest is TestUtil {
 
     function test_claim_multipleLP() public {
 
-        /*******************************/
-        /*** Finalize liquidity pool ***/
-        /*******************************/
-        address stakeLocker = lp1.stakeLockerAddress();
-        address liqLocker   = lp1.liquidityLockerAddress();
-
-        sid.approve(address(bPool), stakeLocker, uint(-1));
+        /******************************************/
+        /*** Stake & Finalize 2 Liquidity Pools ***/
+        /******************************************/
+        address stakeLocker1 = lp1.stakeLockerAddress();
+        address stakeLocker2 = lp2.stakeLockerAddress();
+        sid.approve(address(bPool), stakeLocker1, uint(-1));
+        jon.approve(address(bPool), stakeLocker2, uint(-1));
         sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
-
+        jon.stake(lp2.stakeLockerAddress(), bPool.balanceOf(address(jon)) / 2);
         lp1.finalize();
+        lp2.finalize();
+
+        address liqLocker1 = lp1.liquidityLockerAddress();
+        address liqLocker2 = lp2.liquidityLockerAddress();
 
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
@@ -667,41 +671,66 @@ contract LiquidityPoolTest is TestUtil {
         che.approve(DAI, address(lp1), uint(-1));
         dan.approve(DAI, address(lp1), uint(-1));
 
-        assertTrue(bob.try_deposit(address(lp1), 1000 ether));  // 10%
-        assertTrue(che.try_deposit(address(lp1), 3000 ether));  // 30%
-        assertTrue(dan.try_deposit(address(lp1), 6000 ether));  // 60%
+        bob.approve(DAI, address(lp2), uint(-1));
+        che.approve(DAI, address(lp2), uint(-1));
+        dan.approve(DAI, address(lp2), uint(-1));
+
+        assertTrue(bob.try_deposit(address(lp1), 1000 ether));  // 10% BOB in LP1
+        assertTrue(che.try_deposit(address(lp1), 3000 ether));  // 30% CHE in LP1
+        assertTrue(dan.try_deposit(address(lp1), 6000 ether));  // 60% DAN in LP1
+
+        assertTrue(bob.try_deposit(address(lp2), 4000 ether));  // 40% BOB in LP2
+        assertTrue(che.try_deposit(address(lp2), 3000 ether));  // 30% BOB in LP2
+        assertTrue(dan.try_deposit(address(lp2), 3000 ether));  // 30% BOB in LP2
 
         globals.setLoanVaultFactory(address(loanVFactory)); // Don't remove, not done in setUp()
 
         address fundingLocker  = vault.fundingLocker();
         address fundingLocker2 = vault2.fundingLocker();
 
-        /************************************/
-        /*** Fund vault / vault2 (Excess) ***/
-        /************************************/
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1),   25 ether));  // Fund vault using ltlf1 for 25 DAI
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1),   25 ether));  // Fund vault using ltlf1 for 25 DAI, again, 50 DAI total
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2),   50 ether));  // Fund vault using ltlf2 for 50 DAI
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 1000 ether));  // Fund vault using ltlf2 for 1000 DAI (excess), 1050 DAI total
+        /***************************/
+        /*** Fund vault / vault2 ***/
+        /***************************/
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1), 250 ether));  // Fund vault using ltlf1 for 250 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1), 250 ether));  // Fund vault using ltlf1 for 250 DAI, again, 500 DAI total
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 250 ether));  // Fund vault using ltlf2 for 250 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 250 ether));  // Fund vault using ltlf2 for 250 DAI (no excess), 1000 DAI total
 
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf1),   20 ether));  // Fund vault2 using ltlf1 for 20 DAI
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf1),   20 ether));  // Fund vault2 using ltlf1 for 20 DAI, again 40 DAI total
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2),   60 ether));  // Fund vault2 using ltlf2 for 60 DAI
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2), 1000 ether));  // Fund vault2 using ltlf2 for 1000 DAI (excess), 1060 DAI total
+        assertTrue(jon.try_fundLoan(address(lp2), address(vault),  address(ltlf1), 500 ether));  // Fund vault using ltlf1 for 500 DAI (excess), 1500 DAI total
+        assertTrue(jon.try_fundLoan(address(lp2), address(vault),  address(ltlf2), 500 ether));  // Fund vault using ltlf2 for 500 DAI (excess), 2000 DAI total
 
-        (,address ltl1,,,,,) = lp1.loans(address(vault),  address(ltlf1));  // ltl1 = LoanTokenLocker 1, for vault using ltlf1
-        (,address ltl2,,,,,) = lp1.loans(address(vault),  address(ltlf2));  // ltl2 = LoanTokenLocker 2, for vault using ltlf2
-        (,address ltl3,,,,,) = lp1.loans(address(vault2), address(ltlf1));  // ltl3 = LoanTokenLocker 3, for vault2 using ltlf1
-        (,address ltl4,,,,,) = lp1.loans(address(vault2), address(ltlf2));  // ltl4 = LoanTokenLocker 4, for vault2 using ltlf2
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2),  address(ltlf1), 100 ether));  // Fund vault using ltlf1 for 100 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2),  address(ltlf1), 100 ether));  // Fund vault using ltlf1 for 100 DAI, again, 200 DAI total
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2),  address(ltlf2), 100 ether));  // Fund vault using ltlf2 for 100 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2),  address(ltlf2), 100 ether));  // Fund vault using ltlf2 for 100 DAI again, 400 DAI total
+
+        assertTrue(jon.try_fundLoan(address(lp2), address(vault2),  address(ltlf1), 150 ether));  // Fund vault using ltlf1 for 150 DAI
+        assertTrue(jon.try_fundLoan(address(lp2), address(vault2),  address(ltlf1), 150 ether));  // Fund vault using ltlf1 for 150 DAI, again, 700 DAI total
+        assertTrue(jon.try_fundLoan(address(lp2), address(vault2),  address(ltlf2), 150 ether));  // Fund vault using ltlf2 for 150 DAI
+        assertTrue(jon.try_fundLoan(address(lp2), address(vault2),  address(ltlf2), 150 ether));  // Fund vault using ltlf2 for 150 DAI (no excess), 1000 DAI total
+
+        (,address ltl1_lp1,,,,,) = lp1.loans(address(vault),  address(ltlf1));  // ltl1_lp1 = LoanTokenLocker 1, for lp1, for vault using ltlf1
+        (,address ltl2_lp1,,,,,) = lp1.loans(address(vault),  address(ltlf2));  // ltl2_lp1 = LoanTokenLocker 2, for lp1, for vault using ltlf2
+        (,address ltl3_lp1,,,,,) = lp1.loans(address(vault2), address(ltlf1));  // ltl3_lp1 = LoanTokenLocker 3, for lp1, for vault2 using ltlf1
+        (,address ltl4_lp1,,,,,) = lp1.loans(address(vault2), address(ltlf2));  // ltl4_lp1 = LoanTokenLocker 4, for lp1, for vault2 using ltlf2
+        (,address ltl1_lp2,,,,,) = lp2.loans(address(vault),  address(ltlf1));  // ltl1_lp2 = LoanTokenLocker 1, for lp2, for vault using ltlf1
+        (,address ltl2_lp2,,,,,) = lp2.loans(address(vault),  address(ltlf2));  // ltl2_lp2 = LoanTokenLocker 2, for lp2, for vault using ltlf2
+        (,address ltl3_lp2,,,,,) = lp2.loans(address(vault2), address(ltlf1));  // ltl3_lp2 = LoanTokenLocker 3, for lp2, for vault2 using ltlf1
+        (,address ltl4_lp2,,,,,) = lp2.loans(address(vault2), address(ltlf2));  // ltl4_lp2 = LoanTokenLocker 4, for lp2, for vault2 using ltlf2
 
         // Present state checks
-        assertEq(IERC20(DAI).balanceOf(liqLocker),               7800 ether);  // 10000 DAI deposited - (1100 DAI + 1100 DAI)
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  1100 ether);  // Balance of vault fl
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 1100 ether);  // Balance of vault2 fl
-        assertEq(IERC20(vault).balanceOf(ltl1),                    50 ether);  // Balance of ltl1 for lp1 with ltlf1
-        assertEq(IERC20(vault).balanceOf(ltl2),                  1050 ether);  // Balance of ltl2 for lp1 with ltlf2
-        assertEq(IERC20(vault2).balanceOf(ltl3),                   40 ether);  // Balance of ltl3 for lp1 with ltlf1
-        assertEq(IERC20(vault2).balanceOf(ltl4),                 1060 ether);  // Balance of ltl4 for lp1 with ltlf2
+        assertEq(IERC20(DAI).balanceOf(liqLocker1),              8600 ether);  // 10000 DAI deposited - (1000 DAI + 400 DAI)
+        assertEq(IERC20(DAI).balanceOf(liqLocker2),              8400 ether);  // 10000 DAI deposited - (1000 DAI + 600 DAI)
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  2000 ether);  // Balance of vault fl (excess, 1000 DAI from LP1 & 1000 DAI from LP2)
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 1000 ether);  // Balance of vault2 fl (no excess, exactly 400 DAI from LP1 & 600 DAI from LP2)
+        assertEq(IERC20(vault).balanceOf(ltl1_lp1),               500 ether);  // Balance of ltl1 for lp1 with ltlf1
+        assertEq(IERC20(vault).balanceOf(ltl2_lp1),               500 ether);  // Balance of ltl2 for lp1 with ltlf2
+        assertEq(IERC20(vault2).balanceOf(ltl3_lp1),              200 ether);  // Balance of ltl3 for lp1 with ltlf1
+        assertEq(IERC20(vault2).balanceOf(ltl4_lp1),              200 ether);  // Balance of ltl4 for lp1 with ltlf2
+        assertEq(IERC20(vault).balanceOf(ltl1_lp2),               500 ether);  // Balance of ltl1 for lp2 with ltlf1
+        assertEq(IERC20(vault).balanceOf(ltl2_lp2),               500 ether);  // Balance of ltl2 for lp2 with ltlf2
+        assertEq(IERC20(vault2).balanceOf(ltl3_lp2),              300 ether);  // Balance of ltl3 for lp2 with ltlf1
+        assertEq(IERC20(vault2).balanceOf(ltl4_lp2),              300 ether);  // Balance of ltl4 for lp2 with ltlf2
 
         /*****************/
         /*** Draw Down ***/
