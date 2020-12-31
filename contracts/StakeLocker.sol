@@ -46,6 +46,8 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     /// @notice The parent liquidity pool.
     address public immutable parentLP;
 
+    event BalanceUpdated(address who, address token, uint256 balance);
+
     // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
     constructor(
         address _stakeAsset,
@@ -96,6 +98,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         _updateStakeDate(msg.sender, _amt);
         _mint(msg.sender, _amt);
         emit Stake(_amt, msg.sender);
+        emit BalanceUpdated(address(this), address(IStakeAsset), IStakeAsset.balanceOf(address(this)));
     }
 
     function unstake(uint256 _amt) external delegateLock {
@@ -112,6 +115,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         );
         _burn(address(this), _amt);
         emit Unstake(_amt, msg.sender);
+        emit BalanceUpdated(address(this), address(IStakeAsset), IStakeAsset.balanceOf(address(this)));
     }
 
     //TODO: Make sure LP gets the delete function implemented.

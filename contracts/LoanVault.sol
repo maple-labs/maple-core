@@ -107,6 +107,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
     /// @notice Fired when user calls fundLoan()
     event LoanFunded(uint256 _amountFunded, address indexed _fundedBy);
+    event BalanceUpdated(address who, address token, uint256 balance);
 
     /// @notice Constructor for loan vault.
     /// @param _borrower Address of borrower
@@ -192,8 +193,9 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         premiumCalculator = IPremiumCalculator(_calculators[2]);
         nextPaymentDue = loanCreatedTimestamp.add(paymentIntervalSeconds);
 
-        // Deploy a funding locker.
-        fundingLocker = IFundingLockerFactory(fundingLockerFactory).newLocker(assetRequested);
+        // Deploy lockers
+        collateralLocker = ICollateralLockerFactory(collateralLockerFactory).newLocker(assetCollateral);
+        fundingLocker    = IFundingLockerFactory(fundingLockerFactory).newLocker(assetRequested);
     }
 
     /**
@@ -207,8 +209,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             IRequestedAsset.transferFrom(msg.sender, fundingLocker, _amount),
             "LoanVault::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
         );
-        emit LoanFunded(_amount, _mintedTokenReceiver);
         _mint(_mintedTokenReceiver, _amount);
+
+        emit LoanFunded(_amount, _mintedTokenReceiver);
+        emit BalanceUpdated(fundingLocker, address(IRequestedAsset), IRequestedAsset.balanceOf(fundingLocker));
     }
 
     /// @notice Returns the balance of _requestedAsset in the FundingLocker.
@@ -242,9 +246,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         loanState = State.Active;
 
-        // Deploy a collateral locker.
-        collateralLocker = ICollateralLockerFactory(collateralLockerFactory).newLocker(assetCollateral);
-
         // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
         require(
             ICollateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(_drawdownAmount)), 
@@ -255,10 +256,12 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         uint treasuryFee = MapleGlobals.treasuryFee();
         uint investorFee = MapleGlobals.investorFee();
 
+        address treasury = MapleGlobals.mapleTreasury();
+
         // Send treasuryFee directly to MapleTreasury
         require(
            IFundingLocker(fundingLocker).pull(
-                MapleGlobals.mapleTreasury(), 
+                treasury, 
                 _drawdownAmount.mul(treasuryFee).div(10000)
             ), 
             "LoanVault::drawdown:CRITICAL_ERR_PULL"
@@ -291,6 +294,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::endFunding:ERR_DRAIN"
         );
 
+        emit BalanceUpdated(collateralLocker, address(ICollateralAsset), ICollateralAsset.balanceOf(collateralLocker));
+        emit BalanceUpdated(fundingLocker,    address(IRequestedAsset),  IRequestedAsset.balanceOf(fundingLocker));
+        emit BalanceUpdated(address(this),    address(IRequestedAsset),  IRequestedAsset.balanceOf(address(this)));
+        emit BalanceUpdated(treasury,         address(IRequestedAsset),  IRequestedAsset.balanceOf(treasury));
     }
 
     /// @notice Make the next payment for this loan.
@@ -349,7 +356,11 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         if (numberOfPayments == 0) {
             loanState = State.Matured;
             ICollateralLocker(collateralLocker).pull(borrower, getCollateralLockerBalance());
+
+            emit BalanceUpdated(collateralLocker, address(ICollateralAsset), ICollateralAsset.balanceOf(collateralLocker));
         }
+
+        emit BalanceUpdated(address(this), address(IRequestedAsset),  IRequestedAsset.balanceOf(address(this)));
     }
 
     /// @notice Returns the next payment amounts.
@@ -384,6 +395,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         numberOfPayments = 0;
         principalPaid = principalPaid.add(_principal);
         interestPaid = interestPaid.add(_interest);
+
+        emit BalanceUpdated(address(this), address(IRequestedAsset),  IRequestedAsset.balanceOf(address(this)));
     }
 
     /// @notice Returns the payment amount when paying off the loan early.
