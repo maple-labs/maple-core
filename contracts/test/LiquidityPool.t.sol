@@ -546,35 +546,10 @@ contract LiquidityPoolTest is TestUtil {
         uint feePaid = vault.feePaid();
         uint excPaid = vault.excessReturned();
 
-        uint[5] memory info1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
-        uint[5] memory info2 = sid.claim(address(lp1), address(vault),   address(ltlf2));
-        uint[5] memory info3 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
-        uint[5] memory info4 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
-
-        
-        // assertEq(1, info1[0]);
-        // assertEq(1, info1[1]);
-        // assertEq(1, info1[2]);
-        // assertEq(1, info1[3]);
-        // assertEq(1, info1[4]);
-
-        // assertEq(1, info2[0]);
-        // assertEq(1, info2[1]);
-        // assertEq(1, info2[2]);
-        // assertEq(1, info2[3]);
-        // assertEq(1, info2[4]);
-
-        // assertEq(1, info3[0]);
-        // assertEq(1, info3[1]);
-        // assertEq(1, info3[2]);
-        // assertEq(1, info3[3]);
-        // assertEq(1, info3[4]);
-
-        // assertEq(1, info4[0]);
-        // assertEq(1, info4[1]);
-        // assertEq(1, info4[2]);
-        // assertEq(1, info4[3]);
-        // assertEq(1, info4[4]);
+        uint[5] memory claim1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory claim2 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory claim3 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory claim4 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
 
         /******************************/
         /*** Make 2 Payments (3/6)  ***/
@@ -768,35 +743,15 @@ contract LiquidityPoolTest is TestUtil {
         uint feePaid = vault.feePaid();
         uint excPaid = vault.excessReturned();
 
-        uint[5] memory info1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
-        uint[5] memory info2 = sid.claim(address(lp1), address(vault),   address(ltlf2));
-        uint[5] memory info3 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
-        uint[5] memory info4 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
+        uint[5] memory claim1_lp1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory claim2_lp1 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory claim3_lp1 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory claim4_lp1 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
 
-        
-        // assertEq(1, info1[0]);
-        // assertEq(1, info1[1]);
-        // assertEq(1, info1[2]);
-        // assertEq(1, info1[3]);
-        // assertEq(1, info1[4]);
-
-        // assertEq(1, info2[0]);
-        // assertEq(1, info2[1]);
-        // assertEq(1, info2[2]);
-        // assertEq(1, info2[3]);
-        // assertEq(1, info2[4]);
-
-        // assertEq(1, info3[0]);
-        // assertEq(1, info3[1]);
-        // assertEq(1, info3[2]);
-        // assertEq(1, info3[3]);
-        // assertEq(1, info3[4]);
-
-        // assertEq(1, info4[0]);
-        // assertEq(1, info4[1]);
-        // assertEq(1, info4[2]);
-        // assertEq(1, info4[3]);
-        // assertEq(1, info4[4]);
+        uint[5] memory claim1_lp2 = sid.claim(address(lp2), address(vault),   address(ltlf1)); // Note who is calling this.
+        uint[5] memory claim2_lp2 = sid.claim(address(lp2), address(vault),   address(ltlf2)); // It's Sid, who is a pool delegate elsewhere.
+        uint[5] memory claim3_lp2 = sid.claim(address(lp2), address(vault2),  address(ltlf1)); // This is expected behavior.
+        uint[5] memory claim4_lp2 = sid.claim(address(lp2), address(vault2),  address(ltlf2)); // Claim is public, to enable free flowing fund claims.
 
         /******************************/
         /*** Make 2 Payments (3/6)  ***/
@@ -828,10 +783,15 @@ contract LiquidityPoolTest is TestUtil {
         // TODO: Pre-state checks.
         // TODO: Post-state checks.
 
-        uint[5] memory info5 = sid.claim(address(lp1), address(vault),   address(ltlf1));
-        uint[5] memory info6 = sid.claim(address(lp1), address(vault),   address(ltlf2));
-        uint[5] memory info7 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
-        uint[5] memory info8 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
+        uint[5] memory claim5_lp1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory claim6_lp1 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory claim7_lp1 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory claim8_lp1 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
+
+        uint[5] memory claim5_lp2 = sid.claim(address(lp2), address(vault),   address(ltlf1));
+        uint[5] memory claim6_lp2 = sid.claim(address(lp2), address(vault),   address(ltlf2));
+        uint[5] memory claim7_lp2 = sid.claim(address(lp2), address(vault2),  address(ltlf1));
+        uint[5] memory claim8_lp2 = sid.claim(address(lp2), address(vault2),  address(ltlf2));
         
         /*********************************/
         /*** Make (Early) Full Payment ***/
@@ -854,10 +814,15 @@ contract LiquidityPoolTest is TestUtil {
         // TODO: Pre-state checks.
         // TODO: Post-state checks.
 
-        uint[5] memory info9  = sid.claim(address(lp1), address(vault),   address(ltlf1));
-        uint[5] memory info10 = sid.claim(address(lp1), address(vault),   address(ltlf2));
-        uint[5] memory info11 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
-        uint[5] memory info12 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
+        uint[5] memory claim9_lp1  = sid.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory claim10_lp1 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory claim11_lp1 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory claim12_lp1 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
+
+        uint[5] memory claim9_lp2  = sid.claim(address(lp2), address(vault),   address(ltlf1));
+        uint[5] memory claim10_lp2 = sid.claim(address(lp2), address(vault),   address(ltlf2));
+        uint[5] memory claim11_lp2 = sid.claim(address(lp2), address(vault2),  address(ltlf1));
+        uint[5] memory claim12_lp2 = sid.claim(address(lp2), address(vault2),  address(ltlf2));
 
         // Ensure both loans are matured.
         assertEq(uint256(vault.loanState()),  2);
