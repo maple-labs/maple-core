@@ -113,6 +113,7 @@ jobs:
       - run:
           name: Upload files to gcloud bucket
           command: |
+            cd ~/project/packages/maple-core/contracts && ls -al
             cd ~/project/packages/contracts/private/abis && ls -al
             cd ~/project/packages/contracts/private/addresses && ls -al
             cd ~/project/packages/contracts/private/json && ls -al
