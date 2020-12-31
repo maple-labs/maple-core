@@ -109,6 +109,10 @@ contract Borrower {
         LoanVault(loanVault).makePayment();
     }
 
+    function makeFullPayment(address loanVault) external {
+        LoanVault(loanVault).makeFullPayment();
+    }
+
     function drawdown(address loanVault, uint256 _drawdownAmount) external {
         LoanVault(loanVault).drawdown(_drawdownAmount);
     }
@@ -241,11 +245,11 @@ contract LiquidityPoolTest is TestUtil {
         ));
 
         // vault Specifications
-        uint256[6] memory specs_vault = [500, 90, 30, uint256(1000 ether), 2000, 7];
+        uint256[6] memory specs_vault = [500, 180, 30, uint256(1000 ether), 2000, 7];
         bytes32[3] memory calcs_vault = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
 
         // vault2 Specifications
-        uint256[6] memory specs_vault2 = [500, 90, 30, uint256(1000 ether), 2000, 7];
+        uint256[6] memory specs_vault2 = [500, 180, 30, uint256(1000 ether), 2000, 7];
         bytes32[3] memory calcs_vault2 = [bytes32("AMORTIZATION"), bytes32("NULL"), bytes32("FLAT")];
 
         vault  = eli.createLoanVault(loanVFactory, DAI, WETH, specs_vault, calcs_vault);
@@ -494,8 +498,8 @@ contract LiquidityPoolTest is TestUtil {
         /*****************/
         /***  LP Claim ***/
         /*****************/
-
-        // Pre-state checks
+        // TODO: Pre-state checks.
+        // TODO: Post-state checks.
 
         // LiquidityPool claim() across ltl1, ltl2, ltl3, ltl4
         uint intPaid = vault.interestPaid();
@@ -508,47 +512,95 @@ contract LiquidityPoolTest is TestUtil {
         uint[5] memory info3 = lpd.claim(address(lp1), address(vault2),  address(ltlf1));
         uint[5] memory info4 = lpd.claim(address(lp1), address(vault2),  address(ltlf2));
 
-        assertEq(1, info1[0]);
-        assertEq(1, info1[1]);
-        assertEq(1, info1[2]);
-        assertEq(1, info1[3]);
-        assertEq(1, info1[4]);
+        
+        // assertEq(1, info1[0]);
+        // assertEq(1, info1[1]);
+        // assertEq(1, info1[2]);
+        // assertEq(1, info1[3]);
+        // assertEq(1, info1[4]);
 
-        assertEq(1, info2[0]);
-        assertEq(1, info2[1]);
-        assertEq(1, info2[2]);
-        assertEq(1, info2[3]);
-        assertEq(1, info2[4]);
+        // assertEq(1, info2[0]);
+        // assertEq(1, info2[1]);
+        // assertEq(1, info2[2]);
+        // assertEq(1, info2[3]);
+        // assertEq(1, info2[4]);
 
-        assertEq(1, info3[0]);
-        assertEq(1, info3[1]);
-        assertEq(1, info3[2]);
-        assertEq(1, info3[3]);
-        assertEq(1, info3[4]);
+        // assertEq(1, info3[0]);
+        // assertEq(1, info3[1]);
+        // assertEq(1, info3[2]);
+        // assertEq(1, info3[3]);
+        // assertEq(1, info3[4]);
 
-        assertEq(1, info4[0]);
-        assertEq(1, info4[1]);
-        assertEq(1, info4[2]);
-        assertEq(1, info4[3]);
-        assertEq(1, info4[4]);
-
-        // Post-state checks
+        // assertEq(1, info4[0]);
+        // assertEq(1, info4[1]);
+        // assertEq(1, info4[2]);
+        // assertEq(1, info4[3]);
+        // assertEq(1, info4[4]);
 
         /******************************/
         /*** Make 2 Payments (3/6)  ***/
         /******************************/
+        // TODO: Pre-state checks.
+        // TODO: Post-state checks.
+
+        (uint amt2_1,,,) =  vault.getNextPayment(); // DAI required for 2nd payment on vault
+        (uint amt2_2,,,) = vault2.getNextPayment(); // DAI required for 2nd payment on vault2
+        mint("DAI", address(eli), amt2_1);
+        mint("DAI", address(fay), amt2_2);
+        eli.approve(DAI, address(vault),  amt2_1);
+        fay.approve(DAI, address(vault2), amt2_2);
+        eli.makePayment(address(vault));
+        fay.makePayment(address(vault2));
+
+        (uint amt3_1,,,) =  vault.getNextPayment(); // DAI required for 3rd payment on vault
+        (uint amt3_2,,,) = vault2.getNextPayment(); // DAI required for 3rd payment on vault2
+        mint("DAI", address(eli), amt3_1);
+        mint("DAI", address(fay), amt3_2);
+        eli.approve(DAI, address(vault),  amt3_1);
+        fay.approve(DAI, address(vault2), amt3_2);
+        eli.makePayment(address(vault));
+        fay.makePayment(address(vault2));
         
         /*****************/
         /***  LP Claim ***/
         /*****************/
+        // TODO: Pre-state checks.
+        // TODO: Post-state checks.
+
+        uint[5] memory info5 = lpd.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory info6 = lpd.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory info7 = lpd.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory info8 = lpd.claim(address(lp1), address(vault2),  address(ltlf2));
         
         /*********************************/
         /*** Make (Early) Full Payment ***/
         /*********************************/
+        // TODO: Pre-state checks.
+        // TODO: Post-state checks.
+
+        (uint amtf_1,,) =  vault.getFullPayment(); // DAI required for 2nd payment on vault
+        (uint amtf_2,,) = vault2.getFullPayment(); // DAI required for 2nd payment on vault2
+        mint("DAI", address(eli), amtf_1);
+        mint("DAI", address(fay), amtf_2);
+        eli.approve(DAI, address(vault),  amtf_1);
+        fay.approve(DAI, address(vault2), amtf_2);
+        eli.makeFullPayment(address(vault));
+        fay.makeFullPayment(address(vault2));
         
         /*****************/
         /***  LP Claim ***/
         /*****************/
+        // TODO: Pre-state checks.
+        // TODO: Post-state checks.
+
+        uint[5] memory info9  = lpd.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory info10 = lpd.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory info11 = lpd.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory info12 = lpd.claim(address(lp1), address(vault2),  address(ltlf2));
+
+        // Ensure both loans are matured.
+        assertEq(uint256(vault.loanState()),  2);
+        assertEq(uint256(vault2.loanState()), 2);
 
     }
 
