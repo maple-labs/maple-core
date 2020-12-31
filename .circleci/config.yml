@@ -97,10 +97,7 @@ jobs:
             source $BASH_ENV
       - run:
           name: Deploy contracts to Kaleido
-          command: |
-            echo $MAPLE_KALEIDO_URL
-            echo $MAPLE_MNEMONIC
-            cd ~/project && yarn kaleido:all:migrate
+          command: cd ~/project && yarn kaleido:all:migrate
       - persist_to_workspace:
           root: ~/project
           paths:
@@ -117,11 +114,6 @@ jobs:
       - run:
           name: Upload files to gcloud bucket
           command: |
-            cd ~/project/packages/maple-core/contracts && ls -al
-            cd ~/project/packages/contracts/private/abis && ls -al
-            cd ~/project/packages/contracts/private/addresses && ls -al
-            cd ~/project/packages/contracts/private/json && ls -al
-            cd ~/project/packages/contracts/private/bytecode && ls -al
             gsutil -m rsync -r ~/project/packages/contracts/private gs://maple-artifacts/contract-artifacts/kaleido/$CIRCLE_BUILD_NUM
             gsutil -m rsync -r ~/project/packages/contracts/private gs://maple-artifacts/contract-artifacts/kaleido/current
 
@@ -129,31 +121,29 @@ workflows:
   version: 2
   test_all:
     jobs:
-      # - unit_test:
-      #     context: seth
+      - unit_test:
+          context: seth
       - dependencies
-      # - integration_test:
-      #     requires:
-      #       - dependencies
+      - integration_test:
+          requires:
+            - dependencies
       - deploy_kaleido:
           context: kaleido
           requires:
               - dependencies
-              # - integration_test
+              - integration_test
           filters:
             branches:
               only:
                 - master
-                - fix-ci-gcloud-calc-upload
       - upload_kaleido_artifacts:
           context: google-cloud
           requires:
-              # - unit_test
-              # - dependencies
-              # - integration_test
+              - unit_test
+              - dependencies
+              - integration_test
               - deploy_kaleido
           filters:
             branches:
               only:
                 - master
-                - fix-ci-gcloud-calc-upload
