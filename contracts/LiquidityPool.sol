@@ -307,25 +307,21 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 newFee       = vault.feePaid() - info.feePaid;
         uint256 newExcess    = vault.excessReturned() - info.excessReturned;
 
-        // Update ERC2222 internal accounting for LoanVault.
-        vault.updateFundsReceived();
-        vault.withdrawFunds();
-
-        // Return tokens to locker.
-        vault.transfer(_ltl, IERC20(_lvf).balanceOf(address(this)));
-
-        // TODO: ERC-2222 could have return value in withdrawFunds(), 2 lines above.
-        // Fetch amount claimed from calling withdrawFunds()
-        uint256 balance = ILiquidityAsset.balanceOf(address(this)); // 80 DAI Balance, 1st guy
-
         // Update loans data structure.
         loans[_loanVault][_loanTokenLockerFactory].interestPaid   = vault.interestPaid();
         loans[_loanVault][_loanTokenLockerFactory].principalPaid  = vault.principalPaid();
         loans[_loanVault][_loanTokenLockerFactory].feePaid        = vault.feePaid();
         loans[_loanVault][_loanTokenLockerFactory].excessReturned = vault.excessReturned();
 
-        uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess);
+        // Update ERC2222 internal accounting for LoanVault.
+        vault.updateFundsReceived(); // This could be called at end of LV makePayment() / makeFullPayment()
+        vault.withdrawFunds();
 
+        // Return tokens to locker.
+        vault.transfer(_ltl, IERC20(_lvf).balanceOf(address(this)));
+
+        uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess);
+        uint256 balance   = ILiquidityAsset.balanceOf(address(this));
         uint256 interest  = newInterest.mul(1 ether).div(sum).mul(balance).div(1 ether);
         uint256 principal = newPrincipal.mul(1 ether).div(sum).mul(balance).div(1 ether);
         uint256 fee       = newFee.mul(1 ether).div(sum).mul(balance).div(1 ether);
