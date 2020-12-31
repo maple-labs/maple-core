@@ -302,7 +302,7 @@ contract LiquidityPool is IERC20, ERC20 {
         ILoanTokenLocker(_ltl).fetch();
 
         // Calculate deltas, or "net new" values.
-        uint256 newInterest  = vault.interestPaid() - info.interestPaid;
+        uint256 newInterest  = vault.interestPaid() - info.interestPaid; // 100 DAI Interest, 1st guy
         uint256 newPrincipal = vault.principalPaid() - info.principalPaid;
         uint256 newFee       = vault.feePaid() - info.feePaid;
         uint256 newExcess    = vault.excessReturned() - info.excessReturned;
@@ -316,7 +316,7 @@ contract LiquidityPool is IERC20, ERC20 {
 
         // TODO: ERC-2222 could have return value in withdrawFunds(), 2 lines above.
         // Fetch amount claimed from calling withdrawFunds()
-        uint256 balance = ILiquidityAsset.balanceOf(address(this));
+        uint256 balance = ILiquidityAsset.balanceOf(address(this)); // 80 DAI Balance, 1st guy
 
         // Update loans data structure.
         loans[_loanVault][_loanTokenLockerFactory].interestPaid   = vault.interestPaid();
@@ -341,9 +341,6 @@ contract LiquidityPool is IERC20, ERC20 {
 
         // Distribute "fee" to poolDelegate.
         require(ILiquidityAsset.transfer(poolDelegate, fee));
-        
-        // Return tokens held here in LP back to LTL.
-        IERC20(_lvf).transfer(_ltl, IERC20(_lvf).balanceOf(address(this)));
 
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
         emit BalanceUpdated(stakeLockerAddress,     address(ILiquidityAsset), ILiquidityAsset.balanceOf(stakeLockerAddress));
