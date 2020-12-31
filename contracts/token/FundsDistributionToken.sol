@@ -8,7 +8,7 @@ import "./IFundsDistributionToken.sol";
 import "../math/SafeMathUint.sol";
 import "../math/SafeMathInt.sol";
 
-contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
+abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
     using SafeMath for uint256;
     using SafeMathUint for uint256;
     using SignedSafeMath for int256;
@@ -19,6 +19,8 @@ contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 
     mapping(address => int256) internal pointsCorrection;
     mapping(address => uint256) internal withdrawnFunds;
+    event Debug(uint, uint);
+    event Debug2(uint, int);
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) public {}
 
@@ -48,15 +50,30 @@ contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
      * @notice Prepares funds withdrawal
      * @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
      */
+    
     function _prepareWithdraw() internal returns (uint256) {
         uint256 _withdrawableDividend = withdrawableFundsOf(msg.sender);
 
+        emit Debug(0, _withdrawableDividend);
+        emit Debug(1, withdrawnFunds[msg.sender]);
+        emit Debug(2, withdrawableFundsOf(msg.sender));
+        emit Debug(3, accumulativeFundsOf(msg.sender));
+        emit Debug(4, withdrawnFundsOf(msg.sender));
+        emit Debug(5, balanceOf(msg.sender));
+
         withdrawnFunds[msg.sender] = withdrawnFunds[msg.sender].add(_withdrawableDividend);
+        
+        emit Debug(6, withdrawnFunds[msg.sender]);
+        emit Debug(7, pointsPerShare);
+        emit Debug2(8, pointsCorrection[msg.sender]);
+        emit Debug(9, pointsMultiplier);
 
         emit FundsWithdrawn(msg.sender, _withdrawableDividend);
 
         return _withdrawableDividend;
     }
+
+    // (33752790193340907365653287453419279100 * 1050000000000000000000 - 33752790193340907365653287453419279100000000000000000000000) / 340282366920938463463374607431768211456
 
     /**
      * @notice View the amount of funds that an address can withdraw.

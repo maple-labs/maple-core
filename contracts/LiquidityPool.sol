@@ -300,12 +300,17 @@ contract LiquidityPool is IERC20, ERC20 {
 
         // Pull tokens from TokenLocker.
         ILoanTokenLocker(_ltl).fetch();
+        vault.updateFundsReceived();
 
         // Calculate deltas, or "net new" values.
         uint256 newInterest  = vault.interestPaid() - info.interestPaid; // 100 DAI Interest, 1st guy
         uint256 newPrincipal = vault.principalPaid() - info.principalPaid;
         uint256 newFee       = vault.feePaid() - info.feePaid;
         uint256 newExcess    = vault.excessReturned() - info.excessReturned;
+        emit Debug(0, newInterest);
+        emit Debug(1, newPrincipal);
+        emit Debug(2, newFee);
+        emit Debug(3, newExcess);
 
         // Update loans data structure.
         loans[_loanVault][_loanTokenLockerFactory].interestPaid   = vault.interestPaid();
@@ -314,7 +319,6 @@ contract LiquidityPool is IERC20, ERC20 {
         loans[_loanVault][_loanTokenLockerFactory].excessReturned = vault.excessReturned();
 
         // Update ERC2222 internal accounting for LoanVault.
-        vault.updateFundsReceived(); // This could be called at end of LV makePayment() / makeFullPayment()
         vault.withdrawFunds();
 
         // Return tokens to locker.
@@ -327,9 +331,19 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 fee       = newFee.mul(1 ether).div(sum).mul(balance).div(1 ether);
         uint256 excess    = newExcess.mul(1 ether).div(sum).mul(balance).div(1 ether);
 
+        emit Debug(4, sum);
+        emit Debug(5, balance);
+        emit Debug(6, interest);
+        emit Debug(7, principal);
+        emit Debug(8, fee);
+        emit Debug(9, excess);
+
+        // Distribute "interest" to appropriate parties.
         require(ILiquidityAsset.transfer(poolDelegate,           interest.mul(delegateFee).div(10000)));
         require(ILiquidityAsset.transfer(stakeLockerAddress,     interest.mul(stakingFee).div(10000)));
         require(ILiquidityAsset.transfer(liquidityLockerAddress, interest.mul(10000 - stakingFee - delegateFee).div(10000)));
+
+        // TODO: Update our LP interest distribution mechanism / variable here.
 
         // Distribute "principal" and "excess" to liquidityLocker.
         require(ILiquidityAsset.transfer(liquidityLockerAddress, principal));

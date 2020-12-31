@@ -11,9 +11,8 @@ interface IFundsDistributionToken {
 
     /**
      * @dev Withdraws all available funds for a FundsDistributionToken holder. 
-     * TODO: Implement this function
      */
-    // function withdrawFunds() external;
+    function withdrawFunds() external;
 
     /**
      * @dev This event emits when new funds are distributed
