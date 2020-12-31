@@ -152,6 +152,7 @@ contract LiquidityPoolTest is TestUtil {
     LoanTokenLockerFactory               ltlf1; 
     LoanTokenLockerFactory               ltlf2; 
     LiquidityPool                          lp1; 
+    LiquidityPool                          lp2; 
     DSValue                          ethOracle;
     DSValue                          daiOracle;
     AmortizationRepaymentCalculator amortiCalc;
@@ -159,7 +160,8 @@ contract LiquidityPoolTest is TestUtil {
     LateFeeNullCalculator          lateFeeCalc;
     PremiumFlatCalculator          premiumCalc;
     IBPool                               bPool;
-    PoolDelegate                           lpd;
+    PoolDelegate                           sid;
+    PoolDelegate                           jon;
     LP                                     bob;
     LP                                     che;
     LP                                     dan;
@@ -185,7 +187,8 @@ contract LiquidityPoolTest is TestUtil {
         bulletCalc     = new BulletRepaymentCalculator();
         lateFeeCalc    = new LateFeeNullCalculator();
         premiumCalc    = new PremiumFlatCalculator(500); // Flat 5% premium
-        lpd            = new PoolDelegate();
+        sid            = new PoolDelegate();
+        jon            = new PoolDelegate();
         bob            = new LP();
         che            = new LP();
         dan            = new LP();
@@ -212,13 +215,15 @@ contract LiquidityPoolTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
-        globals.setPoolDelegateWhitelist(address(lpd), true);
+        globals.setPoolDelegateWhitelist(address(sid), true);
+        globals.setPoolDelegateWhitelist(address(jon), true);
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
         assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
 
-        bPool.transfer(address(lpd), bPool.balanceOf(address(this)));
+        bPool.transfer(address(sid), bPool.balanceOf(address(this)) / 2);
+        bPool.transfer(address(jon), bPool.balanceOf(address(this)));
 
         // Set Globals
         globals.setInterestStructureCalculator("AMORTIZATION", address(amortiCalc));
@@ -234,7 +239,7 @@ contract LiquidityPoolTest is TestUtil {
         globals.setStakeRequired(100 * 10 ** 6);
 
         // Create Liquidity Pool
-        lp1 = LiquidityPool(lpd.createLiquidityPool(
+        lp1 = LiquidityPool(sid.createLiquidityPool(
             address(liqPoolFactory),
             DAI,
             address(bPool),
@@ -242,6 +247,17 @@ contract LiquidityPoolTest is TestUtil {
             100,
             "Maple Liquidity Pool 0",
             "MPL_LP_0"
+        ));
+
+        // Create Liquidity Pool
+        lp2 = LiquidityPool(jon.createLiquidityPool(
+            address(liqPoolFactory),
+            DAI,
+            address(bPool),
+            7500,
+            50,
+            "Johns Liquidity Pool 480",
+            "JRQ_LP_480"
         ));
 
         // vault Specifications
@@ -257,28 +273,51 @@ contract LiquidityPoolTest is TestUtil {
     }
 
     function test_stake_and_finalize() public {
-        address stakeLocker = lp1.stakeLockerAddress();
 
-        lpd.approve(address(bPool), stakeLocker, uint(-1));
-        assertEq(bPool.balanceOf(address(lpd)),               100 * WAD);
-        assertEq(bPool.balanceOf(stakeLocker),                0);
-        assertEq(IERC20(stakeLocker).balanceOf(address(lpd)), 0);
+        /*****************************************/
+        /*** Approve Stake Locker To Take BPTs ***/
+        /*****************************************/
+        address stakeLocker1 = lp1.stakeLockerAddress();
+        address stakeLocker2 = lp2.stakeLockerAddress();
+        sid.approve(address(bPool), stakeLocker1, uint(-1));
+        jon.approve(address(bPool), stakeLocker2, uint(-1));
 
-        lpd.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(lpd)) / 2);
+        // Pre-state checks.
+        assertEq(bPool.balanceOf(address(sid)),                 50 * WAD);
+        assertEq(bPool.balanceOf(address(jon)),                 50 * WAD);
+        assertEq(bPool.balanceOf(stakeLocker1),                        0);
+        assertEq(bPool.balanceOf(stakeLocker2),                        0);
+        assertEq(IERC20(stakeLocker1).balanceOf(address(sid)),         0);
+        assertEq(IERC20(stakeLocker2).balanceOf(address(jon)),         0);
 
-        assertEq(bPool.balanceOf(address(lpd)),               50 * WAD);
-        assertEq(bPool.balanceOf(stakeLocker),                50 * WAD);
-        assertEq(IERC20(stakeLocker).balanceOf(address(lpd)), 50 * WAD);
+        /**************************************/
+        /*** Stake Respective Stake Lockers ***/
+        /*************************************/
+        sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
+        jon.stake(lp2.stakeLockerAddress(), bPool.balanceOf(address(jon)) / 2);
 
+        // Post-state checks.
+        assertEq(bPool.balanceOf(address(sid)),                25 * WAD);
+        assertEq(bPool.balanceOf(address(jon)),                25 * WAD);
+        assertEq(bPool.balanceOf(stakeLocker1),                25 * WAD);
+        assertEq(bPool.balanceOf(stakeLocker2),                25 * WAD);
+        assertEq(IERC20(stakeLocker1).balanceOf(address(sid)), 25 * WAD);
+        assertEq(IERC20(stakeLocker2).balanceOf(address(jon)), 25 * WAD);
+
+        /********************************/
+        /*** Finalize Liquidity Pools ***/
+        /********************************/
         lp1.finalize();
+        lp2.finalize();
+
     }
 
     function test_deposit() public {
         address stakeLocker = lp1.stakeLockerAddress();
         address liqLocker   = lp1.liquidityLockerAddress();
 
-        lpd.approve(address(bPool), stakeLocker, uint(-1));
-        lpd.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(lpd)) / 2);
+        sid.approve(address(bPool), stakeLocker, uint(-1));
+        sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
 
         // Mint 100 DAI into this LP account
         mint("DAI", address(bob), 100 ether);
@@ -307,8 +346,8 @@ contract LiquidityPoolTest is TestUtil {
         address liqLocker     = lp1.liquidityLockerAddress();
         address fundingLocker = vault.fundingLocker();
 
-        lpd.approve(address(bPool), stakeLocker, uint(-1));
-        lpd.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(lpd)) / 2);
+        sid.approve(address(bPool), stakeLocker, uint(-1));
+        sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
 
         // Mint 100 DAI into this LP account
         mint("DAI", address(bob), 100 ether);
@@ -319,7 +358,7 @@ contract LiquidityPoolTest is TestUtil {
 
         assertTrue(bob.try_deposit(address(lp1), 100 ether));
 
-        assertTrue(!lpd.try_fundLoan(address(lp1), address(vault), address(ltlf1), 100 ether)); // LoanVaultFactory not in globals
+        assertTrue(!sid.try_fundLoan(address(lp1), address(vault), address(ltlf1), 100 ether)); // LoanVaultFactory not in globals
 
         globals.setLoanVaultFactory(address(loanVFactory));
 
@@ -329,7 +368,7 @@ contract LiquidityPoolTest is TestUtil {
         /*******************/
         /*** Fund a Loan ***/
         /*******************/
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault), address(ltlf1), 20 ether));  // Fund loan for 20 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault), address(ltlf1), 20 ether));  // Fund loan for 20 DAI
 
         (
             address loanVaultFunded,
@@ -357,7 +396,7 @@ contract LiquidityPoolTest is TestUtil {
         /****************************************/
         /*** Fund same loan with the same LTL ***/
         /****************************************/
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault), address(ltlf1), 25 ether)); // Fund loan for 25 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault), address(ltlf1), 25 ether)); // Fund loan for 25 DAI
         (
             loanVaultFunded,
             loanTokenLocker,
@@ -385,7 +424,7 @@ contract LiquidityPoolTest is TestUtil {
         /*** Fund same loan with a different LTL ***/
         /*******************************************/
         LoanTokenLockerFactory ltlf2 = new LoanTokenLockerFactory();
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault), address(ltlf2), 15 ether)); // Fund loan for 25 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault), address(ltlf2), 15 ether)); // Fund loan for 25 DAI
 
         (
             loanVaultFunded,
@@ -419,8 +458,8 @@ contract LiquidityPoolTest is TestUtil {
         address stakeLocker = lp1.stakeLockerAddress();
         address liqLocker   = lp1.liquidityLockerAddress();
 
-        lpd.approve(address(bPool), stakeLocker, uint(-1));
-        lpd.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(lpd)) / 2);
+        sid.approve(address(bPool), stakeLocker, uint(-1));
+        sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
 
         lp1.finalize();
 
@@ -447,15 +486,15 @@ contract LiquidityPoolTest is TestUtil {
         /************************************/
         /*** Fund vault / vault2 (Excess) ***/
         /************************************/
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault),  address(ltlf1),   25 ether));  // Fund vault using ltlf1 for 25 DAI
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault),  address(ltlf1),   25 ether));  // Fund vault using ltlf1 for 25 DAI, again, 50 DAI total
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault),  address(ltlf2),   50 ether));  // Fund vault using ltlf2 for 50 DAI
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 1000 ether));  // Fund vault using ltlf2 for 1000 DAI (excess), 1050 DAI total
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1),   25 ether));  // Fund vault using ltlf1 for 25 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1),   25 ether));  // Fund vault using ltlf1 for 25 DAI, again, 50 DAI total
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2),   50 ether));  // Fund vault using ltlf2 for 50 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 1000 ether));  // Fund vault using ltlf2 for 1000 DAI (excess), 1050 DAI total
 
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault2), address(ltlf1),   20 ether));  // Fund vault2 using ltlf1 for 20 DAI
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault2), address(ltlf1),   20 ether));  // Fund vault2 using ltlf1 for 20 DAI, again 40 DAI total
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault2), address(ltlf2),   60 ether));  // Fund vault2 using ltlf2 for 60 DAI
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault2), address(ltlf2), 1000 ether));  // Fund vault2 using ltlf2 for 1000 DAI (excess), 1060 DAI total
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf1),   20 ether));  // Fund vault2 using ltlf1 for 20 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf1),   20 ether));  // Fund vault2 using ltlf1 for 20 DAI, again 40 DAI total
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2),   60 ether));  // Fund vault2 using ltlf2 for 60 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2), 1000 ether));  // Fund vault2 using ltlf2 for 1000 DAI (excess), 1060 DAI total
 
         (,address ltl1,,,,,) = lp1.loans(address(vault),  address(ltlf1));  // ltl1 = LoanTokenLocker 1, for vault using ltlf1
         (,address ltl2,,,,,) = lp1.loans(address(vault),  address(ltlf2));  // ltl2 = LoanTokenLocker 2, for vault using ltlf2
@@ -507,10 +546,10 @@ contract LiquidityPoolTest is TestUtil {
         uint feePaid = vault.feePaid();
         uint excPaid = vault.excessReturned();
 
-        uint[5] memory info1 = lpd.claim(address(lp1), address(vault),   address(ltlf1));
-        uint[5] memory info2 = lpd.claim(address(lp1), address(vault),   address(ltlf2));
-        uint[5] memory info3 = lpd.claim(address(lp1), address(vault2),  address(ltlf1));
-        uint[5] memory info4 = lpd.claim(address(lp1), address(vault2),  address(ltlf2));
+        uint[5] memory info1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory info2 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory info3 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory info4 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
 
         
         // assertEq(1, info1[0]);
@@ -567,10 +606,10 @@ contract LiquidityPoolTest is TestUtil {
         // TODO: Pre-state checks.
         // TODO: Post-state checks.
 
-        uint[5] memory info5 = lpd.claim(address(lp1), address(vault),   address(ltlf1));
-        uint[5] memory info6 = lpd.claim(address(lp1), address(vault),   address(ltlf2));
-        uint[5] memory info7 = lpd.claim(address(lp1), address(vault2),  address(ltlf1));
-        uint[5] memory info8 = lpd.claim(address(lp1), address(vault2),  address(ltlf2));
+        uint[5] memory info5 = sid.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory info6 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory info7 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory info8 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
         
         /*********************************/
         /*** Make (Early) Full Payment ***/
@@ -593,10 +632,203 @@ contract LiquidityPoolTest is TestUtil {
         // TODO: Pre-state checks.
         // TODO: Post-state checks.
 
-        uint[5] memory info9  = lpd.claim(address(lp1), address(vault),   address(ltlf1));
-        uint[5] memory info10 = lpd.claim(address(lp1), address(vault),   address(ltlf2));
-        uint[5] memory info11 = lpd.claim(address(lp1), address(vault2),  address(ltlf1));
-        uint[5] memory info12 = lpd.claim(address(lp1), address(vault2),  address(ltlf2));
+        uint[5] memory info9  = sid.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory info10 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory info11 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory info12 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
+
+        // Ensure both loans are matured.
+        assertEq(uint256(vault.loanState()),  2);
+        assertEq(uint256(vault2.loanState()), 2);
+
+    }
+
+    function test_claim_multipleLP() public {
+
+        /*******************************/
+        /*** Finalize liquidity pool ***/
+        /*******************************/
+        address stakeLocker = lp1.stakeLockerAddress();
+        address liqLocker   = lp1.liquidityLockerAddress();
+
+        sid.approve(address(bPool), stakeLocker, uint(-1));
+        sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
+
+        lp1.finalize();
+
+        /**************************************************/
+        /*** Mint and deposit funds into liquidity pool ***/
+        /**************************************************/
+        mint("DAI", address(bob), 10000 ether);
+        mint("DAI", address(che), 10000 ether);
+        mint("DAI", address(dan), 10000 ether);
+
+        bob.approve(DAI, address(lp1), uint(-1));
+        che.approve(DAI, address(lp1), uint(-1));
+        dan.approve(DAI, address(lp1), uint(-1));
+
+        assertTrue(bob.try_deposit(address(lp1), 1000 ether));  // 10%
+        assertTrue(che.try_deposit(address(lp1), 3000 ether));  // 30%
+        assertTrue(dan.try_deposit(address(lp1), 6000 ether));  // 60%
+
+        globals.setLoanVaultFactory(address(loanVFactory)); // Don't remove, not done in setUp()
+
+        address fundingLocker  = vault.fundingLocker();
+        address fundingLocker2 = vault2.fundingLocker();
+
+        /************************************/
+        /*** Fund vault / vault2 (Excess) ***/
+        /************************************/
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1),   25 ether));  // Fund vault using ltlf1 for 25 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1),   25 ether));  // Fund vault using ltlf1 for 25 DAI, again, 50 DAI total
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2),   50 ether));  // Fund vault using ltlf2 for 50 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 1000 ether));  // Fund vault using ltlf2 for 1000 DAI (excess), 1050 DAI total
+
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf1),   20 ether));  // Fund vault2 using ltlf1 for 20 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf1),   20 ether));  // Fund vault2 using ltlf1 for 20 DAI, again 40 DAI total
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2),   60 ether));  // Fund vault2 using ltlf2 for 60 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2), 1000 ether));  // Fund vault2 using ltlf2 for 1000 DAI (excess), 1060 DAI total
+
+        (,address ltl1,,,,,) = lp1.loans(address(vault),  address(ltlf1));  // ltl1 = LoanTokenLocker 1, for vault using ltlf1
+        (,address ltl2,,,,,) = lp1.loans(address(vault),  address(ltlf2));  // ltl2 = LoanTokenLocker 2, for vault using ltlf2
+        (,address ltl3,,,,,) = lp1.loans(address(vault2), address(ltlf1));  // ltl3 = LoanTokenLocker 3, for vault2 using ltlf1
+        (,address ltl4,,,,,) = lp1.loans(address(vault2), address(ltlf2));  // ltl4 = LoanTokenLocker 4, for vault2 using ltlf2
+
+        // Present state checks
+        assertEq(IERC20(DAI).balanceOf(liqLocker),               7800 ether);  // 10000 DAI deposited - (1100 DAI + 1100 DAI)
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  1100 ether);  // Balance of vault fl
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 1100 ether);  // Balance of vault2 fl
+        assertEq(IERC20(vault).balanceOf(ltl1),                    50 ether);  // Balance of ltl1 for lp1 with ltlf1
+        assertEq(IERC20(vault).balanceOf(ltl2),                  1050 ether);  // Balance of ltl2 for lp1 with ltlf2
+        assertEq(IERC20(vault2).balanceOf(ltl3),                   40 ether);  // Balance of ltl3 for lp1 with ltlf1
+        assertEq(IERC20(vault2).balanceOf(ltl4),                 1060 ether);  // Balance of ltl4 for lp1 with ltlf2
+
+        /*****************/
+        /*** Draw Down ***/
+        /*****************/
+        uint cReq1 =  vault.collateralRequiredForDrawdown(1000 ether); // wETH required for 1000 DAI drawdown on vault
+        uint cReq2 = vault2.collateralRequiredForDrawdown(1000 ether); // wETH required for 1000 DAI drawdown on vault2
+        mint("WETH", address(eli), cReq1);
+        mint("WETH", address(fay), cReq2);
+        eli.approve(WETH, address(vault),  cReq1);
+        fay.approve(WETH, address(vault2), cReq2);
+        eli.drawdown(address(vault),  1000 ether);
+        fay.drawdown(address(vault2), 1000 ether);
+        
+        /****************************/
+        /*** Make 1 Payment (1/6) ***/
+        /****************************/
+        (uint amt1_1,,,) =  vault.getNextPayment(); // DAI required for 1st payment on vault
+        (uint amt1_2,,,) = vault2.getNextPayment(); // DAI required for 1st payment on vault2
+        mint("DAI", address(eli), amt1_1);
+        mint("DAI", address(fay), amt1_2);
+        eli.approve(DAI, address(vault),  amt1_1);
+        fay.approve(DAI, address(vault2), amt1_2);
+        eli.makePayment(address(vault));
+        fay.makePayment(address(vault2));
+        
+        /*****************/
+        /***  LP Claim ***/
+        /*****************/
+        // TODO: Pre-state checks.
+        // TODO: Post-state checks.
+
+        // LiquidityPool claim() across ltl1, ltl2, ltl3, ltl4
+        uint intPaid = vault.interestPaid();
+        uint priPaid = vault.principalPaid();
+        uint feePaid = vault.feePaid();
+        uint excPaid = vault.excessReturned();
+
+        uint[5] memory info1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory info2 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory info3 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory info4 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
+
+        
+        // assertEq(1, info1[0]);
+        // assertEq(1, info1[1]);
+        // assertEq(1, info1[2]);
+        // assertEq(1, info1[3]);
+        // assertEq(1, info1[4]);
+
+        // assertEq(1, info2[0]);
+        // assertEq(1, info2[1]);
+        // assertEq(1, info2[2]);
+        // assertEq(1, info2[3]);
+        // assertEq(1, info2[4]);
+
+        // assertEq(1, info3[0]);
+        // assertEq(1, info3[1]);
+        // assertEq(1, info3[2]);
+        // assertEq(1, info3[3]);
+        // assertEq(1, info3[4]);
+
+        // assertEq(1, info4[0]);
+        // assertEq(1, info4[1]);
+        // assertEq(1, info4[2]);
+        // assertEq(1, info4[3]);
+        // assertEq(1, info4[4]);
+
+        /******************************/
+        /*** Make 2 Payments (3/6)  ***/
+        /******************************/
+        // TODO: Pre-state checks.
+        // TODO: Post-state checks.
+
+        (uint amt2_1,,,) =  vault.getNextPayment(); // DAI required for 2nd payment on vault
+        (uint amt2_2,,,) = vault2.getNextPayment(); // DAI required for 2nd payment on vault2
+        mint("DAI", address(eli), amt2_1);
+        mint("DAI", address(fay), amt2_2);
+        eli.approve(DAI, address(vault),  amt2_1);
+        fay.approve(DAI, address(vault2), amt2_2);
+        eli.makePayment(address(vault));
+        fay.makePayment(address(vault2));
+
+        (uint amt3_1,,,) =  vault.getNextPayment(); // DAI required for 3rd payment on vault
+        (uint amt3_2,,,) = vault2.getNextPayment(); // DAI required for 3rd payment on vault2
+        mint("DAI", address(eli), amt3_1);
+        mint("DAI", address(fay), amt3_2);
+        eli.approve(DAI, address(vault),  amt3_1);
+        fay.approve(DAI, address(vault2), amt3_2);
+        eli.makePayment(address(vault));
+        fay.makePayment(address(vault2));
+        
+        /*****************/
+        /***  LP Claim ***/
+        /*****************/
+        // TODO: Pre-state checks.
+        // TODO: Post-state checks.
+
+        uint[5] memory info5 = sid.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory info6 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory info7 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory info8 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
+        
+        /*********************************/
+        /*** Make (Early) Full Payment ***/
+        /*********************************/
+        // TODO: Pre-state checks.
+        // TODO: Post-state checks.
+
+        (uint amtf_1,,) =  vault.getFullPayment(); // DAI required for 2nd payment on vault
+        (uint amtf_2,,) = vault2.getFullPayment(); // DAI required for 2nd payment on vault2
+        mint("DAI", address(eli), amtf_1);
+        mint("DAI", address(fay), amtf_2);
+        eli.approve(DAI, address(vault),  amtf_1);
+        fay.approve(DAI, address(vault2), amtf_2);
+        eli.makeFullPayment(address(vault));
+        fay.makeFullPayment(address(vault2));
+        
+        /*****************/
+        /***  LP Claim ***/
+        /*****************/
+        // TODO: Pre-state checks.
+        // TODO: Post-state checks.
+
+        uint[5] memory info9  = sid.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory info10 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory info11 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory info12 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
 
         // Ensure both loans are matured.
         assertEq(uint256(vault.loanState()),  2);
@@ -612,8 +844,8 @@ contract LiquidityPoolTest is TestUtil {
         address stakeLocker = lp1.stakeLockerAddress();
         address liqLocker   = lp1.liquidityLockerAddress();
 
-        lpd.approve(address(bPool), stakeLocker, uint(-1));
-        lpd.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(lpd)) / 2);
+        sid.approve(address(bPool), stakeLocker, uint(-1));
+        sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
 
         lp1.finalize();
 
@@ -654,10 +886,10 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(IERC20(DAI).balanceOf(liqLocker),              100 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),         0);  // Balance of Funding Locker
 
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault),  address(ltlf1),  20 ether));  // Fund loan for 20 DAI
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault),  address(ltlf1),  25 ether));  // Fund same loan for 25 DAI
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 15 ether));  // Fund new loan same vault for 15 DAI
-        assertTrue(lpd.try_fundLoan(address(lp1), address(vault2), address(ltlf2), 15 ether));  // Fund new loan new vault for 15 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1),  20 ether));  // Fund loan for 20 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1),  25 ether));  // Fund same loan for 25 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 15 ether));  // Fund new loan same vault for 15 DAI
+        assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2), 15 ether));  // Fund new loan new vault for 15 DAI
 
         (, address ltLocker,,,,,)  = lp1.loans(address(vault),  address(ltlf1));
         (, address ltLocker2,,,,,) = lp1.loans(address(vault),  address(ltlf2));
