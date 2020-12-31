@@ -341,11 +341,9 @@ contract LiquidityPool is IERC20, ERC20 {
 
         // Distribute "fee" to poolDelegate.
         require(ILiquidityAsset.transfer(poolDelegate, fee));
-        // Return tokens to locker.
-        IERC20(info.loanVaultFunded).transfer(
-            loans[info.loanVaultFunded][info.loanTokenLocker].loanTokenLocker,
-            IERC20(info.loanVaultFunded).balanceOf(address(this))
-        );
+        
+        // Return tokens held here in LP back to LTL.
+        IERC20(_lvf).transfer(_ltl, IERC20(_lvf).balanceOf(address(this)));
 
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
         emit BalanceUpdated(stakeLockerAddress,     address(ILiquidityAsset), ILiquidityAsset.balanceOf(stakeLockerAddress));

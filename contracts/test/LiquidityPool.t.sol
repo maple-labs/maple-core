@@ -502,8 +502,11 @@ contract LiquidityPoolTest is TestUtil {
         uint priPaid = vault.principalPaid();
         uint feePaid = vault.feePaid();
         uint excPaid = vault.excessReturned();
-        uint[5] memory info1 = lpd.claim(address(lp1), address(vault),  address(ltlf2));
-        uint[5] memory info2 = lpd.claim(address(lp1), address(vault),  address(ltlf2));
+
+        uint[5] memory info1 = lpd.claim(address(lp1), address(vault),   address(ltlf1));
+        uint[5] memory info2 = lpd.claim(address(lp1), address(vault),   address(ltlf2));
+        uint[5] memory info3 = lpd.claim(address(lp1), address(vault2),  address(ltlf1));
+        uint[5] memory info4 = lpd.claim(address(lp1), address(vault2),  address(ltlf2));
 
         assertEq(1, info1[0]);
         assertEq(1, info1[1]);
@@ -517,10 +520,17 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(1, info2[3]);
         assertEq(1, info2[4]);
 
-        lpd.claim(address(lp1), address(vault),  address(ltlf1));
-        lpd.claim(address(lp1), address(vault),  address(ltlf2));
-        lpd.claim(address(lp1), address(vault2), address(ltlf1));
-        lpd.claim(address(lp1), address(vault2), address(ltlf2));
+        assertEq(1, info3[0]);
+        assertEq(1, info3[1]);
+        assertEq(1, info3[2]);
+        assertEq(1, info3[3]);
+        assertEq(1, info3[4]);
+
+        assertEq(1, info4[0]);
+        assertEq(1, info4[1]);
+        assertEq(1, info4[2]);
+        assertEq(1, info4[3]);
+        assertEq(1, info4[4]);
 
         // Post-state checks
 
