@@ -13,7 +13,7 @@
     "balance": "hardhat balance",
     "docs": "npx solidity-docgen --solc-module solc -i ./contracts -o ./docs -t ./docs",
     "lint": "npx solhint contracts/**/*.sol",
-    "pretty": "npx prettier --write contracts/**/*.sol&&npx prettier --write ./{test,scripts}/*.js",
+    "pretty": "npx prettier --write ./{test,scripts}/*.js",
     "coverage": "npx hardhat coverage --network coverage",
     "migrate-token": "git submodule update --init --recursive && npx hardhat run scripts/migrate-token.js && hardhat run scripts/publish.js",
     "migrate": "git submodule update --init --recursive && npx hardhat run scripts/deploy.js&& hardhat run scripts/publish.js",
@@ -43,9 +43,7 @@
     "husky": "^4.3.0",
     "node-watch": "^0.7.0",
     "prettier": "^2.1.2",
-    "prettier-plugin-solidity": "^1.0.0-beta.1",
     "solhint": "^3.3.1",
-    "solhint-plugin-prettier": "0.0.5",
     "solidity-coverage": "^0.7.12"
   },
   "dependencies": {
