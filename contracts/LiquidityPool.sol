@@ -221,6 +221,8 @@ contract LiquidityPool is IERC20, ERC20 {
     function withdraw(uint256 _amt) external notDefunct finalized {}
 
     event Debug(string, uint);
+    event DebugAdd(string, address);
+
     function withdraw() external notDefunct finalized {
         uint256 share = balanceOf(msg.sender) * WAD / totalSupply();
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
@@ -245,9 +247,9 @@ contract LiquidityPool is IERC20, ERC20 {
         );
 
         // Instantiate locker if it doesn't exist with this factory type.
-        if (loans[_vault][_ltlFactory].loanTokenLocker == address(0)) {
+        if (loanTokenLockers[_vault][_ltlFactory] == address(0)) {
             address _loanTokenLocker = ILoanTokenLockerFactory(_ltlFactory).newLocker(_vault);
-            loanTokenLockers[_vault][_ltlFactory] = _loanTokenLocker
+            loanTokenLockers[_vault][_ltlFactory] = _loanTokenLocker;
         }
         
         principalSum += _amount;
@@ -348,7 +350,9 @@ contract LiquidityPool is IERC20, ERC20 {
     ///         uint[3]: Fee portion claimed.
     ///         uint[4]: Excess portion claimed.
     ///         uint[5]: TODO: Liquidation portion claimed.
-    function claim(address _vault, address _ltlFactory) public {
+    function claim(address _vault, address _ltlFactory) public returns(uint[5] memory) {
+
+        DebugAdd("msg.sender", msg.sender);
 
         uint[5] memory claimInfo = ILoanTokenLocker(loanTokenLockers[_vault][_ltlFactory]).claim();
 
@@ -369,6 +373,8 @@ contract LiquidityPool is IERC20, ERC20 {
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
         emit BalanceUpdated(stakeLockerAddress,     address(ILiquidityAsset), ILiquidityAsset.balanceOf(stakeLockerAddress));
         emit BalanceUpdated(poolDelegate,           address(ILiquidityAsset), ILiquidityAsset.balanceOf(poolDelegate));
+
+        return claimInfo;
     }
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals

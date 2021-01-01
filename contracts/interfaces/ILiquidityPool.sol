@@ -10,5 +10,5 @@ interface ILiquidityPool {
 
     function deposit(uint256) external;
 
-    function claim(address, address) external;
+    function claim(address, address) external returns(uint[5] memory);
 }

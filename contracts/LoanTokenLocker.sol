@@ -2,9 +2,12 @@
 
 pragma solidity >=0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./interfaces/ILoanVault.sol";
 
 contract LoanTokenLocker {
+
+    using SafeMath for uint256;
 
     address public immutable vault; // The LoanVault that this locker is holding tokens for.
     address public immutable owner; // The owner of this Locker (a liquidity pool).
@@ -22,8 +25,11 @@ contract LoanTokenLocker {
     }
 
     event Debug(string, uint);
+    event DebugAdd(string, address);
     
     modifier isOwner() {
+        emit DebugAdd("msg.sender", msg.sender);
+        emit DebugAdd("owner", owner);
         require(msg.sender == owner, "LoanTokenLocker:ERR_MSG_SENDER_NOT_OWNER");
         _;
     }
@@ -74,7 +80,7 @@ contract LoanTokenLocker {
         uint256 fee       = newFee      .mul(1 ether).div(sum).mul(balance).div(1 ether);
         uint256 excess    = newExcess   .mul(1 ether).div(sum).mul(balance).div(1 ether);
 
-        require(IERC20(asset).transfer(owner), "LoanTokenLocker::claim:ERR_XFER_OWNER");
+        require(IERC20(asset).transfer(owner, balance), "LoanTokenLocker::claim:ERR_XFER");
         
         emit Debug("sum", sum);
         emit Debug("balance", balance);

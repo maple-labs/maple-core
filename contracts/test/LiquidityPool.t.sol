@@ -342,114 +342,114 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(lp1.balanceOf(address(bob)),     100 ether);
     }
 
-    function test_fundLoan() public {
-        address stakeLocker   = lp1.stakeLockerAddress();
-        address liqLocker     = lp1.liquidityLockerAddress();
-        address fundingLocker = vault.fundingLocker();
+    // function test_fundLoan() public {
+    //     address stakeLocker   = lp1.stakeLockerAddress();
+    //     address liqLocker     = lp1.liquidityLockerAddress();
+    //     address fundingLocker = vault.fundingLocker();
 
-        sid.approve(address(bPool), stakeLocker, uint(-1));
-        sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
+    //     sid.approve(address(bPool), stakeLocker, uint(-1));
+    //     sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
 
-        // Mint 100 DAI into this LP account
-        mint("DAI", address(bob), 100 ether);
+    //     // Mint 100 DAI into this LP account
+    //     mint("DAI", address(bob), 100 ether);
 
-        lp1.finalize();
+    //     lp1.finalize();
 
-        bob.approve(DAI, address(lp1), uint(-1));
+    //     bob.approve(DAI, address(lp1), uint(-1));
 
-        assertTrue(bob.try_deposit(address(lp1), 100 ether));
+    //     assertTrue(bob.try_deposit(address(lp1), 100 ether));
 
-        assertTrue(!sid.try_fundLoan(address(lp1), address(vault), address(ltlf1), 100 ether)); // LoanVaultFactory not in globals
+    //     assertTrue(!sid.try_fundLoan(address(lp1), address(vault), address(ltlf1), 100 ether)); // LoanVaultFactory not in globals
 
-        globals.setLoanVaultFactory(address(loanVFactory));
+    //     globals.setLoanVaultFactory(address(loanVFactory));
 
-        assertEq(IERC20(DAI).balanceOf(liqLocker),               100 ether);  // Balance of Liquidity Locker
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),          0);  // Balance of Funding Locker
+    //     assertEq(IERC20(DAI).balanceOf(liqLocker),               100 ether);  // Balance of Liquidity Locker
+    //     assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),          0);  // Balance of Funding Locker
         
-        /*******************/
-        /*** Fund a Loan ***/
-        /*******************/
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault), address(ltlf1), 20 ether));  // Fund loan for 20 DAI
+    //     /*******************/
+    //     /*** Fund a Loan ***/
+    //     /*******************/
+    //     assertTrue(sid.try_fundLoan(address(lp1), address(vault), address(ltlf1), 20 ether));  // Fund loan for 20 DAI
 
-        (
-            address loanVaultFunded,
-            address loanTokenLocker,
-            uint256 amountFunded,
-            uint256 principalPaid,
-            uint256 interestPaid,
-            uint256 feePaid,
-            uint256 excessReturned
-        ) = lp1.loans(address(vault), address(ltlf1));
+    //     (
+    //         address loanVaultFunded,
+    //         address loanTokenLocker,
+    //         uint256 amountFunded,
+    //         uint256 principalPaid,
+    //         uint256 interestPaid,
+    //         uint256 feePaid,
+    //         uint256 excessReturned
+    //     ) = lp1.loans(address(vault), address(ltlf1));
 
-        assertEq(ltlf1.lockers(0), loanTokenLocker);  // LTL instantiated
+    //     assertEq(ltlf1.lockers(0), loanTokenLocker);  // LTL instantiated
 
-        assertEq(loanVaultFunded,  address(vault));
-        assertEq(amountFunded,           20 ether); 
-        assertEq(principalPaid,                 0);
-        assertEq(interestPaid,                  0);
-        assertEq(feePaid,                       0);
-        assertEq(excessReturned,                0);
+    //     assertEq(loanVaultFunded,  address(vault));
+    //     assertEq(amountFunded,           20 ether); 
+    //     assertEq(principalPaid,                 0);
+    //     assertEq(interestPaid,                  0);
+    //     assertEq(feePaid,                       0);
+    //     assertEq(excessReturned,                0);
 
-        assertEq(IERC20(DAI).balanceOf(liqLocker),              80 ether);  // Balance of Liquidity Locker
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 20 ether);  // Balance of Funding Locker
-        assertEq(IERC20(vault).balanceOf(loanTokenLocker),      20 ether);  // LoanToken balance of LT Locker
+    //     assertEq(IERC20(DAI).balanceOf(liqLocker),              80 ether);  // Balance of Liquidity Locker
+    //     assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 20 ether);  // Balance of Funding Locker
+    //     assertEq(IERC20(vault).balanceOf(loanTokenLocker),      20 ether);  // LoanToken balance of LT Locker
 
-        /****************************************/
-        /*** Fund same loan with the same LTL ***/
-        /****************************************/
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault), address(ltlf1), 25 ether)); // Fund loan for 25 DAI
-        (
-            loanVaultFunded,
-            loanTokenLocker,
-            amountFunded,
-            principalPaid,
-            interestPaid,
-            feePaid,
-            excessReturned
-        ) = lp1.loans(address(vault), address(ltlf1));
+    //     /****************************************/
+    //     /*** Fund same loan with the same LTL ***/
+    //     /****************************************/
+    //     assertTrue(sid.try_fundLoan(address(lp1), address(vault), address(ltlf1), 25 ether)); // Fund loan for 25 DAI
+    //     (
+    //         loanVaultFunded,
+    //         loanTokenLocker,
+    //         amountFunded,
+    //         principalPaid,
+    //         interestPaid,
+    //         feePaid,
+    //         excessReturned
+    //     ) = lp1.loans(address(vault), address(ltlf1));
 
-        assertEq(ltlf1.lockers(0), loanTokenLocker);  // Same LTL
+    //     assertEq(ltlf1.lockers(0), loanTokenLocker);  // Same LTL
 
-        assertEq(loanVaultFunded,  address(vault));
-        assertEq(amountFunded,           45 ether); 
-        assertEq(principalPaid,                 0);
-        assertEq(interestPaid,                  0);
-        assertEq(feePaid,                       0);
-        assertEq(excessReturned,                0);
+    //     assertEq(loanVaultFunded,  address(vault));
+    //     assertEq(amountFunded,           45 ether); 
+    //     assertEq(principalPaid,                 0);
+    //     assertEq(interestPaid,                  0);
+    //     assertEq(feePaid,                       0);
+    //     assertEq(excessReturned,                0);
 
-        assertEq(IERC20(DAI).balanceOf(liqLocker),              55 ether);  // Balance of Liquidity Locker
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 45 ether);  // Balance of Funding Locker
-        assertEq(IERC20(vault).balanceOf(loanTokenLocker),      45 ether);  // LoanToken balance of LT Locker
+    //     assertEq(IERC20(DAI).balanceOf(liqLocker),              55 ether);  // Balance of Liquidity Locker
+    //     assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 45 ether);  // Balance of Funding Locker
+    //     assertEq(IERC20(vault).balanceOf(loanTokenLocker),      45 ether);  // LoanToken balance of LT Locker
 
-        /*******************************************/
-        /*** Fund same loan with a different LTL ***/
-        /*******************************************/
-        LoanTokenLockerFactory ltlf2 = new LoanTokenLockerFactory();
-        assertTrue(sid.try_fundLoan(address(lp1), address(vault), address(ltlf2), 15 ether)); // Fund loan for 25 DAI
+    //     /*******************************************/
+    //     /*** Fund same loan with a different LTL ***/
+    //     /*******************************************/
+    //     LoanTokenLockerFactory ltlf2 = new LoanTokenLockerFactory();
+    //     assertTrue(sid.try_fundLoan(address(lp1), address(vault), address(ltlf2), 15 ether)); // Fund loan for 25 DAI
 
-        (
-            loanVaultFunded,
-            loanTokenLocker,
-            amountFunded,
-            principalPaid,
-            interestPaid,
-            feePaid,
-            excessReturned
-        ) = lp1.loans(address(vault), address(ltlf2)); // Next struct in mapping, corrresponding to new LTL
+    //     (
+    //         loanVaultFunded,
+    //         loanTokenLocker,
+    //         amountFunded,
+    //         principalPaid,
+    //         interestPaid,
+    //         feePaid,
+    //         excessReturned
+    //     ) = lp1.loans(address(vault), address(ltlf2)); // Next struct in mapping, corrresponding to new LTL
 
-        assertEq(ltlf2.lockers(0), loanTokenLocker);  // Same LTL
+    //     assertEq(ltlf2.lockers(0), loanTokenLocker);  // Same LTL
 
-        assertEq(loanVaultFunded,  address(vault));
-        assertEq(amountFunded,           15 ether); 
-        assertEq(principalPaid,                 0);
-        assertEq(interestPaid,                  0);
-        assertEq(feePaid,                       0);
-        assertEq(excessReturned,                0);
+    //     assertEq(loanVaultFunded,  address(vault));
+    //     assertEq(amountFunded,           15 ether); 
+    //     assertEq(principalPaid,                 0);
+    //     assertEq(interestPaid,                  0);
+    //     assertEq(feePaid,                       0);
+    //     assertEq(excessReturned,                0);
 
-        assertEq(IERC20(DAI).balanceOf(liqLocker),              40 ether);  // Balance of Liquidity Locker
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 60 ether);  // Balance of Funding Locker
-        assertEq(IERC20(vault).balanceOf(loanTokenLocker),      15 ether);  // LoanToken balance of LT Locker
-    }
+    //     assertEq(IERC20(DAI).balanceOf(liqLocker),              40 ether);  // Balance of Liquidity Locker
+    //     assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 60 ether);  // Balance of Funding Locker
+    //     assertEq(IERC20(vault).balanceOf(loanTokenLocker),      15 ether);  // LoanToken balance of LT Locker
+    // }
 
     function test_claim_singleLP() public {
 
@@ -493,10 +493,10 @@ contract LiquidityPoolTest is TestUtil {
         assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf1),   500 ether));
         assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2),   500 ether));
 
-        (,address ltl1,,,,,) = lp1.loans(address(vault),  address(ltlf1));  // ltl1 = LoanTokenLocker 1, for vault using ltlf1
-        (,address ltl2,,,,,) = lp1.loans(address(vault),  address(ltlf2));  // ltl2 = LoanTokenLocker 2, for vault using ltlf2
-        (,address ltl3,,,,,) = lp1.loans(address(vault2), address(ltlf1));  // ltl3 = LoanTokenLocker 3, for vault2 using ltlf1
-        (,address ltl4,,,,,) = lp1.loans(address(vault2), address(ltlf2));  // ltl4 = LoanTokenLocker 4, for vault2 using ltlf2
+        address ltl1 = lp1.loanTokenLockers(address(vault),  address(ltlf1));  // ltl1 = LoanTokenLocker 1, for vault using ltlf1
+        address ltl2 = lp1.loanTokenLockers(address(vault),  address(ltlf2));  // ltl2 = LoanTokenLocker 2, for vault using ltlf2
+        address ltl3 = lp1.loanTokenLockers(address(vault2), address(ltlf1));  // ltl3 = LoanTokenLocker 3, for vault2 using ltlf1
+        address ltl4 = lp1.loanTokenLockers(address(vault2), address(ltlf2));  // ltl4 = LoanTokenLocker 4, for vault2 using ltlf2
 
         // Present state checks
         assertEq(IERC20(DAI).balanceOf(liqLocker),               8000 ether);  // 10000 DAI deposited - (1100 DAI + 1100 DAI)
@@ -551,27 +551,30 @@ contract LiquidityPoolTest is TestUtil {
         uint feePaid2 = vault2.feePaid();
         uint excPaid2 = vault2.excessReturned();
 
-        // Snapshot theory, the original holder of tokens claims the tokens.
-        // When updateFundsReceived() is fired, the contract holding the ERC-2222 tokens
-        // is the only contract then allowed to claim associated fundsDistributed().
+        // // Snapshot theory, the original holder of tokens claims the tokens.
+        // // When updateFundsReceived() is fired, the contract holding the ERC-2222 tokens
+        // // is the only contract then allowed to claim associated fundsDistributed().
         
-        // To test this, we do normal claim as follows ...
-        LoanTokenLocker LTL_1 = LoanTokenLocker(ltl1);
-        LTL_1.claim();
+        // // To test this, we do normal claim as follows ...
+        // LoanTokenLocker LTL_1 = LoanTokenLocker(ltl1);
+        // LTL_1.claim();
 
-        // ... with follow up claim by LP.
-        // ... note this leaves funds locked in LoanTokenLocker, but they are claimed as expected.
+        // // ... with follow up claim by LP.
+        // // ... note this leaves funds locked in LoanTokenLocker, but they are claimed as expected.
+        // uint[5] memory claim1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
+
+        // // Now we reverse order of claim and attempt to make claim from LiquidityPool ...
+        // // ... even though LoanTokens were held in LoanTokenLocker at time of updateFundsReceived() call.
+        // // The following will fail / allow the LiquidityPool to claim nothing.
+        // uint[5] memory claim2 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+        // LoanTokenLocker LTL_2 = LoanTokenLocker(ltl2);
+
+        // // Lo and behold, we are able to claim everything via LoanTokenLocker after failed LP claim() attempt.
+        // LTL_2.claim();
+
+        // New implementation:
         uint[5] memory claim1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
-
-        // Now we reverse order of claim and attempt to make claim from LiquidityPool ...
-        // ... even though LoanTokens were held in LoanTokenLocker at time of updateFundsReceived() call.
-        // The following will fail / allow the LiquidityPool to claim nothing.
         uint[5] memory claim2 = sid.claim(address(lp1), address(vault),   address(ltlf2));
-        LoanTokenLocker LTL_2 = LoanTokenLocker(ltl2);
-
-        // Lo and behold, we are able to claim everything via LoanTokenLocker after failed LP claim() attempt.
-        LTL_2.claim();
-
 
         // uint[5] memory claim3 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
         // uint[5] memory claim4 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
@@ -746,14 +749,14 @@ contract LiquidityPoolTest is TestUtil {
         assertTrue(jon.try_fundLoan(address(lp2), address(vault2),  address(ltlf2), 150 ether));  // Fund vault using ltlf2 for 150 DAI
         assertTrue(jon.try_fundLoan(address(lp2), address(vault2),  address(ltlf2), 150 ether));  // Fund vault using ltlf2 for 150 DAI (no excess), 1000 DAI total
 
-        (,address ltl1_lp1,,,,,) = lp1.loans(address(vault),  address(ltlf1));  // ltl1_lp1 = LoanTokenLocker 1, for lp1, for vault using ltlf1
-        (,address ltl2_lp1,,,,,) = lp1.loans(address(vault),  address(ltlf2));  // ltl2_lp1 = LoanTokenLocker 2, for lp1, for vault using ltlf2
-        (,address ltl3_lp1,,,,,) = lp1.loans(address(vault2), address(ltlf1));  // ltl3_lp1 = LoanTokenLocker 3, for lp1, for vault2 using ltlf1
-        (,address ltl4_lp1,,,,,) = lp1.loans(address(vault2), address(ltlf2));  // ltl4_lp1 = LoanTokenLocker 4, for lp1, for vault2 using ltlf2
-        (,address ltl1_lp2,,,,,) = lp2.loans(address(vault),  address(ltlf1));  // ltl1_lp2 = LoanTokenLocker 1, for lp2, for vault using ltlf1
-        (,address ltl2_lp2,,,,,) = lp2.loans(address(vault),  address(ltlf2));  // ltl2_lp2 = LoanTokenLocker 2, for lp2, for vault using ltlf2
-        (,address ltl3_lp2,,,,,) = lp2.loans(address(vault2), address(ltlf1));  // ltl3_lp2 = LoanTokenLocker 3, for lp2, for vault2 using ltlf1
-        (,address ltl4_lp2,,,,,) = lp2.loans(address(vault2), address(ltlf2));  // ltl4_lp2 = LoanTokenLocker 4, for lp2, for vault2 using ltlf2
+        address ltl1_lp1 = lp1.loanTokenLockers(address(vault),  address(ltlf1));  // ltl1_lp1 = LoanTokenLocker 1, for lp1, for vault using ltlf1
+        address ltl2_lp1 = lp1.loanTokenLockers(address(vault),  address(ltlf2));  // ltl2_lp1 = LoanTokenLocker 2, for lp1, for vault using ltlf2
+        address ltl3_lp1 = lp1.loanTokenLockers(address(vault2), address(ltlf1));  // ltl3_lp1 = LoanTokenLocker 3, for lp1, for vault2 using ltlf1
+        address ltl4_lp1 = lp1.loanTokenLockers(address(vault2), address(ltlf2));  // ltl4_lp1 = LoanTokenLocker 4, for lp1, for vault2 using ltlf2
+        address ltl1_lp2 = lp2.loanTokenLockers(address(vault),  address(ltlf1));  // ltl1_lp2 = LoanTokenLocker 1, for lp2, for vault using ltlf1
+        address ltl2_lp2 = lp2.loanTokenLockers(address(vault),  address(ltlf2));  // ltl2_lp2 = LoanTokenLocker 2, for lp2, for vault using ltlf2
+        address ltl3_lp2 = lp2.loanTokenLockers(address(vault2), address(ltlf1));  // ltl3_lp2 = LoanTokenLocker 3, for lp2, for vault2 using ltlf1
+        address ltl4_lp2 = lp2.loanTokenLockers(address(vault2), address(ltlf2));  // ltl4_lp2 = LoanTokenLocker 4, for lp2, for vault2 using ltlf2
 
         // Present state checks
         assertEq(IERC20(DAI).balanceOf(liqLocker1),              8600 ether);  // 10000 DAI deposited - (1000 DAI + 400 DAI)
@@ -947,9 +950,9 @@ contract LiquidityPoolTest is TestUtil {
         assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 15 ether));  // Fund new loan same vault for 15 DAI
         assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2), 15 ether));  // Fund new loan new vault for 15 DAI
 
-        (, address ltLocker,,,,,)  = lp1.loans(address(vault),  address(ltlf1));
-        (, address ltLocker2,,,,,) = lp1.loans(address(vault),  address(ltlf2));
-        (, address ltLocker3,,,,,) = lp1.loans(address(vault2), address(ltlf2));
+        address ltLocker  = lp1.loanTokenLockers(address(vault),  address(ltlf1));
+        address ltLocker2 = lp1.loanTokenLockers(address(vault),  address(ltlf2));
+        address ltLocker3 = lp1.loanTokenLockers(address(vault2), address(ltlf2));
 
         assertEq(IERC20(DAI).balanceOf(liqLocker),               25 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  60 ether);  // Balance of Funding Locker
