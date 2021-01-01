@@ -40,18 +40,6 @@ contract LiquidityPool is IERC20, ERC20 {
     // An interface for the factory used to instantiate a StakeLocker for this LiquidityPool.
     IStakeLockerFactory private StakeLockerFactory;
 
-    // Struct for tracking investments.
-    struct Loan {
-        address loanVaultFunded;
-        address loanTokenLocker;
-        uint256 amountFunded;
-        uint256 principalPaid;
-        uint256 interestPaid;
-        uint256 feePaid;
-        uint256 excessReturned;
-        // TODO: uint256 liquidationClaimed;
-    }
-
     /// @notice Fires when this liquidity pool funds a loan.
     event LoanFunded(
         address loanVaultFunded,
@@ -61,9 +49,9 @@ contract LiquidityPool is IERC20, ERC20 {
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
-    /// @notice Data structure to reference loan token lockers.
-    /// @dev loans[LOAN_VAULT][LOCKER_FACTORY] = LOCKER
-    mapping(address => mapping(address => Loan)) public loans;
+    /// @notice Data structure to referencing loan token lockers.
+    /// @dev loans[LOAN_VAULT][LOCKER_FACTORY] = loanTokenLocker
+    mapping(address => mapping(address => address)) public loanTokenLockers;
 
     // An interface for the locker which escrows StakeAsset.
     IStakeLocker private StakeLocker;
@@ -233,6 +221,8 @@ contract LiquidityPool is IERC20, ERC20 {
     function withdraw(uint256 _amt) external notDefunct finalized {}
 
     event Debug(string, uint);
+    event DebugAdd(string, address);
+
     function withdraw() external notDefunct finalized {
         uint256 share = balanceOf(msg.sender) * WAD / totalSupply();
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
@@ -245,41 +235,113 @@ contract LiquidityPool is IERC20, ERC20 {
     }
 
     function fundLoan(
-        address _loanVault,
-        address _loanTokenLockerFactory,
-        uint256 _amt
+        address _vault,
+        address _ltlFactory,
+        uint256 _amount
     ) external notDefunct finalized isDelegate {
+
         // Auth check on loanVaultFactory "kernel"
         require(
-            ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_loanVault),
+            ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_vault),
             "LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID"
         );
+
         // Instantiate locker if it doesn't exist with this factory type.
-        if (loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker == address(0)) {
-            address _loanTokenLocker = ILoanTokenLockerFactory(
-                _loanTokenLockerFactory
-            ).newLocker(_loanVault);
-            // Store data in loans mapping with a Loan struct.
-            loans[_loanVault][_loanTokenLockerFactory] = Loan(
-                _loanVault, 
-                _loanTokenLocker,
-                _amt,
-                0,0,0,0
-            );
-        } else {
-            loans[_loanVault][_loanTokenLockerFactory].amountFunded += _amt;
+        if (loanTokenLockers[_vault][_ltlFactory] == address(0)) {
+            address _loanTokenLocker = ILoanTokenLockerFactory(_ltlFactory).newLocker(_vault);
+            loanTokenLockers[_vault][_ltlFactory] = _loanTokenLocker;
         }
+        
+        principalSum += _amount;
+
         // Fund loan.
-        principalSum += _amt;
         ILiquidityLocker(liquidityLockerAddress).fundLoan(
-            _loanVault,
-            loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker,
-            _amt
+            _vault,
+            loanTokenLockers[_vault][_ltlFactory],
+            _amount
         );
         
-        emit LoanFunded(_loanVault, loans[_loanVault][_loanTokenLockerFactory].loanTokenLocker, _amt);
+        emit LoanFunded(_vault, loanTokenLockers[_vault][_ltlFactory], _amount);
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
     }
+
+    // /// @notice Claim available funds through a LoanToken.
+    // /// @return uint[0]: Total amount claimed.
+    // ///         uint[1]: Interest portion claimed.
+    // ///         uint[2]: Principal portion claimed.
+    // ///         uint[3]: Fee portion claimed.
+    // ///         uint[4]: Excess portion claimed.
+    // ///         uint[5]: TODO: Liquidation portion claimed.
+    // function claim(address _loanVault, address _loanTokenLockerFactory) public returns(uint[5] memory) {
+
+    //     // Grab "info" from loans data structure.
+    //     Loan memory info = loans[_loanVault][_loanTokenLockerFactory];
+    //     address _lvf = info.loanVaultFunded;
+    //     address _ltl = info.loanTokenLocker;
+
+    //     // Create interface for LoanVault.
+    //     ILoanVault vault = ILoanVault(_lvf);
+
+    //     // Pull tokens from TokenLocker.
+    //     ILoanTokenLocker(_ltl).fetch();
+    //     vault.updateFundsReceived();
+
+    //     // Calculate deltas, or "net new" values.
+    //     uint256 newInterest  = vault.interestPaid() - info.interestPaid; // 100 DAI Interest, 1st guy
+    //     uint256 newPrincipal = vault.principalPaid() - info.principalPaid;
+    //     uint256 newFee       = vault.feePaid() - info.feePaid;
+    //     uint256 newExcess    = vault.excessReturned() - info.excessReturned;
+    //     emit Debug("newInterest", newInterest);
+    //     emit Debug("newPrincipal", newPrincipal);
+    //     emit Debug("newFee", newFee);
+    //     emit Debug("newExcess", newExcess);
+
+    //     // Update loans data structure.
+    //     loans[_loanVault][_loanTokenLockerFactory].interestPaid   = vault.interestPaid();
+    //     loans[_loanVault][_loanTokenLockerFactory].principalPaid  = vault.principalPaid();
+    //     loans[_loanVault][_loanTokenLockerFactory].feePaid        = vault.feePaid();
+    //     loans[_loanVault][_loanTokenLockerFactory].excessReturned = vault.excessReturned();
+
+    //     // Update ERC2222 internal accounting for LoanVault.
+    //     vault.withdrawFunds();
+
+    //     // Return tokens to locker.
+    //     vault.transfer(_ltl, IERC20(_lvf).balanceOf(address(this)));
+
+    //     uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess);
+    //     uint256 balance   = ILiquidityAsset.balanceOf(address(this));
+    //     uint256 interest  = newInterest.mul(1 ether).div(sum).mul(balance).div(1 ether);
+    //     uint256 principal = newPrincipal.mul(1 ether).div(sum).mul(balance).div(1 ether);
+    //     uint256 fee       = newFee.mul(1 ether).div(sum).mul(balance).div(1 ether);
+    //     uint256 excess    = newExcess.mul(1 ether).div(sum).mul(balance).div(1 ether);
+
+    //     emit Debug("sum", sum);
+    //     emit Debug("balance", balance);
+    //     emit Debug("interest", interest);
+    //     emit Debug("principal", principal);
+    //     emit Debug("fee", fee);
+    //     emit Debug("excess", excess);
+
+    //     // Distribute "interest" to appropriate parties.
+    //     require(ILiquidityAsset.transfer(poolDelegate,           interest.mul(delegateFee).div(10000)));
+    //     require(ILiquidityAsset.transfer(stakeLockerAddress,     interest.mul(stakingFee).div(10000)));
+    //     require(ILiquidityAsset.transfer(liquidityLockerAddress, interest.mul(10000 - stakingFee - delegateFee).div(10000)));
+
+    //     // TODO: Update our LP interest distribution mechanism / variable here.
+
+    //     // Distribute "principal" and "excess" to liquidityLocker.
+    //     require(ILiquidityAsset.transfer(liquidityLockerAddress, principal));
+    //     require(ILiquidityAsset.transfer(liquidityLockerAddress, excess));
+
+    //     // Distribute "fee" to poolDelegate.
+    //     require(ILiquidityAsset.transfer(poolDelegate, fee));
+
+    //     emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
+    //     emit BalanceUpdated(stakeLockerAddress,     address(ILiquidityAsset), ILiquidityAsset.balanceOf(stakeLockerAddress));
+    //     emit BalanceUpdated(poolDelegate,           address(ILiquidityAsset), ILiquidityAsset.balanceOf(poolDelegate));
+        
+    //     return([sum, interest, principal, fee, excess]);
+    // }
 
     /// @notice Claim available funds through a LoanToken.
     /// @return uint[0]: Total amount claimed.
@@ -288,75 +350,31 @@ contract LiquidityPool is IERC20, ERC20 {
     ///         uint[3]: Fee portion claimed.
     ///         uint[4]: Excess portion claimed.
     ///         uint[5]: TODO: Liquidation portion claimed.
-    function claim(address _loanVault, address _loanTokenLockerFactory) public returns(uint[5] memory) {
+    function claim(address _vault, address _ltlFactory) public returns(uint[5] memory) {
 
-        // Grab "info" from loans data structure.
-        Loan memory info = loans[_loanVault][_loanTokenLockerFactory];
-        address _lvf = info.loanVaultFunded;
-        address _ltl = info.loanTokenLocker;
+        DebugAdd("msg.sender", msg.sender);
 
-        // Create interface for LoanVault.
-        ILoanVault vault = ILoanVault(_lvf);
-
-        // Pull tokens from TokenLocker.
-        ILoanTokenLocker(_ltl).fetch();
-        vault.updateFundsReceived();
-
-        // Calculate deltas, or "net new" values.
-        uint256 newInterest  = vault.interestPaid() - info.interestPaid; // 100 DAI Interest, 1st guy
-        uint256 newPrincipal = vault.principalPaid() - info.principalPaid;
-        uint256 newFee       = vault.feePaid() - info.feePaid;
-        uint256 newExcess    = vault.excessReturned() - info.excessReturned;
-        emit Debug("newInterest", newInterest);
-        emit Debug("newPrincipal", newPrincipal);
-        emit Debug("newFee", newFee);
-        emit Debug("newExcess", newExcess);
-
-        // Update loans data structure.
-        loans[_loanVault][_loanTokenLockerFactory].interestPaid   = vault.interestPaid();
-        loans[_loanVault][_loanTokenLockerFactory].principalPaid  = vault.principalPaid();
-        loans[_loanVault][_loanTokenLockerFactory].feePaid        = vault.feePaid();
-        loans[_loanVault][_loanTokenLockerFactory].excessReturned = vault.excessReturned();
-
-        // Update ERC2222 internal accounting for LoanVault.
-        vault.withdrawFunds();
-
-        // Return tokens to locker.
-        vault.transfer(_ltl, IERC20(_lvf).balanceOf(address(this)));
-
-        uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess);
-        uint256 balance   = ILiquidityAsset.balanceOf(address(this));
-        uint256 interest  = newInterest.mul(1 ether).div(sum).mul(balance).div(1 ether);
-        uint256 principal = newPrincipal.mul(1 ether).div(sum).mul(balance).div(1 ether);
-        uint256 fee       = newFee.mul(1 ether).div(sum).mul(balance).div(1 ether);
-        uint256 excess    = newExcess.mul(1 ether).div(sum).mul(balance).div(1 ether);
-
-        emit Debug("sum", sum);
-        emit Debug("balance", balance);
-        emit Debug("interest", interest);
-        emit Debug("principal", principal);
-        emit Debug("fee", fee);
-        emit Debug("excess", excess);
+        uint[5] memory claimInfo = ILoanTokenLocker(loanTokenLockers[_vault][_ltlFactory]).claim();
 
         // Distribute "interest" to appropriate parties.
-        require(ILiquidityAsset.transfer(poolDelegate,           interest.mul(delegateFee).div(10000)));
-        require(ILiquidityAsset.transfer(stakeLockerAddress,     interest.mul(stakingFee).div(10000)));
-        require(ILiquidityAsset.transfer(liquidityLockerAddress, interest.mul(10000 - stakingFee - delegateFee).div(10000)));
-
+        require(ILiquidityAsset.transfer(poolDelegate,           claimInfo[1].mul(delegateFee).div(10000)));
+        require(ILiquidityAsset.transfer(stakeLockerAddress,     claimInfo[1].mul(stakingFee).div(10000)));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, claimInfo[1].mul(10000 - stakingFee - delegateFee).div(10000)));
+        
         // TODO: Update our LP interest distribution mechanism / variable here.
 
         // Distribute "principal" and "excess" to liquidityLocker.
-        require(ILiquidityAsset.transfer(liquidityLockerAddress, principal));
-        require(ILiquidityAsset.transfer(liquidityLockerAddress, excess));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, claimInfo[2]));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, claimInfo[4]));
 
         // Distribute "fee" to poolDelegate.
-        require(ILiquidityAsset.transfer(poolDelegate, fee));
+        require(ILiquidityAsset.transfer(poolDelegate, claimInfo[3]));
 
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
         emit BalanceUpdated(stakeLockerAddress,     address(ILiquidityAsset), ILiquidityAsset.balanceOf(stakeLockerAddress));
         emit BalanceUpdated(poolDelegate,           address(ILiquidityAsset), ILiquidityAsset.balanceOf(poolDelegate));
-        
-        return([sum, interest, principal, fee, excess]);
+
+        return claimInfo;
     }
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
