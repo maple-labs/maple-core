@@ -19,8 +19,8 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 
     mapping(address => int256) internal pointsCorrection;
     mapping(address => uint256) internal withdrawnFunds;
-    event Debug(uint, uint);
-    event Debug2(uint, int);
+    event DebugInt(string, int);
+    event DebugUint(string, uint);
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) public {}
 
@@ -52,21 +52,22 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
      */
     
     function _prepareWithdraw() internal returns (uint256) {
+
+
         uint256 _withdrawableDividend = withdrawableFundsOf(msg.sender);
+        emit DebugUint("_withdrawableDividend", _withdrawableDividend);
 
-        emit Debug(0, _withdrawableDividend);
-        emit Debug(1, withdrawnFunds[msg.sender]);
-        emit Debug(2, withdrawableFundsOf(msg.sender));
-        emit Debug(3, accumulativeFundsOf(msg.sender));
-        emit Debug(4, withdrawnFundsOf(msg.sender));
-        emit Debug(5, balanceOf(msg.sender));
+        // withdrawableFundsOf(msg.sender) = accumulativeFundsOf(msg.sender).sub(withdrawnFunds[msg.sender]);
+        emit DebugUint("accumulativeFundsOf(msg.sender)", accumulativeFundsOf(msg.sender));
+        emit DebugUint("balanceOf(msg.sender)", balanceOf(msg.sender));
+        emit DebugUint("pointsPerShare", pointsPerShare);
+        emit DebugInt("pointsCorrection[msg.sender]", pointsCorrection[msg.sender]);
+        emit DebugUint("pointsMultiplier", pointsMultiplier);
+        emit DebugUint("withdrawnFunds[msg.sender])", withdrawnFunds[msg.sender]);
 
+        emit DebugUint("withdrawnFundsOf(msg.sender)-pre", withdrawnFundsOf(msg.sender));
         withdrawnFunds[msg.sender] = withdrawnFunds[msg.sender].add(_withdrawableDividend);
-        
-        emit Debug(6, withdrawnFunds[msg.sender]);
-        emit Debug(7, pointsPerShare);
-        emit Debug2(8, pointsCorrection[msg.sender]);
-        emit Debug(9, pointsMultiplier);
+        emit DebugUint("withdrawnFundsOf(msg.sender)-post", withdrawnFundsOf(msg.sender));
 
         emit FundsWithdrawn(msg.sender, _withdrawableDividend);
 
@@ -124,13 +125,13 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
         super._transfer(from, to, value);
 
         int256 _magCorrection = pointsPerShare.mul(value).toInt256Safe();
-        emit Debug2(0, _magCorrection);
-        emit Debug2(0, pointsCorrection[from]);
-        emit Debug2(0, pointsCorrection[to]);
+        emit DebugInt("_magCorrection", _magCorrection);
+        emit DebugInt("pointsCorrection[from]-pre", pointsCorrection[from]);
+        emit DebugInt("pointsCorrection[to]-pre", pointsCorrection[to]);
         pointsCorrection[from] = pointsCorrection[from].add(_magCorrection);
         pointsCorrection[to] = pointsCorrection[to].sub(_magCorrection);
-        emit Debug2(0, pointsCorrection[from]);
-        emit Debug2(0, pointsCorrection[to]);
+        emit DebugInt("pointsCorrection[from]-post", pointsCorrection[from]);
+        emit DebugInt("pointsCorrection[to]-post", pointsCorrection[to]);
     }
 
     /**
