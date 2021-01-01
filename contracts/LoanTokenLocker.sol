@@ -5,14 +5,24 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/ILoanVault.sol";
 
 contract LoanTokenLocker {
-    /// @notice The LoanToken this vault is holding.
-    address public immutable loanToken;
 
-    /// @notice The owner of this Locker (a liquidity pool).
-    address public immutable owner;
+    address public immutable vault; // The LoanVault that this locker is holding tokens for.
+    address public immutable owner; // The owner of this Locker (a liquidity pool).
 
-    constructor(address _loanToken, address _owner) public {
-        loanToken = _loanToken;
+    // Struct for tracking investments.
+    struct ClaimDifferential {
+        address loanVaultFunded;
+        address loanTokenLocker;
+        uint256 amountFunded;
+        uint256 principalPaid;
+        uint256 interestPaid;
+        uint256 feePaid;
+        uint256 excessReturned;
+        // TODO: uint256 liquidationClaimed;
+    }
+
+    constructor(address _vault, address _owner) public {
+        loanToken = _vault;
         owner = _owner;
     }
 
