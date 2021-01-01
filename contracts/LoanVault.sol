@@ -471,7 +471,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
      * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
      * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
      */
-    function updateFundsReceived() external {
+    function updateFundsReceived() public {
         int256 newFunds = _updateFundsTokenBalance();
 
         if (newFunds > 0) {

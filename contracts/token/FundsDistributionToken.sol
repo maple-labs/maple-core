@@ -126,6 +126,9 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
         int256 _magCorrection = pointsPerShare.mul(value).toInt256Safe();
         pointsCorrection[from] = pointsCorrection[from].add(_magCorrection);
         pointsCorrection[to] = pointsCorrection[to].sub(_magCorrection);
+        emit Debug2(0, _magCorrection);
+        emit Debug2(0, pointsCorrection[from]);
+        emit Debug2(0, pointsCorrection[to]);
     }
 
     /**
