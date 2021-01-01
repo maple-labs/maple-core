@@ -13,16 +13,12 @@ contract LoanTokenLocker {
     address public immutable owner; // The owner of this Locker (a liquidity pool).
     address public immutable asset; // The asset that this locker will claim.
 
-    ClaimDifferential cd; // Struct for tracking deltas.
-
-    struct ClaimDifferential {
-        address loanVaultFunded;
-        uint256 principalPaid;
-        uint256 interestPaid;
-        uint256 feePaid;
-        uint256 excessReturned;
-        // TODO: uint256 liquidationClaimed;
-    }
+    address public loanVaultFunded;
+    uint256 public principalPaid;
+    uint256 public interestPaid;
+    uint256 public feePaid;
+    uint256 public excessReturned;
+    // TODO: uint256 liquidationClaimed;
 
     event Debug(string, uint);
     event DebugAdd(string, address);
@@ -38,7 +34,7 @@ contract LoanTokenLocker {
         vault = _vault;
         owner = _owner;
         asset = ILoanVault(_vault).assetRequested();
-        cd = ClaimDifferential(_vault, 0, 0, 0, 0);
+        loanVaultFunded = _vault;
     }
 
     // Claim funds distribution via ERC-2222.
@@ -54,10 +50,10 @@ contract LoanTokenLocker {
         loanVault.updateFundsReceived();
 
         // Calculate deltas, or "net new" values.
-        uint256 newInterest  = loanVault.interestPaid() - cd.interestPaid;
-        uint256 newPrincipal = loanVault.principalPaid() - cd.principalPaid;
-        uint256 newFee       = loanVault.feePaid() - cd.feePaid;
-        uint256 newExcess    = loanVault.excessReturned() - cd.excessReturned;
+        uint256 newInterest  = loanVault.interestPaid() - interestPaid;
+        uint256 newPrincipal = loanVault.principalPaid() - principalPaid;
+        uint256 newFee       = loanVault.feePaid() - feePaid;
+        uint256 newExcess    = loanVault.excessReturned() - excessReturned;
 
         emit Debug("newInterest", newInterest);
         emit Debug("newPrincipal", newPrincipal);
@@ -65,10 +61,10 @@ contract LoanTokenLocker {
         emit Debug("newExcess", newExcess);
 
         // Update loans data structure.
-        cd.interestPaid   = loanVault.interestPaid();
-        cd.principalPaid  = loanVault.principalPaid();
-        cd.feePaid        = loanVault.feePaid();
-        cd.excessReturned = loanVault.excessReturned();
+        interestPaid   = loanVault.interestPaid();
+        principalPaid  = loanVault.principalPaid();
+        feePaid        = loanVault.feePaid();
+        excessReturned = loanVault.excessReturned();
 
         // Update ERC2222 internal accounting for LoanVault.
         loanVault.withdrawFunds();
@@ -83,6 +79,7 @@ contract LoanTokenLocker {
         require(IERC20(asset).transfer(owner, balance), "LoanTokenLocker::claim:ERR_XFER");
         
         emit Debug("sum", sum);
+        emit Debug("sum2", balance + interest + principal + fee + excess);
         emit Debug("balance", balance);
         emit Debug("interest", interest);
         emit Debug("principal", principal);
