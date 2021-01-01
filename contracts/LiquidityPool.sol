@@ -232,16 +232,16 @@ contract LiquidityPool is IERC20, ERC20 {
 
     function withdraw(uint256 _amt) external notDefunct finalized {}
 
-    event Debug(uint, uint);
+    event Debug(string, uint);
     function withdraw() external notDefunct finalized {
         uint256 share = balanceOf(msg.sender) * WAD / totalSupply();
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
         uint256 due   = share * (principalSum + bal) / WAD;
         require(IERC20(liquidityLockerAddress).transfer(msg.sender, due), "LiquidityPool::ERR_WITHDRAW_TRANSFER");
-        emit Debug(0, share);
-        emit Debug(1, bal);
-        emit Debug(2, due);
-        emit Debug(3, principalSum);
+        emit Debug("share", share);
+        emit Debug("bal", bal);
+        emit Debug("due", due);
+        emit Debug("principalSum", principalSum);
     }
 
     function fundLoan(
@@ -307,10 +307,10 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 newPrincipal = vault.principalPaid() - info.principalPaid;
         uint256 newFee       = vault.feePaid() - info.feePaid;
         uint256 newExcess    = vault.excessReturned() - info.excessReturned;
-        emit Debug(0, newInterest);
-        emit Debug(1, newPrincipal);
-        emit Debug(2, newFee);
-        emit Debug(3, newExcess);
+        emit Debug("newInterest", newInterest);
+        emit Debug("newPrincipal", newPrincipal);
+        emit Debug("newFee", newFee);
+        emit Debug("newExcess", newExcess);
 
         // Update loans data structure.
         loans[_loanVault][_loanTokenLockerFactory].interestPaid   = vault.interestPaid();
@@ -331,12 +331,12 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 fee       = newFee.mul(1 ether).div(sum).mul(balance).div(1 ether);
         uint256 excess    = newExcess.mul(1 ether).div(sum).mul(balance).div(1 ether);
 
-        emit Debug(4, sum);
-        emit Debug(5, balance);
-        emit Debug(6, interest);
-        emit Debug(7, principal);
-        emit Debug(8, fee);
-        emit Debug(9, excess);
+        emit Debug("sum", sum);
+        emit Debug("balance", balance);
+        emit Debug("interest", interest);
+        emit Debug("principal", principal);
+        emit Debug("fee", fee);
+        emit Debug("excess", excess);
 
         // Distribute "interest" to appropriate parties.
         require(ILiquidityAsset.transfer(poolDelegate,           interest.mul(delegateFee).div(10000)));
