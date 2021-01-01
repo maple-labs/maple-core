@@ -2,6 +2,7 @@
 
 pragma solidity >=0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "./interfaces/ILoanVault.sol";
 
 contract LoanTokenLocker {
     /// @notice The LoanToken this vault is holding.
@@ -13,6 +14,12 @@ contract LoanTokenLocker {
     constructor(address _loanToken, address _owner) public {
         loanToken = _loanToken;
         owner = _owner;
+    }
+
+    function claim() public {
+        ILoanVault vault = ILoanVault(loanToken);
+        vault.updateFundsReceived();
+        vault.withdrawFunds();
     }
 
     modifier isOwner() {

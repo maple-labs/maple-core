@@ -7,4 +7,6 @@ interface ILoanTokenLocker {
     function loanToken() external returns (address);
 
     function fetch() external;
+
+    function claim() external;
 }

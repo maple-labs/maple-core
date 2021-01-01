@@ -23,6 +23,7 @@ import "../StakeLockerFactory.sol";
 import "../LiquidityPoolFactory.sol";
 import "../LiquidityLockerFactory.sol";
 import "../LoanTokenLockerFactory.sol";
+import "../LoanTokenLocker.sol";
 import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
 import "../LoanVaultFactory.sol";
@@ -492,21 +493,19 @@ contract LiquidityPoolTest is TestUtil {
         assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf1),   500 ether));
         assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2),   500 ether));
 
-        {
-            (,address ltl1,,,,,) = lp1.loans(address(vault),  address(ltlf1));  // ltl1 = LoanTokenLocker 1, for vault using ltlf1
-            (,address ltl2,,,,,) = lp1.loans(address(vault),  address(ltlf2));  // ltl2 = LoanTokenLocker 2, for vault using ltlf2
-            (,address ltl3,,,,,) = lp1.loans(address(vault2), address(ltlf1));  // ltl3 = LoanTokenLocker 3, for vault2 using ltlf1
-            (,address ltl4,,,,,) = lp1.loans(address(vault2), address(ltlf2));  // ltl4 = LoanTokenLocker 4, for vault2 using ltlf2
+        (,address ltl1,,,,,) = lp1.loans(address(vault),  address(ltlf1));  // ltl1 = LoanTokenLocker 1, for vault using ltlf1
+        (,address ltl2,,,,,) = lp1.loans(address(vault),  address(ltlf2));  // ltl2 = LoanTokenLocker 2, for vault using ltlf2
+        (,address ltl3,,,,,) = lp1.loans(address(vault2), address(ltlf1));  // ltl3 = LoanTokenLocker 3, for vault2 using ltlf1
+        (,address ltl4,,,,,) = lp1.loans(address(vault2), address(ltlf2));  // ltl4 = LoanTokenLocker 4, for vault2 using ltlf2
 
-            // Present state checks
-            assertEq(IERC20(DAI).balanceOf(liqLocker),               8000 ether);  // 10000 DAI deposited - (1100 DAI + 1100 DAI)
-            assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  1000 ether);  // Balance of vault fl
-            assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 1000 ether);  // Balance of vault2 fl
-            assertEq(IERC20(vault).balanceOf(ltl1),                   500 ether);  // Balance of ltl1 for lp1 with ltlf1
-            assertEq(IERC20(vault).balanceOf(ltl2),                   500 ether);  // Balance of ltl2 for lp1 with ltlf2
-            assertEq(IERC20(vault2).balanceOf(ltl3),                  500 ether);  // Balance of ltl3 for lp1 with ltlf1
-            assertEq(IERC20(vault2).balanceOf(ltl4),                  500 ether);  // Balance of ltl4 for lp1 with ltlf2
-        }
+        // Present state checks
+        assertEq(IERC20(DAI).balanceOf(liqLocker),               8000 ether);  // 10000 DAI deposited - (1100 DAI + 1100 DAI)
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  1000 ether);  // Balance of vault fl
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 1000 ether);  // Balance of vault2 fl
+        assertEq(IERC20(vault).balanceOf(ltl1),                   500 ether);  // Balance of ltl1 for lp1 with ltlf1
+        assertEq(IERC20(vault).balanceOf(ltl2),                   500 ether);  // Balance of ltl2 for lp1 with ltlf2
+        assertEq(IERC20(vault2).balanceOf(ltl3),                  500 ether);  // Balance of ltl3 for lp1 with ltlf1
+        assertEq(IERC20(vault2).balanceOf(ltl4),                  500 ether);  // Balance of ltl4 for lp1 with ltlf2
 
         /*****************/
         /*** Draw Down ***/
@@ -552,8 +551,17 @@ contract LiquidityPoolTest is TestUtil {
         uint feePaid2 = vault2.feePaid();
         uint excPaid2 = vault2.excessReturned();
 
+        // Snapshot theory, the original holder of tokens claims the tokens.
+        LoanTokenLocker LTL_1 = LoanTokenLocker(ltl1);
+        LTL_1.claim();
+
         uint[5] memory claim1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
+
+        LoanTokenLocker LTL_2 = LoanTokenLocker(ltl2);
+        LTL_2.claim();
+
         uint[5] memory claim2 = sid.claim(address(lp1), address(vault),   address(ltlf2));
+
         // uint[5] memory claim3 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
         // uint[5] memory claim4 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
 
