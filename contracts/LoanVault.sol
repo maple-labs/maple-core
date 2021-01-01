@@ -360,6 +360,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             emit BalanceUpdated(collateralLocker, address(ICollateralAsset), ICollateralAsset.balanceOf(collateralLocker));
         }
 
+        updateFundsReceived();
+
         emit BalanceUpdated(address(this), address(IRequestedAsset),  IRequestedAsset.balanceOf(address(this)));
     }
 
@@ -395,6 +397,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         numberOfPayments = 0;
         principalPaid = principalPaid.add(_principal);
         interestPaid = interestPaid.add(_interest);
+
+        updateFundsReceived();
 
         emit BalanceUpdated(address(this), address(IRequestedAsset),  IRequestedAsset.balanceOf(address(this)));
     }

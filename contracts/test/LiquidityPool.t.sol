@@ -552,15 +552,26 @@ contract LiquidityPoolTest is TestUtil {
         uint excPaid2 = vault2.excessReturned();
 
         // Snapshot theory, the original holder of tokens claims the tokens.
+        // When updateFundsReceived() is fired, the contract holding the ERC-2222 tokens
+        // is the only contract then allowed to claim associated fundsDistributed().
+        
+        // To test this, we do normal claim as follows ...
         LoanTokenLocker LTL_1 = LoanTokenLocker(ltl1);
         LTL_1.claim();
 
+        // ... with follow up claim by LP.
+        // ... note this leaves funds locked in LoanTokenLocker, but they are claimed as expected.
         uint[5] memory claim1 = sid.claim(address(lp1), address(vault),   address(ltlf1));
 
+        // Now we reverse order of claim and attempt to make claim from LiquidityPool ...
+        // ... even though LoanTokens were held in LoanTokenLocker at time of updateFundsReceived() call.
+        // The following will fail / allow the LiquidityPool to claim nothing.
+        uint[5] memory claim2 = sid.claim(address(lp1), address(vault),   address(ltlf2));
         LoanTokenLocker LTL_2 = LoanTokenLocker(ltl2);
+
+        // Lo and behold, we are able to claim everything via LoanTokenLocker after failed LP claim() attempt.
         LTL_2.claim();
 
-        uint[5] memory claim2 = sid.claim(address(lp1), address(vault),   address(ltlf2));
 
         // uint[5] memory claim3 = sid.claim(address(lp1), address(vault2),  address(ltlf1));
         // uint[5] memory claim4 = sid.claim(address(lp1), address(vault2),  address(ltlf2));
