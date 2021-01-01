@@ -8,5 +8,5 @@ interface ILoanTokenLocker {
 
     function fetch() external;
 
-    function claim() external;
+    function claim() external returns(uint[5] memory);
 }
