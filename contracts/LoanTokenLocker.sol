@@ -18,13 +18,8 @@ contract LoanTokenLocker {
     uint256 public feePaid;
     uint256 public excessReturned;
     // TODO: uint256 liquidationClaimed;
-
-    event Debug(string, uint);
-    event DebugAdd(string, address);
     
     modifier isOwner() {
-        emit DebugAdd("msg.sender", msg.sender);
-        emit DebugAdd("owner", owner);
         require(msg.sender == owner, "LoanTokenLocker:ERR_MSG_SENDER_NOT_OWNER");
         _;
     }
@@ -53,11 +48,6 @@ contract LoanTokenLocker {
         uint256 newFee       = loanVault.feePaid() - feePaid;
         uint256 newExcess    = loanVault.excessReturned() - excessReturned;
 
-        emit Debug("newInterest", newInterest);
-        emit Debug("newPrincipal", newPrincipal);
-        emit Debug("newFee", newFee);
-        emit Debug("newExcess", newExcess);
-
         // Update loans data structure.
         interestPaid   = loanVault.interestPaid();
         principalPaid  = loanVault.principalPaid();
@@ -75,14 +65,6 @@ contract LoanTokenLocker {
         uint256 excess    = newExcess   .mul(1 ether).div(sum).mul(balance).div(1 ether);
 
         require(IERC20(asset).transfer(owner, balance), "LoanTokenLocker::claim:ERR_XFER");
-        
-        emit Debug("sum", sum);
-        emit Debug("sum2", balance + interest + principal + fee + excess);
-        emit Debug("balance", balance);
-        emit Debug("interest", interest);
-        emit Debug("principal", principal);
-        emit Debug("fee", fee);
-        emit Debug("excess", excess);
 
         return([balance, interest, principal, fee, excess]);
     }

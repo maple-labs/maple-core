@@ -220,18 +220,11 @@ contract LiquidityPool is IERC20, ERC20 {
 
     function withdraw(uint256 _amt) external notDefunct finalized {}
 
-    event Debug(string, uint);
-    event DebugAdd(string, address);
-
     function withdraw() external notDefunct finalized {
         uint256 share = balanceOf(msg.sender) * WAD / totalSupply();
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
         uint256 due   = share * (principalSum + bal) / WAD;
         require(IERC20(liquidityLockerAddress).transfer(msg.sender, due), "LiquidityPool::ERR_WITHDRAW_TRANSFER");
-        emit Debug("share", share);
-        emit Debug("bal", bal);
-        emit Debug("due", due);
-        emit Debug("principalSum", principalSum);
     }
 
     function fundLoan(
