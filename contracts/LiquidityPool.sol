@@ -357,18 +357,16 @@ contract LiquidityPool is IERC20, ERC20 {
         uint[5] memory claimInfo = ILoanTokenLocker(loanTokenLockers[_vault][_ltlFactory]).claim();
 
         // Distribute "interest" to appropriate parties.
-        require(ILiquidityAsset.transfer(poolDelegate,           claimInfo[1].mul(delegateFee).div(10000)));
-        require(ILiquidityAsset.transfer(stakeLockerAddress,     claimInfo[1].mul(stakingFee).div(10000)));
-        require(ILiquidityAsset.transfer(liquidityLockerAddress, claimInfo[1].mul(10000 - stakingFee - delegateFee).div(10000)));
-        
-        // TODO: Update our LP interest distribution mechanism / variable here.
-
-        // Distribute "principal" and "excess" to liquidityLocker.
-        require(ILiquidityAsset.transfer(liquidityLockerAddress, claimInfo[2]));
-        require(ILiquidityAsset.transfer(liquidityLockerAddress, claimInfo[4]));
+        require(ILiquidityAsset.transfer(poolDelegate,       claimInfo[1].mul(delegateFee).div(10000)));
+        require(ILiquidityAsset.transfer(stakeLockerAddress, claimInfo[1].mul(stakingFee).div(10000)));
 
         // Distribute "fee" to poolDelegate.
         require(ILiquidityAsset.transfer(poolDelegate, claimInfo[3]));
+        
+        // TODO: Update our LP interest distribution mechanism / variable here.
+
+        // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liqudityLocker
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, ILiquidityAsset.balanceOf(address(this)))); 
 
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
         emit BalanceUpdated(stakeLockerAddress,     address(ILiquidityAsset), ILiquidityAsset.balanceOf(stakeLockerAddress));
