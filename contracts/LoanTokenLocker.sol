@@ -13,7 +13,6 @@ contract LoanTokenLocker {
     address public immutable owner; // The owner of this Locker (a liquidity pool).
     address public immutable asset; // The asset that this locker will claim.
 
-    address public loanVaultFunded;
     uint256 public principalPaid;
     uint256 public interestPaid;
     uint256 public feePaid;
@@ -34,7 +33,6 @@ contract LoanTokenLocker {
         vault = _vault;
         owner = _owner;
         asset = ILoanVault(_vault).assetRequested();
-        loanVaultFunded = _vault;
     }
 
     // Claim funds distribution via ERC-2222.
