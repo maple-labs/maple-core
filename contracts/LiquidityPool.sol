@@ -49,7 +49,7 @@ contract LiquidityPool is IERC20, ERC20 {
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
-    /// @notice Data structure to referencing loan token lockers.
+    /// @notice Data structure to reference loan token lockers.
     /// @dev loans[LOAN_VAULT][LOCKER_FACTORY] = loanTokenLocker
     mapping(address => mapping(address => address)) public loanTokenLockers;
 
@@ -265,10 +265,8 @@ contract LiquidityPool is IERC20, ERC20 {
     ///         uint[3]: Fee portion claimed.
     ///         uint[4]: Excess portion claimed.
     ///         uint[5]: TODO: Liquidation portion claimed.
-    function claim(address _vault, address _ltlFactory) public returns(uint[5] memory) {
-
-        DebugAdd("msg.sender", msg.sender);
-
+    function claim(address _vault, address _ltlFactory) public returns(uint[5] memory) { 
+        
         uint[5] memory claimInfo = ILoanTokenLocker(loanTokenLockers[_vault][_ltlFactory]).claim();
 
         // Distribute "interest" to appropriate parties.

@@ -560,8 +560,6 @@ contract LiquidityPoolTest is TestUtil {
         /****************************/
         /*** Make 1 Payment (1/6) ***/
         /****************************/
-        // // TODO: Pre-state checks.
-        // // TODO: Post-state checks.
         {
             (uint amt1_1,,,) =  vault.getNextPayment(); // DAI required for 1st payment on vault
             (uint amt1_2,,,) = vault2.getNextPayment(); // DAI required for 1st payment on vault2
@@ -573,9 +571,9 @@ contract LiquidityPoolTest is TestUtil {
             fay.makePayment(address(vault2));
         }
         
-        /*****************/
-        /***  LP Claim ***/
-        /*****************/
+        /****************/
+        /*** LP Claim ***/
+        /****************/
         {      
             checkClaim(ltl1, vault,  sid, IERC20(DAI), lp1, address(ltlf1));
             checkClaim(ltl2, vault,  sid, IERC20(DAI), lp1, address(ltlf2));
@@ -586,8 +584,6 @@ contract LiquidityPoolTest is TestUtil {
         /******************************/
         /*** Make 2 Payments (3/6)  ***/
         /******************************/
-        // TODO: Pre-state checks.
-        // TODO: Post-state checks.
         {
             (uint amt2_1,,,) =  vault.getNextPayment(); // DAI required for 2nd payment on vault
             (uint amt2_2,,,) = vault2.getNextPayment(); // DAI required for 2nd payment on vault2
@@ -608,9 +604,9 @@ contract LiquidityPoolTest is TestUtil {
             fay.makePayment(address(vault2));
         }
         
-        /*****************/
-        /***  LP Claim ***/
-        /*****************/
+        /****************/
+        /*** LP Claim ***/
+        /****************/
         {      
             checkClaim(ltl1, vault,  sid, IERC20(DAI), lp1, address(ltlf1));
             checkClaim(ltl2, vault,  sid, IERC20(DAI), lp1, address(ltlf2));
@@ -621,8 +617,6 @@ contract LiquidityPoolTest is TestUtil {
         /*********************************/
         /*** Make (Early) Full Payment ***/
         /*********************************/
-        // TODO: Pre-state checks.
-        // TODO: Post-state checks.
         {
             (uint amtf_1,,) =  vault.getFullPayment(); // DAI required for 2nd payment on vault
             (uint amtf_2,,) = vault2.getFullPayment(); // DAI required for 2nd payment on vault2
@@ -634,9 +628,9 @@ contract LiquidityPoolTest is TestUtil {
             fay.makeFullPayment(address(vault2));
         }
         
-        /*****************/
-        /***  LP Claim ***/
-        /*****************/
+        /****************/
+        /*** LP Claim ***/
+        /****************/
         {      
             checkClaim(ltl1, vault,  sid, IERC20(DAI), lp1, address(ltlf1));
             checkClaim(ltl2, vault,  sid, IERC20(DAI), lp1, address(ltlf2));
@@ -795,8 +789,6 @@ contract LiquidityPoolTest is TestUtil {
         /******************************/
         /*** Make 2 Payments (3/6)  ***/
         /******************************/
-        // TODO: Pre-state checks.
-        // TODO: Post-state checks.
         {
             (uint amt2_1,,,) =  vault.getNextPayment(); // DAI required for 2nd payment on vault
             (uint amt2_2,,,) = vault2.getNextPayment(); // DAI required for 2nd payment on vault2
@@ -837,8 +829,6 @@ contract LiquidityPoolTest is TestUtil {
         /*********************************/
         /*** Make (Early) Full Payment ***/
         /*********************************/
-        // TODO: Pre-state checks.
-        // TODO: Post-state checks.
         {
             (uint amtf_1,,) =  vault.getFullPayment(); // DAI required for 2nd payment on vault
             (uint amtf_2,,) = vault2.getFullPayment(); // DAI required for 2nd payment on vault2

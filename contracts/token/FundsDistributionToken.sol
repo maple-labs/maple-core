@@ -19,8 +19,6 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
 
     mapping(address => int256) internal pointsCorrection;
     mapping(address => uint256) internal withdrawnFunds;
-    event DebugInt(string, int);
-    event DebugUint(string, uint);
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) public {}
 
@@ -52,29 +50,14 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
      */
     
     function _prepareWithdraw() internal returns (uint256) {
-
-
         uint256 _withdrawableDividend = withdrawableFundsOf(msg.sender);
-        emit DebugUint("_withdrawableDividend", _withdrawableDividend);
 
-        // withdrawableFundsOf(msg.sender) = accumulativeFundsOf(msg.sender).sub(withdrawnFunds[msg.sender]);
-        emit DebugUint("accumulativeFundsOf(msg.sender)", accumulativeFundsOf(msg.sender));
-        emit DebugUint("balanceOf(msg.sender)", balanceOf(msg.sender));
-        emit DebugUint("pointsPerShare", pointsPerShare);
-        emit DebugInt("pointsCorrection[msg.sender]", pointsCorrection[msg.sender]);
-        emit DebugUint("pointsMultiplier", pointsMultiplier);
-        emit DebugUint("withdrawnFunds[msg.sender])", withdrawnFunds[msg.sender]);
-
-        emit DebugUint("withdrawnFundsOf(msg.sender)-pre", withdrawnFundsOf(msg.sender));
         withdrawnFunds[msg.sender] = withdrawnFunds[msg.sender].add(_withdrawableDividend);
-        emit DebugUint("withdrawnFundsOf(msg.sender)-post", withdrawnFundsOf(msg.sender));
 
         emit FundsWithdrawn(msg.sender, _withdrawableDividend);
 
         return _withdrawableDividend;
     }
-
-    // (33752790193340907365653287453419279100 * 1050000000000000000000 - 33752790193340907365653287453419279100000000000000000000000) / 340282366920938463463374607431768211456
 
     /**
      * @notice View the amount of funds that an address can withdraw.
@@ -125,13 +108,8 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
         super._transfer(from, to, value);
 
         int256 _magCorrection = pointsPerShare.mul(value).toInt256Safe();
-        emit DebugInt("_magCorrection", _magCorrection);
-        emit DebugInt("pointsCorrection[from]-pre", pointsCorrection[from]);
-        emit DebugInt("pointsCorrection[to]-pre", pointsCorrection[to]);
         pointsCorrection[from] = pointsCorrection[from].add(_magCorrection);
         pointsCorrection[to] = pointsCorrection[to].sub(_magCorrection);
-        emit DebugInt("pointsCorrection[from]-post", pointsCorrection[from]);
-        emit DebugInt("pointsCorrection[to]-post", pointsCorrection[to]);
     }
 
     /**
