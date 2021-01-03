@@ -218,13 +218,14 @@ contract LiquidityPool is IERC20, ERC20 {
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
     }
 
-    function withdraw(uint256 _amt) external notDefunct finalized {}
-
-    function withdraw() external notDefunct finalized {
-        uint256 share = balanceOf(msg.sender).mul(WAD).div(totalSupply());  // Equity
-        uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress); // Balance of Liquidity Locker
-        uint256 due   = share.mul(principalSum.add(bal)).div(WAD); // Transfer to Liquidity Provider
+    function withdraw(uint256 _amt) external notDefunct finalized {
+        require(balanceOf(msg.sender) >= _amt, "LiquidityPool::withdraw:USER_BAL_LESS_THAN_AMT");
+        uint256 share = _amt.mul(WAD).div(totalSupply());
+        uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
+        uint256 due   = share.mul(principalSum.add(bal)).div(WAD);
+        _burn(msg.sender, _amt); // TODO: Unit testing on _burn / _mint for ERC-2222
         require(IERC20(liquidityLockerAddress).transfer(msg.sender, due), "LiquidityPool::ERR_WITHDRAW_TRANSFER");
+        emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
     }
 
     function fundLoan(

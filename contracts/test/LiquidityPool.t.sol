@@ -87,10 +87,6 @@ contract LP {
     function withdraw(address lPool, uint256 amt) external {
         LiquidityPool(lPool).withdraw(amt);
     }
-
-    function withdraw(address lPool) external {
-        LiquidityPool(lPool).withdraw();
-    }
 }
 
 contract Borrower {
@@ -927,7 +923,7 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(IERC20(vault2).balanceOf(ltLocker3),            15 ether);  // LoanToken balance of LT Locker 3
 
         assertEq(IERC20(DAI).balanceOf(address(bob)), 90 ether);
-        bob.withdraw(address(lp1));
+        bob.withdraw(address(lp1), lp1.balanceOf(address(bob)));
         assertEq(IERC20(DAI).balanceOf(address(bob)), 100 ether); // Paid back initial share of 10% of pool
 
         // TODO: Post-claim, multiple providers
