@@ -25,7 +25,7 @@ describe("MapleGlobals.sol Interactions", function () {
     accounts = await ethers.provider.listAccounts();
   });
 
-  it("update state variables via setters", async function () {
+  xit("update state variables via setters", async function () {
     await mapleGlobals.setGracePeriod(86400);
     const gracePeriodFetch = await mapleGlobals.gracePeriod();
     expect(gracePeriodFetch).to.equal(86400);
@@ -93,7 +93,7 @@ describe("MapleGlobals.sol Interactions", function () {
     );
   });
 
-  it("set governor back", async function () {
+  xit("set governor back", async function () {
     const mapleGlobals2 = new ethers.Contract(
       globalAddress,
       gloablABI,
@@ -105,7 +105,7 @@ describe("MapleGlobals.sol Interactions", function () {
     expect(governorFetch).to.equal(accounts[0]);
   });
 
-  it("state variables have correct init values (reverted from prior tests)", async function () {
+  xit("state variables have correct init values (reverted from prior tests)", async function () {
     const accounts = await ethers.provider.listAccounts();
     const governorFetch = await mapleGlobals.governor();
     const mapleTokenFetch = await mapleGlobals.mapleToken();
