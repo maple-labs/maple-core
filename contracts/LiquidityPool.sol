@@ -277,7 +277,7 @@ contract LiquidityPool is IERC20, ERC20 {
         require(ILiquidityAsset.transfer(poolDelegate, claimInfo[3]));
 
         // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liqudityLocker
-        uint remainder  = ILiquidityAsset.balanceOf(address(this));
+        uint remainder = ILiquidityAsset.balanceOf(address(this));
         require(ILiquidityAsset.transfer(liquidityLockerAddress, remainder));
 
         // Update outstanding principal, the interest distribution mechanism.
