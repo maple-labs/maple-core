@@ -8,7 +8,7 @@ import "./IFundsDistributionToken.sol";
 import "../math/SafeMathUint.sol";
 import "../math/SafeMathInt.sol";
 
-contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
+abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
     using SafeMath for uint256;
     using SafeMathUint for uint256;
     using SignedSafeMath for int256;
@@ -48,6 +48,7 @@ contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
      * @notice Prepares funds withdrawal
      * @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
      */
+    
     function _prepareWithdraw() internal returns (uint256) {
         uint256 _withdrawableDividend = withdrawableFundsOf(msg.sender);
 
