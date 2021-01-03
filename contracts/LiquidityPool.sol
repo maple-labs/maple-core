@@ -221,9 +221,9 @@ contract LiquidityPool is IERC20, ERC20 {
     function withdraw(uint256 _amt) external notDefunct finalized {}
 
     function withdraw() external notDefunct finalized {
-        uint256 share = balanceOf(msg.sender).mul(WAD).div(totalSupply());
-        uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
-        uint256 due   = share.mul(principalSum.add(bal)).div(WAD);
+        uint256 share = balanceOf(msg.sender).mul(WAD).div(totalSupply());  // Equity
+        uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress); // Balance of Liquidity Locker
+        uint256 due   = share.mul(principalSum.add(bal)).div(WAD); // Transfer to Liquidity Provider
         require(IERC20(liquidityLockerAddress).transfer(msg.sender, due), "LiquidityPool::ERR_WITHDRAW_TRANSFER");
     }
 
@@ -281,12 +281,9 @@ contract LiquidityPool is IERC20, ERC20 {
         require(ILiquidityAsset.transfer(liquidityLockerAddress, remainder));
 
         // Update outstanding principal, the interest distribution mechanism.
-        if (remainder > principalSum) {
-            principalSum = 0;
-        }
-        else {
-            principalSum = principalSum.sub(remainder);
-        }
+        principalSum = principalSum.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error.
+
+        // TODO: Consider any underflow / overflow that feeds into this calculation from RepaymentCalculators.
 
         // Update funds received for ERC-2222 StakeLocker tokens.
         StakeLocker.updateFundsReceived();
