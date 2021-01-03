@@ -20,7 +20,7 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
     mapping(address => int256) internal pointsCorrection;
     mapping(address => uint256) internal withdrawnFunds;
 
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) public {}
 
     /**
      * prev. distributeDividends
