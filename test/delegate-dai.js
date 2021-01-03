@@ -85,16 +85,56 @@ describe("Pool Delegate Journey - DAI", function () {
   });
 
   it("B - Finalize the liquidity pool (enables deposits, confirms staking if any)", async function () {
+
     const LiquidityPoolABI = require(artpath + "abis/LiquidityPool.abi.js");
 
+    // Create liquidity pool
     LiquidityPool = new ethers.Contract(
       LiquidityPoolAddress,
       LiquidityPoolABI,
       ethers.provider.getSigner(0)
     );
 
+    // Interface with Balancer Pool and stake
+    let BPTStakeRequired = await LiquidityPool.getInitialStakeRequirements();
+
+    const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
+    const MapleGlobalsAddress = require(artpath +"addresses/MapleGlobals.address.js");
+
+    MapleGlobals = new ethers.Contract(
+      MapleGlobalsAddress,
+      MapleGlobalsABI,
+      ethers.provider.getSigner(0)
+    );
+
+    MapleBPool = await MapleGlobals.mapleBPool();
+
+    const BPoolABI = require(artpath + "abis/LiquidityPool.abi.js");
+
+    BPool = new ethers.Contract(
+      MapleBPool,
+      BPoolABI,
+      ethers.provider.getSigner(0)
+    );
+
+    const StakeLockerABI = require(artpath + "abis/StakeLocker.abi.js");
+    const StakeLockerAddress = await LiquidityPool.stakeLockerAddress();
+
+    StakeLocker = new ethers.Contract(
+      StakeLockerAddress,
+      StakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    // Get stake required.
+    // Stake 5% of the supply (should be enough for pulling out)
+    // TODO: Complete calculator to fetch exact amount of poolAmountIn needed for staking.
+    await BPool.approve(StakeLockerAddress, BigNumber.from(10).pow(18).mul(5));
+    await StakeLocker.stake(BigNumber.from(10).pow(18).mul(5));
+
     // Finalize the pool
     await LiquidityPool.finalize();
+
   });
 
   it("C - Mint the pool delegate some DAI", async function () {

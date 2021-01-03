@@ -35,7 +35,7 @@ contract MapleGlobalsTest is TestUtil {
         globals.setGracePeriod(1 days);
         assertEq(globals.gracePeriod(), 1 days);
 
-        assertEq(globals.stakeAmountRequired(), 0);
+        assertEq(globals.stakeAmountRequired(), 100000000);
         globals.setStakeRequired(35000);
         assertEq(globals.stakeAmountRequired(), 35000);
 
