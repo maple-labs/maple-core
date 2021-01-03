@@ -3,6 +3,9 @@ pragma solidity >=0.6.11;
 import "./LoanTokenLocker.sol";
 
 contract LoanTokenLockerFactory {
+
+    // TODO: Identify why we have lockerPool and lockers as two data structures for same purpose.
+
     // Mapping data structure for owners of staked asset lockers.
     mapping(address => address) private lockerPool;
 

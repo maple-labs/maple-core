@@ -360,6 +360,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             emit BalanceUpdated(collateralLocker, address(ICollateralAsset), ICollateralAsset.balanceOf(collateralLocker));
         }
 
+        updateFundsReceived();
+
         emit BalanceUpdated(address(this), address(IRequestedAsset),  IRequestedAsset.balanceOf(address(this)));
     }
 
@@ -395,6 +397,8 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         numberOfPayments = 0;
         principalPaid = principalPaid.add(_principal);
         interestPaid = interestPaid.add(_interest);
+
+        updateFundsReceived();
 
         emit BalanceUpdated(address(this), address(IRequestedAsset),  IRequestedAsset.balanceOf(address(this)));
     }
@@ -442,7 +446,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @notice Withdraws all available funds for a token holder
      */
-    function withdrawFunds() external /* override */ {
+    function withdrawFunds() external override {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
@@ -471,7 +475,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
      * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
      * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
      */
-    function updateFundsReceived() external {
+    function updateFundsReceived() public {
         int256 newFunds = _updateFundsTokenBalance();
 
         if (newFunds > 0) {
