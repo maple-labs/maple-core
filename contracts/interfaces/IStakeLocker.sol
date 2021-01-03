@@ -11,4 +11,5 @@ interface IStakeLocker is IERC20 {
     function withdrawInterest() external returns (uint256);
     function deleteLP() external;
     function finalizeLP() external;
+    function updateFundsReceived() external;
 }

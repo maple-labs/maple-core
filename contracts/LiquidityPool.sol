@@ -221,9 +221,9 @@ contract LiquidityPool is IERC20, ERC20 {
     function withdraw(uint256 _amt) external notDefunct finalized {}
 
     function withdraw() external notDefunct finalized {
-        uint256 share = balanceOf(msg.sender) * WAD / totalSupply();
+        uint256 share = balanceOf(msg.sender).mul(WAD).div(totalSupply());
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
-        uint256 due   = share * (principalSum + bal) / WAD;
+        uint256 due   = share.mul(principalSum.add(bal)).div(WAD);
         require(IERC20(liquidityLockerAddress).transfer(msg.sender, due), "LiquidityPool::ERR_WITHDRAW_TRANSFER");
     }
 
@@ -268,18 +268,30 @@ contract LiquidityPool is IERC20, ERC20 {
     function claim(address _vault, address _ltlFactory) public returns(uint[5] memory) { 
         
         uint[5] memory claimInfo = ILoanTokenLocker(loanTokenLockers[_vault][_ltlFactory]).claim();
+        uint toPoolDelegate = claimInfo[1].mul(delegateFee).div(10000);
+        uint toStakeLocker  = claimInfo[1].mul(stakingFee).div(10000);
 
         // Distribute "interest" to appropriate parties.
-        require(ILiquidityAsset.transfer(poolDelegate,       claimInfo[1].mul(delegateFee).div(10000)));
-        require(ILiquidityAsset.transfer(stakeLockerAddress, claimInfo[1].mul(stakingFee).div(10000)));
+        require(ILiquidityAsset.transfer(poolDelegate,       toPoolDelegate));
+        require(ILiquidityAsset.transfer(stakeLockerAddress, toStakeLocker));
 
         // Distribute "fee" to poolDelegate.
         require(ILiquidityAsset.transfer(poolDelegate, claimInfo[3]));
-        
-        // TODO: Update our LP interest distribution mechanism / variable here.
 
         // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liqudityLocker
-        require(ILiquidityAsset.transfer(liquidityLockerAddress, ILiquidityAsset.balanceOf(address(this)))); 
+        uint remainder  = ILiquidityAsset.balanceOf(address(this));
+        require(ILiquidityAsset.transfer(liquidityLockerAddress, remainder));
+
+        // Update outstanding principal, the interest distribution mechanism.
+        if (toPoolDelegate.add(toStakeLocker).add(remainder) > principalSum) {
+            principalSum = 0;
+        }
+        else {
+            principalSum = principalSum.sub(toPoolDelegate).sub(toStakeLocker).sub(remainder);
+        }
+
+        // Update funds received for ERC-2222 StakeLocker tokens.
+        StakeLocker.updateFundsReceived();
 
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
         emit BalanceUpdated(stakeLockerAddress,     address(ILiquidityAsset), ILiquidityAsset.balanceOf(stakeLockerAddress));
