@@ -268,12 +268,10 @@ contract LiquidityPool is IERC20, ERC20 {
     function claim(address _vault, address _ltlFactory) public returns(uint[5] memory) { 
         
         uint[5] memory claimInfo = ILoanTokenLocker(loanTokenLockers[_vault][_ltlFactory]).claim();
-        uint toPoolDelegate = claimInfo[1].mul(delegateFee).div(10000);
-        uint toStakeLocker  = claimInfo[1].mul(stakingFee).div(10000);
 
         // Distribute "interest" to appropriate parties.
-        require(ILiquidityAsset.transfer(poolDelegate,       toPoolDelegate));
-        require(ILiquidityAsset.transfer(stakeLockerAddress, toStakeLocker));
+        require(ILiquidityAsset.transfer(poolDelegate,       claimInfo[1].mul(delegateFee).div(10000)));
+        require(ILiquidityAsset.transfer(stakeLockerAddress, claimInfo[1].mul(stakingFee).div(10000)));
 
         // Distribute "fee" to poolDelegate.
         require(ILiquidityAsset.transfer(poolDelegate, claimInfo[3]));
@@ -283,11 +281,11 @@ contract LiquidityPool is IERC20, ERC20 {
         require(ILiquidityAsset.transfer(liquidityLockerAddress, remainder));
 
         // Update outstanding principal, the interest distribution mechanism.
-        if (toPoolDelegate.add(toStakeLocker).add(remainder) > principalSum) {
+        if (remainder > principalSum) {
             principalSum = 0;
         }
         else {
-            principalSum = principalSum.sub(toPoolDelegate).sub(toStakeLocker).sub(remainder);
+            principalSum = principalSum.sub(remainder);
         }
 
         // Update funds received for ERC-2222 StakeLocker tokens.
