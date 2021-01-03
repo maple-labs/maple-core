@@ -299,6 +299,8 @@ contract LiquidityPoolTest is TestUtil {
         lp1.finalize();
         lp2.finalize();
 
+        // TODO: Post-state assertions to finalize().
+
     }
 
     function test_deposit() public {
