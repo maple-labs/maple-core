@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
@@ -10,10 +11,10 @@ import "../interfaces/IBPool.sol";
 import "../interfaces/ILiquidityPool.sol";
 import "../interfaces/ILiquidityPoolFactory.sol";
 
-import "../calculators/AmortizationRepaymentCalculator.sol";
-import "../calculators/BulletRepaymentCalculator.sol";
-import "../calculators/LateFeeNullCalculator.sol";
-import "../calculators/PremiumFlatCalculator.sol";
+import "../AmortizationRepaymentCalculator.sol";
+import "../BulletRepaymentCalculator.sol";
+import "../LateFeeNullCalculator.sol";
+import "../PremiumFlatCalculator.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -112,7 +113,7 @@ contract Borrower {
         address requestedAsset, 
         address collateralAsset, 
         uint256[6] memory specifications,
-        bytes32[3] memory calculators
+        address[3] memory calculators
     ) 
         external returns (LoanVault loanVault) 
     {
@@ -215,10 +216,10 @@ contract LiquidityPoolTest is TestUtil {
         bPool.transfer(address(joe), bPool.balanceOf(address(this)));
 
         // Set Globals
-        globals.setInterestStructureCalculator("AMORTIZATION", address(amortiCalc));
-        globals.setInterestStructureCalculator("BULLET", address(bulletCalc));
-        globals.setLateFeeCalculator("NULL", address(lateFeeCalc));
-        globals.setPremiumCalculator("FLAT", address(premiumCalc));
+        globals.setCalculator(address(amortiCalc),  true);
+        globals.setCalculator(address(bulletCalc),  true);
+        globals.setCalculator(address(lateFeeCalc), true);
+        globals.setCalculator(address(premiumCalc), true);
         globals.addCollateralToken(WETH);
         globals.addBorrowToken(DAI);
         globals.assignPriceFeed(WETH, address(ethOracle));
@@ -251,11 +252,11 @@ contract LiquidityPoolTest is TestUtil {
 
         // vault Specifications
         uint256[6] memory specs_vault = [500, 180, 30, uint256(1000 ether), 2000, 7];
-        bytes32[3] memory calcs_vault = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
+        address[3] memory calcs_vault = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
         // vault2 Specifications
         uint256[6] memory specs_vault2 = [500, 180, 30, uint256(1000 ether), 2000, 7];
-        bytes32[3] memory calcs_vault2 = [bytes32("AMORTIZATION"), bytes32("NULL"), bytes32("FLAT")];
+        address[3] memory calcs_vault2 = [address(amortiCalc), address(lateFeeCalc), address(premiumCalc)];
 
         vault  = eli.createLoanVault(loanVFactory, DAI, WETH, specs_vault, calcs_vault);
         vault2 = fay.createLoanVault(loanVFactory, DAI, WETH, specs_vault2, calcs_vault2);
@@ -887,7 +888,7 @@ contract LiquidityPoolTest is TestUtil {
 
         // Create Loan Vault
         uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
-        bytes32[3] memory calcs = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
+        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
         LoanVault vault2 = LoanVault(loanVFactory.createLoanVault(DAI, WETH, specs, calcs));
 

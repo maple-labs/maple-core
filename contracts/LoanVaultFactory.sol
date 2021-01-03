@@ -5,7 +5,7 @@ import "./LoanVault.sol";
 import "./interfaces/IGlobals.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./library/TokenUUID.sol";
-import "./interface/ICalcGeneral.sol";
+import "./interfaces/ICalcGeneral.sol";
 
 /// @title LoanVaultFactory instantiates LoanVault contracts.
 contract LoanVaultFactory {

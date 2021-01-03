@@ -2,7 +2,7 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "./interface/ILoanVault.sol";
+import "./interfaces/ILoanVault.sol";
 
 contract AmortizationRepaymentCalculator {
 
