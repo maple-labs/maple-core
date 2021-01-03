@@ -380,6 +380,7 @@ contract LiquidityPoolTest is TestUtil {
         assertTrue(sid.try_fundLoan(address(lp1), address(vault), address(ltlf1), 25 ether)); // Fund same loan for 25 DAI
 
         assertEq(ltlf1.lockers(0), address(ltl));  // Same LTL
+        assertTrue(ltlf1.isLoanTokenLocker(address(ltl)));
 
         assertEq(IERC20(DAI).balanceOf(liqLocker),              55 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 45 ether);  // Balance of Funding Locker
@@ -399,6 +400,7 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(ltl2.asset(), DAI);
 
         assertEq(ltlf2.lockers(0), address(ltl2));  // LTL instantiated
+        assertTrue(ltlf2.isLoanTokenLocker(address(ltl2)));
 
         assertEq(IERC20(DAI).balanceOf(liqLocker),              45 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 55 ether);  // Balance of Funding Locker
@@ -406,6 +408,7 @@ contract LiquidityPoolTest is TestUtil {
         assertEq(lp1.principalSum(),                            55 ether);  // Outstanding principal in liqiudity pool 1
     }
 
+    // TODO: Add in pre-state and post-state checks for principalSum value.
     function checkClaim(LoanTokenLocker ltl, LoanVault vault, PoolDelegate pd, IERC20 reqAsset, LiquidityPool lp, address ltlf) internal {
         uint256[10] memory balances = [
             reqAsset.balanceOf(address(ltl)),
