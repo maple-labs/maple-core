@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
@@ -6,10 +7,10 @@ import "./TestUtil.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
-import "../calculators/AmortizationRepaymentCalculator.sol";
-import "../calculators/BulletRepaymentCalculator.sol";
-import "../calculators/LateFeeNullCalculator.sol";
-import "../calculators/PremiumFlatCalculator.sol";
+import "../AmortizationRepaymentCalculator.sol";
+import "../BulletRepaymentCalculator.sol";
+import "../LateFeeNullCalculator.sol";
+import "../PremiumFlatCalculator.sol";
 
 import "../MapleToken.sol";
 import "../MapleGlobals.sol";
@@ -36,13 +37,13 @@ contract Borrower {
         LoanVaultFactory loanVaultFactory,
         address requestedAsset, 
         address collateralAsset, 
-        uint256[6] memory specifications,
-        bytes32[3] memory calculators
+        uint256[6] memory specs_vault,
+        address[3] memory calcs_vault
     ) 
         external returns (LoanVault loanVault) 
     {
         loanVault = LoanVault(
-            loanVaultFactory.createLoanVault(requestedAsset, collateralAsset, specifications, calculators)
+            loanVaultFactory.createLoanVault(requestedAsset, collateralAsset, specs_vault, calcs_vault)
         );
     }
 }
@@ -105,10 +106,10 @@ contract LoanVaultTest is TestUtil {
         ethOracle.poke(500 ether);  // Set ETH price to $600
         daiOracle.poke(1 ether);    // Set DAI price to $1
 
-        globals.setInterestStructureCalculator("BULLET", address(bulletCalc));
-        globals.setInterestStructureCalculator("AMORTIZATION", address(amortiCalc));
-        globals.setLateFeeCalculator("NULL", address(lateFeeCalc));
-        globals.setPremiumCalculator("FLAT", address(premiumCalc));
+        globals.setCalculator(address(amortiCalc),  true);
+        globals.setCalculator(address(bulletCalc),  true);
+        globals.setCalculator(address(lateFeeCalc), true);
+        globals.setCalculator(address(premiumCalc), true);
         globals.addCollateralToken(WETH);
         globals.addBorrowToken(DAI);
         globals.assignPriceFeed(WETH, address(ethOracle));
@@ -125,10 +126,10 @@ contract LoanVaultTest is TestUtil {
     }
 
     function test_createLoanVault() public {
-        uint256[6] memory specifications = [500, 90, 30, uint256(1000 ether), 2000, 7];
-        bytes32[3] memory calculators = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
+        uint256[6] memory specs_vault = [500, 180, 30, uint256(1000 ether), 2000, 7];
+        address[3] memory calcs_vault = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        LoanVault loanVault = ali.createLoanVault(loanVaultFactory, DAI, WETH, specifications, calculators);
+        LoanVault loanVault = ali.createLoanVault(loanVaultFactory, DAI, WETH, specs_vault, calcs_vault);
     
         assertEq(loanVault.assetRequested(),               DAI);
         assertEq(loanVault.assetCollateral(),              WETH);
@@ -136,13 +137,13 @@ contract LoanVaultTest is TestUtil {
         assertEq(loanVault.collateralLockerFactory(),      address(collateralLockerFactory));
         assertEq(loanVault.borrower(),                     address(ali));
         assertEq(loanVault.loanCreatedTimestamp(),         block.timestamp);
-        assertEq(loanVault.aprBips(),                      specifications[0]);
-        assertEq(loanVault.termDays(),                     specifications[1]);
-        assertEq(loanVault.numberOfPayments(),             specifications[1] / specifications[2]);
-        assertEq(loanVault.paymentIntervalSeconds(),       specifications[2] * 1 days);
-        assertEq(loanVault.minRaise(),                     specifications[3]);
-        assertEq(loanVault.collateralBipsRatio(),          specifications[4]);
-        assertEq(loanVault.fundingPeriodSeconds(),         specifications[5] * 1 days);
+        assertEq(loanVault.aprBips(),                      specs_vault[0]);
+        assertEq(loanVault.termDays(),                     specs_vault[1]);
+        assertEq(loanVault.numberOfPayments(),             specs_vault[1] / specs_vault[2]);
+        assertEq(loanVault.paymentIntervalSeconds(),       specs_vault[2] * 1 days);
+        assertEq(loanVault.minRaise(),                     specs_vault[3]);
+        assertEq(loanVault.collateralBipsRatio(),          specs_vault[4]);
+        assertEq(loanVault.fundingPeriodSeconds(),         specs_vault[5] * 1 days);
         assertEq(address(loanVault.repaymentCalculator()), address(bulletCalc));
         assertEq(address(loanVault.lateFeeCalculator()),   address(lateFeeCalc));
         assertEq(address(loanVault.premiumCalculator()),   address(premiumCalc));
@@ -150,10 +151,10 @@ contract LoanVaultTest is TestUtil {
     }
 
     function test_fundLoan() public {
-        uint256[6] memory specifications = [500, 90, 30, uint256(1000 ether), 2000, 7];
-        bytes32[3] memory calculators = [bytes32("BULLET"), bytes32("NULL"), bytes32("FLAT")];
+        uint256[6] memory specs_vault = [500, 90, 30, uint256(1000 ether), 2000, 7];
+        address[3] memory calcs_vault = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        LoanVault loanVault = ali.createLoanVault(loanVaultFactory, DAI, WETH, specifications, calculators);
+        LoanVault loanVault = ali.createLoanVault(loanVaultFactory, DAI, WETH, specs_vault, calcs_vault);
         address fundingLocker = loanVault.fundingLocker();
 
         bob.approve(DAI, address(loanVault), 5000 ether);
@@ -169,11 +170,11 @@ contract LoanVaultTest is TestUtil {
         assertEq(IERC20(DAI).balanceOf(address(bob)),                    0);
     }
 
-    function createAndFundLoan(bytes32 _interestStructure) internal returns (LoanVault loanVault) {
-        uint256[6] memory specifications = [500, 90, 30, uint256(1000 ether), 2000, 7];
-        bytes32[3] memory calculators = [_interestStructure, bytes32("NULL"), bytes32("FLAT")];
+    function createAndFundLoan(address _interestStructure) internal returns (LoanVault loanVault) {
+        uint256[6] memory specs_vault = [500, 90, 30, uint256(1000 ether), 2000, 7];
+        address[3] memory calcs_vault = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
-        loanVault = ali.createLoanVault(loanVaultFactory, DAI, WETH, specifications, calculators);
+        loanVault = ali.createLoanVault(loanVaultFactory, DAI, WETH, specs_vault, calcs_vault);
 
         bob.approve(DAI, address(loanVault), 5000 ether);
     
@@ -181,14 +182,14 @@ contract LoanVaultTest is TestUtil {
     }
 
     function test_collateralRequiredForDrawdown() public {
-        LoanVault loanVault = createAndFundLoan(bytes32("BULLET"));
+        LoanVault loanVault = createAndFundLoan(address(bulletCalc));
 
         uint256 reqCollateral = loanVault.collateralRequiredForDrawdown(1000 ether);
         assertEq(reqCollateral, 0.4 ether);
     }
 
     function test_drawdown() public {
-        LoanVault loanVault = createAndFundLoan(bytes32("BULLET"));
+        LoanVault loanVault = createAndFundLoan(address(bulletCalc));
 
         assertTrue(!bob.try_drawdown(address(loanVault), 1000 ether));  // Non-borrower can't drawdown
         assertTrue(!ali.try_drawdown(address(loanVault), 1000 ether));  // Can't drawdown without approving collateral
@@ -238,7 +239,7 @@ contract LoanVaultTest is TestUtil {
 
     function test_makePaymentBullet() public {
 
-        LoanVault loanVault = createAndFundLoan(bytes32("BULLET"));
+        LoanVault loanVault = createAndFundLoan(address(bulletCalc));
 
         assertEq(uint256(loanVault.loanState()), 0);  // Loan state: Live
 
@@ -330,7 +331,7 @@ contract LoanVaultTest is TestUtil {
     }
 
     function test_makePaymentAmortization() public {
-        LoanVault loanVault = createAndFundLoan(bytes32("AMORTIZATION"));
+        LoanVault loanVault = createAndFundLoan(address(amortiCalc));
 
         assertEq(uint256(loanVault.loanState()), 0);  // Loan state: Live
 
@@ -423,7 +424,7 @@ contract LoanVaultTest is TestUtil {
     }
 
     function test_makePaymentLateAmortization() public {
-        LoanVault loanVault = createAndFundLoan(bytes32("AMORTIZATION"));
+        LoanVault loanVault = createAndFundLoan(address(amortiCalc));
 
         assertEq(uint256(loanVault.loanState()), 0);  // Loan state: Live
 
@@ -528,7 +529,7 @@ contract LoanVaultTest is TestUtil {
     }
 
     function test_makePaymentLateBullet() public {
-        LoanVault loanVault = createAndFundLoan(bytes32("BULLET"));
+        LoanVault loanVault = createAndFundLoan(address(bulletCalc));
 
         assertEq(uint256(loanVault.loanState()), 0);  // Loan state: Live
 
