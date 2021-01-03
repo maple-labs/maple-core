@@ -91,17 +91,6 @@ contract LP {
 
 contract Borrower {
 
-    // TODO: remove the try_* for LoanVault specific functions
-    function try_drawdown(address loanVault, uint256 amt) external returns (bool ok) {
-        string memory sig = "drawdown(uint256)";
-        (ok,) = address(loanVault).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function try_makePayment(address loanVault) external returns (bool ok) {
-        string memory sig = "makePayment()";
-        (ok,) = address(loanVault).call(abi.encodeWithSignature(sig));
-    }
-
     function makePayment(address loanVault) external {
         LoanVault(loanVault).makePayment();
     }
