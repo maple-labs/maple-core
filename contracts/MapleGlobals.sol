@@ -41,9 +41,9 @@ contract MapleGlobals {
     mapping(address => bool) public isValidBorrowToken;
     mapping(address => bool) public isValidCollateral;
     address[] public validBorrowTokenAddresses;
-    string[] public validBorrowTokenSymbols;
+    string[] public validBorrowTokenSymbols;  // TODO: Account for ERC20s with bytes32 name/symbol
     address[] public validCollateralTokenAddresses;
-    string[] public validCollateralTokenSymbols;
+    string[] public validCollateralTokenSymbols; // TODO: Account for ERC20s with bytes32 name/symbol
 
     // Mapping of asset, to the associated pricefeed.
     mapping(address => address) public tokenPriceFeed;
@@ -56,6 +56,11 @@ contract MapleGlobals {
 
     /// @return Validation data structure for pool delegates (prevent invalid addresses from creating pools).
     mapping(address => bool) public validPoolDelegate;
+
+    event CollateralTokenAdded(address token,  string name,  string symbol);
+    event CollateralTokenAdded(address token, bytes32 name, bytes32 symbol);
+    event     BorrowTokenAdded(address token,  string name,  string symbol);
+    event     BorrowTokenAdded(address token, bytes32 name, bytes32 symbol);
 
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
@@ -130,6 +135,7 @@ contract MapleGlobals {
         isValidCollateral[_token] = true;
         validCollateralTokenAddresses.push(_token);
         validCollateralTokenSymbols.push(IERC20Details(_token).symbol());
+        emit CollateralTokenAdded(_token, IERC20Details(_token).name(), IERC20Details(_token).symbol());
     }
 
     /**
@@ -141,6 +147,7 @@ contract MapleGlobals {
         isValidBorrowToken[_token] = true;
         validBorrowTokenAddresses.push(_token);
         validBorrowTokenSymbols.push(IERC20Details(_token).symbol());
+        emit BorrowTokenAdded(_token, IERC20Details(_token).name(), IERC20Details(_token).symbol());
     }
 
     function setCalculator(address _calculator, bool valid) public isGovernor {
