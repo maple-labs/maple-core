@@ -28,15 +28,13 @@ contract PoolDelegate {
         address liquidityAsset,
         address stakeAsset,
         uint256 stakingFee,
-        uint256 delegateFee,
-        string memory name,
-        string memory symbol
+        uint256 delegateFee
     ) 
         external returns (bool ok) 
     {
-        string memory sig = "createLiquidityPool(address,address,uint256,uint256,string,string)";
+        string memory sig = "createLiquidityPool(address,address,uint256,uint256)";
         (ok,) = address(liquidityPoolFactory).call(
-            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, stakingFee, delegateFee, name, symbol)
+            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, stakingFee, delegateFee)
         );
     }
 }
@@ -91,9 +89,7 @@ contract LiquidityPoolFactoryTest is TestUtil {
             DAI,
             address(bPool),
             500,
-            100,
-            "Maple Liquidity Pool 0",
-            "MPL_LP_0"
+            100
         ));
     }
 
@@ -105,9 +101,7 @@ contract LiquidityPoolFactoryTest is TestUtil {
             DAI,
             address(bPool),
             500,
-            100,
-            "Maple Liquidity Pool 0",
-            "MPL_LP_0"
+            100
         ));
     }
 
@@ -135,9 +129,7 @@ contract LiquidityPoolFactoryTest is TestUtil {
             DAI,
             address(bPool),
             500,
-            100,
-            "Maple Liquidity Pool 0",
-            "MPL_LP_0"
+            100
         ));
     }
 
@@ -153,9 +145,7 @@ contract LiquidityPoolFactoryTest is TestUtil {
             DAI,
             address(bPool),
             500,
-            100,
-            "Maple Liquidity Pool 0",
-            "MPL_LP_0"
+            100
         ));
 
         LiquidityPool lPool = LiquidityPool(liquidityPoolFactory.getLiquidityPool(0));

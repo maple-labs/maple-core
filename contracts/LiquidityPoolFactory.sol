@@ -3,6 +3,8 @@ pragma solidity >=0.6.11;
 
 import "./LiquidityPool.sol";
 import "./interfaces/IGlobals.sol";
+import "./library/TokenUUID.sol";
+
 
 contract LiquidityPoolFactory {
     // TODO: Consider adjusting LiquidityPools mapping to an array.
@@ -49,21 +51,20 @@ contract LiquidityPoolFactory {
     /// @notice Instantiates a liquidity pool contract on-chain.
     /// @param _liquidityAsset The primary asset which lenders deposit into the liquidity pool for investment.
     /// @param _stakeAsset The asset which stakers deposit into the liquidity pool for liquidation during defaults.
-    /// @param name The name of the liquidity pool's token (minted when investors deposit _liquidityAsset).
-    /// @param symbol The ticker of the liquidity pool's token.
     /// @return Address of the instantiated liquidity pool.
     function createLiquidityPool(
         address _liquidityAsset,
         address _stakeAsset,
         uint256 _stakingFee,
-        uint256 _delegateFee,
-        string memory name,
-        string memory symbol
+        uint256 _delegateFee
     ) public returns (address) {
         require(
             IGlobals(mapleGlobals).validPoolDelegate(msg.sender),
             "LiquidityPoolFactory::createLiquidityPool:ERR_MSG_SENDER_NOT_WHITELISTED"
         );
+        string memory _tUUID = TokenUUID.mkUUID(liquidityPoolsCreated+1);
+	string memory name = string(abi.encodePacked("Maple Liquidity Pool Token ", _tUUID));
+        string memory symbol = string(abi.encodePacked("LP", _tUUID));
         LiquidityPool lPool =
             new LiquidityPool(
                 msg.sender,
