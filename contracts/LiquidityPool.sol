@@ -126,7 +126,7 @@ contract LiquidityPool is IERC20, ERC20 {
         delegateFee = _delegateFee;
 
         // Initialize the LiquidityLocker and StakeLocker.
-        stakeLockerAddress = createStakeLocker(_stakeAsset);
+        stakeLockerAddress = createStakeLocker(_stakeAsset,symbol);
         liquidityLockerAddress = address(
             ILiquidityLockerFactory(_liquidityLockerFactory).newLocker(liquidityAsset)
         );
@@ -150,14 +150,14 @@ contract LiquidityPool is IERC20, ERC20 {
 
     /// @notice Deploys and assigns a StakeLocker for this LiquidityPool.
     /// @param _stakeAsset Address of the asset used for staking.
-    function createStakeLocker(address _stakeAsset) private returns (address) {
+    function createStakeLocker(address _stakeAsset, string memory _symbol) private returns (address) {
         require(
             IBPool(_stakeAsset).isBound(MapleGlobals.mapleToken()) &&
                 IBPool(_stakeAsset).isFinalized(),
             "LiquidityPool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
         );
         address _stakeLocker =
-            StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
+            StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals), _symbol);
         StakeLocker = IStakeLocker(_stakeLocker);
         return _stakeLocker;
     }

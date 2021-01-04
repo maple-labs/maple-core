@@ -5,6 +5,7 @@ interface IStakeLockerFactory {
     function newLocker(
         address _stakeAsset,
         address _liquidityAsset,
-        address _globals
+        address _globals,
+	string memory _LPSymbol
     ) external returns (address);
 }

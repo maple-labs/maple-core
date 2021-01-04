@@ -21,10 +21,13 @@ contract StakeLockerFactory {
     function newLocker(
         address _stakeAsset,
         address _liquidityAsset,
-        address _globals
+        address _globals,
+	string memory _LPSymbol
     ) external returns (address) {
         address _owner = address(msg.sender);
-        address _stakeLocker = address(new StakeLocker(_stakeAsset, _liquidityAsset, _owner, _globals));
+	string memory _name = string(abi.encodePacked("Maple Stake Locker for ",_LPSymbol));
+	string memory _symbol = string(abi.encodePacked("S",_LPSymbol));
+        address _stakeLocker = address(new StakeLocker(_stakeAsset, _liquidityAsset, _owner, _globals,_name, _symbol));
         ownerOfLocker[_stakeLocker] = _owner; //address of LP contract that sent it, not poolManagers
         isLocker[_stakeLocker] = true;
         return _stakeLocker;

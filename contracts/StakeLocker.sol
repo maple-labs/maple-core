@@ -53,8 +53,10 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         address _stakeAsset,
         address _liquidityAsset,
         address _parentLP,
-        address _globals
-    ) FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") public {
+        address _globals,
+	string memory _name,
+	string memory _symbol
+    ) FundsDistributionToken(_name, _symbol) public {
         liquidityAsset = _liquidityAsset;
         stakeAsset = _stakeAsset;
         parentLP = _parentLP;
