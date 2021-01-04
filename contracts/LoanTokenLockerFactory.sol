@@ -6,11 +6,8 @@ contract LoanTokenLockerFactory {
 
     // TODO: Identify why we have lockerPool and lockers as two data structures for same purpose.
 
-    // Mapping data structure for owners of staked asset lockers.
-    mapping(address => address) private lockerPool;
-
-    //Mapping to tell us if an address is a locker
-    mapping(address => bool) private isLocker;
+    mapping(address => address) private lockerPool;  // Mapping data structure for owners of staked asset lockers.
+    mapping(address => bool)    private isLocker;    // Mapping to tell us if an address is a locker
 
     address[] public lockers;
 
