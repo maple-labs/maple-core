@@ -25,8 +25,9 @@ contract StakeLockerFactory {
 	string memory _LPSymbol
     ) external returns (address) {
         address _owner = address(msg.sender);
-	string memory _name = string(abi.encodePacked("Maple Stake Locker for ",_LPSymbol));
-	string memory _symbol = string(abi.encodePacked("S",_LPSymbol));
+	bytes memory _bLPSymbol = bytes(_LPSymbol);
+	string memory _name = string(abi.encodePacked("Maple Stake Locker for Liquidity Pool ",_LPSymbol));
+	string memory _symbol = string(abi.encodePacked("MPLS",_bLPSymbol[_bLPSymbol.length-6],_bLPSymbol[_bLPSymbol.length-5],_bLPSymbol[_bLPSymbol.length-4],_bLPSymbol[_bLPSymbol.length-3],_bLPSymbol[_bLPSymbol.length-2],_bLPSymbol[_bLPSymbol.length-1]));
         address _stakeLocker = address(new StakeLocker(_stakeAsset, _liquidityAsset, _owner, _globals,_name, _symbol));
         ownerOfLocker[_stakeLocker] = _owner; //address of LP contract that sent it, not poolManagers
         isLocker[_stakeLocker] = true;
