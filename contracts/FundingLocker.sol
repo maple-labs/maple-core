@@ -5,8 +5,8 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract FundingLocker {
 
-    address public immutable fundingAsset;  // Address the loan is funded with.
-    address public immutable loanVault;     // LoanVault this FundingLocker is attached to.
+    address public immutable fundingAsset;  // Asset the LoanVault was funded with
+    address public immutable loanVault;     // LoanVault this FundingLocker has funded
 
     constructor(address _fundingAsset, address _loanVault) public {
         fundingAsset = _fundingAsset;
