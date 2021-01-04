@@ -10,9 +10,8 @@ contract PremiumFlatCalculator {
 
     bytes32 public calcType = "PREMIUM";
     bytes32 public name = "FLAT";
-
-    /// @notice The amount of principal to charge extra as a premium for calling the loan.
-    uint256 public premiumBips;
+    
+    uint256 public premiumBips;  // The amount of principal to charge extra as a premium for calling the loan.
 
     constructor(uint256 _premiumBips) public {
         premiumBips = _premiumBips;
