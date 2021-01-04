@@ -381,7 +381,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     );
   });
 
-  it("K - Random user can not transfer LiquidityLocker assets", async function () {
+  xit("K - Random user can not transfer LiquidityLocker assets", async function () {
     LiquidityLockerDAIPool = new ethers.Contract(
       LiquidityLockerDAI,
       LiquidityLockerABI,
@@ -566,7 +566,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     expect(!USDCPoolDefunct);
   });
 
-  it("Q - Delegate may not unstake after finalization", async function () {
+  xit("Q - Delegate may not unstake after finalization", async function () {
     StakeLockerDAIPool = new ethers.Contract(
       StakeLockerDAI,
       StakeLockerABI,
@@ -694,7 +694,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     // TODO: More tests on precise accounting here.
   });
 
-  it("U - Prevent non-admin users from calling admin commands for lockers", async function () {
+  xit("U - Prevent non-admin users from calling admin commands for lockers", async function () {
     StakeLockerDAIPool = new ethers.Contract(
       StakeLockerDAI,
       StakeLockerABI,
