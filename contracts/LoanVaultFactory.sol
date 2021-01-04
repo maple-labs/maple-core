@@ -12,35 +12,15 @@ contract LoanVaultFactory {
 
 	using SafeMath for uint256;
 
-    // Data structures for loan vaults.
+    address public mapleGlobals;             // The MapleGlobals.sol contract.
+    address public fundingLockerFactory;     // The FundingLockerFactory to use for this LoanVaultFactory.
+    address public collateralLockerFactory;  // The CollateralLockerFactory to use for this LoanVaultFactory.
+
+    uint256 public loanVaultsCreated;  // Incrementor for number of loan vaults created.
+
     mapping(uint256 => address) private loanVaults;
-    mapping(address => bool) private _isLoanVault;
-    
-    /// @notice Incrementor for number of loan vaults created.
-    uint256 public loanVaultsCreated;
+    mapping(address => bool)    private _isLoanVault;
 
-    /// @notice The MapleGlobals.sol contract.
-    address public mapleGlobals;
-    
-    /// @notice The FundingLockerFactory to use for this LoanVaultFactory.
-    address public fundingLockerFactory;
-    
-    /// @notice The CollateralLockerFactory to use for this LoanVaultFactory.
-    address public collateralLockerFactory;
-
-    constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) public {
-        mapleGlobals = _mapleGlobals;
-        fundingLockerFactory = _fundingLockerFactory;
-        collateralLockerFactory = _collateralLockerFactory;
-    }
-
-    // Authorization to call Treasury functions.
-    modifier isGovernor() {
-        require(msg.sender == IGlobals(mapleGlobals).governor(), "LoanVaultFactory::ERR_MSG_SENDER_NOT_GOVERNOR");
-        _;
-    }
-
-    /// @notice Fired when user calls createLoanVault()
     event LoanVaultCreated(
         uint256 loanVaultID,
 		address loanVaultAddress,
@@ -54,6 +34,18 @@ contract LoanVaultFactory {
         string name,
         string symbol
     );
+    
+    constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) public {
+        mapleGlobals = _mapleGlobals;
+        fundingLockerFactory = _fundingLockerFactory;
+        collateralLockerFactory = _collateralLockerFactory;
+    }
+
+    // Authorization to call Treasury functions.
+    modifier isGovernor() {
+        require(msg.sender == IGlobals(mapleGlobals).governor(), "LoanVaultFactory::ERR_MSG_SENDER_NOT_GOVERNOR");
+        _;
+    }
 
     /// @notice Instantiates a LoanVault
     /// @param _assetRequested The asset borrower is requesting funding in.
