@@ -10,4 +10,4 @@ export DAPP_TEST_NUMBER=$(seth block latest number)
 
 LANG=C.UTF-8 DAPP_SRC="contracts" hevm dapp-test --rpc="$ETH_RPC_URL" --json-file=out/dapp.sol.json --dapp-root=. --verbose 1
 
-# --match "test_drawdown"
+# --match "test_"
