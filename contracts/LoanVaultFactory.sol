@@ -50,7 +50,9 @@ contract LoanVaultFactory {
         address collateralLocker,
         address fundingLocker,
         uint256[6] specifications,
-        address[3] calculators
+        address[3] calculators,
+        string name,
+        string symbol
     );
 
     /// @notice Instantiates a LoanVault
@@ -129,7 +131,9 @@ contract LoanVaultFactory {
             vault.collateralLocker(),
             vault.fundingLocker(),
             _specifications,
-            [_interestCalculator, _lateFeeCalculator, _premiumCalculator]
+            [_interestCalculator, _lateFeeCalculator, _premiumCalculator],
+            vault.name(),
+            vault.symbol()
         );
 
         // Increment loanVaultCreated (IDs), return loan vault address.
