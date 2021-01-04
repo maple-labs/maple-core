@@ -9,14 +9,14 @@ contract LoanTokenLocker {
 
     using SafeMath for uint256;
 
-    address public immutable vault; // The LoanVault that this locker is holding tokens for.
-    address public immutable owner; // The owner of this Locker (a liquidity pool).
-    address public immutable asset; // The asset that this locker will claim.
+    address public immutable vault;  // The LoanVault that this locker is holding tokens for.
+    address public immutable owner;  // The owner of this Locker (a liquidity pool).
+    address public immutable asset;  // The asset that this locker will claim.
 
-    uint256 public principalPaid;
-    uint256 public interestPaid;
-    uint256 public feePaid;
-    uint256 public excessReturned;
+    uint256 public principalPaid;   // Vault total principal paid  at time of claim()
+    uint256 public interestPaid;    // Vault total interest  paid  at time of claim()
+    uint256 public feePaid;         // Vault total fees      paid  at time of claim()
+    uint256 public excessReturned;  // Vault total excess returned at time of claim()
     // TODO: uint256 liquidationClaimed;
     
     modifier isOwner() {
