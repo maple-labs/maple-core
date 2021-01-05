@@ -22,7 +22,7 @@ contract LoanVaultFactory {
     mapping(address => bool)    private _isLoanVault;
 
     event LoanVaultCreated(
-        uint256 loanVaultID,
+        string  indexed tUUID,
 		address loanVaultAddress,
         address indexed borrower,
         address indexed assetRequested,
@@ -95,7 +95,7 @@ contract LoanVaultFactory {
         );
         
         // Deploy loan vault contract.
-	    string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated+1);
+	    string memory tUUID = TokenUUID.mkUUID(loanVaultsCreated + 1);
 
         LoanVault vault = new LoanVault(
             msg.sender,
@@ -106,7 +106,7 @@ contract LoanVaultFactory {
             mapleGlobals,
             _specifications,
             [_interestCalculator, _lateFeeCalculator, _premiumCalculator],
-	        _tUUID
+	        tUUID
         );
 
         // Update LoanVaultFactory identification mappings.
@@ -115,7 +115,7 @@ contract LoanVaultFactory {
 
         // Emit event.
         emit LoanVaultCreated(
-            loanVaultsCreated,
+            tUUID,
             address(vault),
             msg.sender,
             _assetRequested,
