@@ -28,6 +28,32 @@
 
 */
 
+/*
+
+  This test suite triggers the following events:
+
+    LiquidityPool:
+      - LoanFunded()      >> fundLoan() 
+      - BalanceUpdated()  >> claim(), deposit(), withdraw(), fundLoan()
+      - Claim()           >> claim()
+
+    LiquidityPoolFactory:
+      - PoolCreated()     >> createLiquidityPool()
+    
+    LoanVault:
+      - LoanFunded()      >> fundLoan()
+      - BalanceUpdated()  >> fundLoan(), drawdown(), makePayment(), makeFullPayment()
+
+    LoanVaultFactory:
+      - LoanVaultCreated() >> createLoanVault()
+
+    StakeLocker:
+      - BalanceUpdated()  >> stake(), unstake()
+      - Stake()           >> stake()
+      - Unstake()         >> unstake()
+      
+*/
+
 // JS Globals
 const { expect, assert } = require("chai");
 const { BigNumber }      = require("ethers");
@@ -64,7 +90,7 @@ const WBTCABI     = require(artpath + "abis/WBTC.abi");
 describe("Cycle of an entire loan", function () {
 
   // These are initialized in test suite.
-  let Pool, PoolAddress;
+  let Pool_PoolDelegate, Pool_LiquidityProvider, PoolAddress;
   let Loan, LoanAddress;
 
    // Already existing contracts, assigned in before().
@@ -103,7 +129,7 @@ describe("Cycle of an entire loan", function () {
     );
 
     // MPL
-    MPL_Delegate = new ethers.Contract(
+    MPL_PoolDelegate = new ethers.Contract(
       MPLAddress,
       MPLABI,
       ethers.provider.getSigner(0)
@@ -111,21 +137,21 @@ describe("Cycle of an entire loan", function () {
     MPL_Staker = new ethers.Contract(
       MPLAddress,
       MPLABI,
-      ethers.provider.getSigner(1)
+      ethers.provider.getSigner(2)
     );
 
     // USDC
-    USDC_Delegate = new ethers.Contract(
+    USDC_PoolDelegate = new ethers.Contract(
       USDCAddress,
       USDCABI,
       ethers.provider.getSigner(0)
     );
-    USDC_Staker = new ethers.Contract(
+    USDC_LiquidityProvider = new ethers.Contract(
       USDCAddress,
       USDCABI,
       ethers.provider.getSigner(1)
     );
-    USDC_Provider = new ethers.Contract(
+    USDC_Staker = new ethers.Contract(
       USDCAddress,
       USDCABI,
       ethers.provider.getSigner(2)
@@ -144,27 +170,31 @@ describe("Cycle of an entire loan", function () {
     stakeAsset      = await Globals.mapleBPool();
     stakingFee      = 100;  // Basis points (100 = 1%)
     delegateFee     = 150;  // Basis points (150 = 1.5%)
-    name            = "Maple Core Pool";
-    symbol          = "MCP";
 
     // Initializing a pool.
     await PoolFactory.createLiquidityPool(
       liquidityAsset,
       stakeAsset,
       stakingFee,
-      delegateFee,
-      name,
-      symbol
+      delegateFee
     );
 
     // Assigning contract object to Pool.
     let PoolAddress = await PoolFactory.getLiquidityPool(index);
 
-    Pool = new ethers.Contract(
+    Pool_PoolDelegate = new ethers.Contract(
       PoolAddress,
       PoolABI,
       ethers.provider.getSigner(0)
     );
+
+    Pool_LiquidityProvider = new ethers.Contract(
+      PoolAddress,
+      PoolABI,
+      ethers.provider.getSigner(1)
+    );
+
+    console.log(PoolAddress)
 
   });
 
@@ -172,14 +202,14 @@ describe("Cycle of an entire loan", function () {
 
     // Assume pool delegate already has 10000 MPL.
     // Mint 10000 USDC for pool delegate.
-    USDC_Delegate.mintSpecial(Accounts[0], 5000000);
+    await USDC_PoolDelegate.mintSpecial(Accounts[0], 5000000);
     
     // Approve the balancer pool for both USDC and MPL.
-    USDC_Delegate.approve(
+    await USDC_PoolDelegate.approve(
       await Globals.mapleBPool(),
       BigNumber.from(10).pow(6).mul(5000000)
     );
-    MPL_Delegate.approve(
+    await MPL_PoolDelegate.approve(
       await Globals.mapleBPool(),
       BigNumber.from(10).pow(18).mul(100000)
     );
@@ -218,10 +248,10 @@ describe("Cycle of an entire loan", function () {
   it("(P4) Pool delegate finalizing a pool", async function () {
 
     // Pool delegate finalizes the pool (enabling deposits).
-    await Pool.finalize();
+    await Pool_PoolDelegate.finalize();
     
     // Confirm pool is finalized.
-    let finalized = await Pool.isFinalized();
+    let finalized = await Pool_PoolDelegate.isFinalized();
     expect(finalized);
 
   });
@@ -279,41 +309,49 @@ describe("Cycle of an entire loan", function () {
 
   it("(P5) Provider depositing USDC to a pool", async function () {
 
-  });
+    // Approve the pool for deposit.
+    USDC_LiquidityProvider.approve(
+      PoolAddress,
+      BigNumber.from(10).pow(6).mul(2500) // Deposit = 2500 USDC
+    )
 
-  it("(P6) Pool delegate funding a loan", async function () {
-
-  });
-
-  it("(P7) Liquidity provider withdrawing USDC", async function () {
-
-  });
-
-  it("(L2) Borrower posting collateral and drawing down loan", async function () {
+    Pool_LiquidityProvider.
 
   });
 
-  it("(P8) Pool claiming from loan", async function () {
+  xit("(P6) Pool delegate funding a loan", async function () {
 
   });
 
-  it("(L3) Borrower making a single payment", async function () {
+  xit("(P7) Liquidity provider withdrawing USDC", async function () {
 
   });
 
-  it("(P9) Pool claiming from loan", async function () {
+  xit("(L2) Borrower posting collateral and drawing down loan", async function () {
 
   });
 
-  it("(L4) Borrower making a full payment", async function () {
+  xit("(P8) Pool claiming from loan", async function () {
 
   });
 
-  it("(P10) Pool claiming from loan", async function () {
+  xit("(L3) Borrower making a single payment", async function () {
 
   });
 
-  it("(P11) Liquidity provider withdrawing USDC", async function () {
+  xit("(P9) Pool claiming from loan", async function () {
+
+  });
+
+  xit("(L4) Borrower making a full payment", async function () {
+
+  });
+
+  xit("(P10) Pool claiming from loan", async function () {
+
+  });
+
+  xit("(P11) Liquidity provider withdrawing USDC", async function () {
 
   });
 
