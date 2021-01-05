@@ -727,13 +727,13 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
   // TODO:  Create a new test suite for funding loans.
   //        This file should be restricuted to pool and locker instantiation.
 
-  // it("V - Reset global stake requirement to 0", async function () {
-  //   MapleGlobals = new ethers.Contract(
-  //     MapleGlobalsAddress,
-  //     MapleGlobalsABI,
-  //     ethers.provider.getSigner(0)
-  //   );
+  xit("V - Reset global stake requirement to 0", async function () {
+    MapleGlobals = new ethers.Contract(
+      MapleGlobalsAddress,
+      MapleGlobalsABI,
+      ethers.provider.getSigner(0)
+    );
 
-  //   await MapleGlobals.setStakeRequired(0);
-  // });
+    await MapleGlobals.setStakeRequired(0);
+  });
 });

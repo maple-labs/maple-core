@@ -44,11 +44,19 @@ const VaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.addres
 const VaultFactoryABI     = require(artpath + "abis/LoanVaultFactory.abi");
 const StakeLockerABI      = require(artpath + "abis/StakeLocker.abi");
 const PoolABI             = require(artpath + "abis/LiquidityPool.abi");
+const BulletCalcAddress   = require(artpath + "addresses/BulletRepaymentCalculator.address");
+const AmortiCalcAddress   = require(artpath + "addresses/AmortizationRepaymentCalculator.address");
+const LateFeeCalcAddress   = require(artpath + "addresses/LateFeeNullCalculator.address");
+const PremiumCalcAddress   = require(artpath + "addresses/PremiumFlatCalculator.address");
 
 // External Contracts
 const BPoolABI    = require(artpath + "abis/BPool.abi");
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address");
 const USDCABI     = require(artpath + "abis/MintableTokenUSDC.abi");
+const WETHAddress = require(artpath + "addresses/WETH9.address");
+const WETHABI     = require(artpath + "abis/WETH9.abi");
+const WBTCAddress = require(artpath + "addresses/WBTC.address");
+const WBTCABI     = require(artpath + "abis/WBTC.abi");
 
 describe("Cycle of an entire loan", function () {
 
@@ -213,17 +221,52 @@ describe("Cycle of an entire loan", function () {
 
   it("(P4) Pool delegate finalizing a pool", async function () {
 
+    // Pool delegate finalizes the pool (enabling deposits).
     await Pool.finalize();
     
-    let stakeRequired = await Globals.stakeAmountRequired();
+    // Confirm pool is finalized.
     let finalized = await Pool.isFinalized();
-
-    console.log(parseInt(stakeRequired["_hex"]));
     expect(finalized);
 
   });
 
   it("(L1) Borrower creating a loan", async function () {
+
+
+    const assetRequested     = DAIAddress;
+    const assetCollateral    = WETHAddress;
+    const interestCalculator = BulletCalcAddress; // AmortiCalcAddress || BulletCalcAddress
+    const lateFeeCalculator  = LateFeeCalcAddress;
+    const premiumCalculator  = PremiumCalcAddress;
+
+    const aprBips = 500; // 5% APR
+    const termDays = 180; // (termDays/paymentIntervalDays) = # of Payments
+    const paymentIntervalDays = 30; 
+    const minRaise = BigNumber.from(10).pow(6).mul(1000); // 1000 USDC
+    const collateralRatioBips = 1000; // 10%
+    const fundingPeriodDays = 7;
+
+    await LoanVaultFactory.createLoanVault(
+      assetRequested,
+      assetCollateral,
+      [
+        aprBips,
+        termDays,
+        paymentIntervalDays,
+        minRaise,
+        collateralRatioBips,
+        fundingPeriodDays
+      ],
+      [
+        interestCalculator, 
+        lateFeeCalculator, 
+        premiumCalculator
+      ],
+      { gasLimit: 6000000 }
+    );
+
+    loanVaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
+  });
 
   });
 

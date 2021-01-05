@@ -10,6 +10,8 @@ const KALEIDO_MNEMONIC = process.env.MAPLE_MNEMONIC || "";
 const KOVAN_NODE_URL = process.env.KOVAN_NODE_URL || "";
 const KOVAN_MNEMONIC = process.env.KOVAN_MNEMONIC || "";
 
+const defaultNetwork = "private";
+
 const MAINNET_NODE_URL = process.env.MAINNET_NODE_URL || "";
 const MAINNET_MNEMONIC = process.env.MAINNET_MNEMONIC || "";
 
