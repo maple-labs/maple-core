@@ -316,13 +316,13 @@ contract LiquidityPoolTest is TestUtil {
 
         assertEq(IERC20(DAI).balanceOf(address(bob)), 100 ether);
         assertEq(IERC20(DAI).balanceOf(liqLocker),            0);
-        assertEq(lp1.balanceOf(address(bob)),             0);
+        assertEq(lp1.balanceOf(address(bob)),                 0);
 
         assertTrue(bob.try_deposit(address(lp1), 100 ether));
 
         assertEq(IERC20(DAI).balanceOf(address(bob)),         0);
         assertEq(IERC20(DAI).balanceOf(liqLocker),    100 ether);
-        assertEq(lp1.balanceOf(address(bob)),     100 ether);
+        assertEq(lp1.balanceOf(address(bob)),         100 ether);
     }
 
     function test_fundLoan() public {

@@ -140,7 +140,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     /**
      * @dev view function returning your unstakeable balance.
      * @param _addy wallet address
-     * @return uint amount of BPTs that may be unstaked
+     * @return _out uint amount of BPTs that may be unstaked
      */
     function getUnstakeableBalance(address _addy) public view returns (uint256 _out) {
         uint256 _bal = balanceOf(_addy);
