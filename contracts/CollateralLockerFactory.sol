@@ -6,14 +6,9 @@ import "./interfaces/ILoanVaultFactory.sol";
 
 contract CollateralLockerFactory {
 
-    // Mapping of CollateralLocker contracts to the LoanVault it's attached with.
-    mapping(address => address) private lockerOwner;
-
-    // Mapping of identification check to confirm a locker was created through this factory.
-    mapping(address => bool) private isLocker;
-
-    // Unique deployment per address, ensure no duplication (or decoupling).
-    mapping(address => bool) private deployedLocker;
+    mapping(address => address) private lockerOwner;    // Mapping of CollateralLocker contracts to the LoanVault it's attached with.
+    mapping(address => bool)    private isLocker;       // Mapping of identification check to confirm a locker was created through this factory
+    mapping(address => bool)    private deployedLocker; // Unique deployment per address, ensure no duplication (or decoupling).
 
     /// @notice Instantiate a CollateralLocker contract.
     /// @param _collateralAsset Address of the collateral asset.

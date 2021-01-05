@@ -11,17 +11,10 @@ contract MapleTreasury {
 
 	using SafeMath for uint256;
 
-  /// @notice mapletoken is the MapleToken.sol contract.
-  address public mapleToken;
-
-  /// @notice fundsToken is the _fundsToken value in the MapleToken.sol contract.
-  address public fundsToken;
-
-  /// @notice uniswapRouter is the official UniswapV2 router contract.
-  address public uniswapRouter;
-
-  /// @notice mapleGlobals is the MapleGlobals.sol contract.
-  address public mapleGlobals;
+  address public mapleToken;     // MapleToken.sol contract.
+  address public fundsToken;     // _fundsToken value in the MapleToken.sol contract.
+  address public uniswapRouter;  // Official UniswapV2 router contract.
+  address public mapleGlobals;   // MapleGlobals.sol contract.
 
   /// @notice Instantiates the MapleTreasury contract.
   /// @param _mapleToken is the MapleToken.sol contract.

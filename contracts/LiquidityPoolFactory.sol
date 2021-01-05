@@ -3,24 +3,18 @@ pragma solidity >=0.6.11;
 
 import "./LiquidityPool.sol";
 import "./interfaces/IGlobals.sol";
+import "./library/TokenUUID.sol";
+
 
 contract LiquidityPoolFactory {
-    // TODO: Consider adjusting LiquidityPools mapping to an array.
-    // Mappings for liquidity pool contracts, and their validation.
-    mapping(uint256 => address) private _liquidityPools;
-    mapping(address => bool) private _isLiquidityPool;
 
-    /// @notice Incrementor for number of LPs created.
-    uint256 public liquidityPoolsCreated;
+    uint256 public liquidityPoolsCreated;   // Incrementor for number of LPs created
+    address public mapleGlobals;            // The MapleGlobals.sol contract
+    address public stakeLockerFactory;      // The StakeLockerFactory to use for this LiquidityPoolFactory
+    address public liquidityLockerFactory;  // The LiquidityLockerFactory to use for this LiquidityPoolFactory
 
-    /// @notice The MapleGlobals.sol contract.
-    address public mapleGlobals;
-
-    /// @notice The StakeLockerFactory to use for this LiquidityPoolFactory.
-    address public stakeLockerFactory;
-
-    /// @notice The LiquidityLockerFactory to use for this LiquidityPoolFactory.
-    address public liquidityLockerFactory;
+    mapping(uint256 => address) private _liquidityPools; // Mappings for liquidity pool contracts, and their validation. (TODO: Consider adjusting LiquidityPools mapping to an array.)
+    mapping(address => bool)    private _isLiquidityPool;
 
     constructor(
         address _mapleGlobals, 
@@ -33,7 +27,7 @@ contract LiquidityPoolFactory {
     }
 
     event PoolCreated(
-        uint256 indexed id,
+        string  indexed tUUID,
         address indexed pool,
         address indexed delegate,
         address liquidityAsset,
@@ -49,21 +43,23 @@ contract LiquidityPoolFactory {
     /// @notice Instantiates a liquidity pool contract on-chain.
     /// @param _liquidityAsset The primary asset which lenders deposit into the liquidity pool for investment.
     /// @param _stakeAsset The asset which stakers deposit into the liquidity pool for liquidation during defaults.
-    /// @param name The name of the liquidity pool's token (minted when investors deposit _liquidityAsset).
-    /// @param symbol The ticker of the liquidity pool's token.
     /// @return Address of the instantiated liquidity pool.
     function createLiquidityPool(
         address _liquidityAsset,
         address _stakeAsset,
         uint256 _stakingFee,
-        uint256 _delegateFee,
-        string memory name,
-        string memory symbol
+        uint256 _delegateFee
     ) public returns (address) {
+
         require(
             IGlobals(mapleGlobals).validPoolDelegate(msg.sender),
             "LiquidityPoolFactory::createLiquidityPool:ERR_MSG_SENDER_NOT_WHITELISTED"
         );
+
+        string memory tUUID  = TokenUUID.mkUUID(liquidityPoolsCreated + 1);
+        string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
+        string memory symbol = string(abi.encodePacked("LP", tUUID));
+
         LiquidityPool lPool =
             new LiquidityPool(
                 msg.sender,
@@ -77,10 +73,13 @@ contract LiquidityPoolFactory {
                 symbol,
                 mapleGlobals
             );
+
         _liquidityPools[liquidityPoolsCreated] = address(lPool);
-        _isLiquidityPool[address(lPool)] = true;
+        _isLiquidityPool[address(lPool)]       = true;
+        liquidityPoolsCreated++;
+
         emit PoolCreated(
-            liquidityPoolsCreated,
+            tUUID,
             address(lPool),
             msg.sender,
             _liquidityAsset,
@@ -92,7 +91,6 @@ contract LiquidityPoolFactory {
             name,
             symbol
         );
-        liquidityPoolsCreated++;
         return address(lPool);
     }
 

@@ -7,15 +7,11 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract MapleToken is IFundsDistributionToken, FundsDistributionToken {
 
-	using SafeMathInt for int256;
+	using SafeMathInt    for int256;
 	using SignedSafeMath for int256;
 
-	// token in which the funds can be sent to the FundsDistributionToken
-	IERC20 public fundsToken;
-	
-	// balance of fundsToken that the FundsDistributionToken currently holds
-	uint256 public fundsTokenBalance;
-
+	IERC20  public fundsToken;  // Token in which the funds can be sent to the FundsDistributionToken
+	uint256 public fundsTokenBalance;  // Balance of fundsToken that the FundsDistributionToken currently holds
 
 	modifier onlyFundsToken () {
 		require(msg.sender == address(fundsToken), "FDT_ERC20Extension.onlyFundsToken: UNAUTHORIZED_SENDER");

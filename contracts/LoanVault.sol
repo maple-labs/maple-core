@@ -18,82 +18,51 @@ import "./interfaces/IPremiumCalculator.sol";
 /// @title LoanVault is the core loan vault contract.
 contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     
-    using SafeMathInt for int256;
-    using SignedSafeMath for int256;
-    using SafeMath for uint256;
+    using SafeMathInt     for int256;
+    using SignedSafeMath  for int256;
+    using SafeMath       for uint256;
 
-    // The fundsToken (dividends) and assetRequested.
-    IERC20 private fundsToken;
+    enum State { Live, Active, Matured } // Live = Created, Active = Drawndown
 
-    // The fundsToken (dividends) and assetRequested.
-    IERC20 private IRequestedAsset;
+    State public loanState;  // The current state of this loan, as defined in the State enum below.
 
-    // The collateral asset for this loan vault.
-    IERC20 private ICollateralAsset;
+    IERC20   private fundsToken;        // The fundsToken (dividends) and assetRequested. (TODO: Remove redundant variable)
+    IERC20   private IRequestedAsset;   // The fundsToken (dividends) and assetRequested.
+    IERC20   private ICollateralAsset;  // The collateral asset for this loan vault.
+    IGlobals private MapleGlobals;      // The maple globals contract.
 
-    // The maple globals contract.
-    IGlobals private MapleGlobals;
+    IRepaymentCalculator public repaymentCalculator;  // The repayment calculator for this loan.
+    ILateFeeCalculator   public lateFeeCalculator;    // The late fee calculator for this loan.
+    IPremiumCalculator   public premiumCalculator;    // The premium calculator for this loan.
 
-    /// @notice The amount of fundsToken (assetRequested) currently present and accounted for in this contract.
-    uint256 public fundsTokenBalance;
+    address public assetRequested;           // Asset deposited by lenders into the FundingLocker, when funding this loan.
+    address public assetCollateral;          // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
+    address public fundingLocker;            // Funding locker - holds custody of loan funds before drawdown    
+    address public fundingLockerFactory;     // Funding locker factory
+    address public collateralLocker;         // Collateral locker - holds custody of loan collateral
+    address public collateralLockerFactory;  // Collateral locker factory
+    address public borrower;                 // Borrower of this loan, responsible for repayments.
 
-    /// @notice The asset deposited by lenders into the InvestmentLocker, when funding this loan.
-    address public assetRequested;
+    uint256 public fundsTokenBalance;  // The amount of fundsToken (assetRequested) currently present and accounted for in this contract.
+    uint256 public principalOwed;      // The principal owed (initially the drawdown amount).
+    uint256 public drawdownAmount;     // The amount the borrower drew down, historical reference for calculators.
+    uint256 public nextPaymentDue;     // The unix timestamp due date of next payment.
 
-    /// @notice The asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
-    address public assetCollateral;
-
-    /// @notice The FundingLocker for this contract.
-    address public fundingLocker;
-    address public fundingLockerFactory;
-
-    /// @notice The CollateralLocker for this contract.
-    address public collateralLocker;
-    address public collateralLockerFactory;
-
-    /// @notice The borrower of this loan, responsible for repayments.
-    address public borrower;
-
-    /// @notice The loan specifications.
-    uint256 public aprBips;
+    // Loan specifications
+    uint256 public aprBips;         
     uint256 public numberOfPayments;
     uint256 public termDays;
-    uint256 public paymentIntervalSeconds;
+    uint256 public paymentIntervalSeconds; 
     uint256 public minRaise;
     uint256 public collateralBipsRatio;
     uint256 public fundingPeriodSeconds;
     uint256 public loanCreatedTimestamp;
 
-    /// @notice The principal owed (initially the drawdown amount).
-    uint256 public principalOwed;
-
-    // Accounting variables.
+    // Accounting variables
     uint256 public principalPaid;
     uint256 public interestPaid;
     uint256 public feePaid;
     uint256 public excessReturned;
-
-    /// @notice The amount the borrower drew down, historical reference for calculators.
-    uint256 public drawdownAmount;
-
-    // The repayment calculator for this loan.
-    IRepaymentCalculator public repaymentCalculator;
-
-    // The late fee calculator for this loan.
-    ILateFeeCalculator public lateFeeCalculator;
-
-    // The premium calculator for this loan.
-    IPremiumCalculator public premiumCalculator;
-
-    /// @notice The unix timestamp due date of next payment.
-    uint256 public nextPaymentDue;
-
-    /// @notice The current state of this loan, as defined in the State enum below.
-    State public loanState;
-
-    // Live = Created
-    // Active = Drawndown
-    enum State { Live, Active, Matured }
 
     modifier isState(State _state) {
         require(loanState == _state, "LoanVault::ERR_FAIL_STATE_CHECK");
@@ -105,7 +74,6 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         _;
     }
 
-    /// @notice Fired when user calls fundLoan()
     event LoanFunded(uint256 _amountFunded, address indexed _fundedBy);
     event BalanceUpdated(address who, address token, uint256 balance);
 

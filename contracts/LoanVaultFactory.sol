@@ -12,22 +12,29 @@ contract LoanVaultFactory {
 
 	using SafeMath for uint256;
 
-    // Data structures for loan vaults.
+    address public mapleGlobals;             // The MapleGlobals.sol contract.
+    address public fundingLockerFactory;     // The FundingLockerFactory to use for this LoanVaultFactory.
+    address public collateralLockerFactory;  // The CollateralLockerFactory to use for this LoanVaultFactory.
+
+    uint256 public loanVaultsCreated;  // Incrementor for number of loan vaults created.
+
     mapping(uint256 => address) private loanVaults;
-    mapping(address => bool) private _isLoanVault;
-    
-    /// @notice Incrementor for number of loan vaults created.
-    uint256 public loanVaultsCreated;
+    mapping(address => bool)    private _isLoanVault;
 
-    /// @notice The MapleGlobals.sol contract.
-    address public mapleGlobals;
+    event LoanVaultCreated(
+        string  indexed tUUID,
+		address loanVaultAddress,
+        address indexed borrower,
+        address indexed assetRequested,
+        address assetCollateral,
+        address collateralLocker,
+        address fundingLocker,
+        uint256[6] specifications,
+        address[3] calculators,
+        string name,
+        string symbol
+    );
     
-    /// @notice The FundingLockerFactory to use for this LoanVaultFactory.
-    address public fundingLockerFactory;
-    
-    /// @notice The CollateralLockerFactory to use for this LoanVaultFactory.
-    address public collateralLockerFactory;
-
     constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) public {
         mapleGlobals = _mapleGlobals;
         fundingLockerFactory = _fundingLockerFactory;
@@ -39,19 +46,6 @@ contract LoanVaultFactory {
         require(msg.sender == IGlobals(mapleGlobals).governor(), "LoanVaultFactory::ERR_MSG_SENDER_NOT_GOVERNOR");
         _;
     }
-
-    /// @notice Fired when user calls createLoanVault()
-    event LoanVaultCreated(
-        uint256 loanVaultID,
-		address loanVaultAddress,
-        address indexed borrower,
-        address indexed assetRequested,
-        address assetCollateral,
-        address collateralLocker,
-        address fundingLocker,
-        uint256[6] specifications,
-        address[3] calculators
-    );
 
     /// @notice Instantiates a LoanVault
     /// @param _assetRequested The asset borrower is requesting funding in.
@@ -101,7 +95,7 @@ contract LoanVaultFactory {
         );
         
         // Deploy loan vault contract.
-	    string memory _tUUID = TokenUUID.mkUUID(loanVaultsCreated+1);
+	    string memory tUUID = TokenUUID.mkUUID(loanVaultsCreated + 1);
 
         LoanVault vault = new LoanVault(
             msg.sender,
@@ -112,7 +106,7 @@ contract LoanVaultFactory {
             mapleGlobals,
             _specifications,
             [_interestCalculator, _lateFeeCalculator, _premiumCalculator],
-	        _tUUID
+	        tUUID
         );
 
         // Update LoanVaultFactory identification mappings.
@@ -121,7 +115,7 @@ contract LoanVaultFactory {
 
         // Emit event.
         emit LoanVaultCreated(
-            loanVaultsCreated,
+            tUUID,
             address(vault),
             msg.sender,
             _assetRequested,
@@ -129,7 +123,9 @@ contract LoanVaultFactory {
             vault.collateralLocker(),
             vault.fundingLocker(),
             _specifications,
-            [_interestCalculator, _lateFeeCalculator, _premiumCalculator]
+            [_interestCalculator, _lateFeeCalculator, _premiumCalculator],
+            vault.name(),
+            vault.symbol()
         );
 
         // Increment loanVaultCreated (IDs), return loan vault address.

@@ -46,9 +46,7 @@ contract PoolDelegate {
         address liqAsset,
         address stakeAsset,
         uint256 stakingFee,
-        uint256 delegateFee,
-        string memory name,
-        string memory symbol
+        uint256 delegateFee
     ) 
         external returns (address liquidityPool) 
     {
@@ -56,9 +54,7 @@ contract PoolDelegate {
             liqAsset,
             stakeAsset,
             stakingFee,
-            delegateFee,
-            name,
-            symbol 
+            delegateFee
         );
     }
 
@@ -220,8 +216,8 @@ contract LiquidityPoolTest is TestUtil {
         globals.setCalculator(address(bulletCalc),  true);
         globals.setCalculator(address(lateFeeCalc), true);
         globals.setCalculator(address(premiumCalc), true);
-        globals.addCollateralToken(WETH);
-        globals.addBorrowToken(DAI);
+        globals.setCollateralToken(WETH, true);
+        globals.setBorrowToken(DAI, true);
         globals.assignPriceFeed(WETH, address(ethOracle));
         globals.assignPriceFeed(DAI, address(daiOracle));
         globals.setMapleBPool(address(bPool));
@@ -234,9 +230,7 @@ contract LiquidityPoolTest is TestUtil {
             DAI,
             address(bPool),
             500,
-            100,
-            "Maple Liquidity Pool 0",
-            "MPL_LP_0"
+            100
         ));
 
         // Create Liquidity Pool
@@ -245,9 +239,7 @@ contract LiquidityPoolTest is TestUtil {
             DAI,
             address(bPool),
             7500,
-            50,
-            "Johns Liquidity Pool 480",
-            "JRQ_LP_480"
+            50
         ));
 
         // vault Specifications
