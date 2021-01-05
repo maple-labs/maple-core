@@ -51,7 +51,7 @@
       - BalanceUpdated()  >> stake(), unstake()
       - Stake()           >> stake()
       - Unstake()         >> unstake()
-      
+
 */
 
 // JS Globals
@@ -68,6 +68,8 @@ const PoolFactoryAddress  = require(artpath + "addresses/LiquidityPoolFactory.ad
 const PoolFactoryABI      = require(artpath + "abis/LiquidityPoolFactory.abi");
 const LoanFactoryAddress  = require(artpath + "addresses/LoanVaultFactory.address");
 const LoanFactoryABI      = require(artpath + "abis/LoanVaultFactory.abi");
+const LTLFactoryAddress   = require(artpath + "addresses/LoanTokenLockerFactory.address");
+const LTLFactoryABI       = require(artpath + "abis/LoanTokenLockerFactory.abi");
 
 // Maple Misc Contracts
 const StakeLockerABI      = require(artpath + "abis/StakeLocker.abi");
@@ -99,7 +101,8 @@ describe("Cycle of an entire loan", function () {
   let LoanFactory;
   let BPool;
   let MPL_Delegate, MPL_Staker;
-  let USDC_Delegate, USDC_Staker, USDC_Provider;
+  let USDC_Delegate, USDC_Staker, USDC_Provider, USDC_Borrower;
+  let WETH_Borrower, WBTC_Borrower;
   let Accounts;
 
   before(async () => {
@@ -156,7 +159,25 @@ describe("Cycle of an entire loan", function () {
       USDCABI,
       ethers.provider.getSigner(2)
     );
+    USDC_Borrower = new ethers.Contract(
+      USDCAddress,
+      USDCABI,
+      ethers.provider.getSigner(0) // Same as USDC_PoolDelegate
+    );
 
+    // WETH / WBTC
+    WETH_Borrower = new ethers.Contract(
+      WETHAddress,
+      WETHABI,
+      ethers.provider.getSigner(0)
+    );
+    WBTC_Borrower = new ethers.Contract(
+      WBTCAddress,
+      WBTCABI,
+      ethers.provider.getSigner(0)
+    );
+
+    // Accounts
     Accounts = await ethers.provider.listAccounts();
 
   });
@@ -180,7 +201,7 @@ describe("Cycle of an entire loan", function () {
     );
 
     // Assigning contract object to Pool.
-    let PoolAddress = await PoolFactory.getLiquidityPool(index);
+    PoolAddress = await PoolFactory.getLiquidityPool(index);
 
     Pool_PoolDelegate = new ethers.Contract(
       PoolAddress,
@@ -193,8 +214,6 @@ describe("Cycle of an entire loan", function () {
       PoolABI,
       ethers.provider.getSigner(1)
     );
-
-    console.log(PoolAddress)
 
   });
 
@@ -229,13 +248,13 @@ describe("Cycle of an entire loan", function () {
 
     // Pool delegate approves StakeLocker directly of Pool to take BPTs.
     await BPool.approve(
-      await Pool.stakeLockerAddress(),
+      await Pool_PoolDelegate.stakeLockerAddress(),
       BigNumber.from(10).pow(17).mul(10)
     )
     
     // Create StakeLocker object.
     StakeLocker = new ethers.Contract(
-      await Pool.stakeLockerAddress(),
+      await Pool_PoolDelegate.stakeLockerAddress(),
       StakeLockerABI,
       ethers.provider.getSigner(0)
     );
@@ -310,48 +329,111 @@ describe("Cycle of an entire loan", function () {
   it("(P5) Provider depositing USDC to a pool", async function () {
 
     // Approve the pool for deposit.
-    USDC_LiquidityProvider.approve(
+    await USDC_LiquidityProvider.approve(
       PoolAddress,
       BigNumber.from(10).pow(6).mul(2500) // Deposit = 2500 USDC
     )
 
-    Pool_LiquidityProvider.
+    // Deposit to the pool.
+    await Pool_LiquidityProvider.deposit(
+      BigNumber.from(10).pow(6).mul(2500)
+    )
 
   });
 
-  xit("(P6) Pool delegate funding a loan", async function () {
+  it("(P6) Pool delegate funding a loan", async function () {
+
+    // Pool delegate funding the loan.
+    await Pool_PoolDelegate.fundLoan(
+      LoanAddress,
+      LTLFactoryAddress,
+      BigNumber.from(10).pow(6).mul(1500)
+    )
 
   });
 
-  xit("(P7) Liquidity provider withdrawing USDC", async function () {
+  it("(P7) Liquidity provider withdrawing USDC", async function () {
+
+    // Withdraw USDC from the pool.
+    await Pool_LiquidityProvider.withdraw(
+      BigNumber.from(10).pow(18).mul(500) // "Burning" 18 decimals worth of shares (maps to 6 decimals worth of USDC)
+    )
 
   });
 
-  xit("(L2) Borrower posting collateral and drawing down loan", async function () {
+  it("(L2) Borrower posting collateral and drawing down loan", async function () {
+
+     // Fetch collateral required when drawing down 1000 USDC (1500 USDC was funded)
+    const collateralRequired = await Loan.collateralRequiredForDrawdown(
+      BigNumber.from(10).pow(6).mul(1000)
+    );
+    
+    // Approve Loan for collateral required. Use "WBTC" object instead if WBTC is collateral.
+    await WETH_Borrower.approve(
+      LoanAddress,
+      parseInt(collateralRequired["_hex"])
+    )
+
+    // Drawdown.
+    await Loan.drawdown(
+      BigNumber.from(10).pow(6).mul(1000)
+    )
 
   });
 
-  xit("(P8) Pool claiming from loan", async function () {
+  it("(P8) Pool claiming from loan", async function () {
+
+      // Pool claims and distributes syrup.
+      await Pool_PoolDelegate.claim(LoanAddress, LTLFactoryAddress);
 
   });
 
-  xit("(L3) Borrower making a single payment", async function () {
+  it("(L3) Borrower making a single payment", async function () {
+
+      // Fetch next payment amount.
+      const paymentInfo = await Loan.getNextPayment()
+
+      // Approve loan for payment.
+      await USDC_Borrower.approve(
+        LoanAddress,
+        paymentInfo[0]
+      )
+
+      // Make payment.
+      await Loan.makePayment();
 
   });
 
   xit("(P9) Pool claiming from loan", async function () {
 
+      // Pool claims and distributes syrup.
+      await Pool_PoolDelegate.claim(LoanAddress, LTLFactoryAddress);
+
   });
 
   xit("(L4) Borrower making a full payment", async function () {
+
+      // Fetch full payment amount.
+
+      // Approve loan for payment.
+
+      // Make payment.
 
   });
 
   xit("(P10) Pool claiming from loan", async function () {
 
+      // Pool claims and distributes syrup.
+      await Pool_PoolDelegate.claim(LoanAddress, LTLFactoryAddress);
+
   });
 
   xit("(P11) Liquidity provider withdrawing USDC", async function () {
+
+    // Withdraw USDC from the pool.
+    await Pool_LiquidityProvider.withdraw(
+      BigNumber.from(10).pow(18).mul(2000) // "Burning" 18 decimals worth of shares (maps to 6 decimals worth of USDC)
+    )
 
   });
 
