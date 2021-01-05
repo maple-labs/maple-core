@@ -3,5 +3,5 @@ pragma solidity >=0.6.11;
 
 interface ILiquidityPoolFactory {
     function isLiquidityPool(address _liquidityPool) external view returns (bool);
-    function createLiquidityPool(address, address, uint256, uint256, string memory, string memory) external returns (address);
+    function createLiquidityPool(address, address, uint256, uint256) external returns (address);
 }
