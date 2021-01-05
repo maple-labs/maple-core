@@ -74,7 +74,9 @@ describe("Pool Delegate Journey - DAI", function () {
       LIQUIDITY_ASSET,
       STAKE_ASSET,
       STAKING_FEE_BASIS_POINTS,
-      DELEGATE_FEE_BASIS_POINTS
+      DELEGATE_FEE_BASIS_POINTS,
+      POOL_NAME,
+      POOL_SYMBOL
     );
 
     LiquidityPoolAddress = await LiquidityPoolFactory.getLiquidityPool(

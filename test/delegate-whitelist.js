@@ -76,7 +76,9 @@ describe("Pool Delegate Whitelist", function () {
         LIQUIDITY_ASSET,
         STAKE_ASSET,
         STAKING_FEE_BASIS_POINTS,
-        DELEGATE_FEE_BASIS_POINTS
+        DELEGATE_FEE_BASIS_POINTS,
+        POOL_NAME,
+        POOL_SYMBOL
       )
     ).to.be.revertedWith(
       "LiquidityPoolFactory::createLiquidityPool:ERR_MSG_SENDER_NOT_WHITELISTED"
@@ -102,12 +104,16 @@ describe("Pool Delegate Whitelist", function () {
     const STAKE_ASSET = BPoolAddress;
     const STAKING_FEE_BASIS_POINTS = 0;
     const DELEGATE_FEE_BASIS_POINTS = 0;
+    const POOL_NAME = "LPDAI";
+    const POOL_SYMBOL = "LPDAI";
 
     await LiquidityPoolFactory.createLiquidityPool(
       LIQUIDITY_ASSET,
       STAKE_ASSET,
       STAKING_FEE_BASIS_POINTS,
-      DELEGATE_FEE_BASIS_POINTS
+      DELEGATE_FEE_BASIS_POINTS,
+      POOL_NAME,
+      POOL_SYMBOL
     );
   });
 });
