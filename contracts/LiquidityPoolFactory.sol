@@ -27,7 +27,7 @@ contract LiquidityPoolFactory {
     }
 
     event PoolCreated(
-        uint256 indexed id,
+        string  indexed tUUID,
         address indexed pool,
         address indexed delegate,
         address liquidityAsset,
@@ -50,13 +50,16 @@ contract LiquidityPoolFactory {
         uint256 _stakingFee,
         uint256 _delegateFee
     ) public returns (address) {
+
         require(
             IGlobals(mapleGlobals).validPoolDelegate(msg.sender),
             "LiquidityPoolFactory::createLiquidityPool:ERR_MSG_SENDER_NOT_WHITELISTED"
         );
-        string memory _tUUID = TokenUUID.mkUUID(liquidityPoolsCreated+1);
-	string memory name = string(abi.encodePacked("Maple Liquidity Pool Token ", _tUUID));
-        string memory symbol = string(abi.encodePacked("LP", _tUUID));
+
+        string memory tUUID  = TokenUUID.mkUUID(liquidityPoolsCreated + 1);
+        string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
+        string memory symbol = string(abi.encodePacked("LP", tUUID));
+
         LiquidityPool lPool =
             new LiquidityPool(
                 msg.sender,
@@ -70,10 +73,13 @@ contract LiquidityPoolFactory {
                 symbol,
                 mapleGlobals
             );
+
         _liquidityPools[liquidityPoolsCreated] = address(lPool);
-        _isLiquidityPool[address(lPool)] = true;
+        _isLiquidityPool[address(lPool)]       = true;
+        liquidityPoolsCreated++;
+
         emit PoolCreated(
-            liquidityPoolsCreated,
+            tUUID,
             address(lPool),
             msg.sender,
             _liquidityAsset,
@@ -85,7 +91,6 @@ contract LiquidityPoolFactory {
             name,
             symbol
         );
-        liquidityPoolsCreated++;
         return address(lPool);
     }
 
