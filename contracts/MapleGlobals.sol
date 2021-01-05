@@ -41,9 +41,9 @@ contract MapleGlobals {
     mapping(address => bool) public isValidBorrowToken;
     mapping(address => bool) public isValidCollateral;
     address[] public validBorrowTokenAddresses;
-    string[] public validBorrowTokenSymbols;  // TODO: Account for ERC20s with bytes32 name/symbol
+    string[] public validBorrowTokenSymbols;
     address[] public validCollateralTokenAddresses;
-    string[] public validCollateralTokenSymbols; // TODO: Account for ERC20s with bytes32 name/symbol
+    string[] public validCollateralTokenSymbols;
 
     // Mapping of asset, to the associated pricefeed.
     mapping(address => address) public tokenPriceFeed;
@@ -56,9 +56,6 @@ contract MapleGlobals {
 
     /// @return Validation data structure for pool delegates (prevent invalid addresses from creating pools).
     mapping(address => bool) public validPoolDelegate;
-
-    event CollateralTokenSet(address token, uint256 decimals, bool valid);
-    event     BorrowTokenSet(address token, uint256 decimals, bool valid);
 
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
@@ -128,24 +125,22 @@ contract MapleGlobals {
         @notice Governor can add a valid token, used as collateral.
         @param _token Address of the valid token.
      */
-    function setCollateralToken(address _token, bool _valid) external isGovernor {
-        require(!isValidCollateral[_token], "MapleGloblas::setCollateralToken:ERR_ALREADY_ADDED");
-        isValidCollateral[_token] = _valid;
+    function addCollateralToken(address _token) external isGovernor {
+        require(!isValidCollateral[_token], "MapleGloblas::addCollateralToken:ERR_ALREADY_ADDED");
+        isValidCollateral[_token] = true;
         validCollateralTokenAddresses.push(_token);
         validCollateralTokenSymbols.push(IERC20Details(_token).symbol());
-        emit CollateralTokenSet(_token, IERC20Details(_token).decimals(), _valid);
     }
 
     /**
         @notice Governor can add a valid token, used for borrowing.
         @param _token Address of the valid token.
      */
-    function setBorrowToken(address _token, bool _valid) external isGovernor {
-        require(!isValidBorrowToken[_token], "MapleGloblas::setBorrowToken:ERR_ALREADY_ADDED");
-        isValidBorrowToken[_token] = _valid;
+    function addBorrowToken(address _token) external isGovernor {
+        require(!isValidBorrowToken[_token], "MapleGloblas::addBorrowTokens:ERR_ALREADY_ADDED");
+        isValidBorrowToken[_token] = true;
         validBorrowTokenAddresses.push(_token);
         validBorrowTokenSymbols.push(IERC20Details(_token).symbol());
-        emit BorrowTokenSet(_token, IERC20Details(_token).decimals(), _valid);
     }
 
     function setCalculator(address _calculator, bool valid) public isGovernor {

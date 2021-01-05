@@ -216,8 +216,8 @@ contract LiquidityPoolTest is TestUtil {
         globals.setCalculator(address(bulletCalc),  true);
         globals.setCalculator(address(lateFeeCalc), true);
         globals.setCalculator(address(premiumCalc), true);
-        globals.setCollateralToken(WETH, true);
-        globals.setBorrowToken(DAI, true);
+        globals.addCollateralToken(WETH);
+        globals.addBorrowToken(DAI);
         globals.assignPriceFeed(WETH, address(ethOracle));
         globals.assignPriceFeed(DAI, address(daiOracle));
         globals.setMapleBPool(address(bPool));
