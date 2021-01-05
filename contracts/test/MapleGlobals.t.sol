@@ -65,7 +65,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(validCollateralTokenSymbols.length,   0);
         assertEq(validCollateralTokenAddresses.length, 0);
 
-        globals.setCollateralToken(WETH, true);
+        globals.addCollateralToken(WETH);
         (
             validBorrowTokenSymbols,
             validBorrowTokenAddresses,
@@ -80,7 +80,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(validCollateralTokenSymbols[0],       "WETH");
         assertEq(validCollateralTokenAddresses[0],      WETH);
 
-        globals.setBorrowToken(DAI, true);
+        globals.addBorrowToken(DAI);
         (
             validBorrowTokenSymbols,
             validBorrowTokenAddresses,

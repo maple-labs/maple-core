@@ -96,12 +96,12 @@ async function main() {
     mapleTreasuryAddress
   );
 
-  await mapleGlobals.setBorrowToken(USDCAddress, true);
-  await mapleGlobals.setBorrowToken(DAIAddress, true);
-  await mapleGlobals.setCollateralToken(DAIAddress, true);
-  await mapleGlobals.setCollateralToken(USDCAddress, true);
-  await mapleGlobals.setCollateralToken(WETHAddress, true);
-  await mapleGlobals.setCollateralToken(WBTCAddress, true);
+  await mapleGlobals.addBorrowToken(USDCAddress);
+  await mapleGlobals.addBorrowToken(DAIAddress);
+  await mapleGlobals.addCollateralToken(DAIAddress);
+  await mapleGlobals.addCollateralToken(USDCAddress);
+  await mapleGlobals.addCollateralToken(WETHAddress);
+  await mapleGlobals.addCollateralToken(WBTCAddress);
 
   await mapleGlobals.setCalculator(AmortizationRepaymentCalculator, true);
   await mapleGlobals.setCalculator(BulletRepaymentCalculator, true);
