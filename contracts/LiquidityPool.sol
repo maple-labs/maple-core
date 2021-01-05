@@ -57,6 +57,7 @@ contract LiquidityPool is IERC20, ERC20 {
 
     event LoanFunded(address loanVaultFunded, address loanTokenLocker, uint256 amountFunded);
     event BalanceUpdated(address who, address token, uint256 balance);
+    event Claim(uint interest, uint principal, uint fee);
 
     constructor(
         address _poolDelegate,
@@ -244,6 +245,8 @@ contract LiquidityPool is IERC20, ERC20 {
         // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liqudityLocker
         uint remainder = ILiquidityAsset.balanceOf(address(this));
         require(ILiquidityAsset.transfer(liquidityLockerAddress, remainder));
+        
+        emit Claim(claimInfo[1], claimInfo[2] + claimInfo[4], claimInfo[3]);
 
         // Update outstanding principal, the interest distribution mechanism.
         principalSum = principalSum.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error.
