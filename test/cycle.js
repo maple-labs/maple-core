@@ -1,5 +1,37 @@
+// cycle.js
+
+/*
+
+  This test suite outlines action(s) for the following:
+
+    (P1) Pool manager initializing a pool
+    (P2) Pool manager minting BPTs .. (assumes USDC / MPL balancer pool already exists with very small amount)
+    (P3) Pool manager staking a pool
+    (P4) Pool manager finalizing a pool
+    ..
+    (L1) Borrower creating a loan
+    ..
+    (P5) Provider depositing USDC to a pool
+    (P6) Delegate funding a loan .. (in slight excess)
+    (P7) Liquidity provider withdrawing USDC .. (claimable vs. equity)
+    ..
+    (L2) Borrower posting collateral and drawing down Loan .. (paying fee and excess)
+    (P8) Liquidity pool claiming from loan .. (claiming fee and excess)
+    ..
+    (L3) Borrower making a single payment .. (paying principal and interest)
+    (P9) Liquidity pool claiming from loan .. (claiming principal and interest)
+    ..
+    (L4) Borrower making a full payment
+    ..
+    (P10) Liquidity pool claiming from loan 
+    (P11) Liquidity provider withdrawing USDC from pool
+
+*/
+
+
+// JS Globals
 const { expect, assert } = require("chai");
-const artpath = "../../contracts/" + network.name + "/";
+const artpath            = "../../contracts/" + network.name + "/";
 
 // Maple
 const GlobalsAddress      = require(artpath + "addresses/MapleGlobals.address");
@@ -10,12 +42,17 @@ const VaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.addres
 const VaultFactoryABI     = require(artpath + "abis/LoanVaultFactory.abi");
 
 // External
-const BPoolABI            = require(artpath + "abis/BPool.abi");
+const BPoolABI    = require(artpath + "abis/BPool.abi");
+const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address");
+const USDCABI     = require(artpath + "abis/MintableTokenUSDC.abi");
 
 describe("Full Cycle of Loan", function () {
 
   // Dynamic contracts, assigned values throughout test suite.
-  let Pool, Vault, Asset;
+  let Pool_DAI;
+  let Loan_DAI; // Loan contract that borrower creates and makes payments to
+  let USDC; // The asset that is used for this loan.
+  let DAI;  // Another asset used in PoolDAI
 
   // Static contracts, set below in before() function.
   let Globals, PoolFactory, VaultFactory, BPool;
@@ -43,7 +80,7 @@ describe("Full Cycle of Loan", function () {
     );
   });
 
-  it("Pool_1 -> Pool Delegate initializes Liquidity Pool", async function () {
+  it("(P1) Pool manager initializing a pool", async function () {
 
     const isFinalized = await BPool.isFinalized();
 
@@ -51,59 +88,59 @@ describe("Full Cycle of Loan", function () {
 
   });
 
-  it("Pool_2 -> Pool Delegate stakes BPT tokens in StakeLocker", async function () {
+  it("(P2) Pool manager minting BPTs", async function () {
 
   });
 
-  it("Pool_3 -> Pool Delegate finalizes the Liquidity Pool", async function () {
+  it("(P3) Pool manager staking a pool", async function () {
 
   });
 
-  it("Pool_4 -> Liquidity Providers deposit funds to Liquidity Pool", async function () {
+  it("(P4) Pool manager finalizing a pool", async function () {
 
   });
 
-  it("Vault_1 -> Borrower initializes Loan Vault", async function () {
+  it("(L1) Borrower creating a loan", async function () {
 
   });
 
-  it("Pool_5 -> Pool Delegate funds the Loan Vault", async function () {
+  it("(P5) Provider depositing USDC to a pool", async function () {
 
   });
 
-  it("Vault_2 -> Borrower takes funding from Loan Vault", async function () {
+  it("(P6) Delegate funding a loan", async function () {
 
   });
 
-  it("Pool_6 -> Liquidity Pool claims any excess or fees from Loan Vault drawdown", async function () {
+  it("(P7) Liquidity provider withdrawing USDC", async function () {
 
   });
 
-  it("Vault_3 -> Borrower makes a single payment", async function () {
+  it("(L2) Borrower posting collateral and drawing down Loan", async function () {
 
   });
 
-  it("Pool_7 -> Liquidity Pool claims and distributes interest and principal from single payment", async function () {
+  it("(P8) Liquidity pool claiming from loan", async function () {
 
   });
 
-  it("Vault_4 -> Borrower makes another single payment", async function () {
+  it("(L3) Borrower making a single payment", async function () {
 
   });
 
-  it("Pool_8 -> Liquidity Pool claims and distributes interest and principal from single payment", async function () {
+  it("(P9) Liquidity pool claiming from loan", async function () {
 
   });
 
-  it("Vault_4 -> Borrower makes a full payment", async function () {
+  it("(L4) Borrower making a full payment", async function () {
 
   });
 
-  it("Pool_9 -> Liquidity Pool claims and distributes interest and principal from full payment", async function () {
+  it("(P10) Liquidity pool claiming from loan ", async function () {
 
   });
 
-  it("Pool_10 -> Liquidity Providers withdraw funds from Liquidity Pool", async function () {
+  it("(P11) Liquidity provider withdrawing USDC from pool", async function () {
 
   });
 
