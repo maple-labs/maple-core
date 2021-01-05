@@ -11,15 +11,15 @@
     ..
     (L1) Borrower creating a loan
     ..
-    (P5) Provider depositing USDC to a pool
+    (P5) Liquidity provider depositing USDC to a pool
     (P6) Pool delegate funding a loan .. (in slight excess)
     (P7) Liquidity provider withdrawing USDC .. (claimable vs. equity)
     ..
     (L2) Borrower posting collateral and drawing down Loan .. (paying fee and excess)
-    (P8) Liquidity pool claiming from loan .. (claiming fee and excess)
+    (P8) Pool claiming from loan .. (claiming fee and excess)
     ..
     (L3) Borrower making a single payment .. (paying principal and interest)
-    (P9) Liquidity pool claiming from loan .. (claiming principal and interest)
+    (P9) Pool claiming from loan .. (claiming principal and interest)
     ..
     (L4) Borrower making a full payment
     ..
