@@ -24,9 +24,7 @@ import "./interfaces/ILoanVault.sol";
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
 /// @title LiquidityPool is the core contract for liquidity pools.
-contract LiquidityPool is IERC20, ERC20 {
-
-    uint256 constant WAD = 10 ** 18;
+contract LiquidityPool is IERC20, ERC20, DSMath {
 
     address public immutable poolDelegate;            // The pool delegate, who maintains full authority over this LiquidityPool. (TODO: Should this be immutable?)
     address public immutable liquidityLockerAddress;  // The LiquidityLocker owned by this contract.
@@ -266,7 +264,7 @@ contract LiquidityPool is IERC20, ERC20 {
     function FDT2liq(uint256 amt) internal view returns (uint256 out) {
         out =
             liquidityAssetDecimals > 18 ?
-            mul(_amt, 10 ** (liquidityAssetDecimals - 18)) :
-            amt / (10 ** (18 - liquidityAssetDecimals))
+            mul(amt, 10 ** (liquidityAssetDecimals - 18)) :
+            amt / (10 ** (18 - liquidityAssetDecimals));
     }
 }

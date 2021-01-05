@@ -49,20 +49,20 @@ contract MapleGlobals {
         @param _mapleToken The address of the ERC-2222 token for the Maple protocol.
     */
     constructor(address _governor, address _mapleToken) public {
-        governor = _governor;
-        mapleToken = _mapleToken;
-        gracePeriod = 5 days;
+        governor            = _governor;
+        mapleToken          = _mapleToken;
+        gracePeriod         = 5 days;
         stakeAmountRequired = 100 * 10 ** 6;
-        unstakeDelay = 90 days;
+        unstakeDelay        = 90 days;
         drawdownGracePeriod = 1 days;
-        investorFee = 50;
-        treasuryFee = 50;
+        investorFee         = 50;
+        treasuryFee         = 50;
     }
 
     function getValidTokens() view public returns(
-        string[] memory _validBorrowTokenSymbols,
+        string[]  memory _validBorrowTokenSymbols,
         address[] memory _validBorrowTokenAddresses,
-        string[] memory _validCollateralTokenSymbols,
+        string[]  memory _validCollateralTokenSymbols,
         address[] memory _validCollateralTokenAddresses
     ) {
         return (

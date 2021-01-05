@@ -3,7 +3,6 @@
 pragma solidity >=0.6.11;
 
 import "./StakeLocker.sol";
-// import "hardhat/console.sol";
 
 contract StakeLockerFactory {
 
@@ -23,16 +22,17 @@ contract StakeLockerFactory {
     /// @param _stakeAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
     /// @param _liquidityAsset The address of the dividend token, also the primary investment asset of the LP.
     /// @return The address of the newly created locker.
-    //TODO: add a modifier here that only lets a liquidity pool run this. This is good for security, but not critical.
+    // TODO: add a modifier here that only lets a liquidity pool run this. This is good for security, but not critical.
     function newLocker(
         address _stakeAsset,
         address _liquidityAsset,
         address _globals
     ) external returns (address) {
-        address _owner = address(msg.sender);
+        address _owner       = address(msg.sender);
         address _stakeLocker = address(new StakeLocker(_stakeAsset, _liquidityAsset, _owner, _globals));
+
         ownerOfLocker[_stakeLocker] = _owner; //address of LP contract that sent it, not poolManagers
-        isLocker[_stakeLocker] = true;
+        isLocker[_stakeLocker]      = true;
 
         emit StakeLockerCreated(
             _owner, 

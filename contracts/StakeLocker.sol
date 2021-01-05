@@ -43,14 +43,14 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         address _parentLP,
         address _globals
     ) FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") public {
-        liquidityAsset = _liquidityAsset;
-        stakeAsset = _stakeAsset;
-        parentLP = _parentLP;
-        IParentLP = ILiquidityPool(_parentLP);
+        liquidityAsset  = _liquidityAsset;
+        stakeAsset      = _stakeAsset;
+        parentLP        = _parentLP;
+        IParentLP       = ILiquidityPool(_parentLP);
         ILiquidityAsset = IERC20(_liquidityAsset);
-        fundsToken = ILiquidityAsset;
-        IStakeAsset = IERC20(_stakeAsset);
-        IMapleGlobals = IGlobals(_globals);
+        fundsToken      = ILiquidityAsset;
+        IStakeAsset     = IERC20(_stakeAsset);
+        IMapleGlobals   = IGlobals(_globals);
     }
 
     event Stake(uint256 _amount, address _staker);
@@ -69,6 +69,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         require(msg.sender == parentLP, "StakeLocker:ERR_UNAUTHORIZED");
         _;
     }
+
     modifier isGovernor() {
         require(msg.sender == IMapleGlobals.governor(), "msg.sender is not Governor");
         _;
@@ -128,11 +129,11 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
             stakeDate[_addy] = block.timestamp;
         } else {
             uint256 _date = stakeDate[_addy];
-            //make sure this is executed before mint or line below needs change on denominator
+            // Make sure this is executed before mint or line below needs change on denominator
             uint256 _coef = (WAD * _amt) / (balanceOf(_addy) + _amt); //yes, i want 0 if _amt is too small
-            //thhis addition will start to overflow in about 3^52 years
+            // This addition will start to overflow in about 3^52 years
             stakeDate[_addy] = (_date * WAD + (block.timestamp - _date) * _coef) / WAD;
-            //I know this is insane but its good trust me
+            // I know this is insane but its good trust me
         }
     }
 
@@ -141,22 +142,20 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
      * @param _addy wallet address
      * @return uint amount of BPTs that may be unstaked
      */
-    function getUnstakeableBalance(address _addy) public view returns (uint256) {
+    function getUnstakeableBalance(address _addy) public view returns (uint256 _out) {
         uint256 _bal = balanceOf(_addy);
         uint256 _time = (block.timestamp - stakeDate[_addy]) * WAD;
-        uint256 _out = ((_time / (IMapleGlobals.unstakeDelay() + 1)) * _bal) / WAD;
-        //the plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
-        //also i do indeed want this to return 0 if denominator is less than WAD
-        if (_out > _bal) {
-            _out = _bal;
-        }
-        return _out;
+
+        _out = ((_time / (IMapleGlobals.unstakeDelay() + 1)) * _bal) / WAD;
+        // The plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
+        // Also i do indeed want this to return 0 if denominator is less than WAD
+        if (_out > _bal) _out = _bal;
     }
 
     // TODO: Make this handle transfer of time lock more properly, parameterize _updateStakeDate
-    //      to these ends to save code.
-    //      can improve this so the updated age of tokens reflects their age in the senders wallets
-    //      right now it simply is equivalent to the age update if the receiver was making a new stake.
+    //       to these ends to save code.
+    //       can improve this so the updated age of tokens reflects their age in the senders wallets
+    //       right now it simply is equivalent to the age update if the receiver was making a new stake.
     function _transfer(
         address from,
         address to,
@@ -170,7 +169,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
      * @notice Withdraws all available funds for a token holder
      */
     function withdrawFunds() public override {
-        //must be public so it can be called insdie here
+        // Must be public so it can be called insdie here
         uint256 withdrawableFunds = _prepareWithdraw();
         require(
             fundsToken.transfer(msg.sender, withdrawableFunds),
