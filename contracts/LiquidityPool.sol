@@ -7,6 +7,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "./token/IFundsDistributionToken.sol";
 import "./token/FundsDistributionToken.sol";
 import "./math/CalcBPool.sol";
+import "./math/math.sol";
 import "./interfaces/IBPool.sol";
 import "./LiquidityLockerFactory.sol";
 import "./interfaces/IGlobals.sol";
@@ -24,8 +25,6 @@ import "./interfaces/ILoanVault.sol";
 
 /// @title LiquidityPool is the core contract for liquidity pools.
 contract LiquidityPool is IERC20, ERC20 {
-
-    using SafeMath for uint256;
 
     uint256 constant WAD = 10 ** 18;
 

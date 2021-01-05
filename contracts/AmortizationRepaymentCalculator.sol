@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "./math/math.sol";
 import "./interfaces/ILoanVault.sol";
 
-contract AmortizationRepaymentCalculator {
-
-	using SafeMath for uint256;
+contract AmortizationRepaymentCalculator is DSMath {
 
     bytes32 public calcType = "INTEREST";
     bytes32 public name = "AMORTIZATION";
@@ -16,20 +14,19 @@ contract AmortizationRepaymentCalculator {
     function getNextPayment(address _loanVault) view public returns(uint256, uint256, uint256) {
 
         ILoanVault loan = ILoanVault(_loanVault);
-        uint256 principalOwed = loan.principalOwed();
-        uint256 paymentsRemaining = loan.numberOfPayments();
-        uint256 aprBips = loan.aprBips();
-        uint256 paymentIntervalDays = loan.paymentIntervalSeconds().div(86400);
-        uint256 drawdownAmount = loan.drawdownAmount();
-        uint256 fifty = 50;
-        uint256 hundred = 100;
+
+        uint256 principalOwed       = loan.principalOwed();
+        uint256 paymentsRemaining   = loan.numberOfPayments();
+        uint256 aprBips             = loan.aprBips();
+        uint256 paymentIntervalDays = loan.paymentIntervalSeconds() / 1 days;
+        uint256 drawdownAmount      = loan.drawdownAmount();
 
         // Represents amortization by flattening the total interest owed for equal interest payments.
-        uint256 interestAnnual = drawdownAmount.mul(aprBips).div(10000).mul(paymentIntervalDays).div(365);
-        uint256 interestPartial = fifty.mul(1 ether).div(paymentsRemaining).add(fifty.mul(1 ether));
-        uint256 interest = interestAnnual.mul(interestPartial).div(hundred.mul(1 ether));
-        uint256 principal = principalOwed.div(paymentsRemaining);
+        uint256 interestAnnual  = mul(mul(drawdownAmount, aprBips) / 1000, paymentIntervalDays) / 365; 
+        uint256 interestPartial = 50 ether / paymentsRemaining + 50 ether;
+        uint256 interest        = mul(interestAnnual, interestPartial) / 100 ether;
+        uint256 principal       = principalOwed / paymentsRemaining;
 
-    return (interest.add(principal), principal, interest);
+    return (add(interest, principal), principal, interest);
   }
 }
