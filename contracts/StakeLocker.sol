@@ -10,29 +10,41 @@ import "./interfaces/IGlobals.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
-
-    using SafeMathInt    for int256;
+    using SafeMathInt for int256;
     using SignedSafeMath for int256;
 
-    uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division
+    //map address to date value
+    mapping(address => uint256) private stakeDate; // Consider making public
 
-    address public immutable parentLP;  // The parent liquidity pool. (TODO: Consider if this variable is needed, redundant to IParentLP)
+    // The primary investment asset for the LP, and the dividend token for this contract.
+    IERC20 private ILiquidityAsset;
+    IERC20 private IStakeAsset;
+    IERC20 private fundsToken;
 
-    address public liquidityAsset;  // The LiquidityAsset for the LiquidityPool as well as the dividend token for this contract.
-    address public stakeAsset;      // The asset deposited by stakers into this contract, for liquidation during defaults.
+    /// @notice  The amount of LiquidityAsset tokens (dividends) currently present and accounted for in this contract.
+    uint256 public fundsTokenBalance;
 
-    IERC20         private ILiquidityAsset;  // The primary investment asset for the LP, and the dividend token for this contract.
-    IERC20         private IStakeAsset;      // Asset used for staking
-    IERC20         private fundsToken;       // ERC-2222 token used to claim revenues
-    ILiquidityPool private IParentLP;        // Interface for the parent/owner of this contract, a liquidity pool.
-    IGlobals       private IMapleGlobals;    // Interface for the MapleGlobals.sol contract.
-    
-    uint256 public fundsTokenBalance;  //  The amount of LiquidityAsset tokens (dividends) currently present and accounted for in this contract.
+    /// @notice The LiquidityAsset for the LiquidityPool as well as the dividend token for this contract.
+    address public liquidityAsset;
 
-    bool private isLPDefunct;    // The LiquidityAsset for the LiquidityPool as well as the dividend token for this contract.
-    bool private isLPFinalized;  // The LiquidityAsset for the LiquidityPool as well as the dividend token for this contract.
+    bool private isLPDefunct;
+    bool private isLPFinalized;
 
-    mapping(address => uint256) private stakeDate;  // Map address to date value (TODO: Consider making public)
+    /// @notice The asset deposited by stakers into this contract, for liquidation during defaults.
+    address public stakeAsset;
+
+    // Interface for the MapleGlobals.sol contract.
+    IGlobals private IMapleGlobals;
+
+    // Interface for the parent/owner of this contract, a liquidity pool.
+    ILiquidityPool private IParentLP;
+
+    //scaling factor for synthetic float division
+    uint256 constant _ONE = 10**18;
+
+    // TODO: Consider if this variable is needed, redundant to IParentLP.
+    /// @notice The parent liquidity pool.
+    address public immutable parentLP;
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
@@ -129,9 +141,9 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         } else {
             uint256 _date = stakeDate[_addy];
             //make sure this is executed before mint or line below needs change on denominator
-            uint256 _coef = (WAD * _amt) / (balanceOf(_addy) + _amt); //yes, i want 0 if _amt is too small
+            uint256 _coef = (_ONE * _amt) / (balanceOf(_addy) + _amt); //yes, i want 0 if _amt is too small
             //thhis addition will start to overflow in about 3^52 years
-            stakeDate[_addy] = (_date * WAD + (block.timestamp - _date) * _coef) / WAD;
+            stakeDate[_addy] = (_date * _ONE + (block.timestamp - _date) * _coef) / _ONE;
             //I know this is insane but its good trust me
         }
     }
@@ -143,10 +155,10 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
      */
     function getUnstakeableBalance(address _addy) public view returns (uint256) {
         uint256 _bal = balanceOf(_addy);
-        uint256 _time = (block.timestamp - stakeDate[_addy]) * WAD;
-        uint256 _out = ((_time / (IMapleGlobals.unstakeDelay() + 1)) * _bal) / WAD;
+        uint256 _time = (block.timestamp - stakeDate[_addy]) * _ONE;
+        uint256 _out = ((_time / (IMapleGlobals.unstakeDelay() + 1)) * _bal) / _ONE;
         //the plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
-        //also i do indeed want this to return 0 if denominator is less than WAD
+        //also i do indeed want this to return 0 if denominator is less than _ONE
         if (_out > _bal) {
             _out = _bal;
         }

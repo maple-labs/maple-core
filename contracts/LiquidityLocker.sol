@@ -8,8 +8,11 @@ contract LiquidityLocker {
 
     IERC20 private immutable ILiquidityAsset;
 
-    address public immutable ownerLP;         // The LiquidityPool that owns this LiquidityLocker, for authorization purposes.
-    address public           liquidityAsset;  // The asset which this LiquidityLocker will escrow.
+    /// @notice The asset which this LiquidityLocker will escrow.
+    address public liquidityAsset;
+
+    /// @notice The LiquidityPool that owns this LiquidityLocker, for authorization purposes.
+    address public immutable ownerLP;
 
     // TODO: Consider checking if the _liquidityPool (owner) is a valid LiquidityPool via LPFactory.
     constructor(address _liquidityAsset, address _liquidityPool) public {

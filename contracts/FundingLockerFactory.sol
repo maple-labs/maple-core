@@ -6,9 +6,14 @@ import "./interfaces/ILoanVaultFactory.sol";
 
 contract FundingLockerFactory {
 
-    mapping(address => address) private lockerOwner;     // Mapping of FundingLocker contracts to the LoanVault it's attached with.
-    mapping(address => bool)    private isLocker;        // Mapping of identification check to confirm a locker was created through this factory.
-    mapping(address => bool)    private deployedLocker;  // Unique deployment per address, ensure no duplication (or decoupling).
+    // Mapping of FundingLocker contracts to the LoanVault it's attached with.
+    mapping(address => address) private lockerOwner;
+
+    // Mapping of identification check to confirm a locker was created through this factory.
+    mapping(address => bool) private isLocker;
+
+    // Unique deployment per address, ensure no duplication (or decoupling).
+    mapping(address => bool) private deployedLocker;
 
     /// @notice Instantiate a FundingLocker contract.
     /// @param _fundingAsset Address of the funding asset.
