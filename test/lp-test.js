@@ -91,7 +91,9 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       LIQUIDITY_ASSET,
       STAKE_ASSET,
       STAKING_FEE_BASIS_POINTS,
-      DELEGATE_FEE_BASIS_POINTS
+      DELEGATE_FEE_BASIS_POINTS,
+      POOL_NAME,
+      POOL_SYMBOL
     );
 
     LiquidityPoolAddressDAI = await LiquidityPoolFactory.getLiquidityPool(
@@ -112,7 +114,9 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       LIQUIDITY_ASSET,
       STAKE_ASSET,
       STAKING_FEE_BASIS_POINTS,
-      DELEGATE_FEE_BASIS_POINTS
+      DELEGATE_FEE_BASIS_POINTS,
+      POOL_NAME,
+      POOL_SYMBOL
     );
 
     LiquidityPoolAddressUSDC = await LiquidityPoolFactory.getLiquidityPool(

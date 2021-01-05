@@ -46,7 +46,9 @@ contract PoolDelegate {
         address liqAsset,
         address stakeAsset,
         uint256 stakingFee,
-        uint256 delegateFee
+        uint256 delegateFee,
+        string memory name,
+        string memory symbol
     ) 
         external returns (address liquidityPool) 
     {
@@ -54,7 +56,9 @@ contract PoolDelegate {
             liqAsset,
             stakeAsset,
             stakingFee,
-            delegateFee
+            delegateFee,
+            name,
+            symbol 
         );
     }
 
@@ -230,7 +234,9 @@ contract LiquidityPoolTest is TestUtil {
             DAI,
             address(bPool),
             500,
-            100
+            100,
+            "Maple Liquidity Pool 0",
+            "MPL_LP_0"
         ));
 
         // Create Liquidity Pool
@@ -239,7 +245,9 @@ contract LiquidityPoolTest is TestUtil {
             DAI,
             address(bPool),
             7500,
-            50
+            50,
+            "Johns Liquidity Pool 480",
+            "JRQ_LP_480"
         ));
 
         // vault Specifications
