@@ -28,12 +28,11 @@
 
 */
 
-
 // JS Globals
 const { expect, assert } = require("chai");
 const artpath            = "../../contracts/" + network.name + "/";
 
-// Maple
+// Core Contracts
 const GlobalsAddress      = require(artpath + "addresses/MapleGlobals.address");
 const GlobalsABI          = require(artpath + "abis/MapleGlobals.abi");
 const MPLAddress          = require(artpath + "addresses/MapleToken.address");
@@ -44,14 +43,14 @@ const VaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.addres
 const VaultFactoryABI     = require(artpath + "abis/LoanVaultFactory.abi");
 const PoolABI             = require(artpath + "abis/LiquidityPool.abi");
 
-// External
+// External Contracts
 const BPoolABI    = require(artpath + "abis/BPool.abi");
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address");
 const USDCABI     = require(artpath + "abis/MintableTokenUSDC.abi");
 
 describe("Cycle of an entire loan", function () {
 
-  // To be created contracts, created in test suite.
+  // These are initialized in test suite.
   let Pool;
   let Loan; 
 
@@ -60,10 +59,12 @@ describe("Cycle of an entire loan", function () {
   let PoolFactory;
   let VaultFactory;
   let BPool;
-  let MPL;
-  let USDC;
+  let MPL_Delegate, MPL_Staker;
+  let USDC_Delegate, USDC_Staker, USDC_Provider;
 
   before(async () => {
+
+    // Core Contracts
     Globals = new ethers.Contract(
       GlobalsAddress,
       GlobalsABI,
@@ -79,20 +80,41 @@ describe("Cycle of an entire loan", function () {
       VaultFactoryABI,
       ethers.provider.getSigner(0)
     );
+
+    // External Contract
     BPool = new ethers.Contract(
       await Globals.mapleBPool(),
       BPoolABI,
       ethers.provider.getSigner(0)
     );
-    MPL = new ethers.Contract(
+
+    // MPL
+    MPL_Delegate = new ethers.Contract(
       MPLAddress,
       MPLABI,
       ethers.provider.getSigner(0)
     );
-    USDC = new ethers.Contract(
+    MPL_Staker = new ethers.Contract(
+      MPLAddress,
+      MPLABI,
+      ethers.provider.getSigner(1)
+    );
+
+    // USDC
+    USDC_Delegate = new ethers.Contract(
       USDCAddress,
       USDCABI,
       ethers.provider.getSigner(0)
+    );
+    USDC_Staker = new ethers.Contract(
+      USDCAddress,
+      USDCABI,
+      ethers.provider.getSigner(1)
+    );
+    USDC_Provider = new ethers.Contract(
+      USDCAddress,
+      USDCABI,
+      ethers.provider.getSigner(2)
     );
   });
 
