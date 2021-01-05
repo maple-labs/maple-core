@@ -23,8 +23,8 @@
     ..
     (L4) Borrower making a full payment
     ..
-    (P10) Liquidity pool claiming from loan 
-    (P11) Liquidity provider withdrawing USDC from pool
+    (P10) Pool claiming from loan 
+    (P11) Liquidity provider withdrawing USDC
 
 */
 
@@ -36,8 +36,8 @@ const artpath            = "../../contracts/" + network.name + "/";
 // Maple
 const GlobalsAddress      = require(artpath + "addresses/MapleGlobals.address");
 const GlobalsABI          = require(artpath + "abis/MapleGlobals.abi");
-const MPLAddress          = require(artpath + "addresses/LoanVaultFactory.address");
-const MPLABI              = require(artpath + "abis/LoanVaultFactory.abi");
+const MPLAddress          = require(artpath + "addresses/MapleToken.address");
+const MPLABI              = require(artpath + "abis/MapleToken.abi");
 const PoolFactoryAddress  = require(artpath + "addresses/LiquidityPoolFactory.address");
 const PoolFactoryABI      = require(artpath + "abis/LiquidityPoolFactory.abi");
 const VaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address");
@@ -127,11 +127,11 @@ describe("Full Cycle of Loan", function () {
 
   });
 
-  it("(L2) Borrower posting collateral and drawing down Loan", async function () {
+  it("(L2) Borrower posting collateral and drawing down loan", async function () {
 
   });
 
-  it("(P8) Liquidity pool claiming from loan", async function () {
+  it("(P8) Pool claiming from loan", async function () {
 
   });
 
@@ -139,7 +139,7 @@ describe("Full Cycle of Loan", function () {
 
   });
 
-  it("(P9) Liquidity pool claiming from loan", async function () {
+  it("(P9) Pool claiming from loan", async function () {
 
   });
 
@@ -147,11 +147,11 @@ describe("Full Cycle of Loan", function () {
 
   });
 
-  it("(P10) Liquidity pool claiming from loan ", async function () {
+  it("(P10) Pool claiming from loan ", async function () {
 
   });
 
-  it("(P11) Liquidity provider withdrawing USDC from pool", async function () {
+  it("(P11) Liquidity provider withdrawing USDC", async function () {
 
   });
 
