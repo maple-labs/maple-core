@@ -18,7 +18,6 @@ import "./interfaces/ILiquidityLockerFactory.sol";
 import "./interfaces/ILoanTokenLockerFactory.sol";
 import "./interfaces/ILoanTokenLocker.sol";
 import "./interfaces/ILoanVault.sol";
-import "hardhat/console.sol";
 
 // TODO: Implement the withdraw() function, so investors can withdraw LiquidityAsset from LP.
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
@@ -178,9 +177,7 @@ contract LiquidityPool is IERC20, ERC20 {
     /// @param _amt The amount of LiquidityAsset to deposit, in wei.
     function deposit(uint256 _amt) external notDefunct finalized {
         ILiquidityAsset.transferFrom(msg.sender, liquidityLockerAddress, _amt);
-        console.log("_amt", _amt);
         uint256 _mintAmt = liq2FDT(_amt);
-        console.log("_mintAmt", _mintAmt);
         _mint(msg.sender, _mintAmt);
 
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
@@ -272,17 +269,11 @@ contract LiquidityPool is IERC20, ERC20 {
     if we dont support decimals > 18, that would half this code, but some jerk probably has a higher decimal coin
     */
     function liq2FDT(uint256 _amt) internal view returns (uint256 _out) {
-        console.log("amt", _amt);
-        console.log("liquidityAssetDecimals", liquidityAssetDecimals);
         if (liquidityAssetDecimals > 18) {
             _out = _amt.div(10**(liquidityAssetDecimals - 18));
         } else {
             uint _offset = 18 - liquidityAssetDecimals;
-            console.log("calc_a", _amt.mul(10**(18 - liquidityAssetDecimals)));
-            console.log("calc_b", _amt * 10 ** (18 - liquidityAssetDecimals));
-            console.log("calc_d", _amt.mul(10 ** 6));
             _out = _amt.mul(10 ** _offset);
-            console.log("_out", _out);
         }
         return _out;
     }
