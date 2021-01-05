@@ -11,7 +11,7 @@ contract CollateralLocker {
 
     constructor(address _collateralAsset, address _loanVault) public {
         collateralAsset = _collateralAsset;
-        loanVault = _loanVault;
+        loanVault       = _loanVault;
     }
 
     modifier isLoanVault() {

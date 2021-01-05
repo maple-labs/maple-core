@@ -5,6 +5,7 @@ pragma solidity >=0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./token/IFundsDistributionToken.sol";
 import "./token/FundsDistributionToken.sol";
+import "./math/math.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/IFundingLocker.sol";
 import "./interfaces/IFundingLockerFactory.sol";
@@ -16,11 +17,7 @@ import "./interfaces/ILateFeeCalculator.sol";
 import "./interfaces/IPremiumCalculator.sol";
 
 /// @title LoanVault is the core loan vault contract.
-contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
-    
-    using SafeMathInt     for int256;
-    using SignedSafeMath  for int256;
-    using SafeMath       for uint256;
+contract LoanVault is IFundsDistributionToken, FundsDistributionToken, DSMath {
 
     enum State { Live, Active, Matured } // Live = Created, Active = Drawndown
 
@@ -142,24 +139,24 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             "LoanVault::constructor:ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO"
         );
         require(
-            _specifications[1].mod(_specifications[2]) == 0,
+            _specifications[1] % _specifications[2] == 0,
             "LoanVault::constructor:ERR_INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION"
         );
         require(_specifications[3] > 0, "LoanVault::constructor:ERR_MIN_RAISE_EQUALS_ZERO");
         require(_specifications[5] > 0, "LoanVault::constructor:ERR_FUNDING_PERIOD_EQUALS_ZERO");
 
         // Update state variables.
-        aprBips = _specifications[0];
-        termDays = _specifications[1];
-        numberOfPayments = _specifications[1].div(_specifications[2]);
-        paymentIntervalSeconds = _specifications[2].mul(1 days);
-        minRaise = _specifications[3];
-        collateralBipsRatio = _specifications[4];
-        fundingPeriodSeconds = _specifications[5].mul(1 days);
-        repaymentCalculator = IRepaymentCalculator(_calculators[0]);
-        lateFeeCalculator = ILateFeeCalculator(_calculators[1]);
-        premiumCalculator = IPremiumCalculator(_calculators[2]);
-        nextPaymentDue = loanCreatedTimestamp.add(paymentIntervalSeconds);
+        aprBips                = _specifications[0];
+        termDays               = _specifications[1];
+        numberOfPayments       = _specifications[1] / _specifications[2];
+        paymentIntervalSeconds = mul(_specifications[2], 1 days);
+        minRaise               = _specifications[3];
+        collateralBipsRatio    = _specifications[4];
+        fundingPeriodSeconds   = mul(_specifications[5], 1 days);
+        repaymentCalculator    = IRepaymentCalculator(_calculators[0]);
+        lateFeeCalculator      = ILateFeeCalculator(_calculators[1]);
+        premiumCalculator      = IPremiumCalculator(_calculators[2]);
+        nextPaymentDue         = loanCreatedTimestamp.add(paymentIntervalSeconds);
 
         // Deploy lockers
         collateralLocker = ICollateralLockerFactory(collateralLockerFactory).newLocker(assetCollateral);
@@ -230,13 +227,13 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         require(
            IFundingLocker(fundingLocker).pull(
                 treasury, 
-                _drawdownAmount.mul(treasuryFee).div(10000)
+                mul(_drawdownAmount, treasuryFee) / 10000
             ), 
             "LoanVault::drawdown:CRITICAL_ERR_PULL"
         );
 
         // Update investorFee locally.
-        feePaid = _drawdownAmount.mul(investorFee).div(10000);
+        feePaid = mul(_drawdownAmount, investorFee) / 10000;
 
         // Pull investorFee into this LoanVault.
         require(
@@ -248,7 +245,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
         require(
             IFundingLocker(fundingLocker).pull(
                 borrower, 
-                _drawdownAmount.mul(10000 - investorFee - treasuryFee).div(10000)
+                mul(_drawdownAmount, sub(10000, add(investorFee, treasuryFee))) / 10000
             ), 
             "LoanVault::drawdown:CRITICAL_ERR_PULL"
         );
@@ -284,10 +281,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             );
 
             // Update internal accounting variables.
-            principalOwed = principalOwed.sub(_principal);
-            principalPaid = principalPaid.add(_principal);
-            interestPaid = interestPaid.add(_interest);
-            nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
+            principalOwed  = sub(principalOwed,  _principal);
+            principalPaid  = add(principalPaid,  _principal);
+            interestPaid   = add(interestPaid,   _interest);
+            nextPaymentDue = add(nextPaymentDue, paymentIntervalSeconds);
             numberOfPayments--;
         }
         else if (block.timestamp <= nextPaymentDue.add(MapleGlobals.gracePeriod())) {
@@ -309,10 +306,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             );
 
             // Update internal accounting variables.
-            principalOwed = principalOwed.sub(_principal);
-            principalPaid = principalPaid.add(_principal).add(_principalExtra);
-            interestPaid = interestPaid.add(_interest).add(_interestExtra);
-            nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
+            principalOwed  = sub(principalOwed,  _principal);
+            principalPaid  = add(principalPaid,  add(_principal, _principalExtra));
+            interestPaid   = add(interestPaid,   add(_interest, _interestExtra));
+            nextPaymentDue = add(nextPaymentDue, paymentIntervalSeconds);
             numberOfPayments--;
         }
         else {
@@ -361,10 +358,10 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         // Update internal accounting variables.
         // TODO: Identify any other variables worth resetting on full payment.
-        principalOwed = 0;
+        principalOwed    = 0;
         numberOfPayments = 0;
-        principalPaid = principalPaid.add(_principal);
-        interestPaid = interestPaid.add(_interest);
+        principalPaid    = add(principalPaid, _principal);
+        interestPaid     = add(interestPaid,  _interest);
 
         updateFundsReceived();
 
@@ -389,7 +386,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
     function collateralRequiredForDrawdown(uint256 _drawdownAmount) public view returns(uint256) {
 
         // Fetch value of collateral and funding asset.
-        uint256 requestPrice = MapleGlobals.getPrice(assetRequested);
+        uint256 requestPrice    = MapleGlobals.getPrice(assetRequested);
         uint256 collateralPrice = MapleGlobals.getPrice(assetCollateral);
 
         /*
@@ -404,9 +401,9 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
             collateralPrice(wETH) = 59452607912
         */
 
-        uint256 collateralRequiredUSD = requestPrice.mul(_drawdownAmount).mul(collateralBipsRatio).div(10000);
-        uint256 collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
-        uint256 collateralRequiredFIN = collateralRequiredWEI.div(10**(18 - IERC20Details(assetCollateral).decimals()));
+        uint256 collateralRequiredUSD = mul(requestPrice, mul(_drawdownAmount, collateralBipsRatio)) / 10000;
+        uint256 collateralRequiredWEI = collateralRequiredUSD / collateralPrice;
+        uint256 collateralRequiredFIN = collateralRequiredWEI / (10 ** (18 - IERC20Details(assetCollateral).decimals()));
 
         return collateralRequiredFIN;
     }
@@ -435,7 +432,7 @@ contract LoanVault is IFundsDistributionToken, FundsDistributionToken {
 
         fundsTokenBalance = fundsToken.balanceOf(address(this));
 
-        return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
+        return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance)); // TODO: Evaluate what to do about SafeMath in FDT
     }
 
     /**

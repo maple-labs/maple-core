@@ -2,12 +2,10 @@
 
 pragma solidity >=0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "./math/math.sol";
 import "./interfaces/ILoanVault.sol";
 
-contract LoanTokenLocker {
-
-    using SafeMath for uint256;
+contract LoanTokenLocker is DSMath {
 
     address public immutable vault;  // The LoanVault that this locker is holding tokens for.
     address public immutable owner;  // The owner of this Locker (a liquidity pool).
@@ -57,12 +55,12 @@ contract LoanTokenLocker {
         // Update ERC2222 internal accounting for LoanVault.
         loanVault.withdrawFunds();
 
-        uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess);
+        uint256 sum       = add(newInterest, add(newPrincipal, add(newFee, newExcess)));
         uint256 balance   = IERC20(asset).balanceOf(address(this));
-        uint256 interest  = newInterest .mul(1 ether).div(sum).mul(balance).div(1 ether);
-        uint256 principal = newPrincipal.mul(1 ether).div(sum).mul(balance).div(1 ether);
-        uint256 fee       = newFee      .mul(1 ether).div(sum).mul(balance).div(1 ether);
-        uint256 excess    = newExcess   .mul(1 ether).div(sum).mul(balance).div(1 ether);
+        uint256 interest  = wmul(wdiv(newInterest,  sum), balance);
+        uint256 principal = wmul(wdiv(newPrincipal, sum), balance);
+        uint256 fee       = wmul(wdiv(newFee,       sum), balance);
+        uint256 excess    = wmul(wdiv(newExcess,    sum), balance);
 
         require(IERC20(asset).transfer(owner, balance), "LoanTokenLocker::claim:ERR_XFER");
 

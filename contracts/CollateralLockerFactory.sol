@@ -18,10 +18,10 @@ contract CollateralLockerFactory {
             !deployedLocker[msg.sender], 
             "CollateralLockerFactory::newLocker:ERR_MSG_SENDER_ALREADY_DEPLOYED_FUNDING_LOCKER"
         );
-        deployedLocker[msg.sender] = true;
-        address _collateralLocker = address(new CollateralLocker(_collateralAsset, msg.sender));
+        address _collateralLocker      = address(new CollateralLocker(_collateralAsset, msg.sender));
+        deployedLocker[msg.sender]     = true;
         lockerOwner[_collateralLocker] = msg.sender;
-        isLocker[_collateralLocker] = true;
+        isLocker[_collateralLocker]    = true;
         return _collateralLocker;
     }
 

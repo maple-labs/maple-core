@@ -76,18 +76,18 @@ contract LiquidityPool is IERC20, ERC20 {
         );
 
         // Assign variables relating to the LiquidityAsset.
-        liquidityAsset = _liquidityAsset;
+        liquidityAsset         = _liquidityAsset;
         liquidityAssetDecimals = ERC20(liquidityAsset).decimals();
-        ONELiquidityAsset = 10 ** (liquidityAssetDecimals);
-        ILiquidityAsset = IERC20(_liquidityAsset);
+        ONELiquidityAsset      = 10 ** (liquidityAssetDecimals);
+        ILiquidityAsset        = IERC20(_liquidityAsset);
 
         // Assign misc. state variables.
-        stakeAsset = _stakeAsset;
+        stakeAsset         = _stakeAsset;
         StakeLockerFactory = IStakeLockerFactory(_stakeLockerFactory);
-        MapleGlobals = IGlobals(_mapleGlobals);
-        poolDelegate = _poolDelegate;
-        stakingFee = _stakingFee;
-        delegateFee = _delegateFee;
+        MapleGlobals       = IGlobals(_mapleGlobals);
+        poolDelegate       = _poolDelegate;
+        stakingFee         = _stakingFee;
+        delegateFee        = _delegateFee;
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLockerAddress = createStakeLocker(_stakeAsset);
@@ -117,11 +117,10 @@ contract LiquidityPool is IERC20, ERC20 {
     function createStakeLocker(address _stakeAsset) private returns (address) {
         require(
             IBPool(_stakeAsset).isBound(MapleGlobals.mapleToken()) &&
-                IBPool(_stakeAsset).isFinalized(),
+            IBPool(_stakeAsset).isFinalized(),
             "LiquidityPool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
         );
-        address _stakeLocker =
-            StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
+        address _stakeLocker = StakeLockerFactory.newLocker(_stakeAsset, liquidityAsset, address(MapleGlobals));
         StakeLocker = IStakeLocker(_stakeLocker);
         return _stakeLocker;
     }
@@ -144,24 +143,15 @@ contract LiquidityPool is IERC20, ERC20 {
         @return uint, [3] = Amount of pool shares required.
         @return uint, [4] = Amount of pool shares present.
     */
-    function getInitialStakeRequirements()
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            bool,
-            uint256,
-            uint256
-        )
-    {
-        address pool = MapleGlobals.mapleBPool();
-        address pair = MapleGlobals.mapleBPoolAssetPair();
+    function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
+        address pool     = MapleGlobals.mapleBPool();
+        address pair     = MapleGlobals.mapleBPoolAssetPair();
         uint256 minStake = MapleGlobals.stakeAmountRequired();
 
         // TODO: Resolve the dissonance between poolSharesRequired / minstake / getSwapOutValue
         (uint256 _poolAmountInRequired, uint256 _poolAmountPresent) =
             calcBPool.getPoolSharesRequired(pool, pair, poolDelegate, stakeLockerAddress, minStake);
+
         return (
             minStake,
             calcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLockerAddress),
@@ -184,20 +174,17 @@ contract LiquidityPool is IERC20, ERC20 {
 
     function withdraw(uint256 _amt) external notDefunct finalized {
         require(balanceOf(msg.sender) >= _amt, "LiquidityPool::withdraw:USER_BAL_LESS_THAN_AMT");
-        uint256 share = _amt.mul(WAD).div(totalSupply());
+
+        uint256 share = wdiv(_amt, totalSupply());
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
-        uint256 due   = share.mul(principalSum.add(bal)).div(WAD);
+        uint256 due   = wmul(share, add(principalSum, bal));
+
         _burn(msg.sender, _amt); // TODO: Unit testing on _burn / _mint for ERC-2222
         require(IERC20(liquidityLockerAddress).transfer(msg.sender, due), "LiquidityPool::ERR_WITHDRAW_TRANSFER");
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
     }
 
-    function fundLoan(
-        address _vault,
-        address _ltlFactory,
-        uint256 _amount
-    ) external notDefunct finalized isDelegate {
-
+    function fundLoan(address _vault, address _ltlFactory, uint256 _amount) external notDefunct finalized isDelegate {
         // Auth check on loanVaultFactory "kernel"
         require(
             ILoanVaultFactory(MapleGlobals.loanVaultFactory()).isLoanVault(_vault),
@@ -206,7 +193,7 @@ contract LiquidityPool is IERC20, ERC20 {
 
         // Instantiate locker if it doesn't exist with this factory type.
         if (loanTokenLockers[_vault][_ltlFactory] == address(0)) {
-            address _loanTokenLocker = ILoanTokenLockerFactory(_ltlFactory).newLocker(_vault);
+            address _loanTokenLocker              = ILoanTokenLockerFactory(_ltlFactory).newLocker(_vault);
             loanTokenLockers[_vault][_ltlFactory] = _loanTokenLocker;
         }
         
@@ -235,8 +222,8 @@ contract LiquidityPool is IERC20, ERC20 {
         uint[5] memory claimInfo = ILoanTokenLocker(loanTokenLockers[_vault][_ltlFactory]).claim();
 
         // Distribute "interest" to appropriate parties.
-        require(ILiquidityAsset.transfer(poolDelegate,       claimInfo[1].mul(delegateFee).div(10000)));
-        require(ILiquidityAsset.transfer(stakeLockerAddress, claimInfo[1].mul(stakingFee).div(10000)));
+        require(ILiquidityAsset.transfer(poolDelegate,       mul(claimInfo[1], delegateFee) / 10000));
+        require(ILiquidityAsset.transfer(stakeLockerAddress, mul(claimInfo[1], stakingFee)  / 10000));
 
         // Distribute "fee" to poolDelegate.
         require(ILiquidityAsset.transfer(poolDelegate, claimInfo[3]));
@@ -246,7 +233,7 @@ contract LiquidityPool is IERC20, ERC20 {
         require(ILiquidityAsset.transfer(liquidityLockerAddress, remainder));
 
         // Update outstanding principal, the interest distribution mechanism.
-        principalSum = principalSum.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error.
+        principalSum = sub(principalSum, add(claimInfo[2], claimInfo[4]));  // Reversion here indicates critical error.
 
         // TODO: Consider any underflow / overflow that feeds into this calculation from RepaymentCalculators.
 
@@ -267,23 +254,19 @@ contract LiquidityPool is IERC20, ERC20 {
     but that will cause frontend interface complications!
     if we dont support decimals > 18, that would half this code, but some jerk probably has a higher decimal coin
     */
-    function liq2FDT(uint256 _amt) internal view returns (uint256 _out) {
-        if (liquidityAssetDecimals > 18) {
-            _out = _amt.div(10**(liquidityAssetDecimals - 18));
-        } else {
-            _out = _amt.mul(10**(18 - liquidityAssetDecimals));
-        }
-        return _out;
+    function liq2FDT(uint256 amt) internal view returns (uint256 out) {
+        out = 
+            liquidityAssetDecimals > 18 ? 
+            amt / (10 ** (liquidityAssetDecimals - 18)) :
+            mul(amt, (10 ** (18 - liquidityAssetDecimals)));
     }
 
     // TODO: Optimize FDT2liq and liq2FDT
     // TODO: Consider removing the one below if not being used after withdraw() is implemented.
-    function FDT2liq(uint256 _amt) internal view returns (uint256 _out) {
-        if (liquidityAssetDecimals > 18) {
-            _out = _amt.mul(10**(liquidityAssetDecimals - 18));
-        } else {
-            _out = _amt.div(10**(18 - liquidityAssetDecimals));
-        }
-        return _out;
+    function FDT2liq(uint256 amt) internal view returns (uint256 out) {
+        out =
+            liquidityAssetDecimals > 18 ?
+            mul(_amt, 10 ** (liquidityAssetDecimals - 18)) :
+            amt / (10 ** (18 - liquidityAssetDecimals))
     }
 }

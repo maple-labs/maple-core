@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "./LoanVault.sol";
-import "./interfaces/IGlobals.sol";
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "./library/TokenUUID.sol";
 import "./interfaces/ICalcGeneral.sol";
+import "./interfaces/IGlobals.sol";
+import "./library/TokenUUID.sol";
+import "./math/math.sol";
+
+import "./LoanVault.sol";
 
 /// @title LoanVaultFactory instantiates LoanVault contracts.
-contract LoanVaultFactory {
-
-	using SafeMath for uint256;
+contract LoanVaultFactory is DSMath {
 
     address public mapleGlobals;             // The MapleGlobals.sol contract.
     address public fundingLockerFactory;     // The FundingLockerFactory to use for this LoanVaultFactory.
@@ -36,8 +35,8 @@ contract LoanVaultFactory {
     );
     
     constructor(address _mapleGlobals, address _fundingLockerFactory, address _collateralLockerFactory) public {
-        mapleGlobals = _mapleGlobals;
-        fundingLockerFactory = _fundingLockerFactory;
+        mapleGlobals            = _mapleGlobals;
+        fundingLockerFactory    = _fundingLockerFactory;
         collateralLockerFactory = _collateralLockerFactory;
     }
 
@@ -71,8 +70,8 @@ contract LoanVaultFactory {
 
         // Pre-checks.
         address _interestCalculator = _calculators[0];
-        address _lateFeeCalculator = _calculators[1];
-        address _premiumCalculator = _calculators[2];
+        address _lateFeeCalculator  = _calculators[1];
+        address _premiumCalculator  = _calculators[2];
 
         require(
             _assetCollateral != address(0),
@@ -80,17 +79,17 @@ contract LoanVaultFactory {
         );
         require(
             IGlobals(mapleGlobals).isValidCalculator(_interestCalculator) &&
-                ICalcGeneral(_interestCalculator).calcType() == "INTEREST",
+            ICalcGeneral(_interestCalculator).calcType() == "INTEREST",
             "LoanVaultFactory::createLoanVault:ERR_NULL_INTEREST_STRUCTURE_CALC"
         );
         require(
             IGlobals(mapleGlobals).isValidCalculator(_lateFeeCalculator) &&
-                ICalcGeneral(_lateFeeCalculator).calcType() == "LATEFEE",
+            ICalcGeneral(_lateFeeCalculator).calcType() == "LATEFEE",
             "LoanVaultFactory::createLoanVault:ERR_NULL_LATE_FEE_CALC"
         );
         require(
             IGlobals(mapleGlobals).isValidCalculator(_premiumCalculator) &&
-                ICalcGeneral(_premiumCalculator).calcType() == "PREMIUM",
+            ICalcGeneral(_premiumCalculator).calcType() == "PREMIUM",
             "LoanVaultFactory::createLoanVault:ERR_NULL_PREMIUM_CALC"
         );
         
@@ -111,7 +110,7 @@ contract LoanVaultFactory {
 
         // Update LoanVaultFactory identification mappings.
         loanVaults[loanVaultsCreated] = address(vault);
-        _isLoanVault[address(vault)] = true;
+        _isLoanVault[address(vault)]  = true;
 
         // Emit event.
         emit LoanVaultCreated(

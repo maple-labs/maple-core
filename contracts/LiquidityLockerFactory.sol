@@ -14,10 +14,11 @@ contract LiquidityLockerFactory {
     /// @param _liquidityAsset Address of the LiquidityAsset for the LiquidityPool.
     /// @return Address of the new LiquidityLocker.
     function newLocker(address _liquidityAsset) external returns (address) {
-        address _owner = address(msg.sender);
+        address _owner           = address(msg.sender);
         address _liquidityLocker = address(new LiquidityLocker(_liquidityAsset, _owner));
+
         ownerOfLocker[_liquidityLocker] = _owner;
-        isLocker[_liquidityLocker] = true;
+        isLocker[_liquidityLocker]      = true;
         return _liquidityLocker;
     }
 

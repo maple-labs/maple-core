@@ -10,7 +10,7 @@ contract FundingLocker {
 
     constructor(address _fundingAsset, address _loanVault) public {
         fundingAsset = _fundingAsset;
-        loanVault = _loanVault;
+        loanVault    = _loanVault;
     }
 
     modifier isLoanVault() {

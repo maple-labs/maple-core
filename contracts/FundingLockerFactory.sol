@@ -18,10 +18,10 @@ contract FundingLockerFactory {
             !deployedLocker[msg.sender], 
             "FundingLockerFactory::newLocker:ERR_MSG_SENDER_ALREADY_DEPLOYED_FUNDING_LOCKER"
         );
-        deployedLocker[msg.sender] = true;
-        address _fundingLocker = address(new FundingLocker(_fundingAsset, msg.sender));
+        address _fundingLocker      = address(new FundingLocker(_fundingAsset, msg.sender));
+        deployedLocker[msg.sender]  = true;
         lockerOwner[_fundingLocker] = msg.sender;
-        isLocker[_fundingLocker] = true;
+        isLocker[_fundingLocker]    = true;
         return _fundingLocker;
     }
 

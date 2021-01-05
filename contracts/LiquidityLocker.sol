@@ -13,8 +13,8 @@ contract LiquidityLocker {
 
     // TODO: Consider checking if the _liquidityPool (owner) is a valid LiquidityPool via LPFactory.
     constructor(address _liquidityAsset, address _liquidityPool) public {
-        liquidityAsset = _liquidityAsset;
-        ownerLP = _liquidityPool;
+        liquidityAsset  = _liquidityAsset;
+        ownerLP         = _liquidityPool;
         ILiquidityAsset = IERC20(_liquidityAsset);
     }
     
