@@ -30,6 +30,7 @@
 
 // JS Globals
 const { expect, assert } = require("chai");
+const { BigNumber }      = require("ethers");
 const artpath            = "../../contracts/" + network.name + "/";
 
 // Core Contracts
@@ -41,6 +42,7 @@ const PoolFactoryAddress  = require(artpath + "addresses/LiquidityPoolFactory.ad
 const PoolFactoryABI      = require(artpath + "abis/LiquidityPoolFactory.abi");
 const VaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address");
 const VaultFactoryABI     = require(artpath + "abis/LoanVaultFactory.abi");
+const StakeLockerABI      = require(artpath + "abis/StakeLocker.abi");
 const PoolABI             = require(artpath + "abis/LiquidityPool.abi");
 
 // External Contracts
@@ -51,8 +53,8 @@ const USDCABI     = require(artpath + "abis/MintableTokenUSDC.abi");
 describe("Cycle of an entire loan", function () {
 
   // These are initialized in test suite.
-  let Pool;
-  let Loan; 
+  let Pool, PoolAddress;
+  let Loan, LoanAddress;
 
    // Already existing contracts, assigned in before().
   let Globals;
@@ -61,6 +63,7 @@ describe("Cycle of an entire loan", function () {
   let BPool;
   let MPL_Delegate, MPL_Staker;
   let USDC_Delegate, USDC_Staker, USDC_Provider;
+  let Accounts;
 
   before(async () => {
 
@@ -116,6 +119,9 @@ describe("Cycle of an entire loan", function () {
       USDCABI,
       ethers.provider.getSigner(2)
     );
+
+    Accounts = await ethers.provider.listAccounts();
+
   });
 
   it("(P1) Pool delegate initializing a pool", async function () {
@@ -141,10 +147,10 @@ describe("Cycle of an entire loan", function () {
     );
 
     // Assigning contract object to Pool.
-    let poolAddress = await PoolFactory.getLiquidityPool(index);
+    let PoolAddress = await PoolFactory.getLiquidityPool(index);
 
     Pool = new ethers.Contract(
-      poolAddress,
+      PoolAddress,
       PoolABI,
       ethers.provider.getSigner(0)
     );
@@ -153,13 +159,67 @@ describe("Cycle of an entire loan", function () {
 
   it("(P2) Pool delegate minting BPTs", async function () {
 
+    // Assume pool delegate already has 10000 MPL.
+    // Mint 10000 USDC for pool delegate.
+    USDC_Delegate.mintSpecial(Accounts[0], 10000);
+    
+    // Approve the balancer pool for both USDC and MPL.
+    USDC_Delegate.approve(
+      await Globals.mapleBPool(),
+      BigNumber.from(10).pow(6).mul(10000)
+    );
+    MPL_Delegate.approve(
+      await Globals.mapleBPool(),
+      BigNumber.from(10).pow(18).mul(10000)
+    );
+
+    const preBPTs = await BPool.balanceOf(Accounts[0]);
+    
+    // Join pool to mint BPTs.
+    await BPool.joinPool(
+      BigNumber.from(10).pow(16).mul(1), // Set .01 BPTs as expected return.
+      [
+        BigNumber.from(10).pow(6).mul(10000), // Caps maximum USDC tokens it can take to 10k
+        BigNumber.from(10).pow(18).mul(10000) // Caps maximum MPL tokens it can take to 10k
+      ]
+    )
+    
+    const postBPTs = await BPool.balanceOf(Accounts[0]);
+
+    console.log(parseInt(preBPTs["_hex"]))
+    console.log(parseInt(postBPTs["_hex"]))
+
   });
 
   it("(P3) Pool delegate staking a pool", async function () {
 
+    // Pool delegate approves StakeLocker directly of Pool to take BPTs.
+    await BPool.approve(
+      await Pool.stakeLockerAddress(),
+      BigNumber.from(10).pow(16).mul(1)
+    )
+    
+    // Create StakeLocker object.
+    StakeLocker = new ethers.Contract(
+      await Pool.stakeLockerAddress(),
+      StakeLockerABI,
+      ethers.provider.getSigner(0)
+    );
+
+    // Pool delegate stakes to StakeLocker.
+    await StakeLocker.stake(BigNumber.from(10).pow(16).mul(1));
+
   });
 
   it("(P4) Pool delegate finalizing a pool", async function () {
+
+    await Pool.finalize();
+    
+    let stakeRequired = await Globals.stakeAmountRequired();
+    let finalized = await Pool.isFinalized();
+
+    console.log(parseInt(stakeRequired["_hex"]));
+    expect(finalized);
 
   });
 
