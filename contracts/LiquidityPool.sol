@@ -29,34 +29,70 @@ contract LiquidityPool is IERC20, ERC20 {
 
     uint256 constant WAD = 10 ** 18;
 
-    address public immutable poolDelegate;            // The pool delegate, who maintains full authority over this LiquidityPool. (TODO: Should this be immutable?)
-    address public immutable liquidityLockerAddress;  // The LiquidityLocker owned by this contract.
-    address public immutable stakeAsset;              // The asset deposited by stakers into the StakeLocker, for liquidation during default events.
-    address public immutable stakeLockerAddress;      // Address of the StakeLocker, escrowing the staked asset.
-    address public           liquidityAsset;          // The asset deposited by lenders into the LiquidityLocker, for funding loans. (TODO: Make immutable)
+    uint256 public principalSum; // Sum of all outstanding principal on loans
 
-    uint8   private           liquidityAssetDecimals;  // decimals() precision for the liquidityAsset. (TODO: Examine the use of this variable, make immutable)
-    uint256 private immutable ONELiquidityAsset;       // 10^k where k = liquidityAssetDecimals, representing one LiquidityAsset unit in 'wei'. (TODO: Examine the use of this variable)
+    // An interface for this contract's liquidity asset, stored in two separate variables.
+    IERC20 private ILiquidityAsset;
 
-    IStakeLockerFactory private StakeLockerFactory;  // An interface for the factory used to instantiate a StakeLocker for this LiquidityPool.
-    IERC20              private ILiquidityAsset;     // An interface for this contract's liquidity asset, stored in two separate variables.
-    IERC20              private IStakeAsset;         // An interface for the asset used to stake the StakeLocker for this LiquidityPool.
-    IStakeLocker        private StakeLocker;         // An interface for the locker which escrows StakeAsset.
-    IGlobals            private MapleGlobals;        // An interface for the MapleGlobals contract.
+    // An interface for the asset used to stake the StakeLocker for this LiquidityPool.
+    IERC20 private IStakeAsset;
 
-    uint256 public principalSum;  // Sum of all outstanding principal on loans
-    uint256 public stakingFee;    // The fee for stakers (in basis points).
-    uint256 public delegateFee;   // The fee for delegates (in basis points).
+    // An interface for the factory used to instantiate a StakeLocker for this LiquidityPool.
+    IStakeLockerFactory private StakeLockerFactory;
 
-    bool public isFinalized;  // True if this LiquidityPool is setup and the poolDelegate has met staking requirements.
-    bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
+    /// @notice Fires when this liquidity pool funds a loan.
+    event LoanFunded(
+        address loanVaultFunded,
+        address loanTokenLocker,
+        uint256 amountFunded
+    );
 
-    mapping(address => mapping(address => address)) public loanTokenLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = loanTokenLocker
+    event BalanceUpdated(address who, address token, uint256 balance);
+
+    /// @notice Data structure to reference loan token lockers.
+    /// @dev loans[LOAN_VAULT][LOCKER_FACTORY] = loanTokenLocker
+    mapping(address => mapping(address => address)) public loanTokenLockers;
+
+    // An interface for the locker which escrows StakeAsset.
+    IStakeLocker private StakeLocker;
+
+    // An interface for the MapleGlobals contract.
+    IGlobals private MapleGlobals;
+
+    /// @notice The asset deposited by lenders into the LiquidityLocker, for funding loans.
+    address public liquidityAsset;
+
+    // decimals() precision for the liquidityAsset.
+    uint8 private liquidityAssetDecimals;
+
+    // 10^k where k = liquidityAssetDecimals, representing one LiquidityAsset unit in 'wei'.
+    uint256 private immutable _ONELiquidityAsset;
+
+    /// @notice The LiquidityLocker owned by this contract.
+    address public immutable liquidityLockerAddress;
+
+    /// @notice The asset deposited by stakers into the StakeLocker, for liquidation during default events.
+    address public stakeAsset;
+
+    /// @notice Address of the StakeLocker, escrowing the staked asset.
+    address public immutable stakeLockerAddress;
+
+    /// @notice The pool delegate, who maintains full authority over this LiquidityPool.
+    address public poolDelegate;
+
+    /// @notice True if this LiquidityPool is setup and the poolDelegate has met staking requirements.
+    bool public isFinalized;
+
+    /// @notice True when the pool is closed, enabling poolDelegate to withdraw their stake.
+    bool public isDefunct;
+
+    /// @notice The fee for stakers (in basis points).
+    uint256 public stakingFee;
+
+    /// @notice The fee for delegates (in basis points).
+    uint256 public delegateFee;
 
     CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
-
-    event LoanFunded(address loanVaultFunded, address loanTokenLocker, uint256 amountFunded);
-    event BalanceUpdated(address who, address token, uint256 balance);
 
     constructor(
         address _poolDelegate,
@@ -78,7 +114,7 @@ contract LiquidityPool is IERC20, ERC20 {
         // Assign variables relating to the LiquidityAsset.
         liquidityAsset = _liquidityAsset;
         liquidityAssetDecimals = ERC20(liquidityAsset).decimals();
-        ONELiquidityAsset = 10 ** (liquidityAssetDecimals);
+        _ONELiquidityAsset = 10**(liquidityAssetDecimals);
         ILiquidityAsset = IERC20(_liquidityAsset);
 
         // Assign misc. state variables.

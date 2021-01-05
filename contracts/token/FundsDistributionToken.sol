@@ -9,15 +9,15 @@ import "../math/SafeMathUint.sol";
 import "../math/SafeMathInt.sol";
 
 abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
-    using SafeMath       for uint256;
-    using SafeMathUint   for uint256;
-    using SignedSafeMath for  int256;
-    using SafeMathInt    for  int256;
+    using SafeMath for uint256;
+    using SafeMathUint for uint256;
+    using SignedSafeMath for int256;
+    using SafeMathInt for int256;
 
     uint256 internal constant pointsMultiplier = 2**128;
     uint256 internal pointsPerShare;
 
-    mapping(address => int256)  internal pointsCorrection;
+    mapping(address => int256) internal pointsCorrection;
     mapping(address => uint256) internal withdrawnFunds;
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) public {}

@@ -5,8 +5,11 @@ import "./LiquidityLocker.sol";
 
 contract LiquidityLockerFactory {
 
-    mapping(address => address) private ownerOfLocker;  // Mapping of LiquidityLocker contracts to owners of LiquidityLockers.
-    mapping(address => bool)    private isLocker;       // Mapping for validation of lockers, confirmed when initialized through this contract.
+    // Mapping of LiquidityLocker contracts to owners of LiquidityLockers.
+    mapping(address => address) private ownerOfLocker;
+
+    // Mapping for validation of lockers, confirmed when initialized through this contract.
+    mapping(address => bool) private isLocker;
 
     // TODO: Consider whether this needs to be external or public.
     // TODO: ADD MODIFIER LETTING ONLY LIQUIDITY POOLS RUN THIS (not critical, but good)

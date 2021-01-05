@@ -5,9 +5,11 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract CollateralLocker {
 
-    
-    address public immutable collateralAsset;  // Address the loan is funded with.
-    address public immutable loanVault;        // LoanVault this CollateralLocker is attached to.
+    /// @notice Address the loan is funded with.
+    address public immutable collateralAsset;
+
+    /// @notice LoanVault this CollateralLocker is attached to.
+    address public immutable loanVault;
 
     constructor(address _collateralAsset, address _loanVault) public {
         collateralAsset = _collateralAsset;

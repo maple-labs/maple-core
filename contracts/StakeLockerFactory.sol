@@ -7,8 +7,11 @@ import "./StakeLocker.sol";
 
 contract StakeLockerFactory {
 
-    mapping(address => address) private ownerOfLocker;  // Mapping of StakeLocker contracts to owners of StakeLockers.
-    mapping(address => bool)    private isLocker;       // Mapping for validation of lockers, confirmed when initialized through this contract.
+    // Mapping of StakeLocker contracts to owners of StakeLockers.
+    mapping(address => address) private ownerOfLocker;
+
+    // Mapping for validation of lockers, confirmed when initialized through this contract.
+    mapping(address => bool) private isLocker;
 
     event StakeLockerCreated(
         address owner,
@@ -19,10 +22,10 @@ contract StakeLockerFactory {
         string symbol
     );
 
-    /// @notice Creates a new locker.
-    /// @param _stakeAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
-    /// @param _liquidityAsset The address of the dividend token, also the primary investment asset of the LP.
-    /// @return The address of the newly created locker.
+    // @notice Creates a new locker.
+    // @param _stakeAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
+    // @param _liquidityAsset The address of the dividend token, also the primary investment asset of the LP.
+    // @return The address of the newly created locker.
     //TODO: add a modifier here that only lets a liquidity pool run this. This is good for security, but not critical.
     function newLocker(
         address _stakeAsset,
