@@ -4,15 +4,15 @@
 
   This test suite outlines action(s) for the following:
 
-    (P1) Pool manager initializing a pool
-    (P2) Pool manager minting BPTs .. (assumes USDC / MPL balancer pool already exists with very small amount)
-    (P3) Pool manager staking a pool
-    (P4) Pool manager finalizing a pool
+    (P1) Pool delegate initializing a pool
+    (P2) Pool delegate minting BPTs .. (assumes USDC / MPL balancer pool already exists with very small amount)
+    (P3) Pool delegate staking a pool
+    (P4) Pool delegate finalizing a pool
     ..
     (L1) Borrower creating a loan
     ..
     (P5) Provider depositing USDC to a pool
-    (P6) Delegate funding a loan .. (in slight excess)
+    (P6) Pool delegate funding a loan .. (in slight excess)
     (P7) Liquidity provider withdrawing USDC .. (claimable vs. equity)
     ..
     (L2) Borrower posting collateral and drawing down Loan .. (paying fee and excess)
@@ -36,6 +36,8 @@ const artpath            = "../../contracts/" + network.name + "/";
 // Maple
 const GlobalsAddress      = require(artpath + "addresses/MapleGlobals.address");
 const GlobalsABI          = require(artpath + "abis/MapleGlobals.abi");
+const MPLAddress          = require(artpath + "addresses/LoanVaultFactory.address");
+const MPLABI              = require(artpath + "abis/LoanVaultFactory.abi");
 const PoolFactoryAddress  = require(artpath + "addresses/LiquidityPoolFactory.address");
 const PoolFactoryABI      = require(artpath + "abis/LiquidityPoolFactory.abi");
 const VaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address");
@@ -48,14 +50,17 @@ const USDCABI     = require(artpath + "abis/MintableTokenUSDC.abi");
 
 describe("Full Cycle of Loan", function () {
 
-  // Dynamic contracts, assigned values throughout test suite.
-  let Pool_DAI;
-  let Loan_DAI; // Loan contract that borrower creates and makes payments to
-  let USDC; // The asset that is used for this loan.
-  let DAI;  // Another asset used in PoolDAI
+  // To be created contracts, created in test suite.
+  let Pool;
+  let Loan; 
 
-  // Static contracts, set below in before() function.
-  let Globals, PoolFactory, VaultFactory, BPool;
+   // Already existing contracts, assigned in before().
+  let Globals;
+  let PoolFactory;
+  let VaultFactory;
+  let BPool;
+  let MPL;
+  let USDC;
 
   before(async () => {
     Globals = new ethers.Contract(
@@ -78,25 +83,31 @@ describe("Full Cycle of Loan", function () {
       BPoolABI,
       ethers.provider.getSigner(0)
     );
+    MPL = new ethers.Contract(
+      MPLAddress,
+      MPLABI,
+      ethers.provider.getSigner(0)
+    );
+    USDC = new ethers.Contract(
+      USDCAddress,
+      USDCABI,
+      ethers.provider.getSigner(0)
+    );
   });
 
-  it("(P1) Pool manager initializing a pool", async function () {
-
-    const isFinalized = await BPool.isFinalized();
-
-    console.log(isFinalized);
+  it("(P1) Pool delegate initializing a pool", async function () {
 
   });
 
-  it("(P2) Pool manager minting BPTs", async function () {
+  it("(P2) Pool delegate minting BPTs", async function () {
 
   });
 
-  it("(P3) Pool manager staking a pool", async function () {
+  it("(P3) Pool delegate staking a pool", async function () {
 
   });
 
-  it("(P4) Pool manager finalizing a pool", async function () {
+  it("(P4) Pool delegate finalizing a pool", async function () {
 
   });
 
@@ -108,7 +119,7 @@ describe("Full Cycle of Loan", function () {
 
   });
 
-  it("(P6) Delegate funding a loan", async function () {
+  it("(P6) Pool delegate funding a loan", async function () {
 
   });
 
