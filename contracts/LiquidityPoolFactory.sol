@@ -7,22 +7,14 @@ import "./library/TokenUUID.sol";
 
 
 contract LiquidityPoolFactory {
-    // TODO: Consider adjusting LiquidityPools mapping to an array.
-    // Mappings for liquidity pool contracts, and their validation.
-    mapping(uint256 => address) private _liquidityPools;
-    mapping(address => bool) private _isLiquidityPool;
 
-    /// @notice Incrementor for number of LPs created.
-    uint256 public liquidityPoolsCreated;
+    uint256 public liquidityPoolsCreated;   // Incrementor for number of LPs created
+    address public mapleGlobals;            // The MapleGlobals.sol contract
+    address public stakeLockerFactory;      // The StakeLockerFactory to use for this LiquidityPoolFactory
+    address public liquidityLockerFactory;  // The LiquidityLockerFactory to use for this LiquidityPoolFactory
 
-    /// @notice The MapleGlobals.sol contract.
-    address public mapleGlobals;
-
-    /// @notice The StakeLockerFactory to use for this LiquidityPoolFactory.
-    address public stakeLockerFactory;
-
-    /// @notice The LiquidityLockerFactory to use for this LiquidityPoolFactory.
-    address public liquidityLockerFactory;
+    mapping(uint256 => address) private _liquidityPools; // Mappings for liquidity pool contracts, and their validation. (TODO: Consider adjusting LiquidityPools mapping to an array.)
+    mapping(address => bool)    private _isLiquidityPool;
 
     constructor(
         address _mapleGlobals, 
