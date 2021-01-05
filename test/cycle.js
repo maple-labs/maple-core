@@ -42,13 +42,14 @@ const PoolFactoryAddress  = require(artpath + "addresses/LiquidityPoolFactory.ad
 const PoolFactoryABI      = require(artpath + "abis/LiquidityPoolFactory.abi");
 const VaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address");
 const VaultFactoryABI     = require(artpath + "abis/LoanVaultFactory.abi");
+const PoolABI             = require(artpath + "abis/LiquidityPool.abi");
 
 // External
 const BPoolABI    = require(artpath + "abis/BPool.abi");
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address");
 const USDCABI     = require(artpath + "abis/MintableTokenUSDC.abi");
 
-describe("Full Cycle of Loan", function () {
+describe("Cycle of an entire loan", function () {
 
   // To be created contracts, created in test suite.
   let Pool;
@@ -96,6 +97,35 @@ describe("Full Cycle of Loan", function () {
   });
 
   it("(P1) Pool delegate initializing a pool", async function () {
+
+    let index = await PoolFactory.liquidityPoolsCreated();
+
+    // Input variables for a form.
+    liquidityAsset  = USDCAddress;
+    stakeAsset      = await Globals.mapleBPool();
+    stakingFee      = 100;  // Basis points (100 = 1%)
+    delegateFee     = 150;  // Basis points (150 = 1.5%)
+    name            = "Maple Core Pool";
+    symbol          = "MCP";
+
+    // Initializing a pool.
+    await PoolFactory.createLiquidityPool(
+      liquidityAsset,
+      stakeAsset,
+      stakingFee,
+      delegateFee,
+      name,
+      symbol
+    );
+
+    // Assigning contract object to Pool.
+    let poolAddress = await PoolFactory.getLiquidityPool(index);
+
+    Pool = new ethers.Contract(
+      poolAddress,
+      PoolABI,
+      ethers.provider.getSigner(0)
+    );
 
   });
 
@@ -147,7 +177,7 @@ describe("Full Cycle of Loan", function () {
 
   });
 
-  it("(P10) Pool claiming from loan ", async function () {
+  it("(P10) Pool claiming from loan", async function () {
 
   });
 
