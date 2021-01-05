@@ -404,24 +404,30 @@ describe("Cycle of an entire loan", function () {
 
   });
 
-  xit("(P9) Pool claiming from loan", async function () {
+  it("(P9) Pool claiming from loan", async function () {
 
       // Pool claims and distributes syrup.
       await Pool_PoolDelegate.claim(LoanAddress, LTLFactoryAddress);
 
   });
 
-  xit("(L4) Borrower making a full payment", async function () {
+  it("(L4) Borrower making a full payment", async function () {
 
       // Fetch full payment amount.
+      const paymentInfo = await Loan.getFullPayment()
 
       // Approve loan for payment.
+      await USDC_Borrower.approve(
+        LoanAddress,
+        paymentInfo[0]
+      )
 
       // Make payment.
+      await Loan.makeFullPayment();
 
   });
 
-  xit("(P10) Pool claiming from loan", async function () {
+  it("(P10) Pool claiming from loan", async function () {
 
       // Pool claims and distributes syrup.
       await Pool_PoolDelegate.claim(LoanAddress, LTLFactoryAddress);
@@ -429,6 +435,9 @@ describe("Cycle of an entire loan", function () {
   });
 
   xit("(P11) Liquidity provider withdrawing USDC", async function () {
+
+    // Note: Keep this test commented out, there is critical failure
+    //       in the withdraw() function currently.
 
     // Withdraw USDC from the pool.
     await Pool_LiquidityProvider.withdraw(
