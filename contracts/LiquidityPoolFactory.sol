@@ -57,7 +57,7 @@ contract LiquidityPoolFactory {
         );
 
         string memory tUUID  = TokenUUID.mkUUID(liquidityPoolsCreated + 1);
-	    string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
+        string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
         string memory symbol = string(abi.encodePacked("LP", tUUID));
 
         LiquidityPool lPool =
