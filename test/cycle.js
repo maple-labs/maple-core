@@ -33,21 +33,24 @@ const { expect, assert } = require("chai");
 const { BigNumber }      = require("ethers");
 const artpath            = "../../contracts/" + network.name + "/";
 
-// Core Contracts
+// Maple Core Contracts
 const GlobalsAddress      = require(artpath + "addresses/MapleGlobals.address");
 const GlobalsABI          = require(artpath + "abis/MapleGlobals.abi");
 const MPLAddress          = require(artpath + "addresses/MapleToken.address");
 const MPLABI              = require(artpath + "abis/MapleToken.abi");
 const PoolFactoryAddress  = require(artpath + "addresses/LiquidityPoolFactory.address");
 const PoolFactoryABI      = require(artpath + "abis/LiquidityPoolFactory.abi");
-const VaultFactoryAddress = require(artpath + "addresses/LoanVaultFactory.address");
-const VaultFactoryABI     = require(artpath + "abis/LoanVaultFactory.abi");
+const LoanFactoryAddress  = require(artpath + "addresses/LoanVaultFactory.address");
+const LoanFactoryABI      = require(artpath + "abis/LoanVaultFactory.abi");
+
+// Maple Misc Contracts
 const StakeLockerABI      = require(artpath + "abis/StakeLocker.abi");
 const PoolABI             = require(artpath + "abis/LiquidityPool.abi");
+const LoanABI             = require(artpath + "abis/LoanVault.abi");
 const BulletCalcAddress   = require(artpath + "addresses/BulletRepaymentCalculator.address");
 const AmortiCalcAddress   = require(artpath + "addresses/AmortizationRepaymentCalculator.address");
-const LateFeeCalcAddress   = require(artpath + "addresses/LateFeeNullCalculator.address");
-const PremiumCalcAddress   = require(artpath + "addresses/PremiumFlatCalculator.address");
+const LateFeeCalcAddress  = require(artpath + "addresses/LateFeeNullCalculator.address");
+const PremiumCalcAddress  = require(artpath + "addresses/PremiumFlatCalculator.address");
 
 // External Contracts
 const BPoolABI    = require(artpath + "abis/BPool.abi");
@@ -67,7 +70,7 @@ describe("Cycle of an entire loan", function () {
    // Already existing contracts, assigned in before().
   let Globals;
   let PoolFactory;
-  let VaultFactory;
+  let LoanFactory;
   let BPool;
   let MPL_Delegate, MPL_Staker;
   let USDC_Delegate, USDC_Staker, USDC_Provider;
@@ -86,9 +89,9 @@ describe("Cycle of an entire loan", function () {
       PoolFactoryABI,
       ethers.provider.getSigner(0)
     );
-    VaultFactory = new ethers.Contract(
-      VaultFactoryAddress,
-      VaultFactoryABI,
+    LoanFactory = new ethers.Contract(
+      LoanFactoryAddress,
+      LoanFactoryABI,
       ethers.provider.getSigner(0)
     );
 
@@ -169,33 +172,26 @@ describe("Cycle of an entire loan", function () {
 
     // Assume pool delegate already has 10000 MPL.
     // Mint 10000 USDC for pool delegate.
-    USDC_Delegate.mintSpecial(Accounts[0], 10000);
+    USDC_Delegate.mintSpecial(Accounts[0], 5000000);
     
     // Approve the balancer pool for both USDC and MPL.
     USDC_Delegate.approve(
       await Globals.mapleBPool(),
-      BigNumber.from(10).pow(6).mul(10000)
+      BigNumber.from(10).pow(6).mul(5000000)
     );
     MPL_Delegate.approve(
       await Globals.mapleBPool(),
-      BigNumber.from(10).pow(18).mul(10000)
+      BigNumber.from(10).pow(18).mul(100000)
     );
-
-    const preBPTs = await BPool.balanceOf(Accounts[0]);
     
     // Join pool to mint BPTs.
     await BPool.joinPool(
-      BigNumber.from(10).pow(16).mul(1), // Set .01 BPTs as expected return.
+      BigNumber.from(10).pow(17).mul(10), // Set .1 BPTs as expected return.
       [
-        BigNumber.from(10).pow(6).mul(10000), // Caps maximum USDC tokens it can take to 10k
-        BigNumber.from(10).pow(18).mul(10000) // Caps maximum MPL tokens it can take to 10k
+        BigNumber.from(10).pow(6).mul(5000000), // Caps maximum USDC tokens it can take to 10k
+        BigNumber.from(10).pow(18).mul(1000000) // Caps maximum MPL tokens it can take to 10k
       ]
     )
-    
-    const postBPTs = await BPool.balanceOf(Accounts[0]);
-
-    console.log(parseInt(preBPTs["_hex"]))
-    console.log(parseInt(postBPTs["_hex"]))
 
   });
 
@@ -204,7 +200,7 @@ describe("Cycle of an entire loan", function () {
     // Pool delegate approves StakeLocker directly of Pool to take BPTs.
     await BPool.approve(
       await Pool.stakeLockerAddress(),
-      BigNumber.from(10).pow(16).mul(1)
+      BigNumber.from(10).pow(17).mul(10)
     )
     
     // Create StakeLocker object.
@@ -215,7 +211,7 @@ describe("Cycle of an entire loan", function () {
     );
 
     // Pool delegate stakes to StakeLocker.
-    await StakeLocker.stake(BigNumber.from(10).pow(16).mul(1));
+    await StakeLocker.stake(BigNumber.from(10).pow(17).mul(10));
 
   });
 
@@ -232,12 +228,14 @@ describe("Cycle of an entire loan", function () {
 
   it("(L1) Borrower creating a loan", async function () {
 
-
-    const assetRequested     = DAIAddress;
-    const assetCollateral    = WETHAddress;
-    const interestCalculator = BulletCalcAddress; // AmortiCalcAddress || BulletCalcAddress
+    // Default values for creating a loan.
+    const assetRequested     = USDCAddress;
     const lateFeeCalculator  = LateFeeCalcAddress;
     const premiumCalculator  = PremiumCalcAddress;
+
+    // Adjustable values for creating a loan.
+    const assetCollateral    = WETHAddress; // WETHAddress || WBTCAddress << Use WETHAddress for now
+    const interestCalculator = BulletCalcAddress; // AmortiCalcAddress || BulletCalcAddress << Use either
 
     const aprBips = 500; // 5% APR
     const termDays = 180; // (termDays/paymentIntervalDays) = # of Payments
@@ -246,7 +244,10 @@ describe("Cycle of an entire loan", function () {
     const collateralRatioBips = 1000; // 10%
     const fundingPeriodDays = 7;
 
-    await LoanVaultFactory.createLoanVault(
+    const index = await LoanFactory.loanVaultsCreated();
+
+    // Creating a loan.
+    await LoanFactory.createLoanVault(
       assetRequested,
       assetCollateral,
       [
@@ -265,8 +266,14 @@ describe("Cycle of an entire loan", function () {
       { gasLimit: 6000000 }
     );
 
-    loanVaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
-  });
+    // Assigning contract object to Loan.
+    LoanAddress = await LoanFactory.getLoanVault(index);
+
+    Loan = new ethers.Contract(
+      LoanAddress,
+      LoanABI,
+      ethers.provider.getSigner(0)
+    );
 
   });
 
