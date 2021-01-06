@@ -37,7 +37,7 @@ describe("Maple Token", function () {
     );
   });
 
-  it("msg.sender (Governor) has first minted 10mm tokens, and supply is 10mm", async function () {
+  xit("msg.sender (Governor) has first minted 10mm tokens, and supply is 10mm", async function () {
     const decimals = await mapleToken.decimals();
     const balanceOfGovernor = await mapleToken.balanceOf(governor);
     const supply = await mapleToken.totalSupply();
@@ -46,7 +46,7 @@ describe("Maple Token", function () {
     expect(supply._hex / 10 ** decimals).to.equal(10000000);
   });
 
-  it("correct initialization of variables", async function () {
+  xit("correct initialization of variables", async function () {
     const decimals = await mapleToken.decimals();
     const name = await mapleToken.name();
     const symbol = await mapleToken.symbol();
@@ -56,7 +56,7 @@ describe("Maple Token", function () {
     expect(symbol).to.equal("MPL");
   });
 
-  it("transfer() functionality", async function () {
+  xit("transfer() functionality", async function () {
     // Transfer 100 (10**decimals) tokens to another account from Governor, check balances.
 
     const accounts = await ethers.provider.listAccounts();
@@ -74,7 +74,7 @@ describe("Maple Token", function () {
     expect(balanceOfReceiver).to.equal(amountToTransfer);
   });
 
-  it("transferFrom() functionality", async function () {
+  xit("transferFrom() functionality", async function () {
     // Approve 100 (10**18) tokens to another account from Governor.
     // Have another account call the transferFrom() function, check balances.
 
@@ -119,13 +119,13 @@ describe("Maple Token", function () {
     );
   });
 
-  it("FDT: fundsToken instatiation ", async function () {
+  xit("FDT: fundsToken instatiation ", async function () {
     // Check the mapleToken has the correct fundsToken address (USDC, or DAI)
     const fetchFundTokenAddress = await mapleToken.fundsToken();
     expect(fetchFundTokenAddress).to.equal(fundTokenAddress);
   });
 
-  it("FDT: mint fundsToken, updateFunds() ", async function () {
+  xit("FDT: mint fundsToken, updateFunds() ", async function () {
     // Mint the fundsToken inside the mapleToken contract, and call updateFunds()
     // Confirm that withdrawableFundsOf() / accumulativeFundsOf() view functions show correct data
 
@@ -180,7 +180,7 @@ describe("Maple Token", function () {
     expect(withdrawableFundsOfAccountOne).to.equal(1999);
   });
 
-  it("FDT: withdrawFunds() ", async function () {
+  xit("FDT: withdrawFunds() ", async function () {
     // Withdraw the fundsToken and confirm withdrawnFundsOf() is correct for appropriate parties
     // Confirm other internal accounting with withdrawableFundsOf() and accumulativeFundsOf() view function
 
