@@ -13,13 +13,13 @@ import "../MapleGlobals.sol";
 contract MapleGlobalsTest is TestUtil {
 
     ERC20        fundsToken;
-    MapleToken   mapleToken;
+    MapleToken   mpl;
     MapleGlobals globals;
 
     function setUp() public {
         fundsToken = new ERC20("FundsToken", "FT");
-        mapleToken = new MapleToken("MapleToken", "MAPL", IERC20(fundsToken));
-        globals    = new MapleGlobals(address(this), address(mapleToken));
+        mpl = new MapleToken("MapleToken", "MAPL", IERC20(fundsToken));
+        globals    = new MapleGlobals(address(this), address(mpl));
     }
 
     function test_setters() public {
@@ -80,7 +80,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(validCollateralTokenSymbols[0],       "WETH");
         assertEq(validCollateralTokenAddresses[0],      WETH);
 
-        globals.setBorrowToken(DAI, true);
+        globals.setLoanToken(DAI, true);
         (
             validBorrowTokenSymbols,
             validBorrowTokenAddresses,

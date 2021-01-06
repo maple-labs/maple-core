@@ -2,14 +2,14 @@ const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 const artpath = "../../contracts/" + network.name + "/";
 
-const AmortizationRepaymentCalculator = require(artpath +
-  "addresses/AmortizationRepaymentCalculator.address.js");
-const BulletRepaymentCalculator = require(artpath +
-  "addresses/BulletRepaymentCalculator.address.js");
-const LateFeeNullCalculator = require(artpath +
-  "addresses/LateFeeNullCalculator.address.js");
-const PremiumFlatCalculator = require(artpath +
-  "addresses/PremiumFlatCalculator.address.js");
+const AmortizationRepaymentCalc = require(artpath +
+  "addresses/AmortizationRepaymentCalc.address.js");
+const BulletRepaymentCalc = require(artpath +
+  "addresses/BulletRepaymentCalc.address.js");
+const LateFeeNullCalc = require(artpath +
+  "addresses/LateFeeNullCalc.address.js");
+const PremiumFlatCalc = require(artpath +
+  "addresses/PremiumFlatCalc.address.js");
 
 const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
@@ -23,39 +23,39 @@ const MPLGlobalsAddress = require(artpath +
 const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
 const MapleGlobalsAddress = require(artpath +
   "addresses/MapleGlobals.address.js");
-const LoanTokenLockerFactoryAddress = require(artpath +
-  "addresses/LoanTokenLockerFactory.address.js");
+const DebtLockerFactoryAddress = require(artpath +
+  "addresses/DebtLockerFactory.address.js");
 
-const LPFactoryABI = require(artpath + "abis/LiquidityPoolFactory.abi.js");
+const LPFactoryABI = require(artpath + "abis/PoolFactory.abi.js");
 const LPFactoryAddress = require(artpath +
-  "addresses/LiquidityPoolFactory.address.js");
-const LiquidityPoolABI = require(artpath + "abis/LiquidityPool.abi.js");
+  "addresses/PoolFactory.address.js");
+const PoolABI = require(artpath + "abis/Pool.abi.js");
 
 const LVFactoryAddress = require(artpath +
-  "addresses/LoanVaultFactory.address.js");
-const LVFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
-const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
+  "addresses/LoanFactory.address.js");
+const LVFactoryABI = require(artpath + "abis/LoanFactory.abi.js");
+const LoanABI = require(artpath + "abis/Loan.abi.js");
 
-describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
+describe("Pool & LiquidityLocker & StakeLocker", function () {
   let accounts;
   let LVFactory;
-  let LiquidityPoolFactory;
+  let PoolFactory;
   let LVAddress;
-  let LoanTokenLocker;
+  let DebtLocker;
   before(async () => {
     accounts = await ethers.provider.listAccounts();
   });
 
   xit("fundLoan() from liquidity pool", async function () {
-    LiquidityPoolFactory = new ethers.Contract(
+    PoolFactory = new ethers.Contract(
       LPFactoryAddress,
       LPFactoryABI,
       ethers.provider.getSigner(0)
     );
-    LPaddress = await LiquidityPoolFactory.getLiquidityPool(0);
+    LPaddress = await PoolFactory.getPool(0);
     LP = new ethers.Contract(
       LPaddress,
-      LiquidityPoolABI,
+      PoolABI,
       ethers.provider.getSigner(0)
     );
     LVFactory = new ethers.Contract(
@@ -63,57 +63,57 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       LVFactoryABI,
       ethers.provider.getSigner(0)
     );
-    LVFactory.createLoanVault(
+    LVFactory.createLoan(
       DAIAddress,
       WETHAddress,
       [5000, 90, 1, 1000000000000, 0, 7],
       [
-        AmortizationRepaymentCalculator,
-        LateFeeNullCalculator,
-        PremiumFlatCalculator,
+        AmortizationRepaymentCalc,
+        LateFeeNullCalc,
+        PremiumFlatCalc,
       ]
     );
-    LVAddress = await LVFactory.getLoanVault(
+    LVAddress = await LVFactory.getLoan(
       (await LVFactory.loanVaultsCreated()) - 1
     );
-    await LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10);
-    LoanTokenLocker = await LP.loanTokenToLocker(LVAddress);
+    await LP.fundLoan(LVAddress, DebtLockerFactoryAddress, 10);
+    DebtLocker = await LP.loanTokenToLocker(LVAddress);
   });
   xit("make sure random guy cant call fundLoan in LP", async function () {
     LP = new ethers.Contract(
       LPaddress,
-      LiquidityPoolABI,
+      PoolABI,
       ethers.provider.getSigner(1)
     );
 
     await expect(
-      LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10)
-    ).to.be.revertedWith("LiquidityPool:ERR_MSG_SENDER_NOT_DELEGATE");
+      LP.fundLoan(LVAddress, DebtLockerFactoryAddress, 10)
+    ).to.be.revertedWith("Pool:ERR_MSG_SENDER_NOT_DELEGATE");
   });
   xit("Check that loan tokens go to their respective locker", async function () {
     LP = new ethers.Contract(
       LPaddress,
-      LiquidityPoolABI,
+      PoolABI,
       ethers.provider.getSigner(0)
     );
 
-    LoanVault = new ethers.Contract(
+    Loan = new ethers.Contract(
       LVAddress,
-      LoanVaultABI,
+      LoanABI,
       ethers.provider.getSigner(0)
     );
-    const bal1 = await LoanVault.balanceOf(LoanTokenLocker);
-    await LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10);
-    const bal2 = await LoanVault.balanceOf(LoanTokenLocker);
+    const bal1 = await Loan.balanceOf(DebtLocker);
+    await LP.fundLoan(LVAddress, DebtLockerFactoryAddress, 10);
+    const bal2 = await Loan.balanceOf(DebtLocker);
     expect(bal2 - bal1 == 10);
   });
   xit("should not create new locker when one exists", async () => {
-    await LP.fundLoan(LVAddress, LoanTokenLockerFactoryAddress, 10);
-    expect(await LP.loanTokenToLocker(LVAddress)).to.equal(LoanTokenLocker);
+    await LP.fundLoan(LVAddress, DebtLockerFactoryAddress, 10);
+    expect(await LP.loanTokenToLocker(LVAddress)).to.equal(DebtLocker);
   });
   xit("cant fund a random address", async () => {
     await expect(
-      LP.fundLoan(accounts[5], LoanTokenLockerFactoryAddress, 10)
-    ).to.be.revertedWith("LiquidityPool::fundLoan:ERR_LOAN_VAULT_INVALID");
+      LP.fundLoan(accounts[5], DebtLockerFactoryAddress, 10)
+    ).to.be.revertedWith("Pool::fundLoan:ERR_LOAN_VAULT_INVALID");
   });
 });

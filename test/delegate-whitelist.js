@@ -4,10 +4,10 @@ const artpath = "../../contracts/" + network.name + "/";
 const MapleGlobalsAddress = require(artpath + "addresses/MapleGlobals.address");
 const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi");
 
-const LiquidityPoolFactoryAddress = require(artpath +
-  "addresses/LiquidityPoolFactory.address");
-const LiquidityPoolFactoryABI = require(artpath +
-  "abis/LiquidityPoolFactory.abi");
+const PoolFactoryAddress = require(artpath +
+  "addresses/PoolFactory.address");
+const PoolFactoryABI = require(artpath +
+  "abis/PoolFactory.abi");
 
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
@@ -58,9 +58,9 @@ describe("Pool Delegate Whitelist", function () {
 
     BPoolAddress = await BPoolCreator.getBPoolAddress(0);
 
-    LiquidityPoolFactory = new ethers.Contract(
-      LiquidityPoolFactoryAddress,
-      LiquidityPoolFactoryABI,
+    PoolFactory = new ethers.Contract(
+      PoolFactoryAddress,
+      PoolFactoryABI,
       ethers.provider.getSigner(9) // getSigner(9) is not validated in whitelist in setup.js
     );
 
@@ -72,14 +72,14 @@ describe("Pool Delegate Whitelist", function () {
     const POOL_SYMBOL = "LPDAI";
 
     await expect(
-      LiquidityPoolFactory.createLiquidityPool(
+      PoolFactory.createPool(
         LIQUIDITY_ASSET,
         STAKE_ASSET,
         STAKING_FEE_BASIS_POINTS,
         DELEGATE_FEE_BASIS_POINTS
       )
     ).to.be.revertedWith(
-      "LiquidityPoolFactory::createLiquidityPool:ERR_MSG_SENDER_NOT_WHITELISTED"
+      "PoolFactory::createPool:ERR_MSG_SENDER_NOT_WHITELISTED"
     );
   });
 
@@ -92,9 +92,9 @@ describe("Pool Delegate Whitelist", function () {
 
     BPoolAddress = await BPoolCreator.getBPoolAddress(0);
 
-    LiquidityPoolFactory = new ethers.Contract(
-      LiquidityPoolFactoryAddress,
-      LiquidityPoolFactoryABI,
+    PoolFactory = new ethers.Contract(
+      PoolFactoryAddress,
+      PoolFactoryABI,
       ethers.provider.getSigner(0) // getSigner(9) is not validated in whitelist in setup.js
     );
 
@@ -103,7 +103,7 @@ describe("Pool Delegate Whitelist", function () {
     const STAKING_FEE_BASIS_POINTS = 0;
     const DELEGATE_FEE_BASIS_POINTS = 0;
 
-    await LiquidityPoolFactory.createLiquidityPool(
+    await PoolFactory.createPool(
       LIQUIDITY_ASSET,
       STAKE_ASSET,
       STAKING_FEE_BASIS_POINTS,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-interface ILiquidityPool {
+interface IPool {
     function poolDelegate() external view returns (address);
 
     function isDefunct() external view returns (bool);

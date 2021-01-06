@@ -3,7 +3,7 @@ const { BigNumber } = require("ethers");
 const artpath = "../../contracts/" + network.name + "/";
 
 describe("Pool Delegate Journey - DAI", function () {
-  let LiquidityPoolAddress;
+  let PoolAddress;
   let FundingAmount = 1000;
 
   it("Z - Fetch the list of liquidityTokens for pool creation", async function () {
@@ -31,10 +31,10 @@ describe("Pool Delegate Journey - DAI", function () {
   });
 
   it("A - Create a liquidity pool with DAI", async function () {
-    const LiquidityPoolFactoryAddress = require(artpath +
-      "addresses/LiquidityPoolFactory.address");
-    const LiquidityPoolFactoryABI = require(artpath +
-      "abis/LiquidityPoolFactory.abi");
+    const PoolFactoryAddress = require(artpath +
+      "addresses/PoolFactory.address");
+    const PoolFactoryABI = require(artpath +
+      "abis/PoolFactory.abi");
 
     const DAIAddress = require(artpath +
       "addresses/MintableTokenDAI.address.js");
@@ -52,14 +52,14 @@ describe("Pool Delegate Journey - DAI", function () {
 
     BPoolAddress = await BPoolCreator.getBPoolAddress(0);
 
-    LiquidityPoolFactory = new ethers.Contract(
-      LiquidityPoolFactoryAddress,
-      LiquidityPoolFactoryABI,
+    PoolFactory = new ethers.Contract(
+      PoolFactoryAddress,
+      PoolFactoryABI,
       ethers.provider.getSigner(0)
     );
 
     // For fetching the address of the pool (do not use this pattern in production).
-    const preIncrementorValue = await LiquidityPoolFactory.liquidityPoolsCreated();
+    const preIncrementorValue = await PoolFactory.poolsCreated();
 
     // Provide the following parameters in a form.
     const LIQUIDITY_ASSET = DAIAddress; // [DAIAddress, USDCAddress] are 2 options, see Z for more.
@@ -70,31 +70,31 @@ describe("Pool Delegate Journey - DAI", function () {
     const POOL_SYMBOL = "LPDAI";
 
     // Create the liquidity pool.
-    await LiquidityPoolFactory.createLiquidityPool(
+    await PoolFactory.createPool(
       LIQUIDITY_ASSET,
       STAKE_ASSET,
       STAKING_FEE_BASIS_POINTS,
       DELEGATE_FEE_BASIS_POINTS
     );
 
-    LiquidityPoolAddress = await LiquidityPoolFactory.getLiquidityPool(
+    PoolAddress = await PoolFactory.getPool(
       preIncrementorValue
     );
   });
 
   it("B - Finalize the liquidity pool (enables deposits, confirms staking if any)", async function () {
 
-    const LiquidityPoolABI = require(artpath + "abis/LiquidityPool.abi.js");
+    const PoolABI = require(artpath + "abis/Pool.abi.js");
 
     // Create liquidity pool
-    LiquidityPool = new ethers.Contract(
-      LiquidityPoolAddress,
-      LiquidityPoolABI,
+    Pool = new ethers.Contract(
+      PoolAddress,
+      PoolABI,
       ethers.provider.getSigner(0)
     );
 
     // Interface with Balancer Pool and stake
-    let BPTStakeRequired = await LiquidityPool.getInitialStakeRequirements();
+    let BPTStakeRequired = await Pool.getInitialStakeRequirements();
 
     const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
     const MapleGlobalsAddress = require(artpath +"addresses/MapleGlobals.address.js");
@@ -107,7 +107,7 @@ describe("Pool Delegate Journey - DAI", function () {
 
     MapleBPool = await MapleGlobals.mapleBPool();
 
-    const BPoolABI = require(artpath + "abis/LiquidityPool.abi.js");
+    const BPoolABI = require(artpath + "abis/Pool.abi.js");
 
     BPool = new ethers.Contract(
       MapleBPool,
@@ -116,7 +116,7 @@ describe("Pool Delegate Journey - DAI", function () {
     );
 
     const StakeLockerABI = require(artpath + "abis/StakeLocker.abi.js");
-    const StakeLockerAddress = await LiquidityPool.stakeLockerAddress();
+    const StakeLockerAddress = await Pool.stakeLocker();
 
     StakeLocker = new ethers.Contract(
       StakeLockerAddress,
@@ -131,7 +131,7 @@ describe("Pool Delegate Journey - DAI", function () {
     await StakeLocker.stake(BigNumber.from(10).pow(18).mul(5));
 
     // Finalize the pool
-    await LiquidityPool.finalize();
+    await Pool.finalize();
 
   });
 
@@ -148,16 +148,16 @@ describe("Pool Delegate Journey - DAI", function () {
   });
 
   it("D - Fund the liquidity pool with DAI", async function () {
-    const LiquidityPoolABI = require(artpath + "abis/LiquidityPool.abi.js");
+    const PoolABI = require(artpath + "abis/Pool.abi.js");
     const DAIAddress = require(artpath +
       "addresses/MintableTokenDAI.address.js");
     const DAIABI = require(artpath + "abis/MintableTokenDAI.abi");
 
     DAI = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(0));
 
-    LiquidityPool = new ethers.Contract(
-      LiquidityPoolAddress,
-      LiquidityPoolABI,
+    Pool = new ethers.Contract(
+      PoolAddress,
+      PoolABI,
       ethers.provider.getSigner(0)
     );
 
@@ -165,9 +165,9 @@ describe("Pool Delegate Journey - DAI", function () {
     const WEI_FUNDING_AMOUNT = BigNumber.from(10).pow(18).mul(FundingAmount);
 
     // Approve the liquidity pool (unique function call, may require another button).
-    await DAI.approve(LiquidityPoolAddress, WEI_FUNDING_AMOUNT);
+    await DAI.approve(PoolAddress, WEI_FUNDING_AMOUNT);
 
     // Fund the liquidity pool.
-    await LiquidityPool.deposit(WEI_FUNDING_AMOUNT);
+    await Pool.deposit(WEI_FUNDING_AMOUNT);
   });
 });

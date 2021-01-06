@@ -3,7 +3,7 @@ const artpath = "../../contracts/" + network.name + "/";
 
 const globalAddress = require(artpath + "addresses/MapleGlobals.address");
 const gloablABI = require(artpath + "abis/MapleGlobals.abi");
-const mapleTokenAddress = require(artpath + "addresses/MapleToken.address");
+const mplAddress = require(artpath + "addresses/MapleToken.address");
 
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
@@ -50,10 +50,10 @@ describe("MapleGlobals.sol Interactions", function () {
     const unstakeDelayRevert = await mapleGlobals.unstakeDelay();
     expect(unstakeDelayRevert).to.equal(7776000);
 
-    await mapleGlobals.setCalculator(BUNK_ADDRESS, true);
-    expect(await mapleGlobals.isValidCalculator(BUNK_ADDRESS)).to.equal(true);
-    await mapleGlobals.setCalculator(BUNK_ADDRESS, false);
-    expect(await mapleGlobals.isValidCalculator(BUNK_ADDRESS)).to.equal(false);
+    await mapleGlobals.setCalc(BUNK_ADDRESS, true);
+    expect(await mapleGlobals.isValidCalc(BUNK_ADDRESS)).to.equal(true);
+    await mapleGlobals.setCalc(BUNK_ADDRESS, false);
+    expect(await mapleGlobals.isValidCalc(BUNK_ADDRESS)).to.equal(false);
 
     await mapleGlobals.setGovernor(accounts[1]);
     const governorFetch = await mapleGlobals.governor();
@@ -84,7 +84,7 @@ describe("MapleGlobals.sol Interactions", function () {
 
     const BUNK_ADDRESS = "0x0000000000000000000000000000000000000003";
 
-    await expect(mapleGlobals.setCalculator(BUNK_ADDRESS, true)).to.be.revertedWith(
+    await expect(mapleGlobals.setCalc(BUNK_ADDRESS, true)).to.be.revertedWith(
       "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR"
     );
 
@@ -108,14 +108,14 @@ describe("MapleGlobals.sol Interactions", function () {
   xit("state variables have correct init values (reverted from prior tests)", async function () {
     const accounts = await ethers.provider.listAccounts();
     const governorFetch = await mapleGlobals.governor();
-    const mapleTokenFetch = await mapleGlobals.mapleToken();
+    const mplFetch = await mapleGlobals.mpl();
     const investorFeeFetch = await mapleGlobals.investorFee();
     const treasuryFeeFetch = await mapleGlobals.treasuryFee();
     const gracePeriodFetch = await mapleGlobals.gracePeriod();
     const stakeRequiredFetch = await mapleGlobals.stakeAmountRequired();
     const unstakeDelay = await mapleGlobals.unstakeDelay();
     expect(governorFetch).to.equal(accounts[0]);
-    expect(mapleTokenFetch).to.equal(mapleTokenAddress);
+    expect(mplFetch).to.equal(mplAddress);
     expect(investorFeeFetch).to.equal(50);
     expect(treasuryFeeFetch).to.equal(50);
     expect(gracePeriodFetch).to.equal(432000);

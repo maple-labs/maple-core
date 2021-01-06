@@ -4,7 +4,7 @@ pragma solidity >=0.6.11;
 interface IGlobals {
     function governor() external view returns (address);
 
-    function mapleToken() external view returns (address);
+    function mpl() external view returns (address);
 
     function mapleTreasury() external view returns (address);
 
@@ -34,11 +34,11 @@ interface IGlobals {
 
     function unstakeDelay() external view returns (uint256);
 
-    function loanVaultFactory() external view returns (address);
+    function loanFactory() external view returns (address);
 
-    function liquidityPoolFactory() external view returns (address);
+    function poolFactory() external view returns (address);
 
     function getPrice(address) external view returns (uint256);
 
-    function isValidCalculator(address) external view returns (bool);
+    function isValidCalc(address) external view returns (bool);
 }

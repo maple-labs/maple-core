@@ -28,18 +28,18 @@ const LiquidityLockerABI = require(artpath + "abis/LiquidityLocker.abi.js");
 const BPoolCreatorAddress = require(artpath + "addresses/BCreator.address.js");
 const BPoolCreatorABI = require(artpath + "abis/BCreator.abi.js");
 const BPoolABI = require(artpath + "abis/BPool.abi.js");
-const LPFactoryABI = require(artpath + "abis/LiquidityPoolFactory.abi.js");
+const LPFactoryABI = require(artpath + "abis/PoolFactory.abi.js");
 const LPFactoryAddress = require(artpath +
-  "addresses/LiquidityPoolFactory.address.js");
-const LPABI = require(artpath + "abis/LiquidityPool.abi.js");
-const LiquidityPoolABI = require(artpath + "abis/LiquidityPool.abi.js");
-const LVFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
+  "addresses/PoolFactory.address.js");
+const LPABI = require(artpath + "abis/Pool.abi.js");
+const PoolABI = require(artpath + "abis/Pool.abi.js");
+const LVFactoryABI = require(artpath + "abis/LoanFactory.abi.js");
 const LVFactoryAddress = require(artpath +
-  "addresses/LoanVaultFactory.address.js");
+  "addresses/LoanFactory.address.js");
 
-describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
-  let LiquidityPoolAddressDAI, LiquidityPoolAddressUSDC;
-  let LiquidityPoolDAI, LiquidityPoolUSDC;
+describe("Pool & LiquidityLocker & StakeLocker", function () {
+  let PoolAddressDAI, PoolAddressUSDC;
+  let PoolDAI, PoolUSDC;
   let StakeLockerDAI, StakeLockerUSDC;
   let LiquidityLockerDAI, LiquidityLockerUSDC;
   let MapleBPool;
@@ -51,14 +51,14 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
 
   it("A - Create two stablecoin liquidity pools, DAI & USDC", async function () {
     // Liquidity pool factory object.
-    const LiquidityPoolFactoryAddress = require(artpath +
-      "addresses/LiquidityPoolFactory.address");
-    const LiquidityPoolFactoryABI = require(artpath +
-      "abis/LiquidityPoolFactory.abi");
+    const PoolFactoryAddress = require(artpath +
+      "addresses/PoolFactory.address");
+    const PoolFactoryABI = require(artpath +
+      "abis/PoolFactory.abi");
 
-    LiquidityPoolFactory = new ethers.Contract(
-      LiquidityPoolFactoryAddress,
-      LiquidityPoolFactoryABI,
+    PoolFactory = new ethers.Contract(
+      PoolFactoryAddress,
+      PoolFactoryABI,
       ethers.provider.getSigner(0)
     );
 
@@ -77,7 +77,7 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     MapleBPool = await MapleGlobals.mapleBPool();
 
     // For fetching the address of the pool (do not use this pattern in production).
-    const INDEX_DAI = await LiquidityPoolFactory.liquidityPoolsCreated();
+    const INDEX_DAI = await PoolFactory.poolsCreated();
 
     // Create DAI pool (these variables could be used in a form).
     let LIQUIDITY_ASSET = DAIAddress; // [DAIAddress, USDCAddress] are 2 options, see Z for more.
@@ -87,18 +87,18 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     let POOL_NAME = "MAPLEALPHA/DAI";
     let POOL_SYMBOL = "LP-DAI-" + INDEX_DAI.toString();
 
-    await LiquidityPoolFactory.createLiquidityPool(
+    await PoolFactory.createPool(
       LIQUIDITY_ASSET,
       STAKE_ASSET,
       STAKING_FEE_BASIS_POINTS,
       DELEGATE_FEE_BASIS_POINTS
     );
 
-    LiquidityPoolAddressDAI = await LiquidityPoolFactory.getLiquidityPool(
+    PoolAddressDAI = await PoolFactory.getPool(
       INDEX_DAI
     );
 
-    const INDEX_USDC = await LiquidityPoolFactory.liquidityPoolsCreated();
+    const INDEX_USDC = await PoolFactory.poolsCreated();
 
     // Create USDC pool (these variables could be used in a form).
     LIQUIDITY_ASSET = USDCAddress;
@@ -108,34 +108,34 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     POOL_NAME = "MAPLEALPHA/USDC";
     POOL_SYMBOL = "LP-USDC-" + INDEX_USDC.toString();
 
-    await LiquidityPoolFactory.createLiquidityPool(
+    await PoolFactory.createPool(
       LIQUIDITY_ASSET,
       STAKE_ASSET,
       STAKING_FEE_BASIS_POINTS,
       DELEGATE_FEE_BASIS_POINTS
     );
 
-    LiquidityPoolAddressUSDC = await LiquidityPoolFactory.getLiquidityPool(
+    PoolAddressUSDC = await PoolFactory.getPool(
       INDEX_USDC
     );
 
-    LiquidityPoolDAI = new ethers.Contract(
-      LiquidityPoolAddressDAI,
-      LiquidityPoolABI,
+    PoolDAI = new ethers.Contract(
+      PoolAddressDAI,
+      PoolABI,
       ethers.provider.getSigner(0)
     );
 
-    LiquidityPoolUSDC = new ethers.Contract(
-      LiquidityPoolAddressUSDC,
-      LiquidityPoolABI,
+    PoolUSDC = new ethers.Contract(
+      PoolAddressUSDC,
+      PoolABI,
       ethers.provider.getSigner(0)
     );
 
-    StakeLockerDAI = await LiquidityPoolDAI.stakeLockerAddress();
-    StakeLockerUSDC = await LiquidityPoolUSDC.stakeLockerAddress();
+    StakeLockerDAI = await PoolDAI.stakeLocker();
+    StakeLockerUSDC = await PoolUSDC.stakeLocker();
 
-    LiquidityLockerDAI = await LiquidityPoolDAI.liquidityLockerAddress();
-    LiquidityLockerUSDC = await LiquidityPoolUSDC.liquidityLockerAddress();
+    LiquidityLockerDAI = await PoolDAI.liquidityLocker();
+    LiquidityLockerUSDC = await PoolUSDC.liquidityLocker();
   });
 
   it("B - Ensure correct LP is assigned to StakeLocker and LiquidityLocker", async function () {
@@ -151,10 +151,10 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
       ethers.provider.getSigner(0)
     );
 
-    const DAI_STAKE_LOCKER_ADDRESS = await LiquidityPoolDAI.stakeLockerAddress();
-    const USDC_STAKE_LOCKER_ADDRESS = await LiquidityPoolUSDC.stakeLockerAddress();
-    const DAI_LIQUIDITY_LOCKER_ADDRESS = await LiquidityPoolDAI.liquidityLockerAddress();
-    const USDC_LIQUIDITY_LOCKER_ADDRESS = await LiquidityPoolUSDC.liquidityLockerAddress();
+    const DAI_STAKE_LOCKER_ADDRESS = await PoolDAI.stakeLocker();
+    const USDC_STAKE_LOCKER_ADDRESS = await PoolUSDC.stakeLocker();
+    const DAI_LIQUIDITY_LOCKER_ADDRESS = await PoolDAI.liquidityLocker();
+    const USDC_LIQUIDITY_LOCKER_ADDRESS = await PoolUSDC.liquidityLocker();
 
     // Check the StakeLockerFactory
     const DAI_STAKE_LOCKER_OWNER = await StakeLockerFactory.getOwner(
@@ -163,8 +163,8 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     const USDC_STAKE_LOCKER_OWNER = await StakeLockerFactory.getOwner(
       USDC_STAKE_LOCKER_ADDRESS
     );
-    expect(DAI_STAKE_LOCKER_OWNER).to.equal(LiquidityPoolAddressDAI);
-    expect(USDC_STAKE_LOCKER_OWNER).to.equal(LiquidityPoolAddressUSDC);
+    expect(DAI_STAKE_LOCKER_OWNER).to.equal(PoolAddressDAI);
+    expect(USDC_STAKE_LOCKER_OWNER).to.equal(PoolAddressUSDC);
 
     // Check the LiquidityLockerFactory
     const DAI_LIQUIDITY_LOCKER_OWNER = await LiquidityLockerFactory.getOwner(
@@ -173,8 +173,8 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     const USDC_LIQUIDITY_LOCKER_OWNER = await LiquidityLockerFactory.getOwner(
       USDC_LIQUIDITY_LOCKER_ADDRESS
     );
-    expect(DAI_LIQUIDITY_LOCKER_OWNER).to.equal(LiquidityPoolAddressDAI);
-    expect(USDC_LIQUIDITY_LOCKER_OWNER).to.equal(LiquidityPoolAddressUSDC);
+    expect(DAI_LIQUIDITY_LOCKER_OWNER).to.equal(PoolAddressDAI);
+    expect(USDC_LIQUIDITY_LOCKER_OWNER).to.equal(PoolAddressUSDC);
 
     // Check that both LiquidityLocker and StakeLocker isValidLocker
     const VALID_DAI_STAKE_LOCKER = await StakeLockerFactory.isStakeLocker(
@@ -197,8 +197,8 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
   });
 
   it("C - Check pools are not finalized", async function () {
-    let isFinalizedDAI = await LiquidityPoolDAI.isFinalized();
-    let isFinalizedUSDC = await LiquidityPoolUSDC.isFinalized();
+    let isFinalizedDAI = await PoolDAI.isFinalized();
+    let isFinalizedUSDC = await PoolUSDC.isFinalized();
 
     expect(!isFinalizedDAI);
     expect(!isFinalizedUSDC);
@@ -228,16 +228,16 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     if (parseInt(STAKE_REQUIRED["_hex"]) == 0) {
       expect(true);
     } else {
-      await expect(LiquidityPoolDAI.finalize()).to.be.revertedWith(
-        "LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE"
+      await expect(PoolDAI.finalize()).to.be.revertedWith(
+        "Pool::finalize:ERR_NOT_ENOUGH_STAKE"
       );
-      await expect(LiquidityPoolUSDC.finalize()).to.be.revertedWith(
-        "LiquidityPool::finalize:ERR_NOT_ENOUGH_STAKE"
+      await expect(PoolUSDC.finalize()).to.be.revertedWith(
+        "Pool::finalize:ERR_NOT_ENOUGH_STAKE"
       );
     }
 
-    let isFinalizedDAI = await LiquidityPoolDAI.isFinalized();
-    let isFinalizedUSDC = await LiquidityPoolUSDC.isFinalized();
+    let isFinalizedDAI = await PoolDAI.isFinalized();
+    let isFinalizedUSDC = await PoolUSDC.isFinalized();
 
     MapleGlobals = new ethers.Contract(
       MapleGlobalsAddress,
@@ -250,8 +250,8 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
   });
 
   it("F - Stake the pools, if necessary", async function () {
-    let BPTStakeRequiredDAI = await LiquidityPoolDAI.getInitialStakeRequirements();
-    let BPTStakeRequiredUSDC = await LiquidityPoolUSDC.getInitialStakeRequirements();
+    let BPTStakeRequiredDAI = await PoolDAI.getInitialStakeRequirements();
+    let BPTStakeRequiredUSDC = await PoolUSDC.getInitialStakeRequirements();
 
     expect(!BPTStakeRequiredDAI[2]);
     expect(!BPTStakeRequiredUSDC[2]);
@@ -289,8 +289,8 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     await BPool.approve(StakeLockerUSDC, BigNumber.from(10).pow(18).mul(5));
     await StakeLockerUSDCPool.stake(BigNumber.from(10).pow(18).mul(5));
 
-    BPTStakeRequiredDAI = await LiquidityPoolDAI.getInitialStakeRequirements();
-    BPTStakeRequiredUSDC = await LiquidityPoolUSDC.getInitialStakeRequirements();
+    BPTStakeRequiredDAI = await PoolDAI.getInitialStakeRequirements();
+    BPTStakeRequiredUSDC = await PoolUSDC.getInitialStakeRequirements();
 
     // console.log(parseInt(BPTStakeRequiredUSDC[0]["_hex"]))
     // console.log(parseInt(BPTStakeRequiredUSDC[1]["_hex"]))
@@ -331,18 +331,18 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
   });
 
   it("H - Prevent liquidity locker deposits before finalization", async function () {
-    await expect(LiquidityPoolDAI.deposit(1)).to.be.revertedWith(
-      "LiquidityPool:ERR_NOT_FINALIZED"
+    await expect(PoolDAI.deposit(1)).to.be.revertedWith(
+      "Pool:ERR_NOT_FINALIZED"
     );
 
-    await expect(LiquidityPoolUSDC.deposit(1)).to.be.revertedWith(
-      "LiquidityPool:ERR_NOT_FINALIZED"
+    await expect(PoolUSDC.deposit(1)).to.be.revertedWith(
+      "Pool:ERR_NOT_FINALIZED"
     );
   });
 
   it("I - Finalize liquidity pools (enable deposits)", async function () {
-    await LiquidityPoolDAI.finalize();
-    await LiquidityPoolUSDC.finalize();
+    await PoolDAI.finalize();
+    await PoolUSDC.finalize();
   });
 
   it("J - Accounting, ensure BPT balance is same as StakeLocker balance", async function () {
@@ -415,13 +415,13 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
     const DAI_DEPOSIT_AMT = BigNumber.from(10).pow(18).mul(DEPOSIT_AMT); // 1000 DAI deposit
     const USDC_DEPOSIT_AMT = BigNumber.from(10).pow(6).mul(DEPOSIT_AMT); // 1000 USDC deposit
 
-    await DAI.approve(LiquidityPoolAddressDAI, DAI_DEPOSIT_AMT);
-    await USDC.approve(LiquidityPoolAddressUSDC, USDC_DEPOSIT_AMT);
-    await LiquidityPoolDAI.deposit(DAI_DEPOSIT_AMT);
-    await LiquidityPoolUSDC.deposit(USDC_DEPOSIT_AMT);
+    await DAI.approve(PoolAddressDAI, DAI_DEPOSIT_AMT);
+    await USDC.approve(PoolAddressUSDC, USDC_DEPOSIT_AMT);
+    await PoolDAI.deposit(DAI_DEPOSIT_AMT);
+    await PoolUSDC.deposit(USDC_DEPOSIT_AMT);
 
-    const FDTBalanceDAILP = await LiquidityPoolDAI.balanceOf(accounts[0]);
-    const FDTBalanceUSDCLP = await LiquidityPoolUSDC.balanceOf(accounts[0]);
+    const FDTBalanceDAILP = await PoolDAI.balanceOf(accounts[0]);
+    const FDTBalanceUSDCLP = await PoolUSDC.balanceOf(accounts[0]);
 
     // FDTs = 18 decimals, USDC = 6 decimals
     // expect(parseInt(FDTBalanceDAILP["_hex"])).to.equals(
@@ -559,8 +559,8 @@ describe("LiquidityPool & LiquidityLocker & StakeLocker", function () {
   });
 
   it("P - Check isDefunct() for pools equals false", async function () {
-    DAIPoolDefunct = await LiquidityPoolDAI.isDefunct();
-    USDCPoolDefunct = await LiquidityPoolUSDC.isDefunct();
+    DAIPoolDefunct = await PoolDAI.isDefunct();
+    USDCPoolDefunct = await PoolUSDC.isDefunct();
 
     expect(!DAIPoolDefunct);
     expect(!USDCPoolDefunct);
