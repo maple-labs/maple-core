@@ -48,10 +48,11 @@ contract LiquidityPool is IERC20, ERC20 {
     uint256 public interestSum; //sum of all interest currently inside the liquidity locker
     uint256 public stakingFee;    // The fee for stakers (in basis points).
     uint256 public delegateFee;   // The fee for delegates (in basis points).
+    uint256 public interestDelay = 30 days; // delay on interest claim
 
     bool public isFinalized;  // True if this LiquidityPool is setup and the poolDelegate has met staking requirements.
     bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
-
+    mapping (address => uint256) private depositAge; //used for interest penalty calculation
     mapping(address => mapping(address => address)) public loanTokenLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = loanTokenLocker
 
     CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
@@ -179,6 +180,7 @@ contract LiquidityPool is IERC20, ERC20 {
     function deposit(uint256 _amt) external notDefunct finalized {
         ILiquidityAsset.transferFrom(msg.sender, liquidityLockerAddress, _amt);
         uint256 _mintAmt = liq2FDT(_amt);
+        _updateDepositAge(_amt, msg.sender);
         _mint(msg.sender, _mintAmt);
 
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
@@ -271,8 +273,26 @@ contract LiquidityPool is IERC20, ERC20 {
     /** This is to establish the function signatur by which an interest penalty will be calculated
     The resulting value will be removed from the interest used in a repayment
     **/
-    function calcInterestPenalty(uint256 _interest,address _user) public view returns (uint256){
-        return WAD.mul(_interest).div(20).div(WAD);
+    function calcInterestPenalty(uint256 _interest, address _addy) public view returns (uint256 _out){
+        uint256 _time = (block.timestamp - depositAge[_addy]) * WAD;
+        uint256 _unlocked = ((_time / (interestDelay + 1)) * _interest) / WAD;
+        if (_unlocked > _interest) {
+            _out = 0;
+        }else{
+            _out = _interest - _unlocked;
+        }
+        return _interest - _out;
+    }
+
+    function _updateDepositAge(uint256 _amt, address _addy) internal {
+        if (depositAge[_addy] == 0) {
+            depositAge[_addy] = block.timestamp;
+        } else {
+            uint256 _date = depositAge[_addy];
+            uint256 _coef = (WAD * _amt) / (balanceOf(_addy) + _amt); //yes, i want 0 if _amt is too small
+            //thhis addition will start to overflow in about 3^52 years
+            depositAge[_addy] = (_date * WAD + (block.timestamp - _date) * _coef) / WAD;
+        }
     }
 
 
