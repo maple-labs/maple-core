@@ -272,7 +272,8 @@ contract LiquidityPool is IERC20, ERC20 {
         if (liquidityAssetDecimals > 18) {
             _out = _amt.div(10**(liquidityAssetDecimals - 18));
         } else {
-            _out = _amt.mul(10**(18 - liquidityAssetDecimals));
+            uint _offset = 18 - liquidityAssetDecimals;
+            _out = _amt.mul(10 ** _offset);
         }
         return _out;
     }
