@@ -185,6 +185,7 @@ describe("Cycle of an entire loan", function () {
   it("(P1) Pool delegate initializing a pool", async function () {
 
     let index = await PoolFactory.liquidityPoolsCreated();
+    // console.log(parseInt(index["_hex"]));
 
     // Input variables for a form.
     liquidityAsset  = USDCAddress;
@@ -201,7 +202,11 @@ describe("Cycle of an entire loan", function () {
     );
 
     // Assigning contract object to Pool.
-    PoolAddress = await PoolFactory.getLiquidityPool(index);
+    PoolAddress = await PoolFactory.getLiquidityPool(parseInt(index["_hex"]));
+    
+    while (PoolAddress == "0x0000000000000000000000000000000000000000") {
+      PoolAddress = await PoolFactory.getLiquidityPool(parseInt(index["_hex"]));
+    }
 
     Pool_PoolDelegate = new ethers.Contract(
       PoolAddress,
@@ -315,8 +320,34 @@ describe("Cycle of an entire loan", function () {
       { gasLimit: 6000000 }
     );
 
+    if (parseInt(index["_hex"]) == 0) {
+      // Creating a 2nd loan.
+      await LoanFactory.createLoanVault(
+        assetRequested,
+        assetCollateral,
+        [
+          aprBips,
+          termDays,
+          paymentIntervalDays,
+          minRaise,
+          collateralRatioBips,
+          fundingPeriodDays
+        ],
+        [
+          interestCalculator, 
+          lateFeeCalculator, 
+          premiumCalculator
+        ],
+        { gasLimit: 6000000 }
+      );
+    }
+
     // Assigning contract object to Loan.
-    LoanAddress = await LoanFactory.getLoanVault(index);
+    LoanAddress = await LoanFactory.getLoanVault(parseInt(index["_hex"]));
+
+    while (LoanAddress == "0x0000000000000000000000000000000000000000") {
+      LoanAddress = await LoanFactory.getLoanVault(parseInt(index["_hex"]));
+    }
 
     Loan = new ethers.Contract(
       LoanAddress,
@@ -367,6 +398,8 @@ describe("Cycle of an entire loan", function () {
     const collateralRequired = await Loan.collateralRequiredForDrawdown(
       BigNumber.from(10).pow(6).mul(1000)
     );
+
+    // console.log(parseInt(collateralRequired["_hex"]))
     
     // Approve Loan for collateral required. Use "WBTC" object instead if WBTC is collateral.
     await WETH_Borrower.approve(
@@ -398,6 +431,11 @@ describe("Cycle of an entire loan", function () {
         LoanAddress,
         paymentInfo[0]
       )
+
+      await USDC_Borrower.mintSpecial(Accounts[0], 500000000000);
+
+      const USDC_Balance = await USDC_Borrower.balanceOf(Accounts[0]);
+      // console.log(parseInt(USDC_Balance["_hex"]))
 
       // Make payment.
       await Loan.makePayment();
