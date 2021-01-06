@@ -45,6 +45,7 @@ contract LiquidityPool is IERC20, ERC20 {
     IGlobals            private MapleGlobals;        // An interface for the MapleGlobals contract.
 
     uint256 public principalSum;  // Sum of all outstanding principal on loans
+    uint256 public interestSum; //sum of all interest currently inside the liquidity locker
     uint256 public stakingFee;    // The fee for stakers (in basis points).
     uint256 public delegateFee;   // The fee for delegates (in basis points).
 
@@ -188,8 +189,13 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 share = _amt.mul(WAD).div(totalSupply());
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
         uint256 due   = share.mul(principalSum.add(bal)).div(WAD);
+	uint256 _interestRatio = WAD.mul(interestSum).div(principalSum.add(bal));//interest/totalMoney
+        uint256 _myInterest = due.mul(_interestRatio).div(WAD);//get nominal interest owned by sender
+        uint256 _penalty = calcInterestPenalty(_myInterest, msg.sender); //get penalty, however it may be calculated
+        due = due.sub(_penalty);//remove penalty
+        interestSum = interestSum.sub(_myInterest).add(_penalty);//update interest total reflecting withdrawn ammount
         _burn(msg.sender, _amt); // TODO: Unit testing on _burn / _mint for ERC-2222
-        require(IERC20(liquidityLockerAddress).transfer(msg.sender, due), "LiquidityPool::ERR_WITHDRAW_TRANSFER");
+        require(ILiquidityLocker(liquidityLockerAddress).transfer(msg.sender, due), "LiquidityPool::ERR_WITHDRAW_TRANSFER");
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
     }
 
@@ -248,7 +254,7 @@ contract LiquidityPool is IERC20, ERC20 {
 
         // Update outstanding principal, the interest distribution mechanism.
         principalSum = principalSum.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error.
-
+        interestSum = interestSum.add(claimInfo[1]);
         // TODO: Consider any underflow / overflow that feeds into this calculation from RepaymentCalculators.
 
         // Update funds received for ERC-2222 StakeLocker tokens.
@@ -262,6 +268,13 @@ contract LiquidityPool is IERC20, ERC20 {
 
         return claimInfo;
     }
+    /** This is to establish the function signatur by which an interest penalty will be calculated
+    The resulting value will be removed from the interest used in a repayment
+    **/
+    function calcInterestPenalty(uint256 _interest,address _user) public view returns (uint256){
+        return WAD.mul(_interest).div(20).div(WAD);
+    }
+
 
     /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
     if we change the decimals on the FDT to match liquidityasset this would not be necessary
