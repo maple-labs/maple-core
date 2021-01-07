@@ -191,7 +191,7 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 share = _amt.mul(WAD).div(totalSupply());
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLockerAddress);
         uint256 due   = share.mul(principalSum.add(bal)).div(WAD);
-	uint256 _interestRatio = WAD.mul(interestSum).div(principalSum.add(bal));//interest/totalMoney
+	uint256 _interestRatio = (WAD).mul(interestSum).div(principalSum.add(bal));//interest/totalMoney
         uint256 _myInterest = due.mul(_interestRatio).div(WAD);//get nominal interest owned by sender
         uint256 _penalty = calcInterestPenalty(_myInterest, msg.sender); //get penalty, however it may be calculated
         due = due.sub(_penalty);//remove penalty
@@ -256,7 +256,7 @@ contract LiquidityPool is IERC20, ERC20 {
 
         // Update outstanding principal, the interest distribution mechanism.
         principalSum = principalSum.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error.
-        interestSum = interestSum.add(claimInfo[1]);
+        interestSum = interestSum.add(claimInfo[1]).sub(claimInfo[1].mul(delegateFee).div(10000)).sub(claimInfo[1].mul(stakingFee).div(10000));
         // TODO: Consider any underflow / overflow that feeds into this calculation from RepaymentCalculators.
 
         // Update funds received for ERC-2222 StakeLocker tokens.
