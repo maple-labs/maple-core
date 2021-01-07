@@ -39,23 +39,22 @@ contract DebtLocker {
     function claim() external isOwner returns(uint[5] memory) {
 
         // Create interface for Loan.
-        ILoan ILoan = ILoan(loan);
-        ILoan.updateFundsReceived();
+        ILoan(loan).updateFundsReceived();
 
         // Calculate deltas, or "net new" values.
-        uint256 newInterest  = ILoan.interestPaid() - interestPaid;
-        uint256 newPrincipal = ILoan.principalPaid() - principalPaid;
-        uint256 newFee       = ILoan.feePaid() - feePaid;
-        uint256 newExcess    = ILoan.excessReturned() - excessReturned;
+        uint256 newInterest  = ILoan(loan).interestPaid() - interestPaid;
+        uint256 newPrincipal = ILoan(loan).principalPaid() - principalPaid;
+        uint256 newFee       = ILoan(loan).feePaid() - feePaid;
+        uint256 newExcess    = ILoan(loan).excessReturned() - excessReturned;
 
         // Update loans data structure.
-        interestPaid   = ILoan.interestPaid();
-        principalPaid  = ILoan.principalPaid();
-        feePaid        = ILoan.feePaid();
-        excessReturned = ILoan.excessReturned();
+        interestPaid   = ILoan(loan).interestPaid();
+        principalPaid  = ILoan(loan).principalPaid();
+        feePaid        = ILoan(loan).feePaid();
+        excessReturned = ILoan(loan).excessReturned();
 
         // Update ERC2222 internal accounting for Loan.
-        ILoan.withdrawFunds();
+        ILoan(loan).withdrawFunds();
 
         uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess);
         uint256 balance   = IERC20(loanAsset).balanceOf(address(this));
