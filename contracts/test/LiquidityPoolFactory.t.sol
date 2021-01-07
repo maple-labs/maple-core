@@ -54,8 +54,7 @@ contract PoolFactoryTest is TestUtil {
 
     function setUp() public {
 
-        fundsToken             = new ERC20("FundsToken", "FT");
-        mpl                    = new MapleToken("MapleToken", "MAPL", IERC20(fundsToken));
+        mpl                    = new MapleToken("MapleToken", "MAPL", USDC);
         globals                = new MapleGlobals(address(this), address(mpl));
         stakeLockerFactory     = new StakeLockerFactory();
         liquidityLockerFactory = new LiquidityLockerFactory();
