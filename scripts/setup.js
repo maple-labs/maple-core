@@ -10,26 +10,26 @@ const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const WETHAddress = require(artpath + "addresses/WETH9.address.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 
-const AmortizationRepaymentCalculator = require(artpath +
-  "addresses/AmortizationRepaymentCalculator.address.js");
+const AmortizationRepaymentCalc = require(artpath +
+  "addresses/AmortizationRepaymentCalc.address.js");
 
-const BulletRepaymentCalculator = require(artpath +
-  "addresses/BulletRepaymentCalculator.address.js");
+const BulletRepaymentCalc = require(artpath +
+  "addresses/BulletRepaymentCalc.address.js");
 
-const LateFeeNullCalculator = require(artpath +
-  "addresses/LateFeeNullCalculator.address.js");
+const LateFeeCalc = require(artpath +
+  "addresses/LateFeeCalc.address.js");
 
-const PremiumFlatCalculator = require(artpath +
-  "addresses/PremiumFlatCalculator.address.js");
+const PremiumFlatCalc = require(artpath +
+  "addresses/PremiumFlatCalc.address.js");
 
 const MapleGlobalsAddress = require(artpath +
   "addresses/MapleGlobals.address.js");
 const MapleGlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
-const LoanVaultFactoryAddress = require(artpath +
-  "addresses/LoanVaultFactory.address.js");
-const LoanVaultFactoryABI = require(artpath + "abis/LoanVaultFactory.abi.js");
-const LiquidityPoolFactoryAddress = require(artpath +
-  "addresses/LiquidityPoolFactory.address");
+const LoanFactoryAddress = require(artpath +
+  "addresses/LoanFactory.address.js");
+const LoanFactoryABI = require(artpath + "abis/LoanFactory.abi.js");
+const PoolFactoryAddress = require(artpath +
+  "addresses/PoolFactory.address");
 const CollateralLockerFactoryAddress = require(artpath +
   "addresses/CollateralLockerFactory.address.js");
 const mapleTreasuryAddress = require(artpath +
@@ -96,21 +96,21 @@ async function main() {
     mapleTreasuryAddress
   );
 
-  await mapleGlobals.setBorrowToken(USDCAddress, true);
-  await mapleGlobals.setBorrowToken(DAIAddress, true);
-  await mapleGlobals.setCollateralToken(DAIAddress, true);
-  await mapleGlobals.setCollateralToken(USDCAddress, true);
-  await mapleGlobals.setCollateralToken(WETHAddress, true);
-  await mapleGlobals.setCollateralToken(WBTCAddress, true);
+  await mapleGlobals.setLoanAsset(USDCAddress, true);
+  await mapleGlobals.setLoanAsset(DAIAddress, true);
+  await mapleGlobals.setCollateralAsset(DAIAddress, true);
+  await mapleGlobals.setCollateralAsset(USDCAddress, true);
+  await mapleGlobals.setCollateralAsset(WETHAddress, true);
+  await mapleGlobals.setCollateralAsset(WBTCAddress, true);
 
-  await mapleGlobals.setCalculator(AmortizationRepaymentCalculator, true);
-  await mapleGlobals.setCalculator(BulletRepaymentCalculator, true);
-  await mapleGlobals.setCalculator(LateFeeNullCalculator, true);
-  await mapleGlobals.setCalculator(PremiumFlatCalculator, true);
+  await mapleGlobals.setCalc(AmortizationRepaymentCalc, true);
+  await mapleGlobals.setCalc(BulletRepaymentCalc, true);
+  await mapleGlobals.setCalc(LateFeeCalc, true);
+  await mapleGlobals.setCalc(PremiumFlatCalc, true);
 
   const LVFactory = new ethers.Contract(
-    LoanVaultFactoryAddress,
-    LoanVaultFactoryABI,
+    LoanFactoryAddress,
+    LoanFactoryABI,
     ethers.provider.getSigner(0)
   );
 
@@ -122,8 +122,8 @@ async function main() {
     CollateralLockerFactoryAddress
   );
 
-  await mapleGlobals.setLiquidityPoolFactory(LiquidityPoolFactoryAddress);
-  await mapleGlobals.setLoanVaultFactory(LoanVaultFactoryAddress);
+  await mapleGlobals.setPoolFactory(PoolFactoryAddress);
+  await mapleGlobals.setLoanFactory(LoanFactoryAddress);
 }
 
 main()

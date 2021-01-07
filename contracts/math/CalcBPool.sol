@@ -32,7 +32,7 @@ contract CalcBPool {
         address _pool,
         address _pair,
         address _staker,
-        address _stakeLockerAddress
+        address _stakeLocker
     ) external view returns (uint256) {
 
         //calculates the value of BPT in unites of _liquidityAssetContract, in 'wei' (decimals) for this token
@@ -43,7 +43,7 @@ contract CalcBPool {
 
         // FDTs are minted 1:1 (in wei) in the StakeLocker when staking BPTs, thus representing stake amount.
         // These are burned when withdrawing staked BPTs, thus representing the current stake amount.
-        uint256 amountStakedBPT = IERC20(_stakeLockerAddress).balanceOf(_staker);
+        uint256 amountStakedBPT = IERC20(_stakeLocker).balanceOf(_staker);
         uint256 totalSupplyBPT = bPoolERC20.totalSupply();
         uint256 liquidityAssetBalance = bPool.getBalance(_pair);
         uint256 liquidityAssetWeight = bPool.getNormalizedWeight(_pair);
@@ -60,13 +60,13 @@ contract CalcBPool {
     /// @param _pool is the official Maple Balancer pool.
     /// @param _pair is the asset paired 50/50 with MPL in the official Maple Balancer pool.
     /// @param _staker is the staker who deposited to the StakeLocker.
-    /// @param _stakeLockerAddress is the address of the StakeLocker.
+    /// @param _stakeLocker is the address of the StakeLocker.
     /// @return uint, USDC swap out value of _staker BPTs.
     function getSwapOutValue(
         address _pool,
         address _pair,
         address _staker,
-        address _stakeLockerAddress
+        address _stakeLocker
     ) external view returns (uint256) {
 
         // Fetch balancer pool token information.
@@ -77,8 +77,8 @@ contract CalcBPool {
         uint256 totalWeight = bPool.getTotalDenormalizedWeight();
         uint256 swapFee = bPool.getSwapFee();
 
-        // Fetch amount staked in _stakeLockerAddress by _staker.
-        uint256 poolAmountIn = IERC20(_stakeLockerAddress).balanceOf(_staker);
+        // Fetch amount staked in _stakeLocker by _staker.
+        uint256 poolAmountIn = IERC20(_stakeLocker).balanceOf(_staker);
         
         // console.log("poolAmountIn", poolAmountIn);
 
@@ -101,7 +101,7 @@ contract CalcBPool {
     /// @param _pool is the official Maple Balancer pool.
     /// @param _pair is the asset paired 50/50 with MPL in the official Maple Balancer pool.
     /// @param _staker is the staker who deposited to the StakeLocker.
-    /// @param _stakeLockerAddress is the address of the StakeLocker.
+    /// @param _stakeLocker is the address of the StakeLocker.
     /// @param _tokenAmountOutRequired is the amount of USDC out required.
     /// @return uint, [0] = poolAmountIn required
     /// @return uint, [1] = poolAmountIn currently staked.
@@ -109,7 +109,7 @@ contract CalcBPool {
         address _pool,
         address _pair,
         address _staker,
-        address _stakeLockerAddress,
+        address _stakeLocker,
         uint256 _tokenAmountOutRequired
     ) external view returns (uint256, uint256) {
 
@@ -131,8 +131,8 @@ contract CalcBPool {
             swapFee
         );
 
-        // Fetch amount staked in _stakeLockerAddress by _staker.
-        uint256 stakerBalance = IERC20(_stakeLockerAddress).balanceOf(_staker);
+        // Fetch amount staked in _stakeLocker by _staker.
+        uint256 stakerBalance = IERC20(_stakeLocker).balanceOf(_staker);
 
         // console.log("poolAmountInRequired", poolAmountInRequired);
         // console.log("stakerBalance", stakerBalance);

@@ -22,21 +22,21 @@ liquidityAsset
 _liquidityAsset
 _liquidityPool
 _loanVault
-_loanTokenLocker
+_DebtLocker
 
 ## LiquidityLockerFactory.sol
 ownerOfLocker
 _liquidityAsset
 _liquidityLocker
 
-## LiquidityPool.sol
+## Pool.sol
 ILiquidityAsset
 IStakeAsset
 StakeLockerFactory
 
 FundedLoan
     loanVaultFunded
-    loanTokenLocker
+    DebtLocker
     amountFunded
     principalPaid
     interestPaid
@@ -44,15 +44,15 @@ FundedLoan
     excessReturned
 
 fundedLoans
-loanTokenLockers
+DebtLockers
 StakeLocker
 MapleGlobals
 liquidityAsset
 liquidityAssetDecimals
 _ONELiquidityAsset
-liquidityLockerAddress
+liquidityLocker
 stakeAsset
-stakeLockerAddress
+stakeLocker
 poolDelegate
 isFinalized
 isDefunct
@@ -63,13 +63,13 @@ calcBPool
 _stakeAsset
 _stakeLocker
 _stakePresent
-_loanTokenLockerFactory
+_DebtLockerFactory
 _loanVault
 
-## LiquidityPoolFactory.sol
+## PoolFactory.sol
 _liquidityPools
-_isLiquidityPool
-liquidityPoolsCreated
+_isPool
+poolsCreated
 mapleGlobals
 stakeLockerFactory
 liquidityLockerFactory
@@ -78,10 +78,10 @@ _stakeAsset
 _stakingFee
 _delegateFee
 
-## LoanTokenLocker.sol
+## DebtLocker.sol
 loanToken
 
-## LoanTokenLockerFactory.sol
+## DebtLockerFactory.sol
 lockerPool
 isLocker
 lockers
@@ -89,4 +89,4 @@ _loanToken
 _liquidityPoolAddress
 _tokenLocker
 
-## LoanVault.sol
+## Loan.sol
