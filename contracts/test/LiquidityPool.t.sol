@@ -359,8 +359,6 @@ contract PoolTest is TestUtil {
         assertEq(debtLocker.owner(), address(pool1));
         assertEq(debtLocker.loanAsset(), DAI);
 
-        assertEq(dlFactory1.lockers(0), address(debtLocker));  // LTL instantiated
-
         assertEq(IERC20(DAI).balanceOf(liqLocker),              80 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 20 ether);  // Balance of Funding Locker
         assertEq(IERC20(loan).balanceOf(address(debtLocker)),         20 ether);  // LoanToken balance of LT Locker
@@ -371,8 +369,8 @@ contract PoolTest is TestUtil {
         /****************************************/
         assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 25 ether)); // Fund same loan for 25 DAI
 
-        assertEq(dlFactory1.lockers(0), address(debtLocker));  // Same LTL
-        assertTrue(dlFactory1.isDebtLocker(address(debtLocker)));
+        assertEq(dlFactory1.owner(address(debtLocker)), address(pool1));
+        assertTrue(dlFactory1.isLocker(address(debtLocker)));
 
         assertEq(IERC20(DAI).balanceOf(liqLocker),              55 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 45 ether);  // Balance of Funding Locker
@@ -391,8 +389,8 @@ contract PoolTest is TestUtil {
         assertEq(debtLocker2.owner(), address(pool1));
         assertEq(debtLocker2.loanAsset(), DAI);
 
-        assertEq(dlFactory2.lockers(0), address(debtLocker2));  // LTL instantiated
-        assertTrue(dlFactory2.isDebtLocker(address(debtLocker2)));
+        assertEq(dlFactory2.owner(address(debtLocker2)), address(pool1));
+        assertTrue(dlFactory2.isLocker(address(debtLocker2)));
 
         assertEq(IERC20(DAI).balanceOf(liqLocker),              45 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)), 55 ether);  // Balance of Funding Locker
