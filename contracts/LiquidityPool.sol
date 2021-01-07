@@ -275,7 +275,7 @@ contract LiquidityPool is IERC20, ERC20 {
     **/
     function calcInterestPenalty(uint256 _interest, address _addy) public view returns (uint256 _out){
         uint256 _time = (block.timestamp.sub(depositAge[_addy])).mul(WAD);
-        uint256 _unlocked = ((_time.div(interestDelay)).mul(_interest)) / WAD;
+        uint256 _unlocked = ((_time.div(interestDelay+1)).mul(_interest)) / WAD;
         if (_unlocked > _interest) {
             _out = 0;
         }else{
@@ -289,9 +289,9 @@ contract LiquidityPool is IERC20, ERC20 {
             depositAge[_addy] = block.timestamp;
         } else {
             uint256 _date = depositAge[_addy];
-            uint256 _coef = (WAD * _amt) / (balanceOf(_addy) + _amt); //yes, i want 0 if _amt is too small
+            uint256 _coef = (WAD.mul(_amt)).div(balanceOf(_addy).add(_amt)); //yes, i want 0 if _amt is too small
             //thhis addition will start to overflow in about 3^52 years
-            depositAge[_addy] = (_date * WAD + (block.timestamp - _date) * _coef) / WAD;
+            depositAge[_addy] = ( _date.mul(WAD).add((block.timestamp.sub(_date)).mul(_coef)) ).div(WAD);
         }
     }
 

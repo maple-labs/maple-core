@@ -148,6 +148,7 @@ contract PoolTest is TestUtil {
     LP                                     bob;
     LP                                     che;
     LP                                     dan;
+    LP                                     kim;
     Borrower                               eli;
     Borrower                               fay;
 
@@ -177,6 +178,7 @@ contract PoolTest is TestUtil {
         bob            = new LP();
         che            = new LP();
         dan            = new LP();
+        kim            = new LP();
         eli            = new Borrower();
         fay            = new Borrower();
 
@@ -912,4 +914,192 @@ contract PoolTest is TestUtil {
 
         // TODO: Post-claim, multiple providers
     }
+    function test_interest() public {
+
+        /*******************************/
+        /*** Finalize liquidity pool ***/
+        /*******************************/
+        {
+            sid.approve(address(bPool), lp1.stakeLockerAddress(), uint(-1));
+            sid.stake(lp1.stakeLockerAddress(), bPool.balanceOf(address(sid)) / 2);
+
+            lp1.finalize();
+        }
+        /**************************************************/
+        /*** Mint and deposit funds into liquidity pool ***/
+        /**************************************************/
+        {
+            mint("DAI", address(bob), 1_000_000_000 ether);
+            mint("DAI", address(che), 1_000_000_000 ether);
+            mint("DAI", address(dan), 1_000_000_000 ether);
+
+            bob.approve(DAI, address(lp1), uint(-1));
+            che.approve(DAI, address(lp1), uint(-1));
+            dan.approve(DAI, address(lp1), uint(-1));
+
+            assertTrue(bob.try_deposit(address(lp1), 100_000_000 ether));  // 10%
+            assertTrue(che.try_deposit(address(lp1), 300_000_000 ether));  // 30%
+            assertTrue(dan.try_deposit(address(lp1), 600_000_000 ether));  // 60%
+
+            globals.setLoanVaultFactory(address(loanVFactory)); // Don't remove, not done in setUp()
+        }
+
+        address fundingLocker  = vault.fundingLocker();
+        address fundingLocker2 = vault2.fundingLocker();
+
+        /************************************/
+        /*** Fund vault / vault2 (Excess) ***/
+        /************************************/
+        {
+            assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1), 100_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf1), 100_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 200_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(lp1), address(vault),  address(ltlf2), 200_000_000 ether));
+
+            assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf1),  50_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf1),  50_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2), 150_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(lp1), address(vault2), address(ltlf2), 150_000_000 ether));
+        }
+
+        LoanTokenLocker ltl1 = LoanTokenLocker(lp1.loanTokenLockers(address(vault),  address(ltlf1)));  // ltl1 = LoanTokenLocker 1, for vault using ltlf1
+        LoanTokenLocker ltl2 = LoanTokenLocker(lp1.loanTokenLockers(address(vault),  address(ltlf2)));  // ltl2 = LoanTokenLocker 2, for vault using ltlf2
+        LoanTokenLocker ltl3 = LoanTokenLocker(lp1.loanTokenLockers(address(vault2), address(ltlf1)));  // ltl3 = LoanTokenLocker 3, for vault2 using ltlf1
+        LoanTokenLocker ltl4 = LoanTokenLocker(lp1.loanTokenLockers(address(vault2), address(ltlf2)));  // ltl4 = LoanTokenLocker 4, for vault2 using ltlf2
+
+        /*****************/
+        /*** Draw Down ***/
+        /*****************/
+        {
+            uint cReq1 =  vault.collateralRequiredForDrawdown(100_000_000 ether); // wETH required for 100_000_000 DAI drawdown on vault
+            uint cReq2 = vault2.collateralRequiredForDrawdown(100_000_000 ether); // wETH required for 100_000_000 DAI drawdown on vault2
+            mint("WETH", address(eli), cReq1);
+            mint("WETH", address(fay), cReq2);
+            eli.approve(WETH, address(vault),  cReq1);
+            fay.approve(WETH, address(vault2), cReq2);
+            eli.drawdown(address(vault),  100_000_000 ether);
+            fay.drawdown(address(vault2), 100_000_000 ether);
+        }
+        
+        /****************************/
+        /*** Make 1 Payment (1/6) ***/
+        /****************************/
+        {
+            (uint amt1_1,,,) =  vault.getNextPayment(); // DAI required for 1st payment on vault
+            (uint amt1_2,,,) = vault2.getNextPayment(); // DAI required for 1st payment on vault2
+            mint("DAI", address(eli), amt1_1);
+            mint("DAI", address(fay), amt1_2);
+            eli.approve(DAI, address(vault),  amt1_1);
+            fay.approve(DAI, address(vault2), amt1_2);
+            eli.makePayment(address(vault));
+            fay.makePayment(address(vault2));
+        }
+        
+        /****************/
+        /*** LP Claim ***/
+        /****************/
+        {      
+            checkClaim(ltl1, vault,  sid, IERC20(DAI), lp1, address(ltlf1));
+            checkClaim(ltl2, vault,  sid, IERC20(DAI), lp1, address(ltlf2));
+            checkClaim(ltl3, vault2, sid, IERC20(DAI), lp1, address(ltlf1));
+            checkClaim(ltl4, vault2, sid, IERC20(DAI), lp1, address(ltlf2));
+        }
+
+        /******************************/
+        /*** Make 2 Payments (3/6)  ***/
+        /******************************/
+        {
+            (uint amt2_1,,,) =  vault.getNextPayment(); // DAI required for 2nd payment on vault
+            (uint amt2_2,,,) = vault2.getNextPayment(); // DAI required for 2nd payment on vault2
+            mint("DAI", address(eli), amt2_1);
+            mint("DAI", address(fay), amt2_2);
+            eli.approve(DAI, address(vault),  amt2_1);
+            fay.approve(DAI, address(vault2), amt2_2);
+            eli.makePayment(address(vault));
+            fay.makePayment(address(vault2));
+
+            (uint amt3_1,,,) =  vault.getNextPayment(); // DAI required for 3rd payment on vault
+            (uint amt3_2,,,) = vault2.getNextPayment(); // DAI required for 3rd payment on vault2
+            mint("DAI", address(eli), amt3_1);
+            mint("DAI", address(fay), amt3_2);
+            eli.approve(DAI, address(vault),  amt3_1);
+            fay.approve(DAI, address(vault2), amt3_2);
+            eli.makePayment(address(vault));
+            fay.makePayment(address(vault2));
+        }
+        
+        /****************/
+        /*** LP Claim ***/
+        /****************/
+        {      
+            checkClaim(ltl1, vault,  sid, IERC20(DAI), lp1, address(ltlf1));
+            checkClaim(ltl2, vault,  sid, IERC20(DAI), lp1, address(ltlf2));
+            checkClaim(ltl3, vault2, sid, IERC20(DAI), lp1, address(ltlf1));
+            checkClaim(ltl4, vault2, sid, IERC20(DAI), lp1, address(ltlf2));
+        }
+        
+        /*********************************/
+        /*** Make (Early) Full Payment ***/
+        /*********************************/
+        {
+            (uint amtf_1,,) =  vault.getFullPayment(); // DAI required for 2nd payment on vault
+            (uint amtf_2,,) = vault2.getFullPayment(); // DAI required for 2nd payment on vault2
+            mint("DAI", address(eli), amtf_1);
+            mint("DAI", address(fay), amtf_2);
+            eli.approve(DAI, address(vault),  amtf_1);
+            fay.approve(DAI, address(vault2), amtf_2);
+            eli.makeFullPayment(address(vault));
+            fay.makeFullPayment(address(vault2));
+        }
+        
+        /****************/
+        /*** LP Claim ***/
+        /****************/
+        {      
+            checkClaim(ltl1, vault,  sid, IERC20(DAI), lp1, address(ltlf1));
+            checkClaim(ltl2, vault,  sid, IERC20(DAI), lp1, address(ltlf2));
+            checkClaim(ltl3, vault2, sid, IERC20(DAI), lp1, address(ltlf1));
+            checkClaim(ltl4, vault2, sid, IERC20(DAI), lp1, address(ltlf2));
+
+            // Ensure both loans are matured.
+            assertEq(uint256(vault.loanState()),  2);
+            assertEq(uint256(vault2.loanState()), 2);
+        }
+
+        mint("DAI", address(kim), 100_000_000 ether);
+
+        kim.approve(DAI, address(lp1), uint(-1));
+
+        uint256 start = block.timestamp;
+        assertEq(lp1.calcInterestPenalty(1 ether,address(bob)),1 ether);
+        assertEq(lp1.calcInterestPenalty(1 ether,address(che)),1 ether);
+        hevm.warp(start + lp1.interestDelay()/2);
+        assertTrue((lp1.calcInterestPenalty(2 ether,address(bob)) - 1 ether) <  500000000000);
+        assertTrue((lp1.calcInterestPenalty(2 ether,address(che)) - 1 ether) <  500000000000);
+        hevm.warp(start + lp1.interestDelay());
+        assertTrue((lp1.calcInterestPenalty(1 ether,address(bob)) ) >0);
+        assertTrue((lp1.calcInterestPenalty(1 ether,address(che)) ) >0);
+        assertTrue((lp1.calcInterestPenalty(1 ether,address(bob)) ) <500000000000 );
+        assertTrue((lp1.calcInterestPenalty(1 ether,address(che)) ) <500000000000);
+
+        hevm.warp(start + lp1.interestDelay() + 1);
+        assertEq(lp1.calcInterestPenalty(1 ether,address(bob)),0);
+        assertEq(lp1.calcInterestPenalty(1 ether,address(che)),0);
+        hevm.warp(start + lp1.interestDelay()*2);
+        assertEq(lp1.calcInterestPenalty(1 ether,address(bob)),0);
+        assertEq(lp1.calcInterestPenalty(1 ether,address(che)),0);
+
+        assertTrue(kim.try_deposit(address(lp1), 10_000_000 ether));
+
+        //assertEq(IERC20(DAI).balanceOf(address(kim)), 900 ether);
+        kim.withdraw(address(lp1), lp1.balanceOf(address(kim)));
+        assertEq(IERC20(DAI).balanceOf(address(kim)), 100_000_000 ether); 
+
+        assertTrue(kim.try_deposit(address(lp1), 10_000_000 ether));
+        hevm.warp(block.timestamp + lp1.interestDelay()*2);
+        kim.withdraw(address(lp1), lp1.balanceOf(address(kim)));
+        assertEq(IERC20(DAI).balanceOf(address(kim)), 100_000_000 ether);
+
+    }
+    
 }
