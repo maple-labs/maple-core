@@ -303,8 +303,6 @@ contract PoolTest is TestUtil {
             eli.makePayment(address(loan));
         }
         
-        assertTrue(false);
-        
     }
     
 }
