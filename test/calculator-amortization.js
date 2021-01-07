@@ -43,7 +43,7 @@ describe("Calc - Amortization Repayment", function () {
       ethers.provider.getSigner(0)
     );
 
-    const preIncrementorValue = await LoanFactory.loanVaultsCreated();
+    const preIncrementorValue = await LoanFactory.loansCreated();
 
     // ERC-20 contracts for tokens
     const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address");
@@ -196,7 +196,7 @@ describe("Calc - Amortization Repayment", function () {
       ethers.provider.getSigner(0)
     );
 
-    const preIncrementorValue = await LoanFactory.loanVaultsCreated();
+    const preIncrementorValue = await LoanFactory.loansCreated();
 
     // ERC-20 contracts for tokens
     const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address");

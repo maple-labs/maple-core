@@ -124,16 +124,16 @@ describe("MapleGlobals.sol Interactions", function () {
   });
 
   it("test priceFeed data not null", async function () {
-    const ETH_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(
+    const ETH_USD_ORACLE_ADDRESS = await mapleGlobals.assetPriceFeed(
       WETHAddress
     );
-    const WBTC_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(
+    const WBTC_USD_ORACLE_ADDRESS = await mapleGlobals.assetPriceFeed(
       WBTCAddress
     );
-    const DAI_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(
+    const DAI_USD_ORACLE_ADDRESS = await mapleGlobals.assetPriceFeed(
       DAIAddress
     );
-    const USDC_USD_ORACLE_ADDRESS = await mapleGlobals.tokenPriceFeed(
+    const USDC_USD_ORACLE_ADDRESS = await mapleGlobals.assetPriceFeed(
       USDCAddress
     );
     ETH_USD = new ethers.Contract(

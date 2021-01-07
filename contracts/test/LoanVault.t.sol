@@ -34,7 +34,7 @@ contract Borrower {
     }
 
     function createLoan(
-        LoanFactory loanVaultFactory,
+        LoanFactory loanFactory,
         address requestedAsset, 
         address collateralAsset, 
         uint256[6] memory specs_vault,
@@ -43,7 +43,7 @@ contract Borrower {
         external returns (Loan loanVault) 
     {
         loanVault = Loan(
-            loanVaultFactory.createLoan(requestedAsset, collateralAsset, specs_vault, calcs_vault)
+            loanFactory.createLoan(requestedAsset, collateralAsset, specs_vault, calcs_vault)
         );
     }
 }
@@ -79,7 +79,7 @@ contract LoanTest is TestUtil {
     BulletRepaymentCalc       bulletCalc;
     LateFeeCalc              lateFeeCalc;
     PremiumFlatCalc          premiumCalc;
-    LoanFactory         loanVaultFactory;
+    LoanFactory              loanFactory;
     Borrower                         ali;
     Lender                           bob;
     Treasury                         trs;
@@ -97,7 +97,7 @@ contract LoanTest is TestUtil {
         amortiCalc              = new AmortizationRepaymentCalc();
         lateFeeCalc             = new LateFeeCalc();
         premiumCalc             = new PremiumFlatCalc(500); // Flat 5% premium
-        loanVaultFactory        = new LoanFactory(
+        loanFactory             = new LoanFactory(
             address(globals), 
             address(flFactory), 
             address(clFactory)
@@ -129,7 +129,7 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs_vault = [500, 180, 30, uint256(1000 ether), 2000, 7];
         address[3] memory calcs_vault = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        Loan loanVault = ali.createLoan(loanVaultFactory, DAI, WETH, specs_vault, calcs_vault);
+        Loan loanVault = ali.createLoan(loanFactory, DAI, WETH, specs_vault, calcs_vault);
     
         assertEq(loanVault.loanAsset(),               DAI);
         assertEq(loanVault.collateralAsset(),              WETH);
@@ -154,7 +154,7 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs_vault = [500, 90, 30, uint256(1000 ether), 2000, 7];
         address[3] memory calcs_vault = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        Loan loanVault = ali.createLoan(loanVaultFactory, DAI, WETH, specs_vault, calcs_vault);
+        Loan loanVault = ali.createLoan(loanFactory, DAI, WETH, specs_vault, calcs_vault);
         address fundingLocker = loanVault.fundingLocker();
 
         bob.approve(DAI, address(loanVault), 5000 ether);
@@ -174,7 +174,7 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs_vault = [500, 90, 30, uint256(1000 ether), 2000, 7];
         address[3] memory calcs_vault = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
-        loanVault = ali.createLoan(loanVaultFactory, DAI, WETH, specs_vault, calcs_vault);
+        loanVault = ali.createLoan(loanFactory, DAI, WETH, specs_vault, calcs_vault);
 
         bob.approve(DAI, address(loanVault), 5000 ether);
     

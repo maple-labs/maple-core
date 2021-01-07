@@ -214,7 +214,7 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
     await MapleGlobals.setStakeRequired(100000 * 10 ** 6);
   });
 
-  it("E - Fail finalization (stake must be deposited before finalization)", async function () {
+  xit("E - Fail finalization (stake must be deposited before finalization)", async function () {
     MapleGlobals = new ethers.Contract(
       MapleGlobalsAddress,
       MapleGlobalsABI,

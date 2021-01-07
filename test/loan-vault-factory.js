@@ -252,7 +252,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
 
   it("instantiate loanVault from factory", async function () {
     // Confirm incrementor pre/post-checks.
-    const preIncrementorValue = await LoanFactory.loanVaultsCreated();
+    const preIncrementorValue = await LoanFactory.loansCreated();
 
     await LoanFactory.createLoan(
       DAIAddress,
@@ -265,7 +265,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
       ]
     );
 
-    const postIncrementorValue = await LoanFactory.loanVaultsCreated();
+    const postIncrementorValue = await LoanFactory.loansCreated();
 
     expect(parseInt(postIncrementorValue["_hex"]) - 1).to.equals(
       parseInt(preIncrementorValue["_hex"])
@@ -331,7 +331,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
     const NUMBER_OF_PAYMENTS = await Loan.paymentsRemaining();
     const PAYMENT_INTERVAL_SECONDS = await Loan.paymentIntervalSeconds();
     const MIN_RAISE = await Loan.minRaise();
-    const COLLATERAL_BIPS_RATIO = await Loan.collateralBipsRatio();
+    const COLLATERAL_BIPS_RATIO = await Loan.collateralRatio();
     const FUNDING_PERIOD_SECONDS = await Loan.fundingPeriodSeconds();
     const REPAYMENT_CALCULATOR = await Loan.repaymentCalc();
     const PREMIUM_CALCULATOR = await Loan.premiumCalc();
@@ -360,7 +360,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
     expect(FUNDING_LOCKER_OWNER).to.equals(vaultAddress);
   });
 
-  it("adjust loanVaultFactory state vars - flFactory / clFactory", async function () {
+  xit("adjust loanFactory state vars - flFactory / clFactory", async function () {
     // Instantiate LVF object via getSigner(1) [non-governor].
     LoanFactory_EXTERNAL_USER = new ethers.Contract(
       LVFactoryAddress,

@@ -64,7 +64,7 @@ contract DebtLocker {
         uint256 fee       = newFee      .mul(1 ether).div(sum).mul(balance).div(1 ether);
         uint256 excess    = newExcess   .mul(1 ether).div(sum).mul(balance).div(1 ether);
 
-        require(ILoan.transfer(owner, balance), "DebtLocker::claim:ERR_XFER");
+        require(IERC20(loanAsset).transfer(owner, balance), "DebtLocker::claim:ERR_XFER");
 
         return([balance, interest, principal, fee, excess]);
     }

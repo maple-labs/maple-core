@@ -74,7 +74,7 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
       ]
     );
     LVAddress = await LVFactory.getLoan(
-      (await LVFactory.loanVaultsCreated()) - 1
+      (await LVFactory.loansCreated()) - 1
     );
     await LP.fundLoan(LVAddress, DebtLockerFactoryAddress, 10);
     DebtLocker = await LP.loanTokenToLocker(LVAddress);

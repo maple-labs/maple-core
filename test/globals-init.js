@@ -40,7 +40,7 @@ describe("MapleGlobals.sol Initialization", function () {
 
   it("factory addresses set properly in globals", async function () {
     const LPFaddress = await mapleGlobals.poolFactory();
-    const LVFaddress = await mapleGlobals.loanVaultFactory();
+    const LVFaddress = await mapleGlobals.loanFactory();
     expect(LPFaddress).to.equal(LPFactoryAddress);
     expect(LVFaddress).to.equal(LVFactoryAddress);
   });

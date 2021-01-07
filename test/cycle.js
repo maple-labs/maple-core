@@ -298,7 +298,7 @@ describe("Cycle of an entire loan", function () {
     const collateralRatioBips = 1000; // 10%
     const fundingPeriodDays = 7;
 
-    const index = await LoanFactory.loanVaultsCreated();
+    const index = await LoanFactory.loansCreated();
 
     // Creating a loan.
     await LoanFactory.createLoan(

@@ -96,7 +96,7 @@ describe("fundLoan() in Loan.sol", function () {
   it("createLoan() with signer(0)", async function () {
     // Grab preIncrementor to get LoanID
     // Note: consider networkVersion=1 interactions w.r.t. async flow
-    const preIncrementorValue = await LoanFactory.loanVaultsCreated();
+    const preIncrementorValue = await LoanFactory.loansCreated();
 
     // 5% APR, 90 Day Term, 30 Day Interval, 1000 DAI, 20% Collateral, 7 Day Funding Period
     await LoanFactory.createLoan(
