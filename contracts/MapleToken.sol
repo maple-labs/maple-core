@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "./token/FundsDistributionToken.sol";
+import "./token/FDT.sol";
 
-contract MapleToken is FundsDistributionToken {
+contract MapleToken is FDT {
 
 	modifier onlyFundsToken () {
 		require(msg.sender == address(fundsToken), "FDT_ERC20Extension.onlyFundsToken: UNAUTHORIZED_SENDER");
@@ -15,7 +15,7 @@ contract MapleToken is FundsDistributionToken {
 		string memory symbol,
 		address fundsToken
 	)  
-		FundsDistributionToken(name, symbol, fundsToken)
+		FDT(name, symbol, fundsToken)
 		public 
 	{
 		require(address(fundsToken) != address(0), "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS");

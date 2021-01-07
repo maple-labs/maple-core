@@ -3,7 +3,7 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "./token/FundsDistributionToken.sol";
+import "./token/FDT.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/IFundingLocker.sol";
 import "./interfaces/IFundingLockerFactory.sol";
@@ -15,7 +15,7 @@ import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/IPremiumCalc.sol";
 
 /// @title Loan is the core loan vault contract.
-contract Loan is FundsDistributionToken {
+contract Loan is FDT {
     
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
@@ -99,7 +99,7 @@ contract Loan is FundsDistributionToken {
         address[3] memory calcs,
         string memory tUUID
     )
-        FundsDistributionToken(
+        FDT(
             string(abi.encodePacked("Maple Loan Vault Token ", tUUID)),
             string(abi.encodePacked("ML", tUUID)),
             _loanAsset

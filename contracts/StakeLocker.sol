@@ -3,12 +3,12 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "./token/FundsDistributionToken.sol";
+import "./token/FDT.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IGlobals.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
-contract StakeLocker is FundsDistributionToken {
+contract StakeLocker is FDT {
 
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
@@ -27,13 +27,13 @@ contract StakeLocker is FundsDistributionToken {
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
-    // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
+    // TODO: Dynamically assign name and locker to the FDT() params.
     constructor(
         address _stakeAsset,
         address _liquidityAsset,
         address _owner,
         address _globals
-    ) FundsDistributionToken("Maple Stake Locker", "MPLSTAKE", _liquidityAsset) public {
+    ) FDT("Maple Stake Locker", "MPLSTAKE", _liquidityAsset) public {
         liquidityAsset = _liquidityAsset;
         stakeAsset     = _stakeAsset;
         owner          = _owner;
@@ -62,7 +62,7 @@ contract StakeLocker is FundsDistributionToken {
     }
 
     /**
-     * @notice Deposit stakeAsset and mint an equal number of FundsDistributionTokens to the user
+     * @notice Deposit stakeAsset and mint an equal number of FDTs to the user
      * @param amt Amount of stakeAsset(BPTs) to stake
      */
     function stake(uint256 amt) external {

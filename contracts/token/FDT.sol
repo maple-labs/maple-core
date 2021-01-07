@@ -4,11 +4,11 @@ pragma solidity >=0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
-import "./IFundsDistributionToken.sol";
+import "./IFDT.sol";
 import "../math/SafeMathUint.sol";
 import "../math/SafeMathInt.sol";
 
-abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
+abstract contract FDT is IFDT, ERC20 {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
@@ -42,7 +42,7 @@ abstract contract FundsDistributionToken is IFundsDistributionToken, ERC20 {
      *     and try to distribute it in the next distribution ....... todo implement
      */
     function _distributeFunds(uint256 value) internal {
-        require(totalSupply() > 0, "FundsDistributionToken._distributeFunds: SUPPLY_IS_ZERO");
+        require(totalSupply() > 0, "FDT._distributeFunds: SUPPLY_IS_ZERO");
 
         if (value > 0) {
             pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier) / totalSupply());
