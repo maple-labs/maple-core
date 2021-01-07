@@ -18,7 +18,7 @@ interface IGlobals {
 
     function stakeAmountRequired() external view returns (uint256);
 
-    function isValidBorrowToken(address) external view returns (bool);
+    function isValidLoanAsset(address) external view returns (bool);
 
     function isValidCollateral(address) external view returns (bool);
 
@@ -26,11 +26,11 @@ interface IGlobals {
 
     function mapleBPoolAssetPair() external view returns (address);
 
-    function validPoolDelegate(address) external view returns (bool);
+    function isValidPoolDelegate(address) external view returns (bool);
 
-    function validBorrowTokenAddresses() external view returns (address[] memory);
+    function validLoanAssets() external view returns (address[] memory);
 
-    function validCollateralTokenAddresses() external view returns (address[] memory);
+    function validCollateralAssets() external view returns (address[] memory);
 
     function unstakeDelay() external view returns (uint256);
 

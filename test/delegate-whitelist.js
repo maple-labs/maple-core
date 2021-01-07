@@ -15,7 +15,7 @@ const BPoolCreatorAddress = require(artpath + "addresses/BCreator.address.js");
 const BPoolCreatorABI = require(artpath + "abis/BCreator.abi.js");
 
 describe("Pool Delegate Whitelist", function () {
-  it("A - Governor can update validPoolDelegate in MapleGlobals", async function () {
+  it("A - Governor can update isValidPoolDelegate in MapleGlobals", async function () {
     const accounts = await ethers.provider.listAccounts();
 
     MapleGlobals = new ethers.Contract(
@@ -26,16 +26,16 @@ describe("Pool Delegate Whitelist", function () {
 
     await MapleGlobals.setPoolDelegateWhitelist(accounts[1], false);
 
-    const validityCheckOne = await MapleGlobals.validPoolDelegate(accounts[1]);
+    const validityCheckOne = await MapleGlobals.isValidPoolDelegate(accounts[1]);
     expect(!validityCheckOne);
 
     await MapleGlobals.setPoolDelegateWhitelist(accounts[1], true);
 
-    const validityCheckTwo = await MapleGlobals.validPoolDelegate(accounts[1]);
+    const validityCheckTwo = await MapleGlobals.isValidPoolDelegate(accounts[1]);
     expect(validityCheckTwo);
   });
 
-  it("B - Non-governor may not update validPoolDelegate in MapleGlobals", async function () {
+  it("B - Non-governor may not update isValidPoolDelegate in MapleGlobals", async function () {
     const accounts = await ethers.provider.listAccounts();
 
     MapleGlobals = new ethers.Contract(

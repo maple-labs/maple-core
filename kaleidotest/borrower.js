@@ -6,8 +6,8 @@ const AmortizationRepaymentCalc = require(artpath +
   "addresses/AmortizationRepaymentCalc.address.js");
 const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
-const LateFeeNullCalc = require(artpath +
-  "addresses/LateFeeNullCalc.address.js");
+const LateFeeCalc = require(artpath +
+  "addresses/LateFeeCalc.address.js");
 const PremiumFlatCalc = require(artpath +
   "addresses/PremiumFlatCalc.address.js");
 
@@ -32,18 +32,6 @@ describe("Borrower Journey", function () {
     );
 
     const List = await MapleGlobals.getValidTokens();
-
-    // These two arrays are related, in order.
-    // console.log(
-    //   List["_validBorrowTokenSymbols"],
-    //   List["_validBorrowTokenAddresses"]
-    // )
-
-    // These two arrays are related, in order.
-    // console.log(
-    //   List["_validCollateralTokenSymbols"],
-    //   List["_validCollateralTokenAddresses"]
-    // )
   });
 
   it("B - Calculate the total amount owed for supplied params", async function () {
@@ -273,7 +261,7 @@ describe("Borrower Journey", function () {
         COLLATERAL_BIPS_RATIO,
         FUNDING_PERIOD_DAYS,
       ],
-      [BulletRepaymentCalc, LateFeeNullCalc, PremiumFlatCalc],
+      [BulletRepaymentCalc, LateFeeCalc, PremiumFlatCalc],
       { gasLimit: 6000000 }
     );
     await new Promise((r) => setTimeout(r, 15000));

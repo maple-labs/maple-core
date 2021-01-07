@@ -20,14 +20,6 @@ describe("Pool Delegate Journey - DAI", function () {
     );
 
     const List = await MapleGlobals.getValidTokens();
-
-    // The _validBorrowTokenAddresses / _validBorrowTokenSymbols list
-    // can be used to generate a dropdown for viable "LIQUIDITY_ASSET" options.
-
-    // console.log(
-    //   List["_validBorrowTokenSymbols"],
-    //   List["_validBorrowTokenAddresses"]
-    // )
   });
 
   it("A - Create a liquidity pool with DAI", async function () {

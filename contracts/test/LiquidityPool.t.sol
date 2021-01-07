@@ -13,7 +13,7 @@ import "../interfaces/IPoolFactory.sol";
 
 import "../AmortizationRepaymentCalc.sol";
 import "../BulletRepaymentCalc.sol";
-import "../LateFeeNullCalc.sol";
+import "../LateFeeCalc.sol";
 import "../PremiumFlatCalc.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -108,13 +108,13 @@ contract Borrower {
         LoanFactory loanFactory,
         address requestedAsset, 
         address collateralAsset, 
-        uint256[6] memory specifications,
-        address[3] memory calculators
+        uint256[6] memory specs,
+        address[3] memory calcs
     ) 
         external returns (Loan loan) 
     {
         loan = Loan(
-            loanFactory.createLoan(requestedAsset, collateralAsset, specifications, calculators)
+            loanFactory.createLoan(requestedAsset, collateralAsset, specs, calcs)
         );
     }
 }
@@ -140,7 +140,7 @@ contract PoolTest is TestUtil {
     DSValue                          daiOracle;
     AmortizationRepaymentCalc amortiCalc;
     BulletRepaymentCalc       bulletCalc;
-    LateFeeNullCalc          lateFeeCalc;
+    LateFeeCalc          lateFeeCalc;
     PremiumFlatCalc          premiumCalc;
     IBPool                               bPool;
     PoolDelegate                           sid;
@@ -171,7 +171,7 @@ contract PoolTest is TestUtil {
         daiOracle      = new DSValue();
         amortiCalc     = new AmortizationRepaymentCalc();
         bulletCalc     = new BulletRepaymentCalc();
-        lateFeeCalc    = new LateFeeNullCalc();
+        lateFeeCalc    = new LateFeeCalc();
         premiumCalc    = new PremiumFlatCalc(500); // Flat 5% premium
         sid            = new PoolDelegate();
         joe            = new PoolDelegate();
@@ -216,8 +216,8 @@ contract PoolTest is TestUtil {
         globals.setCalc(address(bulletCalc),  true);
         globals.setCalc(address(lateFeeCalc), true);
         globals.setCalc(address(premiumCalc), true);
-        globals.setCollateralToken(WETH, true);
-        globals.setLoanToken(DAI, true);
+        globals.setCollateralAsset(WETH, true);
+        globals.setLoanAsset(DAI, true);
         globals.assignPriceFeed(WETH, address(ethOracle));
         globals.assignPriceFeed(DAI, address(daiOracle));
         globals.setMapleBPool(address(bPool));

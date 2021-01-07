@@ -6,8 +6,8 @@ const AmortizationRepaymentCalc = require(artpath +
   "addresses/AmortizationRepaymentCalc.address.js");
 const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
-const LateFeeNullCalc = require(artpath +
-  "addresses/LateFeeNullCalc.address.js");
+const LateFeeCalc = require(artpath +
+  "addresses/LateFeeCalc.address.js");
 const PremiumFlatCalc = require(artpath +
   "addresses/PremiumFlatCalc.address.js");
 
@@ -69,7 +69,7 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
       [5000, 90, 1, 1000000000000, 0, 7],
       [
         AmortizationRepaymentCalc,
-        LateFeeNullCalc,
+        LateFeeCalc,
         PremiumFlatCalc,
       ]
     );

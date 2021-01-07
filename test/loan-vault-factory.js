@@ -32,8 +32,8 @@ const AmortizationRepaymentCalc = require(artpath +
   "addresses/AmortizationRepaymentCalc.address.js");
 const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
-const LateFeeNullCalc = require(artpath +
-  "addresses/LateFeeNullCalc.address.js");
+const LateFeeCalc = require(artpath +
+  "addresses/LateFeeCalc.address.js");
 const PremiumFlatCalc = require(artpath +
   "addresses/PremiumFlatCalc.address.js");
 
@@ -103,7 +103,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
-        [BUNK_ADDRESS, LateFeeNullCalc, PremiumFlatCalc]
+        [BUNK_ADDRESS, LateFeeCalc, PremiumFlatCalc]
       )
     ).to.be.revertedWith(
       "LoanFactory::createLoan:ERR_NULL_INTEREST_STRUCTURE_CALC"
@@ -125,7 +125,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         DAIAddress,
         WETHAddress,
         [5000, 0, 0, 0, 0, 0],
-        [BulletRepaymentCalc, LateFeeNullCalc, BUNK_ADDRESS]
+        [BulletRepaymentCalc, LateFeeCalc, BUNK_ADDRESS]
       )
     ).to.be.revertedWith(
       "LoanFactory::createLoan:ERR_NULL_PREMIUM_CALC"
@@ -138,7 +138,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         [5000, 0, 0, 0, 0, 0],
         [
           BulletRepaymentCalc,
-          LateFeeNullCalc,
+          LateFeeCalc,
           PremiumFlatCalc,
         ]
       )
@@ -153,7 +153,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         [5000, 0, 0, 0, 0, 0],
         [
           BulletRepaymentCalc,
-          LateFeeNullCalc,
+          LateFeeCalc,
           PremiumFlatCalc,
         ]
       )
@@ -168,7 +168,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         [5000, 0, 0, 0, 0, 0],
         [
           AmortizationRepaymentCalc,
-          LateFeeNullCalc,
+          LateFeeCalc,
           PremiumFlatCalc,
         ]
       )
@@ -183,7 +183,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         [5000, 0, 0, 0, 0, 0],
         [
           BulletRepaymentCalc,
-          LateFeeNullCalc,
+          LateFeeCalc,
           PremiumFlatCalc,
         ]
       )
@@ -198,7 +198,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         [5000, 1, 0, 0, 0, 0],
         [
           AmortizationRepaymentCalc,
-          LateFeeNullCalc,
+          LateFeeCalc,
           PremiumFlatCalc,
         ]
       )
@@ -213,7 +213,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         [5000, 30, 29, 1000000000000, 0, 0],
         [
           BulletRepaymentCalc,
-          LateFeeNullCalc,
+          LateFeeCalc,
           PremiumFlatCalc,
         ]
       )
@@ -228,7 +228,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         [5000, 30, 30, 0, 0, 0],
         [
           BulletRepaymentCalc,
-          LateFeeNullCalc,
+          LateFeeCalc,
           PremiumFlatCalc,
         ]
       )
@@ -241,7 +241,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         [5000, 90, 30, 1000000000000, 0, 0],
         [
           AmortizationRepaymentCalc,
-          LateFeeNullCalc,
+          LateFeeCalc,
           PremiumFlatCalc,
         ]
       )
@@ -260,7 +260,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
       [5000, 90, 30, 1000000000000, 0, 7],
       [
         AmortizationRepaymentCalc,
-        LateFeeNullCalc,
+        LateFeeCalc,
         PremiumFlatCalc,
       ]
     );
@@ -320,7 +320,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
         [5000, 90, 30, 1000000000000, 0, 7], 
         [
           AmortizationRepaymentCalc,
-          LateFeeNullCalc,
+          LateFeeCalc,
           PremiumFlatCalc
         ]
       )

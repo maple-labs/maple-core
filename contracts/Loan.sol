@@ -82,16 +82,16 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
     /// @param _clFactory Factory to instantiate CollateralLocker through.
     /// @param _globals Address of the IGlobals(globals).sol contract.
     /// @param specs The specifications of the loan.
-    ///        specs[0] = APR_BIPS
-    ///        specs[1] = TERM_DAYS
-    ///        specs[2] = PAYMENT_INTERVAL_DAYS
-    ///        specs[3] = MIN_RAISE
-    ///        specs[4] = COLLATERAL_BIPS_RATIO
-    ///        specs[5] = FUNDING_PERIOD_DAYS
+    ///        specs[0] = apr
+    ///        specs[1] = termDays
+    ///        specs[2] = paymentIntervalDays
+    ///        specs[3] = minRaise
+    ///        specs[4] = collateralRatio
+    ///        specs[5] = fundingPeriodDays
     /// @param calcs The calculators used for the loan.
-    ///        calcs[0] = Repayment Calc
-    ///        calcs[1] = LateFee Calc
-    ///        calcs[2] = Premium Calc
+    ///        calcs[0] = repaymentCalc
+    ///        calcs[1] = lateFeeCalc
+    ///        calcs[2] = premiumCalc
     constructor(
         address _borrower,
         address _loanAsset,
@@ -125,7 +125,7 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
 
         // Perform validity cross-checks.
         require(
-            IGlobals(_globals).isValidBorrowToken(_loanAsset),
+            IGlobals(_globals).isValidLoanAsset(_loanAsset),
             "Loan::constructor:ERR_INVALID_ASSET_REQUESTED"
         );
         require(
@@ -161,7 +161,7 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
      * @param mintTo The address to mint LoanTokens for.
      */
     function fundLoan(uint256 amt, address mintTo) external isState(State.Live) {
-        // TODO: Consider testing decimal precision difference: RequestedAsset <> FundsToken
+        // TODO: Consider testing decimal precision difference: loanAsset <> FundsToken
         require(
             IERC20(loanAsset).transferFrom(msg.sender, fundingLocker, amt),
             "Loan::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
@@ -172,7 +172,7 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
         emit BalanceUpdated(fundingLocker, loanAsset, IERC20(loanAsset).balanceOf(fundingLocker));
     }
 
-    /// @notice Returns the balance of _requestedAsset in the FundingLocker.
+    /// @notice Returns the balance of loanAsset in the FundingLocker.
     /// @return The balance of FundingLocker.
     function getFundingLockerBalance() view public returns(uint) {
         return IERC20(loanAsset).balanceOf(fundingLocker);
@@ -185,7 +185,7 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
     }
 
     /// @notice End funding period by claiming funds, posting collateral, transitioning loanState from Funding to Active.
-    /// @param amt Amount of fundingAsset borrower will claim, remainder is returned to Loan.
+    /// @param amt Amount of loanAsset borrower will claim, remainder is returned to Loan.
     function drawdown(uint256 amt) external isState(State.Live) isBorrower {
 
         require(
@@ -361,7 +361,7 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
 
 
     /// @notice Viewer helper for calculating collateral required to drawdown funding.
-    /// @param amt The amount of fundingAsset to drawdown from FundingLocker.
+    /// @param amt The amount of loanAsset to drawdown from FundingLocker.
     /// @return The amount of collateralAsset required to post for given amt.
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
 

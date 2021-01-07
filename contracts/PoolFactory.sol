@@ -43,7 +43,7 @@ contract PoolFactory {
     function createPool(address liquidityAsset, address stakeAsset, uint256 stakingFee, uint256 delegateFee) public returns (address) {
         
         require(
-            IGlobals(globals).validPoolDelegate(msg.sender),
+            IGlobals(globals).isValidPoolDelegate(msg.sender),
             "PoolFactory::createPool:ERR_MSG_SENDER_NOT_WHITELISTED"
         );
 

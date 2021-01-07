@@ -22,20 +22,19 @@ contract MapleGlobals {
     uint256 public investorFee;          // Portion of drawdown that goes to pool delegates/investors
     uint256 public treasuryFee;          // Portion of drawdown that goes to treasury
 
-    address[] public validLoanTokenAddresses;        // Array of valid borrow tokens (TODO: Consider removing)
-    address[] public validCollateralTokenAddresses;  // Array of valid borrow tokens (TODO: Consider removing)
+    address[] public validLoanAssets;               // Array of valid loan assets (for LoanFactory).
+    address[] public validCollateralAssets;         // Array of valid collateral assets (for LoanFactory).
+    string[]  public validLoanAssetSymbols;         // Array of valid loan assets symbols (TODO: Consider removing)
+    string[]  public validCollateralAssetSymbols;    // Array of valid collateral assets symbols (TODO: Consider removing)
 
-    string[]  public validCollateralTokenSymbols;  // Array of valid borrow token symbols (TODO: Consider removing)
-    string[]  public validLoanTokenSymbols;        // Array of valid borrow token symbols (TODO: Consider removing)
+    mapping(address => bool)    public isValidLoanAsset;        // Mapping of valid loan assets
+    mapping(address => bool)    public isValidCollateralAsset;  // Mapping of valid collateral assets
+    mapping(address => bool)    public isValidCalc;             // Mapping of valid calculator contracts
+    mapping(address => bool)    public isValidPoolDelegate;     // Validation data structure for pool delegates (prevent invalid addresses from creating pools).
+    mapping(address => address) public assetPriceFeed;          // Mapping of asset, to the associated oracle price feed.
 
-    mapping(address => bool)    public isValidLoanToken;   // Mapping of valid borrow tokens
-    mapping(address => bool)    public isValidCollateral;  // Mapping of valid collateral tokens
-    mapping(address => bool)    public isValidCalc;        // Mapping of valid calculator contracts
-    mapping(address => bool)    public validPoolDelegate;  // Validation data structure for pool delegates (prevent invalid addresses from creating pools).
-    mapping(address => address) public tokenPriceFeed;     // Mapping of asset, to the associated oracle price feed.
-
-    event CollateralTokenSet(address token, uint256 decimals, bool valid);
-    event       LoanTokenSet(address token, uint256 decimals, bool valid);
+    event CollateralAssetSet(address asset, uint256 decimals, bool valid);
+    event       LoanAssetSet(address asset, uint256 decimals, bool valid);
 
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
@@ -60,16 +59,16 @@ contract MapleGlobals {
     }
 
     function getValidTokens() view public returns(
-        string[]  memory _validLoanTokenSymbols,
-        address[] memory _validLoanTokenAddresses,
-        string[]  memory _validCollateralTokenSymbols,
-        address[] memory _validCollateralTokenAddresses
+        string[]  memory _validLoanAssetSymbols,
+        address[] memory _validLoanAssets,
+        string[]  memory _validCollateralAssetSymbols,
+        address[] memory _validCollateralAssets
     ) {
         return (
-            validLoanTokenSymbols,
-            validLoanTokenAddresses,
-            validCollateralTokenSymbols,
-            validCollateralTokenAddresses
+            validLoanAssetSymbols,
+            validLoanAssets,
+            validCollateralAssetSymbols,
+            validCollateralAssets
         );
     }
 
@@ -86,7 +85,7 @@ contract MapleGlobals {
     }
 
     function setPoolDelegateWhitelist(address delegate, bool valid) external isGovernor {
-        validPoolDelegate[delegate] = valid;
+        isValidPoolDelegate[delegate] = valid;
     }
 
     function setMapleBPoolAssetPair(address _pair) external isGovernor {
@@ -94,11 +93,11 @@ contract MapleGlobals {
     }
 
     function assignPriceFeed(address asset, address oracle) external isGovernor {
-        tokenPriceFeed[asset] = oracle;
+        assetPriceFeed[asset] = oracle;
     }
 
     function getPrice(address asset) external view returns(uint) {
-        return IPriceFeed(tokenPriceFeed[asset]).price();
+        return IPriceFeed(assetPriceFeed[asset]).price();
     }
 
     /**
@@ -106,12 +105,12 @@ contract MapleGlobals {
         @param token Address of the valid token.
         @param valid Boolean
      */
-    function setCollateralToken(address token, bool valid) external isGovernor {
-        require(!isValidCollateral[token], "MapleGloblas::setCollateralToken:ERR_ALREADY_ADDED");
-        isValidCollateral[token] = valid;
-        validCollateralTokenAddresses.push(token);
-        validCollateralTokenSymbols.push(IERC20Details(token).symbol());
-        emit CollateralTokenSet(token, IERC20Details(token).decimals(), valid);
+    function setCollateralAsset(address asset, bool valid) external isGovernor {
+        require(!isValidCollateral[asset], "MapleGloblas::setCollateralAsset:ERR_ALREADY_ADDED");
+        isValidCollateral[asset] = valid;
+        validCollateralAssets.push(asset);
+        validCollateralAssetSymbols.push(IERC20Details(asset).symbol());
+        emit CollateralAssetSet(asset, IERC20Details(asset).decimals(), valid);
     }
 
     /**
@@ -119,12 +118,12 @@ contract MapleGlobals {
         @param token Address of the valid token.
         @param valid Boolean
      */
-    function setLoanToken(address token, bool valid) external isGovernor {
-        require(!isValidLoanToken[token], "MapleGloblas::setLoanToken:ERR_ALREADY_ADDED");
-        isValidLoanToken[token] = valid;
-        validLoanTokenAddresses.push(token);
-        validLoanTokenSymbols.push(IERC20Details(token).symbol());
-        emit LoanTokenSet(token, IERC20Details(token).decimals(), valid);
+    function setLoanAsset(address asset, bool valid) external isGovernor {
+        require(!isValidLoanAsset[asset], "MapleGloblas::setLoanAsset:ERR_ALREADY_ADDED");
+        isValidLoanAsset[asset] = valid;
+        validLoanAssets.push(asset);
+        validLoanAssetSymbols.push(IERC20Details(asset).symbol());
+        emit LoanAssetSet(asset, IERC20Details(asset).decimals(), valid);
     }
 
     function setCalc(address calc, bool valid) public isGovernor {

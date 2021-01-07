@@ -11,7 +11,7 @@ interface ICalc { function calcType() external returns (bytes32); }
 /// @title LoanFactory instantiates Loan contracts.
 contract LoanFactory {
 
-	using SafeMath for uint256;
+    using SafeMath for uint256;
 
     address public immutable globals;    // The MapleGlobals.sol contract.
     address public           flFactory;  // The FundingLockerFactory to use for this LoanFactory.
@@ -24,7 +24,7 @@ contract LoanFactory {
 
     event LoanCreated(
         string  indexed tUUID,
-		address loan,
+        address loan,
         address indexed borrower,
         address indexed loanAsset,
         address collateralAsset,
@@ -52,16 +52,16 @@ contract LoanFactory {
     /// @param loanAsset The asset borrower is requesting funding in.
     /// @param collateralAsset The asset provided as collateral by the borrower.
     /// @param specs The specs of the loan.
-    ///        specs[0] = APR_BIPS
-    ///        specs[1] = TERM_DAYS
-    ///        specs[2] = PAYMENT_INTERVAL_DAYS
-    ///        specs[3] = MIN_RAISE
-    ///        specs[4] = COLLATERAL_BIPS_RATIO
-    ///        specs[5] = FUNDING_PERIOD_DAYS
+    ///        specs[0] = apr
+    ///        specs[1] = termDays
+    ///        specs[2] = paymentIntervalDays
+    ///        specs[3] = minRaise
+    ///        specs[4] = collateralRatio
+    ///        specs[5] = fundingPeriodDays
     /// @param calcs The calcs used for the loan.
-    ///        calcs[0] = Repayment ("Interest Structure") Calc
-    ///        calcs[1] = LateFee Calc
-    ///        calcs[2] = Premium Calc
+    ///        calcs[0] = repaymentCalc
+    ///        calcs[1] = lateFeeCalc
+    ///        calcs[2] = premiumCalc
     /// @return The address of the newly instantiated Loan.
     function createLoan(
         address loanAsset,
@@ -107,7 +107,7 @@ contract LoanFactory {
             globals,
             specs,
             [interestCalc, lateFeeCalc, premiumCalc],
-	        tUUID
+            tUUID
         );
 
         // Update LoanFactory identification mappings.

@@ -77,7 +77,7 @@ const PoolABI             = require(artpath + "abis/Pool.abi");
 const LoanABI             = require(artpath + "abis/Loan.abi");
 const BulletCalcAddress   = require(artpath + "addresses/BulletRepaymentCalc.address");
 const AmortiCalcAddress   = require(artpath + "addresses/AmortizationRepaymentCalc.address");
-const LateFeeCalcAddress  = require(artpath + "addresses/LateFeeNullCalc.address");
+const LateFeeCalcAddress  = require(artpath + "addresses/LateFeeCalc.address");
 const PremiumCalcAddress  = require(artpath + "addresses/PremiumFlatCalc.address");
 
 // External Contracts

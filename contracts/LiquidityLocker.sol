@@ -9,7 +9,7 @@ contract LiquidityLocker {
     address public immutable owner;           // The Pool that owns this LiquidityLocker, for authorization purposes.
     address public           liquidityAsset;  // The asset which this LiquidityLocker will escrow.
 
-    // TODO: Consider checking if the pool (owner) is a valid Pool via LPFactory.
+    // TODO: Consider checking if the pool (owner) is a valid Pool via PoolFactory.
     constructor(address _liquidityAsset, address pool) public {
         liquidityAsset = _liquidityAsset;
         owner          = pool;

@@ -16,8 +16,8 @@ const AmortizationRepaymentCalc = require(artpath +
 const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
 
-const LateFeeNullCalc = require(artpath +
-  "addresses/LateFeeNullCalc.address.js");
+const LateFeeCalc = require(artpath +
+  "addresses/LateFeeCalc.address.js");
 
 const PremiumFlatCalc = require(artpath +
   "addresses/PremiumFlatCalc.address.js");
@@ -96,16 +96,16 @@ async function main() {
     mapleTreasuryAddress
   );
 
-  await mapleGlobals.setLoanToken(USDCAddress, true);
-  await mapleGlobals.setLoanToken(DAIAddress, true);
-  await mapleGlobals.setCollateralToken(DAIAddress, true);
-  await mapleGlobals.setCollateralToken(USDCAddress, true);
-  await mapleGlobals.setCollateralToken(WETHAddress, true);
-  await mapleGlobals.setCollateralToken(WBTCAddress, true);
+  await mapleGlobals.setLoanAsset(USDCAddress, true);
+  await mapleGlobals.setLoanAsset(DAIAddress, true);
+  await mapleGlobals.setCollateralAsset(DAIAddress, true);
+  await mapleGlobals.setCollateralAsset(USDCAddress, true);
+  await mapleGlobals.setCollateralAsset(WETHAddress, true);
+  await mapleGlobals.setCollateralAsset(WBTCAddress, true);
 
   await mapleGlobals.setCalc(AmortizationRepaymentCalc, true);
   await mapleGlobals.setCalc(BulletRepaymentCalc, true);
-  await mapleGlobals.setCalc(LateFeeNullCalc, true);
+  await mapleGlobals.setCalc(LateFeeCalc, true);
   await mapleGlobals.setCalc(PremiumFlatCalc, true);
 
   const LVFactory = new ethers.Contract(

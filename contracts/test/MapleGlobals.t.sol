@@ -49,50 +49,50 @@ contract MapleGlobalsTest is TestUtil {
     }
 
     function test_add_tokens() public {
-        string[]  memory validBorrowTokenSymbols;
-        address[] memory validBorrowTokenAddresses;
-        string[]  memory validCollateralTokenSymbols;
-        address[] memory validCollateralTokenAddresses;
+        string[]  memory validLoanAssetSymbols;
+        address[] memory validLoanAssets;
+        string[]  memory validCollateralAssetSymbols;
+        address[] memory validCollateralAssets;
         (
-            validBorrowTokenSymbols,
-            validBorrowTokenAddresses,
-            validCollateralTokenSymbols,
-            validCollateralTokenAddresses
+            validLoanAssetSymbols,
+            validLoanAssets,
+            validCollateralAssetSymbols,
+            validCollateralAssets
         ) = globals.getValidTokens();
 
-        assertEq(validBorrowTokenSymbols.length,       0);
-        assertEq(validBorrowTokenAddresses.length,     0);
-        assertEq(validCollateralTokenSymbols.length,   0);
-        assertEq(validCollateralTokenAddresses.length, 0);
+        assertEq(validLoanAssetSymbols.length,          0);
+        assertEq(validLoanAssets.length,                0);
+        assertEq(validCollateralAssetSymbols.length,    0);
+        assertEq(validCollateralAssets.length,          0);
 
-        globals.setCollateralToken(WETH, true);
+        globals.setCollateralAsset(WETH, true);
         (
-            validBorrowTokenSymbols,
-            validBorrowTokenAddresses,
-            validCollateralTokenSymbols,
-            validCollateralTokenAddresses
+            validLoanAssetSymbols,
+            validLoanAssets,
+            validCollateralAssetSymbols,
+            validCollateralAssets
         ) = globals.getValidTokens();
 
-        assertEq(validBorrowTokenSymbols.length,            0);
-        assertEq(validBorrowTokenAddresses.length,          0);
-        assertEq(validCollateralTokenSymbols.length,        1);
-        assertEq(validCollateralTokenAddresses.length,      1);
-        assertEq(validCollateralTokenSymbols[0],       "WETH");
-        assertEq(validCollateralTokenAddresses[0],      WETH);
+        assertEq(validLoanAssetSymbols.length,          0);
+        assertEq(validLoanAssets.length,                0);
+        assertEq(validCollateralAssetSymbols.length,    1);
+        assertEq(validCollateralAssets.length,          1);
+        assertEq(validCollateralAssetSymbols[0],   "WETH");
+        assertEq(validCollateralAssets[0],           WETH);
 
-        globals.setLoanToken(DAI, true);
+        globals.setLoanAsset(DAI, true);
         (
-            validBorrowTokenSymbols,
-            validBorrowTokenAddresses,
-            validCollateralTokenSymbols,
-            validCollateralTokenAddresses
+            validLoanAssetSymbols,
+            validLoanAssets,
+            validCollateralAssetSymbols,
+            validCollateralAssets
         ) = globals.getValidTokens();
 
-        assertEq(validBorrowTokenSymbols.length,           1);
-        assertEq(validBorrowTokenAddresses.length,         1);
-        assertEq(validCollateralTokenSymbols.length,       1);
-        assertEq(validCollateralTokenAddresses.length,     1);
-        assertEq(validBorrowTokenSymbols[0],           "DAI");
-        assertEq(validBorrowTokenAddresses[0],          DAI);
+        assertEq(validLoanAssetSymbols.length,          1);
+        assertEq(validLoanAssets.length,                1);
+        assertEq(validCollateralAssetSymbols.length,    1);
+        assertEq(validCollateralAssets.length,          1);
+        assertEq(validLoanAssetSymbols[0],          "DAI");
+        assertEq(validLoanAssets[0],                  DAI);
     }
 }

@@ -18,8 +18,8 @@ const AmortizationRepaymentCalc = require(artpath +
   "addresses/AmortizationRepaymentCalc.address.js");
 const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
-const LateFeeNullCalc = require(artpath +
-  "addresses/LateFeeNullCalc.address.js");
+const LateFeeCalc = require(artpath +
+  "addresses/LateFeeCalc.address.js");
 const PremiumFlatCalc = require(artpath +
   "addresses/PremiumFlatCalc.address.js");
 
@@ -97,7 +97,7 @@ describe("Calc - Bullet Repayment", function () {
         COLLATERAL_BIPS_RATIO,
         FUNDING_PERIOD_DAYS,
       ],
-      [BulletRepaymentCalc, LateFeeNullCalc, PremiumFlatCalc],
+      [BulletRepaymentCalc, LateFeeCalc, PremiumFlatCalc],
       { gasLimit: 6000000 }
     );
 
@@ -248,7 +248,7 @@ describe("Calc - Bullet Repayment", function () {
         COLLATERAL_BIPS_RATIO,
         FUNDING_PERIOD_DAYS,
       ],
-      [BulletRepaymentCalc, LateFeeNullCalc, PremiumFlatCalc],
+      [BulletRepaymentCalc, LateFeeCalc, PremiumFlatCalc],
       { gasLimit: 6000000 }
     );
 

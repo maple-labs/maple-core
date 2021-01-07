@@ -9,7 +9,7 @@ import "../mocks/token.sol";
 
 import "../AmortizationRepaymentCalc.sol";
 import "../BulletRepaymentCalc.sol";
-import "../LateFeeNullCalc.sol";
+import "../LateFeeCalc.sol";
 import "../PremiumFlatCalc.sol";
 
 import "../MapleToken.sol";
@@ -68,34 +68,34 @@ contract Treasury { }
 
 contract LoanTest is TestUtil {
 
-    ERC20                           fundsToken;
-    MapleToken                      mpl;
-    MapleGlobals                    globals;
-    FundingLockerFactory            flFactory;
-    CollateralLockerFactory         clFactory;
-    DSValue                         ethOracle;
-    DSValue                         daiOracle;
+    ERC20                     fundsToken;
+    MapleToken                       mpl;
+    MapleGlobals                 globals;
+    FundingLockerFactory       flFactory;
+    CollateralLockerFactory    clFactory;
+    DSValue                    ethOracle;
+    DSValue                    daiOracle;
     AmortizationRepaymentCalc amortiCalc;
     BulletRepaymentCalc       bulletCalc;
-    LateFeeNullCalc           lateFeeCalc;
-    PremiumFlatCalc           premiumCalc;
-    LoanFactory                loanVaultFactory;
-    Borrower                        ali;
-    Lender                          bob;
-    Treasury                        trs;
+    LateFeeCalc              lateFeeCalc;
+    PremiumFlatCalc          premiumCalc;
+    LoanFactory         loanVaultFactory;
+    Borrower                         ali;
+    Lender                           bob;
+    Treasury                         trs;
 
     function setUp() public {
 
         fundsToken              = new ERC20("FundsToken", "FT");
-        mpl              = new MapleToken("MapleToken", "MAPL", IERC20(fundsToken));
+        mpl                     = new MapleToken("MapleToken", "MAPL", IERC20(fundsToken));
         globals                 = new MapleGlobals(address(this), address(mpl));
-        flFactory    = new FundingLockerFactory();
-        clFactory = new CollateralLockerFactory();
+        flFactory               = new FundingLockerFactory();
+        clFactory               = new CollateralLockerFactory();
         ethOracle               = new DSValue();
         daiOracle               = new DSValue();
         bulletCalc              = new BulletRepaymentCalc();
         amortiCalc              = new AmortizationRepaymentCalc();
-        lateFeeCalc             = new LateFeeNullCalc();
+        lateFeeCalc             = new LateFeeCalc();
         premiumCalc             = new PremiumFlatCalc(500); // Flat 5% premium
         loanVaultFactory        = new LoanFactory(
             address(globals), 
@@ -110,8 +110,8 @@ contract LoanTest is TestUtil {
         globals.setCalc(address(bulletCalc),  true);
         globals.setCalc(address(lateFeeCalc), true);
         globals.setCalc(address(premiumCalc), true);
-        globals.setCollateralToken(WETH, true);
-        globals.setLoanToken(DAI, true);
+        globals.setCollateralAsset(WETH, true);
+        globals.setLoanAsset(DAI, true);
         globals.assignPriceFeed(WETH, address(ethOracle));
         globals.assignPriceFeed(DAI, address(daiOracle));
 

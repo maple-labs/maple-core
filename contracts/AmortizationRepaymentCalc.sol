@@ -6,7 +6,7 @@ import "./interfaces/ILoan.sol";
 
 contract AmortizationRepaymentCalc {
 
-	using SafeMath for uint256;
+    using SafeMath for uint256;
 
     bytes32 public calcType = "INTEREST";
     bytes32 public name = "AMORTIZATION";

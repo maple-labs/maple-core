@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-contract LateFeeNullCalc {
+contract LateFeeCalc {
 
 	bytes32 public calcType = 'LATEFEE';
 	bytes32 public name = 'NULL';
