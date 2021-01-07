@@ -7,12 +7,12 @@ import "./interfaces/ILoan.sol";
 contract LiquidityLocker {
 
     address public immutable owner;           // The Pool that owns this LiquidityLocker, for authorization purposes.
-    address public           liquidityAsset;  // The asset which this LiquidityLocker will escrow.
+    address public immutable liquidityAsset;  // The asset which this LiquidityLocker will escrow.
 
     // TODO: Consider checking if the pool (owner) is a valid Pool via PoolFactory.
-    constructor(address _liquidityAsset, address pool) public {
+    constructor(address _liquidityAsset, address _owner) public {
         liquidityAsset = _liquidityAsset;
-        owner          = pool;
+        owner          = _owner;
     }
     
     modifier isOwner() {
@@ -31,8 +31,9 @@ contract LiquidityLocker {
 
     // TODO: Consider checking if loan is valid via LoanFactory.
     /// @notice Fund a particular loan using available LiquidityAsset.
-    /// @param loan The address of the Loan to fund.
-    /// @param amt The amount of LiquidityAsset to fund.
+    /// @param loan       The address of the Loan to fund.
+    /// @param debtLocker The address of the locker that will recieve minted debt tokens
+    /// @param amt        The amount of LiquidityAsset to fund.
     function fundLoan(address loan, address debtLocker, uint256 amt) external isOwner {
         IERC20(liquidityAsset).approve(loan, amt);
         ILoan(loan).fundLoan(amt, debtLocker);

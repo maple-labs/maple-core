@@ -232,7 +232,6 @@ contract Pool is IERC20, ERC20 {
 
         emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
         emit BalanceUpdated(stakeLocker,     liquidityAsset, IERC20(liquidityAsset).balanceOf(stakeLocker));
-        emit BalanceUpdated(poolDelegate,    liquidityAsset, IERC20(liquidityAsset).balanceOf(poolDelegate));
 
         emit Claim(claimInfo[1], claimInfo[2] + claimInfo[4], claimInfo[3]);
 

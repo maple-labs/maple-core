@@ -57,7 +57,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         _;
     }
 
-    //TODO: Identify why an error is thrown when console.log() is not present in this modifier.
+    // TODO: Identify why an error is thrown when console.log() is not present in this modifier.
     modifier isLP() {
         require(msg.sender == owner, "StakeLocker:ERR_UNAUTHORIZED");
         _;
@@ -99,7 +99,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         emit BalanceUpdated(address(this), stakeAsset, IERC20(stakeAsset).balanceOf(address(this)));
     }
 
-    //TODO: Make sure LP gets the delete function implemented.
+    // TODO: Make sure LP gets the delete function implemented.
     function deleteLP() external isLP {
         isLPDefunct = true;
     }
@@ -112,34 +112,35 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
         dst.transfer(address(this).balance);
     }
 
-    /** @notice updates data structure that stores the information used to calculate unstake delay
-     * @param addr address of staker
+    /** 
+     * @notice updates data structure that stores the information used to calculate unstake delay
+     * @param staker address of staker
      * @param amt amount he is staking
      */
-    function _updateStakeDate(address addr, uint256 amt) internal {
-        if (stakeDate[addr] == 0) {
-            stakeDate[addr] = block.timestamp;
+    function _updateStakeDate(address staker, uint256 amt) internal {
+        if (stakeDate[staker] == 0) {
+            stakeDate[staker] = block.timestamp;
         } else {
-            uint256 date = stakeDate[addr];
-            //make sure this is executed before mint or line below needs change on denominator
-            uint256 coef = (WAD * amt) / (balanceOf(addr) + amt); //yes, i want 0 if amt is too small
-            //thhis addition will start to overflow in about 3^52 years
-            stakeDate[addr] = (date * WAD + (block.timestamp - date) * coef) / WAD;
-            //I know this is insane but its good trust me
+            uint256 date = stakeDate[staker];
+            // Make sure this is executed before mint or line below needs change on denominator
+            uint256 coef = (WAD * amt) / (balanceOf(staker) + amt); // Yes, i want 0 if amt is too small
+            // This addition will start to overflow in about 3^52 years
+            stakeDate[staker] = (date * WAD + (block.timestamp - date) * coef) / WAD;
+            // I know this is insane but its good trust me
         }
     }
 
     /**
      * @dev view function returning your unstakeable balance.
-     * @param addr wallet address
+     * @param staker wallet address
      * @return uint amount of BPTs that may be unstaked
      */
-    function getUnstakeableBalance(address addr) public view returns (uint256) {
-        uint256 bal = balanceOf(addr);
-        uint256 time = (block.timestamp - stakeDate[addr]) * WAD;
+    function getUnstakeableBalance(address staker) public view returns (uint256) {
+        uint256 bal = balanceOf(staker);
+        uint256 time = (block.timestamp - stakeDate[staker]) * WAD;
         uint256 out = ((time / (IGlobals(globals).unstakeDelay() + 1)) * bal) / WAD;
-        //the plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
-        //also i do indeed want this to return 0 if denominator is less than WAD
+        // The plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
+        // Also i do indeed want this to return 0 if denominator is less than WAD
         if (out > bal) {
             out = bal;
         }
@@ -159,7 +160,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
      * @notice Withdraws all available funds for a token holder
      */
     function withdrawFunds() public override {
-        //must be public so it can be called insdie here
+        // Must be public so it can be called insdie here
         uint256 withdrawableFunds = _prepareWithdraw();
         require(
             fundsToken.transfer(msg.sender, withdrawableFunds),

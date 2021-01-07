@@ -160,6 +160,7 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
      * @param amt Amount of _loanAsset to fund the loan for.
      * @param mintTo The address to mint LoanTokens for.
      */
+    // TODO: Update this function signature to use (address, uint)
     function fundLoan(uint256 amt, address mintTo) external isState(State.Live) {
         // TODO: Consider testing decimal precision difference: loanAsset <> FundsToken
         require(
@@ -188,6 +189,7 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
     /// @param amt Amount of loanAsset borrower will claim, remainder is returned to Loan.
     function drawdown(uint256 amt) external isState(State.Live) isBorrower {
 
+        // TODO: Change endFunding to drawdown in err message
         require(
             amt >= minRaise, 
             "Loan::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE"

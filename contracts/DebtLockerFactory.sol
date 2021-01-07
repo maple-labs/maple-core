@@ -16,7 +16,7 @@ contract DebtLockerFactory {
     // @return The address of the newly created locker.
     function newLocker(address loan) external returns (address) {
         address locker   = address(new DebtLocker(loan, msg.sender));
-        owner[locker]    = address(msg.sender);
+        owner[locker]    = msg.sender;
         isLocker[locker] = true;
         lockers.push(locker);
         return locker;
@@ -30,8 +30,8 @@ contract DebtLockerFactory {
     }
 
     // @notice returns true if address is a liwuid asset locker
-    // @param _addy address to test
-    // @return true if _addy is liquid asset locker
+    // @param locker address to test
+    // @return true if locker is liquid asset locker
     function isDebtLocker(address locker) external view returns (bool) {
         return isLocker[locker];
     }

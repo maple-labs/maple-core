@@ -106,7 +106,7 @@ contract MapleGlobals {
         @param valid Boolean
      */
     function setCollateralAsset(address asset, bool valid) external isGovernor {
-        require(!isValidCollateralAsset[asset], "MapleGloblas::setCollateralAsset:ERR_ALREADY_ADDED");
+        require(!isValidCollateralAsset[asset], "MapleGlobals::setCollateralAsset:ERR_ALREADY_ADDED");
         isValidCollateralAsset[asset] = valid;
         validCollateralAssets.push(asset);
         validCollateralAssetSymbols.push(IERC20Details(asset).symbol());
@@ -119,7 +119,7 @@ contract MapleGlobals {
         @param valid Boolean
      */
     function setLoanAsset(address asset, bool valid) external isGovernor {
-        require(!isValidLoanAsset[asset], "MapleGloblas::setLoanAsset:ERR_ALREADY_ADDED");
+        require(!isValidLoanAsset[asset], "MapleGlobals::setLoanAsset:ERR_ALREADY_ADDED");
         isValidLoanAsset[asset] = valid;
         validLoanAssets.push(asset);
         validLoanAssetSymbols.push(IERC20Details(asset).symbol());

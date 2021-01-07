@@ -27,10 +27,10 @@ contract MapleTreasury {
         address _uniswapRouter,
         address _globals
     ) public {
-        mpl = _mpl;
-        fundsToken = _fundsToken;
+        mpl           = _mpl;
+        fundsToken    = _fundsToken;
         uniswapRouter = _uniswapRouter;
-        globals = _globals;
+        globals       = _globals;
     }
 
     /// @notice Fired when an ERC-20 asset is converted to fundsToken and transferred to mpl.
@@ -75,7 +75,7 @@ contract MapleTreasury {
   
     // Fallback and receive functions for native ETH.
     fallback () external payable { }
-    receive () external payable { }
+    receive  () external payable { }
 
     /// @notice Adjust the token to convert assets to (and then send to MapleToken).
     /// @param _newFundsToken The new FundsToken with respect to MapleToken ERC-2222.

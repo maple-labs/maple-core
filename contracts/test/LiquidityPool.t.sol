@@ -122,26 +122,26 @@ contract Borrower {
 contract PoolTest is TestUtil {
 
     ERC20                           fundsToken;
-    MapleToken                      mpl;
+    MapleToken                             mpl;
     MapleGlobals                       globals;
     FundingLockerFactory             flFactory;
     CollateralLockerFactory          clFactory;
-    LoanFactory              loanVFactory;
-    Loan                            loan;
-    Loan                           loan2;
-    PoolFactory        liqPoolFactory;
+    LoanFactory                   loanVFactory;
+    Loan                                  loan;
+    Loan                                 loan2;
+    PoolFactory                 liqPoolFactory;
     StakeLockerFactory           stakeLFactory;
     LiquidityLockerFactory         liqLFactory; 
     DebtLockerFactory               dlFactory1; 
     DebtLockerFactory               dlFactory2; 
-    Pool                          pool1; 
-    Pool                          pool2; 
+    Pool                                 pool1; 
+    Pool                                 pool2; 
     DSValue                          ethOracle;
     DSValue                          daiOracle;
-    AmortizationRepaymentCalc amortiCalc;
-    BulletRepaymentCalc       bulletCalc;
-    LateFeeCalc          lateFeeCalc;
-    PremiumFlatCalc          premiumCalc;
+    AmortizationRepaymentCalc       amortiCalc;
+    BulletRepaymentCalc             bulletCalc;
+    LateFeeCalc                    lateFeeCalc;
+    PremiumFlatCalc                premiumCalc;
     IBPool                               bPool;
     PoolDelegate                           sid;
     PoolDelegate                           joe;
@@ -157,7 +157,7 @@ contract PoolTest is TestUtil {
     function setUp() public {
 
         fundsToken     = new ERC20("FundsToken", "FT");
-        mpl     = new MapleToken("MapleToken", "MAPL", IERC20(fundsToken));
+        mpl            = new MapleToken("MapleToken", "MAPL", IERC20(fundsToken));
         globals        = new MapleGlobals(address(this), address(mpl));
         flFactory      = new FundingLockerFactory();
         clFactory      = new CollateralLockerFactory();

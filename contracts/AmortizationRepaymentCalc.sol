@@ -32,6 +32,6 @@ contract AmortizationRepaymentCalc {
         uint256 interest        = interestAnnual.mul(interestPartial).div(HUNDRED);
         uint256 principal       = principalOwed.div(paymentsRemaining);
 
-    	return (interest.add(principal), principal, interest);
-  	}
+        return (interest.add(principal), principal, interest);
+    }
 }
