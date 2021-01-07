@@ -101,21 +101,21 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can add a valid token, used as collateral.
-        @param token Address of the valid token.
+        @notice Governor can add a valid asset, used as collateral.
+        @param asset Address of the valid asset.
         @param valid Boolean
      */
     function setCollateralAsset(address asset, bool valid) external isGovernor {
-        require(!isValidCollateral[asset], "MapleGloblas::setCollateralAsset:ERR_ALREADY_ADDED");
-        isValidCollateral[asset] = valid;
+        require(!isValidCollateralAsset[asset], "MapleGloblas::setCollateralAsset:ERR_ALREADY_ADDED");
+        isValidCollateralAsset[asset] = valid;
         validCollateralAssets.push(asset);
         validCollateralAssetSymbols.push(IERC20Details(asset).symbol());
         emit CollateralAssetSet(asset, IERC20Details(asset).decimals(), valid);
     }
 
     /**
-        @notice Governor can add a valid token, used for borrowing.
-        @param token Address of the valid token.
+        @notice Governor can add a valid asset, used for borrowing.
+        @param asset Address of the valid asset.
         @param valid Boolean
      */
     function setLoanAsset(address asset, bool valid) external isGovernor {

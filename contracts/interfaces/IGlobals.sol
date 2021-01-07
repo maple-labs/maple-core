@@ -20,7 +20,7 @@ interface IGlobals {
 
     function isValidLoanAsset(address) external view returns (bool);
 
-    function isValidCollateral(address) external view returns (bool);
+    function isValidCollateralAsset(address) external view returns (bool);
 
     function mapleBPool() external view returns (address);
 

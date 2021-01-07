@@ -129,7 +129,7 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
             "Loan::constructor:ERR_INVALID_ASSET_REQUESTED"
         );
         require(
-            IGlobals(_globals).isValidCollateral(_collateralAsset),
+            IGlobals(_globals).isValidCollateralAsset(_collateralAsset),
             "Loan::constructor:ERR_INVALID_ASSET_REQUESTED"
         );
         require(specs[2] != 0,               "Loan::constructor:ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO");
