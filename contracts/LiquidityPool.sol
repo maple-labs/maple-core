@@ -52,7 +52,7 @@ contract LiquidityPool is IERC20, ERC20 {
 
     bool public isFinalized;  // True if this LiquidityPool is setup and the poolDelegate has met staking requirements.
     bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
-    mapping (address => uint256) private depositAge; //used for interest penalty calculation
+    mapping (address => uint256) public depositAge; //used for interest penalty calculation
     mapping(address => mapping(address => address)) public loanTokenLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = loanTokenLocker
 
     CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
@@ -274,14 +274,14 @@ contract LiquidityPool is IERC20, ERC20 {
     The resulting value will be removed from the interest used in a repayment
     **/
     function calcInterestPenalty(uint256 _interest, address _addy) public view returns (uint256 _out){
-        uint256 _time = (block.timestamp - depositAge[_addy]) * WAD;
-        uint256 _unlocked = ((_time / (interestDelay + 1)) * _interest) / WAD;
+        uint256 _time = (block.timestamp.sub(depositAge[_addy])).mul(WAD);
+        uint256 _unlocked = ((_time.div(interestDelay)).mul(_interest)) / WAD;
         if (_unlocked > _interest) {
             _out = 0;
         }else{
-            _out = _interest - _unlocked;
+            _out = _interest - _unlocked;  
         }
-        return _interest - _out;
+        return _out;
     }
 
     function _updateDepositAge(uint256 _amt, address _addy) internal {
