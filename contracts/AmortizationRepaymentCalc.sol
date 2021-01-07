@@ -21,14 +21,16 @@ contract AmortizationRepaymentCalc {
         ILoan loan = ILoan(_loan);
 
         uint256 principalOwed       = loan.principalOwed();
+        uint256 termDays            = loan.termDays();
         uint256 paymentsRemaining   = loan.paymentsRemaining();
         uint256 apr                 = loan.apr();
         uint256 paymentIntervalDays = loan.paymentIntervalSeconds().div(86400);
         uint256 drawdownAmount      = loan.drawdownAmount();
+        uint256 startingPayments    = termDays / paymentIntervalDays;
         
         // Represents amortization by flattening the total interest owed for equal interest payments.
         uint256 interestAnnual  = drawdownAmount.mul(apr).div(10000).mul(paymentIntervalDays).div(365);
-        uint256 interestPartial = FIFTY.div(paymentsRemaining).add(FIFTY);
+        uint256 interestPartial = FIFTY.div(startingPayments).add(FIFTY);
         uint256 interest        = interestAnnual.mul(interestPartial).div(HUNDRED);
         uint256 principal       = principalOwed.div(paymentsRemaining);
 

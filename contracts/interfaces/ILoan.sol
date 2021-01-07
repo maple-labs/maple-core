@@ -22,6 +22,7 @@ interface ILoan is IERC20 {
     function apr() external view returns (uint256);
     function paymentsRemaining() external view returns (uint256);
     function paymentIntervalSeconds() external view returns (uint256);
+    function termDays() external view returns (uint256);
     function minRaise() external view returns (uint256);
     function collateralRatio() external view returns (uint256);
     function fundingPeriodSeconds() external view returns (uint256);

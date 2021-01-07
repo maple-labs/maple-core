@@ -73,6 +73,7 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
 
     event LoanFunded(uint256 amtFunded, address indexed _fundedBy);
     event BalanceUpdated(address who, address token, uint256 balance);
+    event DebugS(string, uint);
 
     /// @notice Constructor for loan vault.
     /// @param _borrower Address of borrower
@@ -261,6 +262,9 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
                 IERC20(loanAsset).transferFrom(msg.sender, address(this), paymentAmount),
                 "Loan::makePayment:ERR_LACK_APPROVAL_OR_BALANCE"
             );
+            emit DebugS("paymentAmount", paymentAmount);
+            emit DebugS("principal", principal);
+            emit DebugS("interest", interest);
 
             // Update internal accounting variables.
             principalOwed  = principalOwed.sub(principal);
