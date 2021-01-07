@@ -2,7 +2,7 @@ require("dotenv").config({ path: "../../.env" });
 require("@nomiclabs/hardhat-waffle");
 require("solidity-coverage");
 
-const defaultNetwork = "private";
+const defaultNetwork = "localhost";
 
 const KALEIDO_URL = process.env.MAPLE_KALEIDO_URL || "";
 const KALEIDO_MNEMONIC = process.env.MAPLE_MNEMONIC || "";
