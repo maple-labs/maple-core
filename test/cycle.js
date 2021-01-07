@@ -32,20 +32,20 @@
 
   This test suite triggers the following events:
 
-    LiquidityPool:
+    Pool:
       - LoanFunded()      >> fundLoan() 
       - BalanceUpdated()  >> claim(), deposit(), withdraw(), fundLoan()
       - Claim()           >> claim()
 
-    LiquidityPoolFactory:
-      - PoolCreated()     >> createLiquidityPool()
+    PoolFactory:
+      - PoolCreated()     >> createPool()
     
-    LoanVault:
+    Loan:
       - LoanFunded()      >> fundLoan()
       - BalanceUpdated()  >> fundLoan(), drawdown(), makePayment(), makeFullPayment()
 
-    LoanVaultFactory:
-      - LoanVaultCreated() >> createLoanVault()
+    LoanFactory:
+      - LoanCreated() >> createLoan()
 
     StakeLocker:
       - BalanceUpdated()  >> stake(), unstake()
@@ -64,21 +64,21 @@ const GlobalsAddress      = require(artpath + "addresses/MapleGlobals.address");
 const GlobalsABI          = require(artpath + "abis/MapleGlobals.abi");
 const MPLAddress          = require(artpath + "addresses/MapleToken.address");
 const MPLABI              = require(artpath + "abis/MapleToken.abi");
-const PoolFactoryAddress  = require(artpath + "addresses/LiquidityPoolFactory.address");
-const PoolFactoryABI      = require(artpath + "abis/LiquidityPoolFactory.abi");
-const LoanFactoryAddress  = require(artpath + "addresses/LoanVaultFactory.address");
-const LoanFactoryABI      = require(artpath + "abis/LoanVaultFactory.abi");
-const LTLFactoryAddress   = require(artpath + "addresses/LoanTokenLockerFactory.address");
-const LTLFactoryABI       = require(artpath + "abis/LoanTokenLockerFactory.abi");
+const PoolFactoryAddress  = require(artpath + "addresses/PoolFactory.address");
+const PoolFactoryABI      = require(artpath + "abis/PoolFactory.abi");
+const LoanFactoryAddress  = require(artpath + "addresses/LoanFactory.address");
+const LoanFactoryABI      = require(artpath + "abis/LoanFactory.abi");
+const LTLFactoryAddress   = require(artpath + "addresses/DebtLockerFactory.address");
+const LTLFactoryABI       = require(artpath + "abis/DebtLockerFactory.abi");
 
 // Maple Misc Contracts
 const StakeLockerABI      = require(artpath + "abis/StakeLocker.abi");
-const PoolABI             = require(artpath + "abis/LiquidityPool.abi");
-const LoanABI             = require(artpath + "abis/LoanVault.abi");
-const BulletCalcAddress   = require(artpath + "addresses/BulletRepaymentCalculator.address");
-const AmortiCalcAddress   = require(artpath + "addresses/AmortizationRepaymentCalculator.address");
-const LateFeeCalcAddress  = require(artpath + "addresses/LateFeeNullCalculator.address");
-const PremiumCalcAddress  = require(artpath + "addresses/PremiumFlatCalculator.address");
+const PoolABI             = require(artpath + "abis/Pool.abi");
+const LoanABI             = require(artpath + "abis/Loan.abi");
+const BulletCalcAddress   = require(artpath + "addresses/BulletRepaymentCalc.address");
+const AmortiCalcAddress   = require(artpath + "addresses/AmortizationRepaymentCalc.address");
+const LateFeeCalcAddress  = require(artpath + "addresses/LateFeeCalc.address");
+const PremiumCalcAddress  = require(artpath + "addresses/PremiumFlatCalc.address");
 
 // External Contracts
 const BPoolABI    = require(artpath + "abis/BPool.abi");
@@ -184,7 +184,7 @@ describe("Cycle of an entire loan", function () {
 
   it("(P1) Pool delegate initializing a pool", async function () {
 
-    let index = await PoolFactory.liquidityPoolsCreated();
+    let index = await PoolFactory.poolsCreated();
     // console.log(parseInt(index["_hex"]));
 
     // Input variables for a form.
@@ -194,7 +194,7 @@ describe("Cycle of an entire loan", function () {
     delegateFee     = 150;  // Basis points (150 = 1.5%)
 
     // Initializing a pool.
-    await PoolFactory.createLiquidityPool(
+    await PoolFactory.createPool(
       liquidityAsset,
       stakeAsset,
       stakingFee,
@@ -202,10 +202,10 @@ describe("Cycle of an entire loan", function () {
     );
 
     // Assigning contract object to Pool.
-    PoolAddress = await PoolFactory.getLiquidityPool(parseInt(index["_hex"]));
+    PoolAddress = await PoolFactory.getPool(parseInt(index["_hex"]));
     
     while (PoolAddress == "0x0000000000000000000000000000000000000000") {
-      PoolAddress = await PoolFactory.getLiquidityPool(parseInt(index["_hex"]));
+      PoolAddress = await PoolFactory.getPool(parseInt(index["_hex"]));
     }
 
     Pool_PoolDelegate = new ethers.Contract(
@@ -253,13 +253,13 @@ describe("Cycle of an entire loan", function () {
 
     // Pool delegate approves StakeLocker directly of Pool to take BPTs.
     await BPool.approve(
-      await Pool_PoolDelegate.stakeLockerAddress(),
+      await Pool_PoolDelegate.stakeLocker(),
       BigNumber.from(10).pow(17).mul(10)
     )
     
     // Create StakeLocker object.
     StakeLocker = new ethers.Contract(
-      await Pool_PoolDelegate.stakeLockerAddress(),
+      await Pool_PoolDelegate.stakeLocker(),
       StakeLockerABI,
       ethers.provider.getSigner(0)
     );
@@ -283,29 +283,29 @@ describe("Cycle of an entire loan", function () {
   it("(L1) Borrower creating a loan", async function () {
 
     // Default values for creating a loan.
-    const assetRequested     = USDCAddress;
-    const lateFeeCalculator  = LateFeeCalcAddress;
-    const premiumCalculator  = PremiumCalcAddress;
+    const loanAsset     = USDCAddress;
+    const lateFeeCalc  = LateFeeCalcAddress;
+    const premiumCalc  = PremiumCalcAddress;
 
     // Adjustable values for creating a loan.
-    const assetCollateral    = WETHAddress; // WETHAddress || WBTCAddress << Use WETHAddress for now
-    const interestCalculator = BulletCalcAddress; // AmortiCalcAddress || BulletCalcAddress << Use either
+    const collateralAsset    = WETHAddress; // WETHAddress || WBTCAddress << Use WETHAddress for now
+    const interestCalc = BulletCalcAddress; // AmortiCalcAddress || BulletCalcAddress << Use either
 
-    const aprBips = 500; // 5% APR
+    const apr = 500; // 5% APR
     const termDays = 180; // (termDays/paymentIntervalDays) = # of Payments
     const paymentIntervalDays = 30; 
     const minRaise = BigNumber.from(10).pow(6).mul(1000); // 1000 USDC
     const collateralRatioBips = 1000; // 10%
     const fundingPeriodDays = 7;
 
-    const index = await LoanFactory.loanVaultsCreated();
+    const index = await LoanFactory.loansCreated();
 
     // Creating a loan.
-    await LoanFactory.createLoanVault(
-      assetRequested,
-      assetCollateral,
+    await LoanFactory.createLoan(
+      loanAsset,
+      collateralAsset,
       [
-        aprBips,
+        apr,
         termDays,
         paymentIntervalDays,
         minRaise,
@@ -313,20 +313,20 @@ describe("Cycle of an entire loan", function () {
         fundingPeriodDays
       ],
       [
-        interestCalculator, 
-        lateFeeCalculator, 
-        premiumCalculator
+        interestCalc, 
+        lateFeeCalc, 
+        premiumCalc
       ],
       { gasLimit: 6000000 }
     );
 
     if (parseInt(index["_hex"]) == 0) {
       // Creating a 2nd loan.
-      await LoanFactory.createLoanVault(
-        assetRequested,
-        assetCollateral,
+      await LoanFactory.createLoan(
+        loanAsset,
+        collateralAsset,
         [
-          aprBips,
+          apr,
           termDays,
           paymentIntervalDays,
           minRaise,
@@ -334,19 +334,19 @@ describe("Cycle of an entire loan", function () {
           fundingPeriodDays
         ],
         [
-          interestCalculator, 
-          lateFeeCalculator, 
-          premiumCalculator
+          interestCalc, 
+          lateFeeCalc, 
+          premiumCalc
         ],
         { gasLimit: 6000000 }
       );
     }
 
     // Assigning contract object to Loan.
-    LoanAddress = await LoanFactory.getLoanVault(parseInt(index["_hex"]));
+    LoanAddress = await LoanFactory.getLoan(parseInt(index["_hex"]));
 
     while (LoanAddress == "0x0000000000000000000000000000000000000000") {
-      LoanAddress = await LoanFactory.getLoanVault(parseInt(index["_hex"]));
+      LoanAddress = await LoanFactory.getLoan(parseInt(index["_hex"]));
     }
 
     Loan = new ethers.Contract(

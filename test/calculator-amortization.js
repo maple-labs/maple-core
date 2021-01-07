@@ -11,18 +11,18 @@ const WETHABI = require(artpath + "abis/WETH9.abi.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const WBTCABI = require(artpath + "abis/WBTC.abi.js");
 
-const AmortizationRepaymentCalculator = require(artpath +
-  "addresses/AmortizationRepaymentCalculator.address.js");
-const BulletRepaymentCalculator = require(artpath +
-  "addresses/BulletRepaymentCalculator.address.js");
-const LateFeeNullCalculator = require(artpath +
-  "addresses/LateFeeNullCalculator.address.js");
-const PremiumFlatCalculator = require(artpath +
-  "addresses/PremiumFlatCalculator.address.js");
+const AmortizationRepaymentCalc = require(artpath +
+  "addresses/AmortizationRepaymentCalc.address.js");
+const BulletRepaymentCalc = require(artpath +
+  "addresses/BulletRepaymentCalc.address.js");
+const LateFeeCalc = require(artpath +
+  "addresses/LateFeeCalc.address.js");
+const PremiumFlatCalc = require(artpath +
+  "addresses/PremiumFlatCalc.address.js");
 
-const LoanVaultABI = require(artpath + "abis/LoanVault.abi.js");
+const LoanABI = require(artpath + "abis/Loan.abi.js");
 
-describe("Calculator - Amortization Repayment", function () {
+describe("Calc - Amortization Repayment", function () {
   let accounts;
 
   before(async () => {
@@ -33,17 +33,17 @@ describe("Calculator - Amortization Repayment", function () {
   let collateralAssetSymbol, requestedAssetSymbol;
 
   it("A - Issue and fund an amortization loan", async function () {
-    const LoanVaultFactoryAddress = require(artpath +
-      "addresses/LoanVaultFactory.address");
-    const LoanVaultFactoryABI = require(artpath + "abis/LoanVaultFactory.abi");
+    const LoanFactoryAddress = require(artpath +
+      "addresses/LoanFactory.address");
+    const LoanFactoryABI = require(artpath + "abis/LoanFactory.abi");
 
-    LoanVaultFactory = new ethers.Contract(
-      LoanVaultFactoryAddress,
-      LoanVaultFactoryABI,
+    LoanFactory = new ethers.Contract(
+      LoanFactoryAddress,
+      LoanFactoryABI,
       ethers.provider.getSigner(0)
     );
 
-    const preIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
+    const preIncrementorValue = await LoanFactory.loansCreated();
 
     // ERC-20 contracts for tokens
     const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address");
@@ -74,7 +74,7 @@ describe("Calculator - Amortization Repayment", function () {
     const COLLATERAL_BIPS_RATIO = 5000; // 50%
     const FUNDING_PERIOD_DAYS = 7;
 
-    await LoanVaultFactory.createLoanVault(
+    await LoanFactory.createLoan(
       REQUESTED_ASSET,
       COLLATERAL_ASSET,
       [
@@ -86,14 +86,14 @@ describe("Calculator - Amortization Repayment", function () {
         FUNDING_PERIOD_DAYS,
       ],
       [
-        AmortizationRepaymentCalculator,
-        LateFeeNullCalculator,
-        PremiumFlatCalculator,
+        AmortizationRepaymentCalc,
+        LateFeeCalc,
+        PremiumFlatCalc,
       ],
       { gasLimit: 6000000 }
     );
 
-    vaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
+    vaultAddress = await LoanFactory.getLoan(preIncrementorValue);
 
     DAI_EXT_1 = new ethers.Contract(
       DAIAddress,
@@ -103,26 +103,26 @@ describe("Calculator - Amortization Repayment", function () {
     await DAI_EXT_1.mintSpecial(accounts[1], ABSTRACT_AMOUNT_MIN_RAISE);
     await DAI_EXT_1.approve(vaultAddress, MIN_RAISE);
 
-    LoanVault = new ethers.Contract(
+    Loan = new ethers.Contract(
       vaultAddress,
-      LoanVaultABI,
+      LoanABI,
       ethers.provider.getSigner(1)
     );
 
     // Fund loan for MIN_RAISE
-    await LoanVault.fundLoan(MIN_RAISE, accounts[1]);
+    await Loan.fundLoan(MIN_RAISE, accounts[1]);
   });
 
   it("B - Borrower draws down the loan", async function () {
-    LoanVault = new ethers.Contract(
+    Loan = new ethers.Contract(
       vaultAddress,
-      LoanVaultABI,
+      LoanABI,
       ethers.provider.getSigner(0)
     );
 
     // Fetch collateral amount required and approve loan vault.
-    const MIN_RAISE = await LoanVault.minRaise();
-    const COLLATERAL_REQUIRED = await LoanVault.collateralRequiredForDrawdown(
+    const MIN_RAISE = await Loan.minRaise();
+    const COLLATERAL_REQUIRED = await Loan.collateralRequiredForDrawdown(
       MIN_RAISE
     );
 
@@ -141,17 +141,17 @@ describe("Calculator - Amortization Repayment", function () {
     );
 
     // Drawdown for the MIN_RAISE (assumes 18 decimal precision requestAsset).
-    await LoanVault.drawdown(BigNumber.from(10).pow(18).mul(abstractMinRaise));
+    await Loan.drawdown(BigNumber.from(10).pow(18).mul(abstractMinRaise));
   });
 
   it("C - Iterate through payments", async function () {
-    LoanVault = new ethers.Contract(
+    Loan = new ethers.Contract(
       vaultAddress,
-      LoanVaultABI,
+      LoanABI,
       ethers.provider.getSigner(0)
     );
 
-    PAYMENT_INFO = await LoanVault.getNextPayment();
+    PAYMENT_INFO = await Loan.getNextPayment();
 
     // console.log(parseInt(PAYMENT_INFO[0]["_hex"])); // Total
     // console.log(parseInt(PAYMENT_INFO[1]["_hex"])); // Interest
@@ -161,21 +161,21 @@ describe("Calculator - Amortization Repayment", function () {
     DAI = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(0));
 
     await DAI.approve(vaultAddress, PAYMENT_INFO[0]);
-    await LoanVault.makePayment();
+    await Loan.makePayment();
 
-    PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+    PAYMENTS_REMAINING = await Loan.paymentsRemaining();
     PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"]);
 
     while (PAYMENTS_REMAINING > 0) {
-      PAYMENT_INFO = await LoanVault.getNextPayment();
+      PAYMENT_INFO = await Loan.getNextPayment();
       await DAI.approve(vaultAddress, PAYMENT_INFO[0]);
-      await LoanVault.makePayment();
-      PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+      await Loan.makePayment();
+      PAYMENTS_REMAINING = await Loan.paymentsRemaining();
       PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"]);
     }
 
-    PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
-    PRINCIPAL_OWED = await LoanVault.principalOwed();
+    PAYMENTS_REMAINING = await Loan.paymentsRemaining();
+    PRINCIPAL_OWED = await Loan.principalOwed();
     PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"]);
     PRINCIPAL_OWED = parseInt(PRINCIPAL_OWED["_hex"]);
 
@@ -186,17 +186,17 @@ describe("Calculator - Amortization Repayment", function () {
   it("D - Test calculator for non 18-decimal precision, USDC(6)", async function () {
     // TODO: Identify the error raised in this test.
 
-    const LoanVaultFactoryAddress = require(artpath +
-      "addresses/LoanVaultFactory.address");
-    const LoanVaultFactoryABI = require(artpath + "abis/LoanVaultFactory.abi");
+    const LoanFactoryAddress = require(artpath +
+      "addresses/LoanFactory.address");
+    const LoanFactoryABI = require(artpath + "abis/LoanFactory.abi");
 
-    LoanVaultFactory = new ethers.Contract(
-      LoanVaultFactoryAddress,
-      LoanVaultFactoryABI,
+    LoanFactory = new ethers.Contract(
+      LoanFactoryAddress,
+      LoanFactoryABI,
       ethers.provider.getSigner(0)
     );
 
-    const preIncrementorValue = await LoanVaultFactory.loanVaultsCreated();
+    const preIncrementorValue = await LoanFactory.loansCreated();
 
     // ERC-20 contracts for tokens
     const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address");
@@ -227,7 +227,7 @@ describe("Calculator - Amortization Repayment", function () {
     const COLLATERAL_BIPS_RATIO = 2000; // 20%
     const FUNDING_PERIOD_DAYS = 7;
 
-    await LoanVaultFactory.createLoanVault(
+    await LoanFactory.createLoan(
       REQUESTED_ASSET,
       COLLATERAL_ASSET,
       [
@@ -239,14 +239,14 @@ describe("Calculator - Amortization Repayment", function () {
         FUNDING_PERIOD_DAYS,
       ],
       [
-        AmortizationRepaymentCalculator,
-        LateFeeNullCalculator,
-        PremiumFlatCalculator,
+        AmortizationRepaymentCalc,
+        LateFeeCalc,
+        PremiumFlatCalc,
       ],
       { gasLimit: 6000000 }
     );
 
-    vaultAddress = await LoanVaultFactory.getLoanVault(preIncrementorValue);
+    vaultAddress = await LoanFactory.getLoan(preIncrementorValue);
 
     USDC_EXT_1 = new ethers.Contract(
       USDCAddress,
@@ -256,24 +256,24 @@ describe("Calculator - Amortization Repayment", function () {
     await USDC_EXT_1.mintSpecial(accounts[1], ABSTRACT_AMOUNT_MIN_RAISE);
     await USDC_EXT_1.approve(vaultAddress, MIN_RAISE);
 
-    LoanVault = new ethers.Contract(
+    Loan = new ethers.Contract(
       vaultAddress,
-      LoanVaultABI,
+      LoanABI,
       ethers.provider.getSigner(1) // getSigner(1) == Lender
     );
 
     // Fund loan for MIN_RAISE
-    await LoanVault.fundLoan(MIN_RAISE, accounts[1]);
+    await Loan.fundLoan(MIN_RAISE, accounts[1]);
 
-    LoanVault = new ethers.Contract(
+    Loan = new ethers.Contract(
       vaultAddress,
-      LoanVaultABI,
+      LoanABI,
       ethers.provider.getSigner(0) // getSigner(0) == Borrower
     );
 
     // Fetch collateral amount required and approve loan vault.
-    const MIN_RAISE_ONCHAIN = await LoanVault.minRaise();
-    const COLLATERAL_REQUIRED = await LoanVault.collateralRequiredForDrawdown(
+    const MIN_RAISE_ONCHAIN = await Loan.minRaise();
+    const COLLATERAL_REQUIRED = await Loan.collateralRequiredForDrawdown(
       MIN_RAISE_ONCHAIN
     );
 
@@ -292,7 +292,7 @@ describe("Calculator - Amortization Repayment", function () {
     );
 
     // Drawdown for the MIN_RAISE, pow(6) is USDC decimal precision
-    await LoanVault.drawdown(MIN_RAISE);
+    await Loan.drawdown(MIN_RAISE);
 
     // Make first payment.
     USDC = new ethers.Contract(
@@ -301,24 +301,24 @@ describe("Calculator - Amortization Repayment", function () {
       ethers.provider.getSigner(0)
     );
 
-    PAYMENT_INFO = await LoanVault.getNextPayment();
+    PAYMENT_INFO = await Loan.getNextPayment();
     await USDC.approve(vaultAddress, PAYMENT_INFO[0]);
-    await LoanVault.makePayment();
+    await Loan.makePayment();
 
     // Make remaining payments.
-    PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+    PAYMENTS_REMAINING = await Loan.paymentsRemaining();
     PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"]);
 
     while (PAYMENTS_REMAINING > 0) {
-      PAYMENT_INFO = await LoanVault.getNextPayment();
+      PAYMENT_INFO = await Loan.getNextPayment();
       await USDC.approve(vaultAddress, PAYMENT_INFO[0]);
-      await LoanVault.makePayment();
-      PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
+      await Loan.makePayment();
+      PAYMENTS_REMAINING = await Loan.paymentsRemaining();
       PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"]);
     }
 
-    PAYMENTS_REMAINING = await LoanVault.numberOfPayments();
-    PRINCIPAL_OWED = await LoanVault.principalOwed();
+    PAYMENTS_REMAINING = await Loan.paymentsRemaining();
+    PRINCIPAL_OWED = await Loan.principalOwed();
     PAYMENTS_REMAINING = parseInt(PAYMENTS_REMAINING["_hex"]);
     PRINCIPAL_OWED = parseInt(PRINCIPAL_OWED["_hex"]);
 

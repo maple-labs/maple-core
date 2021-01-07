@@ -10,8 +10,8 @@ const treasuryABI = require(artpath + "abis/MapleTreasury.abi.js");
 const fundsTokenAddress = require(artpath +
   "addresses/MintableTokenUSDC.address.js");
 const fundsTokenABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
-const mapleTokenAddress = require(artpath + "addresses/MapleToken.address.js");
-const mapleTokenABI = require(artpath + "abis/MapleToken.abi.js");
+const mplAddress = require(artpath + "addresses/MapleToken.address.js");
+const mplABI = require(artpath + "abis/MapleToken.abi.js");
 const uniswapRouterAddress = require(artpath +
   "addresses/UniswapV2Router02.address");
 const uniswapRouterABI = require(artpath + "abis/UniswapV2Router02.abi");
@@ -25,7 +25,7 @@ describe("MapleTreasury.sol", function () {
   let mintableDAI,
     fundsToken,
     mapleTreasury,
-    mapleToken,
+    mpl,
     uniswapRouter,
     uniswapFactory;
 
@@ -45,9 +45,9 @@ describe("MapleTreasury.sol", function () {
       treasuryABI,
       ethers.provider.getSigner(0)
     );
-    mapleToken = new ethers.Contract(
-      mapleTokenAddress,
-      mapleTokenABI,
+    mpl = new ethers.Contract(
+      mplAddress,
+      mplABI,
       ethers.provider.getSigner(0)
     );
     uniswapRouter = new ethers.Contract(
@@ -78,7 +78,7 @@ describe("MapleTreasury.sol", function () {
     const treasuryBalancePre = BigInt(
       await fundsToken.balanceOf(treasuryAddress)
     );
-    const MPLBalancePre = BigInt(await fundsToken.balanceOf(mapleTokenAddress));
+    const MPLBalancePre = BigInt(await fundsToken.balanceOf(mplAddress));
 
     expect(await mapleTreasury.passThroughFundsToken());
   });
@@ -130,7 +130,7 @@ describe("MapleTreasury.sol", function () {
     const DAIDecimals = await mintableDAI.decimals();
     const USDCDecimals = await fundsToken.decimals();
     let treasuryDAIBalance = await mintableDAI.balanceOf(treasuryAddress);
-    let mapleUSDCBalance = await fundsToken.balanceOf(mapleTokenAddress);
+    let mapleUSDCBalance = await fundsToken.balanceOf(mplAddress);
     treasuryDAIBalance =
       parseInt(treasuryDAIBalance["_hex"]) / 10 ** DAIDecimals;
     mapleUSDCBalance = parseInt(mapleUSDCBalance["_hex"]) / 10 ** USDCDecimals;
@@ -138,7 +138,7 @@ describe("MapleTreasury.sol", function () {
     expect(await mapleTreasury.convertERC20(mintableDAIAddress));
 
     treasuryDAIBalance = await mintableDAI.balanceOf(treasuryAddress);
-    mapleUSDCBalance = await fundsToken.balanceOf(mapleTokenAddress);
+    mapleUSDCBalance = await fundsToken.balanceOf(mplAddress);
     treasuryDAIBalance =
       parseInt(treasuryDAIBalance["_hex"]) / 10 ** DAIDecimals;
     mapleUSDCBalance = parseInt(mapleUSDCBalance["_hex"]) / 10 ** USDCDecimals;
@@ -146,11 +146,11 @@ describe("MapleTreasury.sol", function () {
 
   it("claim fee distribution from convertERC20()", async function () {
     const accounts = await ethers.provider.listAccounts();
-    const preWithdraw = await mapleToken.withdrawnFundsOf(accounts[0]);
+    const preWithdraw = await mpl.withdrawnFundsOf(accounts[0]);
 
-    expect(await mapleToken.withdrawFunds());
+    expect(await mpl.withdrawFunds());
 
-    const postWithdraw = await mapleToken.withdrawnFundsOf(accounts[0]);
+    const postWithdraw = await mpl.withdrawnFundsOf(accounts[0]);
 
     expect(parseInt(postWithdraw["_hex"])).to.be.above(
       parseInt(preWithdraw["_hex"])
@@ -169,11 +169,11 @@ describe("MapleTreasury.sol", function () {
 
   it("claim fee distribution from convertETH()", async function () {
     const accounts = await ethers.provider.listAccounts();
-    const preWithdraw = await mapleToken.withdrawnFundsOf(accounts[0]);
+    const preWithdraw = await mpl.withdrawnFundsOf(accounts[0]);
 
-    expect(await mapleToken.withdrawFunds());
+    expect(await mpl.withdrawFunds());
 
-    const postWithdraw = await mapleToken.withdrawnFundsOf(accounts[0]);
+    const postWithdraw = await mpl.withdrawnFundsOf(accounts[0]);
 
     expect(parseInt(postWithdraw["_hex"])).to.be.above(
       parseInt(preWithdraw["_hex"])

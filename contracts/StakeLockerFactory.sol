@@ -3,12 +3,11 @@
 pragma solidity >=0.6.11;
 
 import "./StakeLocker.sol";
-// import "hardhat/console.sol";
 
 contract StakeLockerFactory {
 
-    mapping(address => address) private ownerOfLocker;  // Mapping of StakeLocker contracts to owners of StakeLockers.
-    mapping(address => bool)    private isLocker;       // Mapping for validation of lockers, confirmed when initialized through this contract.
+    mapping(address => address) private owners;    // Mapping of StakeLocker contracts to owners of StakeLockers.
+    mapping(address => bool)    private isLocker;  // Mapping for validation of lockers, confirmed when initialized through this contract.
 
     event StakeLockerCreated(
         address owner,
@@ -20,43 +19,41 @@ contract StakeLockerFactory {
     );
 
     /// @notice Creates a new locker.
-    /// @param _stakeAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
-    /// @param _liquidityAsset The address of the dividend token, also the primary investment asset of the LP.
+    /// @param stakeAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
+    /// @param liquidityAsset The address of the dividend token, also the primary investment asset of the LP.
     /// @return The address of the newly created locker.
     //TODO: add a modifier here that only lets a liquidity pool run this. This is good for security, but not critical.
     function newLocker(
-        address _stakeAsset,
-        address _liquidityAsset,
-        address _globals
+        address stakeAsset,
+        address liquidityAsset,
+        address globals
     ) external returns (address) {
-        address _owner = address(msg.sender);
-        address _stakeLocker = address(new StakeLocker(_stakeAsset, _liquidityAsset, _owner, _globals));
-        ownerOfLocker[_stakeLocker] = _owner; //address of LP contract that sent it, not poolManagers
-        isLocker[_stakeLocker] = true;
+        address stakeLocker   = address(new StakeLocker(stakeAsset, liquidityAsset, msg.sender, globals));
+        owners[stakeLocker]   = msg.sender; //address of LP contract that sent it, not poolManagers
+        isLocker[stakeLocker] = true;
 
         emit StakeLockerCreated(
-            _owner, 
-            _stakeLocker,
-            _stakeAsset, 
-            _liquidityAsset, 
-            StakeLocker(_stakeLocker).name(), 
-            StakeLocker(_stakeLocker).symbol()
+            msg.sender, 
+            stakeLocker,
+            stakeAsset, 
+            liquidityAsset, 
+            StakeLocker(stakeLocker).name(), 
+            StakeLocker(stakeLocker).symbol()
         );
-        return _stakeLocker;
+        return stakeLocker;
     }
 
-    /// @notice Returns the address of the StakeLocker's owner (should be a LiquidityPool).
-    /// @param _locker Address of the StakeLocker.
+    /// @notice Returns the address of the StakeLocker's owner (should be a Pool).
+    /// @param locker Address of the StakeLocker.
     /// @return Owner of the StakeLocker.
-    function getOwner(address _locker) public view returns (address) {
-        return ownerOfLocker[_locker];
+    function getOwner(address locker) public view returns (address) {
+        return owners[locker];
     }
 
     /// @notice Validates if the provided address is a LiqudityLocker created through this factory.
-    /// @param _locker Address of the StakeLocker that needs validation.
-    /// @return true if _locker is a valid StakeLocker.
-    function isStakeLocker(address _locker) external view returns (bool) {
-        return isLocker[_locker];
+    /// @param locker Address of the StakeLocker that needs validation.
+    /// @return true if locker is a valid StakeLocker.
+    function isStakeLocker(address locker) external view returns (bool) {
+        return isLocker[locker];
     }
-
 }

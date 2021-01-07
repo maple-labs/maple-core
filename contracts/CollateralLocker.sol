@@ -5,25 +5,24 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract CollateralLocker {
 
-    
     address public immutable collateralAsset;  // Address the loan is funded with.
-    address public immutable loanVault;        // LoanVault this CollateralLocker is attached to.
+    address public immutable loan;             // Loan this CollateralLocker is attached to.
 
-    constructor(address _collateralAsset, address _loanVault) public {
+    constructor(address _collateralAsset, address _loan) public {
         collateralAsset = _collateralAsset;
-        loanVault = _loanVault;
+        loan            = _loan;
     }
 
-    modifier isLoanVault() {
-        require(msg.sender == loanVault, "CollateralLocker::ERR_ISLOANVAULT_CHECK");
+    modifier isLoan() {
+        require(msg.sender == loan, "CollateralLocker::ERR_ISLOAN_CHECK");
         _;
     }
 
-    /// @notice Transfers _amount of collateralAsset to _destination.
-    /// @param _destination Desintation to transfer fundingAsset to.
-    /// @param _amount Amount of fundingAsset to transfer.
-    function pull(address _destination, uint256 _amount) isLoanVault public returns(bool) {
-        return IERC20(collateralAsset).transfer(_destination, _amount);
+    /// @notice Transfers _amount of collateralAsset to dst.
+    /// @param dst Desintation to transfer collateralAsset to.
+    /// @param amt Amount of collateralAsset to transfer.
+    function pull(address dst, uint256 amt) isLoan public returns(bool) {
+        return IERC20(collateralAsset).transfer(dst, amt);
     }
     
 }

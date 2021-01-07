@@ -3,29 +3,29 @@ pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-interface ILoanVault is IERC20 {
+interface ILoan is IERC20 {
     
     // State Variables
     function fundsTokenBalance() external view returns (uint256);
-    function assetRequested() external view returns (address);
-    function assetCollateral() external view returns (address);
+    function loanAsset() external view returns (address);
+    function collateralAsset() external view returns (address);
     function fundingLocker() external view returns (address);
-    function fundingLockerFactory() external view returns (address);
+    function flFactory() external view returns (address);
     function collateralLocker() external view returns (address);
-    function collateralLockerFactory() external view returns (address);
+    function clFactory() external view returns (address);
     function borrower() external view returns (address);
-    function repaymentCalculator() external view returns (address);
-    function premiumCalculator() external view returns (address);
+    function repaymentCalc() external view returns (address);
+    function premiumCalc() external view returns (address);
     function loanState() external view returns (uint256);
 
     // Loan Specifications
-    function aprBips() external view returns (uint256);
-    function numberOfPayments() external view returns (uint256);
+    function apr() external view returns (uint256);
+    function paymentsRemaining() external view returns (uint256);
     function paymentIntervalSeconds() external view returns (uint256);
     function minRaise() external view returns (uint256);
-    function collateralBipsRatio() external view returns (uint256);
+    function collateralRatio() external view returns (uint256);
     function fundingPeriodSeconds() external view returns (uint256);
-    function loanCreatedTimestamp() external view returns (uint256);
+    function createdAt() external view returns (uint256);
     function principalOwed() external view returns (uint256);
     function drawdownAmount() external view returns (uint256);
     function principalPaid() external view returns (uint256);
