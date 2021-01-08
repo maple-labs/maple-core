@@ -97,7 +97,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
 
   let vaultAddress;
 
-  it("test invalid instantiations from loanVault from factory", async function () {
+  xit("test invalid instantiations from loanVault from factory", async function () {
     await expect(
       LoanFactory.createLoan(
         DAIAddress,
@@ -250,7 +250,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
     );
   });
 
-  it("instantiate loanVault from factory", async function () {
+  xit("instantiate loanVault from factory", async function () {
     // Confirm incrementor pre/post-checks.
     const preIncrementorValue = await LoanFactory.loansCreated();
 
@@ -293,7 +293,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
     expect(vaultAddress).to.equals(owner);
   });
 
-  it("confirm loanVault borrower, other state vars, and specifications", async function () {
+  xit("confirm loanVault borrower, other state vars, and specifications", async function () {
     Globals = new ethers.Contract(
       GlobalsAddress,
       GlobalsABI,
@@ -414,7 +414,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
       currentCollateralLockerFactory
     );
   });
-  it("Check symbol and name UUID match in symbol and name", async function () {
+  xit("Check symbol and name UUID match in symbol and name", async function () {
     const loanVaultAddress1 = await LoanFactory.getLoan(0);
     const loanVaultAddress2 = await LoanFactory.getLoan(1);
     Loan1 = new ethers.Contract(

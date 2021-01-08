@@ -130,23 +130,24 @@ contract LoanTest is TestUtil {
 
         Loan loanVault = ali.createLoan(loanFactory, DAI, WETH, specs_vault, calcs_vault);
     
-        assertEq(loanVault.loanAsset(),               DAI);
-        assertEq(loanVault.collateralAsset(),              WETH);
-        assertEq(loanVault.flFactory(),         address(flFactory));
-        assertEq(loanVault.clFactory(),      address(clFactory));
-        assertEq(loanVault.borrower(),                     address(ali));
-        assertEq(loanVault.createdAt(),         block.timestamp);
-        assertEq(loanVault.apr(),                      specs_vault[0]);
-        assertEq(loanVault.termDays(),                     specs_vault[1]);
-        assertEq(loanVault.paymentsRemaining(),             specs_vault[1] / specs_vault[2]);
-        assertEq(loanVault.paymentIntervalSeconds(),       specs_vault[2] * 1 days);
-        assertEq(loanVault.minRaise(),                     specs_vault[3]);
-        assertEq(loanVault.collateralRatio(),              specs_vault[4]);
-        assertEq(loanVault.fundingPeriodSeconds(),         specs_vault[5] * 1 days);
-        assertEq(address(loanVault.repaymentCalc()), address(bulletCalc));
-        assertEq(address(loanVault.lateFeeCalc()),   address(lateFeeCalc));
-        assertEq(address(loanVault.premiumCalc()),   address(premiumCalc));
-        assertEq(loanVault.nextPaymentDue(),               block.timestamp + loanVault.paymentIntervalSeconds());
+        assertEq(loanVault.loanAsset(),                                          DAI);
+        assertEq(loanVault.collateralAsset(),                                   WETH);
+        assertEq(loanVault.flFactory(),                           address(flFactory));
+        assertEq(loanVault.clFactory(),                           address(clFactory));
+        assertEq(loanVault.borrower(),                                  address(ali));
+        assertEq(loanVault.createdAt(),                              block.timestamp);
+        assertEq(loanVault.apr(),                                     specs_vault[0]);
+        assertEq(loanVault.termDays(),                                specs_vault[1]);
+        assertEq(loanVault.paymentsRemaining(),      specs_vault[1] / specs_vault[2]);
+        assertEq(loanVault.paymentIntervalSeconds(),         specs_vault[2] * 1 days);
+        assertEq(loanVault.minRaise(),                                specs_vault[3]);
+        assertEq(loanVault.collateralRatio(),                         specs_vault[4]);
+        assertEq(loanVault.fundingPeriodSeconds(),           specs_vault[5] * 1 days);
+        assertEq(address(loanVault.repaymentCalc()),             address(bulletCalc));
+        assertEq(address(loanVault.lateFeeCalc()),              address(lateFeeCalc));
+        assertEq(address(loanVault.premiumCalc()),              address(premiumCalc));
+
+        assertEq(loanVault.nextPaymentDue(), block.timestamp + loanVault.paymentIntervalSeconds());
     }
 
     function test_fundLoan() public {

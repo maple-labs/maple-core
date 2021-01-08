@@ -7,7 +7,7 @@ import "./interfaces/ILoanFactory.sol";
 contract CollateralLockerFactory {
 
     mapping(address => address) public owner;     // owner[locker] = Owner of the collateral locker.
-    mapping(address => bool)    public isLocker;  // True if collateralLocker was created by this factory, otherwise false.
+    mapping(address => bool)    public isLocker;  // True if collateral locker was created by this factory, otherwise false.
 
     /// @notice Instantiate a CollateralLocker contract.
     /// @param collateralAsset Address of the collateral asset.
