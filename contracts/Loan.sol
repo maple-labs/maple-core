@@ -3,8 +3,7 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "./token/IFundsDistributionToken.sol";
-import "./token/FundsDistributionToken.sol";
+import "./token/FDT.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/IFundingLocker.sol";
 import "./interfaces/IFundingLockerFactory.sol";
@@ -16,7 +15,7 @@ import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/IPremiumCalc.sol";
 
 /// @title Loan is the core loan vault contract.
-contract Loan is IFundsDistributionToken, FundsDistributionToken {
+contract Loan is FDT {
     
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
@@ -25,8 +24,6 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
     enum State { Live, Active, Matured } // Live = Created, Active = Drawndown
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
-
-    IERC20  private fundsToken;  // The fundsToken (dividends) and loanAsset. (TODO: Remove redundant variable)
 
     address public immutable loanAsset;         // Asset deposited by lenders into the FundingLocker, when funding this loan.
     address public immutable collateralAsset;   // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
@@ -40,7 +37,6 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
     address public immutable lateFeeCalc;       // The late fee calculator for this loan.
     address public immutable premiumCalc;       // The premium calculator for this loan.
 
-    uint256 public fundsTokenBalance;  // The amount of fundsToken (loanAsset) currently present and accounted for in this contract.
     uint256 public principalOwed;      // The principal owed (initially the drawdown amount).
     uint256 public drawdownAmount;     // The amount the borrower drew down, historical reference for calculators.
     uint256 public nextPaymentDue;     // The unix timestamp due date of next payment.
@@ -103,9 +99,10 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
         address[3] memory calcs,
         string memory tUUID
     )
-        FundsDistributionToken(
+        FDT(
             string(abi.encodePacked("Maple Loan Vault Token ", tUUID)),
-            string(abi.encodePacked("ML", tUUID))
+            string(abi.encodePacked("ML", tUUID)),
+            _loanAsset
         )
         public
     {
@@ -120,7 +117,6 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
         flFactory       = _flFactory;
         clFactory       = _clFactory;
         globals         = _globals;
-        fundsToken      = IERC20(_loanAsset);  // TODO: remove when inheriting FDT 
         createdAt       = block.timestamp;
 
         // Perform validity cross-checks.
@@ -388,45 +384,5 @@ contract Loan is IFundsDistributionToken, FundsDistributionToken {
         uint256 collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - IERC20Details(collateralAsset).decimals()));
 
         return collateralRequiredFIN;
-    }
-
-    /**
-     * @notice Withdraws all available funds for a token holder
-     */
-    function withdrawFunds() external override {
-        uint256 withdrawableFunds = _prepareWithdraw();
-
-        require(
-            fundsToken.transfer(msg.sender, withdrawableFunds),
-            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
-        );
-
-        _updateFundsTokenBalance();
-    }
-
-    /**
-     * @dev Updates the current funds token balance
-     * and returns the difference of new and previous funds token balances
-     * @return A int256 representing the difference of the new and previous funds token balance
-     */
-    function _updateFundsTokenBalance() internal returns (int256) {
-        uint256 _prevFundsTokenBalance = fundsTokenBalance;
-
-        fundsTokenBalance = fundsToken.balanceOf(address(this));
-
-        return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
-    }
-
-    /**
-     * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
-     * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
-     * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
-     */
-    function updateFundsReceived() public {
-        int256 newFunds = _updateFundsTokenBalance();
-
-        if (newFunds > 0) {
-            _distributeFunds(newFunds.toUint256Safe());
-        }
     }
 }

@@ -1,9 +1,9 @@
 
 
 ## Functions:
-[`withdrawableFundsOf(address _owner)`](#FundsDistributionToken-withdrawableFundsOf-address-)
-[`withdrawnFundsOf(address _owner)`](#FundsDistributionToken-withdrawnFundsOf-address-)
-[`accumulativeFundsOf(address _owner)`](#FundsDistributionToken-accumulativeFundsOf-address-)
+[`withdrawableFundsOf(address _owner)`](#FDT-withdrawableFundsOf-address-)
+[`withdrawnFundsOf(address _owner)`](#FDT-withdrawnFundsOf-address-)
+[`accumulativeFundsOf(address _owner)`](#FDT-accumulativeFundsOf-address-)
 
 
 ## <u>Functions</u>
