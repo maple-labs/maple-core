@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-interface IFundsDistributionToken {
+interface IFDT {
     /**
      * @dev Returns the total amount of funds a given address is able to withdraw currently.
-     * @param owner Address of FundsDistributionToken holder
+     * @param owner Address of FDT holder
      * @return A uint256 representing the available funds for a given account
      */
     function withdrawableFundsOf(address owner) external view returns (uint256);
 
     /**
-     * @dev Withdraws all available funds for a FundsDistributionToken holder. 
+     * @dev Withdraws all available funds for a FDT holder. 
      */
     function withdrawFunds() external;
 

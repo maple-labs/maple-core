@@ -3,13 +3,12 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "./token/IFundsDistributionToken.sol";
-import "./token/FundsDistributionToken.sol";
+import "./token/FDT.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IGlobals.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
-contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
+contract StakeLocker is FDT {
 
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
@@ -20,10 +19,6 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
     address public immutable owner;           // The parent liquidity pool. (TODO: Consider if this variable is needed, redundant to IParentLP)
     address public immutable globals;         // Maple globals
-    
-    IERC20 private fundsToken;  // ERC-2222 token used to claim revenues (TODO: Move to FDT)
-
-    uint256 public fundsTokenBalance;  //  The amount of LiquidityAsset tokens (dividends) currently present and accounted for in this contract.
 
     bool private isLPDefunct;    // The LiquidityAsset for the Pool as well as the dividend token for this contract.
     bool private isLPFinalized;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
@@ -32,18 +27,17 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
-    // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
+    // TODO: Dynamically assign name and locker to the FDT() params.
     constructor(
         address _stakeAsset,
         address _liquidityAsset,
         address _owner,
         address _globals
-    ) FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") public {
+    ) FDT("Maple Stake Locker", "MPLSTAKE", _liquidityAsset) public {
         liquidityAsset = _liquidityAsset;
         stakeAsset     = _stakeAsset;
         owner          = _owner;
         globals        = _globals;
-        fundsToken     = IERC20(_liquidityAsset);
     }
 
     event   Stake(uint256 _amount, address _staker);
@@ -68,7 +62,7 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     }
 
     /**
-     * @notice Deposit stakeAsset and mint an equal number of FundsDistributionTokens to the user
+     * @notice Deposit stakeAsset and mint an equal number of FDTs to the user
      * @param amt Amount of stakeAsset(BPTs) to stake
      */
     function stake(uint256 amt) external {
@@ -154,45 +148,5 @@ contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
     function _transfer(address from, address to, uint256 amt) internal override delegateLock {
         super._transfer(from, to, amt);
         _updateStakeDate(to, amt);
-    }
-
-    /**
-     * @notice Withdraws all available funds for a token holder
-     */
-    function withdrawFunds() public override {
-        // Must be public so it can be called insdie here
-        uint256 withdrawableFunds = _prepareWithdraw();
-        require(
-            fundsToken.transfer(msg.sender, withdrawableFunds),
-            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
-        );
-
-        _updateFundsTokenBalance();
-    }
-
-    /**
-     * @dev Updates the current funds token balance
-     * and returns the difference of new and previous funds token balances
-     * @return A int256 representing the difference of the new and previous funds token balance
-     */
-    function _updateFundsTokenBalance() internal returns (int256) {
-        uint256 prevFundsTokenBalance = fundsTokenBalance;
-
-        fundsTokenBalance = fundsToken.balanceOf(address(this));
-
-        return int256(fundsTokenBalance).sub(int256(prevFundsTokenBalance));
-    }
-
-    /**
-     * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
-     * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
-     * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
-     */
-    function updateFundsReceived() public {
-        int256 newFunds = _updateFundsTokenBalance();
-
-        if (newFunds > 0) {
-            _distributeFunds(newFunds.toUint256Safe());
-        }
     }
 }
