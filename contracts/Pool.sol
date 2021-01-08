@@ -168,8 +168,6 @@ contract Pool is IERC20, ERC20 {
         emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
     }
 
-    event Debug(string,uint);
-
     function withdraw(uint256 amt) external notDefunct finalized {
         require(balanceOf(msg.sender) >= amt, "Pool::withdraw:USER_BAL_LESS_THAN_AMT");
 
@@ -181,21 +179,9 @@ contract Pool is IERC20, ERC20 {
         uint256 interest   = due.mul(ratio).div(WAD);                                                 // Get nominal interest owned by sender
         uint256 priPenalty = IGlobals(globals).principalPenalty().mul(due.sub(interest)).div(10000);  // Calculate flat principal penalty
         uint256 totPenalty = calcInterestPenalty(interest.add(priPenalty), msg.sender);               // Get total penalty, however it may be calculated
-
-        emit Debug("priPenalty", priPenalty);
-        emit Debug("totPenalty", totPenalty);
-        emit Debug("share", share);
-        emit Debug("bal", bal);
-        emit Debug("due", due);
-        emit Debug("ratio", ratio);
-        emit Debug("interest", interest);
-        emit Debug("interestSum", interestSum);
         
         due         = due.sub(totPenalty);                        // Remove penalty from due amount
         interestSum = interestSum.sub(interest).add(totPenalty);  // Update interest total reflecting withdrawn amount (distributes principal penalty as interest)
-
-        emit Debug("due2", due);
-        emit Debug("interestSum2", interestSum);
 
         _burn(msg.sender, amt); // TODO: Unit testing on _burn / _mint for ERC-2222
         require(IERC20(liquidityLocker).transfer(msg.sender, due), "Pool::ERR_WITHDRAW_TRANSFER");
@@ -299,11 +285,6 @@ contract Pool is IERC20, ERC20 {
         uint256 unlocked = dTime.div(IGlobals(globals).interestDelay()).mul(interest) / WAD;
 
         out = unlocked > interest ? 0 : interest - unlocked;
-
-        emit Debug("dTime", dTime);
-        emit Debug("interest", interest);
-        emit Debug("unlocked", unlocked);
-        emit Debug("out", out);
     }
 
     function updateDepositDate(uint256 amt, address who) internal {

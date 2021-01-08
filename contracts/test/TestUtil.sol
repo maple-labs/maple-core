@@ -70,7 +70,7 @@ contract TestUtil is DSTest {
     }
 
     // Verify equality within accuracy decimals
-    function withinTolerance(uint256 val0, uint256 val1, uint256 accuracy) public {
+    function withinPrecision(uint256 val0, uint256 val1, uint256 accuracy) public {
         uint diff  = val0 > val1 ? val0 - val1 : val1 - val0;
         bool check = ((diff * RAY) / val0) < (RAY / 10 ** accuracy);   
 

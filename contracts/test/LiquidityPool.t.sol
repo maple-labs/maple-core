@@ -121,12 +121,14 @@ contract Borrower {
 
 contract PoolTest is TestUtil {
 
+    using SafeMath for uint256;
+
     ERC20                           fundsToken;
     MapleToken                             mpl;
     MapleGlobals                       globals;
     FundingLockerFactory             flFactory;
     CollateralLockerFactory          clFactory;
-    LoanFactory                   loanFactory;
+    LoanFactory                    loanFactory;
     Loan                                  loan;
     Loan                                 loan2;
     PoolFactory                 liqPoolFactory;
@@ -842,81 +844,7 @@ contract PoolTest is TestUtil {
         }
     }
 
-    function test_withdraw() public {
-
-        /*******************************/
-        /*** Finalize liquidity pool ***/
-        /*******************************/
-        address stakeLocker = pool1.stakeLocker();
-        address liqLocker   = pool1.liquidityLocker();
-
-        sid.approve(address(bPool), stakeLocker, uint(-1));
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-
-        pool1.finalize();
-
-        /**************************************************/
-        /*** Mint and deposit funds into liquidity pool ***/
-        /**************************************************/
-        mint("DAI", address(bob), 100 ether);
-        mint("DAI", address(che), 100 ether);
-        mint("DAI", address(dan), 100 ether);
-
-        bob.approve(DAI, address(pool1), uint(-1));
-        che.approve(DAI, address(pool1), uint(-1));
-        dan.approve(DAI, address(pool1), uint(-1));
-
-        assertTrue(bob.try_deposit(address(pool1), 10 ether));  // 10%
-        assertTrue(che.try_deposit(address(pool1), 30 ether));  // 30%
-        assertTrue(dan.try_deposit(address(pool1), 60 ether));  // 60%
-
-        globals.setLoanFactory(address(loanFactory));
-
-        /*******************************************/
-        /*** Create new dlFactory1 and Loan ***/
-        /*******************************************/
-        DebtLockerFactory dlFactory2 = new DebtLockerFactory();
-
-        // Create Loan Vault
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
-        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
-
-        Loan loan2 = Loan(loanFactory.createLoan(DAI, WETH, specs, calcs));
-
-        address fundingLocker  = loan.fundingLocker();
-        address fundingLocker2 = loan2.fundingLocker();
-
-        /******************/
-        /*** Fund Loans ***/
-        /******************/
-        assertEq(IERC20(DAI).balanceOf(liqLocker),              100 ether);  // Balance of Liquidity Locker
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),         0);  // Balance of Funding Locker
-
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1),  20 ether));  // Fund loan for 20 DAI
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1),  25 ether));  // Fund same loan for 25 DAI
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2),  15 ether));  // Fund new loan same loan for 15 DAI
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2),  15 ether));  // Fund new loan new loan for 15 DAI
-
-        address ltLocker  = pool1.debtLockers(address(loan),  address(dlFactory1));
-        address ltLocker2 = pool1.debtLockers(address(loan),  address(dlFactory2));
-        address ltLocker3 = pool1.debtLockers(address(loan2), address(dlFactory2));
-
-        assertEq(IERC20(DAI).balanceOf(liqLocker),               25 ether);  // Balance of Liquidity Locker
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  60 ether);  // Balance of Funding Locker
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 15 ether);  // Balance of Funding Locker of loan 2
-        assertEq(IERC20(loan).balanceOf(ltLocker),               45 ether);  // LoanToken balance of LT Locker
-        assertEq(IERC20(loan).balanceOf(ltLocker2),              15 ether);  // LoanToken balance of LT Locker 2
-        assertEq(IERC20(loan2).balanceOf(ltLocker3),             15 ether);  // LoanToken balance of LT Locker 3
-
-        assertEq(IERC20(DAI).balanceOf(address(bob)), 90 ether);
-        bob.withdraw(address(pool1), pool1.balanceOf(address(bob)));
-        assertEq(IERC20(DAI).balanceOf(address(bob)), 100 ether - 0.5 ether); // Withdrew immediately (lost 5% of 10 DAI deposit)
-
-        // TODO: Post-claim, multiple providers
-    }
-    
-    function test_interest() public {
-
+    function setUpWithdraw() internal {
         /*******************************/
         /*** Finalize liquidity pool ***/
         /*******************************/
@@ -1066,88 +994,103 @@ contract PoolTest is TestUtil {
             assertEq(uint256(loan.loanState()),  2);
             assertEq(uint256(loan2.loanState()), 2);
         }
+    }
+    
+    function test_withdraw_calculator() public {
+        setUpWithdraw();
 
-        /***********************************/
-        /*** Interest Penalty Calculator ***/
-        /***********************************/
-        {
-            uint256 start = block.timestamp;
-            uint256 delay = globals.interestDelay();
+        uint256 start = block.timestamp;
+        uint256 delay = globals.interestDelay();
 
-            // assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
 
-            hevm.warp(start + delay / 3);
-            withinTolerance(pool1.calcInterestPenalty(1 ether, address(bob)), uint(2 ether) / 3, 6); // After 1/3 delay has passed, 2/3 (interest + penalty) is subtracted
+        hevm.warp(start + delay / 3);
+        withinPrecision(pool1.calcInterestPenalty(1 ether, address(bob)), uint(2 ether) / 3, 6); // After 1/3 delay has passed, 2/3 (interest + penalty) is subtracted
 
-            hevm.warp(start + delay / 2);
-            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0.5 ether);  // After half delay has passed, 1/2 (interest + penalty) is subtracted
+        hevm.warp(start + delay / 2);
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0.5 ether);  // After half delay has passed, 1/2 (interest + penalty) is subtracted
 
-            hevm.warp(start + delay - 1);
-            assertTrue(pool1.calcInterestPenalty(1 ether, address(bob)) > 0); // Still a penalty
-            
-            hevm.warp(start + delay);
-            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0); // After delay has passed, no penalty
+        hevm.warp(start + delay - 1);
+        assertTrue(pool1.calcInterestPenalty(1 ether, address(bob)) > 0); // Still a penalty
+        
+        hevm.warp(start + delay);
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0); // After delay has passed, no penalty
 
-            hevm.warp(start + delay + 1);
-            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0); 
+        hevm.warp(start + delay + 1);
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0); 
 
-            hevm.warp(start + delay * 2);
-            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
+        hevm.warp(start + delay * 2);
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
 
-            hevm.warp(start + delay * 1000);
-            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
-        }
-
-        /*******************************************/
-        /*** Interest only penalty on withdrawal ***/
-        /*******************************************/
-        {
-            globals.setPrincipalPenalty(0);
-            uint start = block.timestamp;
-            mint("DAI", address(kim), 2000 ether);
-            kim.approve(DAI, address(pool1), uint(-1));
-            assertTrue(kim.try_deposit(address(pool1), 1000 ether));
-            kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
-            withinTolerance(IERC20(DAI).balanceOf(address(kim)),2000 ether, 11);
-            assertTrue(kim.try_deposit(address(pool1), 1000 ether));
-            hevm.warp(start + globals.interestDelay()+1);
-            kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
-            assertGt(IERC20(DAI).balanceOf(address(kim)),2000 ether);
-        }
-        /*******************************************/
-        /*** Interest only penalty on withdrawal ***/
-        /*******************************************/
-        {
-            globals.setPrincipalPenalty(500);
-            uint start = block.timestamp;
-            
-            assertTrue(kim.try_deposit(address(pool1), 1000 ether));
-            kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
-            assertTrue(IERC20(DAI).balanceOf(address(kim))<2000 ether);
-            assertTrue(IERC20(DAI).balanceOf(address(kim))>1950 ether);
-            assertTrue(kim.try_deposit(address(pool1), 1000 ether));
-            
-            hevm.warp(start + globals.interestDelay()+1);
-            kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
-            assertGt(IERC20(DAI).balanceOf(address(kim)),1950 ether);
-
-        }
-
-        {
-            mint("DAI", address(kim), 2000 ether);
-            uint256 start = block.timestamp;
-            log_named_uint("blocktime",block.timestamp);
-            assertTrue(kim.try_deposit(address(pool1), 1000 ether));
-            assertTrue(bob.try_deposit(address(pool1), 1_000_000 ether));
-            assertEq(pool1.calcInterestPenalty(1 ether,address(kim)),1 ether);
-            hevm.warp(start + globals.interestDelay()/2);
-            withinTolerance(pool1.calcInterestPenalty(1 ether,address(kim)),uint(1 ether)/2,6);
-            hevm.warp(start + globals.interestDelay() +1);
-            assertEq(pool1.calcInterestPenalty(1 ether,address(kim)),0);
-            assertTrue(kim.try_deposit(address(pool1), 1000 ether));
-            withinTolerance(pool1.calcInterestPenalty(2 ether,address(kim)),uint(1 ether),6);
-            hevm.warp(start + globals.interestDelay()*2+1);
-            assertEq(pool1.calcInterestPenalty(1 ether,address(kim)),0);
-        }
+        hevm.warp(start + delay * 1000);
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
     }    
+
+    function test_withdraw_no_principal_penalty() public {
+        setUpWithdraw();
+
+        uint start = block.timestamp;
+
+        globals.setPrincipalPenalty(0);
+        mint("DAI", address(kim), 2000 ether);
+        kim.approve(DAI, address(pool1), uint(-1));
+        assertTrue(kim.try_deposit(address(pool1), 1000 ether));
+
+        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
+        withinPrecision(IERC20(DAI).balanceOf(address(kim)), 2000 ether, 11); // TODO: Improve this precision
+        
+        uint256 bal0 = IERC20(DAI).balanceOf(address(kim));
+        assertTrue(kim.try_deposit(address(pool1), 1000 ether)); // Add another 1000 DAI
+        hevm.warp(start + globals.interestDelay());          // Fast-forward to claim all proportionate interest
+
+        uint256 share        = pool1.balanceOf(address(kim)).mul(1 ether).div(pool1.totalSupply());
+        uint256 principalOut = pool1.principalOut();
+        uint256 interestSum  = pool1.interestSum();
+        uint256 bal          = IERC20(DAI).balanceOf(pool1.liquidityLocker());
+        uint256 due          = share.mul(principalOut.add(bal)).div(WAD);
+
+        uint256 ratio    = (WAD).mul(interestSum).div(principalOut.add(bal));  // interest/totalMoney ratio
+        uint256 interest = due.mul(ratio).div(WAD);    
+        
+        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
+        uint256 bal1 = IERC20(DAI).balanceOf(address(kim));
+
+        withinPrecision(bal1 - bal0, interest, 5);
+    }
+
+    function test_withdraw_principal_penalty() public {
+        setUpWithdraw();
+
+        uint start = block.timestamp;
+        
+        globals.setPrincipalPenalty(500);
+        mint("DAI", address(kim), 2000 ether);
+        kim.approve(DAI, address(pool1), uint(-1));
+
+        uint256 bal0 = IERC20(DAI).balanceOf(address(kim));
+        assertTrue(kim.try_deposit(address(pool1), 1000 ether));     // Deposit and withdraw in same tx
+        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
+        uint256 bal1 = IERC20(DAI).balanceOf(address(kim));          // Balance after principal penalty
+
+        withinPrecision(bal0 - bal1, 500 * 1000 ether / 10_000, 10); // 5% principal penalty (TODO: Improve this precision)
+        
+        // Do another deposit with same amount
+        bal0 = IERC20(DAI).balanceOf(address(kim));
+        assertTrue(kim.try_deposit(address(pool1), 1000 ether)); // Add another 1000 DAI
+        hevm.warp(start + globals.interestDelay());              // Fast-forward to claim all proportionate interest
+
+        uint256 share        = pool1.balanceOf(address(kim)).mul(1 ether).div(pool1.totalSupply());
+        uint256 principalOut = pool1.principalOut();
+        uint256 interestSum  = pool1.interestSum();
+        uint256 bal          = IERC20(DAI).balanceOf(pool1.liquidityLocker());
+        uint256 due          = share.mul(principalOut.add(bal)).div(WAD);
+
+        uint256 ratio    = (WAD).mul(interestSum).div(principalOut.add(bal));  // interest/totalMoney ratio
+        uint256 interest = due.mul(ratio).div(WAD);    
+        
+        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
+        bal1 = IERC20(DAI).balanceOf(address(kim));
+
+        withinPrecision(bal1 - bal0, interest, 5); // All of principal returned, plus interest
+    }
 }
