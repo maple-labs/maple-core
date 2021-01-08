@@ -31,6 +31,8 @@ interface IBPool {
 
     function totalSupply() external view returns (uint256);
 
+    function getFinalTokens() external view returns (address[] memory);
+
     function calcSingleOutGivenPoolIn(
         uint256 tokenBalanceOut,
         uint256 tokenWeightOut,

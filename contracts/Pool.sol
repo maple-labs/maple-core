@@ -88,6 +88,10 @@ contract Pool is IERC20, ERC20 {
             "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
         );
 
+        address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
+
+        require(tokens[0] == _liquidityAsset || tokens[1] == _liquidityAsset, "Pool:INVALID_STAKING_POOL");
+
         // Assign variables relating to the LiquidityAsset.
         liquidityAsset         = _liquidityAsset;
         liquidityAssetDecimals = ERC20(_liquidityAsset).decimals();

@@ -79,7 +79,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(validCollateralAssetSymbols[0],   "WETH");
         assertEq(validCollateralAssets[0],           WETH);
 
-        globals.setLoanAsset(DAI, true);
+        globals.setLoanAsset(USDC, true);
         (
             validLoanAssetSymbols,
             validLoanAssets,
@@ -91,7 +91,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(validLoanAssets.length,                1);
         assertEq(validCollateralAssetSymbols.length,    1);
         assertEq(validCollateralAssets.length,          1);
-        assertEq(validLoanAssetSymbols[0],          "DAI");
-        assertEq(validLoanAssets[0],                  DAI);
+        assertEq(validLoanAssetSymbols[0],          "USDC");
+        assertEq(validLoanAssets[0],                  USDC);
     }
 }
