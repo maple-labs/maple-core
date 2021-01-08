@@ -38,8 +38,10 @@ contract TestUtil is DSTest {
 
     address constant BPOOL_FACTORY = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd; // Balancer pool factory
 
+    uint256 constant USD = 10 ** 6;  // USDC precision decimals
     uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
+
 
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 

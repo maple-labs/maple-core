@@ -99,8 +99,7 @@ contract LoanTest is TestUtil {
 
     function setUp() public {
 
-        fundsToken              = new ERC20("FundsToken", "FT");
-        mpl                     = new MapleToken("MapleToken", "MAPL", IERC20(fundsToken));
+        mpl                     = new MapleToken("MapleToken", "MAPL", USDC);
         globals                 = new MapleGlobals(address(this), address(mpl));
         flFactory               = new FundingLockerFactory();
         clFactory               = new CollateralLockerFactory();
@@ -134,12 +133,12 @@ contract LoanTest is TestUtil {
         globals.setMapleTreasury(address(trs));
 
         mint("WETH", address(ali),   10 ether);
-        mint("USDC", address(bob), 5000 ether);
-        mint("USDC", address(ali),  500 ether);
+        mint("USDC", address(bob), 5000 * USD);
+        mint("USDC", address(ali),  500 * USD);
     }
 
     function test_createLoan() public {
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 ether), 2000, 7];
+        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
         assertTrue(!ali.try_createLoan(address(loanFactory), DAI, WETH, specs, calcs));  // Can't create a loan with DAI since stakingAsset uses USDC
@@ -166,60 +165,60 @@ contract LoanTest is TestUtil {
     }
 
     function test_fundLoan() public {
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
+        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
         Loan loan = ali.createLoan(loanFactory, USDC, WETH, specs, calcs);
         address fundingLocker = loan.fundingLocker();
 
-        bob.approve(USDC, address(loan), 5000 ether);
+        bob.approve(USDC, address(loan), 5000 * USD);
     
         assertEq(IERC20(loan).balanceOf(address(ali)),                    0);
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),          0);
-        assertEq(IERC20(USDC).balanceOf(address(bob)),           5000 ether);
+        assertEq(IERC20(USDC).balanceOf(address(bob)),           5000 * USD);
 
-        bob.fundLoan(loan, 5000 ether, address(ali));
+        bob.fundLoan(loan, 5000 * USD, address(ali));
 
         assertEq(IERC20(loan).balanceOf(address(ali)),           5000 ether);
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 5000 ether);
+        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 5000 * USD);
         assertEq(IERC20(USDC).balanceOf(address(bob)),                    0);
     }
 
     function createAndFundLoan(address _interestStructure) internal returns (Loan loan) {
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
+        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
         loan = ali.createLoan(loanFactory, USDC, WETH, specs, calcs);
 
-        bob.approve(USDC, address(loan), 5000 ether);
+        bob.approve(USDC, address(loan), 5000 * USD);
     
-        bob.fundLoan(loan, 5000 ether, address(ali));
+        bob.fundLoan(loan, 5000 * USD, address(ali));
     }
 
     function test_collateralRequiredForDrawdown() public {
         Loan loan = createAndFundLoan(address(bulletCalc));
 
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 ether);
+        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
         assertEq(reqCollateral, 0.4 ether);
     }
 
     function test_drawdown() public {
         Loan loan = createAndFundLoan(address(bulletCalc));
 
-        assertTrue(!bob.try_drawdown(address(loan), 1000 ether));  // Non-borrower can't drawdown
-        assertTrue(!ali.try_drawdown(address(loan), 1000 ether));  // Can't drawdown without approving collateral
+        assertTrue(!bob.try_drawdown(address(loan), 1000 * USD));  // Non-borrower can't drawdown
+        assertTrue(!ali.try_drawdown(address(loan), 1000 * USD));  // Can't drawdown without approving collateral
 
         ali.approve(WETH, address(loan), 0.4 ether);
 
-        assertTrue(!ali.try_drawdown(address(loan), 1000 ether - 1));  // Can't drawdown less than minRaise
-        assertTrue(!ali.try_drawdown(address(loan), 5000 ether + 1));  // Can't drawdown more than fundingLocker balance
+        assertTrue(!ali.try_drawdown(address(loan), 1000 * USD - 1));  // Can't drawdown less than minRaise
+        assertTrue(!ali.try_drawdown(address(loan), 5000 * USD + 1));  // Can't drawdown more than fundingLocker balance
 
         address fundingLocker = loan.fundingLocker();
         uint pre = IERC20(USDC).balanceOf(address(ali));
 
         assertEq(IERC20(WETH).balanceOf(address(ali)),    10 ether);  // Borrower collateral balance
         assertEq(IERC20(loan).balanceOf(address(ali)),  5000 ether);  // Borrower loan token balance
-        assertEq(IERC20(USDC).balanceOf(fundingLocker), 5000 ether);  // Funding locker reqAssset balance
+        assertEq(IERC20(USDC).balanceOf(fundingLocker), 5000 * USD);  // Funding locker reqAssset balance
         assertEq(IERC20(USDC).balanceOf(address(loan)),          0);  // Loan vault reqAsset balance
         assertEq(loan.drawdownAmount(),                          0);  // Drawdown amount
         assertEq(loan.principalOwed(),                           0);  // Principal owed
@@ -230,7 +229,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.excessReturned(),                0);  // excessReturned amount
         assertEq(IERC20(USDC).balanceOf(address(trs)), 0);  // Treasury reqAsset balance
 
-        assertTrue(ali.try_drawdown(address(loan), 1000 ether));     // Borrow draws down 1000 USDC
+        assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
 
         address collateralLocker = loan.collateralLocker();
 
@@ -238,17 +237,17 @@ contract LoanTest is TestUtil {
         assertEq(IERC20(WETH).balanceOf(collateralLocker),        0.4 ether);  // Collateral locker collateral balance
         assertEq(IERC20(loan).balanceOf(address(ali)),           5000 ether);  // Borrower loan token balance
         assertEq(IERC20(USDC).balanceOf(fundingLocker),                   0);  // Funding locker reqAssset balance
-        assertEq(IERC20(USDC).balanceOf(address(loan)),          4005 ether);  // Loan vault reqAsset balance
-        assertEq(IERC20(USDC).balanceOf(address(ali)),      990 ether + pre);  // Lender reqAsset balance
-        assertEq(loan.drawdownAmount(),                          1000 ether);  // Drawdown amount
-        assertEq(loan.principalOwed(),                           1000 ether);  // Principal owed
+        assertEq(IERC20(USDC).balanceOf(address(loan)),          4005 * USD);  // Loan vault reqAsset balance
+        assertEq(IERC20(USDC).balanceOf(address(ali)),      990 * USD + pre);  // Lender reqAsset balance
+        assertEq(loan.drawdownAmount(),                          1000 * USD);  // Drawdown amount
+        assertEq(loan.principalOwed(),                           1000 * USD);  // Principal owed
         assertEq(uint256(loan.loanState()),                               1);  // Loan state: Active
 
         
         // Fee related variables post-check.
-        assertEq(loan.feePaid(),                          5 ether);  // Drawdown amount
-        assertEq(loan.excessReturned(),                4000 ether);  // Principal owed
-        assertEq(IERC20(USDC).balanceOf(address(trs)),    5 ether);  // Treasury reqAsset balance
+        assertEq(loan.feePaid(),                          5 * USD);  // Drawdown amount
+        assertEq(loan.excessReturned(),                4000 * USD);  // Principal owed
+        assertEq(IERC20(USDC).balanceOf(address(trs)),    5 * USD);  // Treasury reqAsset balance
 
     }
 
@@ -262,7 +261,7 @@ contract LoanTest is TestUtil {
 
         // Approve collatearl and drawdown loan.
         ali.approve(WETH, address(loan), 0.4 ether);
-        assertTrue(ali.try_drawdown(address(loan), 1000 ether));  // Borrow draws down 1000 USDC
+        assertTrue(ali.try_drawdown(address(loan), 1000 * USD));  // Borrow draws down 1000 USDC
 
         address collateralLocker = loan.collateralLocker();
         address fundingLocker    = loan.fundingLocker();
@@ -280,10 +279,10 @@ contract LoanTest is TestUtil {
 
         // Before state
         assertEq(uint256(loan.loanState()),          1);  // Loan state is Active, accepting payments
-        assertEq(loan.principalOwed(),      1000 ether);  // Initial drawdown amount.
+        assertEq(loan.principalOwed(),      1000 * USD);  // Initial drawdown amount.
         assertEq(loan.principalPaid(),               0);
         assertEq(loan.interestPaid(),                0);
-        assertEq(loan.paymentsRemaining(),            3);
+        assertEq(loan.paymentsRemaining(),           3);
         assertEq(loan.nextPaymentDue(),           _due);
 
         // Make payment.
@@ -293,7 +292,7 @@ contract LoanTest is TestUtil {
 
         // After state
         assertEq(uint256(loan.loanState()),               1);  // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),           1000 ether);  // Initial drawdown amount.
+        assertEq(loan.principalOwed(),           1000 * USD);  // Initial drawdown amount.
         assertEq(loan.principalPaid(),                 _pri);
         assertEq(loan.interestPaid(),                  _int);
         assertEq(loan.paymentsRemaining(),                2);
@@ -310,7 +309,7 @@ contract LoanTest is TestUtil {
         
         // After state
         assertEq(uint256(loan.loanState()),               1);  // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),           1000 ether);  // Initial drawdown amount.
+        assertEq(loan.principalOwed(),           1000 * USD);  // Initial drawdown amount.
         assertEq(loan.principalPaid(),                 _pri);
         assertEq(loan.interestPaid(),              _int * 2);
         assertEq(loan.paymentsRemaining(),                1);
@@ -321,7 +320,7 @@ contract LoanTest is TestUtil {
         ali.approve(USDC, address(loan), _amt);
         
         // Check collateral locker balance.
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 ether);
+        uint256 reqCollateral   = loan.collateralRequiredForDrawdown(1000 * USD);
         address collateralAsset = loan.collateralAsset();
         uint _delta = IERC20(collateralAsset).balanceOf(address(ali));
         assertEq(IERC20(collateralAsset).balanceOf(collateralLocker), reqCollateral);
@@ -354,7 +353,7 @@ contract LoanTest is TestUtil {
 
         // Approve collatearl and drawdown loan.
         ali.approve(WETH, address(loan), 0.4 ether);
-        assertTrue(ali.try_drawdown(address(loan), 1000 ether));     // Borrow draws down 1000 USDC
+        assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
 
         address collateralLocker = loan.collateralLocker();
         address fundingLocker    = loan.fundingLocker();
@@ -372,7 +371,7 @@ contract LoanTest is TestUtil {
 
         // Before state
         assertEq(uint256(loan.loanState()),             1);    // Loan state is Active, accepting payments
-        assertEq(loan.principalOwed(),         1000 ether);    // Initial drawdown amount.
+        assertEq(loan.principalOwed(),         1000 * USD);    // Initial drawdown amount.
         assertEq(loan.principalPaid(),                  0);
         assertEq(loan.interestPaid(),                   0);
         assertEq(loan.paymentsRemaining(),              3);
@@ -385,7 +384,7 @@ contract LoanTest is TestUtil {
 
         // After state
         assertEq(uint256(loan.loanState()),                  1);    // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),       1000 ether - _pri);    
+        assertEq(loan.principalOwed(),       1000 * USD - _pri);    
         assertEq(loan.principalPaid(),                    _pri);
         assertEq(loan.interestPaid(),                     _int);
         assertEq(loan.paymentsRemaining(),                   2);
@@ -403,8 +402,8 @@ contract LoanTest is TestUtil {
         
         // After state
         assertEq(uint256(loan.loanState()),                        1);    // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),         1000 ether - _pri * 2);    // Initial drawdown amount.
-        assertEq(loan.principalPaid(),         1000 ether - _pri - 1);
+        assertEq(loan.principalOwed(),         1000 * USD - _pri * 2);    // Initial drawdown amount.
+        assertEq(loan.principalPaid(),         1000 * USD - _pri - 1);
         assertEq(loan.interestPaid(),                 _int + _intTwo);
         assertEq(loan.paymentsRemaining(),                         1);
         assertEq(loan.nextPaymentDue(),              _nextPaymentDue);
@@ -415,7 +414,7 @@ contract LoanTest is TestUtil {
         ali.approve(USDC, address(loan), _amt);
         
         // Check collateral locker balance.
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 ether);
+        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
         address collateralAsset = loan.collateralAsset();
         uint _delta = IERC20(collateralAsset).balanceOf(address(ali));
         assertEq(IERC20(collateralAsset).balanceOf(collateralLocker), reqCollateral);
@@ -428,7 +427,7 @@ contract LoanTest is TestUtil {
         // After state, state variables.
         assertEq(uint256(loan.loanState()),                          2);  // Loan state is Matured (final payment)
         assertEq(loan.principalOwed(),                               0);  // Final payment, all principal paid for Bullet
-        assertEq(loan.principalPaid(),                      1000 ether);
+        assertEq(loan.principalPaid(),                      1000 * USD);
         assertEq(loan.interestPaid(),       _int + _intTwo + _intThree);
         assertEq(loan.paymentsRemaining(),                           0);
         assertEq(loan.nextPaymentDue(),                _nextPaymentDue);
@@ -447,7 +446,7 @@ contract LoanTest is TestUtil {
 
         // Approve collatearl and drawdown loan.
         ali.approve(WETH, address(loan), 0.4 ether);
-        assertTrue(ali.try_drawdown(address(loan), 1000 ether));  // Borrow draws down 1000 USDC
+        assertTrue(ali.try_drawdown(address(loan), 1000 * USD));  // Borrow draws down 1000 USDC
 
         address collateralLocker = loan.collateralLocker();
         address fundingLocker    = loan.fundingLocker();
@@ -465,7 +464,7 @@ contract LoanTest is TestUtil {
 
         // Before state
         assertEq(uint256(loan.loanState()),          1);  // Loan state is Active, accepting payments
-        assertEq(loan.principalOwed(),      1000 ether);  // Initial drawdown amount.
+        assertEq(loan.principalOwed(),      1000 * USD);  // Initial drawdown amount.
         assertEq(loan.principalPaid(),               0);
         assertEq(loan.interestPaid(),                0);
         assertEq(loan.paymentsRemaining(),           3);
@@ -482,7 +481,7 @@ contract LoanTest is TestUtil {
 
         // After state
         assertEq(uint256(loan.loanState()),                 1);  // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),      1000 ether - _pri);    
+        assertEq(loan.principalOwed(),      1000 * USD - _pri);    
         assertEq(loan.principalPaid(),                   _pri);
         assertEq(loan.interestPaid(),                    _int);
         assertEq(loan.paymentsRemaining(),                  2);
@@ -504,8 +503,8 @@ contract LoanTest is TestUtil {
         
         // After state
         assertEq(uint256(loan.loanState()),                     1);  // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),      1000 ether - _pri * 2);  // Initial drawdown amount.
-        assertEq(loan.principalPaid(),      1000 ether - _pri - 1);
+        assertEq(loan.principalOwed(),      1000 * USD - _pri * 2);  // Initial drawdown amount.
+        assertEq(loan.principalPaid(),      1000 * USD - _pri - 1);
         assertEq(loan.interestPaid(),              _int + _intTwo);
         assertEq(loan.paymentsRemaining(),                      1);
         assertEq(loan.nextPaymentDue(),           _nextPaymentDue);
@@ -516,7 +515,7 @@ contract LoanTest is TestUtil {
         ali.approve(USDC, address(loan), _amt);
         
         // Check collateral locker balance.
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 ether);
+        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
         address collateralAsset = loan.collateralAsset();
         uint _delta = IERC20(collateralAsset).balanceOf(address(ali));
         assertEq(IERC20(collateralAsset).balanceOf(collateralLocker), reqCollateral);
@@ -533,7 +532,7 @@ contract LoanTest is TestUtil {
         // After state, state variables.
         assertEq(uint256(loan.loanState()),                          2);  // Loan state is Matured (final payment)
         assertEq(loan.principalOwed(),                               0);  // Final payment, all principal paid for Bullet
-        assertEq(loan.principalPaid(),                      1000 ether);
+        assertEq(loan.principalPaid(),                      1000 * USD);
         assertEq(loan.interestPaid(),       _int + _intTwo + _intThree);
         assertEq(loan.paymentsRemaining(),                           0);
         assertEq(loan.nextPaymentDue(),                _nextPaymentDue);
@@ -552,7 +551,7 @@ contract LoanTest is TestUtil {
 
         // Approve collatearl and drawdown loan.
         ali.approve(WETH, address(loan), 0.4 ether);
-        assertTrue(ali.try_drawdown(address(loan), 1000 ether));  // Borrow draws down 1000 USDC
+        assertTrue(ali.try_drawdown(address(loan), 1000 * USD));  // Borrow draws down 1000 USDC
 
         address collateralLocker = loan.collateralLocker();
         address fundingLocker    = loan.fundingLocker();
@@ -570,7 +569,7 @@ contract LoanTest is TestUtil {
 
         // Before state
         assertEq(uint256(loan.loanState()),          1);  // Loan state is Active, accepting payments
-        assertEq(loan.principalOwed(),      1000 ether);  // Initial drawdown amount.
+        assertEq(loan.principalOwed(),      1000 * USD);  // Initial drawdown amount.
         assertEq(loan.principalPaid(),               0);
         assertEq(loan.interestPaid(),                0);
         assertEq(loan.paymentsRemaining(),           3);
@@ -587,7 +586,7 @@ contract LoanTest is TestUtil {
 
         // After state
         assertEq(uint256(loan.loanState()),               1);  // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),           1000 ether);  // Initial drawdown amount.
+        assertEq(loan.principalOwed(),           1000 * USD);  // Initial drawdown amount.
         assertEq(loan.principalPaid(),                 _pri);
         assertEq(loan.interestPaid(),                  _int);
         assertEq(loan.paymentsRemaining(),                2);
@@ -608,7 +607,7 @@ contract LoanTest is TestUtil {
         
         // After state
         assertEq(uint256(loan.loanState()),               1);  // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),           1000 ether);  // Initial drawdown amount.
+        assertEq(loan.principalOwed(),           1000 * USD);  // Initial drawdown amount.
         assertEq(loan.principalPaid(),                 _pri);
         assertEq(loan.interestPaid(),              _int * 2);
         assertEq(loan.paymentsRemaining(),                1);
@@ -619,7 +618,7 @@ contract LoanTest is TestUtil {
         ali.approve(USDC, address(loan), _amt);
         
         // Check collateral locker balance.
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 ether);
+        uint256 reqCollateral   = loan.collateralRequiredForDrawdown(1000 * USD);
         address collateralAsset = loan.collateralAsset();
         uint _delta = IERC20(collateralAsset).balanceOf(address(ali));
         assertEq(IERC20(collateralAsset).balanceOf(collateralLocker), reqCollateral);

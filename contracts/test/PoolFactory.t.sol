@@ -107,7 +107,7 @@ contract PoolFactoryTest is TestUtil {
     function test_createPool_no_mpl_token() public {
 
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
-        mint("USDC", address(this), 50_000_000 ether);
+        mint("DAI", address(this), 50_000_000 ether);
 
         // Initialize USDC/USDC Balancer pool (Doesn't include mpl)
         bPool = IBPool(IBPoolFactory(BPOOL_FACTORY).newBPool());
@@ -115,11 +115,11 @@ contract PoolFactoryTest is TestUtil {
         IERC20(DAI).approve(address(bPool), uint(-1));
         IERC20(USDC).approve(address(bPool), uint(-1));
 
-        bPool.bind(DAI,   50_000_000 * 10 ** 6, 5 * WAD);  // Bind 50m   DAI with 5 denormalization weight
-        bPool.bind(USDC,  50_000_000 * WAD,     5 * WAD);  // Bind 100k USDC with 5 denormalization weight
+        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 * WAD);  // Bind 50m   DAI with 5 denormalization weight
+        bPool.bind(DAI,  50_000_000 * WAD,     5 * WAD);  // Bind 100k USDC with 5 denormalization weight
 
-        assertEq(IERC20(DAI).balanceOf(address(bPool)),  50_000_000 * 10 ** 6);
-        assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * WAD);
+        assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * 10 ** 6);
+        assertEq(IERC20(DAI).balanceOf(address(bPool)),  50_000_000 * WAD);
 
         bPool.finalize();
         

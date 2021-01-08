@@ -165,9 +165,11 @@ contract Loan is FDT {
             IERC20(loanAsset).transferFrom(msg.sender, fundingLocker, amt),
             "Loan::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
         );
-        _mint(mintTo, amt);
 
-        emit LoanFunded(amt, mintTo);
+        uint256 wad = amt * 10 ** (18 - IERC20Details(loanAsset).decimals());  // Convert to WAD precision
+        _mint(mintTo, wad);
+
+        emit LoanFunded(wad, mintTo);
         emit BalanceUpdated(fundingLocker, loanAsset, IERC20(loanAsset).balanceOf(fundingLocker));
     }
 
@@ -385,12 +387,14 @@ contract Loan is FDT {
     */
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
 
+        uint256 wad = amt * 10 ** (18 - IERC20Details(loanAsset).decimals());  // Convert to WAD precision
+
         // Fetch value of collateral and funding asset.
         uint256 requestPrice    = IGlobals(globals).getPrice(loanAsset);
         uint256 collateralPrice = IGlobals(globals).getPrice(collateralAsset);
 
         // Calculate collateral required.
-        uint256 collateralRequiredUSD = requestPrice.mul(amt).mul(collateralRatio).div(10000);
+        uint256 collateralRequiredUSD = requestPrice.mul(wad).mul(collateralRatio).div(10000);
         uint256 collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
         uint256 collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - IERC20Details(collateralAsset).decimals()));
 
