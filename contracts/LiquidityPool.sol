@@ -48,7 +48,6 @@ contract LiquidityPool is IERC20, ERC20 {
     uint256 public interestSum; //sum of all interest currently inside the liquidity locker
     uint256 public stakingFee;    // The fee for stakers (in basis points).
     uint256 public delegateFee;   // The fee for delegates (in basis points).
-    uint256 public interestDelay = 30 days; // delay on interest claim
 
     bool public isFinalized;  // True if this LiquidityPool is setup and the poolDelegate has met staking requirements.
     bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
@@ -193,8 +192,10 @@ contract LiquidityPool is IERC20, ERC20 {
         uint256 due   = share.mul(principalSum.add(bal)).div(WAD);
 	uint256 _interestRatio = (WAD).mul(interestSum).div(principalSum.add(bal));//interest/totalMoney
         uint256 _myInterest = due.mul(_interestRatio).div(WAD);//get nominal interest owned by sender
-        uint256 _penalty = calcInterestPenalty(_myInterest, msg.sender); //get penalty, however it may be calculated
+        uint256 _myPrincipalPenalty = MapleGlobals.penaltyBips().mul(due.sub(_myInterest)).div(10000);
+        uint256 _penalty = calcInterestPenalty(_myInterest.add(_myPrincipalPenalty), msg.sender); //get penalty, however it may be calculated
         due = due.sub(_penalty);//remove penalty
+        //this ends up giving penalty on a guys principal as interest to the people who are entitled to it. 
         interestSum = interestSum.sub(_myInterest).add(_penalty);//update interest total reflecting withdrawn ammount
         _burn(msg.sender, _amt); // TODO: Unit testing on _burn / _mint for ERC-2222
         require(ILiquidityLocker(liquidityLockerAddress).transfer(msg.sender, due), "LiquidityPool::ERR_WITHDRAW_TRANSFER");
@@ -275,7 +276,7 @@ contract LiquidityPool is IERC20, ERC20 {
     **/
     function calcInterestPenalty(uint256 _interest, address _addy) public view returns (uint256 _out){
         uint256 _time = (block.timestamp.sub(depositAge[_addy])).mul(WAD);
-        uint256 _unlocked = ((_time.div(interestDelay+1)).mul(_interest)) / WAD;
+        uint256 _unlocked = ((_time.div(MapleGlobals.interestDelay()+1)).mul(_interest)) / WAD;
         if (_unlocked > _interest) {
             _out = 0;
         }else{
