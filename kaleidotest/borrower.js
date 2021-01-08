@@ -275,13 +275,13 @@ describe("Borrower Journey", function () {
     );
 
     preIncrementorValue = await LoanFactory.loansCreated();
-    loanVaultAddress = await LoanFactory.getLoan(
+    loanVaultAddress = await LoanFactory.loans(
       preIncrementorValue - 1
     );
     expect(loanVaultAddress).to.not.equal(
       "0x0000000000000000000000000000000000000000"
     );
-    expect(await LoanFactory.getLoan(preIncrementorValue)).to.equal(
+    expect(await LoanFactory.loans(preIncrementorValue)).to.equal(
       "0x0000000000000000000000000000000000000000"
     );
   });

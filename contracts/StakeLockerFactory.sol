@@ -6,8 +6,8 @@ import "./StakeLocker.sol";
 
 contract StakeLockerFactory {
 
-    mapping(address => address) private owners;    // Mapping of StakeLocker contracts to owners of StakeLockers.
-    mapping(address => bool)    private isLocker;  // Mapping for validation of lockers, confirmed when initialized through this contract.
+    mapping(address => address) public owner;     // owner[locker] = Owner of the stake locker.
+    mapping(address => bool)    public isLocker;  // True if stake locker was created by this factory, otherwise false.
 
     event StakeLockerCreated(
         address owner,
@@ -19,19 +19,17 @@ contract StakeLockerFactory {
     );
 
     /// @notice Creates a new locker.
-    /// @param stakeAsset The address of the balancer pool, whose BPTs will be deposited into the stakeLocker.
-    /// @param liquidityAsset The address of the dividend token, also the primary investment asset of the LP.
-    /// @return The address of the newly created locker.
-    //TODO: add a modifier here that only lets a liquidity pool run this. This is good for security, but not critical.
+    /// @param stakeAsset Address of the stakeAsset (generally a balancer pool).
+    /// @param liquidityAsset Address of the liquidityAsset (as defined in the pool).
+    /// @return Address of the newly created locker.
     function newLocker(
         address stakeAsset,
         address liquidityAsset,
         address globals
     ) external returns (address) {
         address stakeLocker   = address(new StakeLocker(stakeAsset, liquidityAsset, msg.sender, globals));
-        owners[stakeLocker]   = msg.sender; //address of LP contract that sent it, not poolManagers
+        owner[stakeLocker]    = msg.sender;
         isLocker[stakeLocker] = true;
-
         emit StakeLockerCreated(
             msg.sender, 
             stakeLocker,
@@ -42,18 +40,5 @@ contract StakeLockerFactory {
         );
         return stakeLocker;
     }
-
-    /// @notice Returns the address of the StakeLocker's owner (should be a Pool).
-    /// @param locker Address of the StakeLocker.
-    /// @return Owner of the StakeLocker.
-    function getOwner(address locker) public view returns (address) {
-        return owners[locker];
-    }
-
-    /// @notice Validates if the provided address is a LiqudityLocker created through this factory.
-    /// @param locker Address of the StakeLocker that needs validation.
-    /// @return true if locker is a valid StakeLocker.
-    function isStakeLocker(address locker) external view returns (bool) {
-        return isLocker[locker];
-    }
+    
 }

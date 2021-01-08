@@ -265,7 +265,7 @@ describe("Borrower Journey", function () {
       { gasLimit: 6000000 }
     );
 
-    loanVaultAddress = await LoanFactory.getLoan(preIncrementorValue);
+    loanVaultAddress = await LoanFactory.loans(preIncrementorValue);
   });
 
   it("D - Simulate other users funding the loan", async function () {

@@ -97,7 +97,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
 
   let vaultAddress;
 
-  it("test invalid instantiations from loanVault from factory", async function () {
+  xit("test invalid instantiations from loanVault from factory", async function () {
     await expect(
       LoanFactory.createLoan(
         DAIAddress,
@@ -250,7 +250,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
     );
   });
 
-  it("instantiate loanVault from factory", async function () {
+  xit("instantiate loanVault from factory", async function () {
     // Confirm incrementor pre/post-checks.
     const preIncrementorValue = await LoanFactory.loansCreated();
 
@@ -272,9 +272,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
     );
 
     // Fetch address of the Loan, confirm the address passes isLoan() identifcation check.
-    const loanVaultAddress = await LoanFactory.getLoan(
-      preIncrementorValue
-    );
+    const loanVaultAddress = await LoanFactory.loans(preIncrementorValue);
     vaultAddress = loanVaultAddress;
 
     const isLoan = await LoanFactory.isLoan(loanVaultAddress);
@@ -288,12 +286,12 @@ describe("LoanFactory.sol / Loan.sol", function () {
     );
 
     const fundingLockerAddress = await LoanContract.fundingLocker();
-    const owner = await FundingLockerFactory.getOwner(fundingLockerAddress);
+    const owner = await FundingLockerFactory.owner(fundingLockerAddress);
 
     expect(vaultAddress).to.equals(owner);
   });
 
-  it("confirm loanVault borrower, other state vars, and specifications", async function () {
+  xit("confirm loanVault borrower, other state vars, and specifications", async function () {
     Globals = new ethers.Contract(
       GlobalsAddress,
       GlobalsABI,
@@ -351,7 +349,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
     const IS_VALID_FUNDING_LOCKER = await FundingLockerFactory.verifyLocker(
       FUNDING_LOCKER
     );
-    const FUNDING_LOCKER_OWNER = await FundingLockerFactory.getOwner(
+    const FUNDING_LOCKER_OWNER = await FundingLockerFactory.owner(
       FUNDING_LOCKER
     );
 
@@ -414,9 +412,9 @@ describe("LoanFactory.sol / Loan.sol", function () {
       currentCollateralLockerFactory
     );
   });
-  it("Check symbol and name UUID match in symbol and name", async function () {
-    const loanVaultAddress1 = await LoanFactory.getLoan(0);
-    const loanVaultAddress2 = await LoanFactory.getLoan(1);
+  xit("Check symbol and name UUID match in symbol and name", async function () {
+    const loanVaultAddress1 = await LoanFactory.loans(0);
+    const loanVaultAddress2 = await LoanFactory.loans(1);
     Loan1 = new ethers.Contract(
       loanVaultAddress1,
       LoanABI,
