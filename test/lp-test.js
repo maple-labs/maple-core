@@ -94,7 +94,7 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
       DELEGATE_FEE_BASIS_POINTS
     );
 
-    PoolAddressDAI = await PoolFactory.getPool(
+    PoolAddressDAI = await PoolFactory.pools(
       INDEX_DAI
     );
 
@@ -115,7 +115,7 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
       DELEGATE_FEE_BASIS_POINTS
     );
 
-    PoolAddressUSDC = await PoolFactory.getPool(
+    PoolAddressUSDC = await PoolFactory.pools(
       INDEX_USDC
     );
 

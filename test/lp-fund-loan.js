@@ -52,7 +52,7 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
       LPFactoryABI,
       ethers.provider.getSigner(0)
     );
-    LPaddress = await PoolFactory.getPool(0);
+    LPaddress = await PoolFactory.pools(0);
     LP = new ethers.Contract(
       LPaddress,
       PoolABI,

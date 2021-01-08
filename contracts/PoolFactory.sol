@@ -13,7 +13,7 @@ contract PoolFactory {
     address public slFactory;     // The StakeLockerFactory to use for this PoolFactory
     address public llFactory;     // The LiquidityLockerFactory to use for this PoolFactory
 
-    mapping(uint256 => address) private pools;  // Mappings for liquidity pool contracts, and their validation. (TODO: Consider adjusting Pools mapping to an array.)
+    mapping(uint256 => address) public pools;  // Mappings for liquidity pool contracts, and their validation. (TODO: Consider adjusting Pools mapping to an array.)
     mapping(address => bool)    public isPool;
 
     event PoolCreated(
@@ -84,11 +84,5 @@ contract PoolFactory {
         );
         return address(pool);
     }
-
-    /// @notice Fetch address of a liquidity pool using the ID (incrementor).
-    /// @param id The incrementor value.
-    /// @return Address of the liquidity pool at id.
-    function getPool(uint256 id) public view returns (address) {
-        return pools[id];
-    }
+    
 }

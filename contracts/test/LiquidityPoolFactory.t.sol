@@ -147,7 +147,7 @@ contract PoolFactoryTest is TestUtil {
             100
         ));
 
-        Pool lPool = Pool(poolFactory.getPool(0));
+        Pool lPool = Pool(poolFactory.pools(0));
 
         assertTrue(address(lPool) != address(0));
         assertTrue(poolFactory.isPool(address(lPool)));

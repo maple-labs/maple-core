@@ -202,10 +202,10 @@ describe("Cycle of an entire loan", function () {
     );
 
     // Assigning contract object to Pool.
-    PoolAddress = await PoolFactory.getPool(parseInt(index["_hex"]));
+    PoolAddress = await PoolFactory.pools(parseInt(index["_hex"]));
     
     while (PoolAddress == "0x0000000000000000000000000000000000000000") {
-      PoolAddress = await PoolFactory.getPool(parseInt(index["_hex"]));
+      PoolAddress = await PoolFactory.pools(parseInt(index["_hex"]));
     }
 
     Pool_PoolDelegate = new ethers.Contract(
