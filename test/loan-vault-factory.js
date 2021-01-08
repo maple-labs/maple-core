@@ -286,7 +286,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
     );
 
     const fundingLockerAddress = await LoanContract.fundingLocker();
-    const owner = await FundingLockerFactory.getOwner(fundingLockerAddress);
+    const owner = await FundingLockerFactory.owner(fundingLockerAddress);
 
     expect(vaultAddress).to.equals(owner);
   });
@@ -349,7 +349,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
     const IS_VALID_FUNDING_LOCKER = await FundingLockerFactory.verifyLocker(
       FUNDING_LOCKER
     );
-    const FUNDING_LOCKER_OWNER = await FundingLockerFactory.getOwner(
+    const FUNDING_LOCKER_OWNER = await FundingLockerFactory.owner(
       FUNDING_LOCKER
     );
 

@@ -5,5 +5,4 @@ interface ILiquidityLockerFactory {
     function newLocker(address _liquidityAsset) external returns (address);
     function owner(address) external returns (address);
     function isLocker(address) external returns (bool);
-
 }
