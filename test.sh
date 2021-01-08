@@ -8,6 +8,6 @@ DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 1" dapp --use solc:0
 export DAPP_TEST_TIMESTAMP=$(seth block latest timestamp)
 export DAPP_TEST_NUMBER=$(seth block latest number)
 
-LANG=C.UTF-8 DAPP_SRC="contracts" hevm dapp-test --rpc="$ETH_RPC_URL" --json-file=out/dapp.sol.json --dapp-root=. --verbose 1
+LANG=C.UTF-8 DAPP_SRC="contracts" hevm dapp-test --match "test_withdraw" --rpc="$ETH_RPC_URL" --json-file=out/dapp.sol.json --dapp-root=. --verbose 1
 
 # --match "test_" 

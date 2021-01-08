@@ -153,7 +153,7 @@ contract PoolTest is TestUtil {
     Borrower                               fay;
 
     
-    event DebugS(string, uint);
+    event Debug(string, uint);
 
     function setUp() public {
 
@@ -842,78 +842,79 @@ contract PoolTest is TestUtil {
         }
     }
 
-    // function test_withdraw() public {
+    function test_withdraw() public {
 
-    //     /*******************************/
-    //     /*** Finalize liquidity pool ***/
-    //     /*******************************/
-    //     address stakeLocker = pool1.stakeLocker();
-    //     address liqLocker   = pool1.liquidityLocker();
+        /*******************************/
+        /*** Finalize liquidity pool ***/
+        /*******************************/
+        address stakeLocker = pool1.stakeLocker();
+        address liqLocker   = pool1.liquidityLocker();
 
-    //     sid.approve(address(bPool), stakeLocker, uint(-1));
-    //     sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        sid.approve(address(bPool), stakeLocker, uint(-1));
+        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
-    //     pool1.finalize();
+        pool1.finalize();
 
-    //     /**************************************************/
-    //     /*** Mint and deposit funds into liquidity pool ***/
-    //     /**************************************************/
-    //     mint("DAI", address(bob), 100 ether);
-    //     mint("DAI", address(che), 100 ether);
-    //     mint("DAI", address(dan), 100 ether);
+        /**************************************************/
+        /*** Mint and deposit funds into liquidity pool ***/
+        /**************************************************/
+        mint("DAI", address(bob), 100 ether);
+        mint("DAI", address(che), 100 ether);
+        mint("DAI", address(dan), 100 ether);
 
-    //     bob.approve(DAI, address(pool1), uint(-1));
-    //     che.approve(DAI, address(pool1), uint(-1));
-    //     dan.approve(DAI, address(pool1), uint(-1));
+        bob.approve(DAI, address(pool1), uint(-1));
+        che.approve(DAI, address(pool1), uint(-1));
+        dan.approve(DAI, address(pool1), uint(-1));
 
-    //     assertTrue(bob.try_deposit(address(pool1), 10 ether));  // 10%
-    //     assertTrue(che.try_deposit(address(pool1), 30 ether));  // 30%
-    //     assertTrue(dan.try_deposit(address(pool1), 60 ether));  // 60%
+        assertTrue(bob.try_deposit(address(pool1), 10 ether));  // 10%
+        assertTrue(che.try_deposit(address(pool1), 30 ether));  // 30%
+        assertTrue(dan.try_deposit(address(pool1), 60 ether));  // 60%
 
-    //     globals.setLoanFactory(address(loanVFactory));
+        globals.setLoanFactory(address(loanVFactory));
 
-    //     /*******************************************/
-    //     /*** Create new dlFactory1 and Loan ***/
-    //     /*******************************************/
-    //     DebtLockerFactory dlFactory2 = new DebtLockerFactory();
+        /*******************************************/
+        /*** Create new dlFactory1 and Loan ***/
+        /*******************************************/
+        DebtLockerFactory dlFactory2 = new DebtLockerFactory();
 
-    //     // Create Loan Vault
-    //     uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
-    //     address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
+        // Create Loan Vault
+        uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
+        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-    //     Loan loan2 = Loan(loanVFactory.createLoan(DAI, WETH, specs, calcs));
+        Loan loan2 = Loan(loanVFactory.createLoan(DAI, WETH, specs, calcs));
 
-    //     address fundingLocker  = loan.fundingLocker();
-    //     address fundingLocker2 = loan2.fundingLocker();
+        address fundingLocker  = loan.fundingLocker();
+        address fundingLocker2 = loan2.fundingLocker();
 
-    //     /******************/
-    //     /*** Fund Loans ***/
-    //     /******************/
-    //     assertEq(IERC20(DAI).balanceOf(liqLocker),              100 ether);  // Balance of Liquidity Locker
-    //     assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),         0);  // Balance of Funding Locker
+        /******************/
+        /*** Fund Loans ***/
+        /******************/
+        assertEq(IERC20(DAI).balanceOf(liqLocker),              100 ether);  // Balance of Liquidity Locker
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),         0);  // Balance of Funding Locker
 
-    //     assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1),  20 ether));  // Fund loan for 20 DAI
-    //     assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1),  25 ether));  // Fund same loan for 25 DAI
-    //     assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 15 ether));  // Fund new loan same loan for 15 DAI
-    //     assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 15 ether));  // Fund new loan new loan for 15 DAI
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1),  20 ether));  // Fund loan for 20 DAI
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1),  25 ether));  // Fund same loan for 25 DAI
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2),  15 ether));  // Fund new loan same loan for 15 DAI
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2),  15 ether));  // Fund new loan new loan for 15 DAI
 
-    //     address ltLocker  = pool1.debtLockers(address(loan),  address(dlFactory1));
-    //     address ltLocker2 = pool1.debtLockers(address(loan),  address(dlFactory2));
-    //     address ltLocker3 = pool1.debtLockers(address(loan2), address(dlFactory2));
+        address ltLocker  = pool1.debtLockers(address(loan),  address(dlFactory1));
+        address ltLocker2 = pool1.debtLockers(address(loan),  address(dlFactory2));
+        address ltLocker3 = pool1.debtLockers(address(loan2), address(dlFactory2));
 
-    //     assertEq(IERC20(DAI).balanceOf(liqLocker),               25 ether);  // Balance of Liquidity Locker
-    //     assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  60 ether);  // Balance of Funding Locker
-    //     assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 15 ether);  // Balance of Funding Locker of loan 2
-    //     assertEq(IERC20(loan).balanceOf(ltLocker),              45 ether);  // LoanToken balance of LT Locker
-    //     assertEq(IERC20(loan).balanceOf(ltLocker2),             15 ether);  // LoanToken balance of LT Locker 2
-    //     assertEq(IERC20(loan2).balanceOf(ltLocker3),            15 ether);  // LoanToken balance of LT Locker 3
+        assertEq(IERC20(DAI).balanceOf(liqLocker),               25 ether);  // Balance of Liquidity Locker
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  60 ether);  // Balance of Funding Locker
+        assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 15 ether);  // Balance of Funding Locker of loan 2
+        assertEq(IERC20(loan).balanceOf(ltLocker),               45 ether);  // LoanToken balance of LT Locker
+        assertEq(IERC20(loan).balanceOf(ltLocker2),              15 ether);  // LoanToken balance of LT Locker 2
+        assertEq(IERC20(loan2).balanceOf(ltLocker3),             15 ether);  // LoanToken balance of LT Locker 3
 
-    //     assertEq(IERC20(DAI).balanceOf(address(bob)), 90 ether);
-    //     bob.withdraw(address(pool1), pool1.balanceOf(address(bob)));
-    //     assertEq(IERC20(DAI).balanceOf(address(bob)), 100 ether); // Paid back initial share of 10% of pool
+        assertEq(IERC20(DAI).balanceOf(address(bob)), 90 ether);
+        bob.withdraw(address(pool1), pool1.balanceOf(address(bob)));
+        assertEq(IERC20(DAI).balanceOf(address(bob)), 100 ether - 0.5 ether); // Withdrew immediately (lost 5% of 10 DAI deposit)
 
-    //     // TODO: Post-claim, multiple providers
-    // }
+        // TODO: Post-claim, multiple providers
+    }
+    
     // function test_interest() public {
 
     //     /*******************************/

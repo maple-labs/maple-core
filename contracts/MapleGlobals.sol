@@ -22,13 +22,13 @@ contract MapleGlobals {
     uint256 public investorFee;          // Portion of drawdown that goes to pool delegates/investors
     uint256 public treasuryFee;          // Portion of drawdown that goes to treasury
     
-    uint256 public interestDelay;        //seconds after deposit until full interest is available to a lender in a LP 
-    uint256 public penaltyBips;          //percentage in bips of principal lost if withdrawn immediately    
+    uint256 public interestDelay;        // Seconds after deposit until full interest is available to a lender in a LP 
+    uint256 public principalPenalty;     // Percentage in bips of principal lost if withdrawn immediately    
 
     address[] public validLoanAssets;               // Array of valid loan assets (for LoanFactory).
     address[] public validCollateralAssets;         // Array of valid collateral assets (for LoanFactory).
     string[]  public validLoanAssetSymbols;         // Array of valid loan assets symbols (TODO: Consider removing)
-    string[]  public validCollateralAssetSymbols;    // Array of valid collateral assets symbols (TODO: Consider removing)
+    string[]  public validCollateralAssetSymbols;   // Array of valid collateral assets symbols (TODO: Consider removing)
 
     mapping(address => bool)    public isValidLoanAsset;        // Mapping of valid loan assets
     mapping(address => bool)    public isValidCollateralAsset;  // Mapping of valid collateral assets
@@ -60,7 +60,7 @@ contract MapleGlobals {
         investorFee         = 50;
         treasuryFee         = 50;
         interestDelay       = 30 days;
-        penaltyBips         = 500;  // 5%
+        principalPenalty    = 500;
     }
 
     function getValidTokens() view public returns(
@@ -195,7 +195,7 @@ contract MapleGlobals {
         interestDelay = _interestDelay;
     }
  
-    function setPenaltyBips(uint256 _penaltyBips) public isGovernor {
-        penaltyBips = _penaltyBips;
+    function setPrincipalPenalty(uint256 _principalPenalty) public isGovernor {
+        principalPenalty = _principalPenalty;
     }
 }

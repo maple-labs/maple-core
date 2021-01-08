@@ -44,5 +44,5 @@ interface IGlobals {
 
     function interestDelay() external view returns (uint256);
 
-    function penaltyBips() external view returns (uint256);
+    function principalPenalty() external view returns (uint256);
 }
