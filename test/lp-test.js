@@ -330,7 +330,7 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
     await StakeLockerUSDCPool.unstake(1);
   });
 
-  it("H - Prevent liquidity locker deposits before finalization", async function () {
+  xit("H - Prevent liquidity locker deposits before finalization", async function () {
     await expect(PoolDAI.deposit(1)).to.be.revertedWith(
       "Pool:ERR_NOT_FINALIZED"
     );

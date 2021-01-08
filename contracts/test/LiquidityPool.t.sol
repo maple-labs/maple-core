@@ -1068,21 +1068,28 @@ contract PoolTest is TestUtil {
         }
 
         /***********************************/
-        /*** interest penalty calculator ***/
+        /*** Interest Penalty Calculator ***/
         /***********************************/
         {
             uint256 start = block.timestamp;
-            assertEq(pool1.calcInterestPenalty(1 ether,address(bob)),1 ether);
-            hevm.warp(start + globals.interestDelay()/3);
-            isEq(pool1.calcInterestPenalty(1 ether,address(bob)),uint(2 ether) / 3,6);
-            hevm.warp(start + globals.interestDelay()/2);
-            isEq(pool1.calcInterestPenalty(2 ether,address(bob)),1 ether,6);
-            hevm.warp(start + globals.interestDelay() + 1);
-            assertEq(pool1.calcInterestPenalty(1 ether,address(bob)),0);
-            hevm.warp(start + globals.interestDelay()*2);
-            assertEq(pool1.calcInterestPenalty(1 ether,address(bob)),0);
-            hevm.warp(start + globals.interestDelay()*1000);
-            assertEq(pool1.calcInterestPenalty(1 ether,address(bob)),0);
+            uint256 delay = globals.interestDelay();
+
+            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 1 ether);
+
+            hevm.warp(start + delay / 3);
+            withinTolerance(pool1.calcInterestPenalty(1 ether, address(bob)), uint(2 ether) / 3, 6);
+
+            hevm.warp(start + delay / 2);
+            withinTolerance(pool1.calcInterestPenalty(2 ether, address(bob)), 1 ether, 6);
+
+            hevm.warp(start + delay + 1);
+            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
+
+            hevm.warp(start + delay * 2);
+            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
+
+            hevm.warp(start + delay * 1000);
+            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
 
         }
 
@@ -1097,7 +1104,7 @@ contract PoolTest is TestUtil {
             kim.approve(DAI, address(pool1), uint(-1));
             assertTrue(kim.try_deposit(address(pool1), 1000 ether));
             kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
-            isEq(IERC20(DAI).balanceOf(address(kim)),2000 ether, 11);
+            withinTolerance(IERC20(DAI).balanceOf(address(kim)),2000 ether, 11);
             assertTrue(kim.try_deposit(address(pool1), 1000 ether));
             hevm.warp(start + globals.interestDelay()+1);
             kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
@@ -1130,11 +1137,11 @@ contract PoolTest is TestUtil {
             assertTrue(bob.try_deposit(address(pool1), 1_000_000 ether));
             assertEq(pool1.calcInterestPenalty(1 ether,address(kim)),1 ether);
             hevm.warp(start + globals.interestDelay()/2);
-            isEq(pool1.calcInterestPenalty(1 ether,address(kim)),uint(1 ether)/2,6);
+            withinTolerance(pool1.calcInterestPenalty(1 ether,address(kim)),uint(1 ether)/2,6);
             hevm.warp(start + globals.interestDelay() +1);
             assertEq(pool1.calcInterestPenalty(1 ether,address(kim)),0);
             assertTrue(kim.try_deposit(address(pool1), 1000 ether));
-            isEq(pool1.calcInterestPenalty(2 ether,address(kim)),uint(1 ether),6);
+            withinTolerance(pool1.calcInterestPenalty(2 ether,address(kim)),uint(1 ether),6);
             hevm.warp(start + globals.interestDelay()*2+1);
             assertEq(pool1.calcInterestPenalty(1 ether,address(kim)),0);
         }
