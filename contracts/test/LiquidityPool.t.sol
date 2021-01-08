@@ -1066,47 +1066,78 @@ contract PoolTest is TestUtil {
             assertEq(uint256(vault2.loanState()), 2);
         }
 
-        /***************/
-        /*** penalty ***/
-        /***************/
+        /***********************************/
+        /*** interest penalty calculator ***/
+        /***********************************/
         {
-            mint("DAI", address(kim), 1000 ether);
-
-            kim.approve(DAI, address(lp1), uint(-1));
-
             uint256 start = block.timestamp;
             assertEq(lp1.calcInterestPenalty(1 ether,address(bob)),1 ether);
-            assertEq(lp1.calcInterestPenalty(1 ether,address(che)),1 ether);
-            hevm.warp(start + lp1.interestDelay()/2);
-            assertTrue((lp1.calcInterestPenalty(2 ether,address(bob)) - 1 ether) <  500000000000);
-            assertTrue((lp1.calcInterestPenalty(2 ether,address(che)) - 1 ether) <  500000000000);
-            hevm.warp(start + lp1.interestDelay());
-            assertTrue((lp1.calcInterestPenalty(1 ether,address(bob)) ) >0);
-            assertTrue((lp1.calcInterestPenalty(1 ether,address(che)) ) >0);
-            assertTrue((lp1.calcInterestPenalty(1 ether,address(bob)) ) <500000000000 );
-            assertTrue((lp1.calcInterestPenalty(1 ether,address(che)) ) <500000000000);
+            hevm.warp(start + globals.interestDelay()/3);
+            isEq(lp1.calcInterestPenalty(1 ether,address(bob)),uint(2 ether) / 3,6);
+            hevm.warp(start + globals.interestDelay()/2);
+            isEq(lp1.calcInterestPenalty(2 ether,address(bob)),1 ether,6);
+            hevm.warp(start + globals.interestDelay() + 1);
+            assertEq(lp1.calcInterestPenalty(1 ether,address(bob)),0);
+            hevm.warp(start + globals.interestDelay()*2);
+            assertEq(lp1.calcInterestPenalty(1 ether,address(bob)),0);
+            hevm.warp(start + globals.interestDelay()*1000);
+            assertEq(lp1.calcInterestPenalty(1 ether,address(bob)),0);
 
-            hevm.warp(start + lp1.interestDelay() + 1);
-            assertEq(lp1.calcInterestPenalty(1 ether,address(bob)),0);
-            assertEq(lp1.calcInterestPenalty(1 ether,address(che)),0);
-            hevm.warp(start + lp1.interestDelay()*2);
-            assertEq(lp1.calcInterestPenalty(1 ether,address(bob)),0);
-            assertEq(lp1.calcInterestPenalty(1 ether,address(che)),0);
         }
 
 
+        /******************************************/
+        /*** interest only penalty on withdrawl ***/
+        /******************************************/
+        {
+            globals.setPenaltyBips(0);
+            uint start = block.timestamp;
+            mint("DAI", address(kim), 2000 ether);
+            kim.approve(DAI, address(lp1), uint(-1));
+            assertTrue(kim.try_deposit(address(lp1), 1000 ether));
+            kim.withdraw(address(lp1), lp1.balanceOf(address(kim)));
+            isEq(IERC20(DAI).balanceOf(address(kim)),2000 ether, 11);
+            assertTrue(kim.try_deposit(address(lp1), 1000 ether));
+            hevm.warp(start + globals.interestDelay()+1);
+            kim.withdraw(address(lp1), lp1.balanceOf(address(kim)));
+            assertGt(IERC20(DAI).balanceOf(address(kim)),2000 ether);
+        }
+        /******************************************/
+        /*** interest only penalty on withdrawl ***/
+        /******************************************/
+        {
+            globals.setPenaltyBips(500);
+            uint start = block.timestamp;
+            
+            assertTrue(kim.try_deposit(address(lp1), 1000 ether));
+            kim.withdraw(address(lp1), lp1.balanceOf(address(kim)));
+            assertTrue(IERC20(DAI).balanceOf(address(kim))<2000 ether);
+            assertTrue(IERC20(DAI).balanceOf(address(kim))>1950 ether);
+            assertTrue(kim.try_deposit(address(lp1), 1000 ether));
+            
+            hevm.warp(start + globals.interestDelay()+1);
+            kim.withdraw(address(lp1), lp1.balanceOf(address(kim)));
+            assertGt(IERC20(DAI).balanceOf(address(kim)),1950 ether);
+
+        }
 
         {
+            mint("DAI", address(kim), 2000 ether);
+            uint256 start = block.timestamp;
+            log_named_uint("blocktime",block.timestamp);
             assertTrue(kim.try_deposit(address(lp1), 1000 ether));
+            assertTrue(bob.try_deposit(address(lp1), 1_000_000 ether));
+            assertEq(lp1.calcInterestPenalty(1 ether,address(kim)),1 ether);
+            hevm.warp(start + globals.interestDelay()/2);
+            isEq(lp1.calcInterestPenalty(1 ether,address(kim)),uint(1 ether)/2,6);
+            hevm.warp(start + globals.interestDelay() +1);
+            assertEq(lp1.calcInterestPenalty(1 ether,address(kim)),0);
+            assertTrue(kim.try_deposit(address(lp1), 1000 ether));
+            isEq(lp1.calcInterestPenalty(2 ether,address(kim)),uint(1 ether),6);
+            hevm.warp(start + globals.interestDelay()*2+1);
+            assertEq(lp1.calcInterestPenalty(1 ether,address(kim)),0);
 
-            kim.withdraw(address(lp1), lp1.balanceOf(address(kim)));
-            assertEq(IERC20(DAI).balanceOf(address(kim)),1000 ether); 
+
         }
-/*        assertTrue(kim.try_deposit(address(lp1), 10_000_000 ether));
-        hevm.warp(block.timestamp + lp1.interestDelay()*2);
-        kim.withdraw(address(lp1), lp1.balanceOf(address(kim)));
-        assertTrue(IERC20(DAI).balanceOf(address(kim)) > 100_000_000 ether);*/
-
-    }
-    
+    }    
 }

@@ -177,9 +177,9 @@ contract LiquidityPool is IERC20, ERC20 {
     /// @notice Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
     /// @param _amt The amount of LiquidityAsset to deposit, in wei.
     function deposit(uint256 _amt) external notDefunct finalized {
-        ILiquidityAsset.transferFrom(msg.sender, liquidityLockerAddress, _amt);
-        uint256 _mintAmt = liq2FDT(_amt);
         _updateDepositAge(_amt, msg.sender);
+        require(ILiquidityAsset.transferFrom(msg.sender, liquidityLockerAddress, _amt),"LiquidityPool:ERR_DEPOSIT_TRANSFER");
+        uint256 _mintAmt = liq2FDT(_amt);
         _mint(msg.sender, _mintAmt);
 
         emit BalanceUpdated(liquidityLockerAddress, address(ILiquidityAsset), ILiquidityAsset.balanceOf(liquidityLockerAddress));
@@ -290,7 +290,9 @@ contract LiquidityPool is IERC20, ERC20 {
             depositAge[_addy] = block.timestamp;
         } else {
             uint256 _date = depositAge[_addy];
-            uint256 _coef = (WAD.mul(_amt)).div(balanceOf(_addy).add(_amt)); //yes, i want 0 if _amt is too small
+            uint256 _share = (WAD.mul(_amt)).div(totalSupply());
+            uint256 _newShare = (WAD.mul(balanceOf(_addy)+_amt)).div(totalSupply());
+            uint256 _coef = (WAD.mul(_share)).div(_newShare); //yes, i want 0 if _amt is too small
             //thhis addition will start to overflow in about 3^52 years
             depositAge[_addy] = ( _date.mul(WAD).add((block.timestamp.sub(_date)).mul(_coef)) ).div(WAD);
         }
