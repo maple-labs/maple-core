@@ -167,10 +167,10 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
     expect(USDC_STAKE_LOCKER_OWNER).to.equal(PoolAddressUSDC);
 
     // Check the LiquidityLockerFactory
-    const DAI_LIQUIDITY_LOCKER_OWNER = await LiquidityLockerFactory.getOwner(
+    const DAI_LIQUIDITY_LOCKER_OWNER = await LiquidityLockerFactory.owner(
       DAI_LIQUIDITY_LOCKER_ADDRESS
     );
-    const USDC_LIQUIDITY_LOCKER_OWNER = await LiquidityLockerFactory.getOwner(
+    const USDC_LIQUIDITY_LOCKER_OWNER = await LiquidityLockerFactory.owner(
       USDC_LIQUIDITY_LOCKER_ADDRESS
     );
     expect(DAI_LIQUIDITY_LOCKER_OWNER).to.equal(PoolAddressDAI);
@@ -183,10 +183,10 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
     const VALID_USDC_STAKE_LOCKER = await StakeLockerFactory.isStakeLocker(
       USDC_STAKE_LOCKER_ADDRESS
     );
-    const VALID_DAI_LIQUIDITY_LOCKER = await LiquidityLockerFactory.isLiquidityLocker(
+    const VALID_DAI_LIQUIDITY_LOCKER = await LiquidityLockerFactory.isLocker(
       DAI_LIQUIDITY_LOCKER_ADDRESS
     );
-    const VALID_USDC_LIQUIDITY_LOCKER = await LiquidityLockerFactory.isLiquidityLocker(
+    const VALID_USDC_LIQUIDITY_LOCKER = await LiquidityLockerFactory.isLocker(
       USDC_LIQUIDITY_LOCKER_ADDRESS
     );
 
