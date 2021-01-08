@@ -1074,29 +1074,33 @@ contract PoolTest is TestUtil {
             uint256 start = block.timestamp;
             uint256 delay = globals.interestDelay();
 
-            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 1 ether);
+            // assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
 
             hevm.warp(start + delay / 3);
-            withinTolerance(pool1.calcInterestPenalty(1 ether, address(bob)), uint(2 ether) / 3, 6);
+            withinTolerance(pool1.calcInterestPenalty(1 ether, address(bob)), uint(2 ether) / 3, 6); // After 1/3 delay has passed, 2/3 (interest + penalty) is subtracted
 
             hevm.warp(start + delay / 2);
-            withinTolerance(pool1.calcInterestPenalty(2 ether, address(bob)), 1 ether, 6);
+            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0.5 ether);  // After half delay has passed, 1/2 (interest + penalty) is subtracted
+
+            hevm.warp(start + delay - 1);
+            assertTrue(pool1.calcInterestPenalty(1 ether, address(bob)) > 0); // Still a penalty
+            
+            hevm.warp(start + delay);
+            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0); // After delay has passed, no penalty
 
             hevm.warp(start + delay + 1);
-            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
+            assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0); 
 
             hevm.warp(start + delay * 2);
             assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
 
             hevm.warp(start + delay * 1000);
             assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
-
         }
 
-
-        /******************************************/
-        /*** interest only penalty on withdrawl ***/
-        /******************************************/
+        /*******************************************/
+        /*** Interest only penalty on withdrawal ***/
+        /*******************************************/
         {
             globals.setPrincipalPenalty(0);
             uint start = block.timestamp;
@@ -1110,9 +1114,9 @@ contract PoolTest is TestUtil {
             kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
             assertGt(IERC20(DAI).balanceOf(address(kim)),2000 ether);
         }
-        /******************************************/
-        /*** interest only penalty on withdrawl ***/
-        /******************************************/
+        /*******************************************/
+        /*** Interest only penalty on withdrawal ***/
+        /*******************************************/
         {
             globals.setPrincipalPenalty(500);
             uint start = block.timestamp;

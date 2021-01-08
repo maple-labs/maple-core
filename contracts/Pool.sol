@@ -296,11 +296,12 @@ contract Pool is IERC20, ERC20 {
     **/
     function calcInterestPenalty(uint256 interest, address who) public returns (uint256 out) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
-        uint256 unlocked = dTime.div(IGlobals(globals).interestDelay() + 1).mul(interest) / WAD;
+        uint256 unlocked = dTime.div(IGlobals(globals).interestDelay()).mul(interest) / WAD;
 
         out = unlocked > interest ? 0 : interest - unlocked;
 
         emit Debug("dTime", dTime);
+        emit Debug("interest", interest);
         emit Debug("unlocked", unlocked);
         emit Debug("out", out);
     }
