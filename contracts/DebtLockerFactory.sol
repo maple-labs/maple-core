@@ -11,9 +11,9 @@ contract DebtLockerFactory {
     /// @param loan The loan this debt locker is hold debt tokens for.
     /// @return Address of the deployed debt locker.
     function newLocker(address loan) external returns (address) {
-        address debtLocker      = address(new DebtLocker(loan, msg.sender));
-        owner[debtLocker]       = msg.sender;
-        isLocker[debtLocker]    = true;
+        address debtLocker   = address(new DebtLocker(loan, msg.sender));
+        owner[debtLocker]    = msg.sender;
+        isLocker[debtLocker] = true;
         return debtLocker;
     }
     
