@@ -90,7 +90,12 @@ contract Pool is IERC20, ERC20 {
 
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
 
-        require(tokens[0] == _liquidityAsset || tokens[1] == _liquidityAsset, "Pool:INVALID_STAKING_POOL");
+        uint256  i = 0;
+        bool valid = false;
+
+        while(i < tokens.length && !valid) { valid = tokens[i] == _liquidityAsset; i++; }
+
+        require(valid, "Pool:INVALID_STAKING_POOL");
 
         // Assign variables relating to the LiquidityAsset.
         liquidityAsset         = _liquidityAsset;
