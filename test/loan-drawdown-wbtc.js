@@ -99,7 +99,7 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
       [BulletRepaymentCalc, LateFeeCalc, PremiumFlatCalc]
     );
 
-    vaultAddress = await LoanFactory.getLoan(preIncrementorValue);
+    vaultAddress = await LoanFactory.loans(preIncrementorValue);
   });
 
   it("fund loan for 500 DAI", async function () {

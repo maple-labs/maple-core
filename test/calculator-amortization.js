@@ -93,7 +93,7 @@ describe("Calc - Amortization Repayment", function () {
       { gasLimit: 6000000 }
     );
 
-    vaultAddress = await LoanFactory.getLoan(preIncrementorValue);
+    vaultAddress = await LoanFactory.loans(preIncrementorValue);
 
     DAI_EXT_1 = new ethers.Contract(
       DAIAddress,
@@ -246,7 +246,7 @@ describe("Calc - Amortization Repayment", function () {
       { gasLimit: 6000000 }
     );
 
-    vaultAddress = await LoanFactory.getLoan(preIncrementorValue);
+    vaultAddress = await LoanFactory.loans(preIncrementorValue);
 
     USDC_EXT_1 = new ethers.Contract(
       USDCAddress,

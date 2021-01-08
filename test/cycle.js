@@ -343,10 +343,10 @@ describe("Cycle of an entire loan", function () {
     }
 
     // Assigning contract object to Loan.
-    LoanAddress = await LoanFactory.getLoan(parseInt(index["_hex"]));
+    LoanAddress = await LoanFactory.loans(parseInt(index["_hex"]));
 
     while (LoanAddress == "0x0000000000000000000000000000000000000000") {
-      LoanAddress = await LoanFactory.getLoan(parseInt(index["_hex"]));
+      LoanAddress = await LoanFactory.loans(parseInt(index["_hex"]));
     }
 
     Loan = new ethers.Contract(

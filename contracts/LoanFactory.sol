@@ -19,7 +19,7 @@ contract LoanFactory {
 
     uint256 public loansCreated;  // Incrementor for number of loan vaults created.
 
-    mapping(uint256 => address) private loans;
+    mapping(uint256 => address) public loans;
     mapping(address => bool)    public isLoan;
 
     event LoanCreated(
@@ -132,13 +132,6 @@ contract LoanFactory {
         // Increment loanVaultCreated (IDs), return loan address.
         loansCreated++;
         return address(loan);
-    }
-
-    /// @dev Fetch the address of a loan vault using the id (incrementor).
-    /// @param id The incrementor value to supply.
-    /// @return The address of the loan vault at id.
-    function getLoan(uint256 id) public view returns (address) {
-        return loans[id];
     }
 
     /// @dev Governor can adjust the flFactory.

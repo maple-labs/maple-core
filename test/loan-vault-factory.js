@@ -272,9 +272,7 @@ describe("LoanFactory.sol / Loan.sol", function () {
     );
 
     // Fetch address of the Loan, confirm the address passes isLoan() identifcation check.
-    const loanVaultAddress = await LoanFactory.getLoan(
-      preIncrementorValue
-    );
+    const loanVaultAddress = await LoanFactory.loans(preIncrementorValue);
     vaultAddress = loanVaultAddress;
 
     const isLoan = await LoanFactory.isLoan(loanVaultAddress);
@@ -415,8 +413,8 @@ describe("LoanFactory.sol / Loan.sol", function () {
     );
   });
   xit("Check symbol and name UUID match in symbol and name", async function () {
-    const loanVaultAddress1 = await LoanFactory.getLoan(0);
-    const loanVaultAddress2 = await LoanFactory.getLoan(1);
+    const loanVaultAddress1 = await LoanFactory.loans(0);
+    const loanVaultAddress2 = await LoanFactory.loans(1);
     Loan1 = new ethers.Contract(
       loanVaultAddress1,
       LoanABI,
