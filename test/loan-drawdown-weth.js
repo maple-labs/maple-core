@@ -99,7 +99,7 @@ describe("create 1000 USDC loan, fund 500 USDC, drawdown 50% wETH collateralized
       [BulletRepaymentCalc, LateFeeCalc, PremiumFlatCalc]
     );
 
-    vaultAddress = await LoanFactory.getLoan(preIncrementorValue);
+    vaultAddress = await LoanFactory.loans(preIncrementorValue);
   });
 
   it("fund loan for 500 USDC", async function () {

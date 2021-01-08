@@ -93,7 +93,7 @@ describe("Calc - Full Repayment (Premium)", function () {
       { gasLimit: 6000000 }
     );
 
-    vaultAddress = await LoanFactory.getLoan(preIncrementorValue);
+    vaultAddress = await LoanFactory.loans(preIncrementorValue);
 
     DAI_EXT_1 = new ethers.Contract(
       DAIAddress,

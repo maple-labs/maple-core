@@ -106,7 +106,7 @@ describe("fundLoan() in Loan.sol", function () {
       [BulletRepaymentCalc, LateFeeCalc, PremiumFlatCalc]
     );
 
-    vaultAddress = await LoanFactory.getLoan(preIncrementorValue);
+    vaultAddress = await LoanFactory.loans(preIncrementorValue);
   });
 
   it("approve() loanVault to loanAsset with signer(1)", async function () {

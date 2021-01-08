@@ -69,7 +69,7 @@ describe("Pool Delegate Journey - DAI", function () {
       DELEGATE_FEE_BASIS_POINTS
     );
 
-    PoolAddress = await PoolFactory.getPool(
+    PoolAddress = await PoolFactory.pools(
       preIncrementorValue
     );
   });

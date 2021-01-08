@@ -7,4 +7,6 @@ interface IStakeLockerFactory {
         address _liquidityAsset,
         address _globals
     ) external returns (address);
+    function owner(address) external returns (address);
+    function isLocker(address) external returns (bool);
 }
