@@ -67,6 +67,18 @@ contract TestUtil is DSTest {
 
         assertEq(IERC20(addr).balanceOf(who), bal + amt); // Assert new balance
     }
+    function isEq(uint256 bal0, uint256 bal1, uint256 ACC) public {
+        //verify equality within ACC decimals
+        uint RAY = 10**27;
+        uint diff = bal0 > bal1 ? bal0 - bal1 : bal1 - bal0;
+        bool _check = ((diff * RAY) / bal0) < (RAY / 10**ACC) ;    
+        if (!_check){
+            emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", ACC);
+            emit log_named_uint("  Expected", bal0);
+            emit log_named_uint("    Actual", bal1);
+            fail();
+        }
+    }
     
     // // Make payment on any given Loan.
     // function makePayment(address _vault, address _borrower) public {
