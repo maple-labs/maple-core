@@ -170,7 +170,7 @@ contract PoolTest is TestUtil {
         daiOracle      = new DSValue();
         amortiCalc     = new AmortizationRepaymentCalc();
         bulletCalc     = new BulletRepaymentCalc();
-        lateFeeCalc    = new LateFeeCalc();
+        lateFeeCalc    = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc    = new PremiumCalc(500); // Flat 5% premium
         sid            = new PoolDelegate();
         joe            = new PoolDelegate();

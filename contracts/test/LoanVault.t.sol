@@ -94,7 +94,7 @@ contract LoanTest is TestUtil {
         daiOracle               = new DSValue();
         bulletCalc              = new BulletRepaymentCalc();
         amortiCalc              = new AmortizationRepaymentCalc();
-        lateFeeCalc             = new LateFeeCalc();
+        lateFeeCalc             = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc             = new PremiumCalc(500); // Flat 5% premium
         loanFactory             = new LoanFactory(
             address(globals), 
