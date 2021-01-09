@@ -292,9 +292,7 @@ contract Pool is IERC20, ERC20 {
             depositDate[who] = block.timestamp;
         } else {
             uint256 depDate  = depositDate[who];
-            uint256 newShare = (WAD.mul(amt)).div(totalSupply());
-            uint256 totShare = (WAD.mul(balanceOf(who) + amt)).div(totalSupply());
-            uint256 coef     = (WAD.mul(newShare)).div(totShare); // Yes, i want 0 if amt is too small
+            uint256 coef     = (WAD.mul(amt)).div(balanceOf(who) + amt); // Yes, i want 0 if amt is too small
             depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // date + (now - depDate) * coef
         }
     }
