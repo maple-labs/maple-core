@@ -204,7 +204,7 @@ contract PoolTest is TestUtil {
         IERC20(USDC).approve(address(bPool), uint(-1));
         mpl.approve(address(bPool), uint(-1));
 
-        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 ether);          // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 ether);   // Bind 50m USDC with 5 denormalization weight
         bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
 
         assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * 10 ** 6);
@@ -1048,8 +1048,8 @@ contract PoolTest is TestUtil {
         withinPrecision(IERC20(DAI).balanceOf(address(kim)), 2000 ether, 11); // TODO: Improve this precision
         
         uint256 bal0 = IERC20(DAI).balanceOf(address(kim));
-        assertTrue(kim.try_deposit(address(pool1), 1000 ether)); // Add another 1000 DAI
-        hevm.warp(start + pool1.interestDelay());          // Fast-forward to claim all proportionate interest
+        assertTrue(kim.try_deposit(address(pool1), 1000 ether));  // Add another 1000 DAI
+        hevm.warp(start + pool1.interestDelay());                 // Fast-forward to claim all proportionate interest
 
         uint256 share        = pool1.balanceOf(address(kim)).mul(1 ether).div(pool1.totalSupply());
         uint256 principalOut = pool1.principalOut();
@@ -1080,12 +1080,12 @@ contract PoolTest is TestUtil {
         kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
         uint256 bal1 = IERC20(DAI).balanceOf(address(kim));          // Balance after principal penalty
 
-        withinPrecision(bal0 - bal1, 500 * 1000 ether / 10_000, 10); // 5% principal penalty (TODO: Improve this precision)
+        withinPrecision(bal0 - bal1, 50 ether, 10); // 5% principal penalty (TODO: Improve this precision)
         
         // Do another deposit with same amount
         bal0 = IERC20(DAI).balanceOf(address(kim));
         assertTrue(kim.try_deposit(address(pool1), 1000 ether)); // Add another 1000 DAI
-        hevm.warp(start + pool1.interestDelay());              // Fast-forward to claim all proportionate interest
+        hevm.warp(start + pool1.interestDelay());                // Fast-forward to claim all proportionate interest
 
         uint256 share        = pool1.balanceOf(address(kim)).mul(1 ether).div(pool1.totalSupply());
         uint256 principalOut = pool1.principalOut();

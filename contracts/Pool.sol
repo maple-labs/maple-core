@@ -181,10 +181,10 @@ contract Pool is IERC20, ERC20 {
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLocker);
         uint256 due   = share.mul(principalOut.add(bal)).div(WAD);
 
-        uint256 ratio      = (WAD).mul(interestSum).div(principalOut.add(bal));                       // interest/totalMoney ratio
-        uint256 interest   = due.mul(ratio).div(WAD);                                                 // Get nominal interest owned by sender
-        uint256 priPenalty = principalPenalty.mul(due.sub(interest)).div(10000);  // Calculate flat principal penalty
-        uint256 totPenalty = calcInterestPenalty(interest.add(priPenalty), msg.sender);               // Get total penalty, however it may be calculated
+        uint256 ratio      = (WAD).mul(interestSum).div(principalOut.add(bal));          // interest/totalMoney ratio
+        uint256 interest   = due.mul(ratio).div(WAD);                                    // Get nominal interest owned by sender
+        uint256 priPenalty = principalPenalty.mul(due.sub(interest)).div(10000);         // Calculate flat principal penalty
+        uint256 totPenalty = calcInterestPenalty(interest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated
         
         due         = due.sub(totPenalty);                        // Remove penalty from due amount
         interestSum = interestSum.sub(interest).add(totPenalty);  // Update interest total reflecting withdrawn amount (distributes principal penalty as interest)
