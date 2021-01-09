@@ -80,7 +80,7 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
     const INDEX_DAI = await PoolFactory.poolsCreated();
 
     // Create DAI pool (these variables could be used in a form).
-    let LIQUIDITY_ASSET = DAIAddress; // [DAIAddress, USDCAddress] are 2 options, see Z for more.
+    let LIQUIDITY_ASSET = USDCAddress; // [DAIAddress, USDCAddress] are 2 options, see Z for more.
     let STAKE_ASSET = MapleBPool;
     let STAKING_FEE_BASIS_POINTS = 0;
     let DELEGATE_FEE_BASIS_POINTS = 0;
