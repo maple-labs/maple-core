@@ -25,7 +25,7 @@ contract MapleGlobals {
     address[] public validLoanAssets;               // Array of valid loan assets (for LoanFactory).
     address[] public validCollateralAssets;         // Array of valid collateral assets (for LoanFactory).
     string[]  public validLoanAssetSymbols;         // Array of valid loan assets symbols (TODO: Consider removing)
-    string[]  public validCollateralAssetSymbols;    // Array of valid collateral assets symbols (TODO: Consider removing)
+    string[]  public validCollateralAssetSymbols;   // Array of valid collateral assets symbols (TODO: Consider removing)
 
     mapping(address => bool)    public isValidLoanAsset;        // Mapping of valid loan assets
     mapping(address => bool)    public isValidCollateralAsset;  // Mapping of valid collateral assets

@@ -39,6 +39,7 @@ contract TestUtil is DSTest {
     address constant BPOOL_FACTORY = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd; // Balancer pool factory
 
     uint256 constant WAD = 10 ** 18;
+    uint256 constant RAY = 10 ** 27;
 
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
@@ -66,6 +67,19 @@ contract TestUtil is DSTest {
         );
 
         assertEq(IERC20(addr).balanceOf(who), bal + amt); // Assert new balance
+    }
+
+    // Verify equality within accuracy decimals
+    function withinPrecision(uint256 val0, uint256 val1, uint256 accuracy) public {
+        uint diff  = val0 > val1 ? val0 - val1 : val1 - val0;
+        bool check = ((diff * RAY) / val0) < (RAY / 10 ** accuracy);   
+
+        if (!check){
+            emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", accuracy);
+            emit log_named_uint("  Expected", val0);
+            emit log_named_uint("    Actual", val1);
+            fail();
+        }
     }
     
     // // Make payment on any given Loan.

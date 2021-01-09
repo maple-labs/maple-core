@@ -69,6 +69,14 @@ contract PoolDelegate {
     function claim(address pool, address loan, address dlFactory) external returns(uint[5] memory) {
         return IPool(pool).claim(loan, dlFactory);  
     }
+
+    function setPrincipalPenalty(address pool, uint256 penalty) external {
+        return IPool(pool).setPrincipalPenalty(penalty);
+    }
+
+    function setInterestDelay(address pool, uint256 delay) external {
+        return IPool(pool).setInterestDelay(delay);
+    }
 }
 
 contract LP {
@@ -121,12 +129,14 @@ contract Borrower {
 
 contract PoolTest is TestUtil {
 
+    using SafeMath for uint256;
+
     ERC20                           fundsToken;
     MapleToken                             mpl;
     MapleGlobals                       globals;
     FundingLockerFactory             flFactory;
     CollateralLockerFactory          clFactory;
-    LoanFactory                   loanVFactory;
+    LoanFactory                    loanFactory;
     Loan                                  loan;
     Loan                                 loan2;
     PoolFactory                 liqPoolFactory;
@@ -148,11 +158,12 @@ contract PoolTest is TestUtil {
     LP                                     bob;
     LP                                     che;
     LP                                     dan;
+    LP                                     kim;
     Borrower                               eli;
     Borrower                               fay;
 
     
-    event DebugS(string, uint);
+    event Debug(string, uint);
 
     function setUp() public {
 
@@ -160,7 +171,7 @@ contract PoolTest is TestUtil {
         globals        = new MapleGlobals(address(this), address(mpl));
         flFactory      = new FundingLockerFactory();
         clFactory      = new CollateralLockerFactory();
-        loanVFactory   = new LoanFactory(address(globals), address(flFactory), address(clFactory));
+        loanFactory   = new LoanFactory(address(globals), address(flFactory), address(clFactory));
         stakeLFactory  = new StakeLockerFactory();
         liqLFactory    = new LiquidityLockerFactory();
         liqPoolFactory = new PoolFactory(address(globals), address(stakeLFactory), address(liqLFactory));
@@ -177,6 +188,7 @@ contract PoolTest is TestUtil {
         bob            = new LP();
         che            = new LP();
         dan            = new LP();
+        kim            = new LP();
         eli            = new Borrower();
         fay            = new Borrower();
 
@@ -192,7 +204,7 @@ contract PoolTest is TestUtil {
         IERC20(USDC).approve(address(bPool), uint(-1));
         mpl.approve(address(bPool), uint(-1));
 
-        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 ether);          // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 ether);   // Bind 50m USDC with 5 denormalization weight
         bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
 
         assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * 10 ** 6);
@@ -249,8 +261,8 @@ contract PoolTest is TestUtil {
         uint256[6] memory specs_loan2 = [500, 180, 30, uint256(1000 ether), 2000, 7];
         address[3] memory calcs_loan2 = [address(amortiCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan  = eli.createLoan(loanVFactory, DAI, WETH, specs_loan, calcs_loan);
-        loan2 = fay.createLoan(loanVFactory, DAI, WETH, specs_loan2, calcs_loan2);
+        loan  = eli.createLoan(loanFactory, DAI, WETH, specs_loan, calcs_loan);
+        loan2 = fay.createLoan(loanFactory, DAI, WETH, specs_loan2, calcs_loan2);
     }
 
     function test_stake_and_finalize() public {
@@ -343,7 +355,7 @@ contract PoolTest is TestUtil {
 
         assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 100 ether)); // LoanFactory not in globals
 
-        globals.setLoanFactory(address(loanVFactory));
+        globals.setLoanFactory(address(loanFactory));
 
         assertEq(IERC20(DAI).balanceOf(liqLocker),               100 ether);  // Balance of Liquidity Locker
         assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),          0);  // Balance of Funding Locker
@@ -497,7 +509,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool1), 300_000_000 ether));  // 30%
             assertTrue(dan.try_deposit(address(pool1), 600_000_000 ether));  // 60%
 
-            globals.setLoanFactory(address(loanVFactory)); // Don't remove, not done in setUp()
+            globals.setLoanFactory(address(loanFactory)); // Don't remove, not done in setUp()
         }
 
         address fundingLocker  = loan.fundingLocker();
@@ -666,7 +678,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool2), 400_000_000 ether));  // 40% BOB in LP2
             assertTrue(dan.try_deposit(address(pool2), 100_000_000 ether));  // 10% BOB in LP2
 
-            globals.setLoanFactory(address(loanVFactory)); // Don't remove, not done in setUp()
+            globals.setLoanFactory(address(loanFactory)); // Don't remove, not done in setUp()
         }
         
         address fundingLocker  = loan.fundingLocker();
@@ -840,76 +852,253 @@ contract PoolTest is TestUtil {
         }
     }
 
-    function test_withdraw() public {
-
+    function setUpWithdraw() internal {
         /*******************************/
         /*** Finalize liquidity pool ***/
         /*******************************/
-        address stakeLocker = pool1.stakeLocker();
-        address liqLocker   = pool1.liquidityLocker();
+        {
+            sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
+            sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
-        sid.approve(address(bPool), stakeLocker, uint(-1));
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-
-        pool1.finalize();
-
+            pool1.finalize();
+        }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
-        mint("DAI", address(bob), 100 ether);
-        mint("DAI", address(che), 100 ether);
-        mint("DAI", address(dan), 100 ether);
+        {
+            mint("DAI", address(bob), 1_000_000_000 ether);
+            mint("DAI", address(che), 1_000_000_000 ether);
+            mint("DAI", address(dan), 1_000_000_000 ether);
 
-        bob.approve(DAI, address(pool1), uint(-1));
-        che.approve(DAI, address(pool1), uint(-1));
-        dan.approve(DAI, address(pool1), uint(-1));
+            bob.approve(DAI, address(pool1), uint(-1));
+            che.approve(DAI, address(pool1), uint(-1));
+            dan.approve(DAI, address(pool1), uint(-1));
 
-        assertTrue(bob.try_deposit(address(pool1), 10 ether));  // 10%
-        assertTrue(che.try_deposit(address(pool1), 30 ether));  // 30%
-        assertTrue(dan.try_deposit(address(pool1), 60 ether));  // 60%
+            assertTrue(bob.try_deposit(address(pool1), 100_000_000 ether));  // 10%
+            assertTrue(che.try_deposit(address(pool1), 300_000_000 ether));  // 30%
+            assertTrue(dan.try_deposit(address(pool1), 600_000_000 ether));  // 60%
 
-        globals.setLoanFactory(address(loanVFactory));
-
-        /*******************************************/
-        /*** Create new dlFactory1 and Loan ***/
-        /*******************************************/
-        DebtLockerFactory dlFactory2 = new DebtLockerFactory();
-
-        // Create Loan Vault
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 ether), 2000, 7];
-        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
-
-        Loan loan2 = Loan(loanVFactory.createLoan(DAI, WETH, specs, calcs));
+            globals.setLoanFactory(address(loanFactory)); // Don't remove, not done in setUp()
+        }
 
         address fundingLocker  = loan.fundingLocker();
         address fundingLocker2 = loan2.fundingLocker();
 
-        /******************/
-        /*** Fund Loans ***/
-        /******************/
-        assertEq(IERC20(DAI).balanceOf(liqLocker),              100 ether);  // Balance of Liquidity Locker
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),         0);  // Balance of Funding Locker
+        /************************************/
+        /*** Fund loan / loan2 (Excess) ***/
+        /************************************/
+        {
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 ether));
 
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1),  20 ether));  // Fund loan for 20 DAI
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1),  25 ether));  // Fund same loan for 25 DAI
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 15 ether));  // Fund new loan same loan for 15 DAI
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 15 ether));  // Fund new loan new loan for 15 DAI
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 ether));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 ether));
+        }
 
-        address ltLocker  = pool1.debtLockers(address(loan),  address(dlFactory1));
-        address ltLocker2 = pool1.debtLockers(address(loan),  address(dlFactory2));
-        address ltLocker3 = pool1.debtLockers(address(loan2), address(dlFactory2));
+        DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory1)));  // debtLocker1 = DebtLocker 1, for loan using dlFactory1
+        DebtLocker debtLocker2 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory2)));  // debtLocker2 = DebtLocker 2, for loan using dlFactory2
+        DebtLocker debtLocker3 = DebtLocker(pool1.debtLockers(address(loan2), address(dlFactory1)));  // debtLocker3 = DebtLocker 3, for loan2 using dlFactory1
+        DebtLocker debtLocker4 = DebtLocker(pool1.debtLockers(address(loan2), address(dlFactory2)));  // debtLocker4 = DebtLocker 4, for loan2 using dlFactory2
 
-        assertEq(IERC20(DAI).balanceOf(liqLocker),               25 ether);  // Balance of Liquidity Locker
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker)),  60 ether);  // Balance of Funding Locker
-        assertEq(IERC20(DAI).balanceOf(address(fundingLocker2)), 15 ether);  // Balance of Funding Locker of loan 2
-        assertEq(IERC20(loan).balanceOf(ltLocker),              45 ether);  // LoanToken balance of LT Locker
-        assertEq(IERC20(loan).balanceOf(ltLocker2),             15 ether);  // LoanToken balance of LT Locker 2
-        assertEq(IERC20(loan2).balanceOf(ltLocker3),            15 ether);  // LoanToken balance of LT Locker 3
+        /*****************/
+        /*** Draw Down ***/
+        /*****************/
+        {
+            uint cReq1 =  loan.collateralRequiredForDrawdown(100_000_000 ether); // wETH required for 100_000_000 DAI drawdown on loan
+            uint cReq2 = loan2.collateralRequiredForDrawdown(100_000_000 ether); // wETH required for 100_000_000 DAI drawdown on loan2
+            mint("WETH", address(eli), cReq1);
+            mint("WETH", address(fay), cReq2);
+            eli.approve(WETH, address(loan),  cReq1);
+            fay.approve(WETH, address(loan2), cReq2);
+            eli.drawdown(address(loan),  100_000_000 ether);
+            fay.drawdown(address(loan2), 100_000_000 ether);
+        }
+        
+        /****************************/
+        /*** Make 1 Payment (1/6) ***/
+        /****************************/
+        {
+            (uint amt1_1,,,) =  loan.getNextPayment(); // DAI required for 1st payment on loan
+            (uint amt1_2,,,) = loan2.getNextPayment(); // DAI required for 1st payment on loan2
+            mint("DAI", address(eli), amt1_1);
+            mint("DAI", address(fay), amt1_2);
+            eli.approve(DAI, address(loan),  amt1_1);
+            fay.approve(DAI, address(loan2), amt1_2);
+            eli.makePayment(address(loan));
+            fay.makePayment(address(loan2));
+        }
+        
+        /****************/
+        /*** LP Claim ***/
+        /****************/
+        {      
+            checkClaim(debtLocker1, loan,  sid, IERC20(DAI), pool1, address(dlFactory1));
+            checkClaim(debtLocker2, loan,  sid, IERC20(DAI), pool1, address(dlFactory2));
+            checkClaim(debtLocker3, loan2, sid, IERC20(DAI), pool1, address(dlFactory1));
+            checkClaim(debtLocker4, loan2, sid, IERC20(DAI), pool1, address(dlFactory2));
+        }
 
-        assertEq(IERC20(DAI).balanceOf(address(bob)), 90 ether);
-        bob.withdraw(address(pool1), pool1.balanceOf(address(bob)));
-        assertEq(IERC20(DAI).balanceOf(address(bob)), 100 ether); // Paid back initial share of 10% of pool
+        /******************************/
+        /*** Make 2 Payments (3/6)  ***/
+        /******************************/
+        {
+            (uint amt2_1,,,) =  loan.getNextPayment(); // DAI required for 2nd payment on loan
+            (uint amt2_2,,,) = loan2.getNextPayment(); // DAI required for 2nd payment on loan2
+            mint("DAI", address(eli), amt2_1);
+            mint("DAI", address(fay), amt2_2);
+            eli.approve(DAI, address(loan),  amt2_1);
+            fay.approve(DAI, address(loan2), amt2_2);
+            eli.makePayment(address(loan));
+            fay.makePayment(address(loan2));
 
-        // TODO: Post-claim, multiple providers
+            (uint amt3_1,,,) =  loan.getNextPayment(); // DAI required for 3rd payment on loan
+            (uint amt3_2,,,) = loan2.getNextPayment(); // DAI required for 3rd payment on loan2
+            mint("DAI", address(eli), amt3_1);
+            mint("DAI", address(fay), amt3_2);
+            eli.approve(DAI, address(loan),  amt3_1);
+            fay.approve(DAI, address(loan2), amt3_2);
+            eli.makePayment(address(loan));
+            fay.makePayment(address(loan2));
+        }
+        
+        /****************/
+        /*** LP Claim ***/
+        /****************/
+        {      
+            checkClaim(debtLocker1, loan,  sid, IERC20(DAI), pool1, address(dlFactory1));
+            checkClaim(debtLocker2, loan,  sid, IERC20(DAI), pool1, address(dlFactory2));
+            checkClaim(debtLocker3, loan2, sid, IERC20(DAI), pool1, address(dlFactory1));
+            checkClaim(debtLocker4, loan2, sid, IERC20(DAI), pool1, address(dlFactory2));
+        }
+        
+        /*********************************/
+        /*** Make (Early) Full Payment ***/
+        /*********************************/
+        {
+            (uint amtf_1,,) =  loan.getFullPayment(); // DAI required for 2nd payment on loan
+            (uint amtf_2,,) = loan2.getFullPayment(); // DAI required for 2nd payment on loan2
+            mint("DAI", address(eli), amtf_1);
+            mint("DAI", address(fay), amtf_2);
+            eli.approve(DAI, address(loan),  amtf_1);
+            fay.approve(DAI, address(loan2), amtf_2);
+            eli.makeFullPayment(address(loan));
+            fay.makeFullPayment(address(loan2));
+        }
+        
+        /****************/
+        /*** LP Claim ***/
+        /****************/
+        {      
+            checkClaim(debtLocker1, loan,  sid, IERC20(DAI), pool1, address(dlFactory1));
+            checkClaim(debtLocker2, loan,  sid, IERC20(DAI), pool1, address(dlFactory2));
+            checkClaim(debtLocker3, loan2, sid, IERC20(DAI), pool1, address(dlFactory1));
+            checkClaim(debtLocker4, loan2, sid, IERC20(DAI), pool1, address(dlFactory2));
+
+            // Ensure both loans are matured.
+            assertEq(uint256(loan.loanState()),  2);
+            assertEq(uint256(loan2.loanState()), 2);
+        }
+    }
+    
+    function test_withdraw_calculator() public {
+        setUpWithdraw();
+
+        uint256 start = block.timestamp;
+        uint256 delay = pool1.interestDelay();
+
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
+
+        hevm.warp(start + delay / 3);
+        withinPrecision(pool1.calcInterestPenalty(1 ether, address(bob)), uint(2 ether) / 3, 6); // After 1/3 delay has passed, 2/3 (interest + penalty) is subtracted
+
+        hevm.warp(start + delay / 2);
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0.5 ether);  // After half delay has passed, 1/2 (interest + penalty) is subtracted
+
+        hevm.warp(start + delay - 1);
+        assertTrue(pool1.calcInterestPenalty(1 ether, address(bob)) > 0); // Still a penalty
+        
+        hevm.warp(start + delay);
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0); // After delay has passed, no penalty
+
+        hevm.warp(start + delay + 1);
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0); 
+
+        hevm.warp(start + delay * 2);
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
+
+        hevm.warp(start + delay * 1000);
+        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
+    }    
+
+    function test_withdraw_no_principal_penalty() public {
+        setUpWithdraw();
+
+        uint start = block.timestamp;
+
+        sid.setPrincipalPenalty(address(pool1), 0);
+        mint("DAI", address(kim), 2000 ether);
+        kim.approve(DAI, address(pool1), uint(-1));
+        assertTrue(kim.try_deposit(address(pool1), 1000 ether));
+
+        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
+        withinPrecision(IERC20(DAI).balanceOf(address(kim)), 2000 ether, 11); // TODO: Improve this precision
+        
+        uint256 bal0 = IERC20(DAI).balanceOf(address(kim));
+        assertTrue(kim.try_deposit(address(pool1), 1000 ether));  // Add another 1000 DAI
+        hevm.warp(start + pool1.interestDelay());                 // Fast-forward to claim all proportionate interest
+
+        uint256 share        = pool1.balanceOf(address(kim)).mul(1 ether).div(pool1.totalSupply());
+        uint256 principalOut = pool1.principalOut();
+        uint256 interestSum  = pool1.interestSum();
+        uint256 bal          = IERC20(DAI).balanceOf(pool1.liquidityLocker());
+        uint256 due          = share.mul(principalOut.add(bal)).div(WAD);
+
+        uint256 ratio    = (WAD).mul(interestSum).div(principalOut.add(bal));  // interest/totalMoney ratio
+        uint256 interest = due.mul(ratio).div(WAD);    
+        
+        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
+        uint256 bal1 = IERC20(DAI).balanceOf(address(kim));
+
+        withinPrecision(bal1 - bal0, interest, 5);
+    }
+
+    function test_withdraw_principal_penalty() public {
+        setUpWithdraw();
+
+        uint start = block.timestamp;
+        
+        sid.setPrincipalPenalty(address(pool1), 500);
+        mint("DAI", address(kim), 2000 ether);
+        kim.approve(DAI, address(pool1), uint(-1));
+
+        uint256 bal0 = IERC20(DAI).balanceOf(address(kim));
+        assertTrue(kim.try_deposit(address(pool1), 1000 ether));     // Deposit and withdraw in same tx
+        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
+        uint256 bal1 = IERC20(DAI).balanceOf(address(kim));          // Balance after principal penalty
+
+        withinPrecision(bal0 - bal1, 50 ether, 10); // 5% principal penalty (TODO: Improve this precision)
+        
+        // Do another deposit with same amount
+        bal0 = IERC20(DAI).balanceOf(address(kim));
+        assertTrue(kim.try_deposit(address(pool1), 1000 ether)); // Add another 1000 DAI
+        hevm.warp(start + pool1.interestDelay());                // Fast-forward to claim all proportionate interest
+
+        uint256 share        = pool1.balanceOf(address(kim)).mul(1 ether).div(pool1.totalSupply());
+        uint256 principalOut = pool1.principalOut();
+        uint256 interestSum  = pool1.interestSum();
+        uint256 bal          = IERC20(DAI).balanceOf(pool1.liquidityLocker());
+        uint256 due          = share.mul(principalOut.add(bal)).div(WAD);
+
+        uint256 ratio    = (WAD).mul(interestSum).div(principalOut.add(bal));  // interest/totalMoney ratio
+        uint256 interest = due.mul(ratio).div(WAD);    
+        
+        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
+        bal1 = IERC20(DAI).balanceOf(address(kim));
+
+        withinPrecision(bal1 - bal0, interest, 5); // All of principal returned, plus interest
     }
 }
