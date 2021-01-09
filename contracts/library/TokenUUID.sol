@@ -9,7 +9,7 @@ library TokenUUID {
     /// @return UUID
     function generatedUUID(uint256 serial) internal view returns (string memory) {
 
-        bytes32 inBytes      =  keccak256(abi.encodePacked(block.timestamp, serial));
+        bytes32 inBytes       =  keccak256(abi.encodePacked(block.timestamp, serial));
         bytes memory outBytes = new bytes(8);
 
         for (uint8 i = 0; i < 7; i++) {
@@ -18,7 +18,6 @@ library TokenUUID {
         }
 
         uint8 digit = uint8(serial) % 26;
-
         outBytes[7] = byte(97 + digit);
 
         return string(outBytes);
