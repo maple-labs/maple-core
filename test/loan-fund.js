@@ -2,34 +2,28 @@ const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
 const artpath = "../../contracts/" + network.name + "/";
 
-const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
-const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
-const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
-const USDCABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
-const MPLAddress = require(artpath + "addresses/MapleToken.address.js");
-const MPLABI = require(artpath + "abis/MapleToken.abi.js");
-const WETHAddress = require(artpath + "addresses/WETH9.address.js");
-const WETHABI = require(artpath + "abis/WETH9.abi.js");
-const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
-const WBTCABI = require(artpath + "abis/WBTC.abi.js");
-const LVFactoryAddress = require(artpath +
-  "addresses/LoanFactory.address.js");
-const LVFactoryABI = require(artpath + "abis/LoanFactory.abi.js");
-const FLFAddress = require(artpath +
-  "addresses/FundingLockerFactory.address.js");
-const FLFABI = require(artpath + "abis/FundingLockerFactory.abi.js");
-const GlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
-const GlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
-const LoanABI = require(artpath + "abis/Loan.abi.js");
+const DAIAddress       = require(artpath + "addresses/MintableTokenDAI.address.js");
+const DAIABI           = require(artpath + "abis/MintableTokenDAI.abi.js");
+const USDCAddress      = require(artpath + "addresses/MintableTokenUSDC.address.js");
+const USDCABI          = require(artpath + "abis/MintableTokenUSDC.abi.js");
+const MPLAddress       = require(artpath + "addresses/MapleToken.address.js");
+const MPLABI           = require(artpath + "abis/MapleToken.abi.js");
+const WETHAddress      = require(artpath + "addresses/WETH9.address.js");
+const WETHABI          = require(artpath + "abis/WETH9.abi.js");
+const WBTCAddress      = require(artpath + "addresses/WBTC.address.js");
+const WBTCABI          = require(artpath + "abis/WBTC.abi.js");
+const LVFactoryAddress = require(artpath + "addresses/LoanFactory.address.js");
+const LVFactoryABI     = require(artpath + "abis/LoanFactory.abi.js");
+const FLFAddress       = require(artpath + "addresses/FundingLockerFactory.address.js");
+const FLFABI           = require(artpath + "abis/FundingLockerFactory.abi.js");
+const GlobalsAddress   = require(artpath + "addresses/MapleGlobals.address.js");
+const GlobalsABI       = require(artpath + "abis/MapleGlobals.abi.js");
+const LoanABI          = require(artpath + "abis/Loan.abi.js");
 
-const AmortizationRepaymentCalc = require(artpath +
-  "addresses/AmortizationRepaymentCalc.address.js");
-const BulletRepaymentCalc = require(artpath +
-  "addresses/BulletRepaymentCalc.address.js");
-const LateFeeCalc = require(artpath +
-  "addresses/LateFeeCalc.address.js");
-const PremiumFlatCalc = require(artpath +
-  "addresses/PremiumFlatCalc.address.js");
+const AmortizationRepaymentCalc = require(artpath + "addresses/AmortizationRepaymentCalc.address.js");
+const BulletRepaymentCalc       = require(artpath + "addresses/BulletRepaymentCalc.address.js");
+const LateFeeCalc               = require(artpath + "addresses/LateFeeCalc.address.js");
+const PremiumCalc               = require(artpath + "addresses/PremiumCalc.address.js");
 
 describe("fundLoan() in Loan.sol", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000020";
@@ -103,7 +97,11 @@ describe("fundLoan() in Loan.sol", function () {
       DAIAddress,
       WBTCAddress,
       [500, 90, 30, BigNumber.from(10).pow(18).mul(1000), 2000, 7],
-      [BulletRepaymentCalc, LateFeeCalc, PremiumFlatCalc]
+      [
+        AmortizationRepaymentCalc,
+        LateFeeCalc,
+        PremiumCalc
+      ]
     );
 
     vaultAddress = await LoanFactory.loans(preIncrementorValue);

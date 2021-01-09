@@ -14,7 +14,7 @@ import "../interfaces/IPoolFactory.sol";
 import "../AmortizationRepaymentCalc.sol";
 import "../BulletRepaymentCalc.sol";
 import "../LateFeeCalc.sol";
-import "../PremiumFlatCalc.sol";
+import "../PremiumCalc.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -141,7 +141,7 @@ contract PoolTest is TestUtil {
     AmortizationRepaymentCalc       amortiCalc;
     BulletRepaymentCalc             bulletCalc;
     LateFeeCalc                    lateFeeCalc;
-    PremiumFlatCalc                premiumCalc;
+    PremiumCalc                    premiumCalc;
     IBPool                               bPool;
     PoolDelegate                           sid;
     PoolDelegate                           joe;
@@ -170,8 +170,8 @@ contract PoolTest is TestUtil {
         daiOracle      = new DSValue();
         amortiCalc     = new AmortizationRepaymentCalc();
         bulletCalc     = new BulletRepaymentCalc();
-        lateFeeCalc    = new LateFeeCalc();
-        premiumCalc    = new PremiumFlatCalc(500); // Flat 5% premium
+        lateFeeCalc    = new LateFeeCalc(0);   // Flat 0% fee
+        premiumCalc    = new PremiumCalc(500); // Flat 5% premium
         sid            = new PoolDelegate();
         joe            = new PoolDelegate();
         bob            = new LP();

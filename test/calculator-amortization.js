@@ -17,8 +17,8 @@ const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
 const LateFeeCalc = require(artpath +
   "addresses/LateFeeCalc.address.js");
-const PremiumFlatCalc = require(artpath +
-  "addresses/PremiumFlatCalc.address.js");
+const PremiumCalc = require(artpath +
+  "addresses/PremiumCalc.address.js");
 
 const LoanABI = require(artpath + "abis/Loan.abi.js");
 
@@ -88,7 +88,7 @@ describe("Calc - Amortization Repayment", function () {
       [
         AmortizationRepaymentCalc,
         LateFeeCalc,
-        PremiumFlatCalc,
+        PremiumCalc,
       ],
       { gasLimit: 6000000 }
     );
@@ -241,7 +241,7 @@ describe("Calc - Amortization Repayment", function () {
       [
         AmortizationRepaymentCalc,
         LateFeeCalc,
-        PremiumFlatCalc,
+        PremiumCalc,
       ],
       { gasLimit: 6000000 }
     );
