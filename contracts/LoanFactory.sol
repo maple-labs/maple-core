@@ -96,7 +96,7 @@ contract LoanFactory {
         );
         
         // Deploy loan vault contract.
-	    string memory tUUID = TokenUUID.mkUUID(loansCreated + 1);
+	    string memory tUUID = TokenUUID.generatedUUID(loansCreated + 1);
 
         Loan loan = new Loan(
             msg.sender,
