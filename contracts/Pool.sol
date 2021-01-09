@@ -40,10 +40,12 @@ contract Pool is IERC20, ERC20 {
     uint256 private           liquidityAssetDecimals;  // decimals() precision for the liquidityAsset. (TODO: Examine the use of this variable, make immutable)
     uint256 private immutable ONELiquidityAsset;       // 10^k where k = liquidityAssetDecimals, representing one LiquidityAsset unit in 'wei'. (TODO: Examine the use of this variable)
 
-    uint256 public principalOut;  // Sum of all outstanding principal on loans
-    uint256 public interestSum;   // Sum of all interest currently inside the liquidity locker
-    uint256 public stakingFee;    // The fee for stakers (in basis points).
-    uint256 public delegateFee;   // The fee for delegates (in basis points).
+    uint256 public principalOut;     // Sum of all outstanding principal on loans
+    uint256 public interestSum;      // Sum of all interest currently inside the liquidity locker
+    uint256 public stakingFee;       // The fee for stakers (in basis points).
+    uint256 public delegateFee;      // The fee for delegates (in basis points).
+    uint256 public principalPenalty; // max penalty on principal in bips on early withdrawl
+    uint256 public interestDelay;    // time until total interest is available after a deposit, in seconds
 
     bool public isFinalized;  // True if this Pool is setup and the poolDelegate has met staking requirements.
     bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
@@ -93,6 +95,10 @@ contract Pool is IERC20, ERC20 {
 
         // Initialize Balancer pool calculator
         calcBPool = new CalcBPool();
+
+        // Withdrawl penalty variable defaults
+        principalPenalty = 500;
+        interestDelay    = 30 days;
     }
 
     modifier finalized() {
@@ -177,7 +183,7 @@ contract Pool is IERC20, ERC20 {
 
         uint256 ratio      = (WAD).mul(interestSum).div(principalOut.add(bal));                       // interest/totalMoney ratio
         uint256 interest   = due.mul(ratio).div(WAD);                                                 // Get nominal interest owned by sender
-        uint256 priPenalty = IGlobals(globals).principalPenalty().mul(due.sub(interest)).div(10000);  // Calculate flat principal penalty
+        uint256 priPenalty = principalPenalty.mul(due.sub(interest)).div(10000);  // Calculate flat principal penalty
         uint256 totPenalty = calcInterestPenalty(interest.add(priPenalty), msg.sender);               // Get total penalty, however it may be calculated
         
         due         = due.sub(totPenalty);                        // Remove penalty from due amount
@@ -282,7 +288,7 @@ contract Pool is IERC20, ERC20 {
     **/
     function calcInterestPenalty(uint256 interest, address who) public returns (uint256 out) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
-        uint256 unlocked = dTime.div(IGlobals(globals).interestDelay()).mul(interest) / WAD;
+        uint256 unlocked = dTime.div(interestDelay).mul(interest) / WAD;
 
         out = unlocked > interest ? 0 : interest - unlocked;
     }
@@ -296,4 +302,13 @@ contract Pool is IERC20, ERC20 {
             depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // date + (now - depDate) * coef
         }
     }
+
+    function setInterestDelay(uint256 _interestDelay) public isDelegate {
+        interestDelay = _interestDelay;
+    }
+
+    function setPrincipalPenalty(uint256 _principalPenalty) public isDelegate {
+        principalPenalty = _principalPenalty;
+    }
+
 }

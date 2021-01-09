@@ -21,9 +21,6 @@ contract MapleGlobals {
     uint256 public drawdownGracePeriod;  // Amount of time to allow borrower to drawdown on their loan after funding period ends.
     uint256 public investorFee;          // Portion of drawdown that goes to pool delegates/investors
     uint256 public treasuryFee;          // Portion of drawdown that goes to treasury
-    
-    uint256 public interestDelay;        // Seconds after deposit until full interest is available to a lender in a LP 
-    uint256 public principalPenalty;     // Percentage in bips of principal lost if withdrawn immediately    
 
     address[] public validLoanAssets;               // Array of valid loan assets (for LoanFactory).
     address[] public validCollateralAssets;         // Array of valid collateral assets (for LoanFactory).
@@ -59,8 +56,6 @@ contract MapleGlobals {
         drawdownGracePeriod = 1 days;
         investorFee         = 50;
         treasuryFee         = 50;
-        interestDelay       = 30 days;
-        principalPenalty    = 500;
     }
 
     function getValidTokens() view public returns(
@@ -189,13 +184,5 @@ contract MapleGlobals {
      */
     function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
         unstakeDelay = _unstakeDelay;
-    }
-
-    function setInterestDelay(uint256 _interestDelay) public isGovernor {
-        interestDelay = _interestDelay;
-    }
- 
-    function setPrincipalPenalty(uint256 _principalPenalty) public isGovernor {
-        principalPenalty = _principalPenalty;
     }
 }

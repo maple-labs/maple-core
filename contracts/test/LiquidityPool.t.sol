@@ -69,6 +69,14 @@ contract PoolDelegate {
     function claim(address pool, address loan, address dlFactory) external returns(uint[5] memory) {
         return IPool(pool).claim(loan, dlFactory);  
     }
+
+    function setPrincipalPenalty(address pool, uint256 penalty) external {
+        return IPool(pool).setPrincipalPenalty(penalty);
+    }
+
+    function setInterestDelay(address pool, uint256 delay) external {
+        return IPool(pool).setInterestDelay(delay);
+    }
 }
 
 contract LP {
@@ -1000,7 +1008,7 @@ contract PoolTest is TestUtil {
         setUpWithdraw();
 
         uint256 start = block.timestamp;
-        uint256 delay = globals.interestDelay();
+        uint256 delay = pool1.interestDelay();
 
         assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
 
@@ -1031,7 +1039,7 @@ contract PoolTest is TestUtil {
 
         uint start = block.timestamp;
 
-        globals.setPrincipalPenalty(0);
+        sid.setPrincipalPenalty(address(pool1), 0);
         mint("DAI", address(kim), 2000 ether);
         kim.approve(DAI, address(pool1), uint(-1));
         assertTrue(kim.try_deposit(address(pool1), 1000 ether));
@@ -1041,7 +1049,7 @@ contract PoolTest is TestUtil {
         
         uint256 bal0 = IERC20(DAI).balanceOf(address(kim));
         assertTrue(kim.try_deposit(address(pool1), 1000 ether)); // Add another 1000 DAI
-        hevm.warp(start + globals.interestDelay());          // Fast-forward to claim all proportionate interest
+        hevm.warp(start + pool1.interestDelay());          // Fast-forward to claim all proportionate interest
 
         uint256 share        = pool1.balanceOf(address(kim)).mul(1 ether).div(pool1.totalSupply());
         uint256 principalOut = pool1.principalOut();
@@ -1063,7 +1071,7 @@ contract PoolTest is TestUtil {
 
         uint start = block.timestamp;
         
-        globals.setPrincipalPenalty(500);
+        sid.setPrincipalPenalty(address(pool1), 500);
         mint("DAI", address(kim), 2000 ether);
         kim.approve(DAI, address(pool1), uint(-1));
 
@@ -1077,7 +1085,7 @@ contract PoolTest is TestUtil {
         // Do another deposit with same amount
         bal0 = IERC20(DAI).balanceOf(address(kim));
         assertTrue(kim.try_deposit(address(pool1), 1000 ether)); // Add another 1000 DAI
-        hevm.warp(start + globals.interestDelay());              // Fast-forward to claim all proportionate interest
+        hevm.warp(start + pool1.interestDelay());              // Fast-forward to claim all proportionate interest
 
         uint256 share        = pool1.balanceOf(address(kim)).mul(1 ether).div(pool1.totalSupply());
         uint256 principalOut = pool1.principalOut();

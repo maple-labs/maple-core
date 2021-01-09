@@ -41,8 +41,4 @@ interface IGlobals {
     function getPrice(address) external view returns (uint256);
 
     function isValidCalc(address) external view returns (bool);
-
-    function interestDelay() external view returns (uint256);
-
-    function principalPenalty() external view returns (uint256);
 }
