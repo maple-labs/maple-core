@@ -145,20 +145,20 @@ contract Pool is IERC20, ERC20 {
     */
     // TODO: Resolve the dissonance between poolSharesRequired / stakeAmountRequired / getSwapOutValue
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
-        
-        address pool                = IGlobals(globals).mapleBPool();
-        address pair                = IGlobals(globals).mapleBPoolAssetPair();
+
+        address bPool               = IGlobals(globals).mapleBPool();
+        address stake               = IGlobals(globals).mapleBPoolAssetPair(); // TODO: Consider localizing this, relates to SC-1138
         uint256 stakeAmountRequired = IGlobals(globals).stakeAmountRequired();
 
         (
             uint256 poolAmountInRequired, 
             uint256 poolAmountPresent
-        ) = calcBPool.getPoolSharesRequired(pool, pair, stakeAmountRequired, poolDelegate, stakeLocker);
+        ) = calcBPool.getPoolSharesRequired(bPool, stake, stakeAmountRequired, poolDelegate, stakeLocker);
 
         return (
             stakeAmountRequired,
-            calcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLocker),
-            calcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLocker) >= stakeAmountRequired,
+            calcBPool.getSwapOutValue(bPool, stake, poolDelegate, stakeLocker),
+            calcBPool.getSwapOutValue(bPool, stake, poolDelegate, stakeLocker) >= stakeAmountRequired,
             poolAmountInRequired,
             poolAmountPresent
         );
