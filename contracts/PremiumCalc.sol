@@ -25,5 +25,5 @@ contract PremiumCalc {
         uint256 principalOwed = loan.principalOwed();
         uint256 interest      = principalOwed.mul(premiumBips).div(10000);
         return (interest.add(principalOwed), principalOwed, interest);
-  }
+    }
 } 
