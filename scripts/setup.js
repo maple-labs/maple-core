@@ -19,8 +19,8 @@ const BulletRepaymentCalc = require(artpath +
 const LateFeeCalc = require(artpath +
   "addresses/LateFeeCalc.address.js");
 
-const PremiumFlatCalc = require(artpath +
-  "addresses/PremiumFlatCalc.address.js");
+const PremiumCalc = require(artpath +
+  "addresses/PremiumCalc.address.js");
 
 const MapleGlobalsAddress = require(artpath +
   "addresses/MapleGlobals.address.js");
@@ -106,7 +106,7 @@ async function main() {
   await mapleGlobals.setCalc(AmortizationRepaymentCalc, true);
   await mapleGlobals.setCalc(BulletRepaymentCalc, true);
   await mapleGlobals.setCalc(LateFeeCalc, true);
-  await mapleGlobals.setCalc(PremiumFlatCalc, true);
+  await mapleGlobals.setCalc(PremiumCalc, true);
 
   const LVFactory = new ethers.Contract(
     LoanFactoryAddress,

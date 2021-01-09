@@ -8,8 +8,8 @@ const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
 const LateFeeCalc = require(artpath +
   "addresses/LateFeeCalc.address.js");
-const PremiumFlatCalc = require(artpath +
-  "addresses/PremiumFlatCalc.address.js");
+const PremiumCalc = require(artpath +
+  "addresses/PremiumCalc.address.js");
 
 const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
 const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
@@ -70,7 +70,7 @@ describe("Pool & LiquidityLocker & StakeLocker", function () {
       [
         AmortizationRepaymentCalc,
         LateFeeCalc,
-        PremiumFlatCalc,
+        PremiumCalc,
       ]
     );
     LVAddress = await LVFactory.getLoan(

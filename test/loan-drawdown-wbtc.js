@@ -28,8 +28,8 @@ const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
 const LateFeeCalc = require(artpath +
   "addresses/LateFeeCalc.address.js");
-const PremiumFlatCalc = require(artpath +
-  "addresses/PremiumFlatCalc.address.js");
+const PremiumCalc = require(artpath +
+  "addresses/PremiumCalc.address.js");
 
 describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized loan", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000020";
@@ -96,7 +96,7 @@ describe("create 1000 DAI loan, fund 500 DAI, drawdown 20% wBTC collateralized l
       DAIAddress,
       WBTCAddress,
       [500, 90, 30, BigNumber.from(10).pow(18).mul(1000), 2000, 7],
-      [BulletRepaymentCalc, LateFeeCalc, PremiumFlatCalc]
+      [BulletRepaymentCalc, LateFeeCalc, PremiumCalc]
     );
 
     vaultAddress = await LoanFactory.loans(preIncrementorValue);

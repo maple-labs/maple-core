@@ -8,8 +8,8 @@ const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
 const LateFeeCalc = require(artpath +
   "addresses/LateFeeCalc.address.js");
-const PremiumFlatCalc = require(artpath +
-  "addresses/PremiumFlatCalc.address.js");
+const PremiumCalc = require(artpath +
+  "addresses/PremiumCalc.address.js");
 
 describe("Borrower Journey", function () {
   let loanVaultAddress;
@@ -261,7 +261,7 @@ describe("Borrower Journey", function () {
         COLLATERAL_BIPS_RATIO,
         FUNDING_PERIOD_DAYS,
       ],
-      [BulletRepaymentCalc, LateFeeCalc, PremiumFlatCalc],
+      [BulletRepaymentCalc, LateFeeCalc, PremiumCalc],
       { gasLimit: 6000000 }
     );
 
