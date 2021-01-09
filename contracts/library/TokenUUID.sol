@@ -4,9 +4,11 @@ pragma solidity >=0.6.11;
 /// @title Generates a UUID, used for Pool and Loan (debt) tokens in respective factories.
 library TokenUUID {
 
-    /// @notice Generates a UUID.
-    /// @param serial ranodmizes the output.
-    /// @return UUID
+    /**
+        @notice Generates a UUID.
+        @param  serial ranodmizes the output.
+        @return UUID
+    */
     function generatedUUID(uint256 serial) internal view returns (string memory) {
 
         bytes32 inBytes       =  keccak256(abi.encodePacked(block.timestamp, serial));
