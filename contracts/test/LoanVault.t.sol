@@ -10,7 +10,7 @@ import "../mocks/token.sol";
 import "../AmortizationRepaymentCalc.sol";
 import "../BulletRepaymentCalc.sol";
 import "../LateFeeCalc.sol";
-import "../PremiumFlatCalc.sol";
+import "../PremiumCalc.sol";
 
 import "../MapleToken.sol";
 import "../MapleGlobals.sol";
@@ -78,7 +78,7 @@ contract LoanTest is TestUtil {
     AmortizationRepaymentCalc amortiCalc;
     BulletRepaymentCalc       bulletCalc;
     LateFeeCalc              lateFeeCalc;
-    PremiumFlatCalc          premiumCalc;
+    PremiumCalc              premiumCalc;
     LoanFactory              loanFactory;
     Borrower                         ali;
     Lender                           bob;
@@ -95,7 +95,7 @@ contract LoanTest is TestUtil {
         bulletCalc              = new BulletRepaymentCalc();
         amortiCalc              = new AmortizationRepaymentCalc();
         lateFeeCalc             = new LateFeeCalc();
-        premiumCalc             = new PremiumFlatCalc(500); // Flat 5% premium
+        premiumCalc             = new PremiumCalc(500); // Flat 5% premium
         loanFactory             = new LoanFactory(
             address(globals), 
             address(flFactory), 

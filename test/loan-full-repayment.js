@@ -2,23 +2,19 @@ const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
 const artpath = "../../contracts/" + network.name + "/";
 
-const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
-const DAIABI = require(artpath + "abis/MintableTokenDAI.abi.js");
+const DAIAddress  = require(artpath + "addresses/MintableTokenDAI.address.js");
+const DAIABI      = require(artpath + "abis/MintableTokenDAI.abi.js");
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
-const USDCABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
+const USDCABI     = require(artpath + "abis/MintableTokenUSDC.abi.js");
 const WETHAddress = require(artpath + "addresses/WETH9.address.js");
-const WETHABI = require(artpath + "abis/WETH9.abi.js");
+const WETHABI     = require(artpath + "abis/WETH9.abi.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
-const WBTCABI = require(artpath + "abis/WBTC.abi.js");
+const WBTCABI     = require(artpath + "abis/WBTC.abi.js");
 
-const AmortizationRepaymentCalc = require(artpath +
-  "addresses/AmortizationRepaymentCalc.address.js");
-const BulletRepaymentCalc = require(artpath +
-  "addresses/BulletRepaymentCalc.address.js");
-const LateFeeCalc = require(artpath +
-  "addresses/LateFeeCalc.address.js");
-const PremiumFlatCalc = require(artpath +
-  "addresses/PremiumFlatCalc.address.js");
+const AmortizationRepaymentCalc = require(artpath + "addresses/AmortizationRepaymentCalc.address.js");
+const BulletRepaymentCalc       = require(artpath + "addresses/BulletRepaymentCalc.address.js");
+const LateFeeCalc               = require(artpath + "addresses/LateFeeCalc.address.js");
+const PremiumCalc               = require(artpath + "addresses/PremiumCalc.address.js");
 
 const LoanABI = require(artpath + "abis/Loan.abi.js");
 
@@ -33,8 +29,7 @@ describe("Calc - Full Repayment (Premium)", function () {
   let collateralAssetSymbol, requestedAssetSymbol;
 
   it("A - Issue and fund an amortization loan", async function () {
-    const LoanFactoryAddress = require(artpath +
-      "addresses/LoanFactory.address");
+    const LoanFactoryAddress = require(artpath + "addresses/LoanFactory.address");
     const LoanFactoryABI = require(artpath + "abis/LoanFactory.abi");
 
     LoanFactory = new ethers.Contract(
@@ -46,12 +41,11 @@ describe("Calc - Full Repayment (Premium)", function () {
     const preIncrementorValue = await LoanFactory.loansCreated();
 
     // ERC-20 contracts for tokens
-    const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address");
-    const USDCAddress = require(artpath +
-      "addresses/MintableTokenUSDC.address");
+    const DAIAddress  = require(artpath + "addresses/MintableTokenDAI.address");
+    const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address");
     const WETHAddress = require(artpath + "addresses/WETH9.address");
     const WBTCAddress = require(artpath + "addresses/WBTC.address");
-    const ERC20ABI = require(artpath + "abis/MintableTokenDAI.abi");
+    const ERC20ABI    = require(artpath + "abis/MintableTokenDAI.abi");
 
     const REQUESTED_ASSET = DAIAddress; // Update symbol variable below when changing this.
     requestedAssetSymbol = "DAI";
@@ -88,7 +82,7 @@ describe("Calc - Full Repayment (Premium)", function () {
       [
         AmortizationRepaymentCalc,
         LateFeeCalc,
-        PremiumFlatCalc,
+        PremiumCalc
       ],
       { gasLimit: 6000000 }
     );

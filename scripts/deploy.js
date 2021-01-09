@@ -55,7 +55,7 @@ async function main() {
 
   const LateFeeCalc = await deploy("LateFeeCalc");
 
-  const PremiumFlatCalc = await deploy("PremiumFlatCalc", [200]); // 2% FEE on Principal
+  const PremiumCalc = await deploy("PremiumCalc", [200]); // 2% FEE on Principal
 
   const CollateralLockerFactory = await deploy("CollateralLockerFactory");
 

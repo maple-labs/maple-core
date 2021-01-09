@@ -4,7 +4,7 @@ pragma solidity >=0.6.11;
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./interfaces/ILoan.sol";
 
-contract PremiumFlatCalc {
+contract PremiumCalc {
 
 	using SafeMath for uint256;
 
