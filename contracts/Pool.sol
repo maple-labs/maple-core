@@ -168,7 +168,7 @@ contract Pool is IERC20, ERC20 {
     function withdraw(uint256 amt) external notDefunct finalized {
         require(balanceOf(msg.sender) >= amt, "Pool::withdraw:USER_BAL_LESS_THAN_AMT");
 
-        uint256 share = amt.mul(1 ether).div(totalSupply());
+        uint256 share = amt.mul(WAD).div(totalSupply());
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLocker);
         uint256 due   = share.mul(principalOut.add(bal)).div(WAD);
 

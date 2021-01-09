@@ -9,6 +9,8 @@ contract DebtLocker {
 
     using SafeMath for uint256;
 
+    uint256 constant WAD = 10 ** 18;
+
     address public immutable loan;       // The Loan that this locker is holding tokens for.
     address public immutable owner;      // The owner of this Locker (a liquidity pool).
     address public immutable loanAsset;  // The loanAsset that this locker will claim.
@@ -58,11 +60,11 @@ contract DebtLocker {
 
         uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess);
         uint256 balance   = IERC20(loanAsset).balanceOf(address(this));
-        uint256 interest  = newInterest .mul(1 ether).div(sum).mul(balance).div(1 ether);
-        uint256 principal = newPrincipal.mul(1 ether).div(sum).mul(balance).div(1 ether);
-        uint256 fee       = newFee      .mul(1 ether).div(sum).mul(balance).div(1 ether);
-        uint256 excess    = newExcess   .mul(1 ether).div(sum).mul(balance).div(1 ether);
-
+        uint256 interest  = newInterest .mul(WAD).div(sum).mul(balance).div(WAD);
+        uint256 principal = newPrincipal.mul(WAD).div(sum).mul(balance).div(WAD);
+        uint256 fee       = newFee      .mul(WAD).div(sum).mul(balance).div(WAD);
+        uint256 excess    = newExcess   .mul(WAD).div(sum).mul(balance).div(WAD);
+        
         require(IERC20(loanAsset).transfer(owner, balance), "DebtLocker::claim:ERR_XFER");
 
         return([balance, interest, principal, fee, excess]);

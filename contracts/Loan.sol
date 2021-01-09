@@ -367,18 +367,7 @@ contract Loan is FDT {
         uint256 requestPrice    = IGlobals(globals).getPrice(loanAsset);
         uint256 collateralPrice = IGlobals(globals).getPrice(collateralAsset);
 
-        /*
-            Current values fed into ChainLink oracles (8 decimals, based on Kovan values)
-            DAI_USD  == 100232161
-            USDC_USD == 100232161
-            WETH_USD == 59452607912
-            WBTC_USD == 1895510185012
-
-            requestPrice(DAI || USDC) = 100232161
-            collateralPrice(wBTC) = 1895510185012
-            collateralPrice(wETH) = 59452607912
-        */
-
+        // Calculate collateral required.
         uint256 collateralRequiredUSD = requestPrice.mul(amt).mul(collateralRatio).div(10000);
         uint256 collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
         uint256 collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - IERC20Details(collateralAsset).decimals()));
