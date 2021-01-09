@@ -2,8 +2,6 @@
 pragma solidity >=0.6.11;
 
 import "./Loan.sol";
-import "./interfaces/IGlobals.sol";
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./library/TokenUUID.sol";
 
 interface ICalc { function calcType() external returns (bytes32); }

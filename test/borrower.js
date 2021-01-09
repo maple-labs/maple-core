@@ -325,7 +325,6 @@ describe("Borrower Journey", function () {
     );
 
     const DECIMAL_PRECISION_REQUEST_ASSET = await RequestedAsset.decimals();
-    const FUNDING_LOCKER_BALANCE = await Loan.getFundingLockerBalance();
     const MIN_RAISE = await Loan.minRaise();
 
     // Percentage of Target

@@ -174,22 +174,6 @@ contract Loan is FDT {
     }
 
     /**
-        @notice Returns the balance of loanAsset in fundingLocker.
-        @return Balance of fundingLocker.
-    */
-    function getFundingLockerBalance() view public returns(uint) {
-        return IERC20(loanAsset).balanceOf(fundingLocker);
-    }
-
-    /**
-        @notice Returns the balance of collateralAsset in the collateralLocker.
-        @return Balance of collateralLocker.
-    */
-    function getCollateralLockerBalance() view public returns(uint) {
-        return IERC20(collateralAsset).balanceOf(collateralLocker);
-    }
-
-    /**
         @notice Drawdown funding from FundingLocker, post collateral, and transition loanState from Funding to Active.
         @param  amt Amount of loanAsset borrower draws down, remainder is returned to Loan.
     */
@@ -309,7 +293,7 @@ contract Loan is FDT {
         // TODO: Identify any other variables worth resetting on final payment.
         if (paymentsRemaining == 0) {
             loanState = State.Matured;
-            ICollateralLocker(collateralLocker).pull(borrower, getCollateralLockerBalance());
+            ICollateralLocker(collateralLocker).pull(borrower, IERC20(collateralAsset).balanceOf(collateralLocker));
 
             emit BalanceUpdated(collateralLocker, collateralAsset, IERC20(collateralAsset).balanceOf(collateralLocker));
         }
