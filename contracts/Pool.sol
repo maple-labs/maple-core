@@ -135,20 +135,22 @@ contract Pool is IERC20, ERC20 {
         @return uint, [3] = Amount of pool shares required.
         @return uint, [4] = Amount of pool shares present.
     */
-    function getInitialStakeRequirements() public view
-        returns (uint256, uint256, bool, uint256, uint256)
-    {
-        address pool     = IGlobals(globals).mapleBPool();
-        address pair     = IGlobals(globals).mapleBPoolAssetPair();
-        uint256 minStake = IGlobals(globals).stakeAmountRequired();
+    // TODO: Resolve the dissonance between poolSharesRequired / stakeAmountRequired / getSwapOutValue
+    function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
+        
+        address pool                = IGlobals(globals).mapleBPool();
+        address pair                = IGlobals(globals).mapleBPoolAssetPair();
+        uint256 stakeAmountRequired = IGlobals(globals).stakeAmountRequired();
 
-        // TODO: Resolve the dissonance between poolSharesRequired / minstake / getSwapOutValue
-        (uint256 poolAmountInRequired, uint256 poolAmountPresent) =
-            calcBPool.getPoolSharesRequired(pool, pair, poolDelegate, stakeLocker, minStake);
+        (
+            uint256 poolAmountInRequired, 
+            uint256 poolAmountPresent
+        ) = calcBPool.getPoolSharesRequired(pool, pair, stakeAmountRequired, poolDelegate, stakeLocker);
+
         return (
-            minStake,
+            stakeAmountRequired,
             calcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLocker),
-            calcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLocker) >= minStake,
+            calcBPool.getSwapOutValue(pool, pair, poolDelegate, stakeLocker) >= stakeAmountRequired,
             poolAmountInRequired,
             poolAmountPresent
         );
