@@ -95,42 +95,44 @@ contract CalcBPool {
         return tokenAmountOut;
     }
 
-    /// @notice Calculates the pool shares required for supplied tokenAmountOut (USDC).
-    /// @param _pool is the official Maple Balancer pool.
-    /// @param _pair is the asset paired 50/50 with MPL in the official Maple Balancer pool.
-    /// @param _staker is the staker who deposited to the StakeLocker.
-    /// @param _stakeLocker is the address of the StakeLocker.
-    /// @param _tokenAmountOutRequired is the amount of USDC out required.
-    /// @return uint, [0] = poolAmountIn required
-    /// @return uint, [1] = poolAmountIn currently staked.
+    /**
+        @notice Calculates BPTs required if burning BPTs for pair, given supplied tokenAmountOutRequired.
+        @param  bpool is the balancer pool.
+        @param  pair is the swap out asset (e.g. USDC) to receive when burning BPTs.
+        @param  pairAmountRequired is the amount of pair tokens out required.
+        @param  staker is the address that deposited BPTs to stakeLocker.
+        @param  stakeLocker escrow the BPTS deposited by staker.
+        @return [0] = poolAmountIn required
+                [1] = poolAmountIn currently staked.
+    */
     function getPoolSharesRequired(
-        address _pool,
-        address _pair,
-        address _staker,
-        address _stakeLocker,
-        uint256 _tokenAmountOutRequired
+        address bpool,
+        address pair,
+        uint256 pairAmountRequired,
+        address staker,
+        address stakeLocker
     ) external view returns (uint256, uint256) {
 
-        // Fetch balancer pool token information.
-        IBPool bPool = IBPool(_pool);
-        uint256 tokenBalanceOut = bPool.getBalance(_pair);
-        uint256 tokenWeightOut = bPool.getDenormalizedWeight(_pair);
-        uint256 poolSupply = bPool.totalSupply();
-        uint256 totalWeight = bPool.getTotalDenormalizedWeight();
-        uint256 swapFee = bPool.getSwapFee();
+        IBPool bPool = IBPool(bpool);
 
-        // Returns amount of BPTs required to extract tokenAmountOut.
+        uint256 tokenBalanceOut = bPool.getBalance(pair);
+        uint256 tokenWeightOut  = bPool.getDenormalizedWeight(pair);
+        uint256 poolSupply      = bPool.totalSupply();
+        uint256 totalWeight     = bPool.getTotalDenormalizedWeight();
+        uint256 swapFee         = bPool.getSwapFee();
+
+        // Fetch amount of BPTs required to burn to receive pairAmountRequired.
         uint256 poolAmountInRequired = bPool.calcSingleOutGivenPoolIn(
             tokenBalanceOut,
             tokenWeightOut,
             poolSupply,
             totalWeight,
-            _tokenAmountOutRequired,
+            pairAmountRequired,
             swapFee
         );
 
-        // Fetch amount staked in _stakeLocker by _staker.
-        uint256 stakerBalance = IERC20(_stakeLocker).balanceOf(_staker);
+        // Fetch amount staked in _stakeLocker by staker.
+        uint256 stakerBalance = IERC20(stakeLocker).balanceOf(staker);
 
         // console.log("poolAmountInRequired", poolAmountInRequired);
         // console.log("stakerBalance", stakerBalance);
