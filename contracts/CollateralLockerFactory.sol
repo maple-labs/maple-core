@@ -11,8 +11,8 @@ contract CollateralLockerFactory {
 
     /**
         @notice Instantiate a CollateralLocker contract.
-        @param  collateralAsset Address of the collateral asset.
-        @return Address of the instantiated locker.
+        @param  collateralAsset The asset this collateral locker will escrow.
+        @return Address of the instantiated collateral locker.
     */
     function newLocker(address collateralAsset) external returns (address) {
         address collateralLocker   = address(new CollateralLocker(collateralAsset, msg.sender));
