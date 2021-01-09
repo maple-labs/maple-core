@@ -2,11 +2,11 @@
 pragma solidity >=0.6.11;
 import "../library/TokenUUID.sol";
 
-//generates UUID for various tokens in the platform
-
+/// @title Mock contract for testing a generated UUID.
 contract UUIDTest {
-    
-    function test(uint256 _serial) public view returns (string memory _out){
-	return TokenUUID.mkUUID(_serial);
+
+    function test(uint256 a) public view returns (string memory _out) {
+	    return TokenUUID.generatedUUID(a);
     }
+
 }
