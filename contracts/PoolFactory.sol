@@ -36,10 +36,13 @@ contract PoolFactory {
         llFactory = _llFactory;
     }
 
-    /// @notice Instantiates a liquidity pool contract on-chain.
-    /// @param liquidityAsset The primary asset which lenders deposit into the liquidity pool for investment.
-    /// @param stakeAsset The asset which stakers deposit into the liquidity pool for liquidation during defaults.
-    /// @return Address of the instantiated liquidity pool.
+    /**
+        @notice Instantiates a Pool contract.
+        @param  liquidityAsset The asset escrowed in LiquidityLocker.
+        @param  stakeAsset     The asset escrowed in StakeLocker.
+        @param  stakingFee     Fee that stakers earn.
+        @param  delegateFee    Fee that pool delegate earns.
+    */
     function createPool(address liquidityAsset, address stakeAsset, uint256 stakingFee, uint256 delegateFee) public returns (address) {
         
         require(
