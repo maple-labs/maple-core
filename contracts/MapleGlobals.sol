@@ -58,12 +58,14 @@ contract MapleGlobals {
         treasuryFee         = 50;
     }
 
-    function getValidTokens() view public returns(
-        string[]  memory _validLoanAssetSymbols,
-        address[] memory _validLoanAssets,
-        string[]  memory _validCollateralAssetSymbols,
-        address[] memory _validCollateralAssets
-    ) {
+    /**
+        @notice Returns information on valid collateral and loan assets (for Pools and Loans).
+        @return [0] = Valid loan asset symbols.
+                [1] = Valid loan asset (addresses).
+                [2] = Valid collateral asset symbols.
+                [3] = Valid collateral asset (addresses).
+    */
+    function getValidTokens() view public returns(string[] memory, address[] memory, string[] memory, address[] memory) {
         return (
             validLoanAssetSymbols,
             validLoanAssets,
@@ -148,7 +150,7 @@ contract MapleGlobals {
         @notice Governor can add a valid asset, used for borrowing.
         @param asset Address of the valid asset.
         @param valid Boolean
-     */
+    */
     function setLoanAsset(address asset, bool valid) external isGovernor {
         require(!isValidLoanAsset[asset], "MapleGlobals::setLoanAsset:ERR_ALREADY_ADDED");
         isValidLoanAsset[asset] = valid;
@@ -157,6 +159,11 @@ contract MapleGlobals {
         emit LoanAssetSet(asset, IERC20Details(asset).decimals(), valid);
     }
 
+    /**
+        @notice Specifiy validity of a calculator contract.
+        @param  calc  The calculator.
+        @param  valid The validity of calc.
+    */
     function setCalc(address calc, bool valid) public isGovernor {
         isValidCalc[calc] = valid;
     }
@@ -164,7 +171,7 @@ contract MapleGlobals {
     /**
         @notice Governor can adjust investorFee (in basis points).
         @param _fee The fee, 50 = 0.50%
-     */
+    */
     function setInvestorFee(uint256 _fee) public isGovernor {
         investorFee = _fee;
     }
@@ -172,7 +179,7 @@ contract MapleGlobals {
     /**
         @notice Governor can adjust treasuryFee (in basis points).
         @param _fee The fee, 50 = 0.50%
-     */
+    */
     function setTreasuryFee(uint256 _fee) public isGovernor {
         treasuryFee = _fee;
     }
@@ -180,7 +187,7 @@ contract MapleGlobals {
     /**
         @notice Governor can set the MapleTreasury contract.
         @param _mapleTreasury The MapleTreasury contract.
-     */
+    */
     function setMapleTreasury(address _mapleTreasury) public isGovernor {
         mapleTreasury = _mapleTreasury;
     }
@@ -188,17 +195,17 @@ contract MapleGlobals {
     /**
         @notice Governor can adjust the grace period.
         @param _gracePeriod Number of seconds to set the grace period to.
-     */
+    */
     function setGracePeriod(uint256 _gracePeriod) public isGovernor {
         gracePeriod = _gracePeriod;
     }
 
     /**
-        @notice Governor can adjust the stake amount required to create a liquidity pool.
-        @param _newAmount The new minimum stake required.
-     */
-    function setStakeRequired(uint256 _newAmount) public isGovernor {
-        stakeAmountRequired = _newAmount;
+        @notice Governor can adjust the stake amount required to create a pool.
+        @param amtRequired The new minimum stake required.
+    */
+    function setStakeRequired(uint256 amtRequired) public isGovernor {
+        stakeAmountRequired = amtRequired;
     }
 
     /**
@@ -212,7 +219,7 @@ contract MapleGlobals {
     /**
         @notice Governor can specify a new unstake delay value.
         @param _unstakeDelay The new unstake delay.
-     */
+    */
     function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
         unstakeDelay = _unstakeDelay;
     }
