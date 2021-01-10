@@ -18,6 +18,10 @@ import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
 import "../LoanFactory.sol";
 
+import "../DebtLockerFactory.sol";
+import "../interfaces/IDebtLockerFactory.sol";
+
+
 contract Borrower {
     function try_drawdown(address loanVault, uint256 amt) external returns (bool ok) {
         string memory sig = "drawdown(uint256)";
@@ -64,6 +68,14 @@ contract Lender {
     }
 }
 
+
+contract randomGuy {
+    function newLocker(address _addy, address _asset) external returns (address){
+        return IDebtLockerFactory(_addy).newLocker(_asset);
+    }
+}
+
+
 contract Treasury { }
 
 contract LoanTest is TestUtil {
@@ -83,6 +95,9 @@ contract LoanTest is TestUtil {
     Borrower                         ali;
     Lender                           bob;
     Treasury                         trs;
+    randomGuy	                     kim;    
+    DebtLockerFactory  debtLockerFactory;
+
 
     function setUp() public {
 
@@ -122,6 +137,9 @@ contract LoanTest is TestUtil {
         mint("WETH", address(ali), 10 ether);
         mint("DAI",  address(bob), 5000 ether);
         mint("DAI",  address(ali), 500 ether);
+
+        debtLockerFactory = new DebtLockerFactory();
+        kim                  = new randomGuy();
     }
 
     function test_createLoan() public {
@@ -630,5 +648,14 @@ contract LoanTest is TestUtil {
         assertEq(IERC20(collateralAsset).balanceOf(collateralLocker),                      0);
         assertEq(IERC20(collateralAsset).balanceOf(address(ali)),     _delta + reqCollateral);
     }
+
+    function test_createDebtLocker() public {
+        Loan loanVault = createAndFundLoan(address(bulletCalc));
+
+        address _out = kim.newLocker(address(debtLockerFactory), address(loanVault));
+        assertTrue(debtLockerFactory.isLocker(_out));
+        assertTrue(debtLockerFactory.owner(_out) == address(kim));
+    }
+
 
 }
