@@ -17,7 +17,7 @@ contract StakeLocker is FDT {
 
     address public immutable stakeAsset;      // The asset deposited by stakers into this contract, for liquidation during defaults.
     address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
-    address public immutable owner;           // The parent liquidity pool. (TODO: Consider if this variable is needed, redundant to IParentLP)
+    address public immutable owner;           // The parent liquidity pool.
     address public immutable globals;         // Maple globals
 
     bool private isLPDefunct;    // The LiquidityAsset for the Pool as well as the dividend token for this contract.
@@ -27,7 +27,6 @@ contract StakeLocker is FDT {
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
-    // TODO: Dynamically assign name and locker to the FDT() params.
     constructor(
         address _stakeAsset,
         address _liquidityAsset,
@@ -43,6 +42,7 @@ contract StakeLocker is FDT {
     event   Stake(uint256 _amount, address _staker);
     event Unstake(uint256 _amount, address _staker);
 
+    // TODO: Analyze the purpose of this modifier.
     modifier delegateLock() {
         require(
             msg.sender != IPool(owner).poolDelegate() || isLPDefunct || !isLPFinalized,
@@ -51,11 +51,11 @@ contract StakeLocker is FDT {
         _;
     }
 
-    // TODO: Identify why an error is thrown when console.log() is not present in this modifier.
     modifier isLP() {
         require(msg.sender == owner, "StakeLocker:ERR_UNAUTHORIZED");
         _;
     }
+    
     modifier isGovernor() {
         require(msg.sender == IGlobals(globals).governor(), "msg.sender is not Governor");
         _;

@@ -9,7 +9,6 @@ contract LiquidityLocker {
     address public immutable owner;           // The Pool that owns this LiquidityLocker, for authorization purposes.
     address public immutable liquidityAsset;  // The asset which this LiquidityLocker will escrow.
 
-    // TODO: Consider checking if the pool (owner) is a valid Pool via PoolFactory.
     constructor(address _liquidityAsset, address _owner) public {
         liquidityAsset = _liquidityAsset;
         owner          = _owner;
@@ -30,7 +29,6 @@ contract LiquidityLocker {
         return IERC20(liquidityAsset).transfer(dst, amt);
     }
 
-    
     /**
         @notice Fund a loan using available assets in this liquidity locker.
         @param  loan       The loan to fund.
@@ -38,6 +36,7 @@ contract LiquidityLocker {
         @param  amt        Amount of liquidityAsset to fund the loan for.
     */
     // TODO: Consider checking if loan is valid via LoanFactory.
+    //       Lucas -> Pass in loan factory, cross-check with globals, then confirm if legit.
     function fundLoan(address loan, address debtLocker, uint256 amt) external isOwner {
         IERC20(liquidityAsset).approve(loan, amt);
         ILoan(loan).fundLoan(amt, debtLocker);
