@@ -39,13 +39,17 @@ contract Pool is IERC20, ERC20 {
     uint256 private           liquidityAssetDecimals;  // decimals() precision for the liquidityAsset. (TODO: Examine the use of this variable, make immutable)
     uint256 private immutable ONELiquidityAsset;       // 10^k where k = liquidityAssetDecimals, representing one LiquidityAsset unit in 'wei'. (TODO: Examine the use of this variable)
 
-    uint256 public principalOut;  // Sum of all outstanding principal on loans
-    uint256 public stakingFee;    // The fee for stakers (in basis points).
-    uint256 public delegateFee;   // The fee for delegates (in basis points).
+    uint256 public principalOut;     // Sum of all outstanding principal on loans
+    uint256 public interestSum;      // Sum of all interest currently inside the liquidity locker
+    uint256 public stakingFee;       // The fee for stakers (in basis points).
+    uint256 public delegateFee;      // The fee for delegates (in basis points).
+    uint256 public principalPenalty; // max penalty on principal in bips on early withdrawl
+    uint256 public interestDelay;    // time until total interest is available after a deposit, in seconds
 
     bool public isFinalized;  // True if this Pool is setup and the poolDelegate has met staking requirements.
     bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
 
+    mapping(address => uint256)                     public depositDate;   // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
 
     CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
@@ -90,6 +94,10 @@ contract Pool is IERC20, ERC20 {
 
         // Initialize Balancer pool calculator
         calcBPool = new CalcBPool();
+
+        // Withdrawl penalty variable defaults
+        principalPenalty = 500;
+        interestDelay    = 30 days;
     }
 
     modifier finalized() {
@@ -159,6 +167,7 @@ contract Pool is IERC20, ERC20 {
     /// @notice Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
     /// @param amt The amount of LiquidityAsset to deposit, in wei.
     function deposit(uint256 amt) external notDefunct finalized {
+        updateDepositDate(amt, msg.sender);
         IERC20(liquidityAsset).transferFrom(msg.sender, liquidityLocker, amt);
         uint256 wad = liq2FDT(amt);
         _mint(msg.sender, wad);
@@ -172,6 +181,14 @@ contract Pool is IERC20, ERC20 {
         uint256 share = amt.mul(WAD).div(totalSupply());
         uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLocker);
         uint256 due   = share.mul(principalOut.add(bal)).div(WAD);
+
+        uint256 ratio      = (WAD).mul(interestSum).div(principalOut.add(bal));          // interest/totalMoney ratio
+        uint256 interest   = due.mul(ratio).div(WAD);                                    // Get nominal interest owned by sender
+        uint256 priPenalty = principalPenalty.mul(due.sub(interest)).div(10000);         // Calculate flat principal penalty
+        uint256 totPenalty = calcInterestPenalty(interest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated
+        
+        due         = due.sub(totPenalty);                        // Remove penalty from due amount
+        interestSum = interestSum.sub(interest).add(totPenalty);  // Update interest total reflecting withdrawn amount (distributes principal penalty as interest)
 
         _burn(msg.sender, amt); // TODO: Unit testing on _burn / _mint for ERC-2222
         require(IERC20(liquidityLocker).transfer(msg.sender, due), "Pool::ERR_WITHDRAW_TRANSFER");
@@ -224,7 +241,8 @@ contract Pool is IERC20, ERC20 {
         require(IERC20(liquidityAsset).transfer(liquidityLocker, remainder));
 
         // Update outstanding principal, the interest distribution mechanism.
-        principalOut = principalOut.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error.
+        principalOut = principalOut.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error
+        interestSum  = interestSum.add(claimInfo[1]).sub(claimInfo[1].mul(delegateFee).div(10000)).sub(claimInfo[1].mul(stakingFee).div(10000));
 
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
@@ -262,4 +280,34 @@ contract Pool is IERC20, ERC20 {
         }
         return _out;
     }
+
+    /** 
+     * This is to establish the function signatur by which an interest penalty will be calculated
+     * The resulting value will be removed from the interest used in a repayment
+    **/
+    function calcInterestPenalty(uint256 interest, address who) public returns (uint256 out) {
+        uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
+        uint256 unlocked = dTime.div(interestDelay).mul(interest) / WAD;
+
+        out = unlocked > interest ? 0 : interest - unlocked;
+    }
+
+    function updateDepositDate(uint256 amt, address who) internal {
+        if (depositDate[who] == 0) {
+            depositDate[who] = block.timestamp;
+        } else {
+            uint256 depDate  = depositDate[who];
+            uint256 coef     = (WAD.mul(amt)).div(balanceOf(who) + amt); // Yes, i want 0 if amt is too small
+            depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // date + (now - depDate) * coef
+        }
+    }
+
+    function setInterestDelay(uint256 _interestDelay) public isDelegate {
+        interestDelay = _interestDelay;
+    }
+
+    function setPrincipalPenalty(uint256 _principalPenalty) public isDelegate {
+        principalPenalty = _principalPenalty;
+    }
+
 }
