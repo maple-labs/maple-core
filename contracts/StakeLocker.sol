@@ -62,9 +62,10 @@ contract StakeLocker is FDT {
     }
 
     /**
-     * @notice Deposit stakeAsset and mint an equal number of FDTs to the user
-     * @param amt Amount of stakeAsset(BPTs) to stake
-     */
+        @notice Deposit amt of stakeAsset, mint FDTs to msg.sender.
+        @param amt Amount of stakeAsset (BPTs) to deposit.
+    */
+    // TODO: Consider localizing this function to Pool.
     function stake(uint256 amt) external {
         require(
             IERC20(stakeAsset).transferFrom(msg.sender, address(this), amt),
@@ -76,6 +77,11 @@ contract StakeLocker is FDT {
         emit BalanceUpdated(address(this), stakeAsset, IERC20(stakeAsset).balanceOf(address(this)));
     }
 
+    /**
+        @notice Withdraw amt of stakeAsset, burn FDTs for msg.sender.
+        @param amt Amount of stakeAsset (BPTs) to withdraw.
+    */
+    // TODO: Consider localizing this function to Pool.
     function unstake(uint256 amt) external delegateLock {
         require(
             amt <= getUnstakeableBalance(msg.sender),
@@ -107,10 +113,10 @@ contract StakeLocker is FDT {
     }
 
     /** 
-     * @notice updates data structure that stores the information used to calculate unstake delay
-     * @param staker address of staker
-     * @param amt amount he is staking
-     */
+        @notice updates data structure that stores the information used to calculate unstake delay
+        @param staker address of staker
+        @param amt amount he is staking
+    */
     function _updateStakeDate(address staker, uint256 amt) internal {
         if (stakeDate[staker] == 0) {
             stakeDate[staker] = block.timestamp;
@@ -125,10 +131,10 @@ contract StakeLocker is FDT {
     }
 
     /**
-     * @dev view function returning your unstakeable balance.
-     * @param staker wallet address
-     * @return uint amount of BPTs that may be unstaked
-     */
+        @notice view function returning your unstakeable balance.
+        @param staker wallet address
+        @return uint amount of BPTs that may be unstaked
+    */
     function getUnstakeableBalance(address staker) public view returns (uint256) {
         uint256 bal = balanceOf(staker);
         uint256 time = (block.timestamp - stakeDate[staker]) * WAD;
