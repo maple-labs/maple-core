@@ -99,23 +99,35 @@ contract StakeLocker is FDT {
         emit BalanceUpdated(address(this), stakeAsset, IERC20(stakeAsset).balanceOf(address(this)));
     }
 
+    /** 
+        @notice Delete the pool.
+    */
     // TODO: Make sure LP gets the delete function implemented.
+    // TODO: Analyze what this function does.
     function deleteLP() external isLP {
         isLPDefunct = true;
     }
 
+    /** 
+        @notice Finalize the pool.
+    */
+    // TODO: Analyze what this function does.
     function finalizeLP() external isLP {
         isLPFinalized = true;
     }
 
+    /** 
+        @notice Withdraw ETH directly from this locker.
+        @param dst Address to send ETH to.
+    */
     function withdrawETH(address payable dst) external isGovernor {
         dst.transfer(address(this).balance);
     }
 
     /** 
-        @notice updates data structure that stores the information used to calculate unstake delay
-        @param staker address of staker
-        @param amt amount he is staking
+        @notice Updates information used to calculate unstake delay.
+        @param staker The staker who deposited BPTs.
+        @param amt    Amount of BPTs staker has deposited.
     */
     function _updateStakeDate(address staker, uint256 amt) internal {
         if (stakeDate[staker] == 0) {
@@ -131,9 +143,9 @@ contract StakeLocker is FDT {
     }
 
     /**
-        @notice view function returning your unstakeable balance.
-        @param staker wallet address
-        @return uint amount of BPTs that may be unstaked
+        @notice Returns information for staker's unstakeable balance.
+        @param staker The address to view information for.
+        @return Amount of BPTs staker can unstake.
     */
     function getUnstakeableBalance(address staker) public view returns (uint256) {
         uint256 bal = balanceOf(staker);
