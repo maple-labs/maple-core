@@ -404,7 +404,7 @@ describe("Cycle of an entire loan", function () {
     // Approve Loan for collateral required. Use "WBTC" object instead if WBTC is collateral.
     await WETH_Borrower.approve(
       LoanAddress,
-      parseInt(collateralRequired["_hex"])
+      collateralRequired
     )
 
     // Drawdown.

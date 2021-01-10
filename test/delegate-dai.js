@@ -2,7 +2,7 @@ const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
 const artpath = "../../contracts/" + network.name + "/";
 
-describe("Pool Delegate Journey - DAI", function () {
+describe.skip("Pool Delegate Journey - DAI", function () {
   let PoolAddress;
   let FundingAmount = 1000;
 

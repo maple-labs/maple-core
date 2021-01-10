@@ -25,7 +25,7 @@ const BulletRepaymentCalc       = require(artpath + "addresses/BulletRepaymentCa
 const LateFeeCalc               = require(artpath + "addresses/LateFeeCalc.address.js");
 const PremiumCalc               = require(artpath + "addresses/PremiumCalc.address.js");
 
-describe("fundLoan() in Loan.sol", function () {
+describe.skip("fundLoan() in Loan.sol", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000020";
 
   let DAI,

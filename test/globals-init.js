@@ -9,7 +9,7 @@ const LPFactoryAddress = require(artpath +
 const LVFactoryAddress = require(artpath +
   "addresses/LoanFactory.address.js");
 
-describe("MapleGlobals.sol Initialization", function () {
+describe.skip("MapleGlobals.sol Initialization", function () {
   let mapleGlobals;
 
   before(async () => {

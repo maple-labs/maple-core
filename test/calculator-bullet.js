@@ -25,7 +25,7 @@ const PremiumCalc = require(artpath +
 
 const LoanABI = require(artpath + "abis/Loan.abi.js");
 
-describe("Calc - Bullet Repayment", function () {
+describe.skip("Calc - Bullet Repayment", function () {
   let WBTC;
   let accounts;
 

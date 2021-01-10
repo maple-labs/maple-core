@@ -36,7 +36,7 @@ const LVFactoryAddress = require(artpath +
 const LVFactoryABI = require(artpath + "abis/LoanFactory.abi.js");
 const LoanABI = require(artpath + "abis/Loan.abi.js");
 
-describe("Pool & LiquidityLocker & StakeLocker", function () {
+describe.skip("Pool & LiquidityLocker & StakeLocker", function () {
   let accounts;
   let LVFactory;
   let PoolFactory;

@@ -85,7 +85,7 @@ contract PoolFactoryTest is TestUtil {
         
         assertTrue(!ali.try_createPool(
             address(poolFactory),
-            DAI,
+            USDC,
             address(bPool),
             500,
             100
@@ -97,7 +97,7 @@ contract PoolFactoryTest is TestUtil {
         
         assertTrue(!ali.try_createPool(
             address(poolFactory),
-            DAI,
+            USDC,
             address(bPool),
             500,
             100
@@ -109,14 +109,14 @@ contract PoolFactoryTest is TestUtil {
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
         mint("DAI", address(this), 50_000_000 ether);
 
-        // Initialize DAI/USDC Balancer pool (Doesn't include mpl)
+        // Initialize USDC/USDC Balancer pool (Doesn't include mpl)
         bPool = IBPool(IBPoolFactory(BPOOL_FACTORY).newBPool());
 
-        IERC20(USDC).approve(address(bPool), uint(-1));
         IERC20(DAI).approve(address(bPool), uint(-1));
+        IERC20(USDC).approve(address(bPool), uint(-1));
 
-        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 * WAD);  // Bind 50m USDC with 5 denormalization weight
-        bPool.bind(DAI,  50_000_000 * WAD, 5 * WAD);      // Bind 100k MPL with 5 denormalization weight
+        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 * WAD);  // Bind 50m   DAI with 5 denormalization weight
+        bPool.bind(DAI,  50_000_000 * WAD,     5 * WAD);  // Bind 100k USDC with 5 denormalization weight
 
         assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * 10 ** 6);
         assertEq(IERC20(DAI).balanceOf(address(bPool)),  50_000_000 * WAD);
@@ -125,7 +125,7 @@ contract PoolFactoryTest is TestUtil {
         
         assertTrue(!ali.try_createPool(
             address(poolFactory),
-            DAI,
+            USDC,
             address(bPool),
             500,
             100
@@ -141,7 +141,7 @@ contract PoolFactoryTest is TestUtil {
 
         assertTrue(ali.try_createPool(
             address(poolFactory),
-            DAI,
+            USDC,
             address(bPool),
             500,
             100
@@ -153,7 +153,7 @@ contract PoolFactoryTest is TestUtil {
         assertTrue(poolFactory.isPool(address(lPool)));
         assertEq(poolFactory.poolsCreated(), 1);
 
-        assertEq(lPool.liquidityAsset(),    DAI);
+        assertEq(lPool.liquidityAsset(),    USDC);
         assertEq(lPool.stakeAsset(),        address(bPool));
         assertEq(lPool.poolDelegate(),      address(ali));
         assertEq(lPool.stakingFee(),        500);

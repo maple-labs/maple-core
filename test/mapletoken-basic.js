@@ -8,7 +8,7 @@ const fundTokenAddress = require(artpath +
   "addresses/MintableTokenUSDC.address.js");
 const fundTokenABI = require(artpath + "abis/MintableTokenUSDC.abi.js");
 
-describe("Maple Token", function () {
+describe.skip("Maple Token", function () {
   let mpl, mplExternal;
   let fundToken, fundTokenExternal;
   let governor;
