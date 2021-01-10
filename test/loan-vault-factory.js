@@ -37,7 +37,7 @@ const LateFeeCalc = require(artpath +
 const PremiumCalc = require(artpath +
   "addresses/PremiumCalc.address.js");
 
-describe("LoanFactory.sol / Loan.sol", function () {
+describe.skip("LoanFactory.sol / Loan.sol", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
 
   let DAI,

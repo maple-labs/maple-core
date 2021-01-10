@@ -11,7 +11,7 @@ const LateFeeCalc = require(artpath +
 const PremiumCalc = require(artpath +
   "addresses/PremiumCalc.address.js");
 
-describe("Borrower Journey", function () {
+describe.skip("Borrower Journey", function () {
   let loanVaultAddress;
 
   it("A - Fetch the list of borrowTokens / collateralTokens", async function () {
@@ -325,7 +325,6 @@ describe("Borrower Journey", function () {
     );
 
     const DECIMAL_PRECISION_REQUEST_ASSET = await RequestedAsset.decimals();
-    const FUNDING_LOCKER_BALANCE = await Loan.getFundingLockerBalance();
     const MIN_RAISE = await Loan.minRaise();
 
     // Percentage of Target

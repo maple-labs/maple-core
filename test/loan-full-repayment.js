@@ -18,7 +18,7 @@ const PremiumCalc               = require(artpath + "addresses/PremiumCalc.addre
 
 const LoanABI = require(artpath + "abis/Loan.abi.js");
 
-describe("Calc - Full Repayment (Premium)", function () {
+describe.skip("Calc - Full Repayment (Premium)", function () {
   let accounts;
 
   before(async () => {

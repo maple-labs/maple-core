@@ -21,7 +21,7 @@ const uniswapFactoryABI = require(artpath + "abis/UniswapV2Factory.abi.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const WBTCABI = require(artpath + "abis/WBTC.abi.js");
 
-describe("MapleTreasury.sol", function () {
+describe.skip("MapleTreasury.sol", function () {
   let mintableDAI,
     fundsToken,
     mapleTreasury,
