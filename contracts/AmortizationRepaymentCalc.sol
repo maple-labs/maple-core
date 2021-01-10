@@ -9,7 +9,7 @@ contract AmortizationRepaymentCalc {
     using SafeMath for uint256;
 
     bytes32 public calcType = "INTEREST";
-    bytes32 public name = "AMORTIZATION";
+    bytes32 public name     = "AMORTIZATION";
 
     uint256 constant FIFTY   = 50 ether;
     uint256 constant HUNDRED = 100 ether;

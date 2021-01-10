@@ -10,7 +10,7 @@ contract LateFeeCalc {
     using SafeMath for uint256;
 
     bytes32 public calcType = 'LATEFEE';
-    bytes32 public name = 'NULL';
+    bytes32 public name     = 'NULL';
     
     uint256 public feeBips;  // The fee in bips, charged on the payment amount.
 
@@ -18,11 +18,15 @@ contract LateFeeCalc {
         feeBips = _feeBips;
     }
 
-    /// @dev Returns a tuple depicting the amount owed.
-    /// @param _loan The address of the Loan.
-    /// @return [0] = Total Amount, [1] = Principal, [2] = Interest
+    /**
+        @dev    Calculates the late fee payment for a _loan.
+        @param  _loan is the Loan to calculate late fee for.
+        @return [0] = Principal + Interest (Total)
+                [1] = Principal
+                [2] = Interest
+    */
     function getLateFee(address _loan) view public returns(uint256, uint256, uint256) {
-        ILoan loan            = ILoan(_loan);
+        ILoan loan           = ILoan(_loan);
         (uint paymentDue,,,) = loan.getNextPayment();
         return (paymentDue.mul(feeBips).div(10000), 0, paymentDue.mul(feeBips).div(10000));
     }
