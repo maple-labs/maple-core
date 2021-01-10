@@ -65,8 +65,8 @@ contract Pool is IERC20, ERC20 {
         @param  _stakeAsset     The asset escrowed in StakeLocker.
         @param  _slFactory      Factory used to instantiate StakeLocker.
         @param  _llFactory      Factory used to instantiate LiquidityLocker.
-        @param  _stakingFee     Fee that stakers earn.
-        @param  _delegateFee    Fee that _poolDelegate earns.
+        @param  _stakingFee     Fee that stakers earn on interest, in bips.
+        @param  _delegateFee    Fee that _poolDelegate earns on interest, in bips.
         @param  name            Name of pool token.
         @param  symbol          Symbol of pool token.
         @param  _globals        Globals contract address.

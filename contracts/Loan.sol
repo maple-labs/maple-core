@@ -72,23 +72,23 @@ contract Loan is FDT {
 
     /**
         @notice Constructor for a Loan.
-        @param  _borrower  Will receive the funding when calling drawdown(), is also responsible for repayments.
-        @param  _loanAsset The asset _borrower is requesting funding in.
+        @param  _borrower        Will receive the funding when calling drawdown(), is also responsible for repayments.
+        @param  _loanAsset       The asset _borrower is requesting funding in.
         @param  _collateralAsset The asset provided as collateral by _borrower.
-        @param  _flFactory Factory to instantiate FundingLocker with.
-        @param  _clFactory Factory to instantiate CollateralLocker with.
-        @param  _globals   The globals contract.
-        @param  specs provides the specifications for this loan.
-                 specs[0] = apr
-                 specs[1] = termDays
-                 specs[2] = paymentIntervalDays
-                 specs[3] = minRaise
-                 specs[4] = collateralRatio
-                 specs[5] = fundingPeriodDays
-        @param  calcs The calculators used for the loan.
-                 calcs[0] = repaymentCalc
-                 calcs[1] = lateFeeCalc
-                 calcs[2] = premiumCalc
+        @param  _flFactory       Factory to instantiate FundingLocker with.
+        @param  _clFactory       Factory to instantiate CollateralLocker with.
+        @param  _globals         The MapleGlobals contract.
+        @param  specs            Contains specifications for this loan.
+                specs[0] = apr
+                specs[1] = termDays
+                specs[2] = paymentIntervalDays
+                specs[3] = minRaise
+                specs[4] = collateralRatio
+                specs[5] = fundingPeriodDays
+        @param  calcs            The calculators used for the loan.
+                calcs[0] = repaymentCalc
+                calcs[1] = lateFeeCalc
+                calcs[2] = premiumCalc
     */
     constructor(
         address _borrower,

@@ -20,7 +20,7 @@ contract LiquidityLocker {
     }
 
     /**
-        @notice Transfers _amount of liquidityAsset to dst.
+        @notice Transfers amt of liquidityAsset to dst.
         @param  dst Desintation to transfer liquidityAsset to.
         @param  amt Amount of liquidityAsset to transfer.
     */
