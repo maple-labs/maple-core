@@ -48,21 +48,23 @@ contract LoanFactory {
         _;
     }
 
-    /// @notice Instantiates a Loan
-    /// @param loanAsset The asset borrower is requesting funding in.
-    /// @param collateralAsset The asset provided as collateral by the borrower.
-    /// @param specs The specs of the loan.
-    ///        specs[0] = apr
-    ///        specs[1] = termDays
-    ///        specs[2] = paymentIntervalDays
-    ///        specs[3] = minRaise
-    ///        specs[4] = collateralRatio
-    ///        specs[5] = fundingPeriodDays
-    /// @param calcs The calcs used for the loan.
-    ///        calcs[0] = repaymentCalc
-    ///        calcs[1] = lateFeeCalc
-    ///        calcs[2] = premiumCalc
-    /// @return The address of the newly instantiated Loan.
+    /**
+        @notice Create a new Loan.
+        @param  loanAsset       Asset the loan will raise funding in.
+        @param  collateralAsset Asset the loan will use as collateral.
+        @param  specs           Contains specifications for this loan.
+                specs[0] = apr
+                specs[1] = termDays
+                specs[2] = paymentIntervalDays
+                specs[3] = minRaise
+                specs[4] = collateralRatio
+                specs[5] = fundingPeriodDays
+        @param  calcs           The calculators used for the loan.
+                calcs[0] = repaymentCalc
+                calcs[1] = lateFeeCalc
+                calcs[2] = premiumCalc
+        @return Address of the instantiated Loan.
+    */
     function createLoan(
         address loanAsset,
         address collateralAsset,
@@ -96,7 +98,7 @@ contract LoanFactory {
         );
         
         // Deploy loan vault contract.
-	    string memory tUUID = TokenUUID.mkUUID(loansCreated + 1);
+	    string memory tUUID = TokenUUID.generateUUID(loansCreated + 1);
 
         Loan loan = new Loan(
             msg.sender,
@@ -134,14 +136,18 @@ contract LoanFactory {
         return address(loan);
     }
 
-    /// @dev Governor can adjust the flFactory.
-    /// @param _flFactory The new flFactory address.
+    /**
+        @notice Governor can adjust the flFactory.
+        @param  _flFactory The new flFactory address.
+    */
     function setFundingLockerFactory(address _flFactory) public isGovernor {
         flFactory = _flFactory;
     }
     
-    /// @dev Governor can adjust the flFactory.
-    /// @param _clFactory The new clFactory address.
+    /**
+        @notice Governor can adjust the clFactory.
+        @param  _clFactory The new clFactory address.
+    */
     function setCollateralLockerFactory(address _clFactory) public isGovernor {
         clFactory = _clFactory;
     }

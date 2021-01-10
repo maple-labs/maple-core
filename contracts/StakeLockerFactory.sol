@@ -18,10 +18,13 @@ contract StakeLockerFactory {
         string symbol
     );
 
-    /// @notice Creates a new locker.
-    /// @param stakeAsset Address of the stakeAsset (generally a balancer pool).
-    /// @param liquidityAsset Address of the liquidityAsset (as defined in the pool).
-    /// @return Address of the newly created locker.
+    /**
+        @notice Instantiate a StakeLocker contract.
+        @return Address of the instantiated stake locker.
+        @param stakeAsset     Address of the stakeAsset (generally a balancer pool).
+        @param liquidityAsset Address of the liquidityAsset (as defined in the pool).
+        @param globals        Address of the MapleGlobals contract.
+    */
     function newLocker(
         address stakeAsset,
         address liquidityAsset,

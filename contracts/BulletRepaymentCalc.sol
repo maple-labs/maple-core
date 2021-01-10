@@ -9,10 +9,15 @@ contract BulletRepaymentCalc {
 	using SafeMath for uint256;
 
     bytes32 public calcType = "INTEREST";
-    bytes32 public name = "BULLET";
+    bytes32 public name     = "BULLET";
 
-    /// @dev Returns the total value of next payment, and interest/principal amount.
-    /// @return (uint256,uint256,uint256) [0] = Principal + Interest, [1] = Principal, [2] = Interest
+    /**
+        @dev    Calculates the next payment for a _loan.
+        @param  _loan is the Loan to calculate a payment for.
+        @return [0] = Principal + Interest
+                [1] = Principal
+                [2] = Interest
+    */
     function getNextPayment(address _loan) view public returns(uint256, uint256, uint256) {
 
         ILoan loan = ILoan(_loan);

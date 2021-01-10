@@ -43,9 +43,9 @@ contract MapleGlobals {
 
     /**
         @notice Constructor function.
-        @dev Initializes the contract's state variables.
-        @param _governor The administrator's address.
-        @param _mpl The address of the ERC-2222 token for the Maple protocol.
+        @dev    Initializes the contract's state variables.
+        @param  _governor The administrator's address.
+        @param  _mpl The address of the ERC-2222 token for the Maple protocol.
     */
     constructor(address _governor, address _mpl) public {
         governor            = _governor;
@@ -58,12 +58,14 @@ contract MapleGlobals {
         treasuryFee         = 50;
     }
 
-    function getValidTokens() view public returns(
-        string[]  memory _validLoanAssetSymbols,
-        address[] memory _validLoanAssets,
-        string[]  memory _validCollateralAssetSymbols,
-        address[] memory _validCollateralAssets
-    ) {
+    /**
+        @notice Returns information on valid collateral and loan assets (for Pools and Loans).
+        @return [0] = Valid loan asset symbols.
+                [1] = Valid loan asset (addresses).
+                [2] = Valid collateral asset symbols.
+                [3] = Valid collateral asset (addresses).
+    */
+    function getValidTokens() view public returns(string[] memory, address[] memory, string[] memory, address[] memory) {
         return (
             validLoanAssetSymbols,
             validLoanAssets,
@@ -72,39 +74,70 @@ contract MapleGlobals {
         );
     }
 
+    /**
+        @notice Set the poolFactory to a new factory.
+        @param  _poolFactory The new value to assign to poolFactory.
+    */
     function setPoolFactory(address _poolFactory) external isGovernor { // TODO: Change to whitelist, need to handle multiple
         poolFactory = _poolFactory;
     }
 
+    /**
+        @notice Set the loanFactory to a new factory.
+        @param  _loanFactory The new value to assign to loanFactory.
+    */
     function setLoanFactory(address _loanFactory) external isGovernor { // TODO: Change to whitelist, need to handle multiple
         loanFactory = _loanFactory;
     }
 
-    function setMapleBPool(address _mapleBPool) external isGovernor {   // TODO: Change to whitelist, need to handle multiple
+    /**
+        @notice Set the mapleBPool to a new balancer pool.
+        @param  _mapleBPool The new value to assign to mapleBPool.
+    */
+    function setMapleBPool(address _mapleBPool) external isGovernor {   // TODO: Handle multiple balancer pools.
         mapleBPool = _mapleBPool;
     }
 
+    /**
+        @notice Update validity of pool delegate (those able to create pools).
+        @param  delegate The address to manage permissions for.
+        @param  valid    The new permissions of delegate.
+    */
     function setPoolDelegateWhitelist(address delegate, bool valid) external isGovernor {
         isValidPoolDelegate[delegate] = valid;
     }
 
-    function setMapleBPoolAssetPair(address _pair) external isGovernor {
-        mapleBPoolAssetPair = _pair;
+    /**
+        @notice Update the mapleBPoolAssetPair (initially planned to be USDC).
+        @param  asset The address to manage permissions / validity for.
+    */
+    // TODO: Consider how this may break things.
+    function setMapleBPoolAssetPair(address asset) external isGovernor {
+        mapleBPoolAssetPair = asset;
     }
 
+    /**
+        @notice Update a price feed's oracle.
+        @param  asset  The asset to update price for.
+        @param  oracle The new oracle to use.
+    */
     function assignPriceFeed(address asset, address oracle) external isGovernor {
         assetPriceFeed[asset] = oracle;
     }
 
+    /**
+        @notice Get a price feed.
+        @param  asset  The asset to fetch price for.
+    */
     function getPrice(address asset) external view returns(uint) {
         return IPriceFeed(assetPriceFeed[asset]).price();
     }
 
     /**
-        @notice Governor can add a valid asset, used as collateral.
-        @param asset Address of the valid asset.
-        @param valid Boolean
-     */
+        @notice Set the validity of an asset for collateral.
+        @param asset The asset to assign validity to.
+        @param valid The new validity of asset as collateral.
+    */
     function setCollateralAsset(address asset, bool valid) external isGovernor {
         require(!isValidCollateralAsset[asset], "MapleGlobals::setCollateralAsset:ERR_ALREADY_ADDED");
         isValidCollateralAsset[asset] = valid;
@@ -117,7 +150,7 @@ contract MapleGlobals {
         @notice Governor can add a valid asset, used for borrowing.
         @param asset Address of the valid asset.
         @param valid Boolean
-     */
+    */
     function setLoanAsset(address asset, bool valid) external isGovernor {
         require(!isValidLoanAsset[asset], "MapleGlobals::setLoanAsset:ERR_ALREADY_ADDED");
         isValidLoanAsset[asset] = valid;
@@ -126,6 +159,11 @@ contract MapleGlobals {
         emit LoanAssetSet(asset, IERC20Details(asset).decimals(), valid);
     }
 
+    /**
+        @notice Specifiy validity of a calculator contract.
+        @param  calc  The calculator.
+        @param  valid The validity of calc.
+    */
     function setCalc(address calc, bool valid) public isGovernor {
         isValidCalc[calc] = valid;
     }
@@ -133,7 +171,7 @@ contract MapleGlobals {
     /**
         @notice Governor can adjust investorFee (in basis points).
         @param _fee The fee, 50 = 0.50%
-     */
+    */
     function setInvestorFee(uint256 _fee) public isGovernor {
         investorFee = _fee;
     }
@@ -141,7 +179,7 @@ contract MapleGlobals {
     /**
         @notice Governor can adjust treasuryFee (in basis points).
         @param _fee The fee, 50 = 0.50%
-     */
+    */
     function setTreasuryFee(uint256 _fee) public isGovernor {
         treasuryFee = _fee;
     }
@@ -149,7 +187,7 @@ contract MapleGlobals {
     /**
         @notice Governor can set the MapleTreasury contract.
         @param _mapleTreasury The MapleTreasury contract.
-     */
+    */
     function setMapleTreasury(address _mapleTreasury) public isGovernor {
         mapleTreasury = _mapleTreasury;
     }
@@ -157,23 +195,23 @@ contract MapleGlobals {
     /**
         @notice Governor can adjust the grace period.
         @param _gracePeriod Number of seconds to set the grace period to.
-     */
+    */
     function setGracePeriod(uint256 _gracePeriod) public isGovernor {
         gracePeriod = _gracePeriod;
     }
 
     /**
-        @notice Governor can adjust the stake amount required to create a liquidity pool.
-        @param _newAmount The new minimum stake required.
-     */
-    function setStakeRequired(uint256 _newAmount) public isGovernor {
-        stakeAmountRequired = _newAmount;
+        @notice Governor can adjust the stake amount required to create a pool.
+        @param amtRequired The new minimum stake required.
+    */
+    function setStakeRequired(uint256 amtRequired) public isGovernor {
+        stakeAmountRequired = amtRequired;
     }
 
     /**
         @notice Governor can specify a new governor.
         @param _newGovernor The address of new governor.
-     */
+    */
     function setGovernor(address _newGovernor) public isGovernor {
         governor = _newGovernor;
     }
@@ -181,7 +219,7 @@ contract MapleGlobals {
     /**
         @notice Governor can specify a new unstake delay value.
         @param _unstakeDelay The new unstake delay.
-     */
+    */
     function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
         unstakeDelay = _unstakeDelay;
     }

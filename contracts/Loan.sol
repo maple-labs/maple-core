@@ -70,24 +70,26 @@ contract Loan is FDT {
     event LoanFunded(uint256 amtFunded, address indexed _fundedBy);
     event BalanceUpdated(address who, address token, uint256 balance);
 
-    /// @notice Constructor for loan vault.
-    /// @param _borrower Address of borrower
-    /// @param _loanAsset The asset borrower is requesting funding in.
-    /// @param _collateralAsset The asset provided as collateral by the borrower.
-    /// @param _flFactory Factory to instantiate FundingLocker through.
-    /// @param _clFactory Factory to instantiate CollateralLocker through.
-    /// @param _globals Address of the IGlobals(globals).sol contract.
-    /// @param specs The specifications of the loan.
-    ///        specs[0] = apr
-    ///        specs[1] = termDays
-    ///        specs[2] = paymentIntervalDays
-    ///        specs[3] = minRaise
-    ///        specs[4] = collateralRatio
-    ///        specs[5] = fundingPeriodDays
-    /// @param calcs The calculators used for the loan.
-    ///        calcs[0] = repaymentCalc
-    ///        calcs[1] = lateFeeCalc
-    ///        calcs[2] = premiumCalc
+    /**
+        @notice Constructor for a Loan.
+        @param  _borrower        Will receive the funding when calling drawdown(), is also responsible for repayments.
+        @param  _loanAsset       The asset _borrower is requesting funding in.
+        @param  _collateralAsset The asset provided as collateral by _borrower.
+        @param  _flFactory       Factory to instantiate FundingLocker with.
+        @param  _clFactory       Factory to instantiate CollateralLocker with.
+        @param  _globals         The MapleGlobals contract.
+        @param  specs            Contains specifications for this loan.
+                specs[0] = apr
+                specs[1] = termDays
+                specs[2] = paymentIntervalDays
+                specs[3] = minRaise
+                specs[4] = collateralRatio
+                specs[5] = fundingPeriodDays
+        @param  calcs            The calculators used for the loan.
+                calcs[0] = repaymentCalc
+                calcs[1] = lateFeeCalc
+                calcs[2] = premiumCalc
+    */
     constructor(
         address _borrower,
         address _loanAsset,
@@ -152,13 +154,13 @@ contract Loan is FDT {
     }
 
     /**
-     * @notice Fund this loan and mint LoanTokens.
-     * @param amt Amount of _loanAsset to fund the loan for.
-     * @param mintTo The address to mint LoanTokens for.
-     */
+        @notice Fund this loan and mint debt tokens for mintTo.
+        @param  amt    Amount to fund the loan.
+        @param  mintTo Address that debt tokens are minted to.
+    */
     // TODO: Update this function signature to use (address, uint)
     function fundLoan(uint256 amt, address mintTo) external isState(State.Live) {
-        // TODO: Consider testing decimal precision difference: loanAsset <> FundsToken
+        
         require(
             IERC20(loanAsset).transferFrom(msg.sender, fundingLocker, amt),
             "Loan::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
@@ -169,20 +171,26 @@ contract Loan is FDT {
         emit BalanceUpdated(fundingLocker, loanAsset, IERC20(loanAsset).balanceOf(fundingLocker));
     }
 
-    /// @notice Returns the balance of loanAsset in the FundingLocker.
-    /// @return The balance of FundingLocker.
+    /**
+        @notice Returns the balance of loanAsset in fundingLocker.
+        @return Balance of fundingLocker.
+    */
     function getFundingLockerBalance() view public returns(uint) {
         return IERC20(loanAsset).balanceOf(fundingLocker);
     }
 
-    /// @notice Returns the balance of _collateralAsset in the CollateralLocker.
-    /// @return The balance of CollateralLocker.
+    /**
+        @notice Returns the balance of collateralAsset in the collateralLocker.
+        @return Balance of collateralLocker.
+    */
     function getCollateralLockerBalance() view public returns(uint) {
         return IERC20(collateralAsset).balanceOf(collateralLocker);
     }
 
-    /// @notice End funding period by claiming funds, posting collateral, transitioning loanState from Funding to Active.
-    /// @param amt Amount of loanAsset borrower will claim, remainder is returned to Loan.
+    /**
+        @notice Drawdown funding from FundingLocker, post collateral, and transition loanState from Funding to Active.
+        @param  amt Amount of loanAsset borrower draws down, remainder is returned to Loan.
+    */
     function drawdown(uint256 amt) external isState(State.Live) isBorrower {
 
         // TODO: Change endFunding to drawdown in err message
@@ -243,7 +251,9 @@ contract Loan is FDT {
         emit BalanceUpdated(treasury,         loanAsset,       IERC20(loanAsset).balanceOf(treasury));
     }
 
-    /// @notice Make the next payment for this loan.
+    /**
+        @notice Make the next payment for this loan.
+    */
     function makePayment() public isState(State.Active) {
         if (block.timestamp <= nextPaymentDue) {
 
@@ -271,7 +281,6 @@ contract Loan is FDT {
                 uint256 principal,
                 uint256 interest
             ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
-            // TODO: Identify whether principalExtra is needed for lateFee (if only interest needeD).
             (
                 uint256 paymentAmountExtra,
                 uint256 principalExtra,
@@ -308,8 +317,13 @@ contract Loan is FDT {
         emit BalanceUpdated(address(this), loanAsset,  IERC20(loanAsset).balanceOf(address(this)));
     }
 
-    /// @notice Returns the next payment amounts.
-    /// @return [0] = Principal + Interest, [1] = Principal, [2] = Interest, [3] Due By Timestamp
+    /**
+        @notice Returns information on next payment amount.
+        @return [0] = Principal + Interest
+                [1] = Principal 
+                [2] = Interest
+                [3] = Payment Due Date
+    */
     function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
         (
             uint256 total, 
@@ -319,7 +333,9 @@ contract Loan is FDT {
         return (total, principal, interest, nextPaymentDue);
     }
 
-    /// @notice Makes the full payment for this loan, a.k.a. "calling" the loan.
+    /**
+        @notice Make the full payment for this loan, a.k.a. "calling" the loan.
+    */
     function makeFullPayment() public isState(State.Active) {
         (
             uint256 total, 
@@ -346,8 +362,13 @@ contract Loan is FDT {
         emit BalanceUpdated(address(this), loanAsset,  IERC20(loanAsset).balanceOf(address(this)));
     }
 
-    /// @notice Returns the payment amount when paying off the loan early.
-    /// @return [0] = Principal + Interest, [1] = Principal, [2] = Interest
+    /**
+        @notice Returns information on full payment amount.
+        @return [0] = Principal + Interest
+                [1] = Principal 
+                [2] = Interest
+                [3] = Payment Due Date
+    */
     function getFullPayment() public view returns(uint256, uint256, uint256) {
         (
             uint256 total, 
@@ -357,10 +378,11 @@ contract Loan is FDT {
         return (total, principal, interest);
     }
 
-
-    /// @notice Viewer helper for calculating collateral required to drawdown funding.
-    /// @param amt The amount of loanAsset to drawdown from FundingLocker.
-    /// @return The amount of collateralAsset required to post for given amt.
+    /**
+        @notice Helper for calculating collateral required to drawdown amt.
+        @param  amt The amount of loanAsset to drawdown from FundingLocker.
+        @return The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
+    */
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
 
         // Fetch value of collateral and funding asset.

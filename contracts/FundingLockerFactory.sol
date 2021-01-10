@@ -9,9 +9,11 @@ contract FundingLockerFactory {
     mapping(address => address) public owner;     // owner[locker] = Owner of the funding locker.
     mapping(address => bool)    public isLocker;  // True if funding locker was created by this factory, otherwise false.
 
-    /// @notice Instantiate a FundingLocker contract.
-    /// @param loanAsset Address of the funding asset.
-    /// @return Address of the instantiated locker.
+    /**
+        @notice Instantiate a FundingLocker contract.
+        @param  loanAsset The asset this funding locker will escrow.
+        @return Address of the instantiated funding locker.
+    */
     function newLocker(address loanAsset) public returns (address) {
         address fundingLocker   = address(new FundingLocker(loanAsset, msg.sender));
         owner[fundingLocker]    = msg.sender;

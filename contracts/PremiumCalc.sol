@@ -18,8 +18,13 @@ contract PremiumCalc {
         premiumBips = _premiumBips;
     }
 
-    /// @dev Returns the total payment, and interest/principal amount, for paying off the loan early.
-    /// @return (uint,uint,uint) [0] = Principal + Interest, [1] = Principal, [2] = Interest
+    /**
+        @dev    Calculates the premium payment for a _loan, when making a full payment.
+        @param  _loan is the Loan to calculate a premium payment for.
+        @return [0] = Principal + Interest
+                [1] = Principal
+                [2] = Interest
+    */
     function getPremiumPayment(address _loan) view public returns(uint256, uint256, uint256) {
         ILoan   loan          = ILoan(_loan);
         uint256 principalOwed = loan.principalOwed();

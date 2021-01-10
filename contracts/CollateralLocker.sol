@@ -18,9 +18,11 @@ contract CollateralLocker {
         _;
     }
 
-    /// @notice Transfers _amount of collateralAsset to dst.
-    /// @param dst Desintation to transfer collateralAsset to.
-    /// @param amt Amount of collateralAsset to transfer.
+    /**
+        @notice Transfers _amount of collateralAsset to dst.
+        @param  dst Desintation to transfer collateralAsset to.
+        @param  amt Amount of collateralAsset to transfer.
+    */
     function pull(address dst, uint256 amt) isLoan public returns(bool) {
         return IERC20(collateralAsset).transfer(dst, amt);
     }

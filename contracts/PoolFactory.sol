@@ -13,7 +13,7 @@ contract PoolFactory {
     address public slFactory;     // The StakeLockerFactory to use for this PoolFactory
     address public llFactory;     // The LiquidityLockerFactory to use for this PoolFactory
 
-    mapping(uint256 => address) public pools;  // Mappings for liquidity pool contracts, and their validation. (TODO: Consider adjusting Pools mapping to an array.)
+    mapping(uint256 => address) public pools;  // Mappings for liquidity pool contracts, and their validation.
     mapping(address => bool)    public isPool;
 
     event PoolCreated(
@@ -36,10 +36,13 @@ contract PoolFactory {
         llFactory = _llFactory;
     }
 
-    /// @notice Instantiates a liquidity pool contract on-chain.
-    /// @param liquidityAsset The primary asset which lenders deposit into the liquidity pool for investment.
-    /// @param stakeAsset The asset which stakers deposit into the liquidity pool for liquidation during defaults.
-    /// @return Address of the instantiated liquidity pool.
+    /**
+        @notice Instantiates a Pool contract.
+        @param  liquidityAsset The asset escrowed in LiquidityLocker.
+        @param  stakeAsset     The asset escrowed in StakeLocker.
+        @param  stakingFee     Fee that stakers earn on interest, in bips.
+        @param  delegateFee    Fee that pool delegate earns on interest, in bips.
+    */
     function createPool(address liquidityAsset, address stakeAsset, uint256 stakingFee, uint256 delegateFee) public returns (address) {
         
         require(
@@ -47,7 +50,7 @@ contract PoolFactory {
             "PoolFactory::createPool:ERR_MSG_SENDER_NOT_WHITELISTED"
         );
 
-        string memory tUUID  = TokenUUID.mkUUID(poolsCreated + 1);
+        string memory tUUID  = TokenUUID.generateUUID(poolsCreated + 1);
         string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
         string memory symbol = string(abi.encodePacked("LP", tUUID));
 
