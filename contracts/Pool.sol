@@ -58,6 +58,19 @@ contract Pool is IERC20, ERC20 {
     event BalanceUpdated(address who, address token, uint256 balance);
     event Claim(uint interest, uint principal, uint fee);
 
+    /**
+        @notice Constructor for a Pool.
+        @param  _poolDelegate   The address that has manager privlidges for the Pool.
+        @param  _liquidityAsset The asset escrowed in LiquidityLocker.
+        @param  _stakeAsset     The asset escrowed in StakeLocker.
+        @param  _slFactory      Factory used to instantiate StakeLocker.
+        @param  _llFactory      Factory used to instantiate LiquidityLocker.
+        @param  _stakingFee     Fee that stakers earn.
+        @param  _delegateFee    Fee that _poolDelegate earns.
+        @param  name            Name of pool token.
+        @param  symbol          Symbol of pool token.
+        @param  _globals        Globals contract address.
+    */
     constructor(
         address _poolDelegate,
         address _liquidityAsset,
@@ -104,17 +117,23 @@ contract Pool is IERC20, ERC20 {
         require(isFinalized, "Pool:ERR_NOT_FINALIZED");
         _;
     }
+
     modifier notDefunct() {
         require(!isDefunct, "Pool:ERR_IS_DEFUNCT");
         _;
     }
+
     modifier isDelegate() {
         require(msg.sender == poolDelegate, "Pool:ERR_MSG_SENDER_NOT_DELEGATE");
         _;
     }
 
-    /// @notice Deploys and assigns a StakeLocker for this Pool.
-    /// @param stakeAsset Address of the asset used for staking.
+    /**
+        @notice Deploys and assigns a StakeLocker for this Pool (only used once in constructor).
+        @param stakeAsset     Address of the asset used for staking.
+        @param slFactory      Address of the StakeLocker factory used for instantiation.
+        @param liquidityAsset Address of the liquidity asset, required when burning stakeAsset.
+    */
     function createStakeLocker(address stakeAsset, address slFactory, address liquidityAsset) private returns (address) {
         require(
             IBPool(stakeAsset).isBound(IGlobals(globals).mpl()) &&
@@ -125,8 +144,8 @@ contract Pool is IERC20, ERC20 {
     }
 
     /**
-     * @notice Confirm poolDelegate's stake amount held in StakeLocker and finalize this Pool.
-     */
+        @notice Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
+    */
     function finalize() public {
         (,, bool stakePresent,,) = getInitialStakeRequirements();
         require(stakePresent, "Pool::finalize:ERR_NOT_ENOUGH_STAKE");
@@ -136,11 +155,11 @@ contract Pool is IERC20, ERC20 {
 
     /**
         @notice Returns information on the stake requirements.
-        @return uint, [0] = Amount of stake required.
-        @return uint, [1] = Current swap out value of stake present.
-        @return bool, [2] = If enough stake is present from Pool Delegate for finalization.
-        @return uint, [3] = Amount of pool shares required.
-        @return uint, [4] = Amount of pool shares present.
+        @return [0] = Amount of stake required.
+                [1] = Current swap out value of stake present.
+                [2] = If enough stake is present from Pool Delegate for finalization.
+                [3] = Amount of pool shares required.
+                [4] = Amount of pool shares present.
     */
     // TODO: Resolve the dissonance between poolSharesRequired / stakeAmountRequired / getSwapOutValue
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
@@ -164,8 +183,10 @@ contract Pool is IERC20, ERC20 {
     }
 
     // Note: Tether is unusable as a LiquidityAsset!
-    /// @notice Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
-    /// @param amt The amount of LiquidityAsset to deposit, in wei.
+    /**
+        @notice Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
+        @param amt The amount of LiquidityAsset to deposit, in wei.
+    */
     function deposit(uint256 amt) external notDefunct finalized {
         updateDepositDate(amt, msg.sender);
         IERC20(liquidityAsset).transferFrom(msg.sender, liquidityLocker, amt);
@@ -175,6 +196,11 @@ contract Pool is IERC20, ERC20 {
         emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
     }
 
+    /**
+        @notice Liquidity providers can withdraw LiqudityAsset into the LiquidityLocker, burning FDTs.
+        @param amt The amount of LiquidityAsset to withdraw, in wei.
+    */
+    // TODO: Confirm if amt param supplied is in wei of FDT, or in wei of LiquidtyAsset.
     function withdraw(uint256 amt) external notDefunct finalized {
         require(balanceOf(msg.sender) >= amt, "Pool::withdraw:USER_BAL_LESS_THAN_AMT");
 
@@ -195,6 +221,12 @@ contract Pool is IERC20, ERC20 {
         emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
     }
 
+    /**
+        @notice Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
+        @param  loan      Address of the loan to fund.
+        @param  dlFactory The debt locker factory to utilize.
+        @param  amt       Amount to fund the loan.
+    */
     function fundLoan(address loan, address dlFactory, uint256 amt) external notDefunct finalized isDelegate {
 
         // Auth check on loanFactory "kernel"
@@ -218,13 +250,17 @@ contract Pool is IERC20, ERC20 {
         emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
     }
 
-    /// @notice Claim available funds through a LoanToken.
-    /// @return uint[0]: Total amount claimed.
-    ///         uint[1]: Interest portion claimed.
-    ///         uint[2]: Principal portion claimed.
-    ///         uint[3]: Fee portion claimed.
-    ///         uint[4]: Excess portion claimed.
-    ///         uint[5]: TODO: Liquidation portion claimed.
+    /**
+        @notice Claim available funds for loan through specified debt locker factory.
+        @param  loan      Address of the loan to claim from.
+        @param  dlFactory The debt locker factory (always maps to a single debt locker).
+        @return [0] = Total amount claimed.
+                [1] = Interest portion claimed.
+                [2] = Principal portion claimed.
+                [3] = Fee portion claimed.
+                [4] = Excess portion claimed.
+                [5] = TODO: Liquidation portion claimed.
+    */
     function claim(address loan, address dlFactory) public returns(uint[5] memory) { 
         
         uint[5] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
@@ -285,6 +321,7 @@ contract Pool is IERC20, ERC20 {
      * This is to establish the function signatur by which an interest penalty will be calculated
      * The resulting value will be removed from the interest used in a repayment
     **/
+    // TODO: Chris add NatSpec
     function calcInterestPenalty(uint256 interest, address who) public returns (uint256 out) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
         uint256 unlocked = dTime.div(interestDelay).mul(interest) / WAD;
@@ -292,6 +329,7 @@ contract Pool is IERC20, ERC20 {
         out = unlocked > interest ? 0 : interest - unlocked;
     }
 
+    // TODO: Chris add NatSpec
     function updateDepositDate(uint256 amt, address who) internal {
         if (depositDate[who] == 0) {
             depositDate[who] = block.timestamp;
@@ -302,10 +340,12 @@ contract Pool is IERC20, ERC20 {
         }
     }
 
+    // TODO: Chris add NatSpec
     function setInterestDelay(uint256 _interestDelay) public isDelegate {
         interestDelay = _interestDelay;
     }
 
+    // TODO: Chris add NatSpec
     function setPrincipalPenalty(uint256 _principalPenalty) public isDelegate {
         principalPenalty = _principalPenalty;
     }
