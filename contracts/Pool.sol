@@ -197,7 +197,7 @@ contract Pool is IERC20, ERC20 {
     }
 
     /**
-        @notice Liquidity providers can withdraw LiqudityAsset into the LiquidityLocker, burning FDTs.
+        @notice Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
         @param amt The amount of LiquidityAsset to withdraw, in wei.
     */
     // TODO: Confirm if amt param supplied is in wei of FDT, or in wei of LiquidtyAsset.

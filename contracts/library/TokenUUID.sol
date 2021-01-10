@@ -6,7 +6,7 @@ library TokenUUID {
 
     /**
         @notice Generates a UUID.
-        @param  serial ranodmizes the output.
+        @param  serial randomizes the output.
         @return UUID
     */
     function generateUUID(uint256 serial) internal view returns (string memory) {

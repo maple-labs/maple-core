@@ -6,7 +6,7 @@ import "../library/TokenUUID.sol";
 contract UUIDTest {
 
     function test(uint256 a) public view returns (string memory _out) {
-	    return TokenUUID.generateUUID(a);
+        return TokenUUID.generateUUID(a);
     }
 
 }

@@ -10,7 +10,7 @@ contract CalcBPool {
 
     using SafeMath for uint256;
 
-    uint256 constant WAD = 10**18;
+    uint256 constant WAD = 10 ** 18;
 
     /// @notice Official balancer pool bdiv() function, does synthetic float with 10^-18 precision.
     function bdiv(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -24,6 +24,7 @@ contract CalcBPool {
     }
 
     /// @notice Calculates the value of BPT in units of _liquidityAssetContract in 'wei' (decimals) for this token.
+    // TODO: Identify use and add NatSpec later.
     function BPTVal(
         address _pool,
         address _pair,
@@ -53,32 +54,30 @@ contract CalcBPool {
     }
 
     /** 
-        @notice Calculate _pair swap out value of _staker BPT balance escrowed in _stakeLocker.
-        @param _pool is the balancer pool.
-        @param _pair is the swap out asset (e.g. USDC).
-        @param _staker is the address that deposited BPTs to _stakeLocker.
-        @param _stakeLocker escrow the BPTS deposited by _staker.
-        @return uint, USDC swap out value of _staker BPTs.
+        @notice Calculate _pair swap out value of staker BPT balance escrowed in stakeLocker.
+        @param pool        Balancer pool that issues the BPTs.
+        @param pair        Swap out asset (e.g. USDC) to receive when burning BPTs.
+        @param staker      Address that deposited BPTs to stakeLocker.
+        @param stakeLocker Escrows BPTs deposited by staker.
+        @return USDC swap out value of staker BPTs.
     */
     function getSwapOutValue(
-        address _pool,
-        address _pair,
-        address _staker,
-        address _stakeLocker
+        address pool,
+        address pair,
+        address staker,
+        address stakeLocker
     ) external view returns (uint256) {
 
         // Fetch balancer pool token information.
-        IBPool bPool = IBPool(_pool);
-        uint256 tokenBalanceOut = bPool.getBalance(_pair);
-        uint256 tokenWeightOut = bPool.getDenormalizedWeight(_pair);
-        uint256 poolSupply = bPool.totalSupply();
-        uint256 totalWeight = bPool.getTotalDenormalizedWeight();
-        uint256 swapFee = bPool.getSwapFee();
+        IBPool bPool            = IBPool(pool);
+        uint256 tokenBalanceOut = bPool.getBalance(pair);
+        uint256 tokenWeightOut  = bPool.getDenormalizedWeight(pair);
+        uint256 poolSupply      = bPool.totalSupply();
+        uint256 totalWeight     = bPool.getTotalDenormalizedWeight();
+        uint256 swapFee         = bPool.getSwapFee();
 
-        // Fetch amount staked in _stakeLocker by _staker.
-        uint256 poolAmountIn = IERC20(_stakeLocker).balanceOf(_staker);
-        
-        // console.log("poolAmountIn", poolAmountIn);
+        // Fetch amount staked in stakeLocker by staker.
+        uint256 poolAmountIn = IERC20(stakeLocker).balanceOf(staker);
 
         // Returns amount of BPTs required to extract tokenAmountOut.
         uint256 tokenAmountOut = bPool.calcSingleOutGivenPoolIn(
@@ -90,18 +89,16 @@ contract CalcBPool {
             swapFee
         );
 
-        // console.log("tokenAmountOut", tokenAmountOut);
-
         return tokenAmountOut;
     }
 
     /**
         @notice Calculates BPTs required if burning BPTs for pair, given supplied tokenAmountOutRequired.
-        @param  bpool is the balancer pool.
-        @param  pair is the swap out asset (e.g. USDC) to receive when burning BPTs.
-        @param  pairAmountRequired is the amount of pair tokens out required.
-        @param  staker is the address that deposited BPTs to stakeLocker.
-        @param  stakeLocker escrow the BPTS deposited by staker.
+        @param  bpool              Balancer pool that issues the BPTs.
+        @param  pair               Swap out asset (e.g. USDC) to receive when burning BPTs.
+        @param  pairAmountRequired Amount of pair tokens out required.
+        @param  staker             Address that deposited BPTs to stakeLocker.
+        @param  stakeLocker        Escrows BPTs deposited by staker.
         @return [0] = poolAmountIn required
                 [1] = poolAmountIn currently staked.
     */
@@ -133,9 +130,6 @@ contract CalcBPool {
 
         // Fetch amount staked in _stakeLocker by staker.
         uint256 stakerBalance = IERC20(stakeLocker).balanceOf(staker);
-
-        // console.log("poolAmountInRequired", poolAmountInRequired);
-        // console.log("stakerBalance", stakerBalance);
 
         return (poolAmountInRequired, stakerBalance.div(WAD));
     }
