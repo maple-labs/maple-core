@@ -90,8 +90,6 @@ contract Loan is FDT {
                  calcs[0] = repaymentCalc
                  calcs[1] = lateFeeCalc
                  calcs[2] = premiumCalc
-
-        @return Address of the instantiated liquidity locker.
     */
     constructor(
         address _borrower,
