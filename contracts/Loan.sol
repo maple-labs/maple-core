@@ -78,7 +78,6 @@ contract Loan is FDT {
         @param  _flFactory Factory to instantiate FundingLocker with.
         @param  _clFactory Factory to instantiate CollateralLocker with.
         @param  _globals   The globals contract.
-
         @param  specs provides the specifications for this loan.
                  specs[0] = apr
                  specs[1] = termDays
