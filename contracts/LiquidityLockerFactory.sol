@@ -11,9 +11,11 @@ contract LiquidityLockerFactory {
     // TODO: Consider whether this needs to be external or public.
     // TODO: ADD MODIFIER LETTING ONLY LIQUIDITY POOLS RUN THIS (not critical, but good)
 
-    /// @notice Creates a new LiquidityLocker.
-    /// @param liquidityAsset Address of the LiquidityAsset for the Pool.
-    /// @return Address of the new LiquidityLocker.
+    /**
+        @notice Instantiate a LiquidityLocker contract.
+        @param  liquidityAsset The asset this liquidity locker will escrow.
+        @return Address of the instantiated liquidity locker.
+    */
     function newLocker(address liquidityAsset) external returns (address) {
         address liquidityLocker   = address(new LiquidityLocker(liquidityAsset, msg.sender));
         owner[liquidityLocker]    = msg.sender;
