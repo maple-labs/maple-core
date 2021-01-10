@@ -32,32 +32,36 @@ contract DebtLocker {
         loanAsset = ILoan(_loan).loanAsset();
     }
 
-    // Claim funds distribution via ERC-2222.
-    // Returns: uint[0] = Total Claim
-    //          uint[1] = Interest Claim
-    //          uint[2] = Principal Claim
-    //          uint[3] = Fee Claim
-    //          uint[4] = Excess Returned Claim
+    /**
+        @dev    Claim funds distribution for loan via ERC-2222.
+        @return [0] = Total Claimed
+                [1] = Interest Claimed
+                [2] = Principal Claimed
+                [3] = Fee Claimed
+                [4] = Excess Returned Claimed
+                [5] = TODO: Liquidation Amount Claimed Accounting
+    */
     function claim() external isOwner returns(uint[5] memory) {
 
-        // Create interface for Loan.
+        // Tick FDT via ERC2222.
         ILoan(loan).updateFundsReceived();
 
-        // Calculate deltas, or "net new" values.
+        // Calculate deltas.
         uint256 newInterest  = ILoan(loan).interestPaid() - interestPaid;
         uint256 newPrincipal = ILoan(loan).principalPaid() - principalPaid;
         uint256 newFee       = ILoan(loan).feePaid() - feePaid;
         uint256 newExcess    = ILoan(loan).excessReturned() - excessReturned;
 
-        // Update loans data structure.
+        // Update accounting.
         interestPaid   = ILoan(loan).interestPaid();
         principalPaid  = ILoan(loan).principalPaid();
         feePaid        = ILoan(loan).feePaid();
         excessReturned = ILoan(loan).excessReturned();
 
-        // Update ERC2222 internal accounting for Loan.
+        // Withdraw funds via ERC2222.
         ILoan(loan).withdrawFunds();
 
+        // Calculate distributed amounts, transfer the asset, and return metadata.
         uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess);
         uint256 balance   = IERC20(loanAsset).balanceOf(address(this));
         uint256 interest  = newInterest .mul(WAD).div(sum).mul(balance).div(WAD);

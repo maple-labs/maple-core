@@ -16,11 +16,13 @@ contract MapleTreasury {
     address public uniswapRouter;  // Official UniswapV2 router contract.
     address public globals;   // MapleGlobals.sol contract.
 
-    /// @notice Instantiates the MapleTreasury contract.
-    /// @param _mpl is the MapleToken.sol contract.
-    /// @param _fundsToken is the _fundsToken value in the MapleToken.sol contract.
-    /// @param _uniswapRouter is the official UniswapV2 router contract.
-    /// @param _globals is the MapleGlobals.sol contract.
+    /**
+        @notice Instantiates the MapleTreasury contract.
+        @param  _mpl is the MapleToken contract.
+        @param  _fundsToken is the fundsToken of MapleToken contract.
+        @param  _uniswapRouter is the official UniswapV2 router contract.
+        @param  _globals is the MapleGlobals.sol contract.
+    */
     constructor(
         address _mpl, 
         address _fundsToken, 
@@ -33,11 +35,13 @@ contract MapleTreasury {
         globals       = _globals;
     }
 
-    /// @notice Fired when an ERC-20 asset is converted to fundsToken and transferred to mpl.
-    /// @param _asset The asset that is converted.
-    /// @param _by The msg.sender calling the conversion function.
-    /// @param _amountIn The amount of _asset converted to fundsToken.
-    /// @param _amountOut The amount of fundsToken received for _asset conversion.
+    /**
+        @notice Fired when an ERC-20 asset is converted to fundsToken and transferred to mpl.
+        @param _asset     The asset that is converted.
+        @param _by        The msg.sender calling the conversion function.
+        @param _amountIn  The amount of _asset converted to fundsToken.
+        @param _amountOut The amount of fundsToken received for _asset conversion.
+    */
     event ERC20Conversion(
         address _asset,
         address _by,
@@ -45,45 +49,59 @@ contract MapleTreasury {
         uint256 _amountOut
     );
 
-    /// @notice Fired when ETH is converted to fundsToken and transferred to mpl.
-    /// @param _by The msg.sender calling the conversion function.
-    /// @param _amountIn The amount of ETH converted to fundsToken.
-    /// @param _amountOut The amount of fundsToken received for ETH conversion.
+    /**
+        @notice Fired when ETH is converted to fundsToken and transferred to mpl.
+        @param _by        The msg.sender calling the conversion function.
+        @param _amountIn  The amount of ETH converted to fundsToken.
+        @param _amountOut The amount of fundsToken received for ETH conversion.
+    */
     event ETHConversion(
         address _by,
         uint256 _amountIn,
         uint256 _amountOut
     );
 
-    /// @notice Fired when fundsToken is passed through to mpl.
+    /**
+        @notice Fired when fundsToken is passed through to mpl.
+        @param _by        The msg.sender calling the passThrough function.
+        @param _amount    The amount of fundsToken passed through.
+    */
     event PassThrough(
         address _by,
         uint256 _amount
     );
 
-    /// @notice Fired when fundsToken is passed through to mpl.
+    /**
+        @notice Fired when fundsToken is modified for this contract.
+        @param _by            The msg.sender calling the passThrough function.
+        @param _newFundsToken The new fundsToken to convert to.
+    */
+    // TODO: Consider why this would be changed? Seems this would lead to critical erros.
     event FundsTokenModified(
         address _by,
         address _newFundsToken
     );
 
-    // Authorization to call Treasury functions.
     modifier isGovernor() {
         require(msg.sender == IGlobals(globals).governor(), "msg.sender is not Governor");
         _;
     }
   
-    // Fallback and receive functions for native ETH.
     fallback () external payable { }
     receive  () external payable { }
 
-    /// @notice Adjust the token to convert assets to (and then send to MapleToken).
-    /// @param _newFundsToken The new FundsToken with respect to MapleToken ERC-2222.
+    /**
+        @notice Adjust the token to convert assets to (and then send to MapleToken).
+        @param _newFundsToken The new FundsToken with respect to MapleToken ERC-2222.
+    */
+    // TODO: Consider why this would be changed? Seems this would lead to critical erros.
     function setFundsToken(address _newFundsToken) isGovernor public {
         fundsToken = _newFundsToken;
     }
 
-    /// @notice Passes through the current fundsToken to MapleToken.
+    /**
+        @notice Passes through the current fundsToken to MapleToken.
+    */
     function passThroughFundsToken() isGovernor public {
         require(
             IERC20(fundsToken).transfer(mpl, IERC20(fundsToken).balanceOf(address(this))), 
@@ -99,8 +117,10 @@ contract MapleTreasury {
             2nd parameter of the swapExactTokensForTokens() function.
     */
 
-    /// @notice Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
-    /// @param _asset The ERC-20 asset to convert.
+    /**
+        @notice Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
+        @param _asset The ERC-20 asset to convert.
+    */
     function convertERC20(address _asset) isGovernor public {
         require(_asset != fundsToken, "MapleTreasury::convertERC20:ERR_ASSET");
         require(
@@ -133,7 +153,11 @@ contract MapleTreasury {
             2nd parameter of the swapETHForExactTokens() function.
     */
 
-    /// @notice Convert ETH through Uniswap via bilateral transaction (two asset path).
+    /**
+        @notice Convert ETH through Uniswap via bilateral transaction (two asset path).
+        @param _amountOut The amount out expected.
+        @param _amountIn  The amount in to convert.
+    */
     function convertETH(uint256 _amountOut, uint256 _amountIn) isGovernor public {
         address[] memory path = new address[](2);
         path[0] = IUniswapRouter(uniswapRouter).WETH();

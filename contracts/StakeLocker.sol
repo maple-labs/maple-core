@@ -17,7 +17,7 @@ contract StakeLocker is FDT {
 
     address public immutable stakeAsset;      // The asset deposited by stakers into this contract, for liquidation during defaults.
     address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
-    address public immutable owner;           // The parent liquidity pool. (TODO: Consider if this variable is needed, redundant to IParentLP)
+    address public immutable owner;           // The parent liquidity pool.
     address public immutable globals;         // Maple globals
 
     bool private isLPDefunct;    // The LiquidityAsset for the Pool as well as the dividend token for this contract.
@@ -27,7 +27,6 @@ contract StakeLocker is FDT {
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
-    // TODO: Dynamically assign name and locker to the FDT() params.
     constructor(
         address _stakeAsset,
         address _liquidityAsset,
@@ -43,6 +42,7 @@ contract StakeLocker is FDT {
     event   Stake(uint256 _amount, address _staker);
     event Unstake(uint256 _amount, address _staker);
 
+    // TODO: Analyze the purpose of this modifier.
     modifier delegateLock() {
         require(
             msg.sender != IPool(owner).poolDelegate() || isLPDefunct || !isLPFinalized,
@@ -51,20 +51,21 @@ contract StakeLocker is FDT {
         _;
     }
 
-    // TODO: Identify why an error is thrown when console.log() is not present in this modifier.
     modifier isLP() {
         require(msg.sender == owner, "StakeLocker:ERR_UNAUTHORIZED");
         _;
     }
+    
     modifier isGovernor() {
         require(msg.sender == IGlobals(globals).governor(), "msg.sender is not Governor");
         _;
     }
 
     /**
-     * @notice Deposit stakeAsset and mint an equal number of FDTs to the user
-     * @param amt Amount of stakeAsset(BPTs) to stake
-     */
+        @notice Deposit amt of stakeAsset, mint FDTs to msg.sender.
+        @param amt Amount of stakeAsset (BPTs) to deposit.
+    */
+    // TODO: Consider localizing this function to Pool.
     function stake(uint256 amt) external {
         require(
             IERC20(stakeAsset).transferFrom(msg.sender, address(this), amt),
@@ -76,6 +77,11 @@ contract StakeLocker is FDT {
         emit BalanceUpdated(address(this), stakeAsset, IERC20(stakeAsset).balanceOf(address(this)));
     }
 
+    /**
+        @notice Withdraw amt of stakeAsset, burn FDTs for msg.sender.
+        @param amt Amount of stakeAsset (BPTs) to withdraw.
+    */
+    // TODO: Consider localizing this function to Pool.
     function unstake(uint256 amt) external delegateLock {
         require(
             amt <= getUnstakeableBalance(msg.sender),
@@ -93,24 +99,36 @@ contract StakeLocker is FDT {
         emit BalanceUpdated(address(this), stakeAsset, IERC20(stakeAsset).balanceOf(address(this)));
     }
 
+    /** 
+        @notice Delete the pool.
+    */
     // TODO: Make sure LP gets the delete function implemented.
+    // TODO: Analyze what this function does.
     function deleteLP() external isLP {
         isLPDefunct = true;
     }
 
+    /** 
+        @notice Finalize the pool.
+    */
+    // TODO: Analyze what this function does.
     function finalizeLP() external isLP {
         isLPFinalized = true;
     }
 
+    /** 
+        @notice Withdraw ETH directly from this locker.
+        @param dst Address to send ETH to.
+    */
     function withdrawETH(address payable dst) external isGovernor {
         dst.transfer(address(this).balance);
     }
 
     /** 
-     * @notice updates data structure that stores the information used to calculate unstake delay
-     * @param staker address of staker
-     * @param amt amount he is staking
-     */
+        @notice Updates information used to calculate unstake delay.
+        @param staker The staker who deposited BPTs.
+        @param amt    Amount of BPTs staker has deposited.
+    */
     function _updateStakeDate(address staker, uint256 amt) internal {
         if (stakeDate[staker] == 0) {
             stakeDate[staker] = block.timestamp;
@@ -125,10 +143,10 @@ contract StakeLocker is FDT {
     }
 
     /**
-     * @dev view function returning your unstakeable balance.
-     * @param staker wallet address
-     * @return uint amount of BPTs that may be unstaked
-     */
+        @notice Returns information for staker's unstakeable balance.
+        @param staker The address to view information for.
+        @return Amount of BPTs staker can unstake.
+    */
     function getUnstakeableBalance(address staker) public view returns (uint256) {
         uint256 bal = balanceOf(staker);
         uint256 time = (block.timestamp - stakeDate[staker]) * WAD;

@@ -1,19 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-//generates UUID for various tokens in the platform
-
+/// @title Generates a UUID, used for Pool and Loan (debt) tokens in respective factories.
 library TokenUUID {
 
-    function mkUUID(uint256 _serial) internal view returns (string memory) {
-	bytes32 _inbytes =  keccak256(abi.encodePacked(block.timestamp, _serial));
-        bytes memory outbytes = new bytes(8);
+    /**
+        @notice Generates a UUID.
+        @param  serial randomizes the output.
+        @return UUID
+    */
+    function generateUUID(uint256 serial) internal view returns (string memory) {
+
+        bytes32 inBytes       =  keccak256(abi.encodePacked(block.timestamp, serial));
+        bytes memory outBytes = new bytes(8);
+
         for (uint8 i = 0; i < 7; i++) {
-            uint8 digit = uint8(_inbytes[i]) % 10;
-            outbytes[i] = byte(48 + digit);
+            uint8 digit = uint8(inBytes[i]) % 10;
+            outBytes[i] = byte(48 + digit);
         }
-	uint8 digit = uint8(_serial) % 26;
-	outbytes[7] = byte(97 + digit);
-        return string(outbytes);
+
+        uint8 digit = uint8(serial) % 26;
+        outBytes[7] = byte(97 + digit);
+
+        return string(outBytes);
     }
 }
