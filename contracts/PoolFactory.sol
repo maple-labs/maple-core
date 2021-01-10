@@ -50,7 +50,7 @@ contract PoolFactory {
             "PoolFactory::createPool:ERR_MSG_SENDER_NOT_WHITELISTED"
         );
 
-        string memory tUUID  = TokenUUID.generatedUUID(poolsCreated + 1);
+        string memory tUUID  = TokenUUID.generateUUID(poolsCreated + 1);
         string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
         string memory symbol = string(abi.encodePacked("LP", tUUID));
 
