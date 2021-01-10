@@ -13,7 +13,7 @@ contract PoolFactory {
     address public slFactory;     // The StakeLockerFactory to use for this PoolFactory
     address public llFactory;     // The LiquidityLockerFactory to use for this PoolFactory
 
-    mapping(uint256 => address) public pools;  // Mappings for liquidity pool contracts, and their validation. (TODO: Consider adjusting Pools mapping to an array.)
+    mapping(uint256 => address) public pools;  // Mappings for liquidity pool contracts, and their validation.
     mapping(address => bool)    public isPool;
 
     event PoolCreated(

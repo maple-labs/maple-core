@@ -19,7 +19,6 @@ import "./interfaces/ILoan.sol";
 
 import "./LiquidityLockerFactory.sol";
 
-// TODO: Implement the withdraw() function, so investors can withdraw LiquidityAsset from LP.
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
 /// @title Pool is the core contract for liquidity pools.
@@ -29,11 +28,11 @@ contract Pool is IERC20, ERC20 {
 
     uint256 constant WAD = 10 ** 18;
 
-    address public immutable poolDelegate;     // The pool delegate, who maintains full authority over this Pool. (TODO: Should this be immutable?)
+    address public immutable poolDelegate;     // The pool delegate, who maintains full authority over this Pool.
     address public immutable liquidityLocker;  // The LiquidityLocker owned by this contract.
     address public immutable stakeAsset;       // The asset deposited by stakers into the StakeLocker, for liquidation during default events.
     address public immutable stakeLocker;      // Address of the StakeLocker, escrowing the staked asset.
-    address public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans. (TODO: Make immutable)
+    address public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
     address public immutable slFactory;        // Maple Globals contract
     address public           globals;          // Maple Globals contract
 
@@ -148,7 +147,7 @@ contract Pool is IERC20, ERC20 {
 
         address bPool               = IGlobals(globals).mapleBPool();
         address stake               = IGlobals(globals).mapleBPoolAssetPair(); // TODO: Consider localizing this, relates to SC-1138
-        uint256 stakeAmountRequired = IGlobals(globals).stakeAmountRequired();
+        uint256 stakeAmountRequired = IGlobals(globals).stakeAmountRequired(); // TODO: Localize stake amount required (or possibly globals mapping).
 
         (
             uint256 poolAmountInRequired, 
@@ -244,8 +243,6 @@ contract Pool is IERC20, ERC20 {
         // Update outstanding principal, the interest distribution mechanism.
         principalOut = principalOut.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error
         interestSum  = interestSum.add(claimInfo[1]).sub(claimInfo[1].mul(delegateFee).div(10000)).sub(claimInfo[1].mul(stakingFee).div(10000));
-
-        // TODO: Consider any underflow / overflow that feeds into this calculation from RepaymentCalcs.
 
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();

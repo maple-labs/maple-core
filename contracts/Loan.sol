@@ -163,7 +163,7 @@ contract Loan is FDT {
     */
     // TODO: Update this function signature to use (address, uint)
     function fundLoan(uint256 amt, address mintTo) external isState(State.Live) {
-        // TODO: Consider testing decimal precision difference: loanAsset <> FundsToken
+        
         require(
             IERC20(loanAsset).transferFrom(msg.sender, fundingLocker, amt),
             "Loan::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
@@ -284,7 +284,6 @@ contract Loan is FDT {
                 uint256 principal,
                 uint256 interest
             ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
-            // TODO: Identify whether principalExtra is needed for lateFee (if only interest needeD).
             (
                 uint256 paymentAmountExtra,
                 uint256 principalExtra,
