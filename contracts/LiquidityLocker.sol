@@ -20,20 +20,24 @@ contract LiquidityLocker {
         _;
     }
 
-    /// @notice Transfer liquidityAsset from this contract to an external contract.
-    /// @param amt Amount to transfer liquidityAsset to.
-    /// @param dst Address to send liquidityAsset to.
-    /// @return true if transfer succeeds.
+    /**
+        @notice Transfers _amount of liquidityAsset to dst.
+        @param  dst Desintation to transfer liquidityAsset to.
+        @param  amt Amount of liquidityAsset to transfer.
+    */
     function transfer(address dst, uint256 amt) external isOwner returns (bool) {
         require(dst != address(0), "LiquidityLocker::transfer:ERR_TO_VALUE_IS_NULL_ADDRESS");
         return IERC20(liquidityAsset).transfer(dst, amt);
     }
 
+    
+    /**
+        @notice Fund a loan using available assets in this liquidity locker.
+        @param  loan       The loan to fund.
+        @param  debtLocker The locker that will escrow debt tokens.
+        @param  amt        Amount of liquidityAsset to fund the loan for.
+    */
     // TODO: Consider checking if loan is valid via LoanFactory.
-    /// @notice Fund a particular loan using available LiquidityAsset.
-    /// @param loan       The address of the Loan to fund.
-    /// @param debtLocker The address of the locker that will recieve minted debt tokens
-    /// @param amt        The amount of LiquidityAsset to fund.
     function fundLoan(address loan, address debtLocker, uint256 amt) external isOwner {
         IERC20(liquidityAsset).approve(loan, amt);
         ILoan(loan).fundLoan(amt, debtLocker);

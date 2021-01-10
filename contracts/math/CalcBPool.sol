@@ -108,9 +108,9 @@ contract CalcBPool {
     function getPoolSharesRequired(
         address bpool,
         address pair,
-        uint256 pairAmountRequired,
         address staker,
-        address stakeLocker
+        address stakeLocker,
+        uint256 pairAmountRequired
     ) external view returns (uint256, uint256) {
 
         IBPool bPool = IBPool(bpool);

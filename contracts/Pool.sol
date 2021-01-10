@@ -153,7 +153,7 @@ contract Pool is IERC20, ERC20 {
         (
             uint256 poolAmountInRequired, 
             uint256 poolAmountPresent
-        ) = calcBPool.getPoolSharesRequired(bPool, stake, stakeAmountRequired, poolDelegate, stakeLocker);
+        ) = calcBPool.getPoolSharesRequired(bPool, stake, poolDelegate, stakeLocker, stakeAmountRequired);
 
         return (
             stakeAmountRequired,
