@@ -31,7 +31,7 @@ const LateFeeCalc = require(artpath +
 const PremiumCalc = require(artpath +
   "addresses/PremiumCalc.address.js");
 
-describe("create 1000 USDC loan, fund 500 USDC, drawdown 50% wETH collateralized loan", function () {
+describe.skip("create 1000 USDC loan, fund 500 USDC, drawdown 50% wETH collateralized loan", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000020";
 
   let DAI, USDC, MPL, WETH, WBTC;

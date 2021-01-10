@@ -11,7 +11,7 @@ const LateFeeCalc = require(artpath +
 const PremiumCalc = require(artpath +
   "addresses/PremiumCalc.address.js");
 
-describe("Borrower Journey", function () {
+describe.skip("Borrower Journey", function () {
   let loanVaultAddress;
 
   it("A - Fetch the list of borrowTokens / collateralTokens", async function () {

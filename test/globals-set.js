@@ -11,7 +11,7 @@ const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const WETHAddress = require(artpath + "addresses/WETH9.address.js");
 const OracleABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 
-describe("MapleGlobals.sol Interactions", function () {
+describe.skip("MapleGlobals.sol Interactions", function () {
   const BUNK_ADDRESS = "0x0000000000000000000000000000000000000000";
 
   let mapleGlobals;

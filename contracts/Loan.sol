@@ -374,11 +374,11 @@ contract Loan is FDT {
         uint256 wad = amt * 10 ** (18 - IERC20Details(loanAsset).decimals());  // Convert to WAD precision
 
         // Fetch value of collateral and funding asset.
-        uint256 requestPrice    = IGlobals(globals).getPrice(loanAsset);
+        uint256 loanAssetPrice  = IGlobals(globals).getPrice(loanAsset);
         uint256 collateralPrice = IGlobals(globals).getPrice(collateralAsset);
 
         // Calculate collateral required.
-        uint256 collateralRequiredUSD = requestPrice.mul(wad).mul(collateralRatio).div(10000);
+        uint256 collateralRequiredUSD = loanAssetPrice.mul(wad).mul(collateralRatio).div(10000);
         uint256 collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
         uint256 collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - IERC20Details(collateralAsset).decimals()));
 

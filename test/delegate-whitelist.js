@@ -14,7 +14,7 @@ const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
 const BPoolCreatorAddress = require(artpath + "addresses/BCreator.address.js");
 const BPoolCreatorABI = require(artpath + "abis/BCreator.abi.js");
 
-describe("Pool Delegate Whitelist", function () {
+describe.skip("Pool Delegate Whitelist", function () {
   it("A - Governor can update isValidPoolDelegate in MapleGlobals", async function () {
     const accounts = await ethers.provider.listAccounts();
 

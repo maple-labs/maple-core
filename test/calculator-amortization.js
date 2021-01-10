@@ -22,7 +22,7 @@ const PremiumCalc = require(artpath +
 
 const LoanABI = require(artpath + "abis/Loan.abi.js");
 
-describe("Calc - Amortization Repayment", function () {
+describe.skip("Calc - Amortization Repayment", function () {
   let accounts;
 
   before(async () => {
