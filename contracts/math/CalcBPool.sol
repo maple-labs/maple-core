@@ -92,6 +92,8 @@ contract CalcBPool {
         return tokenAmountOut;
     }
 
+    event DebugS(string, uint);
+
     /**
         @dev Calculates BPTs required if burning BPTs for pair, given supplied tokenAmountOutRequired.
         @param  bpool              Balancer pool that issues the BPTs.
@@ -108,7 +110,7 @@ contract CalcBPool {
         address staker,
         address stakeLocker,
         uint256 pairAmountRequired
-    ) external view returns (uint256, uint256) {
+    ) external returns (uint256, uint256) {
 
         IBPool bPool = IBPool(bpool);
 
@@ -118,8 +120,15 @@ contract CalcBPool {
         uint256 totalWeight     = bPool.getTotalDenormalizedWeight();
         uint256 swapFee         = bPool.getSwapFee();
 
+        emit DebugS("tokenBalanceOut", tokenBalanceOut);
+        emit DebugS("tokenWeightOut", tokenWeightOut);
+        emit DebugS("poolSupply", poolSupply);
+        emit DebugS("totalWeight", totalWeight);
+        emit DebugS("swapFee", swapFee);
+        emit DebugS("pairAmountRequired", pairAmountRequired);
+
         // Fetch amount of BPTs required to burn to receive pairAmountRequired.
-        uint256 poolAmountInRequired = bPool.calcSingleOutGivenPoolIn(
+        uint256 poolAmountInRequired = bPool.calcPoolInGivenSingleOut(
             tokenBalanceOut,
             tokenWeightOut,
             poolSupply,
@@ -131,6 +140,7 @@ contract CalcBPool {
         // Fetch amount staked in _stakeLocker by staker.
         uint256 stakerBalance = IERC20(stakeLocker).balanceOf(staker);
 
-        return (poolAmountInRequired, stakerBalance.div(WAD));
+        return (poolAmountInRequired, stakerBalance);
     }
+    
 }
