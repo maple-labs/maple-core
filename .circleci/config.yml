@@ -143,7 +143,7 @@ workflows:
       - deploy_kaleido:
           context: kaleido
           requires:
-              - dependencies
+              - unit_test
               - integration_test
           filters:
             branches:
@@ -153,7 +153,6 @@ workflows:
       - upload_kaleido_artifacts_master:
           context: google-cloud
           requires:
-              - unit_test
               - deploy_kaleido
           filters:
             branches:
@@ -162,7 +161,6 @@ workflows:
       - upload_kaleido_artifacts_develop:
           context: google-cloud
           requires:
-              - unit_test
               - deploy_kaleido
           filters:
             branches:
