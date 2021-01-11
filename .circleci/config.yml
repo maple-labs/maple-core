@@ -97,10 +97,7 @@ jobs:
             source $BASH_ENV
       - run:
           name: Deploy contracts to Kaleido
-          command: |
-          cd ~/project
-          yarn kaleido:all:migrate
-          yarn test test/cycle.js
+          command: cd ~/project && yarn kaleido:all:migrate & yarn test test/cycle.js
       - persist_to_workspace:
           root: ~/project
           paths:
