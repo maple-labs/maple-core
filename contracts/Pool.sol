@@ -59,7 +59,7 @@ contract Pool is IERC20, ERC20 {
     event Claim(uint interest, uint principal, uint fee);
 
     /**
-        @notice Constructor for a Pool.
+        @dev Constructor for a Pool.
         @param  _poolDelegate   The address that has manager privlidges for the Pool.
         @param  _liquidityAsset The asset escrowed in LiquidityLocker.
         @param  _stakeAsset     The asset escrowed in StakeLocker.
@@ -138,7 +138,7 @@ contract Pool is IERC20, ERC20 {
     }
 
     /**
-        @notice Deploys and assigns a StakeLocker for this Pool (only used once in constructor).
+        @dev Deploys and assigns a StakeLocker for this Pool (only used once in constructor).
         @param stakeAsset     Address of the asset used for staking.
         @param slFactory      Address of the StakeLocker factory used for instantiation.
         @param liquidityAsset Address of the liquidity asset, required when burning stakeAsset.
@@ -153,7 +153,7 @@ contract Pool is IERC20, ERC20 {
     }
 
     /**
-        @notice Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
+        @dev Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
     */
     function finalize() public {
         (,, bool stakePresent,,) = getInitialStakeRequirements();
@@ -163,7 +163,7 @@ contract Pool is IERC20, ERC20 {
     }
 
     /**
-        @notice Returns information on the stake requirements.
+        @dev Returns information on the stake requirements.
         @return [0] = Amount of stake required.
                 [1] = Current swap out value of stake present.
                 [2] = If enough stake is present from Pool Delegate for finalization.
@@ -193,7 +193,7 @@ contract Pool is IERC20, ERC20 {
 
     // Note: Tether is unusable as a LiquidityAsset!
     /**
-        @notice Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
+        @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
         @param amt The amount of LiquidityAsset to deposit, in wei.
     */
     function deposit(uint256 amt) external notDefunct finalized {
@@ -206,7 +206,7 @@ contract Pool is IERC20, ERC20 {
     }
 
     /**
-        @notice Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
+        @dev Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
         @param amt The amount of LiquidityAsset to withdraw, in wei.
     */
     // TODO: Confirm if amt param supplied is in wei of FDT, or in wei of LiquidtyAsset.
@@ -231,7 +231,7 @@ contract Pool is IERC20, ERC20 {
     }
 
     /**
-        @notice Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
+        @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
         @param  loan      Address of the loan to fund.
         @param  dlFactory The debt locker factory to utilize.
         @param  amt       Amount to fund the loan.
@@ -260,7 +260,7 @@ contract Pool is IERC20, ERC20 {
     }
 
     /**
-        @notice Claim available funds for loan through specified debt locker factory.
+        @dev Claim available funds for loan through specified debt locker factory.
         @param  loan      Address of the loan to claim from.
         @param  dlFactory The debt locker factory (always maps to a single debt locker).
         @return [0] = Total amount claimed.

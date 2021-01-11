@@ -9,7 +9,7 @@ contract LiquidityLockerFactory {
     mapping(address => bool)    public isLocker;  // True if liquidity locker was created by this factory, otherwise false.
 
     /**
-        @notice Instantiate a LiquidityLocker contract.
+        @dev Instantiate a LiquidityLocker contract.
         @param  liquidityAsset The asset this liquidity locker will escrow.
         @return Address of the instantiated liquidity locker.
     */

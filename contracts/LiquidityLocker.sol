@@ -20,7 +20,7 @@ contract LiquidityLocker {
     }
 
     /**
-        @notice Transfers amt of liquidityAsset to dst.
+        @dev Transfers amt of liquidityAsset to dst.
         @param  dst Desintation to transfer liquidityAsset to.
         @param  amt Amount of liquidityAsset to transfer.
     */
@@ -30,7 +30,7 @@ contract LiquidityLocker {
     }
 
     /**
-        @notice Fund a loan using available assets in this liquidity locker.
+        @dev Fund a loan using available assets in this liquidity locker.
         @param  loan       The loan to fund.
         @param  debtLocker The locker that will escrow debt tokens.
         @param  amt        Amount of liquidityAsset to fund the loan for.

@@ -47,7 +47,7 @@ contract LoanFactory {
     }
 
     /**
-        @notice Create a new Loan.
+        @dev Create a new Loan.
         @param  loanAsset       Asset the loan will raise funding in.
         @param  collateralAsset Asset the loan will use as collateral.
         @param  specs           Contains specifications for this loan.
@@ -135,7 +135,7 @@ contract LoanFactory {
     }
 
     /**
-        @notice Governor can adjust the flFactory.
+        @dev Governor can adjust the flFactory.
         @param  _flFactory The new flFactory address.
     */
     function setFundingLockerFactory(address _flFactory) public isGovernor {
@@ -143,7 +143,7 @@ contract LoanFactory {
     }
     
     /**
-        @notice Governor can adjust the clFactory.
+        @dev Governor can adjust the clFactory.
         @param  _clFactory The new clFactory address.
     */
     function setCollateralLockerFactory(address _clFactory) public isGovernor {

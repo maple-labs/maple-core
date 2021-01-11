@@ -8,7 +8,7 @@ contract DebtLockerFactory {
     mapping(address => bool)    public isLocker;  // True if debt locker was created in this factory, otherwise false.
 
     /**
-        @notice Instantiate a DebtLocker contract.
+        @dev Instantiate a DebtLocker contract.
         @param  loan The loan this debt locker will escrow tokens for.
         @return Address of the instantiated debt locker.
     */

@@ -62,7 +62,7 @@ contract StakeLocker is FDT {
     }
 
     /**
-        @notice Deposit amt of stakeAsset, mint FDTs to msg.sender.
+        @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
         @param amt Amount of stakeAsset (BPTs) to deposit.
     */
     // TODO: Consider localizing this function to Pool.
@@ -78,7 +78,7 @@ contract StakeLocker is FDT {
     }
 
     /**
-        @notice Withdraw amt of stakeAsset, burn FDTs for msg.sender.
+        @dev Withdraw amt of stakeAsset, burn FDTs for msg.sender.
         @param amt Amount of stakeAsset (BPTs) to withdraw.
     */
     // TODO: Consider localizing this function to Pool.
@@ -100,7 +100,7 @@ contract StakeLocker is FDT {
     }
 
     /** 
-        @notice Delete the pool.
+        @dev Delete the pool.
     */
     // TODO: Make sure LP gets the delete function implemented.
     // TODO: Analyze what this function does.
@@ -109,7 +109,7 @@ contract StakeLocker is FDT {
     }
 
     /** 
-        @notice Finalize the pool.
+        @dev Finalize the pool.
     */
     // TODO: Analyze what this function does.
     function finalizeLP() external isLP {
@@ -117,7 +117,7 @@ contract StakeLocker is FDT {
     }
 
     /** 
-        @notice Withdraw ETH directly from this locker.
+        @dev Withdraw ETH directly from this locker.
         @param dst Address to send ETH to.
     */
     function withdrawETH(address payable dst) external isGovernor {
@@ -125,7 +125,7 @@ contract StakeLocker is FDT {
     }
 
     /** 
-        @notice Updates information used to calculate unstake delay.
+        @dev Updates information used to calculate unstake delay.
         @param staker The staker who deposited BPTs.
         @param amt    Amount of BPTs staker has deposited.
     */
@@ -143,7 +143,7 @@ contract StakeLocker is FDT {
     }
 
     /**
-        @notice Returns information for staker's unstakeable balance.
+        @dev Returns information for staker's unstakeable balance.
         @param staker The address to view information for.
         @return Amount of BPTs staker can unstake.
     */

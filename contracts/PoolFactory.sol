@@ -37,7 +37,7 @@ contract PoolFactory {
     }
 
     /**
-        @notice Instantiates a Pool contract.
+        @dev Instantiates a Pool contract.
         @param  liquidityAsset The asset escrowed in LiquidityLocker.
         @param  stakeAsset     The asset escrowed in StakeLocker.
         @param  stakingFee     Fee that stakers earn on interest, in bips.

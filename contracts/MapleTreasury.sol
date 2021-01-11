@@ -17,7 +17,7 @@ contract MapleTreasury {
     address public globals;   // MapleGlobals.sol contract.
 
     /**
-        @notice Instantiates the MapleTreasury contract.
+        @dev Instantiates the MapleTreasury contract.
         @param  _mpl is the MapleToken contract.
         @param  _fundsToken is the fundsToken of MapleToken contract.
         @param  _uniswapRouter is the official UniswapV2 router contract.
@@ -36,7 +36,7 @@ contract MapleTreasury {
     }
 
     /**
-        @notice Fired when an ERC-20 asset is converted to fundsToken and transferred to mpl.
+        @dev Fired when an ERC-20 asset is converted to fundsToken and transferred to mpl.
         @param _asset     The asset that is converted.
         @param _by        The msg.sender calling the conversion function.
         @param _amountIn  The amount of _asset converted to fundsToken.
@@ -50,7 +50,7 @@ contract MapleTreasury {
     );
 
     /**
-        @notice Fired when ETH is converted to fundsToken and transferred to mpl.
+        @dev Fired when ETH is converted to fundsToken and transferred to mpl.
         @param _by        The msg.sender calling the conversion function.
         @param _amountIn  The amount of ETH converted to fundsToken.
         @param _amountOut The amount of fundsToken received for ETH conversion.
@@ -62,7 +62,7 @@ contract MapleTreasury {
     );
 
     /**
-        @notice Fired when fundsToken is passed through to mpl.
+        @dev Fired when fundsToken is passed through to mpl.
         @param _by        The msg.sender calling the passThrough function.
         @param _amount    The amount of fundsToken passed through.
     */
@@ -72,7 +72,7 @@ contract MapleTreasury {
     );
 
     /**
-        @notice Fired when fundsToken is modified for this contract.
+        @dev Fired when fundsToken is modified for this contract.
         @param _by            The msg.sender calling the passThrough function.
         @param _newFundsToken The new fundsToken to convert to.
     */
@@ -91,7 +91,7 @@ contract MapleTreasury {
     receive  () external payable { }
 
     /**
-        @notice Adjust the token to convert assets to (and then send to MapleToken).
+        @dev Adjust the token to convert assets to (and then send to MapleToken).
         @param _newFundsToken The new FundsToken with respect to MapleToken ERC-2222.
     */
     // TODO: Consider why this would be changed? Seems this would lead to critical erros.
@@ -100,7 +100,7 @@ contract MapleTreasury {
     }
 
     /**
-        @notice Passes through the current fundsToken to MapleToken.
+        @dev Passes through the current fundsToken to MapleToken.
     */
     function passThroughFundsToken() isGovernor public {
         require(
@@ -118,7 +118,7 @@ contract MapleTreasury {
     */
 
     /**
-        @notice Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
+        @dev Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
         @param _asset The ERC-20 asset to convert.
     */
     function convertERC20(address _asset) isGovernor public {
@@ -154,7 +154,7 @@ contract MapleTreasury {
     */
 
     /**
-        @notice Convert ETH through Uniswap via bilateral transaction (two asset path).
+        @dev Convert ETH through Uniswap via bilateral transaction (two asset path).
         @param _amountOut The amount out expected.
         @param _amountIn  The amount in to convert.
     */
