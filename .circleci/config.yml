@@ -154,7 +154,7 @@ workflows:
       - upload_kaleido_artifacts_master:
           context: google-cloud
           requires:
-              - unit_test
+              # - unit_test
               - deploy_kaleido
           filters:
             branches:
