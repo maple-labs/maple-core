@@ -3,206 +3,168 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "./token/IFundsDistributionToken.sol";
-import "./token/FundsDistributionToken.sol";
-import "./interfaces/ILiquidityPool.sol";
+import "./token/FDT.sol";
+import "./interfaces/IPool.sol";
 import "./interfaces/IGlobals.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
-contract StakeLocker is IFundsDistributionToken, FundsDistributionToken {
+contract StakeLocker is FDT {
 
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
 
     uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division
 
-    address public immutable parentLP;  // The parent liquidity pool. (TODO: Consider if this variable is needed, redundant to IParentLP)
+    address public immutable stakeAsset;      // The asset deposited by stakers into this contract, for liquidation during defaults.
+    address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
+    address public immutable owner;           // The parent liquidity pool.
+    address public immutable globals;         // Maple globals
 
-    address public liquidityAsset;  // The LiquidityAsset for the LiquidityPool as well as the dividend token for this contract.
-    address public stakeAsset;      // The asset deposited by stakers into this contract, for liquidation during defaults.
-
-    IERC20         private ILiquidityAsset;  // The primary investment asset for the LP, and the dividend token for this contract.
-    IERC20         private IStakeAsset;      // Asset used for staking
-    IERC20         private fundsToken;       // ERC-2222 token used to claim revenues
-    ILiquidityPool private IParentLP;        // Interface for the parent/owner of this contract, a liquidity pool.
-    IGlobals       private IMapleGlobals;    // Interface for the MapleGlobals.sol contract.
-    
-    uint256 public fundsTokenBalance;  //  The amount of LiquidityAsset tokens (dividends) currently present and accounted for in this contract.
-
-    bool private isLPDefunct;    // The LiquidityAsset for the LiquidityPool as well as the dividend token for this contract.
-    bool private isLPFinalized;  // The LiquidityAsset for the LiquidityPool as well as the dividend token for this contract.
+    bool private isLPDefunct;    // The LiquidityAsset for the Pool as well as the dividend token for this contract.
+    bool private isLPFinalized;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
 
     mapping(address => uint256) private stakeDate;  // Map address to date value (TODO: Consider making public)
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
-    // TODO: Dynamically assign name and locker to the FundsDistributionToken() params.
     constructor(
         address _stakeAsset,
         address _liquidityAsset,
-        address _parentLP,
+        address _owner,
         address _globals
-    ) FundsDistributionToken("Maple Stake Locker", "MPLSTAKE") public {
+    ) FDT("Maple Stake Locker", "MPLSTAKE", _liquidityAsset) public {
         liquidityAsset = _liquidityAsset;
-        stakeAsset = _stakeAsset;
-        parentLP = _parentLP;
-        IParentLP = ILiquidityPool(_parentLP);
-        ILiquidityAsset = IERC20(_liquidityAsset);
-        fundsToken = ILiquidityAsset;
-        IStakeAsset = IERC20(_stakeAsset);
-        IMapleGlobals = IGlobals(_globals);
+        stakeAsset     = _stakeAsset;
+        owner          = _owner;
+        globals        = _globals;
     }
 
-    event Stake(uint256 _amount, address _staker);
+    event   Stake(uint256 _amount, address _staker);
     event Unstake(uint256 _amount, address _staker);
 
+    // TODO: Analyze the purpose of this modifier.
     modifier delegateLock() {
         require(
-            msg.sender != IParentLP.poolDelegate() || isLPDefunct || !isLPFinalized,
+            msg.sender != IPool(owner).poolDelegate() || isLPDefunct || !isLPFinalized,
             "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
         );
         _;
     }
 
-    //TODO: Identify why an error is thrown when console.log() is not present in this modifier.
     modifier isLP() {
-        require(msg.sender == parentLP, "StakeLocker:ERR_UNAUTHORIZED");
+        require(msg.sender == owner, "StakeLocker:ERR_UNAUTHORIZED");
         _;
     }
+    
     modifier isGovernor() {
-        require(msg.sender == IMapleGlobals.governor(), "msg.sender is not Governor");
+        require(msg.sender == IGlobals(globals).governor(), "msg.sender is not Governor");
         _;
     }
 
     /**
-     * @notice Deposit stakeAsset and mint an equal number of FundsDistributionTokens to the user
-     * @param _amt Amount of stakeAsset(BPTs) to stake
-     */
-    function stake(uint256 _amt) external {
+        @notice Deposit amt of stakeAsset, mint FDTs to msg.sender.
+        @param amt Amount of stakeAsset (BPTs) to deposit.
+    */
+    // TODO: Consider localizing this function to Pool.
+    function stake(uint256 amt) external {
         require(
-            IStakeAsset.transferFrom(msg.sender, address(this), _amt),
+            IERC20(stakeAsset).transferFrom(msg.sender, address(this), amt),
             "StakeLocker:ERR_INSUFFICIENT_APPROVED_FUNDS"
         );
-        _updateStakeDate(msg.sender, _amt);
-        _mint(msg.sender, _amt);
-        emit Stake(_amt, msg.sender);
-        emit BalanceUpdated(address(this), address(IStakeAsset), IStakeAsset.balanceOf(address(this)));
+        _updateStakeDate(msg.sender, amt);
+        _mint(msg.sender, amt);
+        emit Stake(amt, msg.sender);
+        emit BalanceUpdated(address(this), stakeAsset, IERC20(stakeAsset).balanceOf(address(this)));
     }
 
-    function unstake(uint256 _amt) external delegateLock {
+    /**
+        @notice Withdraw amt of stakeAsset, burn FDTs for msg.sender.
+        @param amt Amount of stakeAsset (BPTs) to withdraw.
+    */
+    // TODO: Consider localizing this function to Pool.
+    function unstake(uint256 amt) external delegateLock {
         require(
-            _amt <= getUnstakeableBalance(msg.sender),
+            amt <= getUnstakeableBalance(msg.sender),
             "Stakelocker:ERR_AMT_REQUESTED_UNAVAILABLE"
         );
         updateFundsReceived();
         withdrawFunds(); //has to be before the transfer or they will end up here
-        _transfer(msg.sender, address(this), _amt);
+        _transfer(msg.sender, address(this), amt);
         require(
-            IStakeAsset.transferFrom(address(this), msg.sender, _amt),
+            IERC20(stakeAsset).transferFrom(address(this), msg.sender, amt),
             "StakeLocker:ERR_STAKE_ASSET_BALANCE_DEPLETED"
         );
-        _burn(address(this), _amt);
-        emit Unstake(_amt, msg.sender);
-        emit BalanceUpdated(address(this), address(IStakeAsset), IStakeAsset.balanceOf(address(this)));
+        _burn(address(this), amt);
+        emit Unstake(amt, msg.sender);
+        emit BalanceUpdated(address(this), stakeAsset, IERC20(stakeAsset).balanceOf(address(this)));
     }
 
-    //TODO: Make sure LP gets the delete function implemented.
+    /** 
+        @notice Delete the pool.
+    */
+    // TODO: Make sure LP gets the delete function implemented.
+    // TODO: Analyze what this function does.
     function deleteLP() external isLP {
         isLPDefunct = true;
     }
 
+    /** 
+        @notice Finalize the pool.
+    */
+    // TODO: Analyze what this function does.
     function finalizeLP() external isLP {
         isLPFinalized = true;
     }
 
-    function withdrawETH(address payable _to) external isGovernor {
-        _to.transfer(address(this).balance);
+    /** 
+        @notice Withdraw ETH directly from this locker.
+        @param dst Address to send ETH to.
+    */
+    function withdrawETH(address payable dst) external isGovernor {
+        dst.transfer(address(this).balance);
     }
 
-    /** @notice updates data structure that stores the information used to calculate unstake delay
-     * @param _addy address of staker
-     * @param _amt amount he is staking
-     */
-    function _updateStakeDate(address _addy, uint256 _amt) internal {
-        if (stakeDate[_addy] == 0) {
-            stakeDate[_addy] = block.timestamp;
+    /** 
+        @notice Updates information used to calculate unstake delay.
+        @param staker The staker who deposited BPTs.
+        @param amt    Amount of BPTs staker has deposited.
+    */
+    function _updateStakeDate(address staker, uint256 amt) internal {
+        if (stakeDate[staker] == 0) {
+            stakeDate[staker] = block.timestamp;
         } else {
-            uint256 _date = stakeDate[_addy];
-            //make sure this is executed before mint or line below needs change on denominator
-            uint256 _coef = (WAD * _amt) / (balanceOf(_addy) + _amt); //yes, i want 0 if _amt is too small
-            //thhis addition will start to overflow in about 3^52 years
-            stakeDate[_addy] = (_date * WAD + (block.timestamp - _date) * _coef) / WAD;
-            //I know this is insane but its good trust me
+            uint256 date = stakeDate[staker];
+            // Make sure this is executed before mint or line below needs change on denominator
+            uint256 coef = (WAD * amt) / (balanceOf(staker) + amt); // Yes, i want 0 if amt is too small
+            // This addition will start to overflow in about 3^52 years
+            stakeDate[staker] = (date * WAD + (block.timestamp - date) * coef) / WAD;
+            // I know this is insane but its good trust me
         }
     }
 
     /**
-     * @dev view function returning your unstakeable balance.
-     * @param _addy wallet address
-     * @return uint amount of BPTs that may be unstaked
-     */
-    function getUnstakeableBalance(address _addy) public view returns (uint256) {
-        uint256 _bal = balanceOf(_addy);
-        uint256 _time = (block.timestamp - stakeDate[_addy]) * WAD;
-        uint256 _out = ((_time / (IMapleGlobals.unstakeDelay() + 1)) * _bal) / WAD;
-        //the plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
-        //also i do indeed want this to return 0 if denominator is less than WAD
-        if (_out > _bal) {
-            _out = _bal;
+        @notice Returns information for staker's unstakeable balance.
+        @param staker The address to view information for.
+        @return Amount of BPTs staker can unstake.
+    */
+    function getUnstakeableBalance(address staker) public view returns (uint256) {
+        uint256 bal = balanceOf(staker);
+        uint256 time = (block.timestamp - stakeDate[staker]) * WAD;
+        uint256 out = ((time / (IGlobals(globals).unstakeDelay() + 1)) * bal) / WAD;
+        // The plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
+        // Also i do indeed want this to return 0 if denominator is less than WAD
+        if (out > bal) {
+            out = bal;
         }
-        return _out;
+        return out;
     }
 
     // TODO: Make this handle transfer of time lock more properly, parameterize _updateStakeDate
     //      to these ends to save code.
     //      can improve this so the updated age of tokens reflects their age in the senders wallets
     //      right now it simply is equivalent to the age update if the receiver was making a new stake.
-    function _transfer(
-        address from,
-        address to,
-        uint256 value
-    ) internal override delegateLock {
-        super._transfer(from, to, value);
-        _updateStakeDate(to, value);
-    }
-
-    /**
-     * @notice Withdraws all available funds for a token holder
-     */
-    function withdrawFunds() public override {
-        //must be public so it can be called insdie here
-        uint256 withdrawableFunds = _prepareWithdraw();
-        require(
-            fundsToken.transfer(msg.sender, withdrawableFunds),
-            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
-        );
-
-        _updateFundsTokenBalance();
-    }
-
-    /**
-     * @dev Updates the current funds token balance
-     * and returns the difference of new and previous funds token balances
-     * @return A int256 representing the difference of the new and previous funds token balance
-     */
-    function _updateFundsTokenBalance() internal returns (int256) {
-        uint256 prevFundsTokenBalance = fundsTokenBalance;
-
-        fundsTokenBalance = fundsToken.balanceOf(address(this));
-
-        return int256(fundsTokenBalance).sub(int256(prevFundsTokenBalance));
-    }
-
-    /**
-     * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
-     * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
-     * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
-     */
-    function updateFundsReceived() public {
-        int256 newFunds = _updateFundsTokenBalance();
-
-        if (newFunds > 0) {
-            _distributeFunds(newFunds.toUint256Safe());
-        }
+    function _transfer(address from, address to, uint256 amt) internal override delegateLock {
+        super._transfer(from, to, amt);
+        _updateStakeDate(to, amt);
     }
 }

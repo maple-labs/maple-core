@@ -5,30 +5,34 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract FundingLocker {
 
-    address public immutable fundingAsset;  // Asset the LoanVault was funded with
-    address public immutable loanVault;     // LoanVault this FundingLocker has funded
+    address public immutable loanAsset;  // Asset the Loan was funded with
+    address public immutable loan;       // Loan this FundingLocker has funded
 
-    constructor(address _fundingAsset, address _loanVault) public {
-        fundingAsset = _fundingAsset;
-        loanVault = _loanVault;
+    constructor(address _loanAsset, address _loan) public {
+        loanAsset = _loanAsset;
+        loan      = _loan;
     }
 
-    modifier isLoanVault() {
-        require(msg.sender == loanVault, "FundingLocker::ERR_ISLOANVAULT_CHECK");
+    modifier isLoan() {
+        require(msg.sender == loan, "FundingLocker::ERR_ISLOAN_CHECK");
         _;
     }
 
-    /// @notice Transfers _amount of fundingAsset to _destination.
-    /// @param _destination Desintation to transfer fundingAsset to.
-    /// @param _amount Amount of fundingAsset to transfer.
-    function pull(address _destination, uint256 _amount) isLoanVault public returns(bool) {
-        return IERC20(fundingAsset).transfer(_destination, _amount);
+    /**
+        @notice Transfers _amount of loanAsset to dst.
+        @param  dst Desintation to transfer loanAsset to.
+        @param  amt Amount of loanAsset to transfer.
+    */
+    function pull(address dst, uint256 amt) isLoan public returns(bool) {
+        return IERC20(loanAsset).transfer(dst, amt);
     }
 
-    /// @notice Transfers the remainder of fundingAsset to LoanVault;
-    function drain() isLoanVault public returns(bool) {
-        uint256 transferAmount = IERC20(fundingAsset).balanceOf(address(this));
-        return IERC20(fundingAsset).transfer(loanVault, transferAmount);
+    /**
+        @notice Transfers entire amount of loanAsset held in escrow to Loan.
+    */
+    function drain() isLoan public returns(bool) {
+        uint256 amt = IERC20(loanAsset).balanceOf(address(this));
+        return IERC20(loanAsset).transfer(loan, amt);
     }
     
 }

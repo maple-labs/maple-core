@@ -15,7 +15,7 @@ const MapleTokenAddress = require(artpath + "addresses/MapleToken.address.js");
 const ChainLinkEmulatorABI = require(artpath + "abis/ChainLinkEmulator.abi.js");
 
 async function main() {
-  /*  const mapleToken = await deploy("MapleToken", [
+  /*  const mpl = await deploy("MapleToken", [
     "MapleToken",
     "MPL",
     USDCAddress,
@@ -33,9 +33,9 @@ async function main() {
 
   const LiquidityLockerFactory = await deploy("LiquidityLockerFactory");
 
-  const LoanTokenLockerFactory = await deploy("LoanTokenLockerFactory");
+  const DebtLockerFactory = await deploy("DebtLockerFactory");
 
-  const LiquidityPoolFactory = await deploy("LiquidityPoolFactory", [
+  const PoolFactory = await deploy("PoolFactory", [
     mapleGlobals.address,
     StakeLockerFactory.address,
     LiquidityLockerFactory.address,
@@ -48,20 +48,20 @@ async function main() {
     mapleGlobals.address,
   ]);
 
-  const AmortizationRepaymentCalculator = await deploy(
-    "AmortizationRepaymentCalculator"
+  const AmortizationRepaymentCalc = await deploy(
+    "AmortizationRepaymentCalc"
   );
-  const BulletRepaymentCalculator = await deploy("BulletRepaymentCalculator");
+  const BulletRepaymentCalc = await deploy("BulletRepaymentCalc");
 
-  const LateFeeNullCalculator = await deploy("LateFeeNullCalculator");
+  const LateFeeCalc = await deploy("LateFeeCalc", [0]); // 0% FEE if Late Payment
 
-  const PremiumFlatCalculator = await deploy("PremiumFlatCalculator", [200]); // 2% FEE on Principal
+  const PremiumCalc = await deploy("PremiumCalc", [200]); // 2% FEE on Principal
 
   const CollateralLockerFactory = await deploy("CollateralLockerFactory");
 
   const FundingLockerFactory = await deploy("FundingLockerFactory");
 
-  const LVFactory = await deploy("LoanVaultFactory", [
+  const LVFactory = await deploy("LoanFactory", [
     mapleGlobals.address,
     FundingLockerFactory.address,
     CollateralLockerFactory.address,

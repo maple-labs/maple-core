@@ -3,7 +3,7 @@ const artpath = "../../contracts/" + network.name + "/";
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
 
 async function main() {
-  const mapleToken = await deploy("MapleToken", [
+  const mpl = await deploy("MapleToken", [
     "MapleToken",
     "MPL",
     USDCAddress,

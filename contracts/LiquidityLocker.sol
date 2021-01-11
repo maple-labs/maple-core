@@ -2,42 +2,43 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "./interfaces/ILoanVault.sol";
+import "./interfaces/ILoan.sol";
 
 contract LiquidityLocker {
 
-    IERC20 private immutable ILiquidityAsset;
+    address public immutable owner;           // The Pool that owns this LiquidityLocker, for authorization purposes.
+    address public immutable liquidityAsset;  // The asset which this LiquidityLocker will escrow.
 
-    address public immutable ownerLP;         // The LiquidityPool that owns this LiquidityLocker, for authorization purposes.
-    address public           liquidityAsset;  // The asset which this LiquidityLocker will escrow.
-
-    // TODO: Consider checking if the _liquidityPool (owner) is a valid LiquidityPool via LPFactory.
-    constructor(address _liquidityAsset, address _liquidityPool) public {
+    constructor(address _liquidityAsset, address _owner) public {
         liquidityAsset = _liquidityAsset;
-        ownerLP = _liquidityPool;
-        ILiquidityAsset = IERC20(_liquidityAsset);
+        owner          = _owner;
     }
     
     modifier isOwner() {
-        require(msg.sender == ownerLP, "LiquidityLocker:ERR_MSG_SENDER_NOT_OWNER");
+        require(msg.sender == owner, "LiquidityLocker:ERR_MSG_SENDER_NOT_OWNER");
         _;
     }
 
-    /// @notice Transfer liquidityAsset from this contract to an external contract.
-    /// @param _amt Amount to transfer liquidityAsset to.
-    /// @param _to Address to send liquidityAsset to.
-    /// @return true if transfer succeeds.
-    function transfer(address _to, uint256 _amt) external isOwner returns (bool) {
-        require(_to != address(0), "LiquidityLocker::transfer:ERR_TO_VALUE_IS_NULL_ADDRESS");
-        return ILiquidityAsset.transfer(_to, _amt);
+    /**
+        @notice Transfers amt of liquidityAsset to dst.
+        @param  dst Desintation to transfer liquidityAsset to.
+        @param  amt Amount of liquidityAsset to transfer.
+    */
+    function transfer(address dst, uint256 amt) external isOwner returns (bool) {
+        require(dst != address(0), "LiquidityLocker::transfer:ERR_TO_VALUE_IS_NULL_ADDRESS");
+        return IERC20(liquidityAsset).transfer(dst, amt);
     }
 
-    // TODO: Consider checking if _loanVault is valid via LoanVaultFactory.
-    /// @notice Fund a particular loan using available LiquidityAsset.
-    /// @param _loanVault The address of the LoanVault to fund.
-    /// @param _amt The amount of LiquidityAsset to fund.
-    function fundLoan(address _loanVault, address _loanTokenLocker, uint256 _amt) external isOwner {
-        ILiquidityAsset.approve(_loanVault, _amt);
-        ILoanVault(_loanVault).fundLoan(_amt, _loanTokenLocker);
+    /**
+        @notice Fund a loan using available assets in this liquidity locker.
+        @param  loan       The loan to fund.
+        @param  debtLocker The locker that will escrow debt tokens.
+        @param  amt        Amount of liquidityAsset to fund the loan for.
+    */
+    // TODO: Consider checking if loan is valid via LoanFactory.
+    //       Lucas -> Pass in loan factory, cross-check with globals, then confirm if legit.
+    function fundLoan(address loan, address debtLocker, uint256 amt) external isOwner {
+        IERC20(liquidityAsset).approve(loan, amt);
+        ILoan(loan).fundLoan(amt, debtLocker);
     }
 }

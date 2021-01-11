@@ -1,12 +1,12 @@
 
 
 ## Functions:
-[`withdrawableFundsOf(address owner)`](#IFundsDistributionToken-withdrawableFundsOf-address-)
-[`withdrawFunds()`](#IFundsDistributionToken-withdrawFunds--)
+[`withdrawableFundsOf(address owner)`](#IFDT-withdrawableFundsOf-address-)
+[`withdrawFunds()`](#IFDT-withdrawFunds--)
 
 ## Events:
-[`FundsDistributed(address by, uint256 fundsDistributed)`](#IFundsDistributionToken-FundsDistributed-address-uint256-)
-[`FundsWithdrawn(address by, uint256 fundsWithdrawn)`](#IFundsDistributionToken-FundsWithdrawn-address-uint256-)
+[`FundsDistributed(address by, uint256 fundsDistributed)`](#IFDT-FundsDistributed-address-uint256-)
+[`FundsWithdrawn(address by, uint256 fundsWithdrawn)`](#IFDT-FundsWithdrawn-address-uint256-)
 
 ## <u>Functions</u>
 
@@ -15,14 +15,14 @@ Returns the total amount of funds a given address is able to withdraw currently.
 
 
 ### Parameters:
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `owner`: Address of FundsDistributionToken holder
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `owner`: Address of FDT holder
 
 
 ### Returns:
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A uint256 representing the available funds for a given account
 
 ### `withdrawFunds()`
-Withdraws all available funds for a FundsDistributionToken holder.
+Withdraws all available funds for a FDT holder.
 
 ## <u>Events</u>
 
