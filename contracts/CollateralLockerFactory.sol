@@ -10,7 +10,7 @@ contract CollateralLockerFactory {
     mapping(address => bool)    public isLocker;  // True if collateral locker was created by this factory, otherwise false.
 
     /**
-        @notice Instantiate a CollateralLocker contract.
+        @dev Instantiate a CollateralLocker contract.
         @param  collateralAsset The asset this collateral locker will escrow.
         @return Address of the instantiated collateral locker.
     */

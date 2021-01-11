@@ -1,21 +1,15 @@
 
 
 ## Functions:
-[`constructor(string name, string symbol, contract IERC20 _fundsToken)`](#MapleToken-constructor-string-string-contract-IERC20-)
-[`withdrawFunds()`](#MapleToken-withdrawFunds--)
-[`updateFundsReceived()`](#MapleToken-updateFundsReceived--)
+[`constructor(string name, string symbol, address fundsToken)`](#MapleToken-constructor-string-string-address-)
 
 
 ## <u>Functions</u>
 
-### `constructor(string name, string symbol, contract IERC20 _fundsToken)`
-No description
-
-### `withdrawFunds()`
-No description
-
-### `updateFundsReceived()`
-Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new 
-funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
+### `constructor(string name, string symbol, address fundsToken)`
+Instanties the MapleToken.
+        @param  name       Name of the token.
+        @param  symbol     Symbol of the token.
+        @param  fundsToken The asset claimable / distributed via ERC-2222, deposited to MapleToken contract.
 
 ## <u>Events</u>

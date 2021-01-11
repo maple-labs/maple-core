@@ -30,7 +30,7 @@ abstract contract FDT is IFDT, ERC20 {
 
     /**
      * prev. distributeDividends
-     * @notice Distributes funds to token holders.
+     * @dev Distributes funds to token holders.
      * @dev It reverts if the total supply of tokens is 0.
      * It emits the `FundsDistributed` event if the amount of received ether is greater than 0.
      * About undistributed funds:
@@ -51,7 +51,7 @@ abstract contract FDT is IFDT, ERC20 {
     }
 
     /**
-     * @notice Prepares funds withdrawal
+     * @dev Prepares funds withdrawal
      * @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
      */
     
@@ -66,7 +66,7 @@ abstract contract FDT is IFDT, ERC20 {
     }
 
     /**
-     * @notice View the amount of funds that an address can withdraw.
+     * @dev View the amount of funds that an address can withdraw.
      * @param _owner The address of a token holder.
      * @return The amount funds that `_owner` can withdraw.
      */
@@ -75,7 +75,7 @@ abstract contract FDT is IFDT, ERC20 {
     }
 
     /**
-     * @notice View the amount of funds that an address has withdrawn.
+     * @dev View the amount of funds that an address has withdrawn.
      * @param _owner The address of a token holder.
      * @return The amount of funds that `_owner` has withdrawn.
      */
@@ -84,7 +84,7 @@ abstract contract FDT is IFDT, ERC20 {
     }
 
     /**
-     * @notice View the amount of funds that an address has earned in total.
+     * @dev View the amount of funds that an address has earned in total.
      * @dev accumulativeFundsOf(_owner) = withdrawableFundsOf(_owner) + withdrawnFundsOf(_owner)
      * = (pointsPerShare * balanceOf(_owner) + pointsCorrection[_owner]) / pointsMultiplier
      * @param _owner The address of a token holder.
@@ -147,7 +147,7 @@ abstract contract FDT is IFDT, ERC20 {
     }
 
     /**
-     * @notice Withdraws all available funds for a token holder
+     * @dev Withdraws all available funds for a token holder
      */
     function withdrawFunds() public override {
         uint256 withdrawableFunds = _prepareWithdraw();
@@ -174,7 +174,7 @@ abstract contract FDT is IFDT, ERC20 {
     }
 
     /**
-     * @notice Register a payment of funds in tokens. May be called directly after a deposit is made.
+     * @dev Register a payment of funds in tokens. May be called directly after a deposit is made.
      * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
      * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
      */

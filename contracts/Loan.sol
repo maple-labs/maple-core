@@ -71,7 +71,7 @@ contract Loan is FDT {
     event BalanceUpdated(address who, address token, uint256 balance);
 
     /**
-        @notice Constructor for a Loan.
+        @dev Constructor for a Loan.
         @param  _borrower        Will receive the funding when calling drawdown(), is also responsible for repayments.
         @param  _loanAsset       The asset _borrower is requesting funding in.
         @param  _collateralAsset The asset provided as collateral by _borrower.
@@ -154,7 +154,7 @@ contract Loan is FDT {
     }
 
     /**
-        @notice Fund this loan and mint debt tokens for mintTo.
+        @dev Fund this loan and mint debt tokens for mintTo.
         @param  amt    Amount to fund the loan.
         @param  mintTo Address that debt tokens are minted to.
     */
@@ -174,7 +174,7 @@ contract Loan is FDT {
     }
 
     /**
-        @notice Drawdown funding from FundingLocker, post collateral, and transition loanState from Funding to Active.
+        @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from Funding to Active.
         @param  amt Amount of loanAsset borrower draws down, remainder is returned to Loan.
     */
     function drawdown(uint256 amt) external isState(State.Live) isBorrower {
@@ -238,7 +238,7 @@ contract Loan is FDT {
     }
 
     /**
-        @notice Make the next payment for this loan.
+        @dev Make the next payment for this loan.
     */
     function makePayment() public isState(State.Active) {
         if (block.timestamp <= nextPaymentDue) {
@@ -304,7 +304,7 @@ contract Loan is FDT {
     }
 
     /**
-        @notice Returns information on next payment amount.
+        @dev Returns information on next payment amount.
         @return [0] = Principal + Interest
                 [1] = Principal 
                 [2] = Interest
@@ -320,7 +320,7 @@ contract Loan is FDT {
     }
 
     /**
-        @notice Make the full payment for this loan, a.k.a. "calling" the loan.
+        @dev Make the full payment for this loan, a.k.a. "calling" the loan.
     */
     function makeFullPayment() public isState(State.Active) {
         (
@@ -349,7 +349,7 @@ contract Loan is FDT {
     }
 
     /**
-        @notice Returns information on full payment amount.
+        @dev Returns information on full payment amount.
         @return [0] = Principal + Interest
                 [1] = Principal 
                 [2] = Interest
@@ -365,7 +365,7 @@ contract Loan is FDT {
     }
 
     /**
-        @notice Helper for calculating collateral required to drawdown amt.
+        @dev Helper for calculating collateral required to drawdown amt.
         @param  amt The amount of loanAsset to drawdown from FundingLocker.
         @return The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
     */

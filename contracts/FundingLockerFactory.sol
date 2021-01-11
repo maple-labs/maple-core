@@ -10,7 +10,7 @@ contract FundingLockerFactory {
     mapping(address => bool)    public isLocker;  // True if funding locker was created by this factory, otherwise false.
 
     /**
-        @notice Instantiate a FundingLocker contract.
+        @dev Instantiate a FundingLocker contract.
         @param  loanAsset The asset this funding locker will escrow.
         @return Address of the instantiated funding locker.
     */

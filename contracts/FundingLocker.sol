@@ -19,7 +19,7 @@ contract FundingLocker {
     }
 
     /**
-        @notice Transfers _amount of loanAsset to dst.
+        @dev Transfers _amount of loanAsset to dst.
         @param  dst Desintation to transfer loanAsset to.
         @param  amt Amount of loanAsset to transfer.
     */
@@ -28,7 +28,7 @@ contract FundingLocker {
     }
 
     /**
-        @notice Transfers entire amount of loanAsset held in escrow to Loan.
+        @dev Transfers entire amount of loanAsset held in escrow to Loan.
     */
     function drain() isLoan public returns(bool) {
         uint256 amt = IERC20(loanAsset).balanceOf(address(this));

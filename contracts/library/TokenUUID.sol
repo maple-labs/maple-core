@@ -5,7 +5,7 @@ pragma solidity >=0.6.11;
 library TokenUUID {
 
     /**
-        @notice Generates a UUID.
+        @dev Generates a UUID.
         @param  serial randomizes the output.
         @return UUID
     */

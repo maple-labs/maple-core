@@ -12,7 +12,7 @@ contract CalcBPool {
 
     uint256 constant WAD = 10 ** 18;
 
-    /// @notice Official balancer pool bdiv() function, does synthetic float with 10^-18 precision.
+    /// @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision.
     function bdiv(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, "ERR_DIV_ZERO");
         uint256 c0 = a * WAD;
@@ -23,7 +23,7 @@ contract CalcBPool {
         return c2;
     }
 
-    /// @notice Calculates the value of BPT in units of _liquidityAssetContract in 'wei' (decimals) for this token.
+    /// @dev Calculates the value of BPT in units of _liquidityAssetContract in 'wei' (decimals) for this token.
     // TODO: Identify use and add NatSpec later.
     function BPTVal(
         address _pool,
@@ -54,7 +54,7 @@ contract CalcBPool {
     }
 
     /** 
-        @notice Calculate _pair swap out value of staker BPT balance escrowed in stakeLocker.
+        @dev Calculate _pair swap out value of staker BPT balance escrowed in stakeLocker.
         @param pool        Balancer pool that issues the BPTs.
         @param pair        Swap out asset (e.g. USDC) to receive when burning BPTs.
         @param staker      Address that deposited BPTs to stakeLocker.
@@ -93,7 +93,7 @@ contract CalcBPool {
     }
 
     /**
-        @notice Calculates BPTs required if burning BPTs for pair, given supplied tokenAmountOutRequired.
+        @dev Calculates BPTs required if burning BPTs for pair, given supplied tokenAmountOutRequired.
         @param  bpool              Balancer pool that issues the BPTs.
         @param  pair               Swap out asset (e.g. USDC) to receive when burning BPTs.
         @param  pairAmountRequired Amount of pair tokens out required.

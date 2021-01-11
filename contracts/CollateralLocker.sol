@@ -19,7 +19,7 @@ contract CollateralLocker {
     }
 
     /**
-        @notice Transfers _amount of collateralAsset to dst.
+        @dev Transfers _amount of collateralAsset to dst.
         @param  dst Desintation to transfer collateralAsset to.
         @param  amt Amount of collateralAsset to transfer.
     */
