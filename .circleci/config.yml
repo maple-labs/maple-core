@@ -134,27 +134,26 @@ workflows:
   version: 2
   test_all:
     jobs:
-      # - unit_test:
-      #     context: seth
+      - unit_test:
+          context: seth
       - dependencies
-      # - integration_test:
-      #     requires:
-      #       - dependencies
+      - integration_test:
+          requires:
+            - dependencies
       - deploy_kaleido:
           context: kaleido
           requires:
               - dependencies
-              # - integration_test
+              - integration_test
           filters:
             branches:
               only:
                 - master
                 - develop
-                - sc-1127-ci-kaleido-script
       - upload_kaleido_artifacts_master:
           context: google-cloud
           requires:
-              # - unit_test
+              - unit_test
               - deploy_kaleido
           filters:
             branches:
@@ -163,11 +162,10 @@ workflows:
       - upload_kaleido_artifacts_develop:
           context: google-cloud
           requires:
-              # - unit_test
+              - unit_test
               - deploy_kaleido
           filters:
             branches:
               only:
                 - develop
-                - sc-1127-ci-kaleido-script
                 
