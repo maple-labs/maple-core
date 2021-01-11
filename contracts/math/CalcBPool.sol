@@ -108,7 +108,7 @@ contract CalcBPool {
         address staker,
         address stakeLocker,
         uint256 pairAmountRequired
-    ) external returns (uint256, uint256) {
+    ) external view returns (uint256, uint256) {
 
         IBPool bPool = IBPool(bpool);
 

@@ -169,7 +169,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
                 [4] = Amount of pool shares present.
     */
     // TODO: Resolve the dissonance between poolSharesRequired / stakeAmountRequired / getSwapOutValue
-    function getInitialStakeRequirements() public returns (uint256, uint256, bool, uint256, uint256) {
+    function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
 
         address bPool               = IGlobals(globals).mapleBPool();
         address stake               = IGlobals(globals).mapleBPoolAssetPair(); // TODO: Consider localizing this, relates to SC-1138
