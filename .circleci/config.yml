@@ -97,7 +97,7 @@ jobs:
             source $BASH_ENV
       - run:
           name: Deploy contracts to Kaleido
-          command: cd ~/project && yarn kaleido:all:migrate & cd packages/maple-core && yarn test test/cycle.js
+          command: cd ~/project && yarn kaleido:all:migrate & cd packages/maple-core && HARDHAT_NETWORK=private yarn test test/cycle.js
       - persist_to_workspace:
           root: ~/project
           paths:
@@ -134,12 +134,12 @@ workflows:
   version: 2
   test_all:
     jobs:
-      - unit_test:
-          context: seth
+      # - unit_test:
+      #     context: seth
       - dependencies
-      - integration_test:
-          requires:
-            - dependencies
+      # - integration_test:
+      #     requires:
+      #       - dependencies
       - deploy_kaleido:
           context: kaleido
           requires:
