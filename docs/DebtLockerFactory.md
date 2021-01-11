@@ -7,6 +7,8 @@
 ## <u>Functions</u>
 
 ### `newLocker(address loan)`
-No description
+Instantiate a DebtLocker contract.
+        @param  loan The loan this debt locker will escrow tokens for.
+        @return Address of the instantiated debt locker.
 
 ## <u>Events</u>

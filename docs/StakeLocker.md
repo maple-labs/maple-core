@@ -20,22 +20,27 @@
 No description
 
 ### `stake(uint256 amt)`
-No description
+Deposit amt of stakeAsset, mint FDTs to msg.sender.
+        @param amt Amount of stakeAsset (BPTs) to deposit.
 
 ### `unstake(uint256 amt)`
-No description
+Withdraw amt of stakeAsset, burn FDTs for msg.sender.
+        @param amt Amount of stakeAsset (BPTs) to withdraw.
 
 ### `deleteLP()`
-No description
+Delete the pool.
 
 ### `finalizeLP()`
-No description
+Finalize the pool.
 
 ### `withdrawETH(address payable dst)`
-No description
+Withdraw ETH directly from this locker.
+        @param dst Address to send ETH to.
 
 ### `getUnstakeableBalance(address staker)`
-No description
+Returns information for staker's unstakeable balance.
+        @param staker The address to view information for.
+        @return Amount of BPTs staker can unstake.
 
 ## <u>Events</u>
 

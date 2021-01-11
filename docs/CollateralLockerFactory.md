@@ -7,6 +7,8 @@
 ## <u>Functions</u>
 
 ### `newLocker(address collateralAsset)`
-No description
+Instantiate a CollateralLocker contract.
+        @param  collateralAsset The asset this collateral locker will escrow.
+        @return Address of the instantiated collateral locker.
 
 ## <u>Events</u>

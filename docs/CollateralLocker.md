@@ -11,6 +11,8 @@
 No description
 
 ### `pull(address dst, uint256 amt)`
-No description
+Transfers _amount of collateralAsset to dst.
+        @param  dst Desintation to transfer collateralAsset to.
+        @param  amt Amount of collateralAsset to transfer.
 
 ## <u>Events</u>

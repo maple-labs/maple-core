@@ -12,9 +12,14 @@
 No description
 
 ### `transfer(address dst, uint256 amt)`
-No description
+Transfers amt of liquidityAsset to dst.
+        @param  dst Desintation to transfer liquidityAsset to.
+        @param  amt Amount of liquidityAsset to transfer.
 
 ### `fundLoan(address loan, address debtLocker, uint256 amt)`
-No description
+Fund a loan using available assets in this liquidity locker.
+        @param  loan       The loan to fund.
+        @param  debtLocker The locker that will escrow debt tokens.
+        @param  amt        Amount of liquidityAsset to fund the loan for.
 
 ## <u>Events</u>

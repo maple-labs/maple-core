@@ -9,7 +9,11 @@
 ## <u>Functions</u>
 
 ### `newLocker(address stakeAsset, address liquidityAsset, address globals)`
-No description
+Instantiate a StakeLocker contract.
+        @return Address of the instantiated stake locker.
+        @param stakeAsset     Address of the stakeAsset (generally a balancer pool).
+        @param liquidityAsset Address of the liquidityAsset (as defined in the pool).
+        @param globals        Address of the MapleGlobals contract.
 
 ## <u>Events</u>
 

@@ -7,6 +7,8 @@
 ## <u>Functions</u>
 
 ### `newLocker(address liquidityAsset)`
-No description
+Instantiate a LiquidityLocker contract.
+        @param  liquidityAsset The asset this liquidity locker will escrow.
+        @return Address of the instantiated liquidity locker.
 
 ## <u>Events</u>

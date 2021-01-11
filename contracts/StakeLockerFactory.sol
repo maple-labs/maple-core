@@ -19,7 +19,7 @@ contract StakeLockerFactory {
     );
 
     /**
-        @notice Instantiate a StakeLocker contract.
+        @dev Instantiate a StakeLocker contract.
         @return Address of the instantiated stake locker.
         @param stakeAsset     Address of the stakeAsset (generally a balancer pool).
         @param liquidityAsset Address of the liquidityAsset (as defined in the pool).

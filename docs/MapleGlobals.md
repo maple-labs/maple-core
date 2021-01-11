@@ -28,61 +28,90 @@
 ## <u>Functions</u>
 
 ### `constructor(address _governor, address _mpl)`
-No description
+Constructor function.
+        @dev    Initializes the contract's state variables.
+        @param  _governor The administrator's address.
+        @param  _mpl The address of the ERC-2222 token for the Maple protocol.
 
 ### `getValidTokens()`
-No description
+Returns information on valid collateral and loan assets (for Pools and Loans).
+        @return [0] = Valid loan asset symbols.
+                [1] = Valid loan asset (addresses).
+                [2] = Valid collateral asset symbols.
+                [3] = Valid collateral asset (addresses).
 
 ### `setPoolFactory(address _poolFactory)`
-No description
+Set the poolFactory to a new factory.
+        @param  _poolFactory The new value to assign to poolFactory.
 
 ### `setLoanFactory(address _loanFactory)`
-No description
+Set the loanFactory to a new factory.
+        @param  _loanFactory The new value to assign to loanFactory.
 
 ### `setMapleBPool(address _mapleBPool)`
-No description
+Set the mapleBPool to a new balancer pool.
+        @param  _mapleBPool The new value to assign to mapleBPool.
 
 ### `setPoolDelegateWhitelist(address delegate, bool valid)`
-No description
+Update validity of pool delegate (those able to create pools).
+        @param  delegate The address to manage permissions for.
+        @param  valid    The new permissions of delegate.
 
 ### `setMapleBPoolAssetPair(address asset)`
-No description
+Update the mapleBPoolAssetPair (initially planned to be USDC).
+        @param  asset The address to manage permissions / validity for.
 
 ### `assignPriceFeed(address asset, address oracle)`
-No description
+Update a price feed's oracle.
+        @param  asset  The asset to update price for.
+        @param  oracle The new oracle to use.
 
 ### `getPrice(address asset)`
-No description
+Get a price feed.
+        @param  asset  The asset to fetch price for.
 
 ### `setCollateralAsset(address asset, bool valid)`
-No description
+Set the validity of an asset for collateral.
+        @param asset The asset to assign validity to.
+        @param valid The new validity of asset as collateral.
 
 ### `setLoanAsset(address asset, bool valid)`
-No description
+Governor can add a valid asset, used for borrowing.
+        @param asset Address of the valid asset.
+        @param valid Boolean
 
 ### `setCalc(address calc, bool valid)`
-No description
+Specifiy validity of a calculator contract.
+        @param  calc  The calculator.
+        @param  valid The validity of calc.
 
 ### `setInvestorFee(uint256 _fee)`
-No description
+Governor can adjust investorFee (in basis points).
+        @param _fee The fee, 50 = 0.50%
 
 ### `setTreasuryFee(uint256 _fee)`
-No description
+Governor can adjust treasuryFee (in basis points).
+        @param _fee The fee, 50 = 0.50%
 
 ### `setMapleTreasury(address _mapleTreasury)`
-No description
+Governor can set the MapleTreasury contract.
+        @param _mapleTreasury The MapleTreasury contract.
 
 ### `setGracePeriod(uint256 _gracePeriod)`
-No description
+Governor can adjust the grace period.
+        @param _gracePeriod Number of seconds to set the grace period to.
 
 ### `setStakeRequired(uint256 amtRequired)`
-No description
+Governor can adjust the stake amount required to create a pool.
+        @param amtRequired The new minimum stake required.
 
 ### `setGovernor(address _newGovernor)`
-No description
+Governor can specify a new governor.
+        @param _newGovernor The address of new governor.
 
 ### `setUnstakeDelay(uint256 _unstakeDelay)`
-No description
+Governor can specify a new unstake delay value.
+        @param _unstakeDelay The new unstake delay.
 
 ## <u>Events</u>
 

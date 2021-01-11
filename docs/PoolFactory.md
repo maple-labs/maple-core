@@ -13,7 +13,11 @@
 No description
 
 ### `createPool(address liquidityAsset, address stakeAsset, uint256 stakingFee, uint256 delegateFee)`
-No description
+Instantiates a Pool contract.
+        @param  liquidityAsset The asset escrowed in LiquidityLocker.
+        @param  stakeAsset     The asset escrowed in StakeLocker.
+        @param  stakingFee     Fee that stakers earn on interest, in bips.
+        @param  delegateFee    Fee that pool delegate earns on interest, in bips.
 
 ## <u>Events</u>
 

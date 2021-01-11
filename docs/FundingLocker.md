@@ -12,9 +12,11 @@
 No description
 
 ### `pull(address dst, uint256 amt)`
-No description
+Transfers _amount of loanAsset to dst.
+        @param  dst Desintation to transfer loanAsset to.
+        @param  amt Amount of loanAsset to transfer.
 
 ### `drain()`
-No description
+Transfers entire amount of loanAsset held in escrow to Loan.
 
 ## <u>Events</u>

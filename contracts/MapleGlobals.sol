@@ -42,7 +42,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Constructor function.
+        @dev Constructor function.
         @dev    Initializes the contract's state variables.
         @param  _governor The administrator's address.
         @param  _mpl The address of the ERC-2222 token for the Maple protocol.
@@ -59,7 +59,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Returns information on valid collateral and loan assets (for Pools and Loans).
+        @dev Returns information on valid collateral and loan assets (for Pools and Loans).
         @return [0] = Valid loan asset symbols.
                 [1] = Valid loan asset (addresses).
                 [2] = Valid collateral asset symbols.
@@ -75,7 +75,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Set the poolFactory to a new factory.
+        @dev Set the poolFactory to a new factory.
         @param  _poolFactory The new value to assign to poolFactory.
     */
     function setPoolFactory(address _poolFactory) external isGovernor { // TODO: Change to whitelist, need to handle multiple
@@ -83,7 +83,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Set the loanFactory to a new factory.
+        @dev Set the loanFactory to a new factory.
         @param  _loanFactory The new value to assign to loanFactory.
     */
     function setLoanFactory(address _loanFactory) external isGovernor { // TODO: Change to whitelist, need to handle multiple
@@ -91,7 +91,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Set the mapleBPool to a new balancer pool.
+        @dev Set the mapleBPool to a new balancer pool.
         @param  _mapleBPool The new value to assign to mapleBPool.
     */
     function setMapleBPool(address _mapleBPool) external isGovernor {   // TODO: Handle multiple balancer pools.
@@ -99,7 +99,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Update validity of pool delegate (those able to create pools).
+        @dev Update validity of pool delegate (those able to create pools).
         @param  delegate The address to manage permissions for.
         @param  valid    The new permissions of delegate.
     */
@@ -108,7 +108,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Update the mapleBPoolAssetPair (initially planned to be USDC).
+        @dev Update the mapleBPoolAssetPair (initially planned to be USDC).
         @param  asset The address to manage permissions / validity for.
     */
     // TODO: Consider how this may break things.
@@ -117,7 +117,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Update a price feed's oracle.
+        @dev Update a price feed's oracle.
         @param  asset  The asset to update price for.
         @param  oracle The new oracle to use.
     */
@@ -126,7 +126,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Get a price feed.
+        @dev Get a price feed.
         @param  asset  The asset to fetch price for.
     */
     function getPrice(address asset) external view returns(uint) {
@@ -134,7 +134,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Set the validity of an asset for collateral.
+        @dev Set the validity of an asset for collateral.
         @param asset The asset to assign validity to.
         @param valid The new validity of asset as collateral.
     */
@@ -147,7 +147,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can add a valid asset, used for borrowing.
+        @dev Governor can add a valid asset, used for borrowing.
         @param asset Address of the valid asset.
         @param valid Boolean
     */
@@ -160,7 +160,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Specifiy validity of a calculator contract.
+        @dev Specifiy validity of a calculator contract.
         @param  calc  The calculator.
         @param  valid The validity of calc.
     */
@@ -169,7 +169,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can adjust investorFee (in basis points).
+        @dev Governor can adjust investorFee (in basis points).
         @param _fee The fee, 50 = 0.50%
     */
     function setInvestorFee(uint256 _fee) public isGovernor {
@@ -177,7 +177,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can adjust treasuryFee (in basis points).
+        @dev Governor can adjust treasuryFee (in basis points).
         @param _fee The fee, 50 = 0.50%
     */
     function setTreasuryFee(uint256 _fee) public isGovernor {
@@ -185,7 +185,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can set the MapleTreasury contract.
+        @dev Governor can set the MapleTreasury contract.
         @param _mapleTreasury The MapleTreasury contract.
     */
     function setMapleTreasury(address _mapleTreasury) public isGovernor {
@@ -193,7 +193,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can adjust the grace period.
+        @dev Governor can adjust the grace period.
         @param _gracePeriod Number of seconds to set the grace period to.
     */
     function setGracePeriod(uint256 _gracePeriod) public isGovernor {
@@ -201,7 +201,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can adjust the stake amount required to create a pool.
+        @dev Governor can adjust the stake amount required to create a pool.
         @param amtRequired The new minimum stake required.
     */
     function setStakeRequired(uint256 amtRequired) public isGovernor {
@@ -209,7 +209,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can specify a new governor.
+        @dev Governor can specify a new governor.
         @param _newGovernor The address of new governor.
     */
     function setGovernor(address _newGovernor) public isGovernor {
@@ -217,7 +217,7 @@ contract MapleGlobals {
     }
 
     /**
-        @notice Governor can specify a new unstake delay value.
+        @dev Governor can specify a new unstake delay value.
         @param _unstakeDelay The new unstake delay.
     */
     function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
