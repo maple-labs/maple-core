@@ -307,6 +307,7 @@ contract PoolTest is TestUtil {
         pool2.finalize();
 
         // TODO: Post-state assertions to finalize().
+        assertTrue(false);
 
     }
 
