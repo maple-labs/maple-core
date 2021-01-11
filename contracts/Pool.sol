@@ -160,8 +160,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
         IStakeLocker(stakeLocker).finalizeLP();
     }
 
-    event DebugS(string, uint);
-
     /**
         @dev Returns information on the stake requirements.
         @return [0] = Amount of stake required.
@@ -181,14 +179,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
             uint256 poolAmountInRequired, 
             uint256 poolAmountPresent
         ) = this.getPoolSharesRequired(bPool, stake, poolDelegate, stakeLocker, stakeAmountRequired);
-
-        emit DebugS("stakeAmountRequired", stakeAmountRequired);
-        emit DebugS(
-            "this.getSwapOutValue(bPool, stake, poolDelegate, stakeLocker)", 
-            this.getSwapOutValue(bPool, stake, poolDelegate, stakeLocker)
-        );
-        emit DebugS("poolAmountInRequired", poolAmountInRequired);
-        emit DebugS("poolAmountPresent", poolAmountPresent);
 
         return (
             stakeAmountRequired,
