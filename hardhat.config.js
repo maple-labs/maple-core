@@ -26,7 +26,7 @@ module.exports = {
     },
     private: {
       gasMultiplier: 5,
-      timeout: 30000,
+      timeout: 45000,
       gas: 9500000,
       gasPrice: 0,
       chainId: 367662372,
@@ -70,6 +70,6 @@ module.exports = {
     },
   },
   mocha: {
-    timeout: 20000,
+    timeout: 200000,
   },
 };
