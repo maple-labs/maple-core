@@ -47,10 +47,7 @@ async function main() {
     uniswapRouter,
     mapleGlobals.address,
   ]);
-
-  const AmortizationRepaymentCalc = await deploy(
-    "AmortizationRepaymentCalc"
-  );
+  
   const BulletRepaymentCalc = await deploy("BulletRepaymentCalc");
 
   const LateFeeCalc = await deploy("LateFeeCalc", [0]); // 0% FEE if Late Payment

@@ -76,7 +76,6 @@ const StakeLockerABI      = require(artpath + "abis/StakeLocker.abi");
 const PoolABI             = require(artpath + "abis/Pool.abi");
 const LoanABI             = require(artpath + "abis/Loan.abi");
 const BulletCalcAddress   = require(artpath + "addresses/BulletRepaymentCalc.address");
-const AmortiCalcAddress   = require(artpath + "addresses/AmortizationRepaymentCalc.address");
 const LateFeeCalcAddress  = require(artpath + "addresses/LateFeeCalc.address");
 const PremiumCalcAddress  = require(artpath + "addresses/PremiumCalc.address");
 
@@ -289,7 +288,7 @@ describe("Cycle of an entire loan", function () {
 
     // Adjustable values for creating a loan.
     const collateralAsset    = WETHAddress; // WETHAddress || WBTCAddress << Use WETHAddress for now
-    const interestCalc = BulletCalcAddress; // AmortiCalcAddress || BulletCalcAddress << Use either
+    const interestCalc = BulletCalcAddress;
 
     const apr = 500; // 5% APR
     const termDays = 180; // (termDays/paymentIntervalDays) = # of Payments

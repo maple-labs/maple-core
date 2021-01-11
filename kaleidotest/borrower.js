@@ -2,8 +2,6 @@ const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
 const artpath = "../../contracts/" + network.name + "/";
 
-const AmortizationRepaymentCalc = require(artpath +
-  "addresses/AmortizationRepaymentCalc.address.js");
 const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
 const LateFeeCalc = require(artpath +
@@ -43,7 +41,7 @@ describe("Borrower Journey", function () {
       APR, // 500 = 5%
       repaymentFrequencyDays, // 30 (Monthly), 90 (Quarterly), 180 (Semi-annually), 360 (Annually)
       paymentsRemaining, // (Term / repaymentFrequencyDays) = (90 Days / 30 Days) = 3 Payments Remaining
-      interestStructure // 'BULLET' or 'AMORTIZATION'
+      interestStructure // 'BULLET'
     ) => {
       if (interestStructure === "BULLET") {
         let interest = BigNumber.from(principalOwed)
@@ -136,7 +134,7 @@ describe("Borrower Journey", function () {
       APR, // 620 = 6.2%
       termLengthDays, // [30,90,180,360,720]
       repaymentFrequencyDays, // [30,90,180,360]
-      paymentStructure // 'BULLET' or 'AMORTIZATION'
+      paymentStructure // 'BULLET'
     ) => {
       if (termLengthDays % repaymentFrequencyDays != 0) {
         throw "ERROR_UNEVEN_TERM_LENGTH_AND_PAYMENT_INTERVAL";
@@ -173,19 +171,7 @@ describe("Borrower Journey", function () {
       PAYMENT_INTERVAL_DAYS,
       "BULLET"
     );
-
-    let exampleAmortizationTotalOwed = getTotalAmountOwed(
-      LOAN_AMOUNT,
-      APR_BIPS,
-      TERM_DAYS,
-      PAYMENT_INTERVAL_DAYS,
-      "AMORTIZATION"
-    );
-
-    // console.log(
-    //   parseInt(exampleBulletTotalOwed["_hex"]),
-    //   parseInt(exampleAmortizationTotalOwed["_hex"])
-    // )
+    
   });
 
   it("C - Create a loan through the factory", async function () {
@@ -231,7 +217,7 @@ describe("Borrower Journey", function () {
 
     const REQUESTED_ASSET = DAIAddress;
     const COLLATERAL_ASSET = WETHAddress;
-    const INTEREST_STRUCTURE = "BULLET"; // 'BULLET' or 'AMORTIZATION'
+    const INTEREST_STRUCTURE = "BULLET"; // 'BULLET'
     const LATE_FEE_TYPE = "NULL"; // 'NULL' only option
     const PREMIUM_TYPE = "FLAT"; // 'FLAT' only option
 

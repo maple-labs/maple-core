@@ -2,8 +2,6 @@ const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 const artpath = "../../contracts/" + network.name + "/";
 
-const AmortizationRepaymentCalc = require(artpath +
-  "addresses/AmortizationRepaymentCalc.address.js");
 const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
 const LateFeeCalc = require(artpath +
