@@ -10,9 +10,6 @@ const DAIAddress = require(artpath + "addresses/MintableTokenDAI.address.js");
 const WETHAddress = require(artpath + "addresses/WETH9.address.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 
-const AmortizationRepaymentCalc = require(artpath +
-  "addresses/AmortizationRepaymentCalc.address.js");
-
 const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
 
@@ -103,7 +100,6 @@ async function main() {
   await mapleGlobals.setCollateralAsset(WETHAddress, true);
   await mapleGlobals.setCollateralAsset(WBTCAddress, true);
 
-  await mapleGlobals.setCalc(AmortizationRepaymentCalc, true);
   await mapleGlobals.setCalc(BulletRepaymentCalc, true);
   await mapleGlobals.setCalc(LateFeeCalc, true);
   await mapleGlobals.setCalc(PremiumCalc, true);

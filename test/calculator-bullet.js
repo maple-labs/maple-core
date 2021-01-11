@@ -14,8 +14,6 @@ const WBTCABI = require(artpath + "abis/WBTC.abi.js");
 const globalAddress = require(artpath + "addresses/MapleGlobals.address");
 const globalABI = require(artpath + "abis/MapleGlobals.abi");
 
-const AmortizationRepaymentCalc = require(artpath +
-  "addresses/AmortizationRepaymentCalc.address.js");
 const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
 const LateFeeCalc = require(artpath +

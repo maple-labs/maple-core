@@ -11,7 +11,6 @@ import "../interfaces/IBPool.sol";
 import "../interfaces/IPool.sol";
 import "../interfaces/IPoolFactory.sol";
 
-import "../AmortizationRepaymentCalc.sol";
 import "../BulletRepaymentCalc.sol";
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
@@ -150,7 +149,6 @@ contract PoolTest is TestUtil {
     Pool                                 pool2; 
     DSValue                          ethOracle;
     DSValue                         usdcOracle;
-    AmortizationRepaymentCalc       amortiCalc;
     BulletRepaymentCalc             bulletCalc;
     LateFeeCalc                    lateFeeCalc;
     PremiumCalc                    premiumCalc;
@@ -163,7 +161,7 @@ contract PoolTest is TestUtil {
     LP                                     kim;
     Borrower                               eli;
     Borrower                               fay;
-    Treasury                                trs;
+    Treasury                               trs;
 
 
     function setUp() public {
@@ -172,7 +170,7 @@ contract PoolTest is TestUtil {
         globals        = new MapleGlobals(address(this), address(mpl));
         flFactory      = new FundingLockerFactory();
         clFactory      = new CollateralLockerFactory();
-        loanFactory   = new LoanFactory(address(globals), address(flFactory), address(clFactory));
+        loanFactory    = new LoanFactory(address(globals), address(flFactory), address(clFactory));
         stakeLFactory  = new StakeLockerFactory();
         liqLFactory    = new LiquidityLockerFactory();
         liqPoolFactory = new PoolFactory(address(globals), address(stakeLFactory), address(liqLFactory));
@@ -180,7 +178,6 @@ contract PoolTest is TestUtil {
         dlFactory2     = new DebtLockerFactory();
         ethOracle      = new DSValue();
         usdcOracle     = new DSValue();
-        amortiCalc     = new AmortizationRepaymentCalc();
         bulletCalc     = new BulletRepaymentCalc();
         lateFeeCalc    = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc    = new PremiumCalc(500); // Flat 5% premium
@@ -226,7 +223,6 @@ contract PoolTest is TestUtil {
         bPool.transfer(address(joe), bPool.balanceOf(address(this)));
 
         // Set Globals
-        globals.setCalc(address(amortiCalc),  true);
         globals.setCalc(address(bulletCalc),  true);
         globals.setCalc(address(lateFeeCalc), true);
         globals.setCalc(address(premiumCalc), true);
@@ -262,7 +258,7 @@ contract PoolTest is TestUtil {
 
         // loan2 Specifications
         uint256[6] memory specs2 = [500, 180, 30, uint256(1000 * USD), 2000, 7];
-        address[3] memory calcs2 = [address(amortiCalc), address(lateFeeCalc), address(premiumCalc)];
+        address[3] memory calcs2 = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan  = eli.createLoan(loanFactory, USDC, WETH, specs, calcs);
         loan2 = fay.createLoan(loanFactory, USDC, WETH, specs2, calcs2);

@@ -11,7 +11,6 @@ const WETHABI     = require(artpath + "abis/WETH9.abi.js");
 const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
 const WBTCABI     = require(artpath + "abis/WBTC.abi.js");
 
-const AmortizationRepaymentCalc = require(artpath + "addresses/AmortizationRepaymentCalc.address.js");
 const BulletRepaymentCalc       = require(artpath + "addresses/BulletRepaymentCalc.address.js");
 const LateFeeCalc               = require(artpath + "addresses/LateFeeCalc.address.js");
 const PremiumCalc               = require(artpath + "addresses/PremiumCalc.address.js");

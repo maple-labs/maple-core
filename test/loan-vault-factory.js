@@ -28,8 +28,6 @@ const GlobalsAddress = require(artpath + "addresses/MapleGlobals.address.js");
 const GlobalsABI = require(artpath + "abis/MapleGlobals.abi.js");
 const LoanABI = require(artpath + "abis/Loan.abi.js");
 
-const AmortizationRepaymentCalc = require(artpath +
-  "addresses/AmortizationRepaymentCalc.address.js");
 const BulletRepaymentCalc = require(artpath +
   "addresses/BulletRepaymentCalc.address.js");
 const LateFeeCalc = require(artpath +
