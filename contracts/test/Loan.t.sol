@@ -80,13 +80,6 @@ contract Lender {
     }
 }
 
-contract Person {
-    function newLocker(address _addy, address _asset) external returns (address){
-        return IDebtLockerFactory(_addy).newLocker(_asset);
-    }
-}
-
-
 contract Treasury { }
 
 contract LoanTest is TestUtil {
@@ -105,7 +98,7 @@ contract LoanTest is TestUtil {
     Borrower                         ali;
     Lender                           bob;
     Treasury                         trs;
-    Person                           kim;
+    User                           kim;
     DebtLockerFactory  debtLockerFactory;
 
     function setUp() public {
@@ -146,7 +139,7 @@ contract LoanTest is TestUtil {
         mint("USDC", address(ali),  500 * USD);
 
         debtLockerFactory = new DebtLockerFactory();
-        kim               = new Person();
+        kim               = new User();
     }
 
     function test_createLoan() public {

@@ -9,20 +9,15 @@ import "../interfaces/ICollateralLockerFactory.sol";
 
 import "../interfaces/ICollateralLocker.sol";
 
-contract Person {
-    function newLocker(address _addy, address _asset) external returns (address){
-        return ICollateralLockerFactory(_addy).newLocker(_asset);
-    }
-}
 
 
 contract CollateralLockerFactoryTest is TestUtil {
-    Person                 kim;
+    User                 kim;
     CollateralLockerFactory collateralLockerFactory;
 
     function setUp() public {
         collateralLockerFactory = new CollateralLockerFactory();
-        kim                     = new Person();
+        kim                     = new User();
     }
 
     function test_createCollateralLocker() public {

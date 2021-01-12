@@ -5,14 +5,21 @@ import "lib/ds-test/contracts/test.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import "../interfaces/ILoan.sol";
+import "../interfaces/IFactory.sol";
 
 interface Hevm {
     function warp(uint256) external;
     function store(address,bytes32,bytes32) external;
 }
 
-interface User {
+interface IUser {
     function approve(address, uint256) external;
+}
+
+contract User {
+    function newLocker(address _factory, address _asset) external returns (address){
+        return IFactory(_factory).newLocker(_asset);
+    }
 }
 
 // TODO: Create master contracts for the following "users":

@@ -9,20 +9,14 @@ import "../interfaces/ILiquidityLockerFactory.sol";
 
 import "../interfaces/ILiquidityLocker.sol";
 
-contract Person {
-    function newLocker(address _addy, address _asset) external returns (address){
-        return ILiquidityLockerFactory(_addy).newLocker(_asset);
-    }
-}
-
 
 contract LiquidityLockerFactoryTest is TestUtil {
-    Person                kim;
+    User                kim;
     LiquidityLockerFactory liquidityLockerFactory;
 
     function setUp() public {
         liquidityLockerFactory = new LiquidityLockerFactory();
-        kim                    = new Person();
+        kim                    = new User();
     }
 
     function test_createLiquidityLocker() public {
