@@ -7,6 +7,8 @@ import "./TestUtil.sol";
 import "../CollateralLockerFactory.sol";
 import "../interfaces/ICollateralLockerFactory.sol";
 
+import "../interfaces/ICollateralLocker.sol";
+
 contract Someone {
     function newLocker(address _addy, address _asset) external returns (address){
         return ICollateralLockerFactory(_addy).newLocker(_asset);
@@ -14,7 +16,7 @@ contract Someone {
 }
 
 
-contract PoolFactoryTest is TestUtil {
+contract CollateralLockerFactoryTest is TestUtil {
     Someone                 kim;
     CollateralLockerFactory collateralLockerFactory;
 
@@ -27,6 +29,9 @@ contract PoolFactoryTest is TestUtil {
 	address _out = kim.newLocker(address(collateralLockerFactory),DAI);
         assertTrue(collateralLockerFactory.isLocker(_out));
         assertTrue(collateralLockerFactory.owner(_out) == address(kim));
+       
+        assertTrue(ICollateralLocker(_out).collateralAsset() == DAI);
+        assertTrue(ICollateralLocker(_out).loan() == address(kim));
     }
 
 }

@@ -7,6 +7,8 @@ import "./TestUtil.sol";
 import "../LiquidityLockerFactory.sol";
 import "../interfaces/ILiquidityLockerFactory.sol";
 
+import "../interfaces/ILiquidityLocker.sol";
+
 contract Someone {
     function newLocker(address _addy, address _asset) external returns (address){
         return ILiquidityLockerFactory(_addy).newLocker(_asset);
@@ -14,7 +16,7 @@ contract Someone {
 }
 
 
-contract PoolFactoryTest is TestUtil {
+contract LiquidityLockerFactoryTest is TestUtil {
     Someone                kim;
     LiquidityLockerFactory liquidityLockerFactory;
 
@@ -27,6 +29,9 @@ contract PoolFactoryTest is TestUtil {
 	address _out = kim.newLocker(address(liquidityLockerFactory),DAI);
         assertTrue(liquidityLockerFactory.isLocker(_out));
         assertTrue(liquidityLockerFactory.owner(_out) == address(kim));
+
+        assertTrue(ILiquidityLocker(_out).owner() == address(kim));
+        assertTrue(ILiquidityLocker(_out).liquidityAsset() == DAI);
     }
 
 }
