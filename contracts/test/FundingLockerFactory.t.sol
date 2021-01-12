@@ -20,12 +20,13 @@ contract FundingLockerFactoryTest is TestUtil {
     }
 
     function test_createFundingLocker() public {
-	address _out = kim.newLocker(address(fundingLockerFactory),DAI);
-        assertTrue(fundingLockerFactory.isLocker(_out));
-        assertTrue(fundingLockerFactory.owner(_out) == address(kim));
+	address _out = kim.newLocker(address(fundingLockerFactory), DAI);
 
+        assertTrue(fundingLockerFactory.isLocker(_out));
+
+        assertTrue(fundingLockerFactory.owner(_out) == address(kim));
         assertTrue(IFundingLocker(_out).loanAsset() == DAI);
-        assertTrue(IFundingLocker(_out).loan() == address(kim));
+        assertTrue(IFundingLocker(_out).loan()      == address(kim));
     }
 
 }

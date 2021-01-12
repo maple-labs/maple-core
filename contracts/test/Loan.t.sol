@@ -457,10 +457,10 @@ contract LoanTest is TestUtil {
         address _out   = kim.newLocker(address(debtLockerFactory), address(loan));
 
         assertTrue(debtLockerFactory.isLocker(_out));
-        assertTrue(debtLockerFactory.owner(_out) == address(kim));
 
-        assertTrue(IDebtLocker(_out).loan() == address(loan));
-        assertTrue(IDebtLocker(_out).owner() == address(kim));
+        assertTrue(debtLockerFactory.owner(_out) == address(kim));
+        assertTrue(IDebtLocker(_out).loan()      == address(loan));
+        assertTrue(IDebtLocker(_out).owner()     == address(kim));
     }
 
 }

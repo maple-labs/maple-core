@@ -20,11 +20,12 @@ contract LiquidityLockerFactoryTest is TestUtil {
     }
 
     function test_createLiquidityLocker() public {
-	address _out = kim.newLocker(address(liquidityLockerFactory),DAI);
-        assertTrue(liquidityLockerFactory.isLocker(_out));
-        assertTrue(liquidityLockerFactory.owner(_out) == address(kim));
+	address _out = kim.newLocker(address(liquidityLockerFactory), DAI);
 
-        assertTrue(ILiquidityLocker(_out).owner() == address(kim));
+        assertTrue(liquidityLockerFactory.isLocker(_out));
+
+        assertTrue(liquidityLockerFactory.owner(_out)      == address(kim));
+        assertTrue(ILiquidityLocker(_out).owner()          == address(kim));
         assertTrue(ILiquidityLocker(_out).liquidityAsset() == DAI);
     }
 
