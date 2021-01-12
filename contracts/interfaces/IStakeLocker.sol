@@ -12,4 +12,6 @@ interface IStakeLocker is IERC20 {
     function deleteLP() external;
     function finalizeLP() external;
     function updateFundsReceived() external;
+    function getUnstakeableBalance(address staker) external returns (uint256);
+
 }
