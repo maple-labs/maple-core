@@ -22,11 +22,9 @@ import "./LiquidityLockerFactory.sol";
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
 /// @title Pool is the core contract for liquidity pools.
-contract Pool is IERC20, ERC20 {
+contract Pool is IERC20, ERC20, CalcBPool {
 
     using SafeMath for uint256;
-
-    uint256 constant WAD = 10 ** 18;
 
     address public immutable poolDelegate;     // The pool delegate, who maintains full authority over this Pool.
     address public immutable liquidityLocker;  // The LiquidityLocker owned by this contract.
@@ -180,12 +178,12 @@ contract Pool is IERC20, ERC20 {
         (
             uint256 poolAmountInRequired, 
             uint256 poolAmountPresent
-        ) = calcBPool.getPoolSharesRequired(bPool, stake, poolDelegate, stakeLocker, stakeAmountRequired);
+        ) = this.getPoolSharesRequired(bPool, stake, poolDelegate, stakeLocker, stakeAmountRequired);
 
         return (
             stakeAmountRequired,
-            calcBPool.getSwapOutValue(bPool, stake, poolDelegate, stakeLocker),
-            calcBPool.getSwapOutValue(bPool, stake, poolDelegate, stakeLocker) >= stakeAmountRequired,
+            this.getSwapOutValue(bPool, stake, poolDelegate, stakeLocker),
+            this.getSwapOutValue(bPool, stake, poolDelegate, stakeLocker) >= stakeAmountRequired,
             poolAmountInRequired,
             poolAmountPresent
         );

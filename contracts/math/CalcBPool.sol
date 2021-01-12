@@ -119,7 +119,7 @@ contract CalcBPool {
         uint256 swapFee         = bPool.getSwapFee();
 
         // Fetch amount of BPTs required to burn to receive pairAmountRequired.
-        uint256 poolAmountInRequired = bPool.calcSingleOutGivenPoolIn(
+        uint256 poolAmountInRequired = bPool.calcPoolInGivenSingleOut(
             tokenBalanceOut,
             tokenWeightOut,
             poolSupply,
@@ -131,6 +131,7 @@ contract CalcBPool {
         // Fetch amount staked in _stakeLocker by staker.
         uint256 stakerBalance = IERC20(stakeLocker).balanceOf(staker);
 
-        return (poolAmountInRequired, stakerBalance.div(WAD));
+        return (poolAmountInRequired, stakerBalance);
     }
+    
 }
