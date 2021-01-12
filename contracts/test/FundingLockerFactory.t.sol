@@ -11,7 +11,7 @@ import "../interfaces/IFundingLocker.sol";
 
 
 contract FundingLockerFactoryTest is TestUtil {
-    User	         kim;
+    User	             kim;
     FundingLockerFactory fundingLockerFactory;
 
     function setUp() public {
@@ -20,13 +20,13 @@ contract FundingLockerFactoryTest is TestUtil {
     }
 
     function test_createFundingLocker() public {
-	address _out = kim.newLocker(address(fundingLockerFactory), DAI);
+	address locker = kim.newLocker(address(fundingLockerFactory), DAI);
 
-        assertTrue(fundingLockerFactory.isLocker(_out));
+        assertTrue(fundingLockerFactory.isLocker(locker));
 
-        assertTrue(fundingLockerFactory.owner(_out) == address(kim));
-        assertTrue(IFundingLocker(_out).loanAsset() == DAI);
-        assertTrue(IFundingLocker(_out).loan()      == address(kim));
+        assertTrue(fundingLockerFactory.owner(locker) == address(kim));
+        assertTrue(IFundingLocker(locker).loanAsset() == DAI);
+        assertTrue(IFundingLocker(locker).loan()      == address(kim));
     }
 
 }

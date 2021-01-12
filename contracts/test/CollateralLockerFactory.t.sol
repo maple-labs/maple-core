@@ -12,7 +12,7 @@ import "../interfaces/ICollateralLocker.sol";
 
 
 contract CollateralLockerFactoryTest is TestUtil {
-    User                 kim;
+    User                    kim;
     CollateralLockerFactory collateralLockerFactory;
 
     function setUp() public {
@@ -21,13 +21,13 @@ contract CollateralLockerFactoryTest is TestUtil {
     }
 
     function test_createCollateralLocker() public {
-	address _out = kim.newLocker(address(collateralLockerFactory),DAI);
+	address locker = kim.newLocker(address(collateralLockerFactory), DAI);
 
-        assertTrue(collateralLockerFactory.isLocker(_out));
+        assertTrue(collateralLockerFactory.isLocker(locker));
 
-        assertTrue(collateralLockerFactory.owner(_out)       == address(kim));
-        assertTrue(ICollateralLocker(_out).collateralAsset() == DAI);
-        assertTrue(ICollateralLocker(_out).loan()            == address(kim));
+        assertTrue(collateralLockerFactory.owner(locker)       == address(kim));
+        assertTrue(ICollateralLocker(locker).collateralAsset() == DAI);
+        assertTrue(ICollateralLocker(locker).loan()            == address(kim));
     }
 
 }

@@ -453,14 +453,14 @@ contract LoanTest is TestUtil {
     }
 
     function test_createDebtLocker() public {
-        Loan loan = createAndFundLoan(address(bulletCalc));
-        address _out   = kim.newLocker(address(debtLockerFactory), address(loan));
+        Loan loan      = createAndFundLoan(address(bulletCalc));
+        address locker = kim.newLocker(address(debtLockerFactory), address(loan));
 
-        assertTrue(debtLockerFactory.isLocker(_out));
+        assertTrue(debtLockerFactory.isLocker(locker));
 
-        assertTrue(debtLockerFactory.owner(_out) == address(kim));
-        assertTrue(IDebtLocker(_out).loan()      == address(loan));
-        assertTrue(IDebtLocker(_out).owner()     == address(kim));
+        assertTrue(debtLockerFactory.owner(locker) == address(kim));
+        assertTrue(IDebtLocker(locker).loan()      == address(loan));
+        assertTrue(IDebtLocker(locker).owner()     == address(kim));
     }
 
 }
