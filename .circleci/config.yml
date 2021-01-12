@@ -134,8 +134,8 @@ workflows:
   version: 2
   test_all:
     jobs:
-      - unit_test:
-          context: seth
+      # - unit_test:
+      #     context: seth
       - dependencies
       - integration_test:
           requires:
@@ -143,7 +143,7 @@ workflows:
       - deploy_kaleido:
           context: kaleido
           requires:
-              - unit_test
+              # - unit_test
               - integration_test
           filters:
             branches:
