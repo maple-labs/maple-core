@@ -55,6 +55,6 @@ interface IBPool {
         address tokenIn,
         uint256 tokenAmountIn,
         uint256 minPoolAmountOut
-    ) external returns (uint256 );
+    ) external returns (uint256);
 
 }
