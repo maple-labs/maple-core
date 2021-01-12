@@ -3,8 +3,8 @@ pragma solidity >=0.6.11;
 
 import "./Pool.sol";
 import "./interfaces/IGlobals.sol";
+import "./interfaces/IBFactory.sol";
 import "./library/TokenUUID.sol";
-
 
 contract PoolFactory {
 
@@ -48,6 +48,10 @@ contract PoolFactory {
         require(
             IGlobals(globals).isValidPoolDelegate(msg.sender),
             "PoolFactory::createPool:ERR_MSG_SENDER_NOT_WHITELISTED"
+        );
+        require(
+            IBFactory(IGlobals(globals).BFactory()).isBPool(stakeAsset),
+            "PoolFactory::createPool:ERR_STAKE_ASSET_NOT_BPOOL"
         );
 
         string memory tUUID  = TokenUUID.generateUUID(poolsCreated + 1);

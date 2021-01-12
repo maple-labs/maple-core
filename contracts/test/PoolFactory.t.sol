@@ -55,7 +55,7 @@ contract PoolFactoryTest is TestUtil {
     function setUp() public {
 
         mpl                    = new MapleToken("MapleToken", "MAPL", USDC);
-        globals                = new MapleGlobals(address(this), address(mpl));
+        globals                = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
         stakeLockerFactory     = new StakeLockerFactory();
         liquidityLockerFactory = new LiquidityLockerFactory();
         poolFactory            = new PoolFactory(address(globals), address(stakeLockerFactory), address(liquidityLockerFactory));

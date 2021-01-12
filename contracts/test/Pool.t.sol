@@ -167,7 +167,7 @@ contract PoolTest is TestUtil {
     function setUp() public {
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = new MapleGlobals(address(this), address(mpl));
+        globals        = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
         flFactory      = new FundingLockerFactory();
         clFactory      = new CollateralLockerFactory();
         loanFactory    = new LoanFactory(address(globals), address(flFactory), address(clFactory));

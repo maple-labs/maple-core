@@ -7,6 +7,8 @@ import "./interfaces/IERC20Details.sol";
 
 contract MapleGlobals {
     
+    address immutable public BFactory;   // Official balancer pool factory.
+
     address public governor;             // Governor is responsible for management of global Maple variables
     address public mpl;                  // Maple Token is the ERC-2222 token for the Maple protocol
     address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
@@ -40,12 +42,12 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Constructor function.
-        @dev    Initializes the contract's state variables.
+        @dev    Constructor function.
         @param  _governor The administrator's address.
-        @param  _mpl The address of the ERC-2222 token for the Maple protocol.
+        @param  _mpl      The address of the ERC-2222 token for the Maple protocol.
+        @param  _bFactory The official Balancer pool factory.
     */
-    constructor(address _governor, address _mpl) public {
+    constructor(address _governor, address _mpl, address _bFactory) public {
         governor            = _governor;
         mpl                 = _mpl;
         gracePeriod         = 5 days;
@@ -54,6 +56,7 @@ contract MapleGlobals {
         drawdownGracePeriod = 1 days;
         investorFee         = 50;
         treasuryFee         = 50;
+        BFactory            = _bFactory;
     }
 
     /**

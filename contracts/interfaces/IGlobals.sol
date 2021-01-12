@@ -22,9 +22,9 @@ interface IGlobals {
 
     function isValidCollateralAsset(address) external view returns (bool);
 
-    function mapleBPool() external view returns (address);
+    function BFactory() external view returns (address);
 
-    function mapleBPoolAssetPair() external view returns (address);
+    function setBFactory() external view returns (uint256);
 
     function isValidPoolDelegate(address) external view returns (bool);
 

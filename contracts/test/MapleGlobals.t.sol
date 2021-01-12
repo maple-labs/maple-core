@@ -18,7 +18,7 @@ contract MapleGlobalsTest is TestUtil {
 
     function setUp() public {
         mpl = new MapleToken("MapleToken", "MAPL", USDC);
-        globals    = new MapleGlobals(address(this), address(mpl));
+        globals    = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
     }
 
     function test_setters() public {
