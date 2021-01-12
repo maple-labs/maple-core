@@ -18,7 +18,7 @@ contract MapleGlobalsTest is TestUtil {
 
     function setUp() public {
         mpl = new MapleToken("MapleToken", "MAPL", USDC);
-        globals    = new MapleGlobals(address(this), address(mpl));
+        globals    = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
     }
 
     function test_setters() public {
@@ -34,9 +34,9 @@ contract MapleGlobalsTest is TestUtil {
         globals.setGracePeriod(1 days);
         assertEq(globals.gracePeriod(), 1 days);
 
-        assertEq(globals.stakeAmountRequired(), 100000000);
-        globals.setStakeRequired(35000);
-        assertEq(globals.stakeAmountRequired(), 35000);
+        assertEq(globals.swapOutRequired(), 100);
+        globals.setSwapOutRequired(35000);
+        assertEq(globals.swapOutRequired(), 35000);
 
         assertEq(globals.unstakeDelay(), 90 days);
         globals.setUnstakeDelay(30 days);

@@ -55,7 +55,7 @@ contract PoolFactoryTest is TestUtil {
     function setUp() public {
 
         mpl                    = new MapleToken("MapleToken", "MAPL", USDC);
-        globals                = new MapleGlobals(address(this), address(mpl));
+        globals                = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
         stakeLockerFactory     = new StakeLockerFactory();
         liquidityLockerFactory = new LiquidityLockerFactory();
         poolFactory            = new PoolFactory(address(globals), address(stakeLockerFactory), address(liquidityLockerFactory));
@@ -87,6 +87,18 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            500,
+            100
+        ));
+    }
+
+    function test_createPool_error_stakeAsset() public {
+        globals.setPoolDelegateWhitelist(address(ali), true);
+        
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(ali),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
             500,
             100
         ));

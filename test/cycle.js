@@ -79,6 +79,9 @@ const BulletCalcAddress   = require(artpath + "addresses/BulletRepaymentCalc.add
 const LateFeeCalcAddress  = require(artpath + "addresses/LateFeeCalc.address");
 const PremiumCalcAddress  = require(artpath + "addresses/PremiumCalc.address");
 
+const BCreatorABI     = require(artpath + "abis/BCreator.abi.js");
+const BCreatorAddress = require(artpath + "addresses/BCreator.address.js");
+
 // External Contracts
 const BPoolABI    = require(artpath + "abis/BPool.abi");
 const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address");
@@ -103,6 +106,7 @@ describe("Cycle of an entire loan", function () {
   let USDC_Delegate, USDC_Staker, USDC_Provider, USDC_Borrower;
   let WETH_Borrower, WBTC_Borrower;
   let Accounts;
+  let MapleBPoolAddress;
 
   before(async () => {
 
@@ -123,9 +127,17 @@ describe("Cycle of an entire loan", function () {
       ethers.provider.getSigner(0)
     );
 
+    // Fetch the official Maple balancer pool address.
+    BCreator = new ethers.Contract(
+      BCreatorAddress,
+      BCreatorABI,
+      ethers.provider.getSigner(0)
+    );
+    MapleBPoolAddress = await BCreator.getBPoolAddress(0);
+
     // External Contract
     BPool = new ethers.Contract(
-      await Globals.mapleBPool(),
+      MapleBPoolAddress,
       BPoolABI,
       ethers.provider.getSigner(0)
     );
@@ -186,9 +198,11 @@ describe("Cycle of an entire loan", function () {
     let index = await PoolFactory.poolsCreated();
     // console.log(parseInt(index["_hex"]));
 
+    
+
     // Input variables for a form.
     liquidityAsset  = USDCAddress;
-    stakeAsset      = await Globals.mapleBPool();
+    stakeAsset      = MapleBPoolAddress;
     stakingFee      = 100;  // Basis points (100 = 1%)
     delegateFee     = 150;  // Basis points (150 = 1.5%)
 
@@ -229,11 +243,11 @@ describe("Cycle of an entire loan", function () {
     
     // Approve the balancer pool for both USDC and MPL.
     await USDC_PoolDelegate.approve(
-      await Globals.mapleBPool(),
+      MapleBPoolAddress,
       BigNumber.from(10).pow(6).mul(5000000)
     );
     await MPL_PoolDelegate.approve(
-      await Globals.mapleBPool(),
+      MapleBPoolAddress,
       BigNumber.from(10).pow(18).mul(100000)
     );
     

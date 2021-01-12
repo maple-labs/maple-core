@@ -167,7 +167,7 @@ contract PoolTest is TestUtil {
     function setUp() public {
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = new MapleGlobals(address(this), address(mpl));
+        globals        = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
         flFactory      = new FundingLockerFactory();
         clFactory      = new CollateralLockerFactory();
         loanFactory    = new LoanFactory(address(globals), address(flFactory), address(clFactory));
@@ -230,9 +230,7 @@ contract PoolTest is TestUtil {
         globals.setLoanAsset(USDC, true);
         globals.assignPriceFeed(WETH, address(ethOracle));
         globals.assignPriceFeed(USDC, address(usdcOracle));
-        globals.setMapleBPool(address(bPool));
-        globals.setMapleBPoolAssetPair(USDC);
-        globals.setStakeRequired(100 * USD);
+        globals.setSwapOutRequired(100);
 
         // Create Liquidity Pool
         pool1 = Pool(sid.createPool(
