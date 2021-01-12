@@ -16,7 +16,7 @@ interface IGlobals {
 
     function drawdownGracePeriod() external view returns (uint256);
 
-    function stakeAmountRequired() external view returns (uint256);
+    function swapOutRequired() external view returns (uint256);
 
     function isValidLoanAsset(address) external view returns (bool);
 

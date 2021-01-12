@@ -10,13 +10,11 @@ contract MapleGlobals {
     address public governor;             // Governor is responsible for management of global Maple variables
     address public mpl;                  // Maple Token is the ERC-2222 token for the Maple protocol
     address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
-    address public mapleBPool;           // Official balancer pool for staking (TODO: Need to handle multiple)
-    address public mapleBPoolAssetPair;  // Asset paired 50/50 with MPL in balancer pool (e.g. USDC) (TODO: Need to handle multiple)
     address public loanFactory;          // Loan vault factory (TODO: Need to handle multiple)
     address public poolFactory;          // Loan vault factory (TODO: Need to handle multiple)
 
     uint256 public gracePeriod;          // Represents the amount of time a borrower has to make a missed payment before a default can be triggered.
-    uint256 public stakeAmountRequired;  // Represents the mapleBPoolSwapOutAsset value (in wei) required when instantiating a liquidity pool.
+    uint256 public swapOutRequired;      // Represents the swap out amount required from staked assets for a Pool's liquidity asset, for default purposes.
     uint256 public unstakeDelay;         // Parameter for unstake delay, with relation to StakeLocker withdrawals.
     uint256 public drawdownGracePeriod;  // Amount of time to allow borrower to drawdown on their loan after funding period ends.
     uint256 public investorFee;          // Portion of drawdown that goes to pool delegates/investors
@@ -51,7 +49,7 @@ contract MapleGlobals {
         governor            = _governor;
         mpl                 = _mpl;
         gracePeriod         = 5 days;
-        stakeAmountRequired = 100;
+        swapOutRequired     = 100;
         unstakeDelay        = 90 days;
         drawdownGracePeriod = 1 days;
         investorFee         = 50;
@@ -91,29 +89,12 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Set the mapleBPool to a new balancer pool.
-        @param  _mapleBPool The new value to assign to mapleBPool.
-    */
-    function setMapleBPool(address _mapleBPool) external isGovernor {   // TODO: Handle multiple balancer pools.
-        mapleBPool = _mapleBPool;
-    }
-
-    /**
         @dev Update validity of pool delegate (those able to create pools).
         @param  delegate The address to manage permissions for.
         @param  valid    The new permissions of delegate.
     */
     function setPoolDelegateWhitelist(address delegate, bool valid) external isGovernor {
         isValidPoolDelegate[delegate] = valid;
-    }
-
-    /**
-        @dev Update the mapleBPoolAssetPair (initially planned to be USDC).
-        @param  asset The address to manage permissions / validity for.
-    */
-    // TODO: Consider how this may break things.
-    function setMapleBPoolAssetPair(address asset) external isGovernor {
-        mapleBPoolAssetPair = asset;
     }
 
     /**
@@ -201,11 +182,11 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Governor can adjust the stake amount required to create a pool.
-        @param amtRequired The new minimum stake required.
+        @dev Governor can adjust the swap out amount required to finalize a pool.
+        @param amt The new minimum swap out required.
     */
-    function setStakeRequired(uint256 amtRequired) public isGovernor {
-        stakeAmountRequired = amtRequired;
+    function setSwapOutRequired(uint256 amt) public isGovernor {
+        swapOutRequired = amt;
     }
 
     /**

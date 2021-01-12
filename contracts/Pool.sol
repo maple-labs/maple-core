@@ -169,22 +169,22 @@ contract Pool is IERC20, ERC20, CalcBPool {
                 [3] = Amount of pool shares required.
                 [4] = Amount of pool shares present.
     */
-    // TODO: Resolve the dissonance between poolSharesRequired / stakeAmountRequired / getSwapOutValue
+    // TODO: Resolve the dissonance between poolSharesRequired / swapOutAmountRequired / getSwapOutValue
     function getInitialStakeRequirements() public returns (uint256, uint256, bool, uint256, uint256) {
 
-        address bPool               = stakeAsset;
-        address stake               = liquidityAsset;
-        uint256 stakeAmountRequired = IGlobals(globals).stakeAmountRequired() * (10 ** IERC20Details(liquidityAsset).decimals());
+        address balancerPool = stakeAsset;
+        address swapOutAsset = liquidityAsset;
+        uint256 swapOutAmountRequired = IGlobals(globals).swapOutRequired() * (10 ** IERC20Details(liquidityAsset).decimals());
 
         (
             uint256 poolAmountInRequired, 
             uint256 poolAmountPresent
-        ) = this.getPoolSharesRequired(bPool, stake, poolDelegate, stakeLocker, stakeAmountRequired);
+        ) = this.getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
 
         return (
-            stakeAmountRequired,
-            this.getSwapOutValue(bPool, stake, poolDelegate, stakeLocker),
-            this.getSwapOutValue(bPool, stake, poolDelegate, stakeLocker) >= stakeAmountRequired,
+            swapOutAmountRequired,
+            this.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
+            this.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker) >= swapOutAmountRequired,
             poolAmountInRequired,
             poolAmountPresent
         );

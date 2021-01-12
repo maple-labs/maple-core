@@ -230,9 +230,7 @@ contract PoolTest is TestUtil {
         globals.setLoanAsset(USDC, true);
         globals.assignPriceFeed(WETH, address(ethOracle));
         globals.assignPriceFeed(USDC, address(usdcOracle));
-        globals.setMapleBPool(address(bPool));
-        globals.setMapleBPoolAssetPair(USDC);
-        globals.setStakeRequired(100);
+        globals.setSwapOutRequired(100);
 
         // Create Liquidity Pool
         pool1 = Pool(sid.createPool(
