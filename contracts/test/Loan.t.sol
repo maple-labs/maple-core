@@ -19,6 +19,7 @@ import "../LoanFactory.sol";
 
 import "../DebtLockerFactory.sol";
 import "../interfaces/IDebtLockerFactory.sol";
+import "../interfaces/IDebtLocker.sol";
 
 contract Borrower {
     function try_drawdown(address loan, uint256 amt) external returns (bool ok) {
@@ -79,7 +80,7 @@ contract Lender {
     }
 }
 
-contract Someone {
+contract Person {
     function newLocker(address _addy, address _asset) external returns (address){
         return IDebtLockerFactory(_addy).newLocker(_asset);
     }
@@ -103,7 +104,7 @@ contract LoanTest is TestUtil {
     Borrower                         ali;
     Lender                           bob;
     Treasury                         trs;
-    Someone                          kim;
+    Person                           kim;
     DebtLockerFactory  debtLockerFactory;
 
     function setUp() public {
@@ -144,7 +145,7 @@ contract LoanTest is TestUtil {
         mint("USDC", address(ali),  500 * USD);
 
         debtLockerFactory = new DebtLockerFactory();
-        kim               = new Someone();
+        kim               = new Person();
     }
 
     function test_createLoan() public {
@@ -458,11 +459,14 @@ contract LoanTest is TestUtil {
     }
 
     function test_createDebtLocker() public {
-        Loan loanVault = createAndFundLoan(address(bulletCalc));
-        address _out   = kim.newLocker(address(debtLockerFactory), address(loanVault));
+        Loan loan = createAndFundLoan(address(bulletCalc));
+        address _out   = kim.newLocker(address(debtLockerFactory), address(loan));
 
         assertTrue(debtLockerFactory.isLocker(_out));
         assertTrue(debtLockerFactory.owner(_out) == address(kim));
+
+        assertTrue(IDebtLocker(_out).loan() == address(loan));
+        assertTrue(IDebtLocker(_out).owner() == address(kim));
     }
 
 }
