@@ -37,7 +37,7 @@ const LVFactoryABI = require(artpath + "abis/LoanFactory.abi.js");
 const LVFactoryAddress = require(artpath +
   "addresses/LoanFactory.address.js");
 
-describe.skip("Pool & LiquidityLocker & StakeLocker", function () {
+describe("Pool & LiquidityLocker & StakeLocker", function () {
   let PoolAddressDAI, PoolAddressUSDC;
   let PoolDAI, PoolUSDC;
   let StakeLockerDAI, StakeLockerUSDC;
@@ -403,7 +403,7 @@ describe.skip("Pool & LiquidityLocker & StakeLocker", function () {
     ).to.be.revertedWith("LiquidityLocker:ERR_MSG_SENDER_NOT_OWNER");
   });
 
-  it("L - Provide liquidity to pools, ensure proper amount of FDTs minted", async function () {
+  xit("L - Provide liquidity to pools, ensure proper amount of FDTs minted", async function () {
     DAI = new ethers.Contract(DAIAddress, DAIABI, ethers.provider.getSigner(0));
     USDC = new ethers.Contract(
       USDCAddress,
