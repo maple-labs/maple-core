@@ -9,7 +9,7 @@ import "../interfaces/IFundingLockerFactory.sol";
 
 import "../interfaces/IFundingLocker.sol";
 
-contract Someone {
+contract Person {
     function newLocker(address _addy, address _asset) external returns (address){
         return IFundingLockerFactory(_addy).newLocker(_asset);
     }
@@ -17,12 +17,12 @@ contract Someone {
 
 
 contract FundingLockerFactoryTest is TestUtil {
-    Someone	         kim;
+    Person	         kim;
     FundingLockerFactory fundingLockerFactory;
 
     function setUp() public {
         fundingLockerFactory = new FundingLockerFactory();
-        kim                  = new Someone();
+        kim                  = new Person();
     }
 
     function test_createFundingLocker() public {
