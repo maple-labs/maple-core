@@ -86,6 +86,7 @@ contract Person {
     }
 }
 
+
 contract Treasury { }
 
 contract LoanTest is TestUtil {
