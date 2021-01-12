@@ -92,6 +92,18 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
+    function test_createPool_error_stakeAsset() public {
+        globals.setPoolDelegateWhitelist(address(ali), true);
+        
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(ali),
+            500,
+            100
+        ));
+    }
+
     function test_createPool_no_whitelist() public {
         bPool.finalize();
         
