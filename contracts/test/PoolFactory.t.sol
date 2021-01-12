@@ -98,7 +98,7 @@ contract PoolFactoryTest is TestUtil {
         assertTrue(!ali.try_createPool(
             address(poolFactory),
             USDC,
-            address(ali),
+            address(ali),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
             500,
             100
         ));
