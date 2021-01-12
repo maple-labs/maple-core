@@ -132,7 +132,7 @@ contract StakeLockerTest is TestUtil {
     PremiumCalc                    premiumCalc;
     IBPool                               bPool;
     PoolDelegate                           sid;
-    Staker                                 apu;
+    Staker                                 jim;
     CollateralLockerFactory          clFactory;
     FundingLockerFactory             flFactory;
 
@@ -149,7 +149,7 @@ contract StakeLockerTest is TestUtil {
         lateFeeCalc    = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc    = new PremiumCalc(500); // Flat 5% premium
         sid            = new PoolDelegate();
-        apu            = new Staker();
+        jim            = new Staker();
 
         ethOracle.poke(500 ether);  // Set ETH price to $600
         usdcOracle.poke(1 ether);    // Set USDC price to $1
@@ -202,30 +202,30 @@ contract StakeLockerTest is TestUtil {
 
     }
     function test_unstake_calculation() public {
-        mint("USDC", address(apu), 50_000_000 * USD);
-        apu.approve(USDC, address(bPool), uint(-1));
+        mint("USDC", address(jim), 50_000_000 * USD);
+        jim.approve(USDC, address(bPool), uint(-1));
 
-        uint apubpt          = apu.joinBpool(address(bPool), USDC, 10_000_000 * USD);
+        uint jimbpt          = jim.joinBpool(address(bPool), USDC, 10_000_000 * USD);
         address stakeLocker1 = pool1.stakeLocker();
-        apu.approve(address(bPool), stakeLocker1, uint(-1));
+        jim.approve(address(bPool), stakeLocker1, uint(-1));
 
-        apu.stake(stakeLocker1, apubpt);
+        jim.stake(stakeLocker1, jimbpt);
         uint start = block.timestamp;
-        apu.approve(stakeLocker1, stakeLocker1, uint(-1));
+        jim.approve(stakeLocker1, stakeLocker1, uint(-1));
 
-        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)), 0);
+        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(jim)), 0);
 
         hevm.warp(start + globals.unstakeDelay() / 36);
-        withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)),IERC20(stakeLocker1).balanceOf(address(apu)) / 36, 6);
+        withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(jim)),IERC20(stakeLocker1).balanceOf(address(jim)) / 36, 6);
 
         hevm.warp(start + globals.unstakeDelay() / 2);
-        withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)),IERC20(stakeLocker1).balanceOf(address(apu)) / 2, 6);
+        withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(jim)),IERC20(stakeLocker1).balanceOf(address(jim)) / 2, 6);
 
         hevm.warp(start + globals.unstakeDelay() + 1);
-        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)), IERC20(stakeLocker1).balanceOf(address(apu)));
+        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(jim)), IERC20(stakeLocker1).balanceOf(address(jim)));
 
         hevm.warp(start + globals.unstakeDelay() + 3600 * 1000);
-        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)), IERC20(stakeLocker1).balanceOf(address(apu)));
+        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(jim)), IERC20(stakeLocker1).balanceOf(address(jim)));
     }
 
 }
