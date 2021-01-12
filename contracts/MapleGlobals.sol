@@ -51,7 +51,7 @@ contract MapleGlobals {
         governor            = _governor;
         mpl                 = _mpl;
         gracePeriod         = 5 days;
-        stakeAmountRequired = 100 * 10 ** 6;
+        stakeAmountRequired = 100;
         unstakeDelay        = 90 days;
         drawdownGracePeriod = 1 days;
         investorFee         = 50;

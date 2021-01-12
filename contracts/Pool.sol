@@ -16,6 +16,7 @@ import "./interfaces/ILiquidityLockerFactory.sol";
 import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IDebtLocker.sol";
 import "./interfaces/ILoan.sol";
+import "./interfaces/IERC20Details.sol";
 
 import "./LiquidityLockerFactory.sol";
 
@@ -169,11 +170,11 @@ contract Pool is IERC20, ERC20, CalcBPool {
                 [4] = Amount of pool shares present.
     */
     // TODO: Resolve the dissonance between poolSharesRequired / stakeAmountRequired / getSwapOutValue
-    function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
+    function getInitialStakeRequirements() public returns (uint256, uint256, bool, uint256, uint256) {
 
-        address bPool               = IGlobals(globals).mapleBPool();
-        address stake               = IGlobals(globals).mapleBPoolAssetPair(); // TODO: Consider localizing this, relates to SC-1138
-        uint256 stakeAmountRequired = IGlobals(globals).stakeAmountRequired(); // TODO: Localize stake amount required (or possibly globals mapping).
+        address bPool               = stakeAsset;
+        address stake               = liquidityAsset;
+        uint256 stakeAmountRequired = IGlobals(globals).stakeAmountRequired() * (10 ** IERC20Details(liquidityAsset).decimals());
 
         (
             uint256 poolAmountInRequired, 
