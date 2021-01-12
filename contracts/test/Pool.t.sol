@@ -1151,8 +1151,6 @@ contract PoolTest is TestUtil {
         hevm.warp(start + globals.unstakeDelay()/36);
         withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(mun)),IERC20(stakeLocker1).balanceOf(address(mun))/36, 6);
 
-
-
         hevm.warp(start + globals.unstakeDelay()/2);
         withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(mun)),IERC20(stakeLocker1).balanceOf(address(mun))/2, 6);
 
@@ -1161,7 +1159,5 @@ contract PoolTest is TestUtil {
 
         hevm.warp(start + globals.unstakeDelay() +3600*1000);
         assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(mun)),IERC20(stakeLocker1).balanceOf(address(mun)));
-
-
     }
 }
