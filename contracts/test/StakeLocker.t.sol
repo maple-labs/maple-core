@@ -216,12 +216,12 @@ contract StakeLockerTest is TestUtil {
         assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)), 0);
 
         hevm.warp(start + globals.unstakeDelay() / 36);
-        withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)),IERC20(stakeLocker1).balanceOf(address(apu))/36, 6);
+        withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)),IERC20(stakeLocker1).balanceOf(address(apu)) / 36, 6);
 
         hevm.warp(start + globals.unstakeDelay() / 2);
         withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)),IERC20(stakeLocker1).balanceOf(address(apu)) / 2, 6);
 
-        hevm.warp(start + globals.unstakeDelay() + 1 );
+        hevm.warp(start + globals.unstakeDelay() + 1);
         assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)), IERC20(stakeLocker1).balanceOf(address(apu)));
 
         hevm.warp(start + globals.unstakeDelay() + 3600 * 1000);
