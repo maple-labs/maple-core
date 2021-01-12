@@ -68,7 +68,7 @@ async function main() {
   await mapleGlobals.assignPriceFeed(WETHAddress, ETH_USD_ORACLE_ADDRESS);
 
   const updateGlobals = await mapleGlobals.setMapleTreasury(
-    mapleTreasuryAddress
+    MapleTreasuryAddress
   );
 
   await mapleGlobals.setLoanAsset(USDCAddress, true);
