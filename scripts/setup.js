@@ -60,9 +60,6 @@ async function main() {
     ethers.provider.getSigner(0)
   );
 
-  await mapleGlobals.setMapleBPool(MapleBPoolAddress);
-  await mapleGlobals.setMapleBPoolAssetPair(USDCAddress);
-
   // Update the MapleGlobals pool delegate whitelist.
   const accounts = await ethers.provider.listAccounts();
 
