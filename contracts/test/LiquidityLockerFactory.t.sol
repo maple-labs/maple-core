@@ -7,7 +7,7 @@ import "./TestUtil.sol";
 import "../LiquidityLockerFactory.sol";
 import "../interfaces/ILiquidityLockerFactory.sol";
 
-contract randomGuy {
+contract Someone {
     function newLocker(address _addy, address _asset) external returns (address){
         return ILiquidityLockerFactory(_addy).newLocker(_asset);
     }
@@ -15,12 +15,12 @@ contract randomGuy {
 
 
 contract PoolFactoryTest is TestUtil {
-    randomGuy	         kim;
+    Someone                kim;
     LiquidityLockerFactory liquidityLockerFactory;
 
     function setUp() public {
         liquidityLockerFactory = new LiquidityLockerFactory();
-        kim                  = new randomGuy();
+        kim                    = new Someone();
     }
 
     function test_createLiquidityLocker() public {
