@@ -98,7 +98,7 @@ contract LoanTest is TestUtil {
     Borrower                         ali;
     Lender                           bob;
     Treasury                         trs;
-    User                           kim;
+    User                             kim;
     DebtLockerFactory  debtLockerFactory;
 
     function setUp() public {

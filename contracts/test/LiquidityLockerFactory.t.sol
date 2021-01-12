@@ -11,7 +11,7 @@ import "../interfaces/ILiquidityLocker.sol";
 
 
 contract LiquidityLockerFactoryTest is TestUtil {
-    User                kim;
+    User                   kim;
     LiquidityLockerFactory liquidityLockerFactory;
 
     function setUp() public {
@@ -20,7 +20,7 @@ contract LiquidityLockerFactoryTest is TestUtil {
     }
 
     function test_createLiquidityLocker() public {
-	address _out = kim.newLocker(address(liquidityLockerFactory), DAI);
+        address _out = kim.newLocker(address(liquidityLockerFactory), DAI);
 
         assertTrue(liquidityLockerFactory.isLocker(_out));
 
