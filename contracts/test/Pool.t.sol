@@ -10,8 +10,6 @@ import "../mocks/token.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IPool.sol";
 import "../interfaces/IPoolFactory.sol";
-import "../interfaces/IStakeLocker.sol";
-
 
 import "../BulletRepaymentCalc.sol";
 import "../LateFeeCalc.sol";
@@ -128,25 +126,6 @@ contract Borrower {
     }
 }
 
-contract Staker {
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function stake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).stake(amt);
-    }
-
-    function unstake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).unstake(amt);
-    }
-    function joinBpool(address _bpool, address _ass, uint _amt) external returns (uint){
-        return IBPool(_bpool).joinswapExternAmountIn(_ass,_amt,10);
-    }
-
-}
-
-
 contract Treasury { }
 
 contract PoolTest is TestUtil {
@@ -183,7 +162,6 @@ contract PoolTest is TestUtil {
     Borrower                               eli;
     Borrower                               fay;
     Treasury                               trs;
-    Staker                                 mun;
 
 
     function setUp() public {
@@ -212,7 +190,6 @@ contract PoolTest is TestUtil {
         eli            = new Borrower();
         fay            = new Borrower();
         trs            = new Treasury();
-        mun            = new Staker();
 
         ethOracle.poke(500 ether);  // Set ETH price to $600
         usdcOracle.poke(1 ether);    // Set USDC price to $1
@@ -1132,32 +1109,5 @@ contract PoolTest is TestUtil {
         bal1 = IERC20(USDC).balanceOf(address(kim));
 
         withinPrecision(bal1 - bal0, interest, 5); // All of principal returned, plus interest
-    }
-
-    function test_unstake_calculation() public {
-        mint("USDC", address(mun), 50_000_000 * USD);
-        mun.approve(USDC,address(bPool),uint(-1));
-
-        uint munbpt          = mun.joinBpool(address(bPool), USDC, 10_000_000*USD);
-        address stakeLocker1 = pool1.stakeLocker();
-        mun.approve(address(bPool),stakeLocker1, uint(-1));
-
-        mun.stake(stakeLocker1, munbpt);
-        uint start = block.timestamp;
-        mun.approve(stakeLocker1, stakeLocker1 , uint(-1));
-
-        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(mun)) , 0);
-
-        hevm.warp(start + globals.unstakeDelay()/36);
-        withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(mun)),IERC20(stakeLocker1).balanceOf(address(mun))/36, 6);
-
-        hevm.warp(start + globals.unstakeDelay()/2);
-        withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(mun)),IERC20(stakeLocker1).balanceOf(address(mun))/2, 6);
-
-        hevm.warp(start + globals.unstakeDelay()+1);
-        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(mun)),IERC20(stakeLocker1).balanceOf(address(mun)));
-
-        hevm.warp(start + globals.unstakeDelay() +3600*1000);
-        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(mun)),IERC20(stakeLocker1).balanceOf(address(mun)));
     }
 }
