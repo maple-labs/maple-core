@@ -170,7 +170,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
                 [4] = Amount of pool shares present.
     */
     // TODO: Resolve the dissonance between poolSharesRequired / swapOutAmountRequired / getSwapOutValue
-    function getInitialStakeRequirements() public returns (uint256, uint256, bool, uint256, uint256) {
+    function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
 
         address balancerPool = stakeAsset;
         address swapOutAsset = liquidityAsset;
