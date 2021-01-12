@@ -114,7 +114,7 @@ contract Staker {
 
 }
 
-contract PoolTest is TestUtil {
+contract StakeLockerTest is TestUtil {
 
     using SafeMath for uint256;
 
@@ -213,7 +213,7 @@ contract PoolTest is TestUtil {
         uint start = block.timestamp;
         apu.approve(stakeLocker1, stakeLocker1, uint(-1));
 
-        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)) , 0);
+        assertEq(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)), 0);
 
         hevm.warp(start + globals.unstakeDelay() / 36);
         withinPrecision(IStakeLocker(stakeLocker1).getUnstakeableBalance(address(apu)),IERC20(stakeLocker1).balanceOf(address(apu))/36, 6);
