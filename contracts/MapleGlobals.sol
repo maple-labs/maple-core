@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "./interfaces/IPriceFeed.sol";
 import "./interfaces/IERC20Details.sol";
+import "./interfaces/ISubFactory.sol";
 
 contract MapleGlobals {
     
@@ -32,6 +33,10 @@ contract MapleGlobals {
     mapping(address => bool)    public isValidCalc;             // Mapping of valid calculator contracts
     mapping(address => bool)    public isValidPoolDelegate;     // Validation data structure for pool delegates (prevent invalid addresses from creating pools).
     mapping(address => address) public assetPriceFeed;          // Mapping of asset, to the associated oracle price feed.
+
+    mapping(address => bool)                     public validPoolFactories;  // Mapping of valid pool factories.
+    mapping(address => bool)                     public validLoanFactories;  // Mapping of valid loan factories.
+    mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories.
 
     event CollateralAssetSet(address asset, uint256 decimals, bool valid);
     event       LoanAssetSet(address asset, uint256 decimals, bool valid);
@@ -76,19 +81,41 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Set the poolFactory to a new factory.
-        @param  _poolFactory The new value to assign to poolFactory.
+        @dev   Update the valid pool factories mapping.
+        @param poolFactory Address of loan factory.
+        @param valid       The new bool value for validating poolFactory.
     */
-    function setPoolFactory(address _poolFactory) external isGovernor { // TODO: Change to whitelist, need to handle multiple
-        poolFactory = _poolFactory;
+    function setValidPoolFactory(address poolFactory, bool valid) external isGovernor {
+        validPoolFactories[poolFactory] = valid;
     }
 
     /**
-        @dev Set the loanFactory to a new factory.
-        @param  _loanFactory The new value to assign to loanFactory.
+        @dev   Update the valid loan factories mapping.
+        @param loanFactory Address of loan factory.
+        @param valid       The new bool value for validating loanFactory.
     */
-    function setLoanFactory(address _loanFactory) external isGovernor { // TODO: Change to whitelist, need to handle multiple
-        loanFactory = _loanFactory;
+    function setValidLoanFactory(address loanFactory, bool valid) external isGovernor {
+        validLoanFactories[loanFactory] = valid;
+    }
+
+    /**
+        @dev    Set the validity of a subFactory as it relates to a superFactory.
+        @param  superFactory The core factory (e.g. PoolFactory, LoanFactory)
+        @param  subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory)
+        @param  valid        The validity of subFactory within context of superFactory.
+    */
+    function setValidSubFactory(address superFactory, address subFactory, bool valid) external isGovernor {
+        validSubFactories[superFactory][subFactory] = valid;
+    }
+
+    /**
+        @dev    Check the validity of a subFactory as it relates to a superFactory.
+        @param  superFactory The core factory (e.g. PoolFactory, LoanFactory)
+        @param  subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory)
+        @param  factoryType  The type expected for the subFactory.
+    */
+    function isValidSubFactory(address superFactory, address subFactory, bytes32 factoryType) external returns(bool) {
+        return validSubFactories[superFactory][subFactory] && ISubFactory(subFactory).factoryType() == factoryType;
     }
 
     /**

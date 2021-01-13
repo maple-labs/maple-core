@@ -11,9 +11,7 @@ contract LoanFactory {
 
     using SafeMath for uint256;
 
-    address public immutable globals;    // The MapleGlobals.sol contract.
-    address public           flFactory;  // The FundingLockerFactory to use for this LoanFactory.
-    address public           clFactory;  // The CollateralLockerFactory to use for this LoanFactory.
+    address public immutable globals;  // The MapleGlobals.sol contract.
 
     uint256 public loansCreated;  // Incrementor for number of loan vaults created.
 
@@ -34,10 +32,8 @@ contract LoanFactory {
         string symbol
     );
     
-    constructor(address _globals, address _flFactory, address _clFactory) public {
+    constructor(address _globals) public {
         globals   = _globals;
-        flFactory = _flFactory;
-        clFactory = _clFactory;
     }
 
     // Authorization to call Treasury functions.
@@ -50,6 +46,8 @@ contract LoanFactory {
         @dev Create a new Loan.
         @param  loanAsset       Asset the loan will raise funding in.
         @param  collateralAsset Asset the loan will use as collateral.
+        @param  flFactory       The factory to instantiate a Funding Locker from.
+        @param  clFactory       The factory to instantiate a Collateral Locker from.
         @param  specs           Contains specifications for this loan.
                 specs[0] = apr
                 specs[1] = termDays
@@ -66,6 +64,8 @@ contract LoanFactory {
     function createLoan(
         address loanAsset,
         address collateralAsset,
+        address flFactory,
+        address clFactory,
         uint256[6] memory specs,
         address[3] memory calcs
     ) public returns (address) {
@@ -76,22 +76,23 @@ contract LoanFactory {
         address premiumCalc  = calcs[2];
 
         require(
-            collateralAsset != address(0),
-            "LoanFactory::createLoan:ERR_NULL_ASSET_COLLATERAL"
+            IGlobals(globals).isValidSubFactory(address(this), flFactory, "FundingLockerFactory"),
+            "LoanFactory::createLoan:ERR_INVALID_FUNDING_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).isValidCalc(interestCalc) &&
-            ICalc(interestCalc).calcType() == "INTEREST",
+            IGlobals(globals).isValidSubFactory(address(this), clFactory, "CollateralLockerFactory"),
+            "LoanFactory::createLoan:ERR_INVALID_FUNDING_COLLATERAL_FACTORY"
+        );
+        require(
+            IGlobals(globals).isValidCalc(interestCalc) && ICalc(interestCalc).calcType() == "INTEREST",
             "LoanFactory::createLoan:ERR_NULL_INTEREST_STRUCTURE_CALC"
         );
         require(
-            IGlobals(globals).isValidCalc(lateFeeCalc) &&
-            ICalc(lateFeeCalc).calcType() == "LATEFEE",
+            IGlobals(globals).isValidCalc(lateFeeCalc) && ICalc(lateFeeCalc).calcType() == "LATEFEE",
             "LoanFactory::createLoan:ERR_NULL_LATE_FEE_CALC"
         );
         require(
-            IGlobals(globals).isValidCalc(premiumCalc) &&
-            ICalc(premiumCalc).calcType() == "PREMIUM",
+            IGlobals(globals).isValidCalc(premiumCalc) && ICalc(premiumCalc).calcType() == "PREMIUM",
             "LoanFactory::createLoan:ERR_NULL_PREMIUM_CALC"
         );
         
@@ -133,20 +134,5 @@ contract LoanFactory {
         loansCreated++;
         return address(loan);
     }
-
-    /**
-        @dev Governor can adjust the flFactory.
-        @param  _flFactory The new flFactory address.
-    */
-    function setFundingLockerFactory(address _flFactory) public isGovernor {
-        flFactory = _flFactory;
-    }
     
-    /**
-        @dev Governor can adjust the clFactory.
-        @param  _clFactory The new clFactory address.
-    */
-    function setCollateralLockerFactory(address _clFactory) public isGovernor {
-        clFactory = _clFactory;
-    }
 }

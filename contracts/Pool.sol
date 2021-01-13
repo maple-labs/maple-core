@@ -6,6 +6,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 import "./math/CalcBPool.sol";
+import "./interfaces/ILoan.sol";
 import "./interfaces/IBPool.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/ILoanFactory.sol";
@@ -15,10 +16,7 @@ import "./interfaces/ILiquidityLocker.sol";
 import "./interfaces/ILiquidityLockerFactory.sol";
 import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IDebtLocker.sol";
-import "./interfaces/ILoan.sol";
 import "./interfaces/IERC20Details.sol";
-
-import "./LiquidityLockerFactory.sol";
 
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
@@ -50,8 +48,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
 
     mapping(address => uint256)                     public depositDate;   // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
-
-    CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
 
     event LoanFunded(address loan, address debtLocker, uint256 amountFunded);
     event BalanceUpdated(address who, address token, uint256 balance);
@@ -112,9 +108,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset);
         liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
-
-        // Initialize Balancer pool calculator
-        calcBPool = new CalcBPool();
 
         // Withdrawl penalty variable defaults
         principalPenalty = 500;
@@ -237,9 +230,13 @@ contract Pool is IERC20, ERC20, CalcBPool {
     */
     function fundLoan(address loan, address dlFactory, uint256 amt) external notDefunct finalized isDelegate {
 
-        // Auth check on loanFactory "kernel"
+        // Auth checks.
         require(
-            ILoanFactory(IGlobals(globals).loanFactory()).isLoan(loan),
+            IGlobals(globals).validLoanFactories(ILoan(loan).superFactory()),
+            "Pool::fundLoan:ERR_LOAN_FACTORY_INVALID"
+        );
+        require(
+            ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),
             "Pool::fundLoan:ERR_LOAN_INVALID"
         );
 

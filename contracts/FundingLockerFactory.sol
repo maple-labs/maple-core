@@ -9,6 +9,8 @@ contract FundingLockerFactory {
     mapping(address => address) public owner;     // owner[locker] = Owner of the funding locker.
     mapping(address => bool)    public isLocker;  // True if funding locker was created by this factory, otherwise false.
 
+    bytes32 public factoryType = "FundingLockerFactory";
+
     /**
         @dev Instantiate a FundingLocker contract.
         @param  loanAsset The asset this funding locker will escrow.

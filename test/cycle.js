@@ -68,8 +68,13 @@ const PoolFactoryAddress  = require(artpath + "addresses/PoolFactory.address");
 const PoolFactoryABI      = require(artpath + "abis/PoolFactory.abi");
 const LoanFactoryAddress  = require(artpath + "addresses/LoanFactory.address");
 const LoanFactoryABI      = require(artpath + "abis/LoanFactory.abi");
-const LTLFactoryAddress   = require(artpath + "addresses/DebtLockerFactory.address");
-const LTLFactoryABI       = require(artpath + "abis/DebtLockerFactory.abi");
+
+// DL = Debt Locker, FL = Funding Locker, CL = Collateral Locker, SL = StakeLocker, LL = LiquidityLocker
+const DLFactoryAddress    = require(artpath + "addresses/DebtLockerFactory.address");
+const FLFactoryAddress    = require(artpath + "addresses/FundingLockerFactory.address");
+const CLFactoryAddress    = require(artpath + "addresses/CollateralLockerFactory.address");
+const SLFactoryAddress    = require(artpath + "addresses/StakeLockerFactory.address");
+const LLFactoryAddress    = require(artpath + "addresses/LiquidityLockerFactory.address");
 
 // Maple Misc Contracts
 const StakeLockerABI      = require(artpath + "abis/StakeLocker.abi");
@@ -196,13 +201,12 @@ describe("Cycle of an entire loan", function () {
   it("(P1) Pool delegate initializing a pool", async function () {
 
     let index = await PoolFactory.poolsCreated();
-    // console.log(parseInt(index["_hex"]));
-
-    
 
     // Input variables for a form.
     liquidityAsset  = USDCAddress;
     stakeAsset      = MapleBPoolAddress;
+    slFactory       = SLFactoryAddress;
+    llFactory       = LLFactoryAddress;
     stakingFee      = 100;  // Basis points (100 = 1%)
     delegateFee     = 150;  // Basis points (150 = 1.5%)
 
@@ -210,6 +214,8 @@ describe("Cycle of an entire loan", function () {
     await PoolFactory.createPool(
       liquidityAsset,
       stakeAsset,
+      slFactory,
+      llFactory,
       stakingFee,
       delegateFee
     );
@@ -296,9 +302,11 @@ describe("Cycle of an entire loan", function () {
   it("(L1) Borrower creating a loan", async function () {
 
     // Default values for creating a loan.
-    const loanAsset     = USDCAddress;
+    const loanAsset    = USDCAddress;
     const lateFeeCalc  = LateFeeCalcAddress;
     const premiumCalc  = PremiumCalcAddress;
+    const flFactory    = FLFactoryAddress;
+    const clFactory    = CLFactoryAddress;
 
     // Adjustable values for creating a loan.
     const collateralAsset    = WETHAddress; // WETHAddress || WBTCAddress << Use WETHAddress for now
@@ -317,6 +325,8 @@ describe("Cycle of an entire loan", function () {
     await LoanFactory.createLoan(
       loanAsset,
       collateralAsset,
+      flFactory,
+      clFactory,
       [
         apr,
         termDays,
@@ -338,6 +348,8 @@ describe("Cycle of an entire loan", function () {
       await LoanFactory.createLoan(
         loanAsset,
         collateralAsset,
+        flFactory,
+        clFactory,
         [
           apr,
           termDays,
@@ -387,10 +399,13 @@ describe("Cycle of an entire loan", function () {
 
   it("(P6) Pool delegate funding a loan", async function () {
 
+    console.log(LoanAddress);
+    console.log(DLFactoryAddress);
+
     // Pool delegate funding the loan.
     await Pool_PoolDelegate.fundLoan(
       LoanAddress,
-      LTLFactoryAddress,
+      DLFactoryAddress,
       BigNumber.from(10).pow(6).mul(1500)
     )
 
@@ -430,7 +445,7 @@ describe("Cycle of an entire loan", function () {
   it("(P8) Pool claiming from loan", async function () {
 
       // Pool claims and distributes syrup.
-      await Pool_PoolDelegate.claim(LoanAddress, LTLFactoryAddress);
+      await Pool_PoolDelegate.claim(LoanAddress, DLFactoryAddress);
 
   });
 
@@ -458,7 +473,7 @@ describe("Cycle of an entire loan", function () {
   it("(P9) Pool claiming from loan", async function () {
 
       // Pool claims and distributes syrup.
-      await Pool_PoolDelegate.claim(LoanAddress, LTLFactoryAddress);
+      await Pool_PoolDelegate.claim(LoanAddress, DLFactoryAddress);
 
   });
 
@@ -481,7 +496,7 @@ describe("Cycle of an entire loan", function () {
   it("(P10) Pool claiming from loan", async function () {
 
       // Pool claims and distributes syrup.
-      await Pool_PoolDelegate.claim(LoanAddress, LTLFactoryAddress);
+      await Pool_PoolDelegate.claim(LoanAddress, DLFactoryAddress);
 
   });
 

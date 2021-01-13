@@ -27,41 +27,47 @@ contract PoolDelegate {
         address poolFactory, 
         address liquidityAsset,
         address stakeAsset,
+        address slFactory, 
+        address llFactory,
         uint256 stakingFee,
         uint256 delegateFee
     ) 
         external returns (bool ok) 
     {
-        string memory sig = "createPool(address,address,uint256,uint256)";
+        string memory sig = "createPool(address,address,address,address,uint256,uint256)";
         (ok,) = address(poolFactory).call(
-            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, stakingFee, delegateFee)
+            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, slFactory, llFactory, stakingFee, delegateFee)
         );
     }
 }
 
 contract PoolFactoryTest is TestUtil {
 
-    ERC20                  fundsToken;
-    MapleToken             mpl;
-    MapleGlobals           globals;
-    PoolFactory   poolFactory;
-    StakeLockerFactory     stakeLockerFactory;
-    LiquidityLockerFactory liquidityLockerFactory;  
-    DSValue                daiOracle;
-    DSValue                usdcOracle;
-    PoolDelegate           ali;
-    IBPool                 bPool;
+    MapleToken                     mpl;
+    MapleGlobals               globals;
+    PoolFactory            poolFactory;
+    StakeLockerFactory       slFactory;
+    LiquidityLockerFactory   llFactory;  
+    DSValue                  daiOracle;
+    DSValue                 usdcOracle;
+    PoolDelegate                   ali;
+    IBPool                       bPool;
 
     function setUp() public {
 
-        mpl                    = new MapleToken("MapleToken", "MAPL", USDC);
-        globals                = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
-        stakeLockerFactory     = new StakeLockerFactory();
-        liquidityLockerFactory = new LiquidityLockerFactory();
-        poolFactory            = new PoolFactory(address(globals), address(stakeLockerFactory), address(liquidityLockerFactory));
-        daiOracle              = new DSValue();
-        usdcOracle             = new DSValue();
-        ali                    = new PoolDelegate();
+        mpl         = new MapleToken("MapleToken", "MAPL", USDC);
+        globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
+        slFactory   = new StakeLockerFactory();
+        llFactory   = new LiquidityLockerFactory();
+        poolFactory = new PoolFactory(address(globals));
+        daiOracle   = new DSValue();
+        usdcOracle  = new DSValue();
+        ali         = new PoolDelegate();
+
+        globals.setValidPoolFactory(address(poolFactory), true);
+        
+        globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
+        globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
 
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
 
@@ -87,6 +93,8 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));
@@ -99,6 +107,8 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(ali),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));
@@ -111,6 +121,8 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));
@@ -139,12 +151,15 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));
     }
 
     function test_createPool() public {
+
         globals.setPoolDelegateWhitelist(address(ali), true);
         bPool.finalize();
 
@@ -155,6 +170,8 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));

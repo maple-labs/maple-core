@@ -33,6 +33,7 @@ interface ILoan is IERC20 {
     function feePaid() external view returns (uint256);
     function excessReturned() external view returns (uint256);
     function getNextPayment() external view returns(uint256, uint256, uint256, uint256);
+    function superFactory() external view returns(address);
     
     // Functions
     function fundLoan(uint256, address) external;
