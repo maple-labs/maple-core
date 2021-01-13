@@ -43,7 +43,6 @@ contract PoolDelegate {
 
 contract PoolFactoryTest is TestUtil {
 
-    ERC20                   dfundsToken;
     MapleToken                     mpl;
     MapleGlobals               globals;
     PoolFactory            poolFactory;
@@ -66,6 +65,7 @@ contract PoolFactoryTest is TestUtil {
         ali         = new PoolDelegate();
 
         globals.setValidPoolFactory(address(poolFactory), true);
+        
         globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
         globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
 

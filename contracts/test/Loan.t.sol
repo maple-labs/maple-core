@@ -58,9 +58,9 @@ contract Borrower {
         uint256[6] memory specs,
         address[3] memory calcs
     ) 
-        external returns (Loan loanVault) 
+        external returns (Loan loan) 
     {
-        loanVault = Loan(
+        loan = Loan(
             loanFactory.createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
         );
     }
@@ -144,7 +144,7 @@ contract LoanTest is TestUtil {
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
         // Can't create a loan with DAI since stakingAsset uses USDC.
-        // assertTrue(!ali.try_createLoan(address(loanFactory), DAI, WETH, flFactory, clFactory, specs, calcs));
+        assertTrue(!ali.try_createLoan(address(loanFactory), DAI, WETH, address(flFactory), address(clFactory), specs, calcs));
 
         Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     

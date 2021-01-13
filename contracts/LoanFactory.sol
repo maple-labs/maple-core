@@ -76,11 +76,11 @@ contract LoanFactory {
         address premiumCalc  = calcs[2];
 
         require(
-            IGlobals(globals).getValidSubFactory(address(this), flFactory, bytes32("FundingLockerFactory")),
+            IGlobals(globals).isValidSubFactory(address(this), flFactory, "FundingLockerFactory"),
             "LoanFactory::createLoan:ERR_INVALID_FUNDING_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).getValidSubFactory(address(this), clFactory, bytes32("CollateralLockerFactory")),
+            IGlobals(globals).isValidSubFactory(address(this), clFactory, "CollateralLockerFactory"),
             "LoanFactory::createLoan:ERR_INVALID_FUNDING_COLLATERAL_FACTORY"
         );
         require(

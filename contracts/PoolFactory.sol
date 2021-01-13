@@ -5,11 +5,6 @@ import "./Pool.sol";
 import "./interfaces/IBFactory.sol";
 import "./library/TokenUUID.sol";
 
-// interface IGlobals {
-//     function isValidPoolDelegate(address) external view returns (bool);
-//     function getValidSubFactory(address, address, bytes32) external view returns (bool);
-// }
-
 contract PoolFactory {
 
     uint256 public poolsCreated;  // Incrementor for number of LPs created
@@ -55,11 +50,11 @@ contract PoolFactory {
     ) public returns (address) {
         
         require(
-            IGlobals(globals).getValidSubFactory(address(this), llFactory, bytes32("LiquidityLockerFactory")),
+            IGlobals(globals).isValidSubFactory(address(this), llFactory, "LiquidityLockerFactory"),
             "LoanFactory::createLoan:ERR_INVALID_LIQUIDITY_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).getValidSubFactory(address(this), slFactory, bytes32("StakeLockerFactory")),
+            IGlobals(globals).isValidSubFactory(address(this), slFactory, "StakeLockerFactory"),
             "LoanFactory::createLoan:ERR_INVALID_STAKE_LOCKER_FACTORY"
         );
         require(

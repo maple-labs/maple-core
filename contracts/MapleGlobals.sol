@@ -83,38 +83,38 @@ contract MapleGlobals {
     /**
         @dev   Update the valid pool factories mapping.
         @param poolFactory Address of loan factory.
-        @param validity    The new bool value for validating poolFactory.
+        @param valid       The new bool value for validating poolFactory.
     */
-    function setValidPoolFactory(address poolFactory, bool validity) external isGovernor {
-        validPoolFactories[poolFactory] = validity;
+    function setValidPoolFactory(address poolFactory, bool valid) external isGovernor {
+        validPoolFactories[poolFactory] = valid;
     }
 
     /**
         @dev   Update the valid loan factories mapping.
         @param loanFactory Address of loan factory.
-        @param validity    The new bool value for validating loanFactory.
+        @param valid       The new bool value for validating loanFactory.
     */
-    function setValidLoanFactory(address loanFactory, bool validity) external isGovernor {
-        validLoanFactories[loanFactory] = validity;
+    function setValidLoanFactory(address loanFactory, bool valid) external isGovernor {
+        validLoanFactories[loanFactory] = valid;
     }
 
     /**
         @dev    Set the validity of a subFactory as it relates to a superFactory.
         @param  superFactory The core factory (e.g. PoolFactory, LoanFactory)
         @param  subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory)
-        @param  validity     The validity of subFactory within context of superFactory.
+        @param  valid        The validity of subFactory within context of superFactory.
     */
-    function setValidSubFactory(address superFactory, address subFactory, bool validity) external isGovernor {
-        validSubFactories[superFactory][subFactory] = validity;
+    function setValidSubFactory(address superFactory, address subFactory, bool valid) external isGovernor {
+        validSubFactories[superFactory][subFactory] = valid;
     }
 
     /**
-        @dev    Get the validity of a subFactory as it relates to a superFactory.
+        @dev    Check the validity of a subFactory as it relates to a superFactory.
         @param  superFactory The core factory (e.g. PoolFactory, LoanFactory)
         @param  subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory)
         @param  factoryType  The type expected for the subFactory.
     */
-    function getValidSubFactory(address superFactory, address subFactory, bytes32 factoryType) external returns(bool) {
+    function isValidSubFactory(address superFactory, address subFactory, bytes32 factoryType) external returns(bool) {
         return validSubFactories[superFactory][subFactory] && ISubFactory(subFactory).factoryType() == factoryType;
     }
 
