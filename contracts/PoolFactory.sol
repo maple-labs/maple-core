@@ -56,11 +56,11 @@ contract PoolFactory {
         
         require(
             IGlobals(globals).getValidSubFactory(address(this), llFactory, bytes32("LiquidityLockerFactory")),
-            "LoanFactory::createLoan:ERR_INVALID_FUNDING_LOCKER_FACTORY"
+            "LoanFactory::createLoan:ERR_INVALID_LIQUIDITY_LOCKER_FACTORY"
         );
         require(
             IGlobals(globals).getValidSubFactory(address(this), slFactory, bytes32("StakeLockerFactory")),
-            "LoanFactory::createLoan:ERR_INVALID_FUNDING_COLLATERAL_FACTORY"
+            "LoanFactory::createLoan:ERR_INVALID_STAKE_LOCKER_FACTORY"
         );
         require(
             IGlobals(globals).isValidPoolDelegate(msg.sender),

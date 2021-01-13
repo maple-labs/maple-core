@@ -20,8 +20,10 @@ const LoanFactoryAddress             = require(artpath + "addresses/LoanFactory.
 const LoanFactoryABI                 = require(artpath + "abis/LoanFactory.abi.js");
 const PoolFactoryAddress             = require(artpath + "addresses/PoolFactory.address");
 const CollateralLockerFactoryAddress = require(artpath + "addresses/CollateralLockerFactory.address.js");
-const MapleTreasuryAddress           = require(artpath + "addresses/MapleTreasury.address.js");
 const FundingLockerFactoryAddress    = require(artpath + "addresses/FundingLockerFactory.address.js");
+const StakeLockerFactoryAddress      = require(artpath + "addresses/StakeLockerFactory.address.js");
+const LiquidityLockerFactoryAddress  = require(artpath + "addresses/LiquidityLockerFactory.address.js");
+const MapleTreasuryAddress           = require(artpath + "addresses/MapleTreasury.address.js");
 const ChainLinkFactoryAddress        = require(artpath + "addresses/ChainLinkEmulatorFactory.address.js");
 const ChainLinkFactoryABI            = require(artpath + "abis/ChainLinkEmulatorFactory.abi.js");
 const ChainLinkEmulatorABI           = require(artpath + "abis/ChainLinkEmulator.abi.js");
@@ -96,6 +98,11 @@ async function main() {
 
   await mapleGlobals.setValidPoolFactory(PoolFactoryAddress, true);
   await mapleGlobals.setValidLoanFactory(LoanFactoryAddress, true);
+
+  await mapleGlobals.setValidSubFactory(PoolFactoryAddress, StakeLockerFactoryAddress, true);
+  await mapleGlobals.setValidSubFactory(PoolFactoryAddress, LiquidityLockerFactoryAddress, true);
+  await mapleGlobals.setValidSubFactory(LoanFactoryAddress, CollateralLockerFactoryAddress, true);
+  await mapleGlobals.setValidSubFactory(LoanFactoryAddress, FundingLockerFactoryAddress, true);
 }
 
 main()

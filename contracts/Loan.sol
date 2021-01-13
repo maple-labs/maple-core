@@ -36,6 +36,7 @@ contract Loan is FDT {
     address public immutable repaymentCalc;     // The repayment calculator for this loan.
     address public immutable lateFeeCalc;       // The late fee calculator for this loan.
     address public immutable premiumCalc;       // The premium calculator for this loan.
+    address public immutable superFactory;      // The factory that deployed this Loan.
 
     uint256 public principalOwed;      // The principal owed (initially the drawdown amount).
     uint256 public drawdownAmount;     // The amount the borrower drew down, historical reference for calculators.
@@ -147,6 +148,7 @@ contract Loan is FDT {
         lateFeeCalc            = calcs[1];
         premiumCalc            = calcs[2];
         nextPaymentDue         = createdAt.add(paymentIntervalSeconds);
+        superFactory           = msg.sender;
 
         // Deploy locker
         collateralLocker = ICollateralLockerFactory(_clFactory).newLocker(_collateralAsset);

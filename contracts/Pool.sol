@@ -6,6 +6,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 import "./math/CalcBPool.sol";
+import "./interfaces/ILoan.sol";
 import "./interfaces/IBPool.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/ILoanFactory.sol";
@@ -16,8 +17,6 @@ import "./interfaces/ILiquidityLockerFactory.sol";
 import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IDebtLocker.sol";
 import "./interfaces/IERC20Details.sol";
-
-// import "./LiquidityLockerFactory.sol";
 
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
@@ -231,9 +230,13 @@ contract Pool is IERC20, ERC20, CalcBPool {
     */
     function fundLoan(address loan, address dlFactory, uint256 amt) external notDefunct finalized isDelegate {
 
-        // Auth check on loanFactory "kernel"
+        // Auth checks.
         require(
-            ILoanFactory(IGlobals(globals).loanFactory()).isLoan(loan),
+            IGlobals(globals).validLoanFactories(ILoan(loan).superFactory()),
+            "Pool::fundLoan:ERR_LOAN_FACTORY_INVALID"
+        );
+        require(
+            ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),
             "Pool::fundLoan:ERR_LOAN_INVALID"
         );
 

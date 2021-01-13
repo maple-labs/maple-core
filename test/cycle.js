@@ -205,8 +205,8 @@ describe("Cycle of an entire loan", function () {
     // Input variables for a form.
     liquidityAsset  = USDCAddress;
     stakeAsset      = MapleBPoolAddress;
-    slFactory       = MapleBPoolAddress;
-    llFactory       = MapleBPoolAddress;
+    slFactory       = SLFactoryAddress;
+    llFactory       = LLFactoryAddress;
     stakingFee      = 100;  // Basis points (100 = 1%)
     delegateFee     = 150;  // Basis points (150 = 1.5%)
 
@@ -398,6 +398,9 @@ describe("Cycle of an entire loan", function () {
   });
 
   it("(P6) Pool delegate funding a loan", async function () {
+
+    console.log(LoanAddress);
+    console.log(DLFactoryAddress);
 
     // Pool delegate funding the loan.
     await Pool_PoolDelegate.fundLoan(

@@ -42,5 +42,7 @@ interface IGlobals {
 
     function isValidCalc(address) external view returns (bool);
 
+    function validLoanFactories(address) external view returns(bool);
+
     function getValidSubFactory(address, address, bytes32) external view returns (bool);
 }
