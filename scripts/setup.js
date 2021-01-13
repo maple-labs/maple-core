@@ -94,8 +94,8 @@ async function main() {
   // await mapleGlobals.setPoolFactory(PoolFactoryAddress);
   // await mapleGlobals.setLoanFactory(LoanFactoryAddress);
 
-  await mapleGlobal.setValidPoolFactory(PoolFactoryAddress, true);
-  await mapleGlobal.setValidLoanFactory(LoanFactoryAddress, true);
+  await mapleGlobals.setValidPoolFactory(PoolFactoryAddress, true);
+  await mapleGlobals.setValidLoanFactory(LoanFactoryAddress, true);
 }
 
 main()

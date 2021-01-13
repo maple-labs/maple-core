@@ -2,9 +2,13 @@
 pragma solidity >=0.6.11;
 
 import "./Pool.sol";
-import "./interfaces/IGlobals.sol";
 import "./interfaces/IBFactory.sol";
 import "./library/TokenUUID.sol";
+
+// interface IGlobals {
+//     function isValidPoolDelegate(address) external view returns (bool);
+//     function getValidSubFactory(address, address, bytes32) external view returns (bool);
+// }
 
 contract PoolFactory {
 

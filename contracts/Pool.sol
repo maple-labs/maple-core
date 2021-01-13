@@ -50,8 +50,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
     mapping(address => uint256)                     public depositDate;   // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
 
-    CalcBPool calcBPool; // TEMPORARY UNTIL LIBRARY IS SORTED OUT
-
     event LoanFunded(address loan, address debtLocker, uint256 amountFunded);
     event BalanceUpdated(address who, address token, uint256 balance);
     event Claim(uint interest, uint principal, uint fee);
@@ -111,9 +109,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset);
         liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
-
-        // Initialize Balancer pool calculator
-        calcBPool = new CalcBPool();
 
         // Withdrawl penalty variable defaults
         principalPenalty = 500;
