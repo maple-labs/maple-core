@@ -41,7 +41,7 @@ contract PoolDelegate {
     }
 
     function createPool(
-        address liqPoolFactory, 
+        address poolFactory, 
         address liqAsset,
         address stakeAsset,
         uint256 stakingFee,
@@ -49,7 +49,7 @@ contract PoolDelegate {
     ) 
         external returns (address liquidityPool) 
     {
-        liquidityPool = IPoolFactory(liqPoolFactory).createPool(
+        liquidityPool = IPoolFactory(poolFactory).createPool(
             liqAsset,
             stakeAsset,
             stakingFee,
@@ -140,9 +140,9 @@ contract PoolTest is TestUtil {
     LoanFactory                    loanFactory;
     Loan                                  loan;
     Loan                                 loan2;
-    PoolFactory                 liqPoolFactory;
-    StakeLockerFactory           stakeLFactory;
-    LiquidityLockerFactory         liqLFactory; 
+    PoolFactory                    poolFactory;
+    StakeLockerFactory               slFactory;
+    LiquidityLockerFactory           llFactory; 
     DebtLockerFactory               dlFactory1; 
     DebtLockerFactory               dlFactory2; 
     Pool                                 pool1; 
@@ -171,9 +171,9 @@ contract PoolTest is TestUtil {
         flFactory      = new FundingLockerFactory();
         clFactory      = new CollateralLockerFactory();
         loanFactory    = new LoanFactory(address(globals), address(flFactory), address(clFactory));
-        stakeLFactory  = new StakeLockerFactory();
-        liqLFactory    = new LiquidityLockerFactory();
-        liqPoolFactory = new PoolFactory(address(globals), address(stakeLFactory), address(liqLFactory));
+        slFactory      = new StakeLockerFactory();
+        llFactory      = new LiquidityLockerFactory();
+        poolFactory    = new PoolFactory(address(globals), address(slFactory), address(llFactory));
         dlFactory1     = new DebtLockerFactory();
         dlFactory2     = new DebtLockerFactory();
         ethOracle      = new DSValue();
@@ -190,6 +190,14 @@ contract PoolTest is TestUtil {
         eli            = new Borrower();
         fay            = new Borrower();
         trs            = new Treasury();
+
+        
+        globals.setValidSubFactory(loanFactory, flFactory, true);
+        globals.setValidSubFactory(loanFactory, clFactory, true);
+
+        globals.setValidSubFactory(poolFactory, llFactory, true);
+        globals.setValidSubFactory(poolFactory, slFactory, true);
+
 
         ethOracle.poke(500 ether);  // Set ETH price to $600
         usdcOracle.poke(1 ether);    // Set USDC price to $1
@@ -234,7 +242,7 @@ contract PoolTest is TestUtil {
 
         // Create Liquidity Pool
         pool1 = Pool(sid.createPool(
-            address(liqPoolFactory),
+            address(poolFactory),
             USDC,
             address(bPool),
             500,
@@ -243,7 +251,7 @@ contract PoolTest is TestUtil {
 
         // Create Liquidity Pool
         pool2 = Pool(joe.createPool(
-            address(liqPoolFactory),
+            address(poolFactory),
             USDC,
             address(bPool),
             7500,

@@ -46,6 +46,8 @@ contract LoanFactory {
         @dev Create a new Loan.
         @param  loanAsset       Asset the loan will raise funding in.
         @param  collateralAsset Asset the loan will use as collateral.
+        @param  flFactory       The factory to instantiate a Funding Locker from.
+        @param  clFactory       The factory to instantiate a Collateral Locker from.
         @param  specs           Contains specifications for this loan.
                 specs[0] = apr
                 specs[1] = termDays
@@ -74,30 +76,23 @@ contract LoanFactory {
         address premiumCalc  = calcs[2];
 
         require(
-            collateralAsset != address(0),
-            "LoanFactory::createLoan:ERR_NULL_ASSET_COLLATERAL"
+            IGlobals(globals).getValidSubFactory(address(this), flFactory, bytes32("FundingLockerFactory")),
+            "LoanFactory::createLoan:ERR_INVALID_FUNDING_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).isValidCalc(interestCalc),
-            "LoanFactory::createLoan:ERR_NULL_ASSET_COLLATERAL"
+            IGlobals(globals).getValidSubFactory(address(this), clFactory, bytes32("CollateralLockerFactory")),
+            "LoanFactory::createLoan:ERR_INVALID_FUNDING_COLLATERAL_FACTORY"
         );
         require(
-            collateralAsset != address(0),
-            "LoanFactory::createLoan:ERR_NULL_ASSET_COLLATERAL"
-        );
-        require(
-            IGlobals(globals).isValidCalc(interestCalc) &&
-            ICalc(interestCalc).calcType() == "INTEREST",
+            IGlobals(globals).isValidCalc(interestCalc) && ICalc(interestCalc).calcType() == "INTEREST",
             "LoanFactory::createLoan:ERR_NULL_INTEREST_STRUCTURE_CALC"
         );
         require(
-            IGlobals(globals).isValidCalc(lateFeeCalc) &&
-            ICalc(lateFeeCalc).calcType() == "LATEFEE",
+            IGlobals(globals).isValidCalc(lateFeeCalc) && ICalc(lateFeeCalc).calcType() == "LATEFEE",
             "LoanFactory::createLoan:ERR_NULL_LATE_FEE_CALC"
         );
         require(
-            IGlobals(globals).isValidCalc(premiumCalc) &&
-            ICalc(premiumCalc).calcType() == "PREMIUM",
+            IGlobals(globals).isValidCalc(premiumCalc) && ICalc(premiumCalc).calcType() == "PREMIUM",
             "LoanFactory::createLoan:ERR_NULL_PREMIUM_CALC"
         );
         

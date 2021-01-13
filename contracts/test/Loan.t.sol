@@ -97,20 +97,16 @@ contract LoanTest is TestUtil {
 
     function setUp() public {
 
-        mpl                     = new MapleToken("MapleToken", "MAPL", USDC);
-        globals                 = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
-        flFactory               = new FundingLockerFactory();
-        clFactory               = new CollateralLockerFactory();
-        ethOracle               = new DSValue();
-        usdcOracle              = new DSValue();
-        bulletCalc              = new BulletRepaymentCalc();
-        lateFeeCalc             = new LateFeeCalc(0);   // Flat 0% fee
-        premiumCalc             = new PremiumCalc(500); // Flat 5% premium
-        loanFactory             = new LoanFactory(
-            address(globals), 
-            address(flFactory), 
-            address(clFactory)
-        );
+        mpl         = new MapleToken("MapleToken", "MAPL", USDC);
+        globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
+        flFactory   = new FundingLockerFactory();
+        clFactory   = new CollateralLockerFactory();
+        ethOracle   = new DSValue();
+        usdcOracle  = new DSValue();
+        bulletCalc  = new BulletRepaymentCalc();
+        lateFeeCalc = new LateFeeCalc(0);   // Flat 0% fee
+        premiumCalc = new PremiumCalc(500); // Flat 5% premium
+        loanFactory = new LoanFactory(address(globals), address(flFactory), address(clFactory));
 
         ethOracle.poke(500 ether);  // Set ETH price to $500
         usdcOracle.poke(1 ether);   // Set USDC price to $1
@@ -123,9 +119,13 @@ contract LoanTest is TestUtil {
         globals.assignPriceFeed(WETH,  address(ethOracle));
         globals.assignPriceFeed(USDC, address(usdcOracle));
 
+        globals.setValidSubFactory(loanFactory, flFactory, true);
+        globals.setValidSubFactory(loanFactory, clFactory, true);
+
         ali = new Borrower();
         bob = new Lender();
         trs = new Treasury();
+
         globals.setMapleTreasury(address(trs));
 
         mint("WETH", address(ali),   10 ether);

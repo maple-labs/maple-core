@@ -9,6 +9,8 @@ contract StakeLockerFactory {
     mapping(address => address) public owner;     // owner[locker] = Owner of the stake locker.
     mapping(address => bool)    public isLocker;  // True if stake locker was created by this factory, otherwise false.
 
+    bytes32 public factoryType = "StakeLockerFactory";
+
     event StakeLockerCreated(
         address owner,
         address stakeLocker,

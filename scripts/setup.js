@@ -82,19 +82,14 @@ async function main() {
   await mapleGlobals.setCalc(LateFeeCalc, true);
   await mapleGlobals.setCalc(PremiumCalc, true);
 
-  const LVFactory = new ethers.Contract(
+  const LoanFactory = new ethers.Contract(
     LoanFactoryAddress,
     LoanFactoryABI,
     ethers.provider.getSigner(0)
   );
 
-  const updateFundingLockerFactory = await LVFactory.setFundingLockerFactory(
-    FundingLockerFactoryAddress
-  );
-
-  const updateCollateralLockerFactory = await LVFactory.setCollateralLockerFactory(
-    CollateralLockerFactoryAddress
-  );
+  // await LoanFactory.setFundingLockerFactory(FundingLockerFactoryAddress);
+  // await LoanFactory.setCollateralLockerFactory(CollateralLockerFactoryAddress);
 
   // await mapleGlobals.setPoolFactory(PoolFactoryAddress);
   // await mapleGlobals.setLoanFactory(LoanFactoryAddress);

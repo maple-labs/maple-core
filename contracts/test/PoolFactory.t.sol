@@ -41,27 +41,30 @@ contract PoolDelegate {
 
 contract PoolFactoryTest is TestUtil {
 
-    ERC20                  fundsToken;
-    MapleToken             mpl;
-    MapleGlobals           globals;
-    PoolFactory   poolFactory;
-    StakeLockerFactory     stakeLockerFactory;
-    LiquidityLockerFactory liquidityLockerFactory;  
-    DSValue                daiOracle;
-    DSValue                usdcOracle;
-    PoolDelegate           ali;
-    IBPool                 bPool;
+    ERC20                   dfundsToken;
+    MapleToken                     mpl;
+    MapleGlobals               globals;
+    PoolFactory            poolFactory;
+    StakeLockerFactory       slFactory;
+    LiquidityLockerFactory   llFactory;  
+    DSValue                  daiOracle;
+    DSValue                 usdcOracle;
+    PoolDelegate                   ali;
+    IBPool                       bPool;
 
     function setUp() public {
 
-        mpl                    = new MapleToken("MapleToken", "MAPL", USDC);
-        globals                = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
-        stakeLockerFactory     = new StakeLockerFactory();
-        liquidityLockerFactory = new LiquidityLockerFactory();
-        poolFactory            = new PoolFactory(address(globals), address(stakeLockerFactory), address(liquidityLockerFactory));
-        daiOracle              = new DSValue();
-        usdcOracle             = new DSValue();
-        ali                    = new PoolDelegate();
+        mpl         = new MapleToken("MapleToken", "MAPL", USDC);
+        globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
+        slFactory   = new StakeLockerFactory();
+        llFactory   = new LiquidityLockerFactory();
+        poolFactory = new PoolFactory(address(globals), address(slFactory), address(llFactory));
+        daiOracle   = new DSValue();
+        usdcOracle  = new DSValue();
+        ali         = new PoolDelegate();
+
+        globals.setValidSubFactory(poolFactory, slFactory, true);
+        globals.setValidSubFactory(poolFactory, llFactory, true);
 
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
 

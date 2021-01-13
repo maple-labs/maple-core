@@ -10,8 +10,6 @@ contract PoolFactory {
 
     uint256 public poolsCreated;  // Incrementor for number of LPs created
     address public globals;       // The MapleGlobals.sol contract
-    address public slFactory;     // The StakeLockerFactory to use for this PoolFactory
-    address public llFactory;     // The LiquidityLockerFactory to use for this PoolFactory
 
     mapping(uint256 => address) public pools;  // Mappings for liquidity pool contracts, and their validation.
     mapping(address => bool)    public isPool;
@@ -30,21 +28,36 @@ contract PoolFactory {
         string  symbol
     );
 
-    constructor(address _globals, address _slFactory, address _llFactory) public {
+    constructor(address _globals) public {
         globals   = _globals;
-        slFactory = _slFactory;
-        llFactory = _llFactory;
     }
 
     /**
         @dev Instantiates a Pool contract.
         @param  liquidityAsset The asset escrowed in LiquidityLocker.
         @param  stakeAsset     The asset escrowed in StakeLocker.
+        @param  slFactory      The factory to instantiate a Stake Locker from.
+        @param  llFactory      The factory to instantiate a Liquidity Locker from.
         @param  stakingFee     Fee that stakers earn on interest, in bips.
         @param  delegateFee    Fee that pool delegate earns on interest, in bips.
     */
-    function createPool(address liquidityAsset, address stakeAsset, uint256 stakingFee, uint256 delegateFee) public returns (address) {
+    function createPool(
+        address liquidityAsset, 
+        address stakeAsset,
+        address slFactory, 
+        address llFactory,
+        uint256 stakingFee, 
+        uint256 delegateFee
+    ) public returns (address) {
         
+        require(
+            IGlobals(globals).getValidSubFactory(address(this), llFactory, bytes32("LiquidityLockerFactory")),
+            "LoanFactory::createLoan:ERR_INVALID_FUNDING_LOCKER_FACTORY"
+        );
+        require(
+            IGlobals(globals).getValidSubFactory(address(this), slFactory, bytes32("StakeLockerFactory")),
+            "LoanFactory::createLoan:ERR_INVALID_FUNDING_COLLATERAL_FACTORY"
+        );
         require(
             IGlobals(globals).isValidPoolDelegate(msg.sender),
             "PoolFactory::createPool:ERR_MSG_SENDER_NOT_WHITELISTED"

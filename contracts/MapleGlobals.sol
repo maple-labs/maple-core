@@ -112,10 +112,10 @@ contract MapleGlobals {
         @dev    Get the validity of a subFactory as it relates to a superFactory.
         @param  superFactory The core factory (e.g. PoolFactory, LoanFactory)
         @param  subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory)
-        @param  type         The type expected for the subFactory.
+        @param  factoryType  The type expected for the subFactory.
     */
-    function getValidSubFactory(address superFactory, address subFactory, bytes32 type) external returns(bool) {
-        return validSubFactories[superFactory][subFactory] && ISubFactory(subFactory).type() == type;
+    function getValidSubFactory(address superFactory, address subFactory, bytes32 factoryType) external returns(bool) {
+        return validSubFactories[superFactory][subFactory] && ISubFactory(subFactory).factoryType() == factoryType;
     }
 
     /**
