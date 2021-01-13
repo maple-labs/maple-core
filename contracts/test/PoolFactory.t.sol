@@ -34,7 +34,7 @@ contract PoolDelegate {
     ) 
         external returns (bool ok) 
     {
-        string memory sig = "createPool(address,address,uint256,uint256)";
+        string memory sig = "createPool(address,address,address,address,uint256,uint256)";
         (ok,) = address(poolFactory).call(
             abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, slFactory, llFactory, stakingFee, delegateFee)
         );
@@ -65,6 +65,7 @@ contract PoolFactoryTest is TestUtil {
         usdcOracle  = new DSValue();
         ali         = new PoolDelegate();
 
+        globals.setValidPoolFactory(address(poolFactory), true);
         globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
         globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
 
@@ -158,6 +159,7 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool() public {
+
         globals.setPoolDelegateWhitelist(address(ali), true);
         bPool.finalize();
 
