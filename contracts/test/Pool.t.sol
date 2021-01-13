@@ -42,16 +42,20 @@ contract PoolDelegate {
 
     function createPool(
         address poolFactory, 
-        address liqAsset,
+        address liquidityAsset,
         address stakeAsset,
+        address slFactory, 
+        address llFactory,
         uint256 stakingFee,
         uint256 delegateFee
     ) 
         external returns (address liquidityPool) 
     {
         liquidityPool = IPoolFactory(poolFactory).createPool(
-            liqAsset,
+            liquidityAsset,
             stakeAsset,
+            slFactory,
+            llFactory,
             stakingFee,
             delegateFee
         );
@@ -113,15 +117,17 @@ contract Borrower {
 
     function createLoan(
         LoanFactory loanFactory,
-        address requestedAsset, 
+        address loanAsset, 
         address collateralAsset, 
+        address flFactory,
+        address clFactory,
         uint256[6] memory specs,
         address[3] memory calcs
     ) 
-        external returns (Loan loan) 
+        external returns (Loan loanVault) 
     {
-        loan = Loan(
-            loanFactory.createLoan(requestedAsset, collateralAsset, specs, calcs)
+        loanVault = Loan(
+            loanFactory.createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
         );
     }
 }
@@ -170,10 +176,10 @@ contract PoolTest is TestUtil {
         globals        = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
         flFactory      = new FundingLockerFactory();
         clFactory      = new CollateralLockerFactory();
-        loanFactory    = new LoanFactory(address(globals), address(flFactory), address(clFactory));
+        loanFactory    = new LoanFactory(address(globals));
         slFactory      = new StakeLockerFactory();
         llFactory      = new LiquidityLockerFactory();
-        poolFactory    = new PoolFactory(address(globals), address(slFactory), address(llFactory));
+        poolFactory    = new PoolFactory(address(globals));
         dlFactory1     = new DebtLockerFactory();
         dlFactory2     = new DebtLockerFactory();
         ethOracle      = new DSValue();
@@ -191,12 +197,11 @@ contract PoolTest is TestUtil {
         fay            = new Borrower();
         trs            = new Treasury();
 
-        
-        globals.setValidSubFactory(loanFactory, flFactory, true);
-        globals.setValidSubFactory(loanFactory, clFactory, true);
+        globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
 
-        globals.setValidSubFactory(poolFactory, llFactory, true);
-        globals.setValidSubFactory(poolFactory, slFactory, true);
+        globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
+        globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
 
 
         ethOracle.poke(500 ether);  // Set ETH price to $600
@@ -245,6 +250,8 @@ contract PoolTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));
@@ -254,6 +261,8 @@ contract PoolTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             7500,
             50
         ));
@@ -266,8 +275,8 @@ contract PoolTest is TestUtil {
         uint256[6] memory specs2 = [500, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs2 = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan  = eli.createLoan(loanFactory, USDC, WETH, specs, calcs);
-        loan2 = fay.createLoan(loanFactory, USDC, WETH, specs2, calcs2);
+        loan  = eli.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan2 = fay.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs2, calcs2);
     }
 
     function test_stake_and_finalize() public {

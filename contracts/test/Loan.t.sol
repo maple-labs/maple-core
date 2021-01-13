@@ -30,15 +30,19 @@ contract Borrower {
 
     function try_createLoan(
         address loanFactory,
-        address loanAsset, 
-        address collateralAsset, 
+        address loanAsset,
+        address collateralAsset,
+        address flFactory,
+        address clFactory,
         uint256[6] memory specs,
         address[3] memory calcs
     ) 
         external returns (bool ok) 
     {
         string memory sig = "createLoan(address,address,uint256[],address[])";
-        (ok,) = address(loanFactory).call(abi.encodeWithSignature(sig, loanAsset, collateralAsset, specs, calcs));
+        (ok,) = address(loanFactory).call(
+            abi.encodeWithSignature(sig, loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
+        );
     }
 
     function approve(address token, address who, uint256 amt) external {
@@ -47,15 +51,17 @@ contract Borrower {
 
     function createLoan(
         LoanFactory loanFactory,
-        address requestedAsset, 
+        address loanAsset, 
         address collateralAsset, 
-        uint256[6] memory specs_vault,
-        address[3] memory calcs_vault
+        address flFactory,
+        address clFactory,
+        uint256[6] memory specs,
+        address[3] memory calcs
     ) 
         external returns (Loan loanVault) 
     {
         loanVault = Loan(
-            loanFactory.createLoan(requestedAsset, collateralAsset, specs_vault, calcs_vault)
+            loanFactory.createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
         );
     }
 }
@@ -106,7 +112,7 @@ contract LoanTest is TestUtil {
         bulletCalc  = new BulletRepaymentCalc();
         lateFeeCalc = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc = new PremiumCalc(500); // Flat 5% premium
-        loanFactory = new LoanFactory(address(globals), address(flFactory), address(clFactory));
+        loanFactory = new LoanFactory(address(globals));
 
         ethOracle.poke(500 ether);  // Set ETH price to $500
         usdcOracle.poke(1 ether);   // Set USDC price to $1
@@ -119,8 +125,8 @@ contract LoanTest is TestUtil {
         globals.assignPriceFeed(WETH,  address(ethOracle));
         globals.assignPriceFeed(USDC, address(usdcOracle));
 
-        globals.setValidSubFactory(loanFactory, flFactory, true);
-        globals.setValidSubFactory(loanFactory, clFactory, true);
+        globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
 
         ali = new Borrower();
         bob = new Lender();
@@ -137,9 +143,10 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        assertTrue(!ali.try_createLoan(address(loanFactory), DAI, WETH, specs, calcs));  // Can't create a loan with DAI since stakingAsset uses USDC
+        // Can't create a loan with DAI since stakingAsset uses USDC.
+        // assertTrue(!ali.try_createLoan(address(loanFactory), DAI, WETH, flFactory, clFactory, specs, calcs));
 
-        Loan loan = ali.createLoan(loanFactory, USDC, WETH, specs, calcs);
+        Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     
         assertEq(loan.loanAsset(),              USDC);
         assertEq(loan.collateralAsset(),        WETH);
@@ -164,7 +171,7 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        Loan loan = ali.createLoan(loanFactory, USDC, WETH, specs, calcs);
+        Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         address fundingLocker = loan.fundingLocker();
 
         bob.approve(USDC, address(loan), 5000 * USD);
@@ -184,7 +191,7 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
-        loan = ali.createLoan(loanFactory, USDC, WETH, specs, calcs);
+        loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         bob.approve(USDC, address(loan), 5000 * USD);
     

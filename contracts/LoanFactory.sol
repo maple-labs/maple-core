@@ -134,20 +134,5 @@ contract LoanFactory {
         loansCreated++;
         return address(loan);
     }
-
-    /**
-        @dev Governor can adjust the flFactory.
-        @param  _flFactory The new flFactory address.
-    */
-    function setFundingLockerFactory(address _flFactory) public isGovernor {
-        flFactory = _flFactory;
-    }
     
-    /**
-        @dev Governor can adjust the clFactory.
-        @param  _clFactory The new clFactory address.
-    */
-    function setCollateralLockerFactory(address _clFactory) public isGovernor {
-        clFactory = _clFactory;
-    }
 }

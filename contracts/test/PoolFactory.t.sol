@@ -27,6 +27,8 @@ contract PoolDelegate {
         address poolFactory, 
         address liquidityAsset,
         address stakeAsset,
+        address slFactory, 
+        address llFactory,
         uint256 stakingFee,
         uint256 delegateFee
     ) 
@@ -34,7 +36,7 @@ contract PoolDelegate {
     {
         string memory sig = "createPool(address,address,uint256,uint256)";
         (ok,) = address(poolFactory).call(
-            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, stakingFee, delegateFee)
+            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, slFactory, llFactory, stakingFee, delegateFee)
         );
     }
 }
@@ -58,13 +60,13 @@ contract PoolFactoryTest is TestUtil {
         globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
         slFactory   = new StakeLockerFactory();
         llFactory   = new LiquidityLockerFactory();
-        poolFactory = new PoolFactory(address(globals), address(slFactory), address(llFactory));
+        poolFactory = new PoolFactory(address(globals));
         daiOracle   = new DSValue();
         usdcOracle  = new DSValue();
         ali         = new PoolDelegate();
 
-        globals.setValidSubFactory(poolFactory, slFactory, true);
-        globals.setValidSubFactory(poolFactory, llFactory, true);
+        globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
+        globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
 
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
 
@@ -90,6 +92,8 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));
@@ -102,6 +106,8 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(ali),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));
@@ -114,6 +120,8 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));
@@ -142,6 +150,8 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));
@@ -158,6 +168,8 @@ contract PoolFactoryTest is TestUtil {
             address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));

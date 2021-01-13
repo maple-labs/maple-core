@@ -15,10 +15,9 @@ import "./interfaces/ILiquidityLocker.sol";
 import "./interfaces/ILiquidityLockerFactory.sol";
 import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IDebtLocker.sol";
-import "./interfaces/ILoan.sol";
 import "./interfaces/IERC20Details.sol";
 
-import "./LiquidityLockerFactory.sol";
+// import "./LiquidityLockerFactory.sol";
 
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
