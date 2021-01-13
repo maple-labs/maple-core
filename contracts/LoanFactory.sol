@@ -11,9 +11,7 @@ contract LoanFactory {
 
     using SafeMath for uint256;
 
-    address public immutable globals;    // The MapleGlobals.sol contract.
-    address public           flFactory;  // The FundingLockerFactory to use for this LoanFactory.
-    address public           clFactory;  // The CollateralLockerFactory to use for this LoanFactory.
+    address public immutable globals;  // The MapleGlobals.sol contract.
 
     uint256 public loansCreated;  // Incrementor for number of loan vaults created.
 
@@ -34,10 +32,8 @@ contract LoanFactory {
         string symbol
     );
     
-    constructor(address _globals, address _flFactory, address _clFactory) public {
+    constructor(address _globals) public {
         globals   = _globals;
-        flFactory = _flFactory;
-        clFactory = _clFactory;
     }
 
     // Authorization to call Treasury functions.
@@ -66,6 +62,8 @@ contract LoanFactory {
     function createLoan(
         address loanAsset,
         address collateralAsset,
+        address flFactory,
+        address clFactory,
         uint256[6] memory specs,
         address[3] memory calcs
     ) public returns (address) {
@@ -75,6 +73,14 @@ contract LoanFactory {
         address lateFeeCalc  = calcs[1];
         address premiumCalc  = calcs[2];
 
+        require(
+            collateralAsset != address(0),
+            "LoanFactory::createLoan:ERR_NULL_ASSET_COLLATERAL"
+        );
+        require(
+            IGlobals(globals).isValidCalc(interestCalc),
+            "LoanFactory::createLoan:ERR_NULL_ASSET_COLLATERAL"
+        );
         require(
             collateralAsset != address(0),
             "LoanFactory::createLoan:ERR_NULL_ASSET_COLLATERAL"

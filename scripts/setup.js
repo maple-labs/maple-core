@@ -96,8 +96,11 @@ async function main() {
     CollateralLockerFactoryAddress
   );
 
-  await mapleGlobals.setPoolFactory(PoolFactoryAddress);
-  await mapleGlobals.setLoanFactory(LoanFactoryAddress);
+  // await mapleGlobals.setPoolFactory(PoolFactoryAddress);
+  // await mapleGlobals.setLoanFactory(LoanFactoryAddress);
+
+  await mapleGlobal.setValidPoolFactory(PoolFactoryAddress, true);
+  await mapleGlobal.setValidLoanFactory(LoanFactoryAddress, true);
 }
 
 main()

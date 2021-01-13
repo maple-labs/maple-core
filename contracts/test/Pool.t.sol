@@ -352,7 +352,7 @@ contract PoolTest is TestUtil {
 
         assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 100 * USD)); // LoanFactory not in globals
 
-        globals.setLoanFactory(address(loanFactory));
+        globals.setValidLoanFactory(address(loanFactory), true);
 
         assertEq(IERC20(USDC).balanceOf(liqLocker),               100 * USD);  // Balance of Liquidity Locker
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),          0);  // Balance of Funding Locker
@@ -506,7 +506,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
             assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
-            globals.setLoanFactory(address(loanFactory)); // Don't remove, not done in setUp()
+            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
 
         address fundingLocker  = loan.fundingLocker();
@@ -675,7 +675,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool2), 400_000_000 * USD));  // 40% BOB in LP2
             assertTrue(dan.try_deposit(address(pool2), 100_000_000 * USD));  // 10% BOB in LP2
 
-            globals.setLoanFactory(address(loanFactory)); // Don't remove, not done in setUp()
+            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
         
         address fundingLocker  = loan.fundingLocker();
@@ -873,7 +873,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
             assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
-            globals.setLoanFactory(address(loanFactory)); // Don't remove, not done in setUp()
+            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
 
         address fundingLocker  = loan.fundingLocker();
