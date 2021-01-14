@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 set -e
 
@@ -8,6 +9,4 @@ DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 1" dapp --use solc:0
 export DAPP_TEST_TIMESTAMP=$(seth block latest timestamp)
 export DAPP_TEST_NUMBER=$(seth block latest number)
 
-LANG=C.UTF-8 DAPP_SRC="contracts" hevm dapp-test --match "contracts/test/" --rpc="$ETH_RPC_URL" --json-file=out/dapp.sol.json --dapp-root=. --verbose 1
-
-# --match "test_" 
+LANG=C.UTF-8 DAPP_SRC="contracts" hevm dapp-test --rpc="$ETH_RPC_URL" --fuzz-runs 10 --json-file=out/dapp.sol.json --dapp-root=. --verbose 1
