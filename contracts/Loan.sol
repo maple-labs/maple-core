@@ -70,6 +70,16 @@ contract Loan is FDT {
 
     event LoanFunded(uint256 amtFunded, address indexed _fundedBy);
     event BalanceUpdated(address who, address token, uint256 balance);
+    event Drawdown(uint256 drawdownAmt);
+    event PaymentMade(
+        uint totalPaid,
+        uint principalPaid,
+        uint interestPaid,
+        uint paymentsRemaining,
+        uint principalOwed,
+        uint nextPaymentDue,
+        bool latePayment
+    )
 
     /**
         @dev Constructor for a Loan.
@@ -237,6 +247,8 @@ contract Loan is FDT {
         emit BalanceUpdated(fundingLocker,    loanAsset,       IERC20(loanAsset).balanceOf(fundingLocker));
         emit BalanceUpdated(address(this),    loanAsset,       IERC20(loanAsset).balanceOf(address(this)));
         emit BalanceUpdated(treasury,         loanAsset,       IERC20(loanAsset).balanceOf(treasury));
+
+        emit Drawdown(amt);
     }
 
     /**
@@ -262,6 +274,16 @@ contract Loan is FDT {
             interestPaid   = interestPaid.add(interest);
             nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
             paymentsRemaining--;
+
+            emit PaymentMade(
+                paymentAmount, 
+                principal, 
+                interest, 
+                paymentsRemaining, 
+                principalOwed, 
+                nextPaymentDue, 
+                false
+            );
         }
         else if (block.timestamp <= nextPaymentDue.add(IGlobals(globals).gracePeriod())) {
             (
@@ -286,6 +308,16 @@ contract Loan is FDT {
             interestPaid   = interestPaid.add(interest).add(interestExtra);
             nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
             paymentsRemaining--;
+
+            emit PaymentMade(
+                paymentAmount.add(paymentAmountExtra), 
+                principal.add(principalExtra), 
+                interest.add(interestExtra), 
+                paymentsRemaining, 
+                principalOwed, 
+                nextPaymentDue, 
+                true
+            );
         }
         else {
             // TODO: Trigger default, or other action as per business requirements.
