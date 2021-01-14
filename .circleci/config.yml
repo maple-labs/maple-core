@@ -134,8 +134,8 @@ workflows:
   version: 2
   test_all:
     jobs:
-      - dapp_test:
-          context: seth
+      # - dapp_test:
+      #     context: seth
       - dependencies
       - integration_test:
           requires:
@@ -143,7 +143,7 @@ workflows:
       - deploy_kaleido:
           context: kaleido
           requires:
-              - dapp_test
+              # - dapp_test
               - integration_test
           filters:
             branches:
