@@ -79,7 +79,7 @@ contract Loan is FDT {
         uint principalOwed,
         uint nextPaymentDue,
         bool latePayment
-    )
+    );
 
     /**
         @dev Constructor for a Loan.
