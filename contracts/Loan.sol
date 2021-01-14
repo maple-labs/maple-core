@@ -255,80 +255,35 @@ contract Loan is FDT {
         @dev Make the next payment for this loan.
     */
     function makePayment() public isState(State.Active) {
-        if (block.timestamp <= nextPaymentDue) {
+        (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
 
-            (
-                uint256 paymentAmount,
-                uint256 principal,
-                uint256 interest
-            ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
+        require(
+            IERC20(loanAsset).transferFrom(msg.sender, address(this), total),
+            "Loan::makePayment:ERR_LACK_APPROVAL_OR_BALANCE"
+        );
 
-            require(
-                IERC20(loanAsset).transferFrom(msg.sender, address(this), paymentAmount),
-                "Loan::makePayment:ERR_LACK_APPROVAL_OR_BALANCE"
-            );
+        // Update internal accounting variables.
+        principalOwed  = principalOwed.sub(principal);
+        principalPaid  = principalPaid.add(principal);
+        interestPaid   = interestPaid.add(interest);
+        nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
+        paymentsRemaining--;
 
-            // Update internal accounting variables.
-            principalOwed  = principalOwed.sub(principal);
-            principalPaid  = principalPaid.add(principal);
-            interestPaid   = interestPaid.add(interest);
-            nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
-            paymentsRemaining--;
-
-            emit PaymentMade(
-                paymentAmount, 
-                principal, 
-                interest, 
-                paymentsRemaining, 
-                principalOwed, 
-                nextPaymentDue, 
-                false
-            );
-        }
-        else if (block.timestamp <= nextPaymentDue.add(IGlobals(globals).gracePeriod())) {
-            (
-                uint256 paymentAmount,
-                uint256 principal,
-                uint256 interest
-            ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
-            (
-                uint256 paymentAmountExtra,
-                uint256 principalExtra,
-                uint256 interestExtra
-            ) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
-
-            require(
-                IERC20(loanAsset).transferFrom(msg.sender, address(this), paymentAmount.add(paymentAmountExtra)),
-                "Loan::makePayment:ERR_LACK_APPROVAL_OR_BALANCE"
-            );
-
-            // Update internal accounting variables.
-            principalOwed  = principalOwed.sub(principal);
-            principalPaid  = principalPaid.add(principal).add(principalExtra);
-            interestPaid   = interestPaid.add(interest).add(interestExtra);
-            nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
-            paymentsRemaining--;
-
-            emit PaymentMade(
-                paymentAmount.add(paymentAmountExtra), 
-                principal.add(principalExtra), 
-                interest.add(interestExtra), 
-                paymentsRemaining, 
-                principalOwed, 
-                nextPaymentDue, 
-                true
-            );
-        }
-        else {
-            // TODO: Trigger default, or other action as per business requirements.
-        }
+        emit PaymentMade(
+            paymentAmount, 
+            principal, 
+            interest, 
+            paymentsRemaining, 
+            principalOwed, 
+            nextPaymentDue, 
+            false
+        );
 
         // Handle final payment.
         // TODO: Identify any other variables worth resetting on final payment.
         if (paymentsRemaining == 0) {
             loanState = State.Matured;
-            ICollateralLocker(collateralLocker).pull(borrower, IERC20(collateralAsset).balanceOf(collateralLocker));
-
+            ICollateralLocker(collateralLocker).pull(borrower,     IERC20(collateralAsset).balanceOf(collateralLocker));
             emit BalanceUpdated(collateralLocker, collateralAsset, IERC20(collateralAsset).balanceOf(collateralLocker));
         }
 
@@ -345,11 +300,20 @@ contract Loan is FDT {
                 [3] = Payment Due Date
     */
     function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
-        (
-            uint256 total, 
-            uint256 principal,
-            uint256 interest
-        ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
+        (uint256 total, uint256 principal, uint256 interest) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
+
+        if (block.timestamp > nextPaymentDue && block.timestamp <= nextPaymentDue.add(IGlobals(globals).gracePeriod())) {
+
+            (uint256 totalExtra, uint256 principalExtra, uint256 interestExtra) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
+
+            total     = total.add(totalExtra);
+            interest  = interest.add(interestExtra);
+            principal = principal.add(principalExtra);
+            
+        } 
+        else if (block.timestamp > nextPaymentDue.add(IGlobals(globals).gracePeriod())) {
+            // Default flow
+        }
         return (total, principal, interest, nextPaymentDue);
     }
 
@@ -357,11 +321,7 @@ contract Loan is FDT {
         @dev Make the full payment for this loan, a.k.a. "calling" the loan.
     */
     function makeFullPayment() public isState(State.Active) {
-        (
-            uint256 total, 
-            uint256 principal,
-            uint256 interest
-        ) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
+        (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
 
         require(
             IERC20(loanAsset).transferFrom(msg.sender, address(this), total),
@@ -390,11 +350,7 @@ contract Loan is FDT {
                 [3] = Payment Due Date
     */
     function getFullPayment() public view returns(uint256, uint256, uint256) {
-        (
-            uint256 total, 
-            uint256 principal,
-            uint256 interest
-        ) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
+        (uint256 total, uint256 principal, uint256 interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
         return (total, principal, interest);
     }
 

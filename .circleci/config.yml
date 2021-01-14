@@ -9,7 +9,7 @@ aliases:
       - image: circleci/node:10
 
 jobs:
-  unit_test:
+  dapp_test:
     docker:
       - image: nixorg/nix:circleci
     steps:
@@ -33,8 +33,8 @@ jobs:
           command: |
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
-            chmod +x test.sh
-            ./test.sh
+            chmod +x test-ci.sh
+            ./test-ci.sh
 
   dependencies:
     <<: *defaults
@@ -97,7 +97,7 @@ jobs:
             source $BASH_ENV
       - run:
           name: Deploy contracts to Kaleido
-          command: cd ~/project && yarn kaleido:all:migrate && cd packages/maple-core && HARDHAT_NETWORK=private yarn test test/cycle.js
+          command: rm -rf ~/project/packages/contracts/private && cd ~/project && yarn kaleido:all:migrate && cd packages/maple-core && HARDHAT_NETWORK=private yarn test test/cycle.js
       - persist_to_workspace:
           root: ~/project
           paths:
@@ -134,8 +134,8 @@ workflows:
   version: 2
   test_all:
     jobs:
-      # - unit_test:
-      #     context: seth
+      - dapp_test:
+          context: seth
       - dependencies
       - integration_test:
           requires:
@@ -143,7 +143,7 @@ workflows:
       - deploy_kaleido:
           context: kaleido
           requires:
-              # - unit_test
+              - dapp_test
               - integration_test
           filters:
             branches:
