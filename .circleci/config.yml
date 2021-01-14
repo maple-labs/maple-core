@@ -96,7 +96,7 @@ jobs:
             source $BASH_ENV
       - run:
           name: Deploy contracts to Kaleido
-          command: rm -rf ~/project/packages/contracts/private && cd ~/project && yarn kaleido:all:migrate && cd packages/maple-core && HARDHAT_NETWORK=private yarn test test/cycle.js
+          command: cd ~/project && yarn kaleido:all:migrate && cd packages/maple-core && HARDHAT_NETWORK=private yarn test test/cycle.js
       - persist_to_workspace:
           root: ~/project
           paths:
