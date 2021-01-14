@@ -41,17 +41,21 @@ contract PoolDelegate {
     }
 
     function createPool(
-        address liqPoolFactory, 
-        address liqAsset,
+        address poolFactory, 
+        address liquidityAsset,
         address stakeAsset,
+        address slFactory, 
+        address llFactory,
         uint256 stakingFee,
         uint256 delegateFee
     ) 
         external returns (address liquidityPool) 
     {
-        liquidityPool = IPoolFactory(liqPoolFactory).createPool(
-            liqAsset,
+        liquidityPool = IPoolFactory(poolFactory).createPool(
+            liquidityAsset,
             stakeAsset,
+            slFactory,
+            llFactory,
             stakingFee,
             delegateFee
         );
@@ -105,15 +109,17 @@ contract Borrower {
 
     function createLoan(
         LoanFactory loanFactory,
-        address requestedAsset, 
+        address loanAsset, 
         address collateralAsset, 
+        address flFactory,
+        address clFactory,
         uint256[6] memory specs,
         address[3] memory calcs
     ) 
-        external returns (Loan loan) 
+        external returns (Loan loanVault) 
     {
-        loan = Loan(
-            loanFactory.createLoan(requestedAsset, collateralAsset, specs, calcs)
+        loanVault = Loan(
+            loanFactory.createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
         );
     }
 }
@@ -132,9 +138,9 @@ contract BulletRepaymentCalcTest is TestUtil {
     LoanFactory                    loanFactory;
     Loan                                  loan;
     Loan                                 loan2;
-    PoolFactory                 liqPoolFactory;
-    StakeLockerFactory           stakeLFactory;
-    LiquidityLockerFactory         liqLFactory; 
+    PoolFactory                 poolFactory;
+    StakeLockerFactory               slFactory;
+    LiquidityLockerFactory         llFactory; 
     DebtLockerFactory               dlFactory1; 
     DebtLockerFactory               dlFactory2; 
     Pool                                 pool1; 
@@ -158,13 +164,13 @@ contract BulletRepaymentCalcTest is TestUtil {
     function setUp() public {
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = new MapleGlobals(address(this), address(mpl));
+        globals        = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
         flFactory      = new FundingLockerFactory();
         clFactory      = new CollateralLockerFactory();
-        loanFactory    = new LoanFactory(address(globals), address(flFactory), address(clFactory));
-        stakeLFactory  = new StakeLockerFactory();
-        liqLFactory    = new LiquidityLockerFactory();
-        liqPoolFactory = new PoolFactory(address(globals), address(stakeLFactory), address(liqLFactory));
+        loanFactory    = new LoanFactory(address(globals));
+        slFactory      = new StakeLockerFactory();
+        llFactory      = new LiquidityLockerFactory();
+        poolFactory    = new PoolFactory(address(globals));
         dlFactory1     = new DebtLockerFactory();
         dlFactory2     = new DebtLockerFactory();
         ethOracle      = new DSValue();
@@ -178,13 +184,20 @@ contract BulletRepaymentCalcTest is TestUtil {
         fay            = new Borrower();
         trs            = new Treasury();
 
-        globals.setMapleTreasury(address(trs));
+        globals.setValidLoanFactory(address(loanFactory), true);
+        globals.setValidLoanFactory(address(poolFactory), true);
+
+        globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
+
+        globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
+        globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
 
         ethOracle.poke(500 ether);  // Set ETH price to $600
         usdcOracle.poke(1 ether);    // Set USDC price to $1
 
         // Mint 50m USDC into this account
-        mint("USDC", address(this), 50_000_000 * 10 ** 6);
+        mint("USDC", address(this), 50_000_000 * USD);
 
         // Initialize MPL/USDC Balancer pool (without finalizing)
         bPool = IBPool(IBPoolFactory(BPOOL_FACTORY).newBPool());
@@ -192,16 +205,17 @@ contract BulletRepaymentCalcTest is TestUtil {
         IERC20(USDC).approve(address(bPool), uint(-1));
         mpl.approve(address(bPool), uint(-1));
 
-        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 ether);          // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 ether);   // Bind 50m USDC with 5 denormalization weight
         bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
 
-        assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * 10 ** 6);
-        assertEq(mpl.balanceOf(address(bPool)),   100_000 * WAD);
+        assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * USD);
+        assertEq(mpl.balanceOf(address(bPool)),             100_000 * WAD);
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
         globals.setPoolDelegateWhitelist(address(sid), true);
         globals.setPoolDelegateWhitelist(address(joe), true);
+        globals.setMapleTreasury(address(trs));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
@@ -212,20 +226,21 @@ contract BulletRepaymentCalcTest is TestUtil {
 
         // Set Globals
         globals.setCalc(address(bulletCalc),  true);
+        globals.setCalc(address(lateFeeCalc), true);
+        globals.setCalc(address(premiumCalc), true);
         globals.setCollateralAsset(WETH, true);
         globals.setLoanAsset(USDC, true);
         globals.assignPriceFeed(WETH, address(ethOracle));
         globals.assignPriceFeed(USDC, address(usdcOracle));
-        globals.setMapleBPool(address(bPool));
-        globals.setMapleBPoolAssetPair(USDC);
-        globals.setStakeRequired(100 * 10 ** 6);
-        globals.setLoanFactory(address(loanFactory)); // Don't remove, not done in setUp()
+        globals.setSwapOutRequired(100);
 
         // Create and finalize Liquidity Pool
         pool1 = Pool(sid.createPool(
-            address(liqPoolFactory),
+            address(poolFactory),
             USDC,
             address(bPool),
+            address(slFactory),
+            address(llFactory),
             500,
             100
         ));
@@ -260,7 +275,7 @@ contract BulletRepaymentCalcTest is TestUtil {
             // Create loan, fund loan, draw down on loan
             address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
             uint256[6] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000, 7];
-            loan = eli.createLoan(loanFactory, USDC, WETH, specs, calcs);
+            loan = eli.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
         }
 
         assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), loanAmt));
