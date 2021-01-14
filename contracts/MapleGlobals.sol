@@ -135,7 +135,7 @@ contract MapleGlobals {
     */
     function assignPriceFeed(address asset, address oracle) external isGovernor {
         assetPriceFeed[asset] = oracle;
-        emit PriceFeedAdded(asset, oracle);
+        emit PriceFeedAssigned(asset, oracle);
     }
 
     /**
