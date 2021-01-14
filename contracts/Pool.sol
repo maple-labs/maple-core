@@ -48,7 +48,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
 
     mapping(address => uint256)                     public depositDate;      // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;      // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
-    mapping(address => bool)                        public stakerWhitelist;  // Whitelist for stakers.
 
     event LoanFunded(address loan, address debtLocker, uint256 amountFunded);
     event BalanceUpdated(address who, address token, uint256 balance);
@@ -105,8 +104,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
         poolDelegate = _poolDelegate;
         stakingFee   = _stakingFee;
         delegateFee  = _delegateFee;
-        
-        stakerWhitelist[_poolDelegate] = true;
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset);
