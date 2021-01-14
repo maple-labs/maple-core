@@ -25,8 +25,7 @@ jobs:
             https://nixos.org/channels/nixpkgs-unstable nixpkgs && \
             nix-channel --update
             nix-env -iA nixpkgs.gnugrep nixpkgs.findutils
-            nix-env -iA dapp hevm seth solc -if https://github.com/dapphub/dapptools/tarball/master --substituters https://dapp.cachix.org --trusted-public-keys dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs=
-            nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_11
+            nix-env -iA dapp hevm seth solc-static-versions.solc_0_6_11 -if https://github.com/dapphub/dapptools/tarball/master --substituters https://dapp.cachix.org --trusted-public-keys dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs=
             dapp update
       - run:
           name: Run unit tests
@@ -134,8 +133,8 @@ workflows:
   version: 2
   test_all:
     jobs:
-      # - dapp_test:
-      #     context: seth
+      - dapp_test:
+          context: seth
       - dependencies
       - integration_test:
           requires:
@@ -143,7 +142,7 @@ workflows:
       - deploy_kaleido:
           context: kaleido
           requires:
-              # - dapp_test
+              - dapp_test
               - integration_test
           filters:
             branches:
