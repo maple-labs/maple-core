@@ -46,7 +46,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     bool public isFinalized;  // True if this Pool is setup and the poolDelegate has met staking requirements.
     bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
 
-    mapping(address => uint256)                     public depositDate;   // Used for interest penalty calculation
+    mapping(address => uint256)                     public depositDate;  // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
 
     event LoanFunded(address loan, address debtLocker, uint256 amountFunded);
@@ -109,7 +109,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset);
         liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
 
-        // Withdrawl penalty variable defaults
+        // Withdrawal penalty default settings.
         principalPenalty = 500;
         interestDelay    = 30 days;
     }
