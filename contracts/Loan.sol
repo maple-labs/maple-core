@@ -270,7 +270,7 @@ contract Loan is FDT {
         paymentsRemaining--;
 
         emit PaymentMade(
-            paymentAmount, 
+            total, 
             principal, 
             interest, 
             paymentsRemaining, 
