@@ -40,6 +40,7 @@ contract MapleGlobals {
 
     event CollateralAssetSet(address asset, uint256 decimals, bool valid);
     event       LoanAssetSet(address asset, uint256 decimals, bool valid);
+    event  PriceFeedAssigned(address asset, address oracle);
 
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
@@ -134,6 +135,7 @@ contract MapleGlobals {
     */
     function assignPriceFeed(address asset, address oracle) external isGovernor {
         assetPriceFeed[asset] = oracle;
+        emit PriceFeedAssigned(asset, oracle);
     }
 
     /**
