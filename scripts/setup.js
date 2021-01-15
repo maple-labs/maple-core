@@ -64,6 +64,13 @@ async function main() {
   const BTC_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_TWO);
   const DAI_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_THREE);
 
+  await mapleGlobals.setLoanAsset(USDCAddress, true);
+  await mapleGlobals.setLoanAsset(DAIAddress, true);
+  await mapleGlobals.setCollateralAsset(DAIAddress, true);
+  await mapleGlobals.setCollateralAsset(USDCAddress, true);
+  await mapleGlobals.setCollateralAsset(WETHAddress, true);
+  await mapleGlobals.setCollateralAsset(WBTCAddress, true);
+
   await mapleGlobals.assignPriceFeed(USDCAddress, DAI_USD_ORACLE_ADDRESS);
   await mapleGlobals.assignPriceFeed(DAIAddress, DAI_USD_ORACLE_ADDRESS);
   await mapleGlobals.assignPriceFeed(WBTCAddress, BTC_USD_ORACLE_ADDRESS);
@@ -72,13 +79,6 @@ async function main() {
   const updateGlobals = await mapleGlobals.setMapleTreasury(
     MapleTreasuryAddress
   );
-
-  await mapleGlobals.setLoanAsset(USDCAddress, true);
-  await mapleGlobals.setLoanAsset(DAIAddress, true);
-  await mapleGlobals.setCollateralAsset(DAIAddress, true);
-  await mapleGlobals.setCollateralAsset(USDCAddress, true);
-  await mapleGlobals.setCollateralAsset(WETHAddress, true);
-  await mapleGlobals.setCollateralAsset(WBTCAddress, true);
 
   await mapleGlobals.setCalc(BulletRepaymentCalc, true);
   await mapleGlobals.setCalc(LateFeeCalc, true);
