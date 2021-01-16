@@ -3,11 +3,12 @@ pragma solidity >=0.6.11;
 
 import "./Loan.sol";
 import "./library/TokenUUID.sol";
+import "./LockerFactoryTypes.sol";
 
 interface ICalc { function calcType() external returns (bytes32); }
 
 /// @title LoanFactory instantiates Loan contracts.
-contract LoanFactory {
+contract LoanFactory is LockerFactoryTypes {
 
     using SafeMath for uint256;
 
@@ -76,11 +77,11 @@ contract LoanFactory {
         address premiumCalc  = calcs[2];
 
         require(
-            IGlobals(globals).isValidSubFactory(address(this), flFactory, "FundingLockerFactory"),
+            IGlobals(globals).isValidSubFactory(address(this), flFactory, FUNDING_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_FUNDING_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).isValidSubFactory(address(this), clFactory, "CollateralLockerFactory"),
+            IGlobals(globals).isValidSubFactory(address(this), clFactory, COLLATERAL_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_FUNDING_COLLATERAL_FACTORY"
         );
         require(

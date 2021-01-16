@@ -9,7 +9,7 @@ contract CollateralLockerFactory {
     mapping(address => address) public owner;     // owner[locker] = Owner of the collateral locker.
     mapping(address => bool)    public isLocker;  // True if collateral locker was created by this factory, otherwise false.
 
-    bytes32 public factoryType = "CollateralLockerFactory";
+    uint8 public constant factoryType = 0;        // i.e LockerFactoryTypes::COLLATERAL_LOCKER_FACTORY.
 
     /**
         @dev Instantiate a CollateralLocker contract.

@@ -2,5 +2,5 @@
 pragma solidity >=0.6.11;
 
 interface ISubFactory {
-    function factoryType() external returns (bytes32);
+    function factoryType() external returns (uint8);
 }

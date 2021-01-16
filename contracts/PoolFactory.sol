@@ -4,8 +4,9 @@ pragma solidity >=0.6.11;
 import "./Pool.sol";
 import "./interfaces/IBFactory.sol";
 import "./library/TokenUUID.sol";
+import "./LockerFactoryTypes.sol";
 
-contract PoolFactory {
+contract PoolFactory is LockerFactoryTypes {
 
     uint256 public poolsCreated;  // Incrementor for number of LPs created
     address public globals;       // The MapleGlobals.sol contract
@@ -50,11 +51,11 @@ contract PoolFactory {
     ) public returns (address) {
         
         require(
-            IGlobals(globals).isValidSubFactory(address(this), llFactory, "LiquidityLockerFactory"),
+            IGlobals(globals).isValidSubFactory(address(this), llFactory, LIQUIDITY_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_LIQUIDITY_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).isValidSubFactory(address(this), slFactory, "StakeLockerFactory"),
+            IGlobals(globals).isValidSubFactory(address(this), slFactory, STAKE_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_STAKE_LOCKER_FACTORY"
         );
         require(
