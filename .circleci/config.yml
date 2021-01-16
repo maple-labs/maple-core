@@ -78,11 +78,13 @@ jobs:
           name: Deploy Core and Dependency Contracts to Hardhat chain
           command: cd ~/project && yarn deploy
       - run:
-          name: Run Tests on Localhost
+          name: Set Env Variables
           command: |
             echo 'export NETWORK="localhost"' >> $BASH_ENV
             source $BASH_ENV
-            cd ~/project && yarn test
+      - run:
+          name: Run Local tests
+          command: cd ~/project && yarn test
       - run:
           name: Stop Hardhat chain
           command: pkill node

@@ -7,7 +7,7 @@
     "download": "node scripts/download.js",
     "console": "npx hardhat console",
     "chain": "hardhat node",
-    "deploy": "yarn migrate-token&& hardhat run scripts/deploy.js && hardhat run scripts/publish.js",
+    "deploy": "npx hardhat run scripts/deploy.js && hardhat run scripts/publish.js",
     "coverage": "npx hardhat coverage --network coverage",
     "migrate-token": "npx hardhat run scripts/migrate-token.js && npx hardhat run scripts/publish.js",
     "compile": "hardhat compile",
