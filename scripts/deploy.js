@@ -1,59 +1,49 @@
+const { ethers } = require("hardhat");
 const { deploy } = require("@maplelabs/hardhat-scripts");
-const artpath = "../../contracts/" + network.name + "/";
-
-const DAIAddress              = require(artpath + "addresses/MintableTokenDAI.address.js");
-const USDCAddress             = require(artpath + "addresses/MintableTokenUSDC.address.js");
-const WETHAddress             = require(artpath + "addresses/WETH9.address.js");
-const WBTCAddress             = require(artpath + "addresses/WBTC.address.js");
-const uniswapRouter           = require(artpath + "addresses/UniswapV2Router02.address.js");
-const ChainLinkFactoryAddress = require(artpath + "addresses/ChainLinkEmulatorFactory.address.js");
-const ChainLinkFactoryABI     = require(artpath + "abis/ChainLinkEmulatorFactory.abi.js");
-const MapleTokenAddress       = require(artpath + "addresses/MapleToken.address.js");
-const ChainLinkEmulatorABI    = require(artpath + "abis/ChainLinkEmulator.abi.js");
-const BFactoryAddress         = require(artpath + "addresses/BFactory.address.js");
+const { CORE, DEPS, getArtifacts } = require("./artifacts");
 
 async function main() {
-  /*  const mpl = await deploy("MapleToken", [
-    "MapleToken",
-    "MPL",
-    USDCAddress,
-  ]);*/
-
-  // Governor = accounts[0]
   const accounts = await ethers.provider.listAccounts();
 
-  const mapleGlobals = await deploy("MapleGlobals", [
+  // Get artifacts for Dependencies
+  const USDC = getArtifacts(DEPS.USDC);
+  const BFactory = getArtifacts(DEPS.BFactory);
+  const UniswapV2Router02 = getArtifacts(DEPS.UniswapV2Router02);
+
+  // Get artifacts for Maple Core
+  const MapleToken = getArtifacts(CORE.MapleToken);
+
+  const mapleGlobals = await deploy(CORE.MapleGlobals, [
     accounts[0],
-    MapleTokenAddress,
-    BFactoryAddress
+    MapleToken.address,
+    BFactory.address,
   ]);
 
-  const StakeLockerFactory = await deploy("StakeLockerFactory");
+  try {
+    await mapleGlobals.deployed();
+  } catch (err) {
+    console.log(err);
+    throw new Error(`Deploy failed ${CORE.MapleToken}`);
+  }
 
-  const LiquidityLockerFactory = await deploy("LiquidityLockerFactory");
+  await deploy(CORE.DebtLockerFactory);
+  await deploy(CORE.StakeLockerFactory);
+  await deploy(CORE.LiquidityLockerFactory);
+  await deploy(CORE.PoolFactory, [mapleGlobals.address]);
 
-  const DebtLockerFactory = await deploy("DebtLockerFactory");
-
-  const PoolFactory = await deploy("PoolFactory", [mapleGlobals.address]);
-
-  const mapleTreasury = await deploy("MapleTreasury", [
-    MapleTokenAddress,
-    USDCAddress,
-    uniswapRouter,
+  await deploy(CORE.MapleTreasury, [
+    MapleToken.address,
+    USDC.address,
+    UniswapV2Router02.address,
     mapleGlobals.address,
   ]);
-  
-  const BulletRepaymentCalc = await deploy("BulletRepaymentCalc");
 
-  const LateFeeCalc = await deploy("LateFeeCalc", [0]); // 0% FEE if Late Payment
-
-  const PremiumCalc = await deploy("PremiumCalc", [200]); // 2% FEE on Principal
-
-  const CollateralLockerFactory = await deploy("CollateralLockerFactory");
-
-  const FundingLockerFactory = await deploy("FundingLockerFactory");
-
-  const LoanFactory = await deploy("LoanFactory", [mapleGlobals.address]);
+  await deploy(CORE.LateFeeCalc, [0]); // 0% FEE if Late Payment
+  await deploy(CORE.PremiumCalc, [200]); // 2% FEE on Principal
+  await deploy(CORE.BulletRepaymentCalc);
+  await deploy(CORE.FundingLockerFactory);
+  await deploy(CORE.CollateralLockerFactory);
+  await deploy(CORE.LoanFactory, [mapleGlobals.address]);
 }
 
 main()

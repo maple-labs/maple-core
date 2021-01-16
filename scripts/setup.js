@@ -1,47 +1,62 @@
-const { expect } = require("chai");
-const { BigNumber } = require("ethers");
-const artpath = "../../contracts/" + network.name + "/";
-
-const BCreatorABI     = require(artpath + "abis/BCreator.abi.js");
-const BCreatorAddress = require(artpath + "addresses/BCreator.address.js");
-
-const USDCAddress = require(artpath + "addresses/MintableTokenUSDC.address.js");
-const DAIAddress  = require(artpath + "addresses/MintableTokenDAI.address.js");
-const WETHAddress = require(artpath + "addresses/WETH9.address.js");
-const WBTCAddress = require(artpath + "addresses/WBTC.address.js");
-
-const BulletRepaymentCalc = require(artpath + "addresses/BulletRepaymentCalc.address.js");
-const LateFeeCalc         = require(artpath + "addresses/LateFeeCalc.address.js");
-const PremiumCalc         = require(artpath + "addresses/PremiumCalc.address.js");
-
-const MapleGlobalsAddress            = require(artpath + "addresses/MapleGlobals.address.js");
-const MapleGlobalsABI                = require(artpath + "abis/MapleGlobals.abi.js");
-const LoanFactoryAddress             = require(artpath + "addresses/LoanFactory.address.js");
-const LoanFactoryABI                 = require(artpath + "abis/LoanFactory.abi.js");
-const PoolFactoryAddress             = require(artpath + "addresses/PoolFactory.address");
-const CollateralLockerFactoryAddress = require(artpath + "addresses/CollateralLockerFactory.address.js");
-const FundingLockerFactoryAddress    = require(artpath + "addresses/FundingLockerFactory.address.js");
-const StakeLockerFactoryAddress      = require(artpath + "addresses/StakeLockerFactory.address.js");
-const LiquidityLockerFactoryAddress  = require(artpath + "addresses/LiquidityLockerFactory.address.js");
-const MapleTreasuryAddress           = require(artpath + "addresses/MapleTreasury.address.js");
-const ChainLinkFactoryAddress        = require(artpath + "addresses/ChainLinkEmulatorFactory.address.js");
-const ChainLinkFactoryABI            = require(artpath + "abis/ChainLinkEmulatorFactory.abi.js");
-const ChainLinkEmulatorABI           = require(artpath + "abis/ChainLinkEmulator.abi.js");
+/*
+  This scripts deploys the global dependencies
+*/
+const { providers } = require("ethers");
+const { ethers } = require("hardhat");
+const { getArtifacts, CORE, DEPS } = require("./artifacts");
 
 async function main() {
+  // Get dependency artifacts
+  const DAI = getArtifacts(DEPS.DAI);
+  const USDC = getArtifacts(DEPS.USDC);
+  const WBTC = getArtifacts(DEPS.WBTC);
+  const WETH = getArtifacts(DEPS.WETH);
+  const ChainLinkFactory = getArtifacts(DEPS.ChainLinkFactory);
 
-  ChainLinkFactory = new ethers.Contract(
-    ChainLinkFactoryAddress,
-    ChainLinkFactoryABI,
-    ethers.provider.getSigner(0)
+  // Get Maple Core artifacts
+  const LateFeeCalc = getArtifacts(CORE.LateFeeCalc);
+  const PremiumCalc = getArtifacts(CORE.PremiumCalc);
+  const BulletRepaymentCalc = getArtifacts(CORE.BulletRepaymentCalc);
+
+  const MapleGlobals = getArtifacts(CORE.MapleGlobals);
+  const MapleTreasury = getArtifacts(CORE.MapleTreasury);
+
+  const LoanFactory = getArtifacts(CORE.LoanFactory);
+  const PoolFactory = getArtifacts(CORE.PoolFactory);
+  const StakeLockerFactory = getArtifacts(CORE.StakeLockerFactory);
+  const FundingLockerFactory = getArtifacts(CORE.FundingLockerFactory);
+  const LiquidityLockerFactory = getArtifacts(CORE.LiquidityLockerFactory);
+  const CollateralLockerFactory = getArtifacts(CORE.CollateralLockerFactory);
+
+  const signer = ethers.provider.getSigner(0);
+
+  const chainLinkFactory = new ethers.Contract(
+    ChainLinkFactory.address,
+    ChainLinkFactory.abi,
+    signer
   );
 
+  try {
+    await chainLinkFactory.deployed();
+  } catch (err) {
+    console.log(err);
+    throw new Error(`${DEPS.ChainLinkFactory} Not Found`);
+  }
 
-  mapleGlobals = new ethers.Contract(
-    MapleGlobalsAddress,
-    MapleGlobalsABI,
-    ethers.provider.getSigner(0)
+  const mapleGlobals = new ethers.Contract(
+    MapleGlobals.address,
+    MapleGlobals.abi,
+    signer
   );
+
+  try {
+    await mapleGlobals.deployed();
+  } catch (err) {
+    console.log(err);
+    throw new Error(`${CORE.MapleGlobals} Not Found`);
+  }
+
+  await mapleGlobals.setMapleTreasury(MapleTreasury.address);
 
   // Update the MapleGlobals pool delegate whitelist.
   const accounts = await ethers.provider.listAccounts();
@@ -60,49 +75,50 @@ async function main() {
   const PAIR_TWO = "BTC / USD";
   const PAIR_THREE = "DAI / USD";
 
-  const ETH_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_ONE);
-  const BTC_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_TWO);
-  const DAI_USD_ORACLE_ADDRESS = ChainLinkFactory.getOracle(PAIR_THREE);
+  const ETH_USD_ORACLE_ADDRESS = chainLinkFactory.getOracle(PAIR_ONE);
+  const BTC_USD_ORACLE_ADDRESS = chainLinkFactory.getOracle(PAIR_TWO);
+  const DAI_USD_ORACLE_ADDRESS = chainLinkFactory.getOracle(PAIR_THREE);
 
-  await mapleGlobals.assignPriceFeed(USDCAddress, DAI_USD_ORACLE_ADDRESS);
-  await mapleGlobals.assignPriceFeed(DAIAddress, DAI_USD_ORACLE_ADDRESS);
-  await mapleGlobals.assignPriceFeed(WBTCAddress, BTC_USD_ORACLE_ADDRESS);
-  await mapleGlobals.assignPriceFeed(WETHAddress, ETH_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(DAI.address, DAI_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(USDC.address, DAI_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WBTC.address, BTC_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WETH.address, ETH_USD_ORACLE_ADDRESS);
 
-  const updateGlobals = await mapleGlobals.setMapleTreasury(
-    MapleTreasuryAddress
+  await mapleGlobals.setLoanAsset(DAI.address, true);
+  await mapleGlobals.setLoanAsset(USDC.address, true);
+
+  await mapleGlobals.setCollateralAsset(DAI.address, true);
+  await mapleGlobals.setCollateralAsset(USDC.address, true);
+  await mapleGlobals.setCollateralAsset(WETH.address, true);
+  await mapleGlobals.setCollateralAsset(WBTC.address, true);
+
+  await mapleGlobals.setCalc(BulletRepaymentCalc.address, true);
+  await mapleGlobals.setCalc(LateFeeCalc.address, true);
+  await mapleGlobals.setCalc(PremiumCalc.address, true);
+
+  await mapleGlobals.setValidPoolFactory(PoolFactory.address, true);
+  await mapleGlobals.setValidLoanFactory(LoanFactory.address, true);
+
+  await mapleGlobals.setValidSubFactory(
+    PoolFactory.address,
+    StakeLockerFactory.address,
+    true
   );
-
-  await mapleGlobals.setLoanAsset(USDCAddress, true);
-  await mapleGlobals.setLoanAsset(DAIAddress, true);
-  await mapleGlobals.setCollateralAsset(DAIAddress, true);
-  await mapleGlobals.setCollateralAsset(USDCAddress, true);
-  await mapleGlobals.setCollateralAsset(WETHAddress, true);
-  await mapleGlobals.setCollateralAsset(WBTCAddress, true);
-
-  await mapleGlobals.setCalc(BulletRepaymentCalc, true);
-  await mapleGlobals.setCalc(LateFeeCalc, true);
-  await mapleGlobals.setCalc(PremiumCalc, true);
-
-  const LoanFactory = new ethers.Contract(
-    LoanFactoryAddress,
-    LoanFactoryABI,
-    ethers.provider.getSigner(0)
+  await mapleGlobals.setValidSubFactory(
+    PoolFactory.address,
+    LiquidityLockerFactory.address,
+    true
   );
-
-  // await LoanFactory.setFundingLockerFactory(FundingLockerFactoryAddress);
-  // await LoanFactory.setCollateralLockerFactory(CollateralLockerFactoryAddress);
-
-  // await mapleGlobals.setPoolFactory(PoolFactoryAddress);
-  // await mapleGlobals.setLoanFactory(LoanFactoryAddress);
-
-  await mapleGlobals.setValidPoolFactory(PoolFactoryAddress, true);
-  await mapleGlobals.setValidLoanFactory(LoanFactoryAddress, true);
-
-  await mapleGlobals.setValidSubFactory(PoolFactoryAddress, StakeLockerFactoryAddress, true);
-  await mapleGlobals.setValidSubFactory(PoolFactoryAddress, LiquidityLockerFactoryAddress, true);
-  await mapleGlobals.setValidSubFactory(LoanFactoryAddress, CollateralLockerFactoryAddress, true);
-  await mapleGlobals.setValidSubFactory(LoanFactoryAddress, FundingLockerFactoryAddress, true);
+  await mapleGlobals.setValidSubFactory(
+    LoanFactory.address,
+    CollateralLockerFactory.address,
+    true
+  );
+  await mapleGlobals.setValidSubFactory(
+    LoanFactory.address,
+    FundingLockerFactory.address,
+    true
+  );
 }
 
 main()
