@@ -6,7 +6,7 @@ orbs:
 aliases:
   - &defaults
     docker:
-      - image: circleci/node:10
+      - image: circleci/node:14
 
 jobs:
   dapp_test:
