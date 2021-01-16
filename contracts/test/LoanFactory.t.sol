@@ -48,6 +48,7 @@ contract LoanFactoryTest is TestUtil {
     CollateralLockerFactory   clFactory;
     LoanFactory                lFactory;
     ILoan                          loan;
+    Borrower                   borrower;
 
     uint256 constant MULTIPLIER = 10 ** 6;
 
@@ -62,6 +63,8 @@ contract LoanFactoryTest is TestUtil {
         clFactory   = new CollateralLockerFactory();
         // Step 5: Setup Loan Factory to support Loan creation.
         lFactory    = new LoanFactory(address(globals));
+        // Step 6: Create borrower.
+        borrower    = new Borrower();
     }
 
     function set_calc() public returns (address[3] memory calcs) {
@@ -89,8 +92,7 @@ contract LoanFactoryTest is TestUtil {
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
-        Borrower b  = new Borrower();
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // Add flFactory in valid list
@@ -98,14 +100,14 @@ contract LoanFactoryTest is TestUtil {
         globals.setValidSubFactory(address(lFactory), address(flFactory), true);
 
         // Still fails as clFactory isn't a valid factory.
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
         
         // Add clFactory in the valid list.
         globals.setValidSubFactory(address(lFactory), address(clFactory), true);
 
         // Should successfully created
-        assertTrue(b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");       // Should be incrementer by 1.
     }
 
@@ -117,20 +119,19 @@ contract LoanFactoryTest is TestUtil {
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
-        Borrower b  = new Borrower();
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[1], calcs[1], calcs[2]]));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[1], calcs[1], calcs[2]]));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // Incorrect type for second calculator contract.
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[0], calcs[2], calcs[2]]));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[0], calcs[2], calcs[2]]));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // Incorrect type for third calculator contract.
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[0], calcs[1], calcs[0]]));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[0], calcs[1], calcs[0]]));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // Should successfully created
-        assertTrue(b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");       // Should be incrementer by 1.
     }
 
@@ -139,40 +140,39 @@ contract LoanFactoryTest is TestUtil {
         address[3] memory calcs = set_calc();
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
-        Borrower b  = new Borrower();
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // Whitelist loan asset
         globals.setLoanAsset(USDC, true);
         // Still fails as collateral asset is not a valid collateral asset
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // Set collateral asset
         globals.setCollateralAsset(WETH, true);
         // Still fails as loan asset can't be 0x0
-        assertTrue(!b.try_createPool(address(lFactory), address(0), WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(!borrower.try_createPool(address(lFactory), address(0), WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // Fails because of error - ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 0, 10_000_000 * MULTIPLIER, 30, 5], calcs));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 0, 10_000_000 * MULTIPLIER, 30, 5], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // fails because of error - ERR_INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 19, 2, 10_000_000 * MULTIPLIER, 30, 5], calcs));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 19, 2, 10_000_000 * MULTIPLIER, 30, 5], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // fails because of error - ERR_MIN_RAISE_EQUALS_ZERO
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [uint256(10), 10, 2, uint256(0), 30, 5], calcs));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [uint256(10), 10, 2, uint256(0), 30, 5], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // fails because of error - ERR_FUNDING_PERIOD_EQUALS_ZERO
-        assertTrue(!b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 0], calcs));
+        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 0], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");                     // Should be 0.
 
         // Should successfully created
-        assertTrue(b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");       // Should be incrementer by 1.
     }
 
@@ -184,9 +184,8 @@ contract LoanFactoryTest is TestUtil {
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
-        Borrower b  = new Borrower();
         // Verify the loan gets created successfully.
-        assertTrue(b.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");       // Should be incrementer by 1.
         ILoan loan   = ILoan(lFactory.loans(0));                                      // Intital value of loansCreated.
         assertTrue(lFactory.isLoan(address(loan)));                                 // Should be considered as a loan.
