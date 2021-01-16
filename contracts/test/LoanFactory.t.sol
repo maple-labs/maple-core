@@ -191,7 +191,7 @@ contract LoanFactoryTest is TestUtil {
         assertTrue(lFactory.isLoan(address(loan)));                                 // Should be considered as a loan.
 
         // Verify the storage of loan contract
-        assertEq(loan.borrower(),               address(b));
+        assertEq(loan.borrower(),               address(borrower));
         assertEq(loan.loanAsset(),              USDC);
         assertEq(loan.collateralAsset(),        WETH);
         assertEq(loan.flFactory(),              address(flFactory));

@@ -15,8 +15,10 @@ interface ILoan is IERC20 {
     function clFactory() external view returns (address);
     function borrower() external view returns (address);
     function repaymentCalc() external view returns (address);
+    function lateFeeCalc() external view returns (address);
     function premiumCalc() external view returns (address);
     function loanState() external view returns (uint256);
+    function globals() external view returns (address);
 
     // Loan Specifications
     function apr() external view returns (uint256);
@@ -32,8 +34,10 @@ interface ILoan is IERC20 {
     function interestPaid() external view returns (uint256);
     function feePaid() external view returns (uint256);
     function excessReturned() external view returns (uint256);
-    function getNextPayment() external view returns(uint256, uint256, uint256, uint256);
-    function superFactory() external view returns(address);
+    function getNextPayment() external view returns (uint256, uint256, uint256, uint256);
+    function superFactory() external view returns (address);
+    function termDays() external view returns (uint256);
+    function nextPaymentDue() external view returns (uint256);
     
     // Functions
     function fundLoan(uint256, address) external;
