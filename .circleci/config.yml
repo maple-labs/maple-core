@@ -75,15 +75,15 @@ jobs:
           name: Wait for chain to start
           command: sleep 3
       - run:
-          name: Deploy Core and Dependency Contracts to Hardhat chain
-          command: cd ~/project && yarn deploy
-      - run:
           name: Set Env Variables
           command: |
             echo 'export NETWORK="localhost"' >> $BASH_ENV
             source $BASH_ENV
       - run:
-          name: Run Local tests
+          name: Deploy Core and Dependency Contracts to Hardhat Chain
+          command: cd ~/project && yarn deploy
+      - run:
+          name: Run Integration on Localhost Network
           command: cd ~/project && yarn test
       - run:
           name: Stop Hardhat chain

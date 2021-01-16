@@ -62,14 +62,13 @@ const DEPS = {
 
 function getArtifacts(contract) {
   const network = process.env.NETWORK || "localhost";
-  const version = process.env.VERSION || "current";
 
   if (!contract) {
     throw new Error(`ARTIFACT NOT FOUND IN LOCAL FOLDER: ${contract}`);
   }
 
-  if (!network || !version) {
-    throw new Error("NETWORK and VERSION must be set to env");
+  if (!network) {
+    console.log("WARNING: NETWORK isn't set in env variables");
   }
 
   const contractsDir = path.join(__dirname, "../../contracts");
