@@ -134,6 +134,10 @@ contract MapleGlobals {
         @param  oracle The new oracle to use.
     */
     function assignPriceFeed(address asset, address oracle) external isGovernor {
+        require(
+            isValidLoanAsset[asset] || isValidCollateralAsset[asset],
+            "MapleGlobals::assignPriceFeed:ERR_NOT_WHITELISTED"
+        );
         assetPriceFeed[asset] = oracle;
         emit PriceFeedAssigned(asset, oracle);
     }
