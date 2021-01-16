@@ -3,10 +3,10 @@ pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
-import "../FundingLockerFactory.sol";
-import "../FundingLocker.sol";
 import "../MapleToken.sol";
 import "../MapleGlobals.sol";
+import "../FundingLocker.sol";
+import "../FundingLockerFactory.sol";
 
 contract FundingLockerFactoryTest is TestUtil {
 
@@ -15,26 +15,20 @@ contract FundingLockerFactoryTest is TestUtil {
     FundingLockerFactory      flFactory;
 
     function setUp() public {
-        // Step 1: Setup Maple token.
-        mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        // Step 2: Setup Maple Globals.
-        globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
-        // Step 3: Setup Funding Locker Factory to support Loan Factory creation.
-        flFactory   = new FundingLockerFactory();
-
+        mpl       = new MapleToken("MapleToken", "MAPL", USDC);                    // Setup Maple token.
+        globals   = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
+        flFactory = new FundingLockerFactory();                                    // Setup Funding Locker Factory to support Loan Factory creation.
         assertEq(flFactory.factoryType(), "FundingLockerFactory", "Incorrect factory type");
     }
 
     function test_newLocker() public {
-        FundingLocker cl  = FundingLocker(flFactory.newLocker(USDC));
-        // Validate the storage of dlfactory.
-        assertEq(flFactory.owner(address(cl)), address(this));
-        assertTrue(flFactory.isLocker(address(cl)));
+        FundingLocker fl  = FundingLocker(flFactory.newLocker(USDC));
+        // Validate the storage of flfactory.
+        assertEq(flFactory.owner(address(fl)), address(this));
+        assertTrue(flFactory.isLocker(address(fl)));
 
-        // Validate whether the dl has a FundingLocker interface or not.
-        assertEq(cl.loan(), address(this), "Incorrect loan address");
-        assertEq(cl.loanAsset(), USDC, "Incorrect address of loan asset");
+        // Validate the storage of fl.
+        assertEq(fl.loan(), address(this), "Incorrect loan address");
+        assertEq(fl.loanAsset(), USDC, "Incorrect address of loan asset");
     }
-
-    
 }
