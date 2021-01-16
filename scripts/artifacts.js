@@ -1,4 +1,5 @@
 require("dotenv").config();
+const path = require("path");
 /*
 
 By declaring these contants here it's
@@ -71,9 +72,11 @@ function getArtifacts(contract) {
     throw new Error("NETWORK and VERSION must be set to env");
   }
 
+  const contractsDir = path.join(__dirname, "../../contracts");
+
   return {
-    abi: require(`../../contracts/${network}/abis/${contract}.abi.js`),
-    address: require(`../../contracts/${network}/addresses/${contract}.address.js`),
+    abi: require(`${contractsDir}/${network}/abis/${contract}.abi.js`),
+    address: require(`${contractsDir}/${network}/addresses/${contract}.address.js`),
   };
 }
 

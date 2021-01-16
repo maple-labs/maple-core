@@ -1,7 +1,6 @@
 /*
   This scripts deploys the global dependencies
 */
-const { providers } = require("ethers");
 const { ethers } = require("hardhat");
 const { getArtifacts, CORE, DEPS } = require("./artifacts");
 
