@@ -54,10 +54,5 @@
     "bignumber.js": "^9.0.1",
     "solc": "0.6.11"
   },
-  "main": "index.js",
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn lint"
-    }
-  }
+  "main": "index.js"
 }
