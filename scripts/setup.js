@@ -71,8 +71,6 @@ async function main() {
   await mapleGlobals.assignPriceFeed(WBTC.address, BTC_USD_ORACLE_ADDRESS);
   await mapleGlobals.assignPriceFeed(WETH.address, ETH_USD_ORACLE_ADDRESS);
 
-  await mapleGlobals.setMapleTreasury(MapleTreasury.address);
-
   await mapleGlobals.setCalc(BulletRepaymentCalc.address, true);
   await mapleGlobals.setCalc(LateFeeCalc.address, true);
   await mapleGlobals.setCalc(PremiumCalc.address, true);

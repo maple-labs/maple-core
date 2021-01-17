@@ -148,31 +148,29 @@ workflows:
       - integration_test:
           requires:
             - dependencies
-      - deploy_kaleido:
-          context: kaleido
-          requires:
-            - dapp_test
-            - integration_test
-          filters:
-            branches:
-              only:
-                - master
-                - develop
-                - DEVOPS-1187
-      - upload_kaleido_artifacts_master:
-          context: google-cloud
-          requires:
-            - deploy_kaleido
-          filters:
-            branches:
-              only:
-                - master
-      - upload_kaleido_artifacts_develop:
-          context: google-cloud
-          requires:
-            - deploy_kaleido
-          filters:
-            branches:
-              only:
-                - develop
-                - DEVOPS-1187
+      # - deploy_kaleido:
+      #     context: kaleido
+      #     requires:
+      #       - dapp_test
+      #       - integration_test
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
+      #           - develop
+      # - upload_kaleido_artifacts_master:
+      #     context: google-cloud
+      #     requires:
+      #       - deploy_kaleido
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
+      # - upload_kaleido_artifacts_develop:
+      #     context: google-cloud
+      #     requires:
+      #       - deploy_kaleido
+      #     filters:
+      #       branches:
+      #         only:
+      #           - develop
