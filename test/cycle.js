@@ -380,8 +380,6 @@ describe("Cycle of an entire loan", function () {
   });
 
   it("(P6) Pool delegate funding a loan", async function () {
-    console.log(LoanAddress);
-    console.log(DLFactoryAddress);
 
     // Pool delegate funding the loan.
     await Pool_PoolDelegate.fundLoan(
@@ -406,9 +404,7 @@ describe("Cycle of an entire loan", function () {
 
     // Approve Loan for collateral required. Use "WBTC" object instead if WBTC is collateral.
     await ethers.provider.getSigner(0).sendTransaction({to: WETHAddress, value: collateralRequired});
-    console.log("Minted 100 WETH to account[0]");
     let y = await WETH_Borrower.balanceOf(Accounts[0]);
-    console.log(parseInt(y["_hex"]))
     await WETH_Borrower.approve(LoanAddress, collateralRequired);
 
     // Drawdown.
