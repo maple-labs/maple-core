@@ -404,9 +404,11 @@ describe("Cycle of an entire loan", function () {
       BigNumber.from(10).pow(6).mul(1000)
     );
 
-    // console.log(parseInt(collateralRequired["_hex"]))
-
     // Approve Loan for collateral required. Use "WBTC" object instead if WBTC is collateral.
+    await ethers.provider.getSigner(0).sendTransaction({to: WETHAddress, value: collateralRequired});
+    console.log("Minted 100 WETH to account[0]");
+    let y = await WETH_Borrower.balanceOf(Accounts[0]);
+    console.log(parseInt(y["_hex"]))
     await WETH_Borrower.approve(LoanAddress, collateralRequired);
 
     // Drawdown.
