@@ -35,25 +35,11 @@ async function main() {
     signer
   );
 
-  try {
-    await chainLinkFactory.deployed();
-  } catch (err) {
-    console.log(err);
-    throw new Error(`${DEPS.ChainLinkFactory} Not Found`);
-  }
-
   const mapleGlobals = new ethers.Contract(
     MapleGlobals.address,
     MapleGlobals.abi,
     signer
   );
-
-  try {
-    await mapleGlobals.deployed();
-  } catch (err) {
-    console.log(err);
-    throw new Error(`${CORE.MapleGlobals} Not Found`);
-  }
 
   await mapleGlobals.setMapleTreasury(MapleTreasury.address);
 
@@ -78,13 +64,33 @@ async function main() {
   const BTC_USD_ORACLE_ADDRESS = chainLinkFactory.getOracle(PAIR_TWO);
   const DAI_USD_ORACLE_ADDRESS = chainLinkFactory.getOracle(PAIR_THREE);
 
-  await mapleGlobals.assignPriceFeed(DAI.address, DAI_USD_ORACLE_ADDRESS);
-  await mapleGlobals.assignPriceFeed(USDC.address, DAI_USD_ORACLE_ADDRESS);
-  await mapleGlobals.assignPriceFeed(WBTC.address, BTC_USD_ORACLE_ADDRESS);
-  await mapleGlobals.assignPriceFeed(WETH.address, ETH_USD_ORACLE_ADDRESS);
 
   await mapleGlobals.setLoanAsset(DAI.address, true);
   await mapleGlobals.setLoanAsset(USDC.address, true);
+
+  await mapleGlobals.setCollateralAsset(DAI.address, true);
+  await mapleGlobals.setCollateralAsset(USDC.addess, true);
+  await mapleGlobals.setCollateralAsset(WETH.address, true);
+  await mapleGlobals.setCollateralAsset(WBTC.address, true);
+
+  await mapleGlobals.assignPriceFeed(USDC.address, DAI_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(DAI.address, DAI_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WBTC.address, BTC_USD_ORACLE_ADDRESS);
+  await mapleGlobals.assignPriceFeed(WETH.address, ETH_USD_ORACLE_ADDRESS);
+
+  const updateGlobals = await mapleGlobals.setMapleTreasury(
+    MapleTreasury.address
+  );
+
+  await mapleGlobals.setCalc(BulletRepaymentCalc, true);
+  await mapleGlobals.setCalc(LateFeeCalc, true);
+  await mapleGlobals.setCalc(PremiumCalc, true);
+
+  const LoanFactory = new ethers.Contract(
+    LoanFactory.address,
+    LoanFactory.address,
+    ethers.provider.getSigner(0)
+  );
 
   await mapleGlobals.setCollateralAsset(DAI.address, true);
   await mapleGlobals.setCollateralAsset(USDC.address, true);
