@@ -2,7 +2,6 @@
 
 pragma solidity >=0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./token/FDT.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/IFundingLocker.sol";
@@ -25,18 +24,18 @@ contract Loan is FDT {
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
 
-    address public immutable loanAsset;         // Asset deposited by lenders into the FundingLocker, when funding this loan.
-    address public immutable collateralAsset;   // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
-    address public immutable fundingLocker;     // Funding locker - holds custody of loan funds before drawdown    
-    address public immutable flFactory;         // Funding locker factory
-    address public immutable collateralLocker;  // Collateral locker - holds custody of loan collateral
-    address public immutable clFactory;         // Collateral locker factory
-    address public immutable borrower;          // Borrower of this loan, responsible for repayments.
-    address public immutable globals;           // Maple Globals
-    address public immutable repaymentCalc;     // The repayment calculator for this loan.
-    address public immutable lateFeeCalc;       // The late fee calculator for this loan.
-    address public immutable premiumCalc;       // The premium calculator for this loan.
-    address public immutable superFactory;      // The factory that deployed this Loan.
+    IERC20Details public immutable loanAsset;        // Asset deposited by lenders into the FundingLocker, when funding this loan.
+    IERC20Details public immutable collateralAsset;  // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
+    address public immutable fundingLocker;          // Funding locker - holds custody of loan funds before drawdown    
+    address public immutable flFactory;              // Funding locker factory
+    address public immutable collateralLocker;       // Collateral locker - holds custody of loan collateral
+    address public immutable clFactory;              // Collateral locker factory
+    address public immutable borrower;               // Borrower of this loan, responsible for repayments.
+    IGlobals public immutable globals;               // Maple Globals
+    address public immutable repaymentCalc;          // The repayment calculator for this loan.
+    address public immutable lateFeeCalc;            // The late fee calculator for this loan.
+    address public immutable premiumCalc;            // The premium calculator for this loan.
+    address public immutable superFactory;           // The factory that deployed this Loan.
 
     uint256 public principalOwed;      // The principal owed (initially the drawdown amount).
     uint256 public drawdownAmount;     // The amount the borrower drew down, historical reference for calculators.
@@ -120,16 +119,16 @@ contract Loan is FDT {
         public
     {
         require(
-            address(_loanAsset) != address(0),
+            _loanAsset != address(0),
             "Loan::constructor:ERR_INVALID_FUNDS_TOKEN_ADDRESS"
         );
 
         borrower        = _borrower;
-        loanAsset       = _loanAsset;
-        collateralAsset = _collateralAsset;
+        loanAsset       = IERC20Details(_loanAsset);
+        collateralAsset = IERC20Details(_collateralAsset);
         flFactory       = _flFactory;
         clFactory       = _clFactory;
-        globals         = _globals;
+        globals         = IGlobals(_globals);
         createdAt       = block.timestamp;
 
         // Perform validity cross-checks.
@@ -174,15 +173,15 @@ contract Loan is FDT {
     function fundLoan(uint256 amt, address mintTo) external isState(State.Live) {
         
         require(
-            IERC20(loanAsset).transferFrom(msg.sender, fundingLocker, amt),
+            loanAsset.transferFrom(msg.sender, fundingLocker, amt),
             "Loan::fundLoan:ERR_INSUFFICIENT_APPROVED_FUNDS"
         );
 
-        uint256 wad = amt * 10 ** (18 - IERC20Details(loanAsset).decimals());  // Convert to WAD precision
+        uint256 wad = amt * 10 ** (18 - loanAsset.decimals());  // Convert to WAD precision
         _mint(mintTo, wad);
 
         emit LoanFunded(amt, mintTo);
-        emit BalanceUpdated(fundingLocker, loanAsset, IERC20(loanAsset).balanceOf(fundingLocker));
+        emit BalanceUpdated(fundingLocker, address(loanAsset), loanAsset.balanceOf(fundingLocker));
     }
 
     /**
@@ -197,7 +196,7 @@ contract Loan is FDT {
             "Loan::endFunding::ERR_DRAWDOWN_AMOUNT_BELOW_MIN_RAISE"
         );
         require(
-            amt <= IERC20(loanAsset).balanceOf(fundingLocker), 
+            amt <= loanAsset.balanceOf(fundingLocker), 
             "Loan::endFunding::ERR_DRAWDOWN_AMOUNT_ABOVE_FUNDING_LOCKER_BALANCE"
         );
 
@@ -209,19 +208,19 @@ contract Loan is FDT {
 
         // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
         require(
-            IERC20(collateralAsset).transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt)), 
+            collateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt)), 
             "Loan::endFunding:ERR_COLLATERAL_TRANSFER_FROM_APPROVAL_OR_BALANCE"
         );
 
         // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to Loan.
-        uint treasuryFee = IGlobals(globals).treasuryFee();
-        uint investorFee = IGlobals(globals).investorFee();
+        uint treasuryFee = globals.treasuryFee();
+        uint investorFee = globals.investorFee();
 
-        address treasury = IGlobals(globals).mapleTreasury();
+        address treasury = globals.mapleTreasury();
 
         // Send treasuryFee directly to MapleTreasury
         require(
-           IFundingLocker(fundingLocker).pull(treasury, amt.mul(treasuryFee).div(10000)), 
+            IFundingLocker(fundingLocker).pull(treasury, amt.mul(treasuryFee).div(10000)), 
             "Loan::drawdown:CRITICAL_ERR_PULL"
         );
 
@@ -238,15 +237,15 @@ contract Loan is FDT {
         );
 
         // Update excessReturned locally.
-        excessReturned = IERC20(loanAsset).balanceOf(fundingLocker);
+        excessReturned = loanAsset.balanceOf(fundingLocker);
 
         // Drain remaining funds from FundingLocker.
         require(IFundingLocker(fundingLocker).drain(), "Loan::endFunding:ERR_DRAIN");
 
-        emit BalanceUpdated(collateralLocker, collateralAsset, IERC20(collateralAsset).balanceOf(collateralLocker));
-        emit BalanceUpdated(fundingLocker,    loanAsset,       IERC20(loanAsset).balanceOf(fundingLocker));
-        emit BalanceUpdated(address(this),    loanAsset,       IERC20(loanAsset).balanceOf(address(this)));
-        emit BalanceUpdated(treasury,         loanAsset,       IERC20(loanAsset).balanceOf(treasury));
+        emit BalanceUpdated(collateralLocker, address(collateralAsset), collateralAsset.balanceOf(collateralLocker));
+        emit BalanceUpdated(fundingLocker,    address(loanAsset),       loanAsset.balanceOf(fundingLocker));
+        emit BalanceUpdated(address(this),    address(loanAsset),       loanAsset.balanceOf(address(this)));
+        emit BalanceUpdated(treasury,         address(loanAsset),       loanAsset.balanceOf(treasury));
 
         emit Drawdown(amt);
     }
@@ -258,7 +257,7 @@ contract Loan is FDT {
         (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
 
         require(
-            IERC20(loanAsset).transferFrom(msg.sender, address(this), total),
+            loanAsset.transferFrom(msg.sender, address(this), total),
             "Loan::makePayment:ERR_LACK_APPROVAL_OR_BALANCE"
         );
 
@@ -283,13 +282,13 @@ contract Loan is FDT {
         // TODO: Identify any other variables worth resetting on final payment.
         if (paymentsRemaining == 0) {
             loanState = State.Matured;
-            ICollateralLocker(collateralLocker).pull(borrower,     IERC20(collateralAsset).balanceOf(collateralLocker));
-            emit BalanceUpdated(collateralLocker, collateralAsset, IERC20(collateralAsset).balanceOf(collateralLocker));
+            ICollateralLocker(collateralLocker).pull(borrower,     collateralAsset.balanceOf(collateralLocker));
+            emit BalanceUpdated(collateralLocker, address(collateralAsset), collateralAsset.balanceOf(collateralLocker));
         }
 
         updateFundsReceived();
 
-        emit BalanceUpdated(address(this), loanAsset,  IERC20(loanAsset).balanceOf(address(this)));
+        emit BalanceUpdated(address(this), address(loanAsset),  loanAsset.balanceOf(address(this)));
     }
 
     /**
@@ -302,7 +301,7 @@ contract Loan is FDT {
     function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
         (uint256 total, uint256 principal, uint256 interest) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
 
-        if (block.timestamp > nextPaymentDue && block.timestamp <= nextPaymentDue.add(IGlobals(globals).gracePeriod())) {
+        if (block.timestamp > nextPaymentDue && block.timestamp <= nextPaymentDue.add(globals.gracePeriod())) {
 
             (uint256 totalExtra, uint256 principalExtra, uint256 interestExtra) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
 
@@ -311,7 +310,7 @@ contract Loan is FDT {
             principal = principal.add(principalExtra);
             
         } 
-        else if (block.timestamp > nextPaymentDue.add(IGlobals(globals).gracePeriod())) {
+        else if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
             // Default flow
         }
         return (total, principal, interest, nextPaymentDue);
@@ -324,7 +323,7 @@ contract Loan is FDT {
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
 
         require(
-            IERC20(loanAsset).transferFrom(msg.sender, address(this), total),
+            loanAsset.transferFrom(msg.sender, address(this), total),
             "Loan::makeFullPayment:ERR_LACK_APPROVAL_OR_BALANCE"
         );
 
@@ -339,7 +338,7 @@ contract Loan is FDT {
 
         updateFundsReceived();
 
-        emit BalanceUpdated(address(this), loanAsset,  IERC20(loanAsset).balanceOf(address(this)));
+        emit BalanceUpdated(address(this), address(loanAsset),  loanAsset.balanceOf(address(this)));
     }
 
     /**
@@ -361,16 +360,16 @@ contract Loan is FDT {
     */
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
 
-        uint256 wad = amt * 10 ** (18 - IERC20Details(loanAsset).decimals());  // Convert to WAD precision
+        uint256 wad = amt * 10 ** (18 - loanAsset.decimals());  // Convert to WAD precision
 
         // Fetch value of collateral and funding asset.
-        uint256 loanAssetPrice  = IGlobals(globals).getPrice(loanAsset);
-        uint256 collateralPrice = IGlobals(globals).getPrice(collateralAsset);
+        uint256 loanAssetPrice  = globals.getPrice(address(loanAsset));
+        uint256 collateralPrice = globals.getPrice(address(collateralAsset));
 
         // Calculate collateral required.
         uint256 collateralRequiredUSD = loanAssetPrice.mul(wad).mul(collateralRatio).div(10000);
         uint256 collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
-        uint256 collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - IERC20Details(collateralAsset).decimals()));
+        uint256 collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - collateralAsset.decimals()));
 
         return collateralRequiredFIN;
     }

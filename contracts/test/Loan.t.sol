@@ -16,6 +16,7 @@ import "../MapleGlobals.sol";
 import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
 import "../LoanFactory.sol";
+import "../interfaces/IERC20Details.sol";
 
 contract Borrower {
     function try_drawdown(address loan, uint256 amt) external returns (bool ok) {
@@ -148,23 +149,23 @@ contract LoanTest is TestUtil {
 
         Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     
-        assertEq(loan.loanAsset(),              USDC);
-        assertEq(loan.collateralAsset(),        WETH);
-        assertEq(loan.flFactory(),              address(flFactory));
-        assertEq(loan.clFactory(),              address(clFactory));
-        assertEq(loan.borrower(),               address(ali));
-        assertEq(loan.createdAt(),              block.timestamp);
-        assertEq(loan.apr(),                    specs[0]);
-        assertEq(loan.termDays(),               specs[1]);
-        assertEq(loan.paymentsRemaining(),      specs[1] / specs[2]);
-        assertEq(loan.paymentIntervalSeconds(), specs[2] * 1 days);
-        assertEq(loan.minRaise(),               specs[3]);
-        assertEq(loan.collateralRatio(),        specs[4]);
-        assertEq(loan.fundingPeriodSeconds(),   specs[5] * 1 days);
-        assertEq(address(loan.repaymentCalc()), address(bulletCalc));
-        assertEq(address(loan.lateFeeCalc()),   address(lateFeeCalc));
-        assertEq(address(loan.premiumCalc()),   address(premiumCalc));
-        assertEq(loan.nextPaymentDue(),         block.timestamp + loan.paymentIntervalSeconds());
+        assertEq(address(loan.loanAsset()),        USDC);
+        assertEq(address(loan.collateralAsset()),  WETH);
+        assertEq(loan.flFactory(),                 address(flFactory));
+        assertEq(loan.clFactory(),                 address(clFactory));
+        assertEq(loan.borrower(),                  address(ali));
+        assertEq(loan.createdAt(),                 block.timestamp);
+        assertEq(loan.apr(),                       specs[0]);
+        assertEq(loan.termDays(),                  specs[1]);
+        assertEq(loan.paymentsRemaining(),         specs[1] / specs[2]);
+        assertEq(loan.paymentIntervalSeconds(),    specs[2] * 1 days);
+        assertEq(loan.minRaise(),                  specs[3]);
+        assertEq(loan.collateralRatio(),           specs[4]);
+        assertEq(loan.fundingPeriodSeconds(),      specs[5] * 1 days);
+        assertEq(address(loan.repaymentCalc()),    address(bulletCalc));
+        assertEq(address(loan.lateFeeCalc()),      address(lateFeeCalc));
+        assertEq(address(loan.premiumCalc()),      address(premiumCalc));
+        assertEq(loan.nextPaymentDue(),            block.timestamp + loan.paymentIntervalSeconds());
     }
 
     function test_fundLoan() public {
@@ -324,9 +325,9 @@ contract LoanTest is TestUtil {
         
         // Check collateral locker balance.
         uint256 reqCollateral   = loan.collateralRequiredForDrawdown(1000 * USD);
-        address collateralAsset = loan.collateralAsset();
-        uint _delta = IERC20(collateralAsset).balanceOf(address(ali));
-        assertEq(IERC20(collateralAsset).balanceOf(collateralLocker), reqCollateral);
+        IERC20Details collateralAsset = loan.collateralAsset();
+        uint _delta = collateralAsset.balanceOf(address(ali));
+        assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
         
         // Make payment.
         assertTrue(ali.try_makePayment(address(loan)));
@@ -342,8 +343,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Collateral locker after state.
-        assertEq(IERC20(collateralAsset).balanceOf(collateralLocker),                      0);
-        assertEq(IERC20(collateralAsset).balanceOf(address(ali)),     _delta + reqCollateral);
+        assertEq(collateralAsset.balanceOf(collateralLocker),                      0);
+        assertEq(collateralAsset.balanceOf(address(ali)),     _delta + reqCollateral);
 
     }
     
@@ -424,9 +425,9 @@ contract LoanTest is TestUtil {
         
         // Check collateral locker balance.
         uint256 reqCollateral   = loan.collateralRequiredForDrawdown(1000 * USD);
-        address collateralAsset = loan.collateralAsset();
-        uint _delta = IERC20(collateralAsset).balanceOf(address(ali));
-        assertEq(IERC20(collateralAsset).balanceOf(collateralLocker), reqCollateral);
+        IERC20Details collateralAsset = loan.collateralAsset();
+        uint _delta = collateralAsset.balanceOf(address(ali));
+        assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
 
         // Warp to *300 seconds* after next payment is due
         hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
@@ -446,8 +447,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Collateral locker after state.
-        assertEq(IERC20(collateralAsset).balanceOf(collateralLocker),                      0);
-        assertEq(IERC20(collateralAsset).balanceOf(address(ali)),     _delta + reqCollateral);
+        assertEq(collateralAsset.balanceOf(collateralLocker),  0);
+        assertEq(collateralAsset.balanceOf(address(ali)),     _delta + reqCollateral);
     }
 
 }

@@ -11,7 +11,7 @@ contract PoolFactory {
     uint8 public constant STAKE_LOCKER_FACTORY       = 4;   // Factory type of `StakeLockerFactory`.
 
     uint256 public poolsCreated;  // Incrementor for number of LPs created
-    address public globals;       // The MapleGlobals.sol contract
+    IGlobals public immutable globals;       // MapleGlobals contract
 
     mapping(uint256 => address) public pools;  // Mappings for liquidity pool contracts, and their validation.
     mapping(address => bool)    public isPool;
@@ -31,7 +31,7 @@ contract PoolFactory {
     );
 
     constructor(address _globals) public {
-        globals   = _globals;
+        globals   = IGlobals(_globals);
     }
 
     /**
@@ -53,19 +53,19 @@ contract PoolFactory {
     ) public returns (address) {
         
         require(
-            IGlobals(globals).isValidSubFactory(address(this), llFactory, LIQUIDITY_LOCKER_FACTORY),
+            globals.isValidSubFactory(address(this), llFactory, LIQUIDITY_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_LIQUIDITY_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).isValidSubFactory(address(this), slFactory, STAKE_LOCKER_FACTORY),
+            globals.isValidSubFactory(address(this), slFactory, STAKE_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_STAKE_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).isValidPoolDelegate(msg.sender),
+            globals.isValidPoolDelegate(msg.sender),
             "PoolFactory::createPool:ERR_MSG_SENDER_NOT_WHITELISTED"
         );
         require(
-            IBFactory(IGlobals(globals).BFactory()).isBPool(stakeAsset),
+            IBFactory(globals.BFactory()).isBPool(stakeAsset),
             "PoolFactory::createPool:ERR_STAKE_ASSET_NOT_BPOOL"
         );
 
@@ -84,7 +84,7 @@ contract PoolFactory {
                 delegateFee,
                 name,
                 symbol,
-                globals
+                address(globals)
             );
 
         pools[poolsCreated]   = address(pool);

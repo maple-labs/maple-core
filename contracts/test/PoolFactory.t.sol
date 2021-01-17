@@ -182,11 +182,11 @@ contract PoolFactoryTest is TestUtil {
         assertTrue(poolFactory.isPool(address(lPool)));
         assertEq(poolFactory.poolsCreated(), 1);
 
-        assertEq(lPool.liquidityAsset(),    USDC);
-        assertEq(lPool.stakeAsset(),        address(bPool));
-        assertEq(lPool.poolDelegate(),      address(ali));
-        assertEq(lPool.stakingFee(),        500);
-        assertEq(lPool.delegateFee(),       100);
+        assertEq(address(lPool.liquidityAsset()),  USDC);
+        assertEq(lPool.stakeAsset(),               address(bPool));
+        assertEq(lPool.poolDelegate(),             address(ali));
+        assertEq(lPool.stakingFee(),               500);
+        assertEq(lPool.delegateFee(),              100);
 
         assertTrue(lPool.stakeLocker()     != address(0));
         assertTrue(lPool.liquidityLocker() != address(0));

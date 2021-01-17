@@ -381,9 +381,9 @@ contract PoolTest is TestUtil {
 
         DebtLocker debtLocker = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory1)));
 
-        assertEq(debtLocker.loan(), address(loan));
+        assertEq(address(debtLocker.loan()), address(loan));
         assertEq(debtLocker.owner(), address(pool1));
-        assertEq(debtLocker.loanAsset(), USDC);
+        assertEq(address(debtLocker.loanAsset()), USDC);
 
         assertEq(IERC20(USDC).balanceOf(liqLocker),              80 * USD);  // Balance of Liquidity Locker
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 20 * USD);  // Balance of Funding Locker
@@ -411,9 +411,9 @@ contract PoolTest is TestUtil {
 
         DebtLocker debtLocker2 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory2)));
 
-        assertEq(debtLocker2.loan(), address(loan));
+        assertEq(address(debtLocker2.loan()), address(loan));
         assertEq(debtLocker2.owner(), address(pool1));
-        assertEq(debtLocker2.loanAsset(), USDC);
+        assertEq(address(debtLocker2.loanAsset()), USDC);
 
         assertEq(dlFactory2.owner(address(debtLocker2)), address(pool1));
         assertTrue(dlFactory2.isLocker(address(debtLocker2)));

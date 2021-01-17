@@ -14,7 +14,7 @@ contract LoanFactory {
     uint8 public constant COLLATERAL_LOCKER_FACTORY  = 0;   // Factory type of `CollateralLockerFactory`.
     uint8 public constant FUNDING_LOCKER_FACTORY     = 2;   // Factory type of `FundingLockerFactory`.
 
-    address public immutable globals;  // The MapleGlobals.sol contract.
+    IGlobals public immutable globals;  // The MapleGlobals.sol contract.
 
     uint256 public loansCreated;  // Incrementor for number of loan vaults created.
 
@@ -36,12 +36,12 @@ contract LoanFactory {
     );
     
     constructor(address _globals) public {
-        globals   = _globals;
+        globals = IGlobals(_globals);
     }
 
     // Authorization to call Treasury functions.
     modifier isGovernor() {
-        require(msg.sender == IGlobals(globals).governor(), "LoanFactory::ERR_MSG_SENDER_NOT_GOVERNOR");
+        require(msg.sender == globals.governor(), "LoanFactory::ERR_MSG_SENDER_NOT_GOVERNOR");
         _;
     }
 
@@ -79,23 +79,23 @@ contract LoanFactory {
         address premiumCalc  = calcs[2];
 
         require(
-            IGlobals(globals).isValidSubFactory(address(this), flFactory, FUNDING_LOCKER_FACTORY),
+            globals.isValidSubFactory(address(this), flFactory, FUNDING_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_FUNDING_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).isValidSubFactory(address(this), clFactory, COLLATERAL_LOCKER_FACTORY),
+            globals.isValidSubFactory(address(this), clFactory, COLLATERAL_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_FUNDING_COLLATERAL_FACTORY"
         );
         require(
-            IGlobals(globals).isValidCalc(interestCalc) && ICalc(interestCalc).calcType() == "INTEREST",
+            globals.isValidCalc(interestCalc) && ICalc(interestCalc).calcType() == "INTEREST",
             "LoanFactory::createLoan:ERR_NULL_INTEREST_STRUCTURE_CALC"
         );
         require(
-            IGlobals(globals).isValidCalc(lateFeeCalc) && ICalc(lateFeeCalc).calcType() == "LATEFEE",
+            globals.isValidCalc(lateFeeCalc) && ICalc(lateFeeCalc).calcType() == "LATEFEE",
             "LoanFactory::createLoan:ERR_NULL_LATE_FEE_CALC"
         );
         require(
-            IGlobals(globals).isValidCalc(premiumCalc) && ICalc(premiumCalc).calcType() == "PREMIUM",
+            globals.isValidCalc(premiumCalc) && ICalc(premiumCalc).calcType() == "PREMIUM",
             "LoanFactory::createLoan:ERR_NULL_PREMIUM_CALC"
         );
         
@@ -108,7 +108,7 @@ contract LoanFactory {
             collateralAsset,
             flFactory,
             clFactory,
-            globals,
+            address(globals),
             specs,
             [interestCalc, lateFeeCalc, premiumCalc],
             tUUID
