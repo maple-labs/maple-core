@@ -1,11 +1,11 @@
 /*
-  This scripts deploys the global dependencies
+  This script sets default global values
 */
 const { ethers } = require("hardhat");
 const { getArtifacts, CORE, DEPS } = require("./artifacts");
 
 async function main() {
-  // Get dependency artifacts
+  // Get Dependency artifacts
   const DAI = getArtifacts(DEPS.DAI);
   const USDC = getArtifacts(DEPS.USDC);
   const WBTC = getArtifacts(DEPS.WBTC);
@@ -49,13 +49,6 @@ async function main() {
 
   await mapleGlobals.setPoolDelegateWhitelist(accounts[0], true);
   await mapleGlobals.setPoolDelegateWhitelist(accounts[1], true);
-  await mapleGlobals.setPoolDelegateWhitelist(accounts[2], true);
-  await mapleGlobals.setPoolDelegateWhitelist(accounts[3], true);
-  await mapleGlobals.setPoolDelegateWhitelist(accounts[4], true);
-  await mapleGlobals.setPoolDelegateWhitelist(accounts[5], true);
-  await mapleGlobals.setPoolDelegateWhitelist(accounts[6], true);
-  await mapleGlobals.setPoolDelegateWhitelist(accounts[7], true);
-  await mapleGlobals.setPoolDelegateWhitelist(accounts[8], true);
 
   const PAIR_ONE = "ETH / USD";
   const PAIR_TWO = "BTC / USD";

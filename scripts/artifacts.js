@@ -6,7 +6,7 @@ By declaring these contants here it's
 easier to add more contracts and to
 change the names of contracts.
 
-This enables us abstract the import of 
+This enables us to abstractly import
 artifacts from the scripts to use statically
 defined addresses and abis for
 mainnet or other networks.
