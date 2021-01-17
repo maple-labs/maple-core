@@ -22,6 +22,7 @@ async function main() {
 
   const LoanFactory = getArtifacts(CORE.LoanFactory);
   const PoolFactory = getArtifacts(CORE.PoolFactory);
+
   const StakeLockerFactory = getArtifacts(CORE.StakeLockerFactory);
   const FundingLockerFactory = getArtifacts(CORE.FundingLockerFactory);
   const LiquidityLockerFactory = getArtifacts(CORE.LiquidityLockerFactory);
@@ -68,7 +69,7 @@ async function main() {
   await mapleGlobals.setLoanAsset(USDC.address, true);
 
   await mapleGlobals.setCollateralAsset(DAI.address, true);
-  await mapleGlobals.setCollateralAsset(USDC.addess, true);
+  await mapleGlobals.setCollateralAsset(USDC.address, true);
   await mapleGlobals.setCollateralAsset(WETH.address, true);
   await mapleGlobals.setCollateralAsset(WBTC.address, true);
 
@@ -78,15 +79,6 @@ async function main() {
   await mapleGlobals.assignPriceFeed(WETH.address, ETH_USD_ORACLE_ADDRESS);
 
   await mapleGlobals.setMapleTreasury(MapleTreasury.address);
-
-  await mapleGlobals.setCalc(BulletRepaymentCalc, true);
-  await mapleGlobals.setCalc(LateFeeCalc, true);
-  await mapleGlobals.setCalc(PremiumCalc, true);
-
-  await mapleGlobals.setCollateralAsset(DAI.address, true);
-  await mapleGlobals.setCollateralAsset(USDC.address, true);
-  await mapleGlobals.setCollateralAsset(WETH.address, true);
-  await mapleGlobals.setCollateralAsset(WBTC.address, true);
 
   await mapleGlobals.setCalc(BulletRepaymentCalc.address, true);
   await mapleGlobals.setCalc(LateFeeCalc.address, true);
