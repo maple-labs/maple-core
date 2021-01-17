@@ -25,7 +25,6 @@ module.exports = {
       url: "http://localhost:8545",
     },
     kaleido: {
-      gasMultiplier: 5,
       timeout: 45000,
       gas: 804247552,
       gasPrice: 0,

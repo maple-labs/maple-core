@@ -19,13 +19,6 @@ async function main() {
     BFactory.address,
   ]);
 
-  try {
-    await mapleGlobals.deployed();
-  } catch (err) {
-    console.log(err);
-    throw new Error(`Deploy failed ${CORE.MapleToken}`);
-  }
-
   await deploy(CORE.DebtLockerFactory);
   await deploy(CORE.StakeLockerFactory);
   await deploy(CORE.LiquidityLockerFactory);
