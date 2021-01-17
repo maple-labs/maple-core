@@ -64,7 +64,6 @@ async function main() {
   const BTC_USD_ORACLE_ADDRESS = chainLinkFactory.getOracle(PAIR_TWO);
   const DAI_USD_ORACLE_ADDRESS = chainLinkFactory.getOracle(PAIR_THREE);
 
-
   await mapleGlobals.setLoanAsset(DAI.address, true);
   await mapleGlobals.setLoanAsset(USDC.address, true);
 
@@ -78,19 +77,11 @@ async function main() {
   await mapleGlobals.assignPriceFeed(WBTC.address, BTC_USD_ORACLE_ADDRESS);
   await mapleGlobals.assignPriceFeed(WETH.address, ETH_USD_ORACLE_ADDRESS);
 
-  const updateGlobals = await mapleGlobals.setMapleTreasury(
-    MapleTreasury.address
-  );
+  await mapleGlobals.setMapleTreasury(MapleTreasury.address);
 
   await mapleGlobals.setCalc(BulletRepaymentCalc, true);
   await mapleGlobals.setCalc(LateFeeCalc, true);
   await mapleGlobals.setCalc(PremiumCalc, true);
-
-  const LoanFactory = new ethers.Contract(
-    LoanFactory.address,
-    LoanFactory.address,
-    ethers.provider.getSigner(0)
-  );
 
   await mapleGlobals.setCollateralAsset(DAI.address, true);
   await mapleGlobals.setCollateralAsset(USDC.address, true);
