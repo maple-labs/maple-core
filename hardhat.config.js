@@ -2,7 +2,7 @@ require("dotenv").config({ path: "../../.env" });
 require("@nomiclabs/hardhat-waffle");
 require("solidity-coverage");
 
-const defaultNetwork = "localhost";
+const defaultNetwork = process.env.NETWORK || "localhost";
 
 const KALEIDO_URL = process.env.MAPLE_KALEIDO_URL || "";
 const KALEIDO_MNEMONIC = process.env.MAPLE_MNEMONIC || "";
@@ -24,12 +24,11 @@ module.exports = {
     localhost: {
       url: "http://localhost:8545",
     },
-    private: {
-      gasMultiplier: 5,
+    kaleido: {
       timeout: 45000,
-      gas: 9500000,
+      gas: 804247552,
       gasPrice: 0,
-      chainId: 367662372,
+      chainId: 333,
       url: KALEIDO_URL,
       accounts: {
         mnemonic: KALEIDO_MNEMONIC,
