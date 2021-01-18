@@ -41,8 +41,9 @@ contract Pool is IERC20, ERC20, CalcBPool {
     uint256 public principalPenalty; // max penalty on principal in bips on early withdrawl
     uint256 public interestDelay;    // time until total interest is available after a deposit, in seconds
 
-    bool public isFinalized;  // True if this Pool is setup and the poolDelegate has met staking requirements.
-    bool public isActive;     // True if Pool is accepting deposits. Setting to false "winds up" or "closes" the pool, which is irreversible.
+    enum State { Initialized, Finalized, Deactivated }
+
+    State public poolState;  // The current state of this pool.
 
     mapping(address => uint256)                     public depositDate;  // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
@@ -102,7 +103,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
         poolDelegate = _poolDelegate;
         stakingFee   = _stakingFee;
         delegateFee  = _delegateFee;
-        isActive     = true;
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset);
@@ -113,18 +113,13 @@ contract Pool is IERC20, ERC20, CalcBPool {
         interestDelay    = 30 days;
     }
 
-    modifier finalized() {
-        require(isFinalized, "Pool:ERR_NOT_FINALIZED");
-        _;
-    }
-
-    modifier active() {
-        require(isActive, "Pool:ERR_IS_DEFUNCT");
-        _;
-    }
-
     modifier isDelegate() {
         require(msg.sender == poolDelegate, "Pool:ERR_MSG_SENDER_NOT_DELEGATE");
+        _;
+    }
+
+    modifier isState(State _state) {
+        require(poolState == _state, "Loan::ERR_FAIL_STATE_CHECK");
         _;
     }
 
@@ -146,10 +141,10 @@ contract Pool is IERC20, ERC20, CalcBPool {
     /**
         @dev Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
     */
-    function finalize() public {
+    function finalize() public isState(State.Initialized) isDelegate {
         (,, bool stakePresent,,) = getInitialStakeRequirements();
         require(stakePresent, "Pool::finalize:ERR_NOT_ENOUGH_STAKE");
-        isFinalized = true;
+        poolState = State.Finalized;
     }
 
     /**
@@ -186,7 +181,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
         @param amt The amount of LiquidityAsset to deposit, in wei.
     */
-    function deposit(uint256 amt) external active finalized {
+    function deposit(uint256 amt) external isState(State.Finalized) {
         updateDepositDate(amt, msg.sender);
         IERC20(liquidityAsset).transferFrom(msg.sender, liquidityLocker, amt);
         uint256 wad = liq2FDT(amt);
@@ -200,7 +195,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @param amt The amount of LiquidityAsset to withdraw, in wei.
     */
     // TODO: Confirm if amt param supplied is in wei of FDT, or in wei of LiquidtyAsset.
-    function withdraw(uint256 amt) external active finalized {
+    function withdraw(uint256 amt) external {
         require(balanceOf(msg.sender) >= amt, "Pool::withdraw:USER_BAL_LESS_THAN_AMT");
 
         uint256 share = amt.mul(WAD).div(totalSupply());
@@ -226,7 +221,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @param  dlFactory The debt locker factory to utilize.
         @param  amt       Amount to fund the loan.
     */
-    function fundLoan(address loan, address dlFactory, uint256 amt) external active finalized isDelegate {
+    function fundLoan(address loan, address dlFactory, uint256 amt) external isState(State.Finalized) isDelegate {
 
         // Auth checks.
         require(
@@ -257,10 +252,10 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @dev Pool Delegate triggers deactivation, permanently shutting down the pool.
         @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
     */
-    function deactivate(uint confirmation) external active finalized isDelegate { 
+    function deactivate(uint confirmation) external isState(State.Finalized) isDelegate { 
         require(confirmation == 86, "Pool::deactivate:INVALID_CONFIRMATION");
         require(principalOut == 0, "Pool::deactivate:PRINCIPAL_OUT_GT_0");
-        isActive = false;
+        poolState = State.Deactivated;
     }
 
     /**

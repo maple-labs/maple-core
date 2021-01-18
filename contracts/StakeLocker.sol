@@ -47,10 +47,9 @@ contract StakeLocker is FDT {
     */
     modifier canUnstake() {
         require(
-            (msg.sender != IPool(owner).poolDelegate() && IPool(owner).isActive()) || 
-            !IPool(owner).isFinalized() || 
-            !IPool(owner).isActive(),
-            "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
+            (msg.sender != IPool(owner).poolDelegate() && IPool(owner).poolState() == 1) || 
+            IPool(owner).poolState() == 0 || IPool(owner).poolState() == 2,
+            "StakeLocker:ERR_STAKE_LOCKED"
         );
         _;
     }
@@ -70,7 +69,7 @@ contract StakeLocker is FDT {
         @param amt Amount of stakeAsset (BPTs) to deposit.
     */
     // TODO: Consider localizing this function to Pool.
-    function stake(uint256 amt) external {
+    function stake(uint256 amt) external { 
         require(
             IERC20(stakeAsset).transferFrom(msg.sender, address(this), amt),
             "StakeLocker:ERR_INSUFFICIENT_APPROVED_FUNDS"
