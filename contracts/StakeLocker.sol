@@ -41,9 +41,8 @@ contract StakeLocker is FDT {
 
     /** 
         canUnstake enables unstaking in the following conditions:
-            1. User is not Pool Delegate and the Pool is active.
-            2. Pool is not finalized.
-            3. Pool is not active.
+            1. User is not Pool Delegate and the Pool is in Finalized state.
+            2. User is Pool Delegate and the Pool is in Initialized or Deactivated state.
     */
     modifier canUnstake() {
         require(

@@ -6,15 +6,13 @@ interface IPool {
 
     function isDefunct() external view returns (bool);
 
-    function isFinalized() external view returns (bool);
-
-    function isActive() external view returns (bool);
-
     function poolState() external view returns (uint256);
 
     function finalize() external;
 
     function deposit(uint256) external;
+
+    function deactivate(uint256) external;
 
     function claim(address, address) external returns(uint[5] memory);
 
