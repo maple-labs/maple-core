@@ -181,7 +181,7 @@ contract Loan is FDT {
         uint256 wad = amt * 10 ** (18 - IERC20Details(loanAsset).decimals());  // Convert to WAD precision
         _mint(mintTo, wad);
 
-        emit LoanFunded(wad, mintTo);
+        emit LoanFunded(amt, mintTo);
         emit BalanceUpdated(fundingLocker, loanAsset, IERC20(loanAsset).balanceOf(fundingLocker));
     }
 
