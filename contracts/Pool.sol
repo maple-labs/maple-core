@@ -51,7 +51,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
 
     event LoanFunded(address loan, address debtLocker, uint256 amountFunded);
     event BalanceUpdated(address who, address token, uint256 balance);
-    event Claim(uint interest, uint principal, uint fee);
+    event Claim(address loan, uint interest, uint principal, uint fee);
 
     /**
         @dev Constructor for a Pool.
@@ -291,7 +291,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
         emit BalanceUpdated(stakeLocker,     liquidityAsset, IERC20(liquidityAsset).balanceOf(stakeLocker));
 
-        emit Claim(claimInfo[1], claimInfo[2] + claimInfo[4], claimInfo[3]);
+        emit Claim(loan, claimInfo[1], claimInfo[2] + claimInfo[4], claimInfo[3]);
 
         return claimInfo;
     }
