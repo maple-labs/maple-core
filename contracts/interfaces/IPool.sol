@@ -12,6 +12,8 @@ interface IPool {
 
     function poolState() external view returns (uint256);
 
+    function finalize() external;
+
     function deposit(uint256) external;
 
     function claim(address, address) external returns(uint[5] memory);

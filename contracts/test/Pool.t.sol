@@ -69,6 +69,10 @@ contract PoolDelegate {
         IStakeLocker(stakeLocker).stake(amt);
     }
 
+    function finalize(address pool) external {
+        IPool(pool).finalize();
+    }
+
     function claim(address pool, address loan, address dlFactory) external returns(uint[5] memory) {
         return IPool(pool).claim(loan, dlFactory);  
     }
@@ -314,8 +318,10 @@ contract PoolTest is TestUtil {
         /********************************/
         /*** Finalize Liquidity Pools ***/
         /********************************/
-        pool1.finalize();
-        pool2.finalize();
+        // pool1.finalize();
+        // pool2.finalize();
+        sid.finalize(address(pool1));
+        joe.finalize(address(pool2));
 
         // TODO: Post-state assertions to finalize().
 
@@ -333,7 +339,9 @@ contract PoolTest is TestUtil {
 
         assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not finalized
 
-        pool1.finalize();
+        // pool1.finalize();
+        sid.finalize(address(pool1));
+        // joe.finalize(address(pool2));
 
         assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not approved
 
@@ -361,7 +369,9 @@ contract PoolTest is TestUtil {
         // Mint 100 USDC into this LP account
         mint("USDC", address(bob), 100 * USD);
 
-        pool1.finalize();
+        // pool1.finalize();
+        sid.finalize(address(pool1));
+        // joe.finalize(address(pool2));
 
         bob.approve(USDC, address(pool1), uint(-1));
 
@@ -505,7 +515,8 @@ contract PoolTest is TestUtil {
             sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
-            pool1.finalize();
+            sid.finalize(address(pool1));
+            // pool1.finalize();
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
@@ -661,8 +672,10 @@ contract PoolTest is TestUtil {
             joe.approve(address(bPool), stakeLocker2, uint(-1));
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
             joe.stake(pool2.stakeLocker(), bPool.balanceOf(address(joe)) / 2);
-            pool1.finalize();
-            pool2.finalize();
+            sid.finalize(address(pool1));
+            joe.finalize(address(pool2));
+            // pool1.finalize();
+            // pool2.finalize();
         }
        
         address liqLocker1 = pool1.liquidityLocker();
@@ -872,7 +885,8 @@ contract PoolTest is TestUtil {
             sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
-            pool1.finalize();
+            // pool1.finalize();
+            sid.finalize(address(pool1));
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
