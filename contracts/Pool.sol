@@ -18,8 +18,6 @@ import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IDebtLocker.sol";
 import "./interfaces/IERC20Details.sol";
 
-// TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
-
 /// @title Pool is the core contract for liquidity pools.
 contract Pool is IERC20, ERC20, CalcBPool {
 
@@ -44,7 +42,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     uint256 public interestDelay;    // time until total interest is available after a deposit, in seconds
 
     bool public isFinalized;  // True if this Pool is setup and the poolDelegate has met staking requirements.
-    bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
+    bool public isActive;     // True if Pool is accepting deposits. Setting to false "winds up" or "closes" the pool, which is irreversible.
 
     mapping(address => uint256)                     public depositDate;  // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
@@ -104,6 +102,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         poolDelegate = _poolDelegate;
         stakingFee   = _stakingFee;
         delegateFee  = _delegateFee;
+        isActive     = true;
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset);
@@ -119,8 +118,8 @@ contract Pool is IERC20, ERC20, CalcBPool {
         _;
     }
 
-    modifier notDefunct() {
-        require(!isDefunct, "Pool:ERR_IS_DEFUNCT");
+    modifier active() {
+        require(isActive, "Pool:ERR_IS_DEFUNCT");
         _;
     }
 
@@ -151,7 +150,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
         (,, bool stakePresent,,) = getInitialStakeRequirements();
         require(stakePresent, "Pool::finalize:ERR_NOT_ENOUGH_STAKE");
         isFinalized = true;
-        IStakeLocker(stakeLocker).finalizeLP();
     }
 
     /**
@@ -188,7 +186,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
         @param amt The amount of LiquidityAsset to deposit, in wei.
     */
-    function deposit(uint256 amt) external notDefunct finalized {
+    function deposit(uint256 amt) external active finalized {
         updateDepositDate(amt, msg.sender);
         IERC20(liquidityAsset).transferFrom(msg.sender, liquidityLocker, amt);
         uint256 wad = liq2FDT(amt);
@@ -202,7 +200,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @param amt The amount of LiquidityAsset to withdraw, in wei.
     */
     // TODO: Confirm if amt param supplied is in wei of FDT, or in wei of LiquidtyAsset.
-    function withdraw(uint256 amt) external notDefunct finalized {
+    function withdraw(uint256 amt) external active finalized {
         require(balanceOf(msg.sender) >= amt, "Pool::withdraw:USER_BAL_LESS_THAN_AMT");
 
         uint256 share = amt.mul(WAD).div(totalSupply());
@@ -228,7 +226,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @param  dlFactory The debt locker factory to utilize.
         @param  amt       Amount to fund the loan.
     */
-    function fundLoan(address loan, address dlFactory, uint256 amt) external notDefunct finalized isDelegate {
+    function fundLoan(address loan, address dlFactory, uint256 amt) external active finalized isDelegate {
 
         // Auth checks.
         require(
@@ -253,6 +251,15 @@ contract Pool is IERC20, ERC20, CalcBPool {
         
         emit LoanFunded(loan, debtLockers[loan][dlFactory], amt);
         emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
+    }
+
+    /**
+        @dev Pool Delegate triggers deactivation, permanently shutting down the pool.
+    */
+    function deactivate(uint confirmation) external active finalized isDelegate { 
+        require(confirmation == 86, "Pool::deactivate:INVALID_CONFIRMATION");
+        require(principalOut == 0, "Pool::deactivate:PRINCIPAL_OUT_GT_0");
+        isActive = false;
     }
 
     /**
