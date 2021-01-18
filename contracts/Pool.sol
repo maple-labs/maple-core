@@ -255,6 +255,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
 
     /**
         @dev Pool Delegate triggers deactivation, permanently shutting down the pool.
+        @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
     */
     function deactivate(uint confirmation) external active finalized isDelegate { 
         require(confirmation == 86, "Pool::deactivate:INVALID_CONFIRMATION");

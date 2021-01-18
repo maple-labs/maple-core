@@ -40,12 +40,12 @@ contract StakeLocker is FDT {
     event Unstake(uint256 _amount, address _staker);
 
     /** 
-        delegateLock enables unstaking in the following conditions:
+        canUnstake enables unstaking in the following conditions:
             1. User is not Pool Delegate and the Pool is active.
             2. Pool is not finalized.
             3. Pool is not active.
     */
-    modifier delegateLock() {
+    modifier canUnstake() {
         require(
             (msg.sender != IPool(owner).poolDelegate() && IPool(owner).isActive()) || 
             !IPool(owner).isFinalized() || 
@@ -86,7 +86,7 @@ contract StakeLocker is FDT {
         @param amt Amount of stakeAsset (BPTs) to withdraw.
     */
     // TODO: Consider localizing this function to Pool.
-    function unstake(uint256 amt) external delegateLock {
+    function unstake(uint256 amt) external canUnstake {
         require(
             amt <= getUnstakeableBalance(msg.sender),
             "Stakelocker:ERR_AMT_REQUESTED_UNAVAILABLE"
@@ -150,7 +150,7 @@ contract StakeLocker is FDT {
     //      to these ends to save code.
     //      can improve this so the updated age of tokens reflects their age in the senders wallets
     //      right now it simply is equivalent to the age update if the receiver was making a new stake.
-    function _transfer(address from, address to, uint256 amt) internal override delegateLock {
+    function _transfer(address from, address to, uint256 amt) internal override canUnstake {
         super._transfer(from, to, amt);
         _updateStakeDate(to, amt);
     }
