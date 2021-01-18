@@ -253,6 +253,8 @@ contract Pool is IERC20, ERC20, CalcBPool {
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
+        event Debug(string, uint);
+
     /**
         @dev Claim available funds for loan through specified debt locker factory.
         @param  loan      Address of the loan to claim from.
@@ -268,19 +270,22 @@ contract Pool is IERC20, ERC20, CalcBPool {
         
         uint[5] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
-        // Distribute "interest" to appropriate parties.
-        require(liquidityAsset.transfer(poolDelegate, claimInfo[1].mul(delegateFee).div(10000)));
-        require(liquidityAsset.transfer(stakeLocker,  claimInfo[1].mul(stakingFee).div(10000)));
+        uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000) + claimInfo[3];
+        uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);
 
-        // Distribute "fee" to poolDelegate.
-        require(liquidityAsset.transfer(poolDelegate, claimInfo[3]));
+        uint256 principal = liquidityAsset.balanceOf(address(this)) - claimInfo[1] - claimInfo[3] - claimInfo[4]; // Accounts for rounding error
+
+        require(liquidityAsset.transfer(poolDelegate, poolDelegatePortion));  // Transfer fee and portion of interest to pool delegate
+        require(liquidityAsset.transfer(stakeLocker,  stakeLockerPortion));   // Transfer portion of interest to stakeLocker
 
         // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liqudityLocker
         uint remainder = liquidityAsset.balanceOf(address(this));
         require(liquidityAsset.transfer(liquidityLocker, remainder));
 
         // Update outstanding principal, the interest distribution mechanism.
-        principalOut = principalOut.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error
+        emit Debug("principalOut1", principalOut);
+        principalOut = principalOut.sub(principal); // Reversion here indicates critical error
+        emit Debug("principalOut2", principalOut);
         interestSum  = interestSum.add(claimInfo[1]).sub(claimInfo[1].mul(delegateFee).div(10000)).sub(claimInfo[1].mul(stakingFee).div(10000));
 
         // Update funds received for ERC-2222 StakeLocker tokens.
@@ -290,6 +295,12 @@ contract Pool is IERC20, ERC20, CalcBPool {
         emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
         emit Claim(loan, claimInfo[1], claimInfo[2] + claimInfo[4], claimInfo[3]);
+
+        emit Debug("poolDelegatePortion",       poolDelegatePortion);
+        emit Debug("stakeLockerPortion",   stakeLockerPortion);
+        emit Debug("principal",  principal);
+        emit Debug("principalOut", principalOut);
+        emit Debug("interestSum",       interestSum);
 
         return claimInfo;
     }
