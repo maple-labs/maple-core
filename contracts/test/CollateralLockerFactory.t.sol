@@ -29,6 +29,6 @@ contract CollateralLockerFactoryTest is TestUtil {
 
         // Validate the storage of cl.
         assertEq(cl.loan(), address(this), "Incorrect loan address");
-        assertEq(cl.collateralAsset(), USDC, "Incorrect address of collateral asset");
+        assertEq(address(cl.collateralAsset()), USDC, "Incorrect address of collateral asset");
     }
 }

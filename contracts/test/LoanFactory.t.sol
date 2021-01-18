@@ -181,24 +181,24 @@ contract LoanFactoryTest is TestUtil {
         assertTrue(lFactory.isLoan(address(loan)));                            // Should be considered as a loan.
 
         // Verify the storage of loan contract
-        assertEq(loan.borrower(),               address(borrower), "Incorrect borrower");
-        assertEq(loan.loanAsset(),              USDC, "Incorrect loan asset");
-        assertEq(loan.collateralAsset(),        WETH, "Incorrect collateral asset");
-        assertEq(loan.flFactory(),              address(flFactory), "Incorrect FLF");
-        assertEq(loan.clFactory(),              address(clFactory), "Incorrect CLF");
-        assertEq(loan.globals(),                address(globals), "Incorrect globals address");
-        assertEq(loan.createdAt(),              block.timestamp, "Incorrect created at timestamp");
-        assertEq(loan.apr(),                    specs[0], "Incorrect APR");
-        assertEq(loan.termDays(),               specs[1], "Incorrect term days");
-        assertEq(loan.paymentsRemaining(),      specs[1].div(specs[2]), "Incorrect payments remaining");
-        assertEq(loan.paymentIntervalSeconds(), specs[2].mul(1 days), "Incorrect payment interval in seconds");
-        assertEq(loan.minRaise(),               specs[3], "Incorrect minimum raise value");
-        assertEq(loan.collateralRatio(),        specs[4], "Incorrect collateral ratio");
-        assertEq(loan.fundingPeriodSeconds(),   specs[5].mul(1 days), "Incorrect funding period in seconds");
-        assertEq(loan.repaymentCalc(),          calcs[0], "Incorrect repayment calculator");
-        assertEq(loan.lateFeeCalc(),            calcs[1], "Incorrect late fee calculator");
-        assertEq(loan.premiumCalc(),            calcs[2], "Incorrect premium calculator");
-        assertEq(loan.nextPaymentDue(),         (loan.createdAt()).add(loan.paymentIntervalSeconds()), "Incorrect next payment due timestamp");
-        assertEq(loan.superFactory(),           address(lFactory), "Incorrect super factory address");
+        assertEq(loan.borrower(),                  address(borrower), "Incorrect borrower");
+        assertEq(address(loan.loanAsset()),        USDC, "Incorrect loan asset");
+        assertEq(address(loan.collateralAsset()),  WETH, "Incorrect collateral asset");
+        assertEq(loan.flFactory(),                 address(flFactory), "Incorrect FLF");
+        assertEq(loan.clFactory(),                 address(clFactory), "Incorrect CLF");
+        assertEq(address(loan.globals()),          address(globals), "Incorrect globals address");
+        assertEq(loan.createdAt(),                 block.timestamp, "Incorrect created at timestamp");
+        assertEq(loan.apr(),                       specs[0], "Incorrect APR");
+        assertEq(loan.termDays(),                  specs[1], "Incorrect term days");
+        assertEq(loan.paymentsRemaining(),         specs[1].div(specs[2]), "Incorrect payments remaining");
+        assertEq(loan.paymentIntervalSeconds(),    specs[2].mul(1 days), "Incorrect payment interval in seconds");
+        assertEq(loan.minRaise(),                  specs[3], "Incorrect minimum raise value");
+        assertEq(loan.collateralRatio(),           specs[4], "Incorrect collateral ratio");
+        assertEq(loan.fundingPeriodSeconds(),      specs[5].mul(1 days), "Incorrect funding period in seconds");
+        assertEq(loan.repaymentCalc(),             calcs[0], "Incorrect repayment calculator");
+        assertEq(loan.lateFeeCalc(),               calcs[1], "Incorrect late fee calculator");
+        assertEq(loan.premiumCalc(),               calcs[2], "Incorrect premium calculator");
+        assertEq(loan.nextPaymentDue(),            (loan.createdAt()).add(loan.paymentIntervalSeconds()), "Incorrect next payment due timestamp");
+        assertEq(loan.superFactory(),              address(lFactory), "Incorrect super factory address");
     }
 }
