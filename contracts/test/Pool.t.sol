@@ -647,6 +647,8 @@ contract PoolTest is TestUtil {
             assertEq(uint256(loan.loanState()),  2);
             assertEq(uint256(loan2.loanState()), 2);
         }
+
+        assertEq(pool1.principalOut(), 0);
     }
 
     function test_claim_multipleLP() public {
