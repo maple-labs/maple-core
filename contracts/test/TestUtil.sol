@@ -32,11 +32,15 @@ contract TestUtil is DSTest {
 
     mapping (bytes32 => Token) tokens;
 
-    address constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address constant DAI   = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address constant USDC  = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address constant CDAI  = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
+    address constant CUSDC = 0x39AA39c021dfbaE8faC545936693aC917d5E7563;
 
-    address constant BPOOL_FACTORY = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd; // Balancer pool factory
+    address constant BPOOL_FACTORY        = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd; // Balancer pool factory
+    address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router
 
     uint256 constant USD = 10 ** 6;  // USDC precision decimals
     uint256 constant WAD = 10 ** 18;
@@ -54,6 +58,12 @@ contract TestUtil is DSTest {
         tokens["USDC"].slot = 9;
         tokens["WETH"].addr = WETH;
         tokens["WETH"].slot = 3;
+        tokens["WBTC"].addr = WBTC;
+        tokens["WBTC"].slot = 0;
+        tokens["CDAI"].addr = CDAI;
+        tokens["CDAI"].slot = 14;
+        tokens["CUSDC"].addr = CUSDC;
+        tokens["CUSDC"].slot = 15;
     }
 
     // Manipulate mainnet ERC20 balance
@@ -83,6 +93,25 @@ contract TestUtil is DSTest {
             fail();
         }
     }
+
+    // function test_cheat_code_for_slot() public {
+    //     address CDAI = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
+    
+    //     uint256 i = 0;
+
+    //     while(IERC20(CDAI).balanceOf(address(this)) == 0) {
+    //         hevm.store(
+    //             CDAI,
+    //             keccak256(abi.encode(address(this), i)), // Mint tokens
+    //             bytes32(uint256(100))
+    //         );
+    //         if(IERC20(CDAI).balanceOf(address(this)) == 100) {
+    //             log_named_uint("slot", i);
+    //         }
+    //         i += 1;
+    //     }
+    //     // assertTrue(false);
+    // }
     
     // // Make payment on any given Loan.
     // function makePayment(address _vault, address _borrower) public {
