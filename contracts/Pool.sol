@@ -268,11 +268,11 @@ contract Pool is IERC20, ERC20, CalcBPool {
         
         uint[5] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
-        uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000) + claimInfo[3];
-        uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);
+        uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
+        uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest
 
         // Accounts for rounding error in interest/fee/(principal+excess) split
-        uint256 principalExcess = liquidityAsset.balanceOf(address(this)) - claimInfo[1] - claimInfo[3]; // Accounts for rounding error
+        uint256 principalExcess = claimInfo[0].sub(claimInfo[1]).sub(claimInfo[3]); // Accounts for rounding error
 
         // Update outstanding principal, going to zero if principalPaid rounds to higher than principalOut
         principalOut = principalOut > principalExcess ? principalOut.sub(principalExcess) : 0;  // Reversion here indicates critical error
@@ -284,7 +284,8 @@ contract Pool is IERC20, ERC20, CalcBPool {
         require(liquidityAsset.transfer(stakeLocker,  stakeLockerPortion));   // Transfer portion of interest to stakeLocker
 
         // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liquidityLocker
-        require(liquidityAsset.transfer(liquidityLocker, liquidityAsset.balanceOf(address(this))));
+        // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
+        require(liquidityAsset.transfer(liquidityLocker, claimInfo[0].sub(poolDelegatePortion).sub(stakeLockerPortion)));
 
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();

@@ -69,6 +69,10 @@ contract PoolDelegate {
         IStakeLocker(stakeLocker).stake(amt);
     }
 
+    function fundLoan(address pool, address loan, address dlFactory, uint256 amt) external {
+        return IPool(pool).fundLoan(loan, dlFactory, amt);  
+    }
+
     function claim(address pool, address loan, address dlFactory) external returns(uint[5] memory) {
         return IPool(pool).claim(loan, dlFactory);  
     }
@@ -94,6 +98,10 @@ contract LP {
 
     function withdraw(address pool, uint256 amt) external {
         Pool(pool).withdraw(amt);
+    }
+
+    function deposit(address pool, uint256 amt) external {
+        Pool(pool).deposit(amt);
     }
 }
 
@@ -202,7 +210,6 @@ contract PoolTest is TestUtil {
 
         globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
         globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
-
 
         ethOracle.poke(500 ether);  // Set ETH price to $600
         usdcOracle.poke(1 ether);    // Set USDC price to $1
@@ -1003,6 +1010,112 @@ contract PoolTest is TestUtil {
         assertEq(pool2.principalOut(), 0);
     }
 
+    function test_claim_external_transfers() public {
+        /*******************************/
+        /*** Finalize liquidity pool ***/
+        /*******************************/
+        {
+            sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
+            sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+
+            pool1.finalize();
+
+            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
+        }
+
+        /**********************************************************/
+        /*** Mint, deposit funds into liquidity pool, fund loan ***/
+        /**********************************************************/
+        {
+            mint("USDC", address(bob), 1_000_000_000 * USD);
+            bob.approve(USDC, address(pool1), uint(-1));
+            bob.approve(USDC, address(this),  uint(-1));
+            bob.deposit(address(pool1), 100_000_000 * USD);
+            sid.fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD);
+            assertEq(pool1.principalOut(), 100_000_000 * USD);
+        }
+
+        /*****************/
+        /*** Draw Down ***/
+        /*****************/
+        {
+            uint cReq1 =  loan.collateralRequiredForDrawdown(100_000_000 * USD); // wETH required for 100_000_000 USDC drawdown on loan
+            mint("WETH", address(eli), cReq1);
+            eli.approve(WETH, address(loan),  cReq1);
+            eli.drawdown(address(loan),  100_000_000 * USD);
+        }
+
+        /*****************************/
+        /*** Make Interest Payment ***/
+        /*****************************/
+        {
+            (uint amt,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
+            mint("USDC", address(eli), amt);
+            eli.approve(USDC, address(loan),  amt);
+            eli.makePayment(address(loan));
+        }
+
+        /**********************************************/
+        /*** Transfer USDC into Pool and debtLocker ***/
+        /**********************************************/
+        {
+            DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory1)));
+
+            uint256 poolBal_before       = IERC20(USDC).balanceOf(address(pool1));
+            uint256 debtLockerBal_before = IERC20(USDC).balanceOf(address(debtLocker1));
+
+            IERC20(USDC).transferFrom(address(bob), address(pool1),       1000 * USD);
+            IERC20(USDC).transferFrom(address(bob), address(debtLocker1), 2000 * USD);
+
+            uint256 poolBal_after       = IERC20(USDC).balanceOf(address(pool1));
+            uint256 debtLockerBal_after = IERC20(USDC).balanceOf(address(debtLocker1));
+
+            assertEq(poolBal_after - poolBal_before,             1000 * USD);
+            assertEq(debtLockerBal_after - debtLockerBal_before, 2000 * USD);
+
+            poolBal_before       = poolBal_after;
+            debtLockerBal_before = debtLockerBal_after;
+
+            checkClaim(debtLocker1, loan, sid, IERC20(USDC), pool1, address(dlFactory1));
+
+            poolBal_after       = IERC20(USDC).balanceOf(address(pool1));
+            debtLockerBal_after = IERC20(USDC).balanceOf(address(debtLocker1));
+
+            assertEq(poolBal_after,             poolBal_before);
+            assertEq(debtLockerBal_after, debtLockerBal_before);
+        }
+
+        /*************************/
+        /*** Make Full Payment ***/
+        /*************************/
+        {
+            (uint amt,,) =  loan.getFullPayment(); // USDC required for 1st payment on loan
+            mint("USDC", address(eli), amt);
+            eli.approve(USDC, address(loan),  amt);
+            eli.makeFullPayment(address(loan));
+        }
+
+        /*********************************************************/
+        /*** Check claim with existing balances in DL and Pool ***/
+        /*********************************************************/
+        {
+            DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory1)));
+
+            uint256 poolBal_before       = IERC20(USDC).balanceOf(address(pool1));
+            uint256 debtLockerBal_before = IERC20(USDC).balanceOf(address(debtLocker1));
+
+            checkClaim(debtLocker1, loan, sid, IERC20(USDC), pool1, address(dlFactory1));
+
+            uint256 poolBal_after       = IERC20(USDC).balanceOf(address(pool1));
+            uint256 debtLockerBal_after = IERC20(USDC).balanceOf(address(debtLocker1));
+
+            assertEq(poolBal_after,             poolBal_before);
+            assertEq(debtLockerBal_after, debtLockerBal_before);
+        }
+
+        assertEq(pool1.principalOut(), 0);
+    }
+
     function setUpWithdraw() internal {
         /*******************************/
         /*** Finalize liquidity pool ***/
@@ -1151,6 +1264,7 @@ contract PoolTest is TestUtil {
     }
     
     function test_withdraw_calculator() public {
+
         setUpWithdraw();
 
         uint256 start = block.timestamp;

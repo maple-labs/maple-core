@@ -33,7 +33,7 @@ contract DebtLocker {
     }
 
     /**
-        @dev    Claim funds distribution for loan via ERC-2222.
+        @dev    Claim funds distribution for loan via FDT.
         @return [0] = Total Claimed
                 [1] = Interest Claimed
                 [2] = Principal Claimed
@@ -43,7 +43,7 @@ contract DebtLocker {
     */
     function claim() external isOwner returns(uint[5] memory) {
 
-        // Tick FDT via ERC2222.
+        // Tick FDT via FDT.
         loan.updateFundsReceived();
 
         // Calculate deltas.
@@ -58,20 +58,28 @@ contract DebtLocker {
         feePaid        = loan.feePaid();
         excessReturned = loan.excessReturned();
 
-        // Withdraw funds via ERC2222.
-        loan.withdrawFunds();
+        uint256 claimBal;
+
+        // Withdraw funds via FDT.
+        {
+            uint256 beforeBal = loanAsset.balanceOf(address(this));  // Current balance of locker (accounts for direct inflows)
+            loan.withdrawFunds();
+            uint256 afterBal = loanAsset.balanceOf(address(this));   // Balance of locker after claiming funds using FDT
+            
+            claimBal = afterBal.sub(beforeBal);  // Amount claimed from loan using FDT
+        }
+        
 
         // Calculate distributed amounts, transfer the asset, and return metadata.
         uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess);
-        uint256 balance   = loanAsset.balanceOf(address(this));
-        uint256 interest  = newInterest .mul(WAD).div(sum).mul(balance).div(WAD);
-        uint256 principal = newPrincipal.mul(WAD).div(sum).mul(balance).div(WAD);
-        uint256 fee       = newFee      .mul(WAD).div(sum).mul(balance).div(WAD);
-        uint256 excess    = newExcess   .mul(WAD).div(sum).mul(balance).div(WAD);
+        uint256 interest  = newInterest .mul(WAD).div(sum).mul(claimBal).div(WAD);
+        uint256 principal = newPrincipal.mul(WAD).div(sum).mul(claimBal).div(WAD);
+        uint256 fee       = newFee      .mul(WAD).div(sum).mul(claimBal).div(WAD);
+        uint256 excess    = newExcess   .mul(WAD).div(sum).mul(claimBal).div(WAD);
         
-        require(loanAsset.transfer(owner, balance), "DebtLocker::claim:ERR_XFER");
+        require(loanAsset.transfer(owner, claimBal), "DebtLocker::claim:ERR_XFER");
 
-        return([balance, interest, principal, fee, excess]);
+        return([claimBal, interest, principal, fee, excess]);
     }
 
 }
