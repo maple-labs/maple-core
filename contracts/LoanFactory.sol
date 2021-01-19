@@ -3,14 +3,16 @@ pragma solidity >=0.6.11;
 
 import "./Loan.sol";
 import "./library/TokenUUID.sol";
-import "./LockerFactoryTypes.sol";
 
 interface ICalc { function calcType() external returns (bytes32); }
 
 /// @title LoanFactory instantiates Loan contracts.
-contract LoanFactory is LockerFactoryTypes {
+contract LoanFactory {
 
     using SafeMath for uint256;
+
+    uint8 public constant COLLATERAL_LOCKER_FACTORY  = 0;   // Factory type of `CollateralLockerFactory`.
+    uint8 public constant FUNDING_LOCKER_FACTORY     = 2;   // Factory type of `FundingLockerFactory`.
 
     address public immutable globals;  // The MapleGlobals.sol contract.
 

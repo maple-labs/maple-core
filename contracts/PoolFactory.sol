@@ -4,9 +4,11 @@ pragma solidity >=0.6.11;
 import "./Pool.sol";
 import "./interfaces/IBFactory.sol";
 import "./library/TokenUUID.sol";
-import "./LockerFactoryTypes.sol";
 
-contract PoolFactory is LockerFactoryTypes {
+contract PoolFactory {
+
+    uint8 public constant LIQUIDITY_LOCKER_FACTORY   = 3;   // Factory type of `LiquidityLockerFactory`.
+    uint8 public constant STAKE_LOCKER_FACTORY       = 4;   // Factory type of `StakeLockerFactory`.
 
     uint256 public poolsCreated;  // Incrementor for number of LPs created
     address public globals;       // The MapleGlobals.sol contract
