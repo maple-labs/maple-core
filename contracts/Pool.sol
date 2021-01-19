@@ -273,20 +273,20 @@ contract Pool is IERC20, ERC20, CalcBPool {
         uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000) + claimInfo[3];
         uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);
 
-        uint256 principal = liquidityAsset.balanceOf(address(this)) - claimInfo[1] - claimInfo[3] - claimInfo[4]; // Accounts for rounding error
+        // Accounts for rounding error in interest/fee/(principal+excess) split
+        uint256 principalExcess = liquidityAsset.balanceOf(address(this)) - claimInfo[1] - claimInfo[3]; // Accounts for rounding error
 
         require(liquidityAsset.transfer(poolDelegate, poolDelegatePortion));  // Transfer fee and portion of interest to pool delegate
         require(liquidityAsset.transfer(stakeLocker,  stakeLockerPortion));   // Transfer portion of interest to stakeLocker
 
-        // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liqudityLocker
-        uint remainder = liquidityAsset.balanceOf(address(this));
-        require(liquidityAsset.transfer(liquidityLocker, remainder));
+        // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liquidityLocker
+        require(liquidityAsset.transfer(liquidityLocker, liquidityAsset.balanceOf(address(this))));
 
-        // Update outstanding principal, the interest distribution mechanism.
-        emit Debug("principalOut1", principalOut);
-        principalOut = principalOut.sub(principal); // Reversion here indicates critical error
-        emit Debug("principalOut2", principalOut);
-        interestSum  = interestSum.add(claimInfo[1]).sub(claimInfo[1].mul(delegateFee).div(10000)).sub(claimInfo[1].mul(stakingFee).div(10000));
+        // Update outstanding principal, going to zero if principalPaid rounds to higher than principalOut
+        principalOut = principalOut > principalExcess ? principalOut.sub(principalExcess) : 0; // Reversion here indicates critical error
+
+        // Accounts for rounding error in stakeLocker/poolDelegate/liquidityLocker interest split
+        interestSum = interestSum.add(claimInfo[1]).sub(claimInfo[1].mul(delegateFee).div(10000)).sub(claimInfo[1].mul(stakingFee).div(10000));
 
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
@@ -294,13 +294,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
         emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
-        emit Claim(loan, claimInfo[1], claimInfo[2] + claimInfo[4], claimInfo[3]);
-
-        emit Debug("poolDelegatePortion",       poolDelegatePortion);
-        emit Debug("stakeLockerPortion",   stakeLockerPortion);
-        emit Debug("principal",  principal);
-        emit Debug("principalOut", principalOut);
-        emit Debug("interestSum",       interestSum);
+        emit Claim(loan, claimInfo[1], principalExcess, claimInfo[3]);
 
         return claimInfo;
     }
