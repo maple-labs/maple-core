@@ -191,6 +191,8 @@ contract Loan is FDT {
     */
     function drawdown(uint256 amt) external isState(State.Live) isBorrower {
 
+        IFundingLocker fundingLocker_ = IFundingLocker(fundingLocker);
+
         // TODO: Change endFunding to drawdown in err message
         require(
             amt >= minRaise, 
@@ -221,7 +223,7 @@ contract Loan is FDT {
 
         // Send treasuryFee directly to MapleTreasury
         require(
-            IFundingLocker(fundingLocker).pull(treasury, amt.mul(treasuryFee).div(10000)), 
+            fundingLocker_.pull(treasury, amt.mul(treasuryFee).div(10000)), 
             "Loan::drawdown:CRITICAL_ERR_PULL"
         );
 
@@ -229,11 +231,11 @@ contract Loan is FDT {
         feePaid = amt.mul(investorFee).div(10000);
 
         // Pull investorFee into this Loan.
-        require(IFundingLocker(fundingLocker).pull(address(this), feePaid), "Loan::drawdown:CRITICAL_ERR_PULL");
+        require(fundingLocker_.pull(address(this), feePaid), "Loan::drawdown:CRITICAL_ERR_PULL");
 
         // Transfer drawdown amount to Borrower.
         require(
-            IFundingLocker(fundingLocker).pull(borrower, amt.mul(10000 - investorFee - treasuryFee).div(10000)), 
+            fundingLocker_.pull(borrower, amt.mul(10000 - investorFee - treasuryFee).div(10000)), 
             "Loan::drawdown:CRITICAL_ERR_PULL"
         );
 
@@ -241,7 +243,7 @@ contract Loan is FDT {
         excessReturned = loanAsset.balanceOf(fundingLocker);
 
         // Drain remaining funds from FundingLocker.
-        require(IFundingLocker(fundingLocker).drain(), "Loan::endFunding:ERR_DRAIN");
+        require(fundingLocker_.drain(), "Loan::endFunding:ERR_DRAIN");
 
         emit BalanceUpdated(collateralLocker, address(collateralAsset), collateralAsset.balanceOf(collateralLocker));
         emit BalanceUpdated(fundingLocker,    address(loanAsset),       loanAsset.balanceOf(fundingLocker));
