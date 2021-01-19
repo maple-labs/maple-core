@@ -508,6 +508,16 @@ contract PoolTest is TestUtil {
         return pool.principalOut() + loanAsset.balanceOf(pool.liquidityLocker()) == constPoolVal;
     }
 
+    function assertConstFundLoan(Pool pool, address loan, address dlFactory, uint256 amt, IERC20 loanAsset, uint256 constPoolVal) internal returns(bool) {
+        assertTrue(sid.try_fundLoan(address(pool), loan,  dlFactory, amt));
+        assertTrue(isConstantPoolValue(pool1, loanAsset, constPoolVal));
+    }
+
+    function assertConstClaim(Pool pool, address loan, address dlFactory, IERC20 loanAsset, uint256 constPoolVal) internal returns(bool) {
+        sid.claim(address(pool), loan, dlFactory);
+        assertTrue(isConstantPoolValue(pool, loanAsset, constPoolVal));
+    }
+
     function test_claim_principal_accounting() public {
         /*********************************************/
         /*** Create a loan with 0% APR, 0% premium ***/
@@ -558,31 +568,16 @@ contract PoolTest is TestUtil {
         /*** Fund loan / loan2 (Excess) ***/
         /************************************/
         {
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
-
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
-
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
-
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
-
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
-
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
-
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
-            
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
+            assertConstFundLoan(pool1, address(loan),  address(dlFactory1), 100_000_000 * USD, IERC20(USDC), CONST_POOL_VALUE);
+            assertConstFundLoan(pool1, address(loan),  address(dlFactory1), 100_000_000 * USD, IERC20(USDC), CONST_POOL_VALUE);
+            assertConstFundLoan(pool1, address(loan),  address(dlFactory2), 200_000_000 * USD, IERC20(USDC), CONST_POOL_VALUE);
+            assertConstFundLoan(pool1, address(loan),  address(dlFactory2), 200_000_000 * USD, IERC20(USDC), CONST_POOL_VALUE);
+            assertConstFundLoan(pool1, address(loan2), address(dlFactory1),  50_000_000 * USD, IERC20(USDC), CONST_POOL_VALUE);
+            assertConstFundLoan(pool1, address(loan2), address(dlFactory1),  50_000_000 * USD, IERC20(USDC), CONST_POOL_VALUE);
+            assertConstFundLoan(pool1, address(loan2), address(dlFactory2), 150_000_000 * USD, IERC20(USDC), CONST_POOL_VALUE);
+            assertConstFundLoan(pool1, address(loan2), address(dlFactory2), 150_000_000 * USD, IERC20(USDC), CONST_POOL_VALUE);
         }
-
+        
         assertEq(pool1.principalOut(), 1_000_000_000 * USD);
         assertEq(IERC20(USDC).balanceOf(pool1.liquidityLocker()), 0);
 
@@ -623,17 +618,10 @@ contract PoolTest is TestUtil {
         /*** LP Claim ***/
         /****************/
         {      
-            sid.claim(address(pool1), address(loan), address(dlFactory1));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
-
-            sid.claim(address(pool1), address(loan), address(dlFactory2));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
-
-            sid.claim(address(pool1), address(loan2), address(dlFactory1));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
-
-            sid.claim(address(pool1), address(loan2), address(dlFactory2));
-            assertTrue(isConstantPoolValue(pool1, IERC20(USDC), CONST_POOL_VALUE));
+            assertConstClaim(pool1, address(loan),  address(dlFactory1), IERC20(USDC), CONST_POOL_VALUE);
+            assertConstClaim(pool1, address(loan),  address(dlFactory2), IERC20(USDC), CONST_POOL_VALUE);
+            assertConstClaim(pool1, address(loan2), address(dlFactory1), IERC20(USDC), CONST_POOL_VALUE);
+            assertConstClaim(pool1, address(loan2), address(dlFactory2), IERC20(USDC), CONST_POOL_VALUE);
         }
         
         assertEq(pool1.principalOut(), 0);
