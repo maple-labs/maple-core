@@ -71,8 +71,8 @@ contract DebtLockerFactoryTest is TestUtil {
         assertTrue(dlFactory.isLocker(address(dl)));
 
         // Validate the storage of dl.
-        assertEq(dl.loan(),      address(loan), "Incorrect loan address");
+        assertEq(address(dl.loan()),      address(loan), "Incorrect loan address");
         assertEq(dl.owner(),     address(this), "Incorrect owner of the DebtLocker");
-        assertEq(dl.loanAsset(), USDC, "Incorrect address of loan asset");
+        assertEq(address(dl.loanAsset()), USDC, "Incorrect address of loan asset");
     }
 }

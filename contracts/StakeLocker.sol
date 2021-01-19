@@ -13,12 +13,13 @@ contract StakeLocker is FDT {
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
 
-    uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division
+    uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division.
 
-    address public immutable stakeAsset;      // The asset deposited by stakers into this contract, for liquidation during defaults.
+    IGlobals public immutable globals;     // Maple globals.
+    IERC20   public immutable stakeAsset;  // The asset deposited by stakers into this contract, for liquidation during defaults.
+    
     address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
     address public immutable owner;           // The parent liquidity pool.
-    address public immutable globals;         // Maple globals
 
     bool private isLPDefunct;    // The LiquidityAsset for the Pool as well as the dividend token for this contract.
     bool private isLPFinalized;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
@@ -34,9 +35,9 @@ contract StakeLocker is FDT {
         address _globals
     ) FDT("Maple Stake Locker", "MPLSTAKE", _liquidityAsset) public {
         liquidityAsset = _liquidityAsset;
-        stakeAsset     = _stakeAsset;
+        stakeAsset     = IERC20(_stakeAsset);
         owner          = _owner;
-        globals        = _globals;
+        globals        = IGlobals(_globals);
     }
 
     event   Stake(uint256 _amount, address _staker);
@@ -57,7 +58,7 @@ contract StakeLocker is FDT {
     }
     
     modifier isGovernor() {
-        require(msg.sender == IGlobals(globals).governor(), "msg.sender is not Governor");
+        require(msg.sender == globals.governor(), "msg.sender is not Governor");
         _;
     }
 
@@ -68,13 +69,13 @@ contract StakeLocker is FDT {
     // TODO: Consider localizing this function to Pool.
     function stake(uint256 amt) external {
         require(
-            IERC20(stakeAsset).transferFrom(msg.sender, address(this), amt),
+            stakeAsset.transferFrom(msg.sender, address(this), amt),
             "StakeLocker:ERR_INSUFFICIENT_APPROVED_FUNDS"
         );
         _updateStakeDate(msg.sender, amt);
         _mint(msg.sender, amt);
         emit Stake(amt, msg.sender);
-        emit BalanceUpdated(address(this), stakeAsset, IERC20(stakeAsset).balanceOf(address(this)));
+        emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
     /**
@@ -91,12 +92,12 @@ contract StakeLocker is FDT {
         withdrawFunds(); //has to be before the transfer or they will end up here
         _transfer(msg.sender, address(this), amt);
         require(
-            IERC20(stakeAsset).transferFrom(address(this), msg.sender, amt),
+            stakeAsset.transferFrom(address(this), msg.sender, amt),
             "StakeLocker:ERR_STAKE_ASSET_BALANCE_DEPLETED"
         );
         _burn(address(this), amt);
         emit Unstake(amt, msg.sender);
-        emit BalanceUpdated(address(this), stakeAsset, IERC20(stakeAsset).balanceOf(address(this)));
+        emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
     /** 
@@ -150,7 +151,7 @@ contract StakeLocker is FDT {
     function getUnstakeableBalance(address staker) public view returns (uint256) {
         uint256 bal = balanceOf(staker);
         uint256 time = (block.timestamp - stakeDate[staker]) * WAD;
-        uint256 out = ((time / (IGlobals(globals).unstakeDelay() + 1)) * bal) / WAD;
+        uint256 out = ((time / (globals.unstakeDelay() + 1)) * bal) / WAD;
         // The plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
         // Also i do indeed want this to return 0 if denominator is less than WAD
         if (out > bal) {

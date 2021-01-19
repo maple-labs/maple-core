@@ -5,11 +5,11 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract CollateralLocker {
 
-    address public immutable collateralAsset;  // Address the loan is funded with.
+    IERC20 public immutable collateralAsset;   // Address the loan is funded with.
     address public immutable loan;             // Loan this CollateralLocker is attached to.
 
     constructor(address _collateralAsset, address _loan) public {
-        collateralAsset = _collateralAsset;
+        collateralAsset = IERC20(_collateralAsset);
         loan            = _loan;
     }
 
@@ -24,7 +24,7 @@ contract CollateralLocker {
         @param  amt Amount of collateralAsset to transfer.
     */
     function pull(address dst, uint256 amt) isLoan public returns(bool) {
-        return IERC20(collateralAsset).transfer(dst, amt);
+        return collateralAsset.transfer(dst, amt);
     }
     
 }

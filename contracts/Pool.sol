@@ -16,7 +16,6 @@ import "./interfaces/ILiquidityLocker.sol";
 import "./interfaces/ILiquidityLockerFactory.sol";
 import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IDebtLocker.sol";
-import "./interfaces/IERC20Details.sol";
 
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
@@ -25,13 +24,14 @@ contract Pool is IERC20, ERC20, CalcBPool {
 
     using SafeMath for uint256;
 
-    address public immutable poolDelegate;     // The pool delegate, who maintains full authority over this Pool.
-    address public immutable liquidityLocker;  // The LiquidityLocker owned by this contract.
-    address public immutable stakeAsset;       // The asset deposited by stakers into the StakeLocker, for liquidation during default events.
-    address public immutable stakeLocker;      // Address of the StakeLocker, escrowing the staked asset.
-    address public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
-    address public immutable slFactory;        // Maple Globals contract
-    address public           globals;          // Maple Globals contract
+    IGlobals public immutable globals;          // Maple Globals contract
+    IERC20   public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
+
+    address public immutable poolDelegate;    // The pool delegate, who maintains full authority over this Pool.
+    address public immutable liquidityLocker; // The LiquidityLocker owned by this contract.
+    address public immutable stakeAsset;      // The asset deposited by stakers into the StakeLocker, for liquidation during default events.
+    address public immutable stakeLocker;     // Address of the StakeLocker, escrowing the staked asset.
+    address public immutable slFactory;       // Address of the StakeLocker factory.
 
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset. (TODO: Examine the use of this variable, make immutable)
 
@@ -92,19 +92,19 @@ contract Pool is IERC20, ERC20, CalcBPool {
         require(valid, "Pool:INVALID_STAKING_POOL");
 
         // Assign variables relating to the LiquidityAsset.
-        liquidityAsset         = _liquidityAsset;
+        liquidityAsset         = IERC20(_liquidityAsset);
         liquidityAssetDecimals = ERC20(_liquidityAsset).decimals();
 
         // Assign misc. state variables.
         stakeAsset   = _stakeAsset;
         slFactory    = _slFactory;
-        globals      = _globals;
+        globals      = IGlobals(_globals);
         poolDelegate = _poolDelegate;
         stakingFee   = _stakingFee;
         delegateFee  = _delegateFee;
 
         // Initialize the LiquidityLocker and StakeLocker.
-        stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset);
+        stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset, _globals);
         liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
 
         // Withdrawal penalty default settings.
@@ -132,8 +132,9 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @param stakeAsset     Address of the asset used for staking.
         @param slFactory      Address of the StakeLocker factory used for instantiation.
         @param liquidityAsset Address of the liquidity asset, required when burning stakeAsset.
+        @param globals        Address of the Maple Globals contract.
     */
-    function createStakeLocker(address stakeAsset, address slFactory, address liquidityAsset) private returns (address) {
+    function createStakeLocker(address stakeAsset, address slFactory, address liquidityAsset, address globals) private returns (address) {
         require(
             IBPool(stakeAsset).isBound(IGlobals(globals).mpl()) &&
             IBPool(stakeAsset).isFinalized(),
@@ -164,8 +165,8 @@ contract Pool is IERC20, ERC20, CalcBPool {
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
 
         address balancerPool = stakeAsset;
-        address swapOutAsset = liquidityAsset;
-        uint256 swapOutAmountRequired = IGlobals(globals).swapOutRequired() * (10 ** IERC20Details(liquidityAsset).decimals());
+        address swapOutAsset = address(liquidityAsset);
+        uint256 swapOutAmountRequired = globals.swapOutRequired() * (10 ** liquidityAssetDecimals);
 
         (
             uint256 poolAmountInRequired, 
@@ -188,11 +189,11 @@ contract Pool is IERC20, ERC20, CalcBPool {
     */
     function deposit(uint256 amt) external notDefunct finalized {
         updateDepositDate(amt, msg.sender);
-        IERC20(liquidityAsset).transferFrom(msg.sender, liquidityLocker, amt);
+        liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt);
         uint256 wad = amt.mul(WAD).div(10 ** liquidityAssetDecimals);
         _mint(msg.sender, wad);
 
-        emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
     /**
@@ -204,7 +205,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         require(balanceOf(msg.sender) >= amt, "Pool::withdraw:USER_BAL_LESS_THAN_AMT");
 
         uint256 share = amt.mul(WAD).div(totalSupply());
-        uint256 bal   = IERC20(liquidityAsset).balanceOf(liquidityLocker);
+        uint256 bal   = liquidityAsset.balanceOf(liquidityLocker);
         uint256 due   = share.mul(principalOut.add(bal)).div(WAD);
 
         uint256 ratio      = (WAD).mul(interestSum).div(principalOut.add(bal));          // interest/totalMoney ratio
@@ -217,7 +218,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
 
         _burn(msg.sender, amt); // TODO: Unit testing on _burn / _mint for ERC-2222
         require(IERC20(liquidityLocker).transfer(msg.sender, due), "Pool::ERR_WITHDRAW_TRANSFER");
-        emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
     /**
@@ -230,7 +231,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
 
         // Auth checks.
         require(
-            IGlobals(globals).validLoanFactories(ILoan(loan).superFactory()),
+            globals.validLoanFactories(ILoan(loan).superFactory()),
             "Pool::fundLoan:ERR_LOAN_FACTORY_INVALID"
         );
         require(
@@ -245,12 +246,11 @@ contract Pool is IERC20, ERC20, CalcBPool {
         }
         
         principalOut += amt;
-
         // Fund loan.
         ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLockers[loan][dlFactory], amt);
         
         emit LoanFunded(loan, debtLockers[loan][dlFactory], amt);
-        emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
     /**
@@ -269,15 +269,15 @@ contract Pool is IERC20, ERC20, CalcBPool {
         uint[5] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
         // Distribute "interest" to appropriate parties.
-        require(IERC20(liquidityAsset).transfer(poolDelegate, claimInfo[1].mul(delegateFee).div(10000)));
-        require(IERC20(liquidityAsset).transfer(stakeLocker,  claimInfo[1].mul(stakingFee).div(10000)));
+        require(liquidityAsset.transfer(poolDelegate, claimInfo[1].mul(delegateFee).div(10000)));
+        require(liquidityAsset.transfer(stakeLocker,  claimInfo[1].mul(stakingFee).div(10000)));
 
         // Distribute "fee" to poolDelegate.
-        require(IERC20(liquidityAsset).transfer(poolDelegate, claimInfo[3]));
+        require(liquidityAsset.transfer(poolDelegate, claimInfo[3]));
 
         // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liqudityLocker
-        uint remainder = IERC20(liquidityAsset).balanceOf(address(this));
-        require(IERC20(liquidityAsset).transfer(liquidityLocker, remainder));
+        uint remainder = liquidityAsset.balanceOf(address(this));
+        require(liquidityAsset.transfer(liquidityLocker, remainder));
 
         // Update outstanding principal, the interest distribution mechanism.
         principalOut = principalOut.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error
@@ -286,8 +286,8 @@ contract Pool is IERC20, ERC20, CalcBPool {
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
 
-        emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
-        emit BalanceUpdated(stakeLocker,     liquidityAsset, IERC20(liquidityAsset).balanceOf(stakeLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
+        emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
         emit Claim(loan, claimInfo[1], claimInfo[2] + claimInfo[4], claimInfo[3]);
 

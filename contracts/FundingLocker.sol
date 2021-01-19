@@ -5,11 +5,11 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract FundingLocker {
 
-    address public immutable loanAsset;  // Asset the Loan was funded with
+    IERC20  public immutable loanAsset;  // Asset the Loan was funded with
     address public immutable loan;       // Loan this FundingLocker has funded
 
     constructor(address _loanAsset, address _loan) public {
-        loanAsset = _loanAsset;
+        loanAsset = IERC20(_loanAsset);
         loan      = _loan;
     }
 
@@ -24,15 +24,15 @@ contract FundingLocker {
         @param  amt Amount of loanAsset to transfer.
     */
     function pull(address dst, uint256 amt) isLoan public returns(bool) {
-        return IERC20(loanAsset).transfer(dst, amt);
+        return loanAsset.transfer(dst, amt);
     }
 
     /**
         @dev Transfers entire amount of loanAsset held in escrow to Loan.
     */
     function drain() isLoan public returns(bool) {
-        uint256 amt = IERC20(loanAsset).balanceOf(address(this));
-        return IERC20(loanAsset).transfer(loan, amt);
+        uint256 amt = loanAsset.balanceOf(address(this));
+        return loanAsset.transfer(loan, amt);
     }
     
 }
