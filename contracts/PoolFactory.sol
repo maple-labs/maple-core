@@ -10,8 +10,8 @@ contract PoolFactory {
     uint8 public constant LIQUIDITY_LOCKER_FACTORY   = 3;   // Factory type of `LiquidityLockerFactory`.
     uint8 public constant STAKE_LOCKER_FACTORY       = 4;   // Factory type of `StakeLockerFactory`.
 
-    uint256 public poolsCreated;  // Incrementor for number of LPs created
-    IGlobals public immutable globals;       // MapleGlobals contract
+    uint256  public poolsCreated;       // Incrementor for number of LPs created.
+    IGlobals public immutable globals;  // MapleGlobals contract.
 
     mapping(uint256 => address) public pools;  // Mappings for liquidity pool contracts, and their validation.
     mapping(address => bool)    public isPool;

@@ -24,13 +24,14 @@ contract Pool is IERC20, ERC20, CalcBPool {
 
     using SafeMath for uint256;
 
+    IGlobals public immutable globals;          // Maple Globals contract
+    IERC20   public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
+
     address public immutable poolDelegate;    // The pool delegate, who maintains full authority over this Pool.
     address public immutable liquidityLocker; // The LiquidityLocker owned by this contract.
     address public immutable stakeAsset;      // The asset deposited by stakers into the StakeLocker, for liquidation during default events.
     address public immutable stakeLocker;     // Address of the StakeLocker, escrowing the staked asset.
-    address public immutable slFactory;       // Maple Globals contract
-    IGlobals public immutable globals;        // Maple Globals contract
-    IERC20 public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
+    address public immutable slFactory;       // Address of the StakeLocker factory.
 
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset. (TODO: Examine the use of this variable, make immutable)
 
@@ -245,14 +246,11 @@ contract Pool is IERC20, ERC20, CalcBPool {
         }
         
         principalOut += amt;
-
-        ILiquidityLocker liquidityLocker_ = ILiquidityLocker(liquidityLocker);
-
         // Fund loan.
-        liquidityLocker_.fundLoan(loan, debtLockers[loan][dlFactory], amt);
+        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLockers[loan][dlFactory], amt);
         
         emit LoanFunded(loan, debtLockers[loan][dlFactory], amt);
-        emit BalanceUpdated(address(liquidityLocker_), address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
     /**
@@ -270,18 +268,16 @@ contract Pool is IERC20, ERC20, CalcBPool {
         
         uint[5] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
-        IERC20 liquidityAsset_ = liquidityAsset;  // Caches the state variable.
-
         // Distribute "interest" to appropriate parties.
-        require(liquidityAsset_.transfer(poolDelegate, claimInfo[1].mul(delegateFee).div(10000)));
-        require(liquidityAsset_.transfer(stakeLocker,  claimInfo[1].mul(stakingFee).div(10000)));
+        require(liquidityAsset.transfer(poolDelegate, claimInfo[1].mul(delegateFee).div(10000)));
+        require(liquidityAsset.transfer(stakeLocker,  claimInfo[1].mul(stakingFee).div(10000)));
 
         // Distribute "fee" to poolDelegate.
-        require(liquidityAsset_.transfer(poolDelegate, claimInfo[3]));
+        require(liquidityAsset.transfer(poolDelegate, claimInfo[3]));
 
         // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liqudityLocker
-        uint remainder = liquidityAsset_.balanceOf(address(this));
-        require(liquidityAsset_.transfer(liquidityLocker, remainder));
+        uint remainder = liquidityAsset.balanceOf(address(this));
+        require(liquidityAsset.transfer(liquidityLocker, remainder));
 
         // Update outstanding principal, the interest distribution mechanism.
         principalOut = principalOut.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error
@@ -290,8 +286,8 @@ contract Pool is IERC20, ERC20, CalcBPool {
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
 
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset_), liquidityAsset_.balanceOf(liquidityLocker));
-        emit BalanceUpdated(stakeLocker,     address(liquidityAsset_), liquidityAsset_.balanceOf(stakeLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
+        emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
         emit Claim(loan, claimInfo[1], claimInfo[2] + claimInfo[4], claimInfo[3]);
 

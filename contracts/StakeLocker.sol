@@ -13,12 +13,13 @@ contract StakeLocker is FDT {
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
 
-    uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division
+    uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division.
 
-    IERC20 public immutable stakeAsset;       // The asset deposited by stakers into this contract, for liquidation during defaults.
+    IGlobals public immutable globals;     // Maple globals.
+    IERC20   public immutable stakeAsset;  // The asset deposited by stakers into this contract, for liquidation during defaults.
+    
     address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
     address public immutable owner;           // The parent liquidity pool.
-    IGlobals public immutable globals;        // Maple globals
 
     bool private isLPDefunct;    // The LiquidityAsset for the Pool as well as the dividend token for this contract.
     bool private isLPFinalized;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.

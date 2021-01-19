@@ -162,9 +162,9 @@ contract LoanTest is TestUtil {
         assertEq(loan.minRaise(),                  specs[3]);
         assertEq(loan.collateralRatio(),           specs[4]);
         assertEq(loan.fundingPeriodSeconds(),      specs[5] * 1 days);
-        assertEq(address(loan.repaymentCalc()),    address(bulletCalc));
-        assertEq(address(loan.lateFeeCalc()),      address(lateFeeCalc));
-        assertEq(address(loan.premiumCalc()),      address(premiumCalc));
+        assertEq(loan.repaymentCalc(),             address(bulletCalc));
+        assertEq(loan.lateFeeCalc(),               address(lateFeeCalc));
+        assertEq(loan.premiumCalc(),               address(premiumCalc));
         assertEq(loan.nextPaymentDue(),            block.timestamp + loan.paymentIntervalSeconds());
     }
 

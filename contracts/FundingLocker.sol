@@ -5,8 +5,8 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract FundingLocker {
 
-    IERC20 public immutable loanAsset;  // Asset the Loan was funded with
-    address public immutable loan;      // Loan this FundingLocker has funded
+    IERC20  public immutable loanAsset;  // Asset the Loan was funded with
+    address public immutable loan;       // Loan this FundingLocker has funded
 
     constructor(address _loanAsset, address _loan) public {
         loanAsset = IERC20(_loanAsset);

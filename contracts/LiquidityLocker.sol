@@ -6,8 +6,8 @@ import "./interfaces/ILoan.sol";
 
 contract LiquidityLocker {
 
-    address public immutable owner;          // The Pool that owns this LiquidityLocker, for authorization purposes.
-    IERC20 public immutable liquidityAsset;  // The asset which this LiquidityLocker will escrow.
+    address public immutable owner;           // The Pool that owns this LiquidityLocker, for authorization purposes.
+    IERC20  public immutable liquidityAsset;  // The asset which this LiquidityLocker will escrow.
 
     constructor(address _liquidityAsset, address _owner) public {
         liquidityAsset = IERC20(_liquidityAsset);
