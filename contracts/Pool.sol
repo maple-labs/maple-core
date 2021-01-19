@@ -216,12 +216,12 @@ contract Pool is FDT, CalcBPool {
         // Alice -2-> liquidityLocker
 
         withdrawFunds();           // Transfer full entitled interest.
-        require(IERC20(liquidityAsset).transferFrom(liquidityLocker, msg.sender, due), "Pool:WITHDRAW_TRANSFER");  // Transfer the principal amount - totPenalty.
+        require(liquidityAsset.transferFrom(liquidityLocker, msg.sender, due), "Pool::WITHDRAW_TRANSFER");  // Transfer the principal amount - totPenalty.
 
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
         updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
 
-        emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
     /**
@@ -347,7 +347,7 @@ contract Pool is FDT, CalcBPool {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
-            IERC20(liquidityAsset).transferFrom(liquidityLocker, msg.sender, withdrawableFunds),
+            liquidityAsset.transferFrom(liquidityLocker, msg.sender, withdrawableFunds),
             "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
         );
 
