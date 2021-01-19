@@ -162,7 +162,7 @@ abstract contract FDT is IFDT, ERC20 {
      * and returns the difference of new and previous funds token balances
      * @return A int256 representing the difference of the new and previous funds token balance
      */
-    function _updateFundsTokenBalance() internal returns (int256) {
+    function _updateFundsTokenBalance() internal virtual returns (int256) {
         uint256 _prevFundsTokenBalance = fundsTokenBalance;
 
         fundsTokenBalance = fundsToken.balanceOf(address(this));

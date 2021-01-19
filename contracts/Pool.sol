@@ -193,6 +193,22 @@ contract Pool is FDT, CalcBPool {
     }
 
     /**
+     * @dev Withdraws all available funds for a token holder
+     */
+    function withdrawFunds() public override(FDT) {
+        uint256 withdrawableFunds = _prepareWithdraw();
+
+        require(
+            liquidityAsset.transferFrom(liquidityLocker, msg.sender, withdrawableFunds),
+            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
+        );
+
+        interestSum -= withdrawableFunds;
+
+        _updateFundsTokenBalance();
+    }
+
+    /**
         @dev Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
         @param amt The amount of LiquidityAsset to withdraw, in wei.
     */
@@ -200,9 +216,13 @@ contract Pool is FDT, CalcBPool {
         amt = amt.mul(WAD).div(10 ** liquidityAssetDecimals);
         require(balanceOf(msg.sender) >= amt, "Pool:USER_BAL_LT_AMT");
 
-        uint256 share = amt.mul(WAD).div(totalSupply());
-        uint256 bal   = liquidityAsset.balanceOf(liquidityLocker);
-        uint256 due   = share.mul(principalOut.add(bal)).div(WAD);
+        // First calculate the interest cooresponds to the user.
+        uint256 allocatedInterest = withdrawableFundsOf(msg.sender);        // Interest
+        uint256 priPenalty        = principalPenalty.mul(amt).div(10000);   // Calculate flat principal penalty
+
+        uint256 share      = amt.mul(WAD).div(totalSupply());
+        uint256 totalBal   = IERC20(liquidityAsset).balanceOf(liquidityLocker);
+        uint256 due        = share.mul(principalOut.add(totalBal)).div(WAD);
 
         uint256 ratio      = (WAD).mul(interestSum).div(principalOut.add(totalBal));     // interest/totalMoney ratio
         uint256 interest   = due.mul(ratio).div(WAD);                                    // Get nominal interest owned by sender
@@ -287,6 +307,8 @@ contract Pool is FDT, CalcBPool {
 
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
+        // Update funds received for ERC-2222 Pool tokens.
+        updateFundsReceived();
 
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
         emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
@@ -294,6 +316,19 @@ contract Pool is FDT, CalcBPool {
         emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
 
         return claimInfo;
+    }
+
+    /**
+     * @dev Updates the current funds token balance
+     * and returns the difference of new and previous funds token balances
+     * @return A int256 representing the difference of the new and previous funds token balance
+     */
+    function _updateFundsTokenBalance() internal override returns (int256) {
+        uint256 _prevFundsTokenBalance = fundsTokenBalance;
+
+        fundsTokenBalance = interestSum;
+
+        return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
     }
 
     /** 
@@ -327,13 +362,6 @@ contract Pool is FDT, CalcBPool {
     // TODO: Chris add NatSpec
     function setPrincipalPenalty(uint256 _principalPenalty) public isDelegate {
         principalPenalty = _principalPenalty;
-    }
-
-    /**
-     * @dev Withdraws all available funds for a token holder
-     */
-    function withdrawFunds() public override(FDT) {
-
     }
 
 }
