@@ -96,7 +96,22 @@ contract MapleGlobalsTest is TestUtil {
     }
 
     function test_setup() public {
-        
+        assertTrue(globals.isValidPoolDelegate(address(sid)));
+        assertTrue(globals.isValidLoanAsset(DAI));
+        assertTrue(globals.isValidLoanAsset(USDC));
+        assertTrue(globals.isValidCollateralAsset(DAI));
+        assertTrue(globals.isValidCollateralAsset(USDC));
+        assertTrue(globals.isValidCollateralAsset(WETH));
+        assertTrue(globals.isValidCollateralAsset(WBTC));
+        assertTrue(globals.isValidCalc(address(lfCalc)));
+        assertTrue(globals.isValidCalc(address(pCalc)));
+        assertTrue(globals.isValidCalc(address(brCalc)));
+        assertTrue(globals.validPoolFactories(address(poolFactory)));
+        assertTrue(globals.validLoanFactories(address(loanFactory)));
+        assertTrue(globals.validSubFactories(address(poolFactory), address(slFactory)));
+        assertTrue(globals.validSubFactories(address(poolFactory), address(llFactory)));
+        assertTrue(globals.validSubFactories(address(loanFactory), address(clFactory)));
+        assertTrue(globals.validSubFactories(address(loanFactory), address(flFactory)));
     }
 
     function test_setters() public {
@@ -120,6 +135,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.governor(), address(mpl));
     }
 
+    // TODO: Add cDAI and cUSDC tests within here.
     function test_add_tokens() public {
         // string[]  memory validLoanAssetSymbols;
         // address[] memory validLoanAssets;
