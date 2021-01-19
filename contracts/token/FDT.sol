@@ -19,10 +19,10 @@ abstract contract FDT is IFDT, ERC20 {
     uint256 public fundsTokenBalance;  // The amount of fundsToken (loanAsset) currently present and accounted for in this contract.
 
     uint256 internal constant pointsMultiplier = 2 ** 128;
-    uint256 internal pointsPerShare;
+    uint256 internal pointsPerShare; /
 
     mapping(address => int256)  internal pointsCorrection;
-    mapping(address => uint256) internal withdrawnFunds;
+    mapping(address => uint256) internal withdrawnFunds; // 3
 
     constructor(string memory name, string memory symbol, address _fundsToken) ERC20(name, symbol) public {
         fundsToken = IERC20(_fundsToken);
@@ -149,7 +149,7 @@ abstract contract FDT is IFDT, ERC20 {
     /**
      * @dev Withdraws all available funds for a token holder
      */
-    function withdrawFunds() public override {
+    function withdrawFunds() public virtual override {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(fundsToken.transfer(msg.sender, withdrawableFunds), "FDT:TRANSFER_FAILED");
@@ -175,7 +175,7 @@ abstract contract FDT is IFDT, ERC20 {
      * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
      * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
      */
-    function updateFundsReceived() public {
+    function updateFundsReceived() public virtual {
         int256 newFunds = _updateFundsTokenBalance();
 
         if (newFunds > 0) {

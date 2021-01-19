@@ -3,7 +3,6 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 import "./math/CalcBPool.sol";
 import "./interfaces/ILoan.sol";
@@ -16,11 +15,12 @@ import "./interfaces/ILiquidityLocker.sol";
 import "./interfaces/ILiquidityLockerFactory.sol";
 import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IDebtLocker.sol";
+import "./token/FDT.sol";
 
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
 /// @title Pool is the core contract for liquidity pools.
-contract Pool is IERC20, ERC20, CalcBPool {
+contract Pool is FDT, CalcBPool {
 
     using SafeMath for uint256;
 
@@ -77,8 +77,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         string memory name,
         string memory symbol,
         address _globals
-    ) ERC20(name, symbol) public {
-       
+    ) FDT(name, symbol, _liquidityAsset) public {
         require(_liquidityAsset != address(0), "Pool:INVALID_LIQ_ASSET"); 
 
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
@@ -197,19 +196,25 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @dev Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
         @param amt The amount of LiquidityAsset to withdraw, in wei.
     */
-    // TODO: Confirm if amt param supplied is in wei of FDT, or in wei of LiquidtyAsset.
     function withdraw(uint256 amt) external notDefunct finalized {
+        amt = amt.mul(WAD).div(10 ** liquidityAssetDecimals);
         require(balanceOf(msg.sender) >= amt, "Pool:USER_BAL_LT_AMT");
 
         uint256 share = amt.mul(WAD).div(totalSupply());
         uint256 bal   = liquidityAsset.balanceOf(liquidityLocker);
         uint256 due   = share.mul(principalOut.add(bal)).div(WAD);
 
-        uint256 ratio      = (WAD).mul(interestSum).div(principalOut.add(bal));          // interest/totalMoney ratio
+        uint256 ratio      = (WAD).mul(interestSum).div(principalOut.add(totalBal));     // interest/totalMoney ratio
         uint256 interest   = due.mul(ratio).div(WAD);                                    // Get nominal interest owned by sender
         uint256 priPenalty = principalPenalty.mul(due.sub(interest)).div(10000);         // Calculate flat principal penalty
-        uint256 totPenalty = calcInterestPenalty(interest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated
+        uint256 totPenalty = calcWithdrawPenalty(interest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated
         
+        Psuedo code:
+        1. calculate the interest using the `pointsCorrection`
+        2. LP = 1000, priPenalty = amt * 5%             let's say amt = 100
+        3. totalPenalty = 
+
+
         due         = due.sub(totPenalty);                        // Remove penalty from due amount
         interestSum = interestSum.sub(interest).add(totPenalty);  // Update interest total reflecting withdrawn amount (distributes principal penalty as interest)
 
@@ -296,11 +301,11 @@ contract Pool is IERC20, ERC20, CalcBPool {
      * The resulting value will be removed from the interest used in a repayment
     **/
     // TODO: Chris add NatSpec
-    function calcInterestPenalty(uint256 interest, address who) public returns (uint256 out) {
+    function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 out) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
-        uint256 unlocked = dTime.div(interestDelay).mul(interest) / WAD;
+        uint256 unlocked = dTime.div(interestDelay).mul(amt) / WAD;
 
-        out = unlocked > interest ? 0 : interest - unlocked;
+        out = unlocked > amt ? 0 : amt - unlocked;
     }
 
     // TODO: Chris add NatSpec
@@ -322,6 +327,13 @@ contract Pool is IERC20, ERC20, CalcBPool {
     // TODO: Chris add NatSpec
     function setPrincipalPenalty(uint256 _principalPenalty) public isDelegate {
         principalPenalty = _principalPenalty;
+    }
+
+    /**
+     * @dev Withdraws all available funds for a token holder
+     */
+    function withdrawFunds() public override(FDT) {
+
     }
 
 }
