@@ -7,6 +7,9 @@ import "./library/TokenUUID.sol";
 
 contract PoolFactory {
 
+    uint8 public constant LIQUIDITY_LOCKER_FACTORY   = 3;   // Factory type of `LiquidityLockerFactory`.
+    uint8 public constant STAKE_LOCKER_FACTORY       = 4;   // Factory type of `StakeLockerFactory`.
+
     uint256 public poolsCreated;  // Incrementor for number of LPs created
     address public globals;       // The MapleGlobals.sol contract
 
@@ -50,11 +53,11 @@ contract PoolFactory {
     ) public returns (address) {
         
         require(
-            IGlobals(globals).isValidSubFactory(address(this), llFactory, "LiquidityLockerFactory"),
+            IGlobals(globals).isValidSubFactory(address(this), llFactory, LIQUIDITY_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_LIQUIDITY_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).isValidSubFactory(address(this), slFactory, "StakeLockerFactory"),
+            IGlobals(globals).isValidSubFactory(address(this), slFactory, STAKE_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_STAKE_LOCKER_FACTORY"
         );
         require(

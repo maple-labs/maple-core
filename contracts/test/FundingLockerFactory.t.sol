@@ -18,7 +18,7 @@ contract FundingLockerFactoryTest is TestUtil {
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);                    // Setup Maple token.
         globals   = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
         flFactory = new FundingLockerFactory();                                    // Setup Funding Locker Factory to support Loan Factory creation.
-        assertEq(flFactory.factoryType(), "FundingLockerFactory", "Incorrect factory type");
+        assertEq(flFactory.factoryType(), uint(2), "Incorrect factory type");
     }
 
     function test_newLocker() public {

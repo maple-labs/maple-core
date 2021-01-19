@@ -18,7 +18,7 @@ contract CollateralLockerFactoryTest is TestUtil {
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);                   // Setup Maple token.
         globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY); // Setup Maple Globals.
         clFactory   = new CollateralLockerFactory();                                // Setup Collateral Locker Factory to support Loan Factory creation.
-        assertEq(clFactory.factoryType(), "CollateralLockerFactory", "Incorrect factory type");
+        assertEq(clFactory.factoryType(), uint(0), "Incorrect factory type");
     }
 
     function test_newLocker() public {

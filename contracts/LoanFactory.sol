@@ -11,6 +11,9 @@ contract LoanFactory {
 
     using SafeMath for uint256;
 
+    uint8 public constant COLLATERAL_LOCKER_FACTORY  = 0;   // Factory type of `CollateralLockerFactory`.
+    uint8 public constant FUNDING_LOCKER_FACTORY     = 2;   // Factory type of `FundingLockerFactory`.
+
     address public immutable globals;  // The MapleGlobals.sol contract.
 
     uint256 public loansCreated;  // Incrementor for number of loan vaults created.
@@ -76,11 +79,11 @@ contract LoanFactory {
         address premiumCalc  = calcs[2];
 
         require(
-            IGlobals(globals).isValidSubFactory(address(this), flFactory, "FundingLockerFactory"),
+            IGlobals(globals).isValidSubFactory(address(this), flFactory, FUNDING_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_FUNDING_LOCKER_FACTORY"
         );
         require(
-            IGlobals(globals).isValidSubFactory(address(this), clFactory, "CollateralLockerFactory"),
+            IGlobals(globals).isValidSubFactory(address(this), clFactory, COLLATERAL_LOCKER_FACTORY),
             "LoanFactory::createLoan:ERR_INVALID_FUNDING_COLLATERAL_FACTORY"
         );
         require(

@@ -7,6 +7,8 @@ contract DebtLockerFactory {
     mapping(address => address) public owner;     // owner[locker] = Owner of the debt locker.
     mapping(address => bool)    public isLocker;  // True if debt locker was created in this factory, otherwise false.
 
+    uint8 public constant factoryType = 1;        // i.e LockerFactoryTypes::DEBT_LOCKER_FACTORY.
+
     /**
         @dev Instantiate a DebtLocker contract.
         @param  loan The loan this debt locker will escrow tokens for.

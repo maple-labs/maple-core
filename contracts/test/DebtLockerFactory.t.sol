@@ -61,6 +61,7 @@ contract DebtLockerFactoryTest is TestUtil {
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");  // Should be incrementer by 1.
         assertTrue(lFactory.isLoan(address(loan)));                            // Should be considered as a loan.
         dlFactory = new DebtLockerFactory();                                   // Create DLF.
+        assertEq(dlFactory.factoryType(), uint(1), "Incorrect factory type");
     }
 
     function test_newLocker() public {
