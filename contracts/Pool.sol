@@ -33,8 +33,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     address public immutable slFactory;        // Maple Globals contract
     address public           globals;          // Maple Globals contract
 
-    uint256 private           liquidityAssetDecimals;  // decimals() precision for the liquidityAsset. (TODO: Examine the use of this variable, make immutable)
-    uint256 private immutable ONELiquidityAsset;       // 10^k where k = liquidityAssetDecimals, representing one LiquidityAsset unit in 'wei'. (TODO: Examine the use of this variable)
+    uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset. (TODO: Examine the use of this variable, make immutable)
 
     uint256 public principalOut;     // Sum of all outstanding principal on loans
     uint256 public interestSum;      // Sum of all interest currently inside the liquidity locker
@@ -95,7 +94,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
         // Assign variables relating to the LiquidityAsset.
         liquidityAsset         = _liquidityAsset;
         liquidityAssetDecimals = ERC20(_liquidityAsset).decimals();
-        ONELiquidityAsset      = 10 ** (liquidityAssetDecimals);
 
         // Assign misc. state variables.
         stakeAsset   = _stakeAsset;
@@ -191,7 +189,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     function deposit(uint256 amt) external notDefunct finalized {
         updateDepositDate(amt, msg.sender);
         IERC20(liquidityAsset).transferFrom(msg.sender, liquidityLocker, amt);
-        uint256 wad = liq2FDT(amt);
+        uint256 wad = amt.mul(WAD).div(10 ** liquidityAssetDecimals);
         _mint(msg.sender, wad);
 
         emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
@@ -294,32 +292,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
         emit Claim(loan, claimInfo[1], claimInfo[2] + claimInfo[4], claimInfo[3]);
 
         return claimInfo;
-    }
-
-    /*these are to convert between FDT of 18 decim and liquidityasset locker of 0 to 256 decimals
-    if we change the decimals on the FDT to match liquidityasset this would not be necessary
-    but that will cause frontend interface complications!
-    if we dont support decimals > 18, that would half this code, but some jerk probably has a higher decimal coin
-    */
-    function liq2FDT(uint256 _amt) internal view returns (uint256 _out) {
-        if (liquidityAssetDecimals > 18) {
-            _out = _amt.div(10**(liquidityAssetDecimals - 18));
-        } else {
-            uint _offset = 18 - liquidityAssetDecimals;
-            _out = _amt.mul(10 ** _offset);
-        }
-        return _out;
-    }
-
-    // TODO: Optimize FDT2liq and liq2FDT
-    // TODO: Consider removing the one below if not being used after withdraw() is implemented.
-    function FDT2liq(uint256 _amt) internal view returns (uint256 _out) {
-        if (liquidityAssetDecimals > 18) {
-            _out = _amt.mul(10**(liquidityAssetDecimals - 18));
-        } else {
-            _out = _amt.div(10**(18 - liquidityAssetDecimals));
-        }
-        return _out;
     }
 
     /** 
