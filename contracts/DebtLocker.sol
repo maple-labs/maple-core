@@ -32,7 +32,6 @@ contract DebtLocker {
         loanAsset = IERC20(ILoan(_loan).loanAsset());
     }
 
-    event Debug(string, uint);
     /**
         @dev    Claim funds distribution for loan via ERC-2222.
         @return [0] = Total Claimed
@@ -51,7 +50,7 @@ contract DebtLocker {
         uint256 newInterest  = loan.interestPaid() - interestPaid;
         uint256 newPrincipal = loan.principalPaid() - principalPaid;
         uint256 newFee       = loan.feePaid() - feePaid;
-        uint256 newExcess    = loan.excessReturned() - excessReturned;
+        uint256 newExcess    = loan.excessReturned() - excessReturned; // TODO: Determine if we need excess accounting still
 
         // Update accounting.
         interestPaid   = loan.interestPaid();
@@ -69,21 +68,6 @@ contract DebtLocker {
         uint256 principal = newPrincipal.mul(WAD).div(sum).mul(balance).div(WAD);
         uint256 fee       = newFee      .mul(WAD).div(sum).mul(balance).div(WAD);
         uint256 excess    = newExcess   .mul(WAD).div(sum).mul(balance).div(WAD);
-
-        if(principal > 0) {
-            emit Debug("sum",       sum);
-            emit Debug("balance",   balance);
-            emit Debug("interest",  interest);
-            emit Debug("principal", principal);
-            emit Debug("fee",       fee);
-            emit Debug("excess",    excess);
-
-            emit Debug("newInterest",  newInterest);
-            emit Debug("newPrincipal", newPrincipal);
-            emit Debug("newFee",       newFee);
-            emit Debug("principal",    principal);
-            emit Debug("newExcess",    newExcess);
-        }
         
         require(loanAsset.transfer(owner, balance), "DebtLocker::claim:ERR_XFER");
 

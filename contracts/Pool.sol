@@ -253,8 +253,6 @@ contract Pool is IERC20, ERC20, CalcBPool {
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
-        event Debug(string, uint);
-
     /**
         @dev Claim available funds for loan through specified debt locker factory.
         @param  loan      Address of the loan to claim from.
