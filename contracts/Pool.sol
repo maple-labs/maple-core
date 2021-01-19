@@ -186,26 +186,10 @@ contract Pool is FDT, CalcBPool {
     function deposit(uint256 amt) external notDefunct finalized {
         updateDepositDate(amt, msg.sender);
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
-        uint256 wad = amt.mul(WAD).div(10 ** liquidityAssetDecimals);
+        uint256 wad = _fdtDenominated(amt);
         _mint(msg.sender, wad);
 
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
-    }
-
-    /**
-     * @dev Withdraws all available funds for a token holder
-     */
-    function withdrawFunds() public override(FDT) {
-        uint256 withdrawableFunds = _prepareWithdraw();
-
-        require(
-            liquidityAsset.transferFrom(liquidityLocker, msg.sender, withdrawableFunds),
-            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
-        );
-
-        interestSum -= withdrawableFunds;
-
-        _updateFundsTokenBalance();
+        emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
     }
 
     /**
@@ -213,34 +197,31 @@ contract Pool is FDT, CalcBPool {
         @param amt The amount of LiquidityAsset to withdraw, in wei.
     */
     function withdraw(uint256 amt) external notDefunct finalized {
-        amt = amt.mul(WAD).div(10 ** liquidityAssetDecimals);
-        require(balanceOf(msg.sender) >= amt, "Pool:USER_BAL_LT_AMT");
+        uint256 fdtAmt = _fdtDenominated(amt);
+        require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
 
-        // First calculate the interest cooresponds to the user.
-        uint256 allocatedInterest = withdrawableFundsOf(msg.sender);        // Interest
-        uint256 priPenalty        = principalPenalty.mul(amt).div(10000);   // Calculate flat principal penalty
-
-        uint256 share      = amt.mul(WAD).div(totalSupply());
-        uint256 totalBal   = IERC20(liquidityAsset).balanceOf(liquidityLocker);
-        uint256 due        = share.mul(principalOut.add(totalBal)).div(WAD);
-
-        uint256 ratio      = (WAD).mul(interestSum).div(principalOut.add(totalBal));     // interest/totalMoney ratio
-        uint256 interest   = due.mul(ratio).div(WAD);                                    // Get nominal interest owned by sender
-        uint256 priPenalty = principalPenalty.mul(due.sub(interest)).div(10000);         // Calculate flat principal penalty
-        uint256 totPenalty = calcWithdrawPenalty(interest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated
+        uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
+        uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
+        uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
+        uint256 due               = amt.sub(totPenalty);                                                 // Funds due after the penalty deduction from the `amt` that is asked for withdraw.
         
-        Psuedo code:
-        1. calculate the interest using the `pointsCorrection`
-        2. LP = 1000, priPenalty = amt * 5%             let's say amt = 100
-        3. totalPenalty = 
+        // TODO: Unit testing on _burn / _mint for ERC-2222 
+        _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
 
+        // TODO: Think about a way where we can show the total funds transfer and then claim back the penalty
+        // for more user visibility. Ex- Alice entitled to get 20 uints as principal amount and 5 uints as the
+        // interest whilst 2 unit will be total penalty. So txn looks like this - 
+        // liquidityLocker -5-> Alice
+        // liquidityLocker -20-> Alice
+        // Alice -2-> liquidityLocker
 
-        due         = due.sub(totPenalty);                        // Remove penalty from due amount
-        interestSum = interestSum.sub(interest).add(totPenalty);  // Update interest total reflecting withdrawn amount (distributes principal penalty as interest)
+        withdrawFunds();           // Transfer full entitled interest.
+        require(IERC20(liquidityAsset).transferFrom(liquidityLocker, msg.sender, due), "Pool:WITHDRAW_TRANSFER");  // Transfer the principal amount - totPenalty.
 
-        _burn(msg.sender, amt); // TODO: Unit testing on _burn / _mint for ERC-2222
-        require(IERC20(liquidityLocker).transfer(msg.sender, due), "Pool:WITHDRAW_TRANSFER");
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
+        interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
+        updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
+
+        emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
     }
 
     /**
@@ -318,21 +299,8 @@ contract Pool is FDT, CalcBPool {
         return claimInfo;
     }
 
-    /**
-     * @dev Updates the current funds token balance
-     * and returns the difference of new and previous funds token balances
-     * @return A int256 representing the difference of the new and previous funds token balance
-     */
-    function _updateFundsTokenBalance() internal override returns (int256) {
-        uint256 _prevFundsTokenBalance = fundsTokenBalance;
-
-        fundsTokenBalance = interestSum;
-
-        return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
-    }
-
     /** 
-     * This is to establish the function signatur by which an interest penalty will be calculated
+     * This is to establish the function signature by which an interest penalty will be calculated
      * The resulting value will be removed from the interest used in a repayment
     **/
     // TODO: Chris add NatSpec
@@ -364,4 +332,40 @@ contract Pool is FDT, CalcBPool {
         principalPenalty = _principalPenalty;
     }
 
+    function _fdtDenominated(uint256 amt) internal returns(uint256) {
+        return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
+    }
+
+    //////////////////////////////
+    /// FDT Overriden functions //
+    /////////////////////////////
+
+    /**
+     * @dev Withdraws all available funds for a token holder
+     */
+    function withdrawFunds() public override(FDT) {
+        uint256 withdrawableFunds = _prepareWithdraw();
+
+        require(
+            IERC20(liquidityAsset).transferFrom(liquidityLocker, msg.sender, withdrawableFunds),
+            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
+        );
+
+        interestSum = interestSum.sub(withdrawableFunds);
+
+        _updateFundsTokenBalance();
+    }
+
+    /**
+     * @dev Updates the current funds token balance
+     * and returns the difference of new and previous funds token balances
+     * @return A int256 representing the difference of the new and previous funds token balance
+     */
+    function _updateFundsTokenBalance() internal override returns (int256) {
+        uint256 _prevFundsTokenBalance = fundsTokenBalance;
+
+        fundsTokenBalance = interestSum;
+
+        return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
+    }
 }

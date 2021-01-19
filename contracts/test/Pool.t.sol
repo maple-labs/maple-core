@@ -1269,28 +1269,28 @@ contract PoolTest is TestUtil {
         uint256 start = block.timestamp;
         uint256 delay = pool1.interestDelay();
 
-        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
+        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
 
         hevm.warp(start + delay / 3);
-        withinPrecision(pool1.calcInterestPenalty(1 ether, address(bob)), uint(2 ether) / 3, 6); // After 1/3 delay has passed, 2/3 (interest + penalty) is subtracted
+        withinPrecision(pool1.calcWithdrawPenalty(1 ether, address(bob)), uint(2 ether) / 3, 6); // After 1/3 delay has passed, 2/3 (interest + penalty) is subtracted
 
         hevm.warp(start + delay / 2);
-        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0.5 ether);  // After half delay has passed, 1/2 (interest + penalty) is subtracted
+        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0.5 ether);  // After half delay has passed, 1/2 (interest + penalty) is subtracted
 
         hevm.warp(start + delay - 1);
-        assertTrue(pool1.calcInterestPenalty(1 ether, address(bob)) > 0); // Still a penalty
+        assertTrue(pool1.calcWithdrawPenalty(1 ether, address(bob)) > 0); // Still a penalty
         
         hevm.warp(start + delay);
-        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0); // After delay has passed, no penalty
+        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0); // After delay has passed, no penalty
 
         hevm.warp(start + delay + 1);
-        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0); 
+        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0); 
 
         hevm.warp(start + delay * 2);
-        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
+        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0);
 
         hevm.warp(start + delay * 1000);
-        assertEq(pool1.calcInterestPenalty(1 ether, address(bob)), 0);
+        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0);
     }    
 
     function test_withdraw_no_principal_penalty() public {

@@ -19,7 +19,7 @@ abstract contract FDT is IFDT, ERC20 {
     uint256 public fundsTokenBalance;  // The amount of fundsToken (loanAsset) currently present and accounted for in this contract.
 
     uint256 internal constant pointsMultiplier = 2 ** 128;
-    uint256 internal pointsPerShare; /
+    uint256 internal pointsPerShare;
 
     mapping(address => int256)  internal pointsCorrection;
     mapping(address => uint256) internal withdrawnFunds; // 3
