@@ -77,7 +77,7 @@ contract DebtLocker {
         uint256 fee       = calcAllotment(newFee,       sum, claimBal);
         uint256 excess    = calcAllotment(newExcess,    sum, claimBal);
         
-        require(loanAsset.transfer(owner, claimBal), "DebtLocker::claim:ERR_XFER");
+        require(loanAsset.transfer(owner, claimBal), "DebtLocker:CLAIM_TRANSFER");
 
         return([claimBal, interest, principal, fee, excess]);
     }

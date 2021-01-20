@@ -184,7 +184,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     */
     function deposit(uint256 amt) external notDefunct finalized {
         updateDepositDate(amt, msg.sender);
-        liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt);
+        require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
         uint256 wad = amt.mul(WAD).div(10 ** liquidityAssetDecimals);
         _mint(msg.sender, wad);
 
@@ -197,7 +197,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     */
     // TODO: Confirm if amt param supplied is in wei of FDT, or in wei of LiquidtyAsset.
     function withdraw(uint256 amt) external notDefunct finalized {
-        require(balanceOf(msg.sender) >= amt, "Pool:USER_BAL_LESS_THAN_AMT");
+        require(balanceOf(msg.sender) >= amt, "Pool:USER_BAL_LT_AMT");
 
         uint256 share = amt.mul(WAD).div(totalSupply());
         uint256 bal   = liquidityAsset.balanceOf(liquidityLocker);
@@ -269,13 +269,13 @@ contract Pool is IERC20, ERC20, CalcBPool {
         // Accounts for rounding error in stakeLocker/poolDelegate/liquidityLocker interest split
         interestSum = interestSum.add(interestClaim);
 
-        require(liquidityAsset.transfer(poolDelegate, poolDelegatePortion));  // Transfer fee and portion of interest to pool delegate
-        require(liquidityAsset.transfer(stakeLocker,  stakeLockerPortion));   // Transfer portion of interest to stakeLocker
+        require(liquidityAsset.transfer(poolDelegate, poolDelegatePortion), "Pool:PD_CLAIM_TRANSFER");  // Transfer fee and portion of interest to pool delegate
+        require(liquidityAsset.transfer(stakeLocker,  stakeLockerPortion),  "Pool:SL_CLAIM_TRANSFER");  // Transfer portion of interest to stakeLocker
 
         // Transfer remaining claim (remaining interest + principal + excess) to liquidityLocker
         // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
         // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
-        require(liquidityAsset.transfer(liquidityLocker, principalClaim.add(interestClaim))); // Ensures that internal accounting is exactly reflective of balance change
+        require(liquidityAsset.transfer(liquidityLocker, principalClaim.add(interestClaim)), "Pool:LL_CLAIM_TRANSFER"); // Ensures that internal accounting is exactly reflective of balance change
 
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();

@@ -131,10 +131,10 @@ contract Loan is FDT {
         require(IGlobals(_globals).isValidLoanAsset(_loanAsset),             "Loan:INVALID_LOAN_ASSET");
         require(IGlobals(_globals).isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
 
-        require(specs[2] != 0,               "Loan:PAYMENT_INTERVAL_DAYS_EQUALS_ZERO");
+        require(specs[2] != 0,               "Loan:PAYMENT_INTERVAL_DAYS_EQ_ZERO");
         require(specs[1].mod(specs[2]) == 0, "Loan:INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION");
-        require(specs[3] > 0,                "Loan:MIN_RAISE_EQUALS_ZERO");
-        require(specs[5] > 0,                "Loan:FUNDING_PERIOD_EQUALS_ZERO");
+        require(specs[3] > 0,                "Loan:MIN_RAISE_EQ_ZERO");
+        require(specs[5] > 0,                "Loan:FUNDING_PERIOD_EQ_ZERO");
 
         // Update state variables.
         apr                    = specs[0];
@@ -178,10 +178,10 @@ contract Loan is FDT {
     */
     function drawdown(uint256 amt) external isState(State.Live) isBorrower {
 
-        IFundingLocker fundingLocker_ = IFundingLocker(fundingLocker);
+        IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
 
-        require(amt >= minRaise,                           "Loan:DRAWDOWN_AMT_BELOW_MIN_RAISE");
-        require(amt <= loanAsset.balanceOf(fundingLocker), "Loan:DRAWDOWN_AMT_ABOVE_FUNDED_AMT");
+        require(amt >= minRaise,                           "Loan:DRAWDOWN_AMT_LT_MIN_RAISE");
+        require(amt <= loanAsset.balanceOf(fundingLocker), "Loan:DRAWDOWN_AMT_GT_FUNDED_AMT");
 
         // Update the principal owed and drawdown amount for this loan.
         principalOwed  = amt;
@@ -202,18 +202,18 @@ contract Loan is FDT {
         address treasury = globals.mapleTreasury();
 
         // Update investorFee locally.
-                    feePaid = amt.mul(investorFee).div(10000);
+        feePaid             = amt.mul(investorFee).div(10000);
         uint256 treasuryAmt = amt.mul(treasuryFee).div(10000);  // Calculate amt to send to MapleTreasury
 
-        require(fundingLocker_.pull(treasury,      treasuryAmt),                       "Loan:TREASURY_FEE_PULL");  // Send treasuryFee directly to MapleTreasury
-        require(fundingLocker_.pull(address(this), feePaid),                           "Loan:INVESTOR_FEE_PULL");  // Pull investorFee into this Loan.
-        require(fundingLocker_.pull(borrower,      amt.sub(treasuryAmt).sub(feePaid)), "Loan:BORROWER_PULL");      // Transfer drawdown amount to Borrower.
+        require(_fundingLocker.pull(treasury,      treasuryAmt),                       "Loan:TREASURY_FEE_PULL");  // Send treasuryFee directly to MapleTreasury
+        require(_fundingLocker.pull(address(this), feePaid),                           "Loan:INVESTOR_FEE_PULL");  // Pull investorFee into this Loan.
+        require(_fundingLocker.pull(borrower,      amt.sub(treasuryAmt).sub(feePaid)), "Loan:BORROWER_PULL");      // Transfer drawdown amount to Borrower.
 
         // Update excessReturned locally.
         excessReturned = loanAsset.balanceOf(fundingLocker);
 
         // Drain remaining funds from FundingLocker.
-        require(fundingLocker_.drain(), "Loan:DRAIN");
+        require(_fundingLocker.drain(), "Loan:DRAIN");
 
         emit BalanceUpdated(collateralLocker, address(collateralAsset), collateralAsset.balanceOf(collateralLocker));
         emit BalanceUpdated(fundingLocker,    address(loanAsset),       loanAsset.balanceOf(fundingLocker));

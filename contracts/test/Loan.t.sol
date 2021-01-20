@@ -175,7 +175,7 @@ contract LoanTest is TestUtil {
         Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         address fundingLocker = loan.fundingLocker();
 
-        bob.approve(USDC, address(loan), 5000 * USD);
+        bob.approve(USDC, address(loan), 1 * USD);
     
         assertEq(IERC20(loan).balanceOf(address(ali)),                    0);
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),          0);
