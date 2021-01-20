@@ -77,7 +77,7 @@ contract MapleGlobalsTest is TestUtil {
 
         globals.setValidPoolFactory(address(poolFactory), true);
         globals.setValidLoanFactory(address(loanFactory), true);
-        
+
         globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
         globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
         globals.setValidSubFactory(address(poolFactory), address(dlFactory), true);
@@ -116,36 +116,6 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(clFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(flFactory)));
-
-        string[]  memory validLoanAssetSymbols;
-        address[] memory validLoanAssets;
-        string[]  memory validCollateralAssetSymbols;
-        address[] memory validCollateralAssets;
-
-        (
-            validLoanAssetSymbols,
-            validLoanAssets,
-            validCollateralAssetSymbols,
-            validCollateralAssets
-        ) = globals.getValidTokens();
-
-        assertEq(validLoanAssetSymbols.length,          2);
-        assertEq(validLoanAssets.length,                2);
-        assertEq(validLoanAssetSymbols[0],          "DAI");
-        assertEq(validLoanAssets[0],                  DAI);
-        assertEq(validLoanAssetSymbols[1],         "USDC");
-        assertEq(validLoanAssets[1],                 USDC);
-
-        assertEq(validCollateralAssetSymbols.length,    4);
-        assertEq(validCollateralAssets.length,          4);
-        assertEq(validCollateralAssetSymbols[0],    "DAI");
-        assertEq(validCollateralAssets[0],            DAI);
-        assertEq(validCollateralAssetSymbols[1],   "USDC");
-        assertEq(validCollateralAssets[1],           USDC);
-        assertEq(validCollateralAssetSymbols[2],   "WETH");
-        assertEq(validCollateralAssets[2],           WETH);
-        assertEq(validCollateralAssetSymbols[3],   "WBTC");
-        assertEq(validCollateralAssets[3],           WBTC);
     }
 
     function test_setters() public {
@@ -162,11 +132,11 @@ contract MapleGlobalsTest is TestUtil {
         globals.setValidLoanFactory(address(sid), false);
         assertTrue(!globals.validLoanFactories(address(sid)));
 
-        assertTrue(!globals.validSubFactories(address(poolFactory), address(dlFactory)));
-        globals.setValidSubFactory(address(poolFactory), address(dlFactory), true);
         assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
         globals.setValidSubFactory(address(poolFactory), address(dlFactory), false);
         assertTrue(!globals.validSubFactories(address(poolFactory), address(dlFactory)));
+        globals.setValidSubFactory(address(poolFactory), address(dlFactory), true);
+        assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
         
         assertTrue(!globals.isValidPoolDelegate(address(joe)));
         globals.setPoolDelegateWhitelist(address(joe), true);
@@ -183,45 +153,14 @@ contract MapleGlobalsTest is TestUtil {
         globals.setCollateralAsset(CDAI, true);
         assertTrue(globals.isValidLoanAsset(WETH));
         assertTrue(globals.isValidCollateralAsset(CDAI));
-
-        string[]  memory validLoanAssetSymbols;
-        address[] memory validLoanAssets;
-        string[]  memory validCollateralAssetSymbols;
-        address[] memory validCollateralAssets;
-
-        (
-            validLoanAssetSymbols,
-            validLoanAssets,
-            validCollateralAssetSymbols,
-            validCollateralAssets
-        ) = globals.getValidTokens();
-
-        assertEq(validLoanAssetSymbols.length,           3);
-        assertEq(validLoanAssets.length,                 3);
-        assertEq(validLoanAssetSymbols[2],          "WETH");
-        assertEq(validLoanAssets[2],                  WETH);
-
-        assertEq(validCollateralAssetSymbols.length,     5);
-        assertEq(validCollateralAssets.length,           5);
-        assertEq(validCollateralAssetSymbols[4],    "cDAI");
-        assertEq(validCollateralAssets[4],            CDAI);
-
         globals.setLoanAsset(WETH, false);
         globals.setCollateralAsset(CDAI, false);
-
-        /** 
-            TODO: Consider implications of static and non-retractive string[] and 
-            address[] arrays for loanAssets / collateralAssets / symbols.
-
-            Failure => assertEq(validCollateralAssetSymbols.length, 4);
-        */
-
         assertTrue(!globals.isValidLoanAsset(WETH));
         assertTrue(!globals.isValidCollateralAsset(CDAI));
 
         assertTrue(globals.isValidCalc(address(brCalc)));
         globals.setCalc(address(brCalc), false);
-
+        assertTrue(!globals.isValidCalc(address(brCalc)));
 
         assertEq(globals.governor(),        address(this));
         assertEq(globals.mpl(),              address(mpl));
@@ -239,8 +178,6 @@ contract MapleGlobalsTest is TestUtil {
         globals.setTreasuryFee(30);
         assertEq(globals.treasuryFee(), 30);
 
-        // TODO: MapleGlobals lacks a setter for drawdownGracePeriod value.
-        //       Implement this setter within MapleGlobals. Add tests here.
         assertEq(globals.drawdownGracePeriod(), 1 days);
         globals.setDrawdownGracePeriod(3 days);
         assertEq(globals.drawdownGracePeriod(), 3 days);
@@ -260,6 +197,10 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.unstakeDelay(), 90 days);
         globals.setUnstakeDelay(30 days);
         assertEq(globals.unstakeDelay(), 30 days);
+
+        assertEq(globals.mapleTreasury(), address(trs));
+        globals.setMapleTreasury(address(this));
+        assertEq(globals.mapleTreasury(), address(this));
 
         globals.setGovernor(address(sid));
         assertEq(globals.governor(), address(sid));
