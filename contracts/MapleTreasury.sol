@@ -83,7 +83,7 @@ contract MapleTreasury {
     );
 
     modifier isGovernor() {
-        require(msg.sender == IGlobals(globals).governor(), "msg.sender is not Governor");
+        require(msg.sender == IGlobals(globals).governor(), "MapleTreasury:MSG_SENDER_NOT_GOVERNOR");
         _;
     }
   
@@ -104,10 +104,7 @@ contract MapleTreasury {
     */
     function passThroughFundsToken() isGovernor public {
         IERC20 _fundsToken = IERC20(fundsToken);
-        require(
-            _fundsToken.transfer(mpl, _fundsToken.balanceOf(address(this))), 
-            "MapleTreasury::passThroughFundsToken:FUNDS_RECEIVE_TRANSFER_ERROR"
-        );
+        require(_fundsToken.transfer(mpl, _fundsToken.balanceOf(address(this))), "MapleTreasury:FUNDS_RECEIVE_TRANSFER");
         emit PassThrough(msg.sender, _fundsToken.balanceOf(address(this)));
     }
 
@@ -123,14 +120,14 @@ contract MapleTreasury {
         @param _asset The ERC-20 asset to convert.
     */
     function convertERC20(address _asset) isGovernor public {
-        require(_asset != fundsToken, "MapleTreasury::convertERC20:ERR_ASSET");
-        require(
-            IERC20(_asset).approve(uniswapRouter, IERC20(_asset).balanceOf(address(this))), 
-            "MapleTreasury::convertERC20:ROUTER_APPROVE_FAIL"
-        );
+        require(_asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
+        
+        IERC20(_asset).approve(uniswapRouter, IERC20(_asset).balanceOf(address(this)));
+
         address[] memory path = new address[](2);
         path[0] = _asset;
         path[1] = fundsToken;
+
         uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
             IERC20(_asset).balanceOf(address(this)),
             0,
@@ -138,7 +135,9 @@ contract MapleTreasury {
             mpl,
             block.timestamp + 1
         );
+
         IMapleToken(mpl).updateFundsReceived();
+
         emit ERC20Conversion(
             _asset,
             msg.sender,
@@ -163,13 +162,16 @@ contract MapleTreasury {
         address[] memory path = new address[](2);
         path[0] = IUniswapRouter(uniswapRouter).WETH();
         path[1] = fundsToken;
+
         uint256[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapETHForExactTokens{value: _amountIn}(
             _amountOut,
             path,
             mpl,
             block.timestamp + 1
         );
+
         IMapleToken(mpl).updateFundsReceived();
+        
         emit ETHConversion(
             msg.sender,
             returnAmounts[0],

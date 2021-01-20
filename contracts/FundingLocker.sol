@@ -14,7 +14,7 @@ contract FundingLocker {
     }
 
     modifier isLoan() {
-        require(msg.sender == loan, "FundingLocker::ERR_ISLOAN_CHECK");
+        require(msg.sender == loan, "FundingLocker:MSG_SENDER_NOT_LOAN");
         _;
     }
 

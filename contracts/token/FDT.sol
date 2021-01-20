@@ -42,7 +42,7 @@ abstract contract FDT is IFDT, ERC20 {
      *     and try to distribute it in the next distribution ....... todo implement
      */
     function _distributeFunds(uint256 value) internal {
-        require(totalSupply() > 0, "FDT._distributeFunds: SUPPLY_IS_ZERO");
+        require(totalSupply() > 0, "FDT:SUPPLY_EQ_ZERO");
 
         if (value > 0) {
             pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier) / totalSupply());
@@ -152,10 +152,7 @@ abstract contract FDT is IFDT, ERC20 {
     function withdrawFunds() public override {
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        require(
-            fundsToken.transfer(msg.sender, withdrawableFunds),
-            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
-        );
+        require(fundsToken.transfer(msg.sender, withdrawableFunds), "FDT:TRANSFER_FAILED");
 
         _updateFundsTokenBalance();
     }

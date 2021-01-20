@@ -43,7 +43,7 @@ contract MapleGlobals {
     event  PriceFeedAssigned(address asset, address oracle);
 
     modifier isGovernor() {
-        require(msg.sender == governor, "MapleGlobals::ERR_MSG_SENDER_NOT_GOVERNOR");
+        require(msg.sender == governor, "MapleGlobals:MSG_SENDER_NOT_GOVERNOR");
         _;
     }
 
@@ -134,10 +134,7 @@ contract MapleGlobals {
         @param  oracle The new oracle to use.
     */
     function assignPriceFeed(address asset, address oracle) external isGovernor {
-        require(
-            isValidLoanAsset[asset] || isValidCollateralAsset[asset],
-            "MapleGlobals::assignPriceFeed:ERR_NOT_WHITELISTED"
-        );
+        require(isValidLoanAsset[asset] || isValidCollateralAsset[asset], "MapleGlobals:PRICE_FEED_ASSET_NOT_WHITELISTED");
         assetPriceFeed[asset] = oracle;
         emit PriceFeedAssigned(asset, oracle);
     }
@@ -156,7 +153,7 @@ contract MapleGlobals {
         @param valid The new validity of asset as collateral.
     */
     function setCollateralAsset(address asset, bool valid) external isGovernor {
-        require(!isValidCollateralAsset[asset], "MapleGlobals::setCollateralAsset:ERR_ALREADY_ADDED");
+        require(!isValidCollateralAsset[asset], "MapleGlobals:COLLATERAL_ASSET_EXISTS");
         isValidCollateralAsset[asset] = valid;
         validCollateralAssets.push(asset);
         validCollateralAssetSymbols.push(IERC20Details(asset).symbol());
@@ -169,7 +166,7 @@ contract MapleGlobals {
         @param valid Boolean
     */
     function setLoanAsset(address asset, bool valid) external isGovernor {
-        require(!isValidLoanAsset[asset], "MapleGlobals::setLoanAsset:ERR_ALREADY_ADDED");
+        require(!isValidLoanAsset[asset], "MapleGlobals:LOAN_ASSET_EXISTS");
         isValidLoanAsset[asset] = valid;
         validLoanAssets.push(asset);
         validLoanAssetSymbols.push(IERC20Details(asset).symbol());

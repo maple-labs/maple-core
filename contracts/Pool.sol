@@ -77,17 +77,16 @@ contract Pool is IERC20, ERC20, CalcBPool {
         string memory symbol,
         address _globals
     ) ERC20(name, symbol) public {
-        require(
-            address(_liquidityAsset) != address(0),
-            "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
-        );
+       
+        require(_liquidityAsset != address(0), "Pool:INVALID_LIQ_ASSET"); 
 
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
 
         uint256  i = 0;
         bool valid = false;
 
-        while(i < tokens.length && !valid) { valid = tokens[i] == _liquidityAsset; i++; }
+        // Check that one of the assets in balancer pool is the liquidity asset
+        while(i < tokens.length && !valid) { valid = tokens[i] == _liquidityAsset; i++; }  
 
         require(valid, "Pool:INVALID_STAKING_POOL");
 
@@ -113,17 +112,17 @@ contract Pool is IERC20, ERC20, CalcBPool {
     }
 
     modifier finalized() {
-        require(isFinalized, "Pool:ERR_NOT_FINALIZED");
+        require(isFinalized, "Pool:NOT_FINALIZED");
         _;
     }
 
     modifier notDefunct() {
-        require(!isDefunct, "Pool:ERR_IS_DEFUNCT");
+        require(!isDefunct, "Pool:IS_DEFUNCT");
         _;
     }
 
     modifier isDelegate() {
-        require(msg.sender == poolDelegate, "Pool:ERR_MSG_SENDER_NOT_DELEGATE");
+        require(msg.sender == poolDelegate, "Pool:MSG_SENDER_NOT_DELEGATE");
         _;
     }
 
@@ -135,11 +134,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @param globals        Address of the Maple Globals contract.
     */
     function createStakeLocker(address stakeAsset, address slFactory, address liquidityAsset, address globals) private returns (address) {
-        require(
-            IBPool(stakeAsset).isBound(IGlobals(globals).mpl()) &&
-            IBPool(stakeAsset).isFinalized(),
-            "Pool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
-        );
+        require(IBPool(stakeAsset).isBound(IGlobals(globals).mpl()) && IBPool(stakeAsset).isFinalized(), "Pool:INVALID_BALANCER_POOL");
         return IStakeLockerFactory(slFactory).newLocker(stakeAsset, liquidityAsset, globals);
     }
 
@@ -148,7 +143,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     */
     function finalize() public {
         (,, bool stakePresent,,) = getInitialStakeRequirements();
-        require(stakePresent, "Pool::finalize:ERR_NOT_ENOUGH_STAKE");
+        require(stakePresent, "Pool:NOT_ENOUGH_STAKE_TO_FINALIZE");
         isFinalized = true;
         IStakeLocker(stakeLocker).finalizeLP();
     }
@@ -189,7 +184,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     */
     function deposit(uint256 amt) external notDefunct finalized {
         updateDepositDate(amt, msg.sender);
-        liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt);
+        require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
         uint256 wad = amt.mul(WAD).div(10 ** liquidityAssetDecimals);
         _mint(msg.sender, wad);
 
@@ -202,7 +197,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     */
     // TODO: Confirm if amt param supplied is in wei of FDT, or in wei of LiquidtyAsset.
     function withdraw(uint256 amt) external notDefunct finalized {
-        require(balanceOf(msg.sender) >= amt, "Pool::withdraw:USER_BAL_LESS_THAN_AMT");
+        require(balanceOf(msg.sender) >= amt, "Pool:USER_BAL_LT_AMT");
 
         uint256 share = amt.mul(WAD).div(totalSupply());
         uint256 bal   = liquidityAsset.balanceOf(liquidityLocker);
@@ -217,7 +212,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         interestSum = interestSum.sub(interest).add(totPenalty);  // Update interest total reflecting withdrawn amount (distributes principal penalty as interest)
 
         _burn(msg.sender, amt); // TODO: Unit testing on _burn / _mint for ERC-2222
-        require(IERC20(liquidityLocker).transfer(msg.sender, due), "Pool::ERR_WITHDRAW_TRANSFER");
+        require(IERC20(liquidityLocker).transfer(msg.sender, due), "Pool:WITHDRAW_TRANSFER");
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
@@ -230,14 +225,8 @@ contract Pool is IERC20, ERC20, CalcBPool {
     function fundLoan(address loan, address dlFactory, uint256 amt) external notDefunct finalized isDelegate {
 
         // Auth checks.
-        require(
-            globals.validLoanFactories(ILoan(loan).superFactory()),
-            "Pool::fundLoan:ERR_LOAN_FACTORY_INVALID"
-        );
-        require(
-            ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),
-            "Pool::fundLoan:ERR_LOAN_INVALID"
-        );
+        require(globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
+        require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),  "Pool:INVALID_LOAN");
 
         // Instantiate locker if it doesn't exist with this factory type.
         if (debtLockers[loan][dlFactory] == address(0)) {
@@ -246,8 +235,8 @@ contract Pool is IERC20, ERC20, CalcBPool {
         }
         
         principalOut += amt;
-        // Fund loan.
-        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLockers[loan][dlFactory], amt);
+        
+        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLockers[loan][dlFactory], amt);  // Fund loan
         
         emit LoanFunded(loan, debtLockers[loan][dlFactory], amt);
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
@@ -268,20 +257,25 @@ contract Pool is IERC20, ERC20, CalcBPool {
         
         uint[5] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
-        // Distribute "interest" to appropriate parties.
-        require(liquidityAsset.transfer(poolDelegate, claimInfo[1].mul(delegateFee).div(10000)));
-        require(liquidityAsset.transfer(stakeLocker,  claimInfo[1].mul(stakingFee).div(10000)));
+        uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
+        uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest
 
-        // Distribute "fee" to poolDelegate.
-        require(liquidityAsset.transfer(poolDelegate, claimInfo[3]));
+        uint256 principalClaim = claimInfo[2].add(claimInfo[4]);  // Principal + excess
+        uint256 interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10000)).sub(stakeLockerPortion);  // Leftover interest
 
-        // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liqudityLocker
-        uint remainder = liquidityAsset.balanceOf(address(this));
-        require(liquidityAsset.transfer(liquidityLocker, remainder));
+        // Subtract outstanding principal by principal claimed plus excess returned
+        principalOut = principalOut.sub(principalClaim);
 
-        // Update outstanding principal, the interest distribution mechanism.
-        principalOut = principalOut.sub(claimInfo[2]).sub(claimInfo[4]); // Reversion here indicates critical error
-        interestSum  = interestSum.add(claimInfo[1]).sub(claimInfo[1].mul(delegateFee).div(10000)).sub(claimInfo[1].mul(stakingFee).div(10000));
+        // Accounts for rounding error in stakeLocker/poolDelegate/liquidityLocker interest split
+        interestSum = interestSum.add(interestClaim);
+
+        require(liquidityAsset.transfer(poolDelegate, poolDelegatePortion), "Pool:PD_CLAIM_TRANSFER");  // Transfer fee and portion of interest to pool delegate
+        require(liquidityAsset.transfer(stakeLocker,  stakeLockerPortion),  "Pool:SL_CLAIM_TRANSFER");  // Transfer portion of interest to stakeLocker
+
+        // Transfer remaining claim (remaining interest + principal + excess) to liquidityLocker
+        // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
+        // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
+        require(liquidityAsset.transfer(liquidityLocker, principalClaim.add(interestClaim)), "Pool:LL_CLAIM_TRANSFER"); // Ensures that internal accounting is exactly reflective of balance change
 
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
@@ -289,7 +283,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
         emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
-        emit Claim(loan, claimInfo[1], claimInfo[2] + claimInfo[4], claimInfo[3]);
+        emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
 
         return claimInfo;
     }

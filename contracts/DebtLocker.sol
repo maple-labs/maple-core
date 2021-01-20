@@ -22,7 +22,7 @@ contract DebtLocker {
     // TODO: uint256 liquidationClaimed;
     
     modifier isOwner() {
-        require(msg.sender == owner, "DebtLocker:ERR_MSG_SENDER_NOT_OWNER");
+        require(msg.sender == owner, "DebtLocker:MSG_SENDER_NOT_OWNER");
         _;
     }
 
@@ -32,8 +32,12 @@ contract DebtLocker {
         loanAsset = IERC20(ILoan(_loan).loanAsset());
     }
 
+    function calcAllotment(uint256 newAmt, uint256 totalNewAmt, uint256 totalClaim) internal pure returns (uint256) {
+        return newAmt.mul(WAD).div(totalNewAmt).mul(totalClaim).div(WAD);
+    }
+
     /**
-        @dev    Claim funds distribution for loan via ERC-2222.
+        @dev    Claim funds distribution for loan via FDT.
         @return [0] = Total Claimed
                 [1] = Interest Claimed
                 [2] = Principal Claimed
@@ -43,14 +47,14 @@ contract DebtLocker {
     */
     function claim() external isOwner returns(uint[5] memory) {
 
-        // Tick FDT via ERC2222.
+        // Tick FDT via FDT.
         loan.updateFundsReceived();
 
         // Calculate deltas.
         uint256 newInterest  = loan.interestPaid() - interestPaid;
         uint256 newPrincipal = loan.principalPaid() - principalPaid;
         uint256 newFee       = loan.feePaid() - feePaid;
-        uint256 newExcess    = loan.excessReturned() - excessReturned;
+        uint256 newExcess    = loan.excessReturned() - excessReturned; // TODO: Determine if we need excess accounting still
 
         // Update accounting.
         interestPaid   = loan.interestPaid();
@@ -58,20 +62,24 @@ contract DebtLocker {
         feePaid        = loan.feePaid();
         excessReturned = loan.excessReturned();
 
-        // Withdraw funds via ERC2222.
-        loan.withdrawFunds();
+        // Withdraw funds via FDT.
+        uint256 beforeBal = loanAsset.balanceOf(address(this));  // Current balance of locker (accounts for direct inflows)
+        loan.withdrawFunds();                                    // Transfer funds from loan to debtLocker
+        uint256 afterBal = loanAsset.balanceOf(address(this));   // Balance of locker after claiming funds using FDT
+        
+        uint256 claimBal = afterBal.sub(beforeBal);  // Amount claimed from loan using FDT
+        
 
         // Calculate distributed amounts, transfer the asset, and return metadata.
         uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess);
-        uint256 balance   = loanAsset.balanceOf(address(this));
-        uint256 interest  = newInterest .mul(WAD).div(sum).mul(balance).div(WAD);
-        uint256 principal = newPrincipal.mul(WAD).div(sum).mul(balance).div(WAD);
-        uint256 fee       = newFee      .mul(WAD).div(sum).mul(balance).div(WAD);
-        uint256 excess    = newExcess   .mul(WAD).div(sum).mul(balance).div(WAD);
+        uint256 interest  = calcAllotment(newInterest,  sum, claimBal);
+        uint256 principal = calcAllotment(newPrincipal, sum, claimBal);
+        uint256 fee       = calcAllotment(newFee,       sum, claimBal);
+        uint256 excess    = calcAllotment(newExcess,    sum, claimBal);
         
-        require(loanAsset.transfer(owner, balance), "DebtLocker::claim:ERR_XFER");
+        require(loanAsset.transfer(owner, claimBal), "DebtLocker:CLAIM_TRANSFER");
 
-        return([balance, interest, principal, fee, excess]);
+        return([claimBal, interest, principal, fee, excess]);
     }
 
 }
