@@ -165,8 +165,8 @@ contract Loan is FDT {
         
         require(loanAsset.transferFrom(msg.sender, fundingLocker, amt), "Loan:INSUFFICIENT_APPROVAL_FUND_LOAN");
 
-        uint256 wad = amt * 10 ** (18 - loanAsset.decimals());  // Convert to WAD precision
-        _mint(mintTo, wad);
+        uint256 wad = _toWad(amt);  // Convert to WAD precision
+        _mint(mintTo, wad);         // Mint FDT to `mintTo` i.e Debt locker contract.
 
         emit LoanFunded(amt, mintTo);
         emit BalanceUpdated(fundingLocker, address(loanAsset), loanAsset.balanceOf(fundingLocker));
@@ -327,7 +327,7 @@ contract Loan is FDT {
     */
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
 
-        uint256 wad = amt * 10 ** (18 - loanAsset.decimals());  // Convert to WAD precision
+        uint256 wad = _toWad(amt);  // Convert to WAD precision.
 
         // Fetch value of collateral and funding asset.
         uint256 loanAssetPrice  = globals.getPrice(address(loanAsset));
@@ -339,5 +339,9 @@ contract Loan is FDT {
         uint256 collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - collateralAsset.decimals()));
 
         return collateralRequiredFIN;
+    }
+
+    function _toWad(uint256 amt) internal view returns(uint256) {
+        return amt.mul(10 ** 18).div(10 ** loanAsset.decimals());
     }
 }

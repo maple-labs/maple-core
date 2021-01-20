@@ -154,6 +154,7 @@ contract PoolTest is TestUtil {
     LoanFactory                    loanFactory;
     Loan                                  loan;
     Loan                                 loan2;
+    Loan                                 loan3;
     PoolFactory                    poolFactory;
     StakeLockerFactory               slFactory;
     LiquidityLockerFactory           llFactory; 
@@ -175,6 +176,7 @@ contract PoolTest is TestUtil {
     LP                                     kim;
     Borrower                               eli;
     Borrower                               fay;
+    Borrower                               doe;
     Treasury                               trs;
 
     uint256 constant public MAX_UINT = uint(-1);
@@ -182,29 +184,30 @@ contract PoolTest is TestUtil {
     function setUp() public {
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
-        flFactory      = new FundingLockerFactory();
-        clFactory      = new CollateralLockerFactory();
-        loanFactory    = new LoanFactory(address(globals));
-        slFactory      = new StakeLockerFactory();
-        llFactory      = new LiquidityLockerFactory();
-        poolFactory    = new PoolFactory(address(globals));
-        dlFactory1     = new DebtLockerFactory();
-        dlFactory2     = new DebtLockerFactory();
-        ethOracle      = new DSValue();
-        usdcOracle     = new DSValue();
-        bulletCalc     = new BulletRepaymentCalc();
-        lateFeeCalc    = new LateFeeCalc(0);   // Flat 0% fee
-        premiumCalc    = new PremiumCalc(500); // Flat 5% premium
-        sid            = new PoolDelegate();
-        joe            = new PoolDelegate();
-        bob            = new LP();
-        che            = new LP();
-        dan            = new LP();
-        kim            = new LP();
-        eli            = new Borrower();
-        fay            = new Borrower();
-        trs            = new Treasury();
+        globals        = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);  //
+        flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan facotry functionality.
+        clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan facotry functionality.
+        loanFactory    = new LoanFactory(address(globals));                             // Create Loan factory.
+        slFactory      = new StakeLockerFactory();                                      // Setup the SL factory to facilitate Pool factory functionality.
+        llFactory      = new LiquidityLockerFactory();                                  // Setup the SL factory to facilitate Pool factory functionality.
+        poolFactory    = new PoolFactory(address(globals));                             // Create pool factory.
+        dlFactory1     = new DebtLockerFactory();                                       // Setup DL factory to hold the commulative funds for a loan corresponds to a pool.
+        dlFactory2     = new DebtLockerFactory();                                       // Setup DL factory to hold the commulative funds for a loan corresponds to a pool.
+        ethOracle      = new DSValue();                                                 // ETH Oracle.
+        usdcOracle     = new DSValue();                                                 // USD Oracle.
+        bulletCalc     = new BulletRepaymentCalc();                                     // Repayment model.
+        lateFeeCalc    = new LateFeeCalc(0);                                            // Flat 0% fee
+        premiumCalc    = new PremiumCalc(500);                                          // Flat 5% premium
+        sid            = new PoolDelegate();                                            // Actor: Manager of the pool.
+        joe            = new PoolDelegate();                                            // Actor: Manager of the pool.
+        bob            = new LP();                                                      // Actor: Liquidity providers
+        che            = new LP();                                                      // Actor: Liquidity providers
+        dan            = new LP();                                                      // Actor: Liquidity providers
+        kim            = new LP();                                                      // Actor: Liquidity providers
+        eli            = new Borrower();                                                // Actor: Borrower aka Loan contract creator.
+        fay            = new Borrower();                                                // Actor: Borrower aka Loan contract creator.
+        doe            = new Borrower();                                                // Actor: Borrower aka Loan contract creator.
+        trs            = new Treasury();                                                // Treasury.
 
         globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
         globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
@@ -214,7 +217,7 @@ contract PoolTest is TestUtil {
         globals.setValidSubFactory(address(poolFactory), address(dlFactory1), true);
         globals.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
 
-        ethOracle.poke(500 ether);  // Set ETH price to $600
+        ethOracle.poke(500 ether);  // Set ETH price to $500
         usdcOracle.poke(1 ether);    // Set USDC price to $1
 
         // Mint 50m USDC into this account
@@ -226,7 +229,7 @@ contract PoolTest is TestUtil {
         IERC20(USDC).approve(address(bPool), MAX_UINT);
         mpl.approve(address(bPool), MAX_UINT);
 
-        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 ether);   // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(USDC, 50_000_000 * USD, 5 ether);       // Bind 50m USDC with 5 denormalization weight
         bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
 
         assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * USD);
@@ -281,12 +284,9 @@ contract PoolTest is TestUtil {
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        // loan2 Specifications
-        uint256[6] memory specs2 = [500, 180, 30, uint256(1000 * USD), 2000, 7];
-        address[3] memory calcs2 = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
-
         loan  = eli.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-        loan2 = fay.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs2, calcs2);
+        loan2 = fay.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan3 = doe.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
 
     function test_stake_and_finalize() public {
@@ -357,7 +357,7 @@ contract PoolTest is TestUtil {
 
         assertEq(IERC20(USDC).balanceOf(address(bob)),         0);
         assertEq(IERC20(USDC).balanceOf(liqLocker),    100 * USD);
-        assertEq(pool1.balanceOf(address(bob)),        100 ether);
+        assertEq(pool1.balanceOf(address(bob)),        100 * WAD);
     }
 
     function test_fundLoan() public {
@@ -387,7 +387,7 @@ contract PoolTest is TestUtil {
         /*******************/
         /*** Fund a Loan ***/
         /*******************/
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 20 * USD));  // Fund loan for 20 USDC
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 20 * USD), "Fail to fund a loan");  // Fund loan for 20 USDC
 
         DebtLocker debtLocker = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory1)));
 
@@ -397,7 +397,7 @@ contract PoolTest is TestUtil {
 
         assertEq(IERC20(USDC).balanceOf(liqLocker),              80 * USD);  // Balance of Liquidity Locker
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 20 * USD);  // Balance of Funding Locker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker)),    20 ether);  // LoanToken balance of LT Locker
+        assertEq(IERC20(loan).balanceOf(address(debtLocker)),    20 * WAD);  // LoanToken balance of LT Locker
         assertEq(pool1.principalOut(),                           20 * USD);  // Outstanding principal in liqiudity pool 1
 
         /****************************************/
@@ -410,7 +410,7 @@ contract PoolTest is TestUtil {
 
         assertEq(IERC20(USDC).balanceOf(liqLocker),              55 * USD);  // Balance of Liquidity Locker
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 45 * USD);  // Balance of Funding Locker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker)),    45 ether);  // LoanToken balance of LT Locker
+        assertEq(IERC20(loan).balanceOf(address(debtLocker)),    45 * WAD);  // LoanToken balance of LT Locker
         assertEq(pool1.principalOut(),                           45 * USD);  // Outstanding principal in liqiudity pool 1
 
         /*******************************************/
@@ -431,7 +431,7 @@ contract PoolTest is TestUtil {
 
         assertEq(IERC20(USDC).balanceOf(liqLocker),              45 * USD);  // Balance of Liquidity Locker
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 55 * USD);  // Balance of Funding Locker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker2)),   10 ether);  // LoanToken balance of LT Locker 2
+        assertEq(IERC20(loan).balanceOf(address(debtLocker2)),   10 * WAD);  // LoanToken balance of LT Locker 2
         assertEq(pool1.principalOut(),                           55 * USD);  // Outstanding principal in liqiudity pool 1
     }
 
@@ -1300,30 +1300,30 @@ contract PoolTest is TestUtil {
         uint start = block.timestamp;
 
         sid.setPrincipalPenalty(address(pool1), 0);
-        mint("USDC", address(kim), 2000 ether);
+        mint("USDC", address(kim), 2000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
-        assertTrue(kim.try_deposit(address(pool1), 1000 ether));
+        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
 
-        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
-        withinPrecision(IERC20(USDC).balanceOf(address(kim)), 2000 ether, 11); // TODO: Improve this precision
+        uint256 withdrawAmount = 1000 * USD;
+        kim.withdraw(address(pool1), withdrawAmount);
+
+        withinPrecision(IERC20(USDC).balanceOf(address(kim)), 2000 * USD, 6); // 100 % precesion.
         
         uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
-        assertTrue(kim.try_deposit(address(pool1), 1000 ether));  // Add another 1000 USDC
-        hevm.warp(start + pool1.interestDelay());                 // Fast-forward to claim all proportionate interest
 
-        uint256 share        = pool1.balanceOf(address(kim)).mul(1 ether).div(pool1.totalSupply());
-        uint256 principalOut = pool1.principalOut();
-        uint256 interestSum  = pool1.interestSum();
-        uint256 bal          = IERC20(USDC).balanceOf(pool1.liquidityLocker());
-        uint256 due          = share.mul(principalOut.add(bal)).div(WAD);
+        assertTrue(kim.try_deposit(address(pool1), 1000 * USD), "Fail to deposit liquidity");                                      // Add another 1000 USDC.
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");   // Fund the loan.
+        hevm.warp(start + pool1.interestDelay());                                                                                  // Fast-forward to claim all proportionate interest.
+        _drawDownLoan(1000 * USD, loan3, doe);                                                                                     // Draw down the loan.
+        _makeLoanPayment(loan3, doe);                                                                                              // Make loan payment.
+        sid.claim(address(pool1), address(loan3), address(dlFactory1));                                                            // Fund claimed by the pool.
 
-        uint256 ratio    = (WAD).mul(interestSum).div(principalOut.add(bal));  // interest/totalMoney ratio
-        uint256 interest = due.mul(ratio).div(WAD);    
-        
-        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
+        uint256 interest = pool1.withdrawableFundsOf(address(kim));
+
+        kim.withdraw(address(pool1), withdrawAmount);
         uint256 bal1 = IERC20(USDC).balanceOf(address(kim));
 
-        withinPrecision(bal1 - bal0, interest, 5);
+        withinPrecision(bal1 - bal0, interest, 6);
     }
 
     function test_withdraw_principal_penalty() public {
@@ -1331,34 +1331,50 @@ contract PoolTest is TestUtil {
 
         uint start = block.timestamp;
         
-        sid.setPrincipalPenalty(address(pool1), 500);
-        mint("USDC", address(kim), 2000 ether);
+        sid.setPrincipalPenalty(address(pool1), 5000);
+        mint("USDC", address(kim), 2000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
 
         uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
-        assertTrue(kim.try_deposit(address(pool1), 1000 ether));     // Deposit and withdraw in same tx
-        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
-        uint256 bal1 = IERC20(USDC).balanceOf(address(kim));          // Balance after principal penalty
+        uint256 depositAmount = 1000 * USD;
+        assertTrue(kim.try_deposit(address(pool1), depositAmount));      // Deposit and withdraw in same tx
+        kim.withdraw(address(pool1), depositAmount);
+        uint256 bal1 = IERC20(USDC).balanceOf(address(kim));            // Balance after principal penalty
 
-        withinPrecision(bal0 - bal1, 50 ether, 10); // 5% principal penalty (TODO: Improve this precision)
+        withinPrecision(bal0 - bal1, 50 * USD, 6); // 5% principal penalty with 100 % precesion.
         
         // Do another deposit with same amount
         bal0 = IERC20(USDC).balanceOf(address(kim));
-        assertTrue(kim.try_deposit(address(pool1), 1000 ether)); // Add another 1000 USDC
-        hevm.warp(start + pool1.interestDelay());                // Fast-forward to claim all proportionate interest
+        assertTrue(kim.try_deposit(address(pool1), depositAmount));                                                                // Add another 1000 USDC
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");   // Fund the loan.
+        _drawDownLoan(1000 * USD, loan3, doe);                                                                                     // Draw down the loan.
+        hevm.warp(start + pool1.interestDelay() - 10 days);                                                                        // Fast-forward to claim all proportionate interest.
+        _makeLoanPayment(loan3, doe);                                                                                              // Make loan payment.
+        sid.claim(address(pool1), address(loan3), address(dlFactory1));                                                            // Fund claimed by the pool.
 
-        uint256 share        = pool1.balanceOf(address(kim)).mul(1 ether).div(pool1.totalSupply());
-        uint256 principalOut = pool1.principalOut();
-        uint256 interestSum  = pool1.interestSum();
-        uint256 bal          = IERC20(USDC).balanceOf(pool1.liquidityLocker());
-        uint256 due          = share.mul(principalOut.add(bal)).div(WAD);
-
-        uint256 ratio    = (WAD).mul(interestSum).div(principalOut.add(bal));  // interest/totalMoney ratio
-        uint256 interest = due.mul(ratio).div(WAD);    
+        uint256 withdrawAmount = depositAmount;
+        uint256 interest       = pool1.withdrawableFundsOf(address(kim));
+        uint256 priPenalty     = pool1.principalPenalty().mul(withdrawAmount).div(100000);                               // Calculate flat principal penalty.
+        uint256 totPenalty     = pool1.calcWithdrawPenalty(interest.add(priPenalty), address(kim));  // Get total penalty, however it may be calculated.
         
-        kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
+        kim.withdraw(address(pool1), withdrawAmount);
         bal1 = IERC20(USDC).balanceOf(address(kim));
+        uint256 balanceDiff = bal1 > bal0 ? bal1 - bal0 : bal0 - bal1;
+        uint256 extraAmount = totPenalty > interest ? totPenalty - interest : interest - totPenalty;
+        withinPrecision(balanceDiff, extraAmount, 6); // All of principal returned, plus interest
+    }
 
-        withinPrecision(bal1 - bal0, interest, 5); // All of principal returned, plus interest
+    function _makeLoanPayment(Loan loan, Borrower by) internal {
+        (uint amt,,,) =  loan.getNextPayment();
+        mint("USDC", address(by), amt);
+        by.approve(USDC, address(loan),  amt);
+        by.makePayment(address(loan));
+    }
+
+    function _drawDownLoan(uint256 drawDownAmount, Loan loan, Borrower by) internal  {
+        uint cReq =  loan.collateralRequiredForDrawdown(drawDownAmount);
+        mint("WETH", address(by), cReq);
+        by.approve(WETH, address(loan),  cReq);
+        by.drawdown(address(loan),  drawDownAmount);
     }
 }

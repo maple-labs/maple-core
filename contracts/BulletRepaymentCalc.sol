@@ -8,8 +8,8 @@ contract BulletRepaymentCalc {
 
 	using SafeMath for uint256;
 
-    bytes32 public calcType = "INTEREST";
-    bytes32 public name     = "BULLET";
+    bytes32 public constant calcType = "INTEREST";
+    bytes32 public constant name     = "BULLET";
 
     /**
         @dev    Calculates the next payment for a _loan.

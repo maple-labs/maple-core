@@ -10,8 +10,8 @@ contract LateFeeCalc {
 
     using SafeMath for uint256;
 
-    bytes32 public calcType = 'LATEFEE';
-    bytes32 public name     = 'NULL';
+    bytes32 public constant calcType = 'LATEFEE';
+    bytes32 public constant name     = 'FLAT';
     
     uint256 public feeBips;  // The fee in bips, charged on the payment amount.
 
@@ -28,7 +28,8 @@ contract LateFeeCalc {
     */
     function getLateFee(address loan) view public returns(uint256, uint256, uint256) {
         IRepaymentCalc repaymentCalc = IRepaymentCalc(ILoan(loan).repaymentCalc());
-        (uint paymentDue,,)          = repaymentCalc.getNextPayment(address(loan));
-        return (paymentDue.mul(feeBips).div(10000), 0, paymentDue.mul(feeBips).div(10000));
+        (uint paymentDue,,)          = repaymentCalc.getNextPayment(loan);
+        uint256 latefee              = paymentDue.mul(feeBips).div(10000);
+        return (latefee, 0, latefee);
     }
 } 

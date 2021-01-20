@@ -108,7 +108,7 @@ contract Pool is FDT, CalcBPool {
         liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
 
         // Withdrawal penalty default settings.
-        principalPenalty = 500;
+        principalPenalty = 5000;  // with 3 decimal precision.
         interestDelay    = 30 days;
     }
 
@@ -201,22 +201,15 @@ contract Pool is FDT, CalcBPool {
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
 
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
-        uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
+        uint256 priPenalty        = principalPenalty.mul(amt).div(100000);                               // Calculate flat principal penalty.
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
         uint256 due               = amt.sub(totPenalty);                                                 // Funds due after the penalty deduction from the `amt` that is asked for withdraw.
         
         // TODO: Unit testing on _burn / _mint for ERC-2222 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
 
-        // TODO: Think about a way where we can show the total funds transfer and then claim back the penalty
-        // for more user visibility. Ex- Alice entitled to get 20 uints as principal amount and 5 uints as the
-        // interest whilst 2 unit will be total penalty. So txn looks like this - 
-        // liquidityLocker -5-> Alice
-        // liquidityLocker -20-> Alice
-        // Alice -2-> liquidityLocker
-
         withdrawFunds();           // Transfer full entitled interest.
-        require(liquidityAsset.transferFrom(liquidityLocker, msg.sender, due), "Pool::WITHDRAW_TRANSFER");  // Transfer the principal amount - totPenalty.
+        require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");  // Transfer the principal amount - totPenalty.
 
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
         updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
@@ -237,17 +230,20 @@ contract Pool is FDT, CalcBPool {
         require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),  "Pool:INVALID_LOAN");
         require(globals.isValidSubFactory(superFactory, dlFactory, 1),  "Pool:INVALID_DL_FACTORY");
 
+        address _debtLocker = debtLockers[loan][dlFactory];
+
         // Instantiate locker if it doesn't exist with this factory type.
-        if (debtLockers[loan][dlFactory] == address(0)) {
+        if (_debtLocker == address(0)) {
             address debtLocker = IDebtLockerFactory(dlFactory).newLocker(loan);
             debtLockers[loan][dlFactory] = debtLocker;
+            _debtLocker = debtLocker;
         }
         
         principalOut = principalOut.add(amt);
         // Fund loan.
-        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLockers[loan][dlFactory], amt);
+        ILiquidityLocker(liquidityLocker).fundLoan(loan, _debtLocker, amt);
         
-        emit LoanFunded(loan, debtLockers[loan][dlFactory], amt);
+        emit LoanFunded(loan, _debtLocker, amt);
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
@@ -327,12 +323,18 @@ contract Pool is FDT, CalcBPool {
         interestDelay = _interestDelay;
     }
 
-    // TODO: Chris add NatSpec
-    function setPrincipalPenalty(uint256 _principalPenalty) public isDelegate {
-        principalPenalty = _principalPenalty;
+    /**
+     * @notice It is recommended to pass with decimal precision of 3.
+     * Ex - Alice as a delegate wants to set 2.24 % then `_newPrincipalPenalty` will be 2240.
+     * @dev Allowing delegate/pool manager to set the principal penalty.
+     * @param _newPrincipalPenalty New principal penalty percentage corresponds to withdrawl amount.
+     */
+    function setPrincipalPenalty(uint256 _newPrincipalPenalty) public isDelegate {
+        principalPenalty = _newPrincipalPenalty;
+        // TODO: Emit an event
     }
 
-    function _toWad(uint256 amt) internal returns(uint256) {
+    function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
     }
 
@@ -347,7 +349,7 @@ contract Pool is FDT, CalcBPool {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
-            liquidityAsset.transferFrom(liquidityLocker, msg.sender, withdrawableFunds),
+            ILiquidityLocker(liquidityLocker).transfer(msg.sender, withdrawableFunds),
             "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
         );
 
