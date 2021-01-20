@@ -80,7 +80,7 @@ contract StakeLocker is FDT {
     */
     // TODO: Consider localizing this function to Pool.
     function unstake(uint256 amt) external delegateLock {
-        require(amt <= getUnstakeableBalance(msg.sender),"Stakelocker:UNSTAKE_AMT_TOO_HIGH");
+        require(amt <= getUnstakeableBalance(msg.sender),"Stakelocker:AMT_GT_UNSTAKEABLE_BALANCE");
 
         updateFundsReceived();
         withdrawFunds();
