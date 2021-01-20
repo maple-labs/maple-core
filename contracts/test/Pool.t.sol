@@ -492,22 +492,18 @@ contract PoolTest is TestUtil {
         }
 
         {
-            assertEq(balances[5] - balances[0], 0);  // LTL locker should have transferred ALL funds claimed to LP
-            assertEq(balances[6] - balances[1], 0);  // LP         should have transferred ALL funds claimed to LL, SL, and PD
+            assertEq(balances[5] - balances[0], 0);      // LTL locker should have transferred ALL funds claimed to LP
+            assertTrue(balances[6] - balances[1] < 10);  // LP         should have transferred ALL funds claimed to LL, SL, and PD (with rounding error)
 
             assertEq(balances[7] - balances[2], claim[3] + claim[1] * pool.delegateFee() / 10_000);  // Pool delegate claim (feePaid + delegateFee portion of interest)
             assertEq(balances[8] - balances[3],            claim[1] * pool.stakingFee()  / 10_000);  // Staking Locker claim (feePaid + stakingFee portion of interest)
 
             withinPrecision(pool.interestSum() - beforeInterestSum, claim[1] - claim[1] * (pool.delegateFee() + pool.stakingFee()) / 10_000, 11);  // interestSum incremented by remainder of interest
 
-            // Liquidity Locker (principal + excess + remaining portion of interest) (remaining balance from claim)
-            // liqLockerClaimed = totalClaimed - pdClaimed - sLockerClaimed
-            assertEq(balances[9] - balances[4], claim[0] - (balances[7] - balances[2]) - (balances[8] - balances[3]));
+            // Liquidity Locker balance change should EXACTLY equal state variable change
+            assertEq(balances[9] - balances[4], (beforePrincipalOut - pool.principalOut()) + (pool.interestSum() - beforeInterestSum));
 
-            assertTrue(
-                (beforePrincipalOut - pool.principalOut() == claim[0] - claim[1] - claim[3]) || // principalOut subtracted is amount leftover after interest + fees
-                pool.principalOut() == 0                                                        // principalOut subtracted is zero after rounding
-            );
+            assertTrue(beforePrincipalOut - pool.principalOut() == claim[2] + claim[4]); // principalOut incremented by claimed principal + excess
         }
     }
 
@@ -631,7 +627,7 @@ contract PoolTest is TestUtil {
             assertConstClaim(pool1, address(loan2), address(dlFactory2), IERC20(USDC), CONST_POOL_VALUE);
         }
         
-        assertEq(pool1.principalOut(), 0);
+        assertTrue(pool1.principalOut() < 10);
     }
 
     function test_claim_singleLP() public {
@@ -789,7 +785,7 @@ contract PoolTest is TestUtil {
             assertEq(uint256(loan2.loanState()), 2);
         }
 
-        assertEq(pool1.principalOut(), 0);
+        assertTrue(pool1.principalOut() < 10);
     }
 
     function test_claim_multipleLP() public {
@@ -1006,8 +1002,8 @@ contract PoolTest is TestUtil {
             assertEq(uint256(loan2.loanState()), 2);
         }
 
-        assertEq(pool1.principalOut(), 0);
-        assertEq(pool2.principalOut(), 0);
+        assertTrue(pool1.principalOut() < 10);
+        assertTrue(pool2.principalOut() < 10);
     }
 
     function test_claim_external_transfers() public {
@@ -1081,7 +1077,7 @@ contract PoolTest is TestUtil {
             poolBal_after       = IERC20(USDC).balanceOf(address(pool1));
             debtLockerBal_after = IERC20(USDC).balanceOf(address(debtLocker1));
 
-            assertEq(poolBal_after,             poolBal_before);
+            assertTrue(poolBal_after - poolBal_before < 10);  // Collects some rounding dust
             assertEq(debtLockerBal_after, debtLockerBal_before);
         }
 
@@ -1109,11 +1105,11 @@ contract PoolTest is TestUtil {
             uint256 poolBal_after       = IERC20(USDC).balanceOf(address(pool1));
             uint256 debtLockerBal_after = IERC20(USDC).balanceOf(address(debtLocker1));
 
-            assertEq(poolBal_after,             poolBal_before);
+            assertTrue(poolBal_after - poolBal_before < 10);  // Collects some rounding dust
             assertEq(debtLockerBal_after, debtLockerBal_before);
         }
 
-        assertEq(pool1.principalOut(), 0);
+        assertTrue(pool1.principalOut() < 10);
     }
 
     function setUpWithdraw() internal {

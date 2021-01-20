@@ -271,21 +271,22 @@ contract Pool is IERC20, ERC20, CalcBPool {
         uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
         uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest
 
-        // Accounts for rounding error in interest/fee/(principal+excess) split
-        uint256 principalExcess = claimInfo[0].sub(claimInfo[1]).sub(claimInfo[3]); // Accounts for rounding error
+        uint256 principalClaim = claimInfo[2].add(claimInfo[4]);  // Principal + excess
+        uint256 interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10000)).sub(stakeLockerPortion);  // Leftover interest
 
-        // Update outstanding principal, going to zero if principalPaid rounds to higher than principalOut
-        principalOut = principalOut > principalExcess ? principalOut.sub(principalExcess) : 0;  // Reversion here indicates critical error
+        // Subtract outstanding principal by principal claimed plus excess returned
+        principalOut = principalOut.sub(principalClaim);
 
         // Accounts for rounding error in stakeLocker/poolDelegate/liquidityLocker interest split
-        interestSum = interestSum.add(claimInfo[1]).sub(claimInfo[1].mul(delegateFee).div(10000)).sub(stakeLockerPortion);
+        interestSum = interestSum.add(interestClaim);
 
         require(liquidityAsset.transfer(poolDelegate, poolDelegatePortion));  // Transfer fee and portion of interest to pool delegate
         require(liquidityAsset.transfer(stakeLocker,  stakeLockerPortion));   // Transfer portion of interest to stakeLocker
 
-        // Transfer remaining balance (remaining interest + principal + excess + rounding error) to liquidityLocker
+        // Transfer remaining claim (remaining interest + principal + excess) to liquidityLocker
+        // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
         // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
-        require(liquidityAsset.transfer(liquidityLocker, claimInfo[0].sub(poolDelegatePortion).sub(stakeLockerPortion)));
+        require(liquidityAsset.transfer(liquidityLocker, principalClaim.add(interestClaim))); // Ensures that internal accounting is exactly reflective of balance change
 
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
@@ -293,7 +294,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
         emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
-        emit Claim(loan, claimInfo[1], principalExcess, claimInfo[3]);
+        emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
 
         return claimInfo;
     }
