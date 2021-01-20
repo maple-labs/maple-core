@@ -15,7 +15,7 @@ contract LiquidityLocker {
     }
     
     modifier isOwner() {
-        require(msg.sender == owner, "LiquidityLocker:ERR_MSG_SENDER_NOT_OWNER");
+        require(msg.sender == owner, "LiquidityLocker:MSG_SENDER_NOT_OWNER");
         _;
     }
 
@@ -25,7 +25,7 @@ contract LiquidityLocker {
         @param  amt Amount of liquidityAsset to transfer.
     */
     function transfer(address dst, uint256 amt) external isOwner returns (bool) {
-        require(dst != address(0), "LiquidityLocker::transfer:ERR_TO_VALUE_IS_NULL_ADDRESS");
+        require(dst != address(0), "LiquidityLocker:NULL_TRASNFER_DST");
         return liquidityAsset.transfer(dst, amt);
     }
 

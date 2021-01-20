@@ -45,20 +45,17 @@ contract StakeLocker is FDT {
 
     // TODO: Analyze the purpose of this modifier.
     modifier delegateLock() {
-        require(
-            msg.sender != IPool(owner).poolDelegate() || isLPDefunct || !isLPFinalized,
-            "StakeLocker:ERR_DELEGATE_STAKE_LOCKED"
-        );
+        require(msg.sender != IPool(owner).poolDelegate() || isLPDefunct || !isLPFinalized, "StakeLocker:DELEGATE_STAKE_LOCKED");
         _;
     }
 
     modifier isLP() {
-        require(msg.sender == owner, "StakeLocker:ERR_UNAUTHORIZED");
+        require(msg.sender == owner, "StakeLocker:MSG_SENDER_NOT_OWNER");
         _;
     }
     
     modifier isGovernor() {
-        require(msg.sender == globals.governor(), "msg.sender is not Governor");
+        require(msg.sender == globals.governor(), "StakeLocker:MSG_SENDER_NOT_GOVERNOR");
         _;
     }
 
@@ -68,12 +65,11 @@ contract StakeLocker is FDT {
     */
     // TODO: Consider localizing this function to Pool.
     function stake(uint256 amt) external {
-        require(
-            stakeAsset.transferFrom(msg.sender, address(this), amt),
-            "StakeLocker:ERR_INSUFFICIENT_APPROVED_FUNDS"
-        );
+        require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
+
         _updateStakeDate(msg.sender, amt);
         _mint(msg.sender, amt);
+
         emit Stake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
@@ -84,18 +80,15 @@ contract StakeLocker is FDT {
     */
     // TODO: Consider localizing this function to Pool.
     function unstake(uint256 amt) external delegateLock {
-        require(
-            amt <= getUnstakeableBalance(msg.sender),
-            "Stakelocker:ERR_AMT_REQUESTED_UNAVAILABLE"
-        );
+        require(amt <= getUnstakeableBalance(msg.sender),"Stakelocker:AMT_GT_UNSTAKEABLE_BALANCE");
+
         updateFundsReceived();
-        withdrawFunds(); //has to be before the transfer or they will end up here
+        withdrawFunds();
         _transfer(msg.sender, address(this), amt);
-        require(
-            stakeAsset.transferFrom(address(this), msg.sender, amt),
-            "StakeLocker:ERR_STAKE_ASSET_BALANCE_DEPLETED"
-        );
         _burn(address(this), amt);
+
+        require(stakeAsset.transferFrom(address(this), msg.sender, amt), "StakeLocker:UNSTAKE_TRANSFER_FROM");
+
         emit Unstake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }

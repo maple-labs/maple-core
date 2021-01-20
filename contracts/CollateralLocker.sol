@@ -14,7 +14,7 @@ contract CollateralLocker {
     }
 
     modifier isLoan() {
-        require(msg.sender == loan, "CollateralLocker::ERR_ISLOAN_CHECK");
+        require(msg.sender == loan, "CollateralLocker:MSG_SENDER_NOT_LOAN");
         _;
     }
 

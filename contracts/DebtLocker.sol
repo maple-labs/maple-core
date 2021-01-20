@@ -22,7 +22,7 @@ contract DebtLocker {
     // TODO: uint256 liquidationClaimed;
     
     modifier isOwner() {
-        require(msg.sender == owner, "DebtLocker:ERR_MSG_SENDER_NOT_OWNER");
+        require(msg.sender == owner, "DebtLocker:MSG_SENDER_NOT_OWNER");
         _;
     }
 
@@ -77,7 +77,7 @@ contract DebtLocker {
         uint256 fee       = calcAllotment(newFee,       sum, claimBal);
         uint256 excess    = calcAllotment(newExcess,    sum, claimBal);
         
-        require(loanAsset.transfer(owner, claimBal), "DebtLocker::claim:ERR_XFER");
+        require(loanAsset.transfer(owner, claimBal), "DebtLocker:CLAIM_TRANSFER");
 
         return([claimBal, interest, principal, fee, excess]);
     }
