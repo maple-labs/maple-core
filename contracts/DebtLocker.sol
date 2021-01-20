@@ -22,7 +22,7 @@ contract DebtLocker {
     // TODO: uint256 liquidationClaimed;
     
     modifier isOwner() {
-        require(msg.sender == owner, "DebtLocker:ERR_MSG_SENDER_NOT_OWNER");
+        require(msg.sender == owner, "DebtLocker:MSG_SENDER_NOT_OWNER");
         _;
     }
 

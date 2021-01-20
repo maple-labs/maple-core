@@ -77,17 +77,16 @@ contract Pool is IERC20, ERC20, CalcBPool {
         string memory symbol,
         address _globals
     ) ERC20(name, symbol) public {
-        require(
-            address(_liquidityAsset) != address(0),
-            "FDT_ERC20Extension: INVALID_FUNDS_TOKEN_ADDRESS"
-        );
+       
+        require(_liquidityAsset != address(0), "Pool:INVALID_LIQ_ASSET"); 
 
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
 
         uint256  i = 0;
         bool valid = false;
 
-        while(i < tokens.length && !valid) { valid = tokens[i] == _liquidityAsset; i++; }
+        // Check that one of the assets in balancer pool is the liquidity asset
+        while(i < tokens.length && !valid) { valid = tokens[i] == _liquidityAsset; i++; }  
 
         require(valid, "Pool:INVALID_STAKING_POOL");
 
@@ -113,17 +112,17 @@ contract Pool is IERC20, ERC20, CalcBPool {
     }
 
     modifier finalized() {
-        require(isFinalized, "Pool:ERR_NOT_FINALIZED");
+        require(isFinalized, "Pool:NOT_FINALIZED");
         _;
     }
 
     modifier notDefunct() {
-        require(!isDefunct, "Pool:ERR_IS_DEFUNCT");
+        require(!isDefunct, "Pool:IS_DEFUNCT");
         _;
     }
 
     modifier isDelegate() {
-        require(msg.sender == poolDelegate, "Pool:ERR_MSG_SENDER_NOT_DELEGATE");
+        require(msg.sender == poolDelegate, "Pool:MSG_SENDER_NOT_DELEGATE");
         _;
     }
 
@@ -135,11 +134,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         @param globals        Address of the Maple Globals contract.
     */
     function createStakeLocker(address stakeAsset, address slFactory, address liquidityAsset, address globals) private returns (address) {
-        require(
-            IBPool(stakeAsset).isBound(IGlobals(globals).mpl()) &&
-            IBPool(stakeAsset).isFinalized(),
-            "Pool::createStakeLocker:ERR_INVALID_BALANCER_POOL"
-        );
+        require(IBPool(stakeAsset).isBound(IGlobals(globals).mpl()) && IBPool(stakeAsset).isFinalized(), "Pool:INVALID_BALANCER_POOL");
         return IStakeLockerFactory(slFactory).newLocker(stakeAsset, liquidityAsset, globals);
     }
 
@@ -148,7 +143,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     */
     function finalize() public {
         (,, bool stakePresent,,) = getInitialStakeRequirements();
-        require(stakePresent, "Pool::finalize:ERR_NOT_ENOUGH_STAKE");
+        require(stakePresent, "Pool:NOT_ENOUGH_STAKE_TO_FINALIZE");
         isFinalized = true;
         IStakeLocker(stakeLocker).finalizeLP();
     }
@@ -202,7 +197,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
     */
     // TODO: Confirm if amt param supplied is in wei of FDT, or in wei of LiquidtyAsset.
     function withdraw(uint256 amt) external notDefunct finalized {
-        require(balanceOf(msg.sender) >= amt, "Pool::withdraw:USER_BAL_LESS_THAN_AMT");
+        require(balanceOf(msg.sender) >= amt, "Pool:USER_BAL_LESS_THAN_AMT");
 
         uint256 share = amt.mul(WAD).div(totalSupply());
         uint256 bal   = liquidityAsset.balanceOf(liquidityLocker);
@@ -217,7 +212,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         interestSum = interestSum.sub(interest).add(totPenalty);  // Update interest total reflecting withdrawn amount (distributes principal penalty as interest)
 
         _burn(msg.sender, amt); // TODO: Unit testing on _burn / _mint for ERC-2222
-        require(IERC20(liquidityLocker).transfer(msg.sender, due), "Pool::ERR_WITHDRAW_TRANSFER");
+        require(IERC20(liquidityLocker).transfer(msg.sender, due), "Pool:WITHDRAW_TRANSFER");
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
@@ -230,14 +225,8 @@ contract Pool is IERC20, ERC20, CalcBPool {
     function fundLoan(address loan, address dlFactory, uint256 amt) external notDefunct finalized isDelegate {
 
         // Auth checks.
-        require(
-            globals.validLoanFactories(ILoan(loan).superFactory()),
-            "Pool::fundLoan:ERR_LOAN_FACTORY_INVALID"
-        );
-        require(
-            ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),
-            "Pool::fundLoan:ERR_LOAN_INVALID"
-        );
+        require(globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
+        require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),  "Pool:INVALID_LOAN");
 
         // Instantiate locker if it doesn't exist with this factory type.
         if (debtLockers[loan][dlFactory] == address(0)) {
@@ -246,8 +235,8 @@ contract Pool is IERC20, ERC20, CalcBPool {
         }
         
         principalOut += amt;
-        // Fund loan.
-        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLockers[loan][dlFactory], amt);
+        
+        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLockers[loan][dlFactory], amt);  // Fund loan
         
         emit LoanFunded(loan, debtLockers[loan][dlFactory], amt);
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));

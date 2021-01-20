@@ -7,8 +7,8 @@ import "./library/TokenUUID.sol";
 
 contract PoolFactory {
 
-    uint8 public constant LIQUIDITY_LOCKER_FACTORY   = 3;   // Factory type of `LiquidityLockerFactory`.
-    uint8 public constant STAKE_LOCKER_FACTORY       = 4;   // Factory type of `StakeLockerFactory`.
+    uint8 public constant LL_FACTORY = 3;   // Factory type of `LiquidityLockerFactory`.
+    uint8 public constant SL_FACTORY = 4;   // Factory type of `StakeLockerFactory`.
 
     uint256  public poolsCreated;       // Incrementor for number of LPs created.
     IGlobals public immutable globals;  // MapleGlobals contract.
@@ -52,22 +52,10 @@ contract PoolFactory {
         uint256 delegateFee
     ) public returns (address) {
         
-        require(
-            globals.isValidSubFactory(address(this), llFactory, LIQUIDITY_LOCKER_FACTORY),
-            "LoanFactory::createLoan:ERR_INVALID_LIQUIDITY_LOCKER_FACTORY"
-        );
-        require(
-            globals.isValidSubFactory(address(this), slFactory, STAKE_LOCKER_FACTORY),
-            "LoanFactory::createLoan:ERR_INVALID_STAKE_LOCKER_FACTORY"
-        );
-        require(
-            globals.isValidPoolDelegate(msg.sender),
-            "PoolFactory::createPool:ERR_MSG_SENDER_NOT_WHITELISTED"
-        );
-        require(
-            IBFactory(globals.BFactory()).isBPool(stakeAsset),
-            "PoolFactory::createPool:ERR_STAKE_ASSET_NOT_BPOOL"
-        );
+        require(globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");
+        require(globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PoolFactory:INVALID_SL_FACTORY");
+        require(globals.isValidPoolDelegate(msg.sender),                         "PoolFactory:MSG_SENDER_NOT_WHITELISTED");
+        require(IBFactory(globals.BFactory()).isBPool(stakeAsset),               "PoolFactory:STAKE_ASSET_NOT_BPOOL");
 
         string memory tUUID  = TokenUUID.generateUUID(poolsCreated + 1);
         string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
