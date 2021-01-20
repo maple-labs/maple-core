@@ -177,6 +177,7 @@ contract PoolTest is TestUtil {
     Borrower                               fay;
     Treasury                               trs;
 
+    uint256 constant public MAX_UINT = uint(-1);
 
     function setUp() public {
 
@@ -222,8 +223,8 @@ contract PoolTest is TestUtil {
         // Initialize MPL/USDC Balancer pool (without finalizing)
         bPool = IBPool(IBPoolFactory(BPOOL_FACTORY).newBPool());
 
-        IERC20(USDC).approve(address(bPool), uint(-1));
-        mpl.approve(address(bPool), uint(-1));
+        IERC20(USDC).approve(address(bPool), MAX_UINT);
+        mpl.approve(address(bPool), MAX_UINT);
 
         bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 ether);   // Bind 50m USDC with 5 denormalization weight
         bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
@@ -295,8 +296,8 @@ contract PoolTest is TestUtil {
         /*****************************************/
         address stakeLocker1 = pool1.stakeLocker();
         address stakeLocker2 = pool2.stakeLocker();
-        sid.approve(address(bPool), stakeLocker1, uint(-1));
-        joe.approve(address(bPool), stakeLocker2, uint(-1));
+        sid.approve(address(bPool), stakeLocker1, MAX_UINT);
+        joe.approve(address(bPool), stakeLocker2, MAX_UINT);
 
         // Pre-state checks.
         assertEq(bPool.balanceOf(address(sid)),                 50 * WAD);
@@ -334,7 +335,7 @@ contract PoolTest is TestUtil {
         address stakeLocker = pool1.stakeLocker();
         address liqLocker   = pool1.liquidityLocker();
 
-        sid.approve(address(bPool), stakeLocker, uint(-1));
+        sid.approve(address(bPool), stakeLocker, MAX_UINT);
         sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
         // Mint 100 USDC into this LP account
@@ -346,7 +347,7 @@ contract PoolTest is TestUtil {
 
         assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not approved
 
-        bob.approve(USDC, address(pool1), uint(-1));
+        bob.approve(USDC, address(pool1), MAX_UINT);
 
         assertEq(IERC20(USDC).balanceOf(address(bob)), 100 * USD);
         assertEq(IERC20(USDC).balanceOf(liqLocker),            0);
@@ -364,7 +365,7 @@ contract PoolTest is TestUtil {
         address liqLocker     = pool1.liquidityLocker();
         address fundingLocker = loan.fundingLocker();
 
-        sid.approve(address(bPool), stakeLocker, uint(-1));
+        sid.approve(address(bPool), stakeLocker, MAX_UINT);
         sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
         // Mint 100 USDC into this LP account
@@ -372,7 +373,7 @@ contract PoolTest is TestUtil {
 
         pool1.finalize();
 
-        bob.approve(USDC, address(pool1), uint(-1));
+        bob.approve(USDC, address(pool1), MAX_UINT);
 
         assertTrue(bob.try_deposit(address(pool1), 100 * USD));
 
@@ -639,7 +640,7 @@ contract PoolTest is TestUtil {
         /*** Finalize liquidity pool ***/
         /*******************************/
         {
-            sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
+            sid.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
             pool1.finalize();
@@ -652,9 +653,9 @@ contract PoolTest is TestUtil {
             mint("USDC", address(che), 1_000_000_000 * USD);
             mint("USDC", address(dan), 1_000_000_000 * USD);
 
-            bob.approve(USDC, address(pool1), uint(-1));
-            che.approve(USDC, address(pool1), uint(-1));
-            dan.approve(USDC, address(pool1), uint(-1));
+            bob.approve(USDC, address(pool1), MAX_UINT);
+            che.approve(USDC, address(pool1), MAX_UINT);
+            dan.approve(USDC, address(pool1), MAX_UINT);
 
             assertTrue(bob.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
             assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
@@ -799,8 +800,8 @@ contract PoolTest is TestUtil {
         address stakeLocker1 = pool1.stakeLocker();
         address stakeLocker2 = pool2.stakeLocker();
         {
-            sid.approve(address(bPool), stakeLocker1, uint(-1));
-            joe.approve(address(bPool), stakeLocker2, uint(-1));
+            sid.approve(address(bPool), stakeLocker1, MAX_UINT);
+            joe.approve(address(bPool), stakeLocker2, MAX_UINT);
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
             joe.stake(pool2.stakeLocker(), bPool.balanceOf(address(joe)) / 2);
             pool1.finalize();
@@ -818,13 +819,13 @@ contract PoolTest is TestUtil {
             mint("USDC", address(che), 1_000_000_000 * USD);
             mint("USDC", address(dan), 1_000_000_000 * USD);
 
-            bob.approve(USDC, address(pool1), uint(-1));
-            che.approve(USDC, address(pool1), uint(-1));
-            dan.approve(USDC, address(pool1), uint(-1));
+            bob.approve(USDC, address(pool1), MAX_UINT);
+            che.approve(USDC, address(pool1), MAX_UINT);
+            dan.approve(USDC, address(pool1), MAX_UINT);
 
-            bob.approve(USDC, address(pool2), uint(-1));
-            che.approve(USDC, address(pool2), uint(-1));
-            dan.approve(USDC, address(pool2), uint(-1));
+            bob.approve(USDC, address(pool2), MAX_UINT);
+            che.approve(USDC, address(pool2), MAX_UINT);
+            dan.approve(USDC, address(pool2), MAX_UINT);
 
             assertTrue(bob.try_deposit(address(pool1), 100_000_000 * USD));  // 10% BOB in LP1
             assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30% CHE in LP1
@@ -1120,7 +1121,7 @@ contract PoolTest is TestUtil {
         /*** Finalize liquidity pool ***/
         /*******************************/
         {
-            sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
+            sid.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
             pool1.finalize();
@@ -1133,9 +1134,9 @@ contract PoolTest is TestUtil {
             mint("USDC", address(che), 1_000_000_000 * USD);
             mint("USDC", address(dan), 1_000_000_000 * USD);
 
-            bob.approve(USDC, address(pool1), uint(-1));
-            che.approve(USDC, address(pool1), uint(-1));
-            dan.approve(USDC, address(pool1), uint(-1));
+            bob.approve(USDC, address(pool1), MAX_UINT);
+            che.approve(USDC, address(pool1), MAX_UINT);
+            dan.approve(USDC, address(pool1), MAX_UINT);
 
             assertTrue(bob.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
             assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
@@ -1300,7 +1301,7 @@ contract PoolTest is TestUtil {
 
         sid.setPrincipalPenalty(address(pool1), 0);
         mint("USDC", address(kim), 2000 ether);
-        kim.approve(USDC, address(pool1), uint(-1));
+        kim.approve(USDC, address(pool1), MAX_UINT);
         assertTrue(kim.try_deposit(address(pool1), 1000 ether));
 
         kim.withdraw(address(pool1), pool1.balanceOf(address(kim)));
@@ -1332,7 +1333,7 @@ contract PoolTest is TestUtil {
         
         sid.setPrincipalPenalty(address(pool1), 500);
         mint("USDC", address(kim), 2000 ether);
-        kim.approve(USDC, address(pool1), uint(-1));
+        kim.approve(USDC, address(pool1), MAX_UINT);
 
         uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
         assertTrue(kim.try_deposit(address(pool1), 1000 ether));     // Deposit and withdraw in same tx

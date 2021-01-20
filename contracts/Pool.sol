@@ -186,10 +186,10 @@ contract Pool is FDT, CalcBPool {
     function deposit(uint256 amt) external notDefunct finalized {
         updateDepositDate(amt, msg.sender);
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
-        uint256 wad = _fdtDenominated(amt);
+        uint256 wad = _toWad(amt);
         _mint(msg.sender, wad);
 
-        emit BalanceUpdated(liquidityLocker, liquidityAsset, IERC20(liquidityAsset).balanceOf(liquidityLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
     }
 
     /**
@@ -197,7 +197,7 @@ contract Pool is FDT, CalcBPool {
         @param amt The amount of LiquidityAsset to withdraw, in wei.
     */
     function withdraw(uint256 amt) external notDefunct finalized {
-        uint256 fdtAmt = _fdtDenominated(amt);
+        uint256 fdtAmt = _toWad(amt);
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
 
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
@@ -243,9 +243,9 @@ contract Pool is FDT, CalcBPool {
             debtLockers[loan][dlFactory] = debtLocker;
         }
         
-        principalOut += amt;
-        
-        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLockers[loan][dlFactory], amt);  // Fund loan
+        principalOut = principalOut.add(amt);
+        // Fund loan.
+        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLockers[loan][dlFactory], amt);
         
         emit LoanFunded(loan, debtLockers[loan][dlFactory], amt);
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
@@ -332,7 +332,7 @@ contract Pool is FDT, CalcBPool {
         principalPenalty = _principalPenalty;
     }
 
-    function _fdtDenominated(uint256 amt) internal returns(uint256) {
+    function _toWad(uint256 amt) internal returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
     }
 
