@@ -77,11 +77,10 @@ contract MapleGlobalsTest is TestUtil {
 
         globals.setValidPoolFactory(address(poolFactory), true);
         globals.setValidLoanFactory(address(loanFactory), true);
-
-        // TODO: Assign DebtLockerFactory within validSubFactory mapping (relates to SC-1272)
-
+        
         globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
         globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
+        globals.setValidSubFactory(address(poolFactory), address(dlFactory), true);
         globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
         globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
     }
@@ -114,6 +113,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(globals.validLoanFactories(address(loanFactory)));
         assertTrue(globals.validSubFactories(address(poolFactory), address(slFactory)));
         assertTrue(globals.validSubFactories(address(poolFactory), address(llFactory)));
+        assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(clFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(flFactory)));
 
@@ -241,6 +241,10 @@ contract MapleGlobalsTest is TestUtil {
 
         // TODO: MapleGlobals lacks a setter for drawdownGracePeriod value.
         //       Implement this setter within MapleGlobals. Add tests here.
+        assertEq(globals.drawdownGracePeriod(), 1 days);
+        globals.setDrawdownGracePeriod(3 days);
+        assertEq(globals.drawdownGracePeriod(), 3 days);
+        globals.setDrawdownGracePeriod(1 days);
         assertEq(globals.drawdownGracePeriod(), 1 days);
 
         assertEq(globals.gracePeriod(), 5 days);

@@ -215,6 +215,14 @@ contract MapleGlobals {
     }
 
     /**
+        @dev Governor can adjust the drawdown grace period.
+        @param _drawdownGracePeriod Number of seconds to set the drawdown grace period to.
+    */
+    function setDrawdownGracePeriod(uint256 _drawdownGracePeriod) public isGovernor {
+        drawdownGracePeriod = _drawdownGracePeriod;
+    }
+
+    /**
         @dev Governor can adjust the swap out amount required to finalize a pool.
         @param amt The new minimum swap out required.
     */
