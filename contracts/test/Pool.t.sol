@@ -315,6 +315,10 @@ contract PoolTest is TestUtil {
         loan3 = hal.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
 
+    function test_createStakeLocker() public {
+        
+    }
+
     function test_stake_and_finalize() public {
 
         /*****************************************/

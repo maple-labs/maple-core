@@ -8,6 +8,7 @@ import "../mocks/value.sol";
 import "../mocks/token.sol";
 
 import "../interfaces/IBPool.sol";
+import "../interfaces/IStakeLocker.sol";
 
 import "./user/Governor.sol";
 
@@ -18,6 +19,8 @@ import "../PoolFactory.sol";
 import "../StakeLockerFactory.sol";
 import "../LiquidityLockerFactory.sol";
 import "../Pool.sol";
+
+
 
 interface IBPoolFactory {
     function newBPool() external returns (address);
@@ -113,7 +116,7 @@ contract PoolFactoryTest is TestUtil {
         assertTrue(!ali.try_createPool(
             address(poolFactory),
             USDC,
-            address(bPool),
+            address(ali),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
             address(slFactory),
             address(llFactory),
             500,
@@ -137,6 +140,21 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
+    // Tests failure mode in createStakeLocker
+    function test_createPool_bPool_not_finalized() public {
+        gov.setPoolDelegateWhitelist(address(ali), true);
+        
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100
+        ));
+    }
+
     function test_createPool_no_whitelist() public {
         bPool.finalize();
         
@@ -152,6 +170,7 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
+    // Tests failure mode in createStakeLocker
     function test_createPool_no_mpl_token() public {
 
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
@@ -233,5 +252,7 @@ contract PoolFactoryTest is TestUtil {
 
         assertTrue(lPool.stakeLocker()     != address(0));
         assertTrue(lPool.liquidityLocker() != address(0));
+
+
     }
 }

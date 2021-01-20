@@ -77,8 +77,8 @@ contract Pool is FDT, CalcBPool {
         string memory name,
         string memory symbol
     ) FDT(name, symbol, _liquidityAsset) public {
-        require(_liquidityAsset != address(0), "Pool:INVALID_LIQ_ASSET");
-        require(_liquidityCap   != uint256(0), "Pool:INVALID_CAP");
+        require(isValidLoanAsset(_liquidityAsset), "Pool:LIQ_ASSET_NOT_WHITELISTED");
+        require(_liquidityCap   != uint256(0),     "Pool:INVALID_CAP");
 
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
 
