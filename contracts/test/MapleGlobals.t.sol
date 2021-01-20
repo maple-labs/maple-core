@@ -39,6 +39,7 @@ contract MapleGlobalsTest is TestUtil {
     LateFeeCalc                   lfCalc;
     PremiumCalc                    pCalc;
     PoolDelegate                     sid;
+    PoolDelegate                     joe;
     MapleTreasury                    trs;
 
     function setUp() public {
@@ -55,9 +56,11 @@ contract MapleGlobalsTest is TestUtil {
         pCalc       = new PremiumCalc(200);
         brCalc      = new BulletRepaymentCalc();
         sid         = new PoolDelegate();
+        joe         = new PoolDelegate();
         trs         = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
 
         // The following code was adopted from maple-core/scripts/setup.js
+        globals.setMapleTreasury(address(trs));
         globals.setPoolDelegateWhitelist(address(sid), true);
         globals.setLoanAsset(DAI, true);
         globals.setLoanAsset(USDC, true);
@@ -84,6 +87,7 @@ contract MapleGlobalsTest is TestUtil {
     }
 
     function test_constructor() public {
+        assertEq(globals.mapleTreasury(),    address(trs));
         assertEq(globals.governor(),        address(this));
         assertEq(globals.mpl(),              address(mpl));
         assertEq(globals.gracePeriod(),            5 days);
@@ -112,75 +116,149 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(globals.validSubFactories(address(poolFactory), address(llFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(clFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(flFactory)));
+
+        string[]  memory validLoanAssetSymbols;
+        address[] memory validLoanAssets;
+        string[]  memory validCollateralAssetSymbols;
+        address[] memory validCollateralAssets;
+
+        (
+            validLoanAssetSymbols,
+            validLoanAssets,
+            validCollateralAssetSymbols,
+            validCollateralAssets
+        ) = globals.getValidTokens();
+
+        assertEq(validLoanAssetSymbols.length,          2);
+        assertEq(validLoanAssets.length,                2);
+        assertEq(validLoanAssetSymbols[0],          "DAI");
+        assertEq(validLoanAssets[0],                  DAI);
+        assertEq(validLoanAssetSymbols[1],         "USDC");
+        assertEq(validLoanAssets[1],                 USDC);
+
+        assertEq(validCollateralAssetSymbols.length,    4);
+        assertEq(validCollateralAssets.length,          4);
+        assertEq(validCollateralAssetSymbols[0],    "DAI");
+        assertEq(validCollateralAssets[0],            DAI);
+        assertEq(validCollateralAssetSymbols[1],   "USDC");
+        assertEq(validCollateralAssets[1],           USDC);
+        assertEq(validCollateralAssetSymbols[2],   "WETH");
+        assertEq(validCollateralAssets[2],           WETH);
+        assertEq(validCollateralAssetSymbols[3],   "WBTC");
+        assertEq(validCollateralAssets[3],           WBTC);
     }
 
     function test_setters() public {
-        
-        globals.setInvestorFee(45);
-        assertEq(globals.investorFee(), 45);
 
+        assertTrue(!globals.validPoolFactories(address(sid)));
+        globals.setValidPoolFactory(address(sid), true);
+        assertTrue(globals.validPoolFactories(address(sid)));
+        globals.setValidPoolFactory(address(sid), false);
+        assertTrue(!globals.validPoolFactories(address(sid)));
+
+        assertTrue(!globals.validLoanFactories(address(sid)));
+        globals.setValidLoanFactory(address(sid), true);
+        assertTrue(globals.validLoanFactories(address(sid)));
+        globals.setValidLoanFactory(address(sid), false);
+        assertTrue(!globals.validLoanFactories(address(sid)));
+
+        assertTrue(!globals.validSubFactories(address(poolFactory), address(dlFactory)));
+        globals.setValidSubFactory(address(poolFactory), address(dlFactory), true);
+        assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
+        globals.setValidSubFactory(address(poolFactory), address(dlFactory), false);
+        assertTrue(!globals.validSubFactories(address(poolFactory), address(dlFactory)));
+        
+        assertTrue(!globals.isValidPoolDelegate(address(joe)));
+        globals.setPoolDelegateWhitelist(address(joe), true);
+        assertTrue(globals.isValidPoolDelegate(address(joe)));
+        globals.setPoolDelegateWhitelist(address(joe), false);
+        assertTrue(!globals.isValidPoolDelegate(address(joe)));
+
+        // TODO: Assign price feeds from official ChainLink oracles.
+        // TODO: Test the assignePriceFeed() and getPrice() functions.
+
+        assertTrue(!globals.isValidLoanAsset(WETH));
+        assertTrue(!globals.isValidCollateralAsset(CDAI));
+        globals.setLoanAsset(WETH, true);
+        globals.setCollateralAsset(CDAI, true);
+        assertTrue(globals.isValidLoanAsset(WETH));
+        assertTrue(globals.isValidCollateralAsset(CDAI));
+
+        string[]  memory validLoanAssetSymbols;
+        address[] memory validLoanAssets;
+        string[]  memory validCollateralAssetSymbols;
+        address[] memory validCollateralAssets;
+
+        (
+            validLoanAssetSymbols,
+            validLoanAssets,
+            validCollateralAssetSymbols,
+            validCollateralAssets
+        ) = globals.getValidTokens();
+
+        assertEq(validLoanAssetSymbols.length,           3);
+        assertEq(validLoanAssets.length,                 3);
+        assertEq(validLoanAssetSymbols[2],          "WETH");
+        assertEq(validLoanAssets[2],                  WETH);
+
+        assertEq(validCollateralAssetSymbols.length,     5);
+        assertEq(validCollateralAssets.length,           5);
+        assertEq(validCollateralAssetSymbols[4],    "cDAI");
+        assertEq(validCollateralAssets[4],            CDAI);
+
+        globals.setLoanAsset(WETH, false);
+        globals.setCollateralAsset(CDAI, false);
+
+        /** 
+            TODO: Consider implications of static and non-retractive string[] and 
+            address[] arrays for loanAssets / collateralAssets / symbols.
+
+            Failure => assertEq(validCollateralAssetSymbols.length, 4);
+        */
+
+        assertTrue(!globals.isValidLoanAsset(WETH));
+        assertTrue(!globals.isValidCollateralAsset(CDAI));
+
+        assertTrue(globals.isValidCalc(address(brCalc)));
+        globals.setCalc(address(brCalc), false);
+
+
+        assertEq(globals.governor(),        address(this));
+        assertEq(globals.mpl(),              address(mpl));
+        assertEq(globals.gracePeriod(),            5 days);
+        assertEq(globals.swapOutRequired(),           100);
+        assertEq(globals.unstakeDelay(),          90 days);
+        assertEq(globals.drawdownGracePeriod(),    1 days);
+        assertEq(globals.BFactory(),        BPOOL_FACTORY);
+
+        assertEq(globals.investorFee(), 50);
+        globals.setInvestorFee(30);
+        assertEq(globals.investorFee(), 30);
+
+        assertEq(globals.treasuryFee(), 50);
         globals.setTreasuryFee(30);
         assertEq(globals.treasuryFee(), 30);
 
-        globals.setGracePeriod(1 days);
-        assertEq(globals.gracePeriod(), 1 days);
+        // TODO: MapleGlobals lacks a setter for drawdownGracePeriod value.
+        //       Implement this setter within MapleGlobals. Add tests here.
+        assertEq(globals.drawdownGracePeriod(), 1 days);
 
-        globals.setSwapOutRequired(35000);
-        assertEq(globals.swapOutRequired(), 35000);
+        assertEq(globals.gracePeriod(), 5 days);
+        globals.setGracePeriod(3 days);
+        assertEq(globals.gracePeriod(), 3 days);
+        globals.setGracePeriod(7 days);
+        assertEq(globals.gracePeriod(), 7 days);
 
+        assertEq(globals.swapOutRequired(), 100);
+        globals.setSwapOutRequired(100000);
+        assertEq(globals.swapOutRequired(), 100000);
+
+        assertEq(globals.unstakeDelay(), 90 days);
         globals.setUnstakeDelay(30 days);
         assertEq(globals.unstakeDelay(), 30 days);
 
-        globals.setGovernor(address(mpl));
-        assertEq(globals.governor(), address(mpl));
+        globals.setGovernor(address(sid));
+        assertEq(globals.governor(), address(sid));
     }
 
-    // TODO: Add cDAI and cUSDC tests within here.
-    function test_add_tokens() public {
-        // string[]  memory validLoanAssetSymbols;
-        // address[] memory validLoanAssets;
-        // string[]  memory validCollateralAssetSymbols;
-        // address[] memory validCollateralAssets;
-        // (
-        //     validLoanAssetSymbols,
-        //     validLoanAssets,
-        //     validCollateralAssetSymbols,
-        //     validCollateralAssets
-        // ) = globals.getValidTokens();
-
-        // assertEq(validLoanAssetSymbols.length,          0);
-        // assertEq(validLoanAssets.length,                0);
-        // assertEq(validCollateralAssetSymbols.length,    0);
-        // assertEq(validCollateralAssets.length,          0);
-
-        // globals.setCollateralAsset(WETH, true);
-        // (
-        //     validLoanAssetSymbols,
-        //     validLoanAssets,
-        //     validCollateralAssetSymbols,
-        //     validCollateralAssets
-        // ) = globals.getValidTokens();
-
-        // assertEq(validLoanAssetSymbols.length,          0);
-        // assertEq(validLoanAssets.length,                0);
-        // assertEq(validCollateralAssetSymbols.length,    1);
-        // assertEq(validCollateralAssets.length,          1);
-        // assertEq(validCollateralAssetSymbols[0],   "WETH");
-        // assertEq(validCollateralAssets[0],           WETH);
-
-        // globals.setLoanAsset(USDC, true);
-        // (
-        //     validLoanAssetSymbols,
-        //     validLoanAssets,
-        //     validCollateralAssetSymbols,
-        //     validCollateralAssets
-        // ) = globals.getValidTokens();
-
-        // assertEq(validLoanAssetSymbols.length,          1);
-        // assertEq(validLoanAssets.length,                1);
-        // assertEq(validCollateralAssetSymbols.length,    1);
-        // assertEq(validCollateralAssets.length,          1);
-        // assertEq(validLoanAssetSymbols[0],          "USDC");
-        // assertEq(validLoanAssets[0],                  USDC);
-    }
 }
