@@ -33,8 +33,9 @@ contract MapleGlobals {
     mapping(address => bool)                     public validLoanFactories;  // Mapping of valid loan factories.
     mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories.
 
-    event CollateralAssetSet(address asset, uint256 decimals, bool valid);
-    event       LoanAssetSet(address asset, uint256 decimals, bool valid);
+    
+    event CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
+    event       LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event  PriceFeedAssigned(address asset, address oracle);
 
     modifier isGovernor() {
@@ -133,7 +134,7 @@ contract MapleGlobals {
     */
     function setCollateralAsset(address asset, bool valid) external isGovernor {
         isValidCollateralAsset[asset] = valid;
-        emit CollateralAssetSet(asset, IERC20Details(asset).decimals(), valid);
+        emit CollateralAssetSet(asset, IERC20Details(asset).decimals(), IERC20Details(asset).symbol(), valid);
     }
 
     /**
@@ -143,7 +144,7 @@ contract MapleGlobals {
     */
     function setLoanAsset(address asset, bool valid) external isGovernor {
         isValidLoanAsset[asset] = valid;
-        emit LoanAssetSet(asset, IERC20Details(asset).decimals(), valid);
+        emit LoanAssetSet(asset, IERC20Details(asset).decimals(), IERC20Details(asset).symbol(), valid);
     }
 
     /**
