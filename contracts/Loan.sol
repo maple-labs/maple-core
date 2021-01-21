@@ -305,6 +305,15 @@ contract Loan is FDT {
 
         updateFundsReceived();
 
+        emit PaymentMade(
+            total,
+            principal,
+            interest,
+            paymentsRemaining,
+            principalOwed,
+            0,
+            false
+        );
         emit BalanceUpdated(address(this), address(loanAsset),  loanAsset.balanceOf(address(this)));
     }
 
