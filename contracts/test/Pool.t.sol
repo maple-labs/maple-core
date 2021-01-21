@@ -1354,7 +1354,7 @@ contract PoolTest is TestUtil {
 
         uint256 withdrawAmount = depositAmount;
         uint256 interest       = pool1.withdrawableFundsOf(address(kim));
-        uint256 priPenalty     = pool1.principalPenalty().mul(withdrawAmount).div(100000);                               // Calculate flat principal penalty.
+        uint256 priPenalty     = pool1.principalPenalty().mul(withdrawAmount).div(100000);           // Calculate flat principal penalty.
         uint256 totPenalty     = pool1.calcWithdrawPenalty(interest.add(priPenalty), address(kim));  // Get total penalty, however it may be calculated.
         
         kim.withdraw(address(pool1), withdrawAmount);

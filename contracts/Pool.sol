@@ -205,10 +205,9 @@ contract Pool is FDT, CalcBPool {
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
         uint256 due               = amt.sub(totPenalty);                                                 // Funds due after the penalty deduction from the `amt` that is asked for withdraw.
         
-        // TODO: Unit testing on _burn / _mint for ERC-2222 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
+        withdrawFunds();            // Transfer full entitled interest.
 
-        withdrawFunds();           // Transfer full entitled interest.
         require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");  // Transfer the principal amount - totPenalty.
 
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
@@ -284,7 +283,7 @@ contract Pool is FDT, CalcBPool {
 
         // Update funds received for ERC-2222 StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
-        // Update funds received for ERC-2222 Pool tokens.
+        // Update the `pointsPerShare` & funds received for ERC-2222 Pool tokens.
         updateFundsReceived();
 
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
