@@ -315,10 +315,6 @@ contract PoolTest is TestUtil {
         loan3 = hal.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
 
-    function test_createStakeLocker() public {
-        
-    }
-
     function test_stake_and_finalize() public {
 
         /*****************************************/
@@ -360,6 +356,18 @@ contract PoolTest is TestUtil {
         // TODO: Post-state assertions to finalize().
 
     }
+
+    // function test_getInitialStakeRequirements() public {
+    //     (uint256 amtReq, uint256 swapOutVal, bool gtMinRaise, uint256 amtInReq, uint256 amtPresent) = pool1.getInitialStakeRequirements();
+
+    //     log_named_uint("amtReq", amtReq);
+    //     log_named_uint("swapOutVal", swapOutVal);
+    //     log_named_uint("amtInReq", amtInReq);
+    //     log_named_uint("amtPresent", amtPresent);
+    //     assertTrue(gtMinRaise);
+
+    //     assertTrue(false);
+    // }
 
     function test_deposit() public {
         address stakeLocker = pool1.stakeLocker();

@@ -77,8 +77,8 @@ contract Pool is FDT, CalcBPool {
         string memory name,
         string memory symbol
     ) FDT(name, symbol, _liquidityAsset) public {
-        require(isValidLoanAsset(_liquidityAsset), "Pool:LIQ_ASSET_NOT_WHITELISTED");
-        require(_liquidityCap   != uint256(0),     "Pool:INVALID_CAP");
+        require(IGlobals(_globals).isValidLoanAsset(_liquidityAsset), "Pool:LIQ_ASSET_NOT_WHITELISTED");
+        require(_liquidityCap   != uint256(0),                        "Pool:INVALID_CAP");
 
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
 
@@ -244,7 +244,7 @@ contract Pool is FDT, CalcBPool {
         IGlobals globals = _globals(superFactory);
 
         // Auth checks.
-        require(globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
+        require(globals.isValidLoanFactory(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
         require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),  "Pool:INVALID_LOAN");
         require(globals.isValidSubFactory(superFactory, dlFactory, 1),  "Pool:INVALID_DL_FACTORY");
 
