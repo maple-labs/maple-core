@@ -276,7 +276,7 @@ contract Loan is FDT {
             uint256 interest
         ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
 
-        if (nextPaymentDue < block.timestamp <= nextPaymentDue.add(globals.gracePeriod())) {
+        if (block.timestamp > nextPaymentDue && block.timestamp <= nextPaymentDue.add(globals.gracePeriod())) {
             (
                 uint256 totalExtra, 
                 uint256 principalExtra, 
