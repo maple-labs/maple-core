@@ -184,15 +184,15 @@ contract PoolTest is TestUtil {
     function setUp() public {
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);  //
-        flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan facotry functionality.
-        clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan facotry functionality.
+        globals        = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
+        flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan factory functionality.
+        clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan factory functionality.
         loanFactory    = new LoanFactory(address(globals));                             // Create Loan factory.
         slFactory      = new StakeLockerFactory();                                      // Setup the SL factory to facilitate Pool factory functionality.
         llFactory      = new LiquidityLockerFactory();                                  // Setup the SL factory to facilitate Pool factory functionality.
         poolFactory    = new PoolFactory(address(globals));                             // Create pool factory.
-        dlFactory1     = new DebtLockerFactory();                                       // Setup DL factory to hold the commulative funds for a loan corresponds to a pool.
-        dlFactory2     = new DebtLockerFactory();                                       // Setup DL factory to hold the commulative funds for a loan corresponds to a pool.
+        dlFactory1     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
+        dlFactory2     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
         ethOracle      = new DSValue();                                                 // ETH Oracle.
         usdcOracle     = new DSValue();                                                 // USD Oracle.
         bulletCalc     = new BulletRepaymentCalc();                                     // Repayment model.
@@ -218,7 +218,7 @@ contract PoolTest is TestUtil {
         globals.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
 
         ethOracle.poke(500 ether);  // Set ETH price to $500
-        usdcOracle.poke(1 ether);    // Set USDC price to $1
+        usdcOracle.poke(1 ether);   // Set USDC price to $1
 
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);

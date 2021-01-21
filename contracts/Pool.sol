@@ -41,7 +41,7 @@ contract Pool is FDT, CalcBPool {
     uint256 public stakingFee;        // The fee for stakers (in basis points).
     uint256 public delegateFee;       // The fee for delegates (in basis points).
     uint256 public principalPenalty;  // max penalty on principal in bips on early withdrawl
-    uint256 public interestDelay;     // time until total interest is available after a deposit, in seconds
+    uint256 public penaltyDelay;     // time until total interest is available after a deposit, in seconds
 
     bool public isFinalized;  // True if this Pool is setup and the poolDelegate has met staking requirements.
     bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
@@ -109,7 +109,7 @@ contract Pool is FDT, CalcBPool {
 
         // Withdrawal penalty default settings.
         principalPenalty = 500;
-        interestDelay    = 30 days;
+        penaltyDelay    = 30 days;
     }
 
     modifier finalized() {
@@ -281,9 +281,9 @@ contract Pool is FDT, CalcBPool {
         // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
         require(liquidityAsset.transfer(liquidityLocker, principalClaim.add(interestClaim)), "Pool:LL_CLAIM_TRANSFER"); // Ensures that internal accounting is exactly reflective of balance change
 
-        // Update funds received for ERC-2222 StakeLocker tokens.
+        // Update funds received for FDT StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
-        // Update the `pointsPerShare` & funds received for ERC-2222 Pool tokens.
+        // Update the `pointsPerShare` & funds received for FDT Pool tokens.
         updateFundsReceived();
 
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
@@ -301,7 +301,7 @@ contract Pool is FDT, CalcBPool {
     // TODO: Chris add NatSpec
     function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 out) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
-        uint256 unlocked = dTime.div(interestDelay).mul(amt) / WAD;
+        uint256 unlocked = dTime.div(penaltyDelay).mul(amt) / WAD;
 
         out = unlocked > amt ? 0 : amt - unlocked;
     }
@@ -318,15 +318,13 @@ contract Pool is FDT, CalcBPool {
     }
 
     // TODO: Chris add NatSpec
-    function setInterestDelay(uint256 _interestDelay) public isDelegate {
-        interestDelay = _interestDelay;
+    function setInterestDelay(uint256 _penaltyDelay) public isDelegate {
+        penaltyDelay = _penaltyDelay;
     }
 
     /**
-     * @notice It is recommended to pass with decimal precision of 3.
-     * Ex - Alice as a delegate wants to set 2.24 % then `_newPrincipalPenalty` will be 2240.
-     * @dev Allowing delegate/pool manager to set the principal penalty.
-     * @param _newPrincipalPenalty New principal penalty percentage corresponds to withdrawl amount.
+        @dev Allowing delegate/pool manager to set the principal penalty.
+        @param _newPrincipalPenalty New principal penalty percentage (in bips) that corresponds to withdrawal amount.
      */
     function setPrincipalPenalty(uint256 _newPrincipalPenalty) public isDelegate {
         principalPenalty = _newPrincipalPenalty;
@@ -337,12 +335,12 @@ contract Pool is FDT, CalcBPool {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
     }
 
-    //////////////////////////////
-    /// FDT Overriden functions //
-    /////////////////////////////
+    /*******************************/
+    /*** FDT Overriden Functions ***/
+    /*******************************/
 
     /**
-     * @dev Withdraws all available funds for a token holder
+        @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
      */
     function withdrawFunds() public override(FDT) {
         uint256 withdrawableFunds = _prepareWithdraw();
@@ -358,9 +356,9 @@ contract Pool is FDT, CalcBPool {
     }
 
     /**
-     * @dev Updates the current funds token balance
-     * and returns the difference of new and previous funds token balances
-     * @return A int256 representing the difference of the new and previous funds token balance
+        @dev Updates the current funds token balance
+        and returns the difference of new and previous funds token balances
+        @return A int256 representing the difference of the new and previous funds token balance
      */
     function _updateFundsTokenBalance() internal override returns (int256) {
         uint256 _prevFundsTokenBalance = fundsTokenBalance;
