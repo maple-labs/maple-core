@@ -25,6 +25,7 @@ async function main() {
 
   const StakeLockerFactory = getArtifacts(CORE.StakeLockerFactory);
   const FundingLockerFactory = getArtifacts(CORE.FundingLockerFactory);
+  const DebtLockerFactory = getArtifacts(CORE.DebtLockerFactory);
   const LiquidityLockerFactory = getArtifacts(CORE.LiquidityLockerFactory);
   const CollateralLockerFactory = getArtifacts(CORE.CollateralLockerFactory);
 
@@ -86,6 +87,11 @@ async function main() {
   await mapleGlobals.setValidSubFactory(
     PoolFactory.address,
     LiquidityLockerFactory.address,
+    true
+  );
+  await mapleGlobals.setValidSubFactory(
+    PoolFactory.address,
+    DebtLockerFactory.address,
     true
   );
   await mapleGlobals.setValidSubFactory(

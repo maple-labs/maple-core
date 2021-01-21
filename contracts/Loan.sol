@@ -20,7 +20,7 @@ contract Loan is FDT {
     using SignedSafeMath  for int256;
     using SafeMath       for uint256;
 
-    enum State { Live, Active, Matured } // Live = Created, Active = Drawndown
+    enum State { Live, Active, Matured }  // Live = Created, Active = Drawndown
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
     
@@ -28,19 +28,19 @@ contract Loan is FDT {
     IERC20Details public immutable loanAsset;        // Asset deposited by lenders into the FundingLocker, when funding this loan.
     IERC20Details public immutable collateralAsset;  // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
 
-    address public immutable fundingLocker;          // Funding locker - holds custody of loan funds before drawdown    
-    address public immutable flFactory;              // Funding locker factory
-    address public immutable collateralLocker;       // Collateral locker - holds custody of loan collateral
-    address public immutable clFactory;              // Collateral locker factory
-    address public immutable borrower;               // Borrower of this loan, responsible for repayments.
-    address public immutable repaymentCalc;          // The repayment calculator for this loan.
-    address public immutable lateFeeCalc;            // The late fee calculator for this loan.
-    address public immutable premiumCalc;            // The premium calculator for this loan.
-    address public immutable superFactory;           // The factory that deployed this Loan.
+    address public immutable fundingLocker;     // Funding locker - holds custody of loan funds before drawdown    
+    address public immutable flFactory;         // Funding locker factory
+    address public immutable collateralLocker;  // Collateral locker - holds custody of loan collateral
+    address public immutable clFactory;         // Collateral locker factory
+    address public immutable borrower;          // Borrower of this loan, responsible for repayments.
+    address public immutable repaymentCalc;     // The repayment calculator for this loan.
+    address public immutable lateFeeCalc;       // The late fee calculator for this loan.
+    address public immutable premiumCalc;       // The premium calculator for this loan.
+    address public immutable superFactory;      // The factory that deployed this Loan.
 
-    uint256 public principalOwed;      // The principal owed (initially the drawdown amount).
-    uint256 public drawdownAmount;     // The amount the borrower drew down, historical reference for calculators.
-    uint256 public nextPaymentDue;     // The unix timestamp due date of next payment.
+    uint256 public principalOwed;   // The principal owed (initially the drawdown amount).
+    uint256 public drawdownAmount;  // The amount the borrower drew down, historical reference for calculators.
+    uint256 public nextPaymentDue;  // The unix timestamp due date of next payment.
 
     // Loan specifications
     uint256 public apr;         

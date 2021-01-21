@@ -24,23 +24,24 @@ contract Pool is IERC20, ERC20, CalcBPool {
 
     using SafeMath for uint256;
 
-    IGlobals public immutable globals;          // Maple Globals contract
-    IERC20   public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
+    IGlobals public immutable globals;         // Maple Globals contract
+    IERC20   public immutable liquidityAsset;  // The asset deposited by lenders into the LiquidityLocker, for funding loans.
 
-    address public immutable poolDelegate;    // The pool delegate, who maintains full authority over this Pool.
-    address public immutable liquidityLocker; // The LiquidityLocker owned by this contract.
-    address public immutable stakeAsset;      // The asset deposited by stakers into the StakeLocker, for liquidation during default events.
-    address public immutable stakeLocker;     // Address of the StakeLocker, escrowing the staked asset.
-    address public immutable slFactory;       // Address of the StakeLocker factory.
+    address public immutable poolDelegate;     // The pool delegate, who maintains full authority over this Pool.
+    address public immutable liquidityLocker;  // The LiquidityLocker owned by this contract.
+    address public immutable stakeAsset;       // The asset deposited by stakers into the StakeLocker, for liquidation during default events.
+    address public immutable stakeLocker;      // Address of the StakeLocker, escrowing the staked asset.
+    address public immutable slFactory;        // Address of the StakeLocker factory.
+    address public immutable superFactory;     // The factory that deployed this Loan.
 
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset. (TODO: Examine the use of this variable, make immutable)
 
-    uint256 public principalOut;     // Sum of all outstanding principal on loans
-    uint256 public interestSum;      // Sum of all interest currently inside the liquidity locker
-    uint256 public stakingFee;       // The fee for stakers (in basis points).
-    uint256 public delegateFee;      // The fee for delegates (in basis points).
-    uint256 public principalPenalty; // max penalty on principal in bips on early withdrawl
-    uint256 public interestDelay;    // time until total interest is available after a deposit, in seconds
+    uint256 public principalOut;      // Sum of all outstanding principal on loans
+    uint256 public interestSum;       // Sum of all interest currently inside the liquidity locker
+    uint256 public stakingFee;        // The fee for stakers (in basis points).
+    uint256 public delegateFee;       // The fee for delegates (in basis points).
+    uint256 public principalPenalty;  // max penalty on principal in bips on early withdrawl
+    uint256 public interestDelay;     // time until total interest is available after a deposit, in seconds
 
     bool public isFinalized;  // True if this Pool is setup and the poolDelegate has met staking requirements.
     bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
@@ -101,6 +102,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         poolDelegate = _poolDelegate;
         stakingFee   = _stakingFee;
         delegateFee  = _delegateFee;
+        superFactory = msg.sender;
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset, _globals);
@@ -227,6 +229,7 @@ contract Pool is IERC20, ERC20, CalcBPool {
         // Auth checks.
         require(globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
         require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),  "Pool:INVALID_LOAN");
+        require(globals.isValidSubFactory(superFactory, dlFactory, 1),  "Pool:INVALID_DL_FACTORY");
 
         // Instantiate locker if it doesn't exist with this factory type.
         if (debtLockers[loan][dlFactory] == address(0)) {
