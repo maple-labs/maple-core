@@ -244,7 +244,7 @@ contract Loan is FDT {
             interest, 
             paymentsRemaining, 
             principalOwed, 
-            nextPaymentDue, 
+            paymentsRemaining > 0 ? nextPaymentDue : 0, 
             false
         );
 
@@ -252,6 +252,7 @@ contract Loan is FDT {
         // TODO: Identify any other variables worth resetting on final payment.
         if (paymentsRemaining == 0) {
             loanState = State.Matured;
+            nextPaymentDue = 0;
             require(ICollateralLocker(collateralLocker).pull(borrower, collateralAsset.balanceOf(collateralLocker)), "Loan:COLLATERAL_PULL");
             emit BalanceUpdated(collateralLocker, address(collateralAsset), collateralAsset.balanceOf(collateralLocker));
         }
@@ -269,20 +270,29 @@ contract Loan is FDT {
                 [3] = Payment Due Date
     */
     function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
-        (uint256 total, uint256 principal, uint256 interest) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
+        (
+            uint256 total, 
+            uint256 principal, 
+            uint256 interest
+        ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
 
-        if (block.timestamp > nextPaymentDue && block.timestamp <= nextPaymentDue.add(globals.gracePeriod())) {
-
-            (uint256 totalExtra, uint256 principalExtra, uint256 interestExtra) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
+        if (nextPaymentDue < block.timestamp <= nextPaymentDue.add(globals.gracePeriod())) {
+            (
+                uint256 totalExtra, 
+                uint256 principalExtra, 
+                uint256 interestExtra
+            ) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
 
             total     = total.add(totalExtra);
             interest  = interest.add(interestExtra);
             principal = principal.add(principalExtra);
-            
         } 
         else if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
-            // Default flow
+            // TODO: Implement handling a default scenario.
+            // TODO: Implement handling Pool Delegate (investor) early grace period default trigger.
+            // TODO: Implement handling public grace period default trigger.
         }
+        
         return (total, principal, interest, nextPaymentDue);
     }
 
