@@ -1373,8 +1373,8 @@ contract PoolTest is TestUtil {
         bal1 = IERC20(USDC).balanceOf(address(kim));
         uint256 balanceDiff = bal1 > bal0 ? bal1 - bal0 : bal0 - bal1;
         uint256 extraAmount = totPenalty > interest ? totPenalty - interest : interest - totPenalty;
-        
-        assertTrue(totalPenalty != uint256(0));
+
+        assertTrue(totPenalty != uint256(0));
         withinPrecision(balanceDiff, extraAmount, 6);                                                                                     // All of principal returned, plus interest
         assertEq(pool1.balanceOf(address(kim)),                 0,                    "Failed to burn the tokens");                       // LP tokens get burned.
         assertEq(pool1.totalSupply(),                           beforeTotalSupply,    "Failed to decrement the supply");                  // Supply get reset.
