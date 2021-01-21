@@ -23,11 +23,6 @@ contract MapleGlobals {
     uint256 public investorFee;          // Portion of drawdown that goes to pool delegates/investors
     uint256 public treasuryFee;          // Portion of drawdown that goes to treasury
 
-    address[] public validLoanAssets;               // Array of valid loan assets (for LoanFactory).
-    address[] public validCollateralAssets;         // Array of valid collateral assets (for LoanFactory).
-    string[]  public validLoanAssetSymbols;         // Array of valid loan assets symbols (TODO: Consider removing)
-    string[]  public validCollateralAssetSymbols;   // Array of valid collateral assets symbols (TODO: Consider removing)
-
     mapping(address => bool)    public isValidLoanAsset;        // Mapping of valid loan assets
     mapping(address => bool)    public isValidCollateralAsset;  // Mapping of valid collateral assets
     mapping(address => bool)    public isValidCalc;             // Mapping of valid calculator contracts
@@ -38,8 +33,9 @@ contract MapleGlobals {
     mapping(address => bool)                     public validLoanFactories;  // Mapping of valid loan factories.
     mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories.
 
-    event CollateralAssetSet(address asset, uint256 decimals, bool valid);
-    event       LoanAssetSet(address asset, uint256 decimals, bool valid);
+    
+    event CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
+    event       LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event  PriceFeedAssigned(address asset, address oracle);
 
     modifier isGovernor() {
@@ -64,23 +60,7 @@ contract MapleGlobals {
         treasuryFee         = 50;
         BFactory            = _bFactory;
     }
-
-    /**
-        @dev Returns information on valid collateral and loan assets (for Pools and Loans).
-        @return [0] = Valid loan asset symbols.
-                [1] = Valid loan asset (addresses).
-                [2] = Valid collateral asset symbols.
-                [3] = Valid collateral asset (addresses).
-    */
-    function getValidTokens() view public returns(string[] memory, address[] memory, string[] memory, address[] memory) {
-        return (
-            validLoanAssetSymbols,
-            validLoanAssets,
-            validCollateralAssetSymbols,
-            validCollateralAssets
-        );
-    }
-
+    
     /**
         @dev   Update the valid pool factories mapping.
         @param poolFactory Address of loan factory.
@@ -153,11 +133,8 @@ contract MapleGlobals {
         @param valid The new validity of asset as collateral.
     */
     function setCollateralAsset(address asset, bool valid) external isGovernor {
-        require(!isValidCollateralAsset[asset], "MapleGlobals:COLLATERAL_ASSET_EXISTS");
         isValidCollateralAsset[asset] = valid;
-        validCollateralAssets.push(asset);
-        validCollateralAssetSymbols.push(IERC20Details(asset).symbol());
-        emit CollateralAssetSet(asset, IERC20Details(asset).decimals(), valid);
+        emit CollateralAssetSet(asset, IERC20Details(asset).decimals(), IERC20Details(asset).symbol(), valid);
     }
 
     /**
@@ -166,11 +143,8 @@ contract MapleGlobals {
         @param valid Boolean
     */
     function setLoanAsset(address asset, bool valid) external isGovernor {
-        require(!isValidLoanAsset[asset], "MapleGlobals:LOAN_ASSET_EXISTS");
         isValidLoanAsset[asset] = valid;
-        validLoanAssets.push(asset);
-        validLoanAssetSymbols.push(IERC20Details(asset).symbol());
-        emit LoanAssetSet(asset, IERC20Details(asset).decimals(), valid);
+        emit LoanAssetSet(asset, IERC20Details(asset).decimals(), IERC20Details(asset).symbol(), valid);
     }
 
     /**
@@ -212,6 +186,14 @@ contract MapleGlobals {
     */
     function setGracePeriod(uint256 _gracePeriod) public isGovernor {
         gracePeriod = _gracePeriod;
+    }
+
+    /**
+        @dev Governor can adjust the drawdown grace period.
+        @param _drawdownGracePeriod Number of seconds to set the drawdown grace period to.
+    */
+    function setDrawdownGracePeriod(uint256 _drawdownGracePeriod) public isGovernor {
+        drawdownGracePeriod = _drawdownGracePeriod;
     }
 
     /**

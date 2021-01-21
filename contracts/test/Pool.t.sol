@@ -210,6 +210,8 @@ contract PoolTest is TestUtil {
 
         globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
         globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
+        globals.setValidSubFactory(address(poolFactory), address(dlFactory1), true);
+        globals.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
 
         ethOracle.poke(500 ether);  // Set ETH price to $600
         usdcOracle.poke(1 ether);    // Set USDC price to $1
@@ -414,6 +416,7 @@ contract PoolTest is TestUtil {
         /*** Fund same loan with a different LTL ***/
         /*******************************************/
         DebtLockerFactory dlFactory2 = new DebtLockerFactory();
+        globals.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
         assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory2), 10 * USD)); // Fund loan for 15 USDC
 
         DebtLocker debtLocker2 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory2)));
