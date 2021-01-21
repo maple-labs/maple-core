@@ -334,7 +334,7 @@ describe("Cycle of an entire loan", function () {
       { gasLimit: 6000000 }
     );
 
-    if (parseInt(index["_hex"]) == 0) {
+    if (parseInt(index["_hex"]) == 0 && process.env.NETWORK !== 'localhost') {
       // Creating a 2nd loan.
       await LoanFactory.createLoan(
         loanAsset,
