@@ -12,7 +12,7 @@ interface IPool {
 
     function claim(address, address) external returns(uint[5] memory);
 
-    function setInterestDelay(uint256) external;
+    function setPenaltyDelay(uint256) external;
 
     function setPrincipalPenalty(uint256) external;
 

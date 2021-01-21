@@ -81,8 +81,8 @@ contract PoolDelegate {
         return IPool(pool).setPrincipalPenalty(penalty);
     }
 
-    function setInterestDelay(address pool, uint256 delay) external {
-        return IPool(pool).setInterestDelay(delay);
+    function setPenaltyDelay(address pool, uint256 delay) external {
+        return IPool(pool).setPenaltyDelay(delay);
     }
 }
 
@@ -1268,7 +1268,7 @@ contract PoolTest is TestUtil {
         setUpWithdraw();
 
         uint256 start = block.timestamp;
-        uint256 delay = pool1.interestDelay();
+        uint256 delay = pool1.penaltyDelay();
 
         assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
 
@@ -1313,7 +1313,7 @@ contract PoolTest is TestUtil {
 
         assertTrue(kim.try_deposit(address(pool1), 1000 * USD), "Fail to deposit liquidity");                                      // Add another 1000 USDC.
         assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");   // Fund the loan.
-        hevm.warp(start + pool1.interestDelay());                                                                                  // Fast-forward to claim all proportionate interest.
+        hevm.warp(start + pool1.penaltyDelay());                                                                                   // Fast-forward to claim all proportionate interest.
         _drawDownLoan(1000 * USD, loan3, doe);                                                                                     // Draw down the loan.
         _makeLoanPayment(loan3, doe);                                                                                              // Make loan payment.
         sid.claim(address(pool1), address(loan3), address(dlFactory1));                                                            // Fund claimed by the pool.
@@ -1359,7 +1359,7 @@ contract PoolTest is TestUtil {
         assertEq(_getLqBal(pool1),                  beforeLqBalance, "Failed to update the LQL balance");                         // Make sure liquidity locker balance get increases.
 
         _drawDownLoan(1000 * USD, loan3, doe);                             // Draw down the loan.
-        hevm.warp(start + pool1.interestDelay() - 10 days);                // Fast-forward to claim all proportionate interest.
+        hevm.warp(start + pool1.penaltyDelay() - 10 days);                 // Fast-forward to claim all proportionate interest.
         _makeLoanPayment(loan3, doe);                                      // Make loan payment.
         sid.claim(address(pool1), address(loan3), address(dlFactory1));    // Fund claimed by the pool
 

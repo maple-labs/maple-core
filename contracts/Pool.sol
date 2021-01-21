@@ -318,7 +318,7 @@ contract Pool is FDT, CalcBPool {
     }
 
     // TODO: Chris add NatSpec
-    function setInterestDelay(uint256 _penaltyDelay) public isDelegate {
+    function setPenaltyDelay(uint256 _penaltyDelay) public isDelegate {
         penaltyDelay = _penaltyDelay;
     }
 
