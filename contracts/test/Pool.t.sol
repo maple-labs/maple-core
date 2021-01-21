@@ -1331,7 +1331,7 @@ contract PoolTest is TestUtil {
 
         uint start = block.timestamp;
         
-        sid.setPrincipalPenalty(address(pool1), 5000);
+        sid.setPrincipalPenalty(address(pool1), 500);
         mint("USDC", address(kim), 2000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
 
@@ -1365,7 +1365,7 @@ contract PoolTest is TestUtil {
 
         uint256 withdrawAmount = depositAmount;
         uint256 interest       = pool1.withdrawableFundsOf(address(kim));
-        uint256 priPenalty     = pool1.principalPenalty().mul(withdrawAmount).div(100000);           // Calculate flat principal penalty.
+        uint256 priPenalty     = pool1.principalPenalty().mul(withdrawAmount).div(10000);           // Calculate flat principal penalty.
         uint256 totPenalty     = pool1.calcWithdrawPenalty(interest.add(priPenalty), address(kim));  // Get total penalty, however it may be calculated.
         uint256 oldInterestSum = pool1.interestSum();
         

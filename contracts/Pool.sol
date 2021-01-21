@@ -108,7 +108,7 @@ contract Pool is FDT, CalcBPool {
         liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
 
         // Withdrawal penalty default settings.
-        principalPenalty = 5000;  // with 3 decimal precision.
+        principalPenalty = 500;
         interestDelay    = 30 days;
     }
 
@@ -201,7 +201,7 @@ contract Pool is FDT, CalcBPool {
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
 
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
-        uint256 priPenalty        = principalPenalty.mul(amt).div(100000);                               // Calculate flat principal penalty.
+        uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
         uint256 due               = amt.sub(totPenalty);                                                 // Funds due after the penalty deduction from the `amt` that is asked for withdraw.
         
