@@ -3,7 +3,6 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
 import "./math/CalcBPool.sol";
 import "./interfaces/ILoan.sol";
@@ -21,7 +20,7 @@ import "./token/FDT.sol";
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
 /// @title Pool is the core contract for liquidity pools.
-contract Pool is FDT, CalcBPool, ReentrancyGuard {
+contract Pool is FDT, CalcBPool {
 
     using SafeMath for uint256;
 
@@ -41,7 +40,7 @@ contract Pool is FDT, CalcBPool, ReentrancyGuard {
     uint256 public interestSum;       // Sum of all interest currently inside the liquidity locker
     uint256 public stakingFee;        // The fee for stakers (in basis points).
     uint256 public delegateFee;       // The fee for delegates (in basis points).
-    uint256 public principalPenalty;  // Max penalty on principal in bips on early withdrawl.
+    uint256 public principalPenalty;  // Max penalty on principal in bips on early withdrawal.
     uint256 public penaltyDelay;      // Time until total interest is available after a deposit, in seconds.
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the pool.
 
@@ -189,7 +188,7 @@ contract Pool is FDT, CalcBPool, ReentrancyGuard {
         @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
         @param amt The amount of LiquidityAsset to deposit, in wei.
     */
-    function deposit(uint256 amt) external nonReentrant notDefunct finalized {
+    function deposit(uint256 amt) external notDefunct finalized {
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
         updateDepositDate(amt, msg.sender);
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
@@ -205,7 +204,7 @@ contract Pool is FDT, CalcBPool, ReentrancyGuard {
      */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
         uint256 alreadyDepositedAmt = _balanceOfLiquidityLocker().add(principalOut);
-        return liquidityCap >= alreadyDepositedAmt.add(depositAmt);
+        return alreadyDepositedAmt.add(depositAmt) <= liquidityCap;
     }
 
     /**
