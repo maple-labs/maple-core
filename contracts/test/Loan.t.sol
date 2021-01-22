@@ -340,7 +340,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.principalPaid(),                 _pri);
         assertEq(loan.interestPaid(),              _int * 3);
         assertEq(loan.paymentsRemaining(),                0);
-        assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
+        assertEq(loan.nextPaymentDue(),                   0);
 
         // Collateral locker after state.
         assertEq(collateralAsset.balanceOf(collateralLocker),                      0);
@@ -444,7 +444,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.principalPaid(),                 _pri);
         assertEq(loan.interestPaid(),              _int * 3);
         assertEq(loan.paymentsRemaining(),                0);
-        assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
+        assertEq(loan.nextPaymentDue(),                   0);
 
         // Collateral locker after state.
         assertEq(collateralAsset.balanceOf(collateralLocker),  0);
