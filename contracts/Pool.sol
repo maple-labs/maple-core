@@ -212,7 +212,6 @@ contract Pool is FDT, CalcBPool {
         @param newLiquidityCap New liquidity cap value. 
      */
     function setLiquidityCap(uint256 newLiquidityCap) external isDelegate {
-        require(newLiquidityCap >= _balanceOfLiquidityLocker().add(principalOut), "Pool:CAP_IS_TOO_LOW");
         liquidityCap = newLiquidityCap;
     }
 

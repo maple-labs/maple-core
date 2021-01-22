@@ -395,10 +395,6 @@ contract PoolTest is TestUtil {
         assertTrue(pool1.isDepositAllowed(500 * USD), "Deposit should be allowed because 900 USD > 500 USD");
         assertTrue(bob.try_deposit(address(pool1), 500 * USD), "Fail to deposit 500 USD");
 
-        // Delegate will fail to reduce the cap because newLiquidityCap < totalDeposits.
-        assertTrue(!sid.try_setLiquidityCap(pool1, 400 * USD), "Should not update the liquidity cap value");
-        assertEq(pool1.liquidityCap(), 900 * USD, "Should not update the liquidity cap value to 900 USD");
-
         // Bob tried again with 600 USDC it fails again.
         assertTrue(!pool1.isDepositAllowed(600 * USD), "Deposit should not be allowed because 900 USD < 500 + 600 USD");
         assertTrue(!bob.try_deposit(address(pool1), 600 * USD), "Should not able to deposit 600 USD");
