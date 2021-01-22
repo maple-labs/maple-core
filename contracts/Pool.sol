@@ -203,8 +203,8 @@ contract Pool is FDT, CalcBPool {
         @param depositAmt Amount of tokens (i.e loanAsset type) is user willing to deposit.
      */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
-        uint256 alreadyDepositedAmt = _balanceOfLiquidityLocker().add(principalOut);
-        return alreadyDepositedAmt.add(depositAmt) <= liquidityCap;
+        uint256 totalDeposits = _balanceOfLiquidityLocker().add(principalOut);
+        return totalDeposits.add(depositAmt) <= liquidityCap;
     }
 
     /**
