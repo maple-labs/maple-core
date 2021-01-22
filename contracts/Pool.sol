@@ -184,9 +184,10 @@ contract Pool is FDT, CalcBPool {
     */
     function deposit(uint256 amt) external isState(State.Finalized) {
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
-        updateDepositDate(amt, msg.sender);
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
         uint256 wad = _toWad(amt);
+
+        updateDepositDate(wad, msg.sender);
         _mint(msg.sender, wad);
 
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
@@ -326,22 +327,26 @@ contract Pool is FDT, CalcBPool {
     }
 
     /** 
-        @dev This is to establish the function signature by which an interest penalty will be calculated.
-        @param amt The amount deposited.
-        @param who The user who deposited amt.
-        @return out The resulting value will be removed from the interest used in a repayment.
+        @dev Calculate the amount of funds to deduct from total claimable amount based on how
+             the effective length of time a user has been in a pool. This is a linear decrease
+             until block.timestamp - depositDate[who] >= penaltyDelay, after which it returns 0.
+        @param  amt Total claimable amount 
+        @param  who Address of user claiming
+        @return penalty Total penalty
     */
-    function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 out) {
+    function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 penalty) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
         uint256 unlocked = dTime.div(penaltyDelay).mul(amt) / WAD;
 
-        out = unlocked > amt ? 0 : amt - unlocked;
+        penalty = unlocked > amt ? 0 : amt - unlocked;
     }
 
     /**
-        @dev Update the deposit date.
-        @param amt The amount deposited.
-        @param who The user who deposited amt. 
+        @dev Update the effective deposit date based on how much new capital has been added.
+             If more capital is added, the depositDate moves closer to the current timestamp.
+        @param  amt Total deposit amount
+        @param  who Address of user depositing
+        @return penalty Total penalty
     */
     function updateDepositDate(uint256 amt, address who) internal {
         if (depositDate[who] == 0) {
@@ -349,13 +354,14 @@ contract Pool is FDT, CalcBPool {
         } else {
             uint256 depDate  = depositDate[who];
             uint256 coef     = (WAD.mul(amt)).div(balanceOf(who) + amt);
-            depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // date + (now - depDate) * coef
+            depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // depDate + (now - depDate) * coef
         }
     }
 
     /**
-        @dev Set the delay penalty.
-        @param _penaltyDelay New penalty setting to apply.
+        @dev Set the amount of time required to recover 100% of claimable funds 
+             (i.e. calcWithdrawPenalty = 0)
+        @param _penaltyDelay Effective time needed in pool for user to be able to claim 100% of funds
     */
     function setPenaltyDelay(uint256 _penaltyDelay) public isDelegate {
         penaltyDelay = _penaltyDelay;
@@ -371,8 +377,8 @@ contract Pool is FDT, CalcBPool {
     }
 
     /**
-        @dev Converts a given amt to WAD precision.
-        @return amt converted to WAD precision.
+        @dev Convert liquidityAsset to WAD precision (10 ** 18)
+        @param amt Effective time needed in pool for user to be able to claim 100% of funds
     */
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);

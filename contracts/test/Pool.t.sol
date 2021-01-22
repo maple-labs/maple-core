@@ -48,6 +48,16 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig));
     }
 
+    function try_setPrincipalPenalty(address pool, uint256 penalty) external returns (bool ok) {
+        string memory sig = "setPrincipalPenalty(uint256)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, penalty));
+    }
+
+    function try_setPenaltyDelay(address pool, uint256 delay) external returns (bool ok) {
+        string memory sig = "setPenaltyDelay(uint256)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, delay));
+    }
+
     function createPool(
         address poolFactory, 
         address liquidityAsset,
@@ -121,6 +131,11 @@ contract PoolDelegate {
 contract LP {
     function try_deposit(address pool1, uint256 amt)  external returns (bool ok) {
         string memory sig = "deposit(uint256)";
+        (ok,) = address(pool1).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_withdraw(address pool1, uint256 amt)  external returns (bool ok) {
+        string memory sig = "withdraw(uint256)";
         (ok,) = address(pool1).call(abi.encodeWithSignature(sig, amt));
     }
 
@@ -468,6 +483,7 @@ contract PoolTest is TestUtil {
     }
 
     function test_deposit_with_liquidity_cap() public {
+    
         address stakeLocker = pool1.stakeLocker();
         address liqLocker   = pool1.liquidityLocker();
 
@@ -496,6 +512,44 @@ contract PoolTest is TestUtil {
         // Bob tried again with 600 USDC it fails again.
         assertTrue(!pool1.isDepositAllowed(600 * USD), "Deposit should not be allowed because 900 USD < 500 + 600 USD");
         assertTrue(!bob.try_deposit(address(pool1), 600 * USD), "Should not able to deposit 600 USD");
+
+        // Set liquidityCap to zero and withdraw
+        assertTrue(sid.try_setLiquidityCap(pool1, 0), "Failed to set liquidity cap");
+        assertTrue(bob.try_withdraw(address(pool1), 500 * USD), "Fail to withdraw 500 USD");
+    }
+
+    function test_deposit_depositDate() public {
+        address stakeLocker = pool1.stakeLocker();
+        address liqLocker   = pool1.liquidityLocker();
+
+        sid.approve(address(bPool), stakeLocker, MAX_UINT);
+        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        
+        // Mint 100 USDC into this LP account
+        mint("USDC", address(bob), 200 * USD);
+        bob.approve(USDC, address(pool1), MAX_UINT);
+        sid.finalize(address(pool1));
+
+        // Deposit 100 USDC on first day
+        uint256 startDate = block.timestamp;
+
+        uint256 initialAmt = 100 * USD;
+
+        bob.deposit(address(pool1), 100 * USD);
+        assertEq(pool1.depositDate(address(bob)), startDate);
+
+        uint256 newAmt = 20 * USD;
+
+        hevm.warp(startDate + 30 days);
+        bob.deposit(address(pool1), newAmt);
+        uint256 coef = newAmt * WAD / (newAmt + initialAmt);
+
+        uint256 newDepDate = startDate + coef * (block.timestamp - startDate) / WAD;
+        assertEq(pool1.depositDate(address(bob)), newDepDate);  // Gets updated
+
+        bob.withdraw(address(pool1), newAmt);
+
+        assertEq(pool1.depositDate(address(bob)), newDepDate);  // Doesn't change
     }
 
     function test_fundLoan() public {
@@ -1517,6 +1571,20 @@ contract PoolTest is TestUtil {
         assertEq(pool1.balanceOf(address(kim)),                 0,                    "Failed to burn the tokens");                       // LP tokens get burned.
         assertEq(pool1.totalSupply(),                           beforeTotalSupply,    "Failed to decrement the supply");                  // Supply get reset.
         assertEq(oldInterestSum.sub(interest).add(totPenalty),  pool1.interestSum(),  "Failed to update the interest sum");               // Interest sum is increased by totPenalty and decreased by the entitled interest.
+    }
+
+    function test_setPenaltyDelay() public {
+        assertEq(pool1.penaltyDelay(),                      30 days);
+        assertTrue(!joe.try_setPenaltyDelay(address(pool1), 45 days));
+        assertTrue( sid.try_setPenaltyDelay(address(pool1), 45 days));
+        assertEq(pool1.penaltyDelay(),                      45 days);
+    }
+
+    function test_setPrincipalPenalty() public {
+        assertEq(pool1.principalPenalty(),                      500);
+        assertTrue(!joe.try_setPrincipalPenalty(address(pool1), 1125));
+        assertTrue( sid.try_setPrincipalPenalty(address(pool1), 1125));
+        assertEq(pool1.principalPenalty(),                      1125);
     }
 
     function _makeLoanPayment(Loan loan, Borrower by) internal {
