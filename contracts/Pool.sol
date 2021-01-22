@@ -346,7 +346,6 @@ contract Pool is FDT, CalcBPool {
              If more capital is added, the depositDate moves closer to the current timestamp.
         @param  amt Total deposit amount
         @param  who Address of user depositing
-        @return penalty Total penalty
     */
     function updateDepositDate(uint256 amt, address who) internal {
         if (depositDate[who] == 0) {
