@@ -189,7 +189,6 @@ contract Pool is FDT, CalcBPool {
 
         updateDepositDate(wad, msg.sender);
         _mint(msg.sender, wad);
-
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
 
@@ -208,6 +207,7 @@ contract Pool is FDT, CalcBPool {
     */
     function setLiquidityCap(uint256 newLiquidityCap) external isDelegate {
         liquidityCap = newLiquidityCap;
+    }
     }
 
     /**
