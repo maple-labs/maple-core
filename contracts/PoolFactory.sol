@@ -10,8 +10,8 @@ contract PoolFactory {
     uint8 public constant LL_FACTORY = 3;   // Factory type of `LiquidityLockerFactory`.
     uint8 public constant SL_FACTORY = 4;   // Factory type of `StakeLockerFactory`.
 
-    uint256  public poolsCreated;       // Incrementor for number of LPs created.
-    IGlobals public immutable globals;  // MapleGlobals contract.
+    uint256  public poolsCreated;  // Incrementor for number of LPs created.
+    IGlobals public globals;       // MapleGlobals contract.
 
     mapping(uint256 => address) public pools;  // Mappings for liquidity pool contracts, and their validation.
     mapping(address => bool)    public isPool;
@@ -35,6 +35,19 @@ contract PoolFactory {
         globals   = IGlobals(_globals);
     }
 
+    modifier isGovernor() {
+        require(msg.sender == globals.governor(), "Loan:MSG_SENDER_NOT_GOVERNOR");
+        _;
+    }
+
+    /**
+        @dev Update the maple globals contract
+        @param  newGlobals Address of new maple globals contract
+    */
+    function setGlobals(address newGlobals) external isGovernor {
+        globals = IGlobals(newGlobals);
+    }
+
     /**
         @dev Instantiates a Pool contract.
         @param  liquidityAsset The asset escrowed in LiquidityLocker.
@@ -54,11 +67,13 @@ contract PoolFactory {
         uint256 delegateFee,
         uint256 liquidityCap
     ) public returns (address) {
+
+        IGlobals _globals = globals;
         
-        require(globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");
-        require(globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PoolFactory:INVALID_SL_FACTORY");
-        require(globals.isValidPoolDelegate(msg.sender),                         "PoolFactory:MSG_SENDER_NOT_WHITELISTED");
-        require(IBFactory(globals.BFactory()).isBPool(stakeAsset),               "PoolFactory:STAKE_ASSET_NOT_BPOOL");
+        require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");
+        require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PoolFactory:INVALID_SL_FACTORY");
+        require(_globals.isValidPoolDelegate(msg.sender),                         "PoolFactory:MSG_SENDER_NOT_WHITELISTED");
+        require(IBFactory(_globals.BFactory()).isBPool(stakeAsset),               "PoolFactory:STAKE_ASSET_NOT_BPOOL");
 
         string memory tUUID  = TokenUUID.generateUUID(poolsCreated + 1);
         string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
@@ -76,7 +91,7 @@ contract PoolFactory {
                 liquidityCap,
                 name,
                 symbol,
-                address(globals)
+                address(_globals)
             );
 
         pools[poolsCreated]   = address(pool);

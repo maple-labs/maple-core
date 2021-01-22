@@ -15,8 +15,9 @@ contract StakeLocker is FDT {
 
     uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division.
 
-    IGlobals public immutable globals;     // Maple globals.
-    IERC20   public immutable stakeAsset;  // The asset deposited by stakers into this contract, for liquidation during defaults.
+    IGlobals public globals;  // Maple globals.
+
+    IERC20  public immutable stakeAsset;  // The asset deposited by stakers into this contract, for liquidation during defaults.
     
     address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
     address public immutable owner;           // The parent liquidity pool.
@@ -57,6 +58,14 @@ contract StakeLocker is FDT {
     modifier isGovernor() {
         require(msg.sender == globals.governor(), "StakeLocker:MSG_SENDER_NOT_GOVERNOR");
         _;
+    }
+
+    /**
+        @dev Update the maple globals contract
+        @param  newGlobals Address of new maple globals contract
+    */
+    function setGlobals(address newGlobals) external isGovernor {
+        globals = IGlobals(newGlobals);
     }
 
     /**

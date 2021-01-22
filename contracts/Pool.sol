@@ -22,8 +22,9 @@ contract Pool is FDT, CalcBPool {
 
     using SafeMath for uint256;
 
-    IGlobals public immutable globals;         // Maple Globals contract
-    IERC20   public immutable liquidityAsset;  // The asset deposited by lenders into the LiquidityLocker, for funding loans.
+    IGlobals public globals;  // Maple Globals contract
+
+    IERC20  public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
 
     address public immutable poolDelegate;     // The pool delegate, who maintains full authority over this Pool.
     address public immutable liquidityLocker;  // The LiquidityLocker owned by this contract.
@@ -123,6 +124,19 @@ contract Pool is FDT, CalcBPool {
     modifier isDelegate() {
         require(msg.sender == poolDelegate, "Pool:MSG_SENDER_NOT_DELEGATE");
         _;
+    }
+
+    modifier isGovernor() {
+        require(msg.sender == globals.governor(), "Loan:MSG_SENDER_NOT_GOVERNOR");
+        _;
+    }
+
+    /**
+        @dev Update the maple globals contract
+        @param  newGlobals Address of new maple globals contract
+    */
+    function setGlobals(address newGlobals) external isGovernor {
+        globals = IGlobals(newGlobals);
     }
 
     /**
@@ -238,10 +252,12 @@ contract Pool is FDT, CalcBPool {
     */
     function fundLoan(address loan, address dlFactory, uint256 amt) external isState(State.Finalized) isDelegate {
 
+        IGlobals _globals = globals;
+
         // Auth checks.
-        require(globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
+        require(_globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
         require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),  "Pool:INVALID_LOAN");
-        require(globals.isValidSubFactory(superFactory, dlFactory, 1),  "Pool:INVALID_DL_FACTORY");
+        require(_globals.isValidSubFactory(superFactory, dlFactory, 1),  "Pool:INVALID_DL_FACTORY");
 
         address _debtLocker = debtLockers[loan][dlFactory];
 
