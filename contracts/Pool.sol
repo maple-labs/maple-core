@@ -109,7 +109,7 @@ contract Pool is FDT, CalcBPool {
 
         // Withdrawal penalty default settings.
         principalPenalty = 500;
-        penaltyDelay    = 30 days;
+        penaltyDelay     = 30 days;
     }
 
     modifier finalized() {
@@ -194,7 +194,7 @@ contract Pool is FDT, CalcBPool {
 
     /**
         @dev Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
-        @param amt The amount of LiquidityAsset to withdraw, in wei.
+        @param amt The amount of LiquidityAsset to withdraw.
     */
     function withdraw(uint256 amt) external notDefunct finalized {
         uint256 fdtAmt = _toWad(amt);
@@ -295,8 +295,8 @@ contract Pool is FDT, CalcBPool {
     }
 
     /** 
-     * This is to establish the function signature by which an interest penalty will be calculated
-     * The resulting value will be removed from the interest used in a repayment
+        This is to establish the function signature by which an interest penalty will be calculated
+        The resulting value will be removed from the interest used in a repayment
     **/
     // TODO: Chris add NatSpec
     function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 out) {
