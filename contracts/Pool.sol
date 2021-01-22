@@ -3,6 +3,7 @@
 pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
 import "./math/CalcBPool.sol";
 import "./interfaces/ILoan.sol";
@@ -20,7 +21,7 @@ import "./token/FDT.sol";
 // TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
 
 /// @title Pool is the core contract for liquidity pools.
-contract Pool is FDT, CalcBPool {
+contract Pool is FDT, CalcBPool, ReentrancyGuard {
 
     using SafeMath for uint256;
 
@@ -40,8 +41,9 @@ contract Pool is FDT, CalcBPool {
     uint256 public interestSum;       // Sum of all interest currently inside the liquidity locker
     uint256 public stakingFee;        // The fee for stakers (in basis points).
     uint256 public delegateFee;       // The fee for delegates (in basis points).
-    uint256 public principalPenalty;  // max penalty on principal in bips on early withdrawl
-    uint256 public penaltyDelay;     // time until total interest is available after a deposit, in seconds
+    uint256 public principalPenalty;  // Max penalty on principal in bips on early withdrawl.
+    uint256 public penaltyDelay;      // Time until total interest is available after a deposit, in seconds.
+    uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the pool.
 
     bool public isFinalized;  // True if this Pool is setup and the poolDelegate has met staking requirements.
     bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
@@ -62,6 +64,7 @@ contract Pool is FDT, CalcBPool {
         @param  _llFactory      Factory used to instantiate LiquidityLocker.
         @param  _stakingFee     Fee that stakers earn on interest, in bips.
         @param  _delegateFee    Fee that _poolDelegate earns on interest, in bips.
+        @param  _liquidityCap   Amount of liquidity tokens accepted by the pool.
         @param  name            Name of pool token.
         @param  symbol          Symbol of pool token.
         @param  _globals        Globals contract address.
@@ -74,11 +77,13 @@ contract Pool is FDT, CalcBPool {
         address _llFactory,
         uint256 _stakingFee,
         uint256 _delegateFee,
+        uint256 _liquidityCap,
         string memory name,
         string memory symbol,
         address _globals
     ) FDT(name, symbol, _liquidityAsset) public {
-        require(_liquidityAsset != address(0), "Pool:INVALID_LIQ_ASSET"); 
+        require(_liquidityAsset != address(0), "Pool:INVALID_LIQ_ASSET");
+        require(_liquidityCap   != uint256(0), "Pool:INVALID_CAP");
 
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
 
@@ -102,6 +107,7 @@ contract Pool is FDT, CalcBPool {
         stakingFee   = _stakingFee;
         delegateFee  = _delegateFee;
         superFactory = msg.sender;
+        liquidityCap = _liquidityCap;
 
         // Initialize the LiquidityLocker and StakeLocker.
         stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset, _globals);
@@ -183,13 +189,32 @@ contract Pool is FDT, CalcBPool {
         @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
         @param amt The amount of LiquidityAsset to deposit, in wei.
     */
-    function deposit(uint256 amt) external notDefunct finalized {
+    function deposit(uint256 amt) external nonReentrant notDefunct finalized {
+        require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
         updateDepositDate(amt, msg.sender);
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
         uint256 wad = _toWad(amt);
         _mint(msg.sender, wad);
 
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+    }
+
+    /**
+        @dev Check whether the given `depositAmt` is an acceptable amount by the pool?.
+        @param depositAmt Amount of tokens (i.e loanAsset type) is user willing to deposit.
+     */
+    function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
+        uint256 alreadyDepositedAmt = _balanceOfLiquidityLocker().add(principalOut);
+        return liquidityCap >= alreadyDepositedAmt.add(depositAmt);
+    }
+
+    /**
+        @dev Set `liquidityCap`, Only allowed by the pool delegate.
+        @param newLiquidityCap New liquidity cap value. 
+     */
+    function setLiquidityCap(uint256 newLiquidityCap) external isDelegate {
+        require(newLiquidityCap >= _balanceOfLiquidityLocker().add(principalOut), "Pool:CAP_IS_TOO_LOW");
+        liquidityCap = newLiquidityCap;
     }
 
     /**
@@ -213,7 +238,7 @@ contract Pool is FDT, CalcBPool {
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
         updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
 
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
 
     /**
@@ -243,7 +268,7 @@ contract Pool is FDT, CalcBPool {
         ILiquidityLocker(liquidityLocker).fundLoan(loan, _debtLocker, amt);
         
         emit LoanFunded(loan, _debtLocker, amt);
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
 
     /**
@@ -286,7 +311,7 @@ contract Pool is FDT, CalcBPool {
         // Update the `pointsPerShare` & funds received for FDT Pool tokens.
         updateFundsReceived();
 
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), liquidityAsset.balanceOf(liquidityLocker));
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
         emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
         emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
@@ -334,6 +359,10 @@ contract Pool is FDT, CalcBPool {
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
     }
+
+    function _balanceOfLiquidityLocker() internal view returns(uint256) {
+        return liquidityAsset.balanceOf(liquidityLocker);
+    } 
 
     /*******************************/
     /*** FDT Overriden Functions ***/

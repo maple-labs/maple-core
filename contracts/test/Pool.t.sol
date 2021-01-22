@@ -47,7 +47,8 @@ contract PoolDelegate {
         address slFactory, 
         address llFactory,
         uint256 stakingFee,
-        uint256 delegateFee
+        uint256 delegateFee,
+        uint256 liquidityCap
     ) 
         external returns (address liquidityPool) 
     {
@@ -57,7 +58,8 @@ contract PoolDelegate {
             slFactory,
             llFactory,
             stakingFee,
-            delegateFee
+            delegateFee,
+            liquidityCap
         );
     }
 
@@ -266,7 +268,8 @@ contract PoolTest is TestUtil {
             address(slFactory),
             address(llFactory),
             500,
-            100
+            100,
+            MAX_UINT  // liquidityCap value
         ));
 
         // Create Liquidity Pool
@@ -277,7 +280,8 @@ contract PoolTest is TestUtil {
             address(slFactory),
             address(llFactory),
             7500,
-            50
+            50,
+            MAX_UINT // liquidityCap value
         ));
 
         // loan Specifications

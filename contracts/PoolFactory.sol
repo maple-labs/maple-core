@@ -26,6 +26,7 @@ contract PoolFactory {
         address stakeLocker, 
         uint256 stakingFee,
         uint256 delegateFee,
+        uint256 liquidityCap,
         string  name,
         string  symbol
     );
@@ -42,6 +43,7 @@ contract PoolFactory {
         @param  llFactory      The factory to instantiate a Liquidity Locker from.
         @param  stakingFee     Fee that stakers earn on interest, in bips.
         @param  delegateFee    Fee that pool delegate earns on interest, in bips.
+        @param  liquidityCap   Amount of liquidity tokens accepted by the pool.
     */
     function createPool(
         address liquidityAsset, 
@@ -49,7 +51,8 @@ contract PoolFactory {
         address slFactory, 
         address llFactory,
         uint256 stakingFee, 
-        uint256 delegateFee
+        uint256 delegateFee,
+        uint256 liquidityCap
     ) public returns (address) {
         
         require(globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");
@@ -70,6 +73,7 @@ contract PoolFactory {
                 llFactory,
                 stakingFee,
                 delegateFee,
+                liquidityCap,
                 name,
                 symbol,
                 address(globals)
@@ -89,6 +93,7 @@ contract PoolFactory {
             pool.stakeLocker(),
             stakingFee,
             delegateFee,
+            liquidityCap,
             name,
             symbol
         );
