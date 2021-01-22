@@ -12,6 +12,8 @@ interface IPool {
 
     function deactivate(uint256) external;
 
+    function finalize() external;
+
     function claim(address, address) external returns(uint[5] memory);
 
     function setPenaltyDelay(uint256) external;

@@ -24,7 +24,7 @@ contract CalcBPool {
     }
 
     /// @dev Calculates the value of BPT in units of _liquidityAssetContract in 'wei' (decimals) for this token.
-    // TODO: Identify use and add NatSpec later.
+    // TODO: Do we need this?
     function BPTVal(
         address _pool,
         address _pair,
@@ -96,9 +96,9 @@ contract CalcBPool {
         @dev Calculates BPTs required if burning BPTs for pair, given supplied tokenAmountOutRequired.
         @param  bpool              Balancer pool that issues the BPTs.
         @param  pair               Swap out asset (e.g. USDC) to receive when burning BPTs.
-        @param  pairAmountRequired Amount of pair tokens out required.
         @param  staker             Address that deposited BPTs to stakeLocker.
         @param  stakeLocker        Escrows BPTs deposited by staker.
+        @param  pairAmountRequired Amount of pair tokens out required.
         @return [0] = poolAmountIn required
                 [1] = poolAmountIn currently staked.
     */

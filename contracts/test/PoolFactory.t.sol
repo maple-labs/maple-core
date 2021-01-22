@@ -120,7 +120,7 @@ contract PoolFactoryTest is TestUtil {
             500,
             100,
             MAX_UINT
-        ));
+        );
     }
 
     function setUpWhitelisting() internal {
@@ -128,38 +128,44 @@ contract PoolFactoryTest is TestUtil {
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setPoolDelegateWhitelist(address(ali), true);
+        gov.setLoanAsset(USDC, true);
     }
 
     function test_createPool_globals_validations() public {
-        assertCreatePoolFails(); // PoolFactory:INVALID_POOL_FACTORY
+        setUpWhitelisting();
+        bPool.finalize();
 
         gov.setValidPoolFactory(address(poolFactory), true);
 
-        assertCreatePoolFails(); // PoolFactory:INVALID_LL_FACTORY
+        // PoolFactory:INVALID_POOL_FACTORY
+        gov.setValidPoolFactory(address(poolFactory), false);
+        assertTrue(createPoolFails());                                   
+        gov.setValidPoolFactory(address(poolFactory), true);
 
+        // PoolFactory:INVALID_LL_FACTORY
+        gov.setValidSubFactory(address(poolFactory), address(llFactory), false);
+        assertTrue(createPoolFails());                                                      
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
 
-        assertCreatePoolFails(); // PoolFactory:INVALID_SL_FACTORY
-
+        // PoolFactory:INVALID_SL_FACTORY
+        gov.setValidSubFactory(address(poolFactory), address(slFactory), false);
+        assertTrue(createPoolFails()); 
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
 
-        assertCreatePoolFails(); // PoolFactory:MSG_SENDER_NOT_WHITELISTED
-
+        // PoolFactory:MSG_SENDER_NOT_WHITELISTED
+        gov.setPoolDelegateWhitelist(address(ali), false);
+        assertTrue(createPoolFails()); 
         gov.setPoolDelegateWhitelist(address(ali), true);
 
-        assertTrue(ali.try_createPool(
-            address(poolFactory),
-            USDC,
-            address(bPool),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
-            address(slFactory),
-            address(llFactory),
-            500,
-            100
-        ));
+        // PoolFactory:LIQ_ASSET_NOT_WHITELISTED
+        gov.setLoanAsset(USDC, false);
+        assertTrue(createPoolFails());   
+        gov.setLoanAsset(USDC, true);
     }
 
     function test_createPool_bad_stakeAsset() public {
         setUpWhitelisting();
+        bPool.finalize();
         
         // PoolFactory:STAKE_ASSET_NOT_BPOOL
         assertTrue(!ali.try_createPool(
@@ -174,23 +180,9 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
-    function test_createPool_bad_liquidityAsset() public {
-        setUpWhitelisting();
-        
-        // Pool:LIQ_ASSET_NOT_WHITELISTED
-        assertTrue(!ali.try_createPool(
-            address(poolFactory),
-            USDC,
-            address(bPool),  
-            address(slFactory),
-            address(llFactory),
-            500,
-            100
-        ));
-    }
-
     function test_createPool_wrong_staking_pair_asset() public {
         setUpWhitelisting();
+        bPool.finalize();
 
         gov.setLoanAsset(DAI, true);
         
@@ -273,6 +265,7 @@ contract PoolFactoryTest is TestUtil {
 
     function test_createPool_no_whitelist() public {
         bPool.finalize();
+        setUpWhitelisting();
         
         // Pool:INVALID_BALANCER_POOL
         assertTrue(!ali.try_createPool(
@@ -286,9 +279,11 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
-    
-
     function test_createPool() public {
+
+        setUpWhitelisting();
+
+        gov.setLoanAsset(USDC, true);
 
         gov.setPoolDelegateWhitelist(address(ali), true);
         bPool.finalize();

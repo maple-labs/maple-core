@@ -149,11 +149,11 @@ contract Pool is FDT, CalcBPool {
 
     /**
         @dev Returns information on the stake requirements.
-        @return [0] = Amount of stake required.
-                [1] = Current swap out value of stake present.
-                [2] = If enough stake is present from Pool Delegate for finalization.
-                [3] = Amount of pool shares required.
-                [4] = Amount of pool shares present.
+        @return [0] = Min amount of liquidityAsset coverage from staking required
+                [1] = Present amount of liquidityAsset coverage from staking
+                [2] = If enough stake is present from Pool Delegate for finalization
+                [3] = Staked BPTs required for minimum liquidityAsset coverage
+                [4] = Current staked BPTs
     */
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
 
@@ -171,7 +171,7 @@ contract Pool is FDT, CalcBPool {
         return (
             swapOutAmountRequired,
             this.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
-            this.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker) >= swapOutAmountRequired,
+            poolAmountPresent >= poolAmountInRequired,
             poolAmountInRequired,
             poolAmountPresent
         );
@@ -348,7 +348,7 @@ contract Pool is FDT, CalcBPool {
             depositDate[who] = block.timestamp;
         } else {
             uint256 depDate  = depositDate[who];
-            uint256 coef     = (WAD.mul(amt)).div(balanceOf(who) + amt); // Yes, i want 0 if amt is too small
+            uint256 coef     = (WAD.mul(amt)).div(balanceOf(who) + amt);
             depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // date + (now - depDate) * coef
         }
     }

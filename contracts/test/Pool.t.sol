@@ -11,6 +11,7 @@ import "./user/Governor.sol";
 
 import "../interfaces/IBPool.sol";
 import "../interfaces/IPool.sol";
+import "../interfaces/IStakeLocker.sol";
 import "../interfaces/IPoolFactory.sol";
 import "../interfaces/IERC20Details.sol";
 
@@ -40,6 +41,11 @@ contract PoolDelegate {
     function try_fundLoan(address pool, address loan, address dlFactory, uint256 amt) external returns (bool ok) {
         string memory sig = "fundLoan(address,address,uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory, amt));
+    }
+
+    function try_finalize(address pool) external returns (bool ok) {
+        string memory sig = "finalize()";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig));
     }
 
     function createPool(
@@ -84,6 +90,10 @@ contract PoolDelegate {
 
     function deactivate(address pool, uint confirmation) external {
         IPool(pool).deactivate(confirmation);
+    }
+
+    function unstake(address stakeLocker, uint256 amt) external {
+        IStakeLocker(stakeLocker).unstake(amt);
     }
 
     function fundLoan(address pool, address loan, address dlFactory, uint256 amt) external {
@@ -280,7 +290,7 @@ contract PoolTest is TestUtil {
         gov.setLoanAsset(USDC, true);
         gov.assignPriceFeed(WETH, address(ethOracle));
         gov.assignPriceFeed(USDC, address(usdcOracle));
-        gov.setSwapOutRequired(100);
+        gov.setSwapOutRequired(1_000_000);
 
         // Create Liquidity Pool
         pool1 = Pool(sid.createPool(
@@ -315,59 +325,118 @@ contract PoolTest is TestUtil {
         loan3 = hal.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
 
+    function test_getStakeInfo() public {
+        uint256 minCover; uint256 minCover2; uint256 curCover;
+        uint256 minStake; uint256 minStake2; uint256 curStake;
+        uint256 calc_minStake; uint256 calc_stakerBal;
+        bool covered;
+
+        /*****************************************/
+        /*** Approve Stake Locker To Take BPTs ***/
+        /*****************************************/
+        address stakeLocker = pool1.stakeLocker();
+        sid.approve(address(bPool), stakeLocker, MAX_UINT);
+
+        // Pre-state checks.
+        assertEq(bPool.balanceOf(address(sid)),                 50 * WAD);  // PD has 50 BPTs
+        assertEq(bPool.balanceOf(stakeLocker),                         0);  // Nothing staked
+        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),          0);  // Nothing staked
+
+        (minCover, curCover, covered, minStake, curStake) = pool1.getStakeInfo();
+
+        (calc_minStake, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(sid), stakeLocker, minCover);
+
+        assertEq(minCover, globals.swapOutRequired() * USD);              // Equal to globally specified value
+        assertEq(curCover, 0);                                            // Nothing staked
+        assertTrue(!covered);                                             // Not covered
+        assertEq(minStake, calc_minStake);                                // Mininum stake equals calculated minimum stake     
+        assertEq(curStake, calc_stakerBal);                               // Current stake equals calculated stake
+        assertEq(curStake, IERC20(stakeLocker).balanceOf(address(sid)));  // Current stake equals balance of stakeLocker FDTs
+
+        /***************************************/
+        /*** Stake Less than Required Amount ***/
+        /***************************************/
+        sid.stake(stakeLocker, minStake - 1);
+
+        // Post-state checks.
+        assertEq(bPool.balanceOf(address(sid)),                50 * WAD - (minStake - 1));  // PD staked minStake - 1 BPTs
+        assertEq(bPool.balanceOf(stakeLocker),                             minStake - 1);   // minStake - 1 BPTs staked
+        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),              minStake - 1);   // PD has minStake - 1 SL tokens
+
+        (minCover2, curCover, covered, minStake2, curStake) = pool1.getStakeInfo();
+
+        (, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(sid), stakeLocker, minCover);
+
+        assertEq(minCover2, minCover);                                    // Doesn't change
+        assertTrue(curCover < minCover);                                  // Not enough cover
+        assertTrue(!covered);                                             // Not covered
+        assertEq(minStake2, minStake);                                    // Doesn't change
+        assertEq(curStake, calc_stakerBal);                               // Current stake equals calculated stake
+        assertEq(curStake, IERC20(stakeLocker).balanceOf(address(sid)));  // Current stake equals balance of stakeLocker FDTs
+
+        /***********************************/
+        /*** Stake Exact Required Amount ***/
+        /***********************************/
+        sid.stake(stakeLocker, 1); // Add one more wei of BPT to get to minStake amount
+
+        // Post-state checks.
+        assertEq(bPool.balanceOf(address(sid)),                50 * WAD - minStake);  // PD staked minStake
+        assertEq(bPool.balanceOf(stakeLocker),                            minStake);  // minStake BPTs staked
+        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),             minStake);  // PD has minStake SL tokens
+
+        (minCover2, curCover, covered, minStake2, curStake) = pool1.getStakeInfo();
+
+        (, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(sid), stakeLocker, minCover);
+
+        assertEq(minCover2, minCover);                                    // Doesn't change
+        withinPrecision(curCover, minCover, 6);                           // Roughly enough
+        assertTrue(covered);                                              // Covered
+        assertEq(minStake2, minStake);                                    // Doesn't change
+        assertEq(curStake, calc_stakerBal);                               // Current stake equals calculated stake
+        assertEq(curStake, IERC20(stakeLocker).balanceOf(address(sid)));  // Current stake equals balance of stakeLocker FDTs
+    }
+
     function test_stake_and_finalize() public {
 
         /*****************************************/
         /*** Approve Stake Locker To Take BPTs ***/
         /*****************************************/
-        address stakeLocker1 = pool1.stakeLocker();
-        address stakeLocker2 = pool2.stakeLocker();
-        sid.approve(address(bPool), stakeLocker1, MAX_UINT);
-        joe.approve(address(bPool), stakeLocker2, MAX_UINT);
+        address stakeLocker = pool1.stakeLocker();
+        sid.approve(address(bPool), stakeLocker, uint(-1));
 
         // Pre-state checks.
-        assertEq(bPool.balanceOf(address(sid)),                 50 * WAD);
-        assertEq(bPool.balanceOf(address(joe)),                 50 * WAD);
-        assertEq(bPool.balanceOf(stakeLocker1),                        0);
-        assertEq(bPool.balanceOf(stakeLocker2),                        0);
-        assertEq(IERC20(stakeLocker1).balanceOf(address(sid)),         0);
-        assertEq(IERC20(stakeLocker2).balanceOf(address(joe)),         0);
+        assertEq(bPool.balanceOf(address(sid)),                 50 * WAD);  // PD has 50 BPTs
+        assertEq(bPool.balanceOf(stakeLocker),                         0);  // Nothing staked
+        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),          0);  // Nothing staked
 
-        /**************************************/
-        /*** Stake Respective Stake Lockers ***/
-        /**************************************/
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-        joe.stake(pool2.stakeLocker(), bPool.balanceOf(address(joe)) / 2);
+        /***************************************/
+        /*** Stake Less than Required Amount ***/
+        /***************************************/
+        (,,, uint256 minStake,) = pool1.getStakeInfo();
+        sid.stake(pool1.stakeLocker(), minStake - 1);
 
         // Post-state checks.
-        assertEq(bPool.balanceOf(address(sid)),                25 * WAD);
-        assertEq(bPool.balanceOf(address(joe)),                25 * WAD);
-        assertEq(bPool.balanceOf(stakeLocker1),                25 * WAD);
-        assertEq(bPool.balanceOf(stakeLocker2),                25 * WAD);
-        assertEq(IERC20(stakeLocker1).balanceOf(address(sid)), 25 * WAD);
-        assertEq(IERC20(stakeLocker2).balanceOf(address(joe)), 25 * WAD);
+        assertEq(bPool.balanceOf(address(sid)),                50 * WAD - (minStake - 1));  // PD staked minStake - 1 BPTs
+        assertEq(bPool.balanceOf(stakeLocker),                             minStake - 1);   // minStake - 1 BPTs staked
+        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),              minStake - 1);   // PD has minStake - 1 SL tokens
 
-        /********************************/
-        /*** Finalize Liquidity Pools ***/
-        /********************************/
-        sid.finalize(address(pool1));
-        joe.finalize(address(pool2));
+        assertTrue(!sid.try_finalize(address(pool1)));  // Can't finalize
 
-        // TODO: Post-state assertions to finalize().
+        /***********************************/
+        /*** Stake Exact Required Amount ***/
+        /***********************************/
+        sid.stake(stakeLocker, 1); // Add one more wei of BPT to get to minStake amount
 
+        // Post-state checks.
+        assertEq(bPool.balanceOf(address(sid)),                50 * WAD - minStake);  // PD staked minStake
+        assertEq(bPool.balanceOf(stakeLocker),                            minStake);  // minStake BPTs staked
+        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),             minStake);  // PD has minStake SL tokens
+
+        assertTrue(!joe.try_finalize(address(pool1)));  // Can't finalize if not PD
+        assertTrue( sid.try_finalize(address(pool1)));  // PD that staked can finalize
+
+        assertTrue(pool1.isFinalized());
     }
-
-    // function test_getInitialStakeRequirements() public {
-    //     (uint256 amtReq, uint256 swapOutVal, bool gtMinRaise, uint256 amtInReq, uint256 amtPresent) = pool1.getInitialStakeRequirements();
-
-    //     log_named_uint("amtReq", amtReq);
-    //     log_named_uint("swapOutVal", swapOutVal);
-    //     log_named_uint("amtInReq", amtInReq);
-    //     log_named_uint("amtPresent", amtPresent);
-    //     assertTrue(gtMinRaise);
-
-    //     assertTrue(false);
-    // }
 
     function test_deposit() public {
         address stakeLocker = pool1.stakeLocker();
