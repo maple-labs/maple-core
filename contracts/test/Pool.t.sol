@@ -47,7 +47,8 @@ contract PoolDelegate {
         address slFactory, 
         address llFactory,
         uint256 stakingFee,
-        uint256 delegateFee
+        uint256 delegateFee,
+        uint256 liquidityCap
     ) 
         external returns (address liquidityPool) 
     {
@@ -57,7 +58,8 @@ contract PoolDelegate {
             slFactory,
             llFactory,
             stakingFee,
-            delegateFee
+            delegateFee,
+            liquidityCap
         );
     }
 
@@ -70,7 +72,7 @@ contract PoolDelegate {
     }
 
     function fundLoan(address pool, address loan, address dlFactory, uint256 amt) external {
-        return IPool(pool).fundLoan(loan, dlFactory, amt);  
+        IPool(pool).fundLoan(loan, dlFactory, amt);  
     }
 
     function claim(address pool, address loan, address dlFactory) external returns(uint[5] memory) {
@@ -78,11 +80,16 @@ contract PoolDelegate {
     }
 
     function setPrincipalPenalty(address pool, uint256 penalty) external {
-        return IPool(pool).setPrincipalPenalty(penalty);
+        IPool(pool).setPrincipalPenalty(penalty);
     }
 
     function setPenaltyDelay(address pool, uint256 delay) external {
-        return IPool(pool).setPenaltyDelay(delay);
+        IPool(pool).setPenaltyDelay(delay);
+    }
+
+    function try_setLiquidityCap(Pool pool, uint256 liquidityCap) external returns(bool ok) {
+        string memory sig = "setLiquidityCap(uint256)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, liquidityCap));
     }
 }
 
@@ -266,7 +273,8 @@ contract PoolTest is TestUtil {
             address(slFactory),
             address(llFactory),
             500,
-            100
+            100,
+            MAX_UINT  // liquidityCap value
         ));
 
         // Create Liquidity Pool
@@ -277,7 +285,8 @@ contract PoolTest is TestUtil {
             address(slFactory),
             address(llFactory),
             7500,
-            50
+            50,
+            MAX_UINT // liquidityCap value
         ));
 
         // loan Specifications
@@ -358,6 +367,37 @@ contract PoolTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(bob)),         0);
         assertEq(IERC20(USDC).balanceOf(liqLocker),    100 * USD);
         assertEq(pool1.balanceOf(address(bob)),        100 * WAD);
+    }
+
+    function test_deposit_with_liquidity_cap() public {
+        address stakeLocker = pool1.stakeLocker();
+        address liqLocker   = pool1.liquidityLocker();
+
+        sid.approve(address(bPool), stakeLocker, MAX_UINT);
+        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+
+        // Mint 1000 USDC into this LP account
+        mint("USDC", address(bob), 10000 * USD);
+
+        pool1.finalize();
+
+        bob.approve(USDC, address(pool1), MAX_UINT);
+
+        // Changes the `liquidityCap`.
+        assertTrue(sid.try_setLiquidityCap(pool1, 900 * USD), "Failed to set liquidity cap");
+        assertEq(pool1.liquidityCap(), 900 * USD, "Incorrect value set for liquidity cap");
+
+        // Not able to deposit as cap is lower than the deposit amount.
+        assertTrue(!pool1.isDepositAllowed(1000 * USD), "Deposit should not be allowed because 900 USD < 1000 USD");
+        assertTrue(!bob.try_deposit(address(pool1), 1000 * USD), "Should not able to deposit 1000 USD");
+
+        // Tries with lower amount it will pass.
+        assertTrue(pool1.isDepositAllowed(500 * USD), "Deposit should be allowed because 900 USD > 500 USD");
+        assertTrue(bob.try_deposit(address(pool1), 500 * USD), "Fail to deposit 500 USD");
+
+        // Bob tried again with 600 USDC it fails again.
+        assertTrue(!pool1.isDepositAllowed(600 * USD), "Deposit should not be allowed because 900 USD < 500 + 600 USD");
+        assertTrue(!bob.try_deposit(address(pool1), 600 * USD), "Should not able to deposit 600 USD");
     }
 
     function test_fundLoan() public {

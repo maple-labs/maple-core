@@ -30,13 +30,14 @@ contract PoolDelegate {
         address slFactory, 
         address llFactory,
         uint256 stakingFee,
-        uint256 delegateFee
+        uint256 delegateFee,
+        uint256 liquidityCap
     ) 
         external returns (bool ok) 
     {
-        string memory sig = "createPool(address,address,address,address,uint256,uint256)";
+        string memory sig = "createPool(address,address,address,address,uint256,uint256,uint256)";
         (ok,) = address(poolFactory).call(
-            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, slFactory, llFactory, stakingFee, delegateFee)
+            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, slFactory, llFactory, stakingFee, delegateFee, liquidityCap)
         );
     }
 }
@@ -52,6 +53,8 @@ contract PoolFactoryTest is TestUtil {
     DSValue                 usdcOracle;
     PoolDelegate                   ali;
     IBPool                       bPool;
+
+    uint256 public constant MAX_UINT = uint256(-1);
 
     function setUp() public {
 
@@ -77,7 +80,7 @@ contract PoolFactoryTest is TestUtil {
         IERC20(USDC).approve(address(bPool), uint(-1));
         mpl.approve(address(bPool), uint(-1));
 
-        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 * WAD);          // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 * WAD);   // Bind 50m USDC with 5 denormalization weight
         bPool.bind(address(mpl), 100_000 * WAD, 5 * WAD);  // Bind 100k MPL with 5 denormalization weight
 
         assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * 10 ** 6);
@@ -96,7 +99,8 @@ contract PoolFactoryTest is TestUtil {
             address(slFactory),
             address(llFactory),
             500,
-            100
+            100,
+            MAX_UINT
         ));
     }
 
@@ -110,7 +114,8 @@ contract PoolFactoryTest is TestUtil {
             address(slFactory),
             address(llFactory),
             500,
-            100
+            100,
+            MAX_UINT
         ));
     }
 
@@ -124,7 +129,8 @@ contract PoolFactoryTest is TestUtil {
             address(slFactory),
             address(llFactory),
             500,
-            100
+            100,
+            MAX_UINT
         ));
     }
 
@@ -154,7 +160,24 @@ contract PoolFactoryTest is TestUtil {
             address(slFactory),
             address(llFactory),
             500,
-            100
+            100,
+            MAX_UINT
+        ));
+    }
+
+    function test_createPool_invalid_liquidity_cap() public {
+        globals.setPoolDelegateWhitelist(address(ali), true);
+        bPool.finalize();
+        
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            0
         ));
     }
 
@@ -173,7 +196,8 @@ contract PoolFactoryTest is TestUtil {
             address(slFactory),
             address(llFactory),
             500,
-            100
+            100,
+            MAX_UINT
         ));
 
         Pool lPool = Pool(poolFactory.pools(0));
@@ -187,6 +211,7 @@ contract PoolFactoryTest is TestUtil {
         assertEq(lPool.poolDelegate(),             address(ali));
         assertEq(lPool.stakingFee(),               500);
         assertEq(lPool.delegateFee(),              100);
+        assertEq(lPool.liquidityCap(),             MAX_UINT);
 
         assertTrue(lPool.stakeLocker()     != address(0));
         assertTrue(lPool.liquidityLocker() != address(0));

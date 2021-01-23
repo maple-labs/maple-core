@@ -212,6 +212,7 @@ describe("Cycle of an entire loan", function () {
     llFactory = LLFactoryAddress;
     stakingFee = 100; // Basis points (100 = 1%)
     delegateFee = 150; // Basis points (150 = 1.5%)
+    liquidityCap = BigNumber.from(10).pow(6).mul(100000000);
 
     // Initializing a pool.
     await PoolFactory.createPool(
@@ -220,7 +221,8 @@ describe("Cycle of an entire loan", function () {
       slFactory,
       llFactory,
       stakingFee,
-      delegateFee
+      delegateFee,
+      liquidityCap
     );
 
     // Assigning contract object to Pool.

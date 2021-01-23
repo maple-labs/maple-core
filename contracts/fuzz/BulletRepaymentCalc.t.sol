@@ -47,7 +47,8 @@ contract PoolDelegate {
         address slFactory, 
         address llFactory,
         uint256 stakingFee,
-        uint256 delegateFee
+        uint256 delegateFee,
+        uint256 liquidityCap
     ) 
         external returns (address liquidityPool) 
     {
@@ -57,7 +58,8 @@ contract PoolDelegate {
             slFactory,
             llFactory,
             stakingFee,
-            delegateFee
+            delegateFee,
+            liquidityCap
         );
     }
 
@@ -193,8 +195,8 @@ contract BulletRepaymentCalcTest is TestUtil {
         globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
         globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
 
-        ethOracle.poke(500 ether);  // Set ETH price to $600
-        usdcOracle.poke(1 ether);    // Set USDC price to $1
+        ethOracle.poke(500 ether);  // Set ETH price to $500
+        usdcOracle.poke(1 ether);   // Set USDC price to $1
 
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);
@@ -242,7 +244,8 @@ contract BulletRepaymentCalcTest is TestUtil {
             address(slFactory),
             address(llFactory),
             500,
-            100
+            100,
+            uint256(-1)
         ));
         sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
         sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
