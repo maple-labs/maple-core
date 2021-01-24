@@ -275,7 +275,8 @@ contract PoolFactoryTest is TestUtil {
             address(slFactory),
             address(llFactory),
             500,
-            100
+            100,
+            MAX_UINT
         ));
     }
 

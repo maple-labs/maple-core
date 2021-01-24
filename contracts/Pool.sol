@@ -208,7 +208,6 @@ contract Pool is FDT, CalcBPool {
     function setLiquidityCap(uint256 newLiquidityCap) external isDelegate {
         liquidityCap = newLiquidityCap;
     }
-    }
 
     /**
         @dev Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
@@ -229,7 +228,7 @@ contract Pool is FDT, CalcBPool {
         require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");  // Transfer the principal amount - totPenalty.
 
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
-        updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
+        if(totalSupply() > 0) updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
 
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
