@@ -32,7 +32,7 @@ contract PoolFactory {
     );
 
     constructor(address _globals) public {
-        globals   = IGlobals(_globals);
+        globals = IGlobals(_globals);
     }
 
     modifier isGovernor() {
@@ -68,13 +68,14 @@ contract PoolFactory {
         uint256 liquidityCap
     ) public returns (address) {
 
-        IGlobals _globals = globals;
+        {
+            IGlobals _globals = globals;
+            require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");
+            require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PoolFactory:INVALID_SL_FACTORY");
+            require(_globals.isValidPoolDelegate(msg.sender),                         "PoolFactory:MSG_SENDER_NOT_WHITELISTED");
+            require(IBFactory(_globals.BFactory()).isBPool(stakeAsset),               "PoolFactory:STAKE_ASSET_NOT_BPOOL");
+        }
         
-        require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");
-        require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PoolFactory:INVALID_SL_FACTORY");
-        require(_globals.isValidPoolDelegate(msg.sender),                         "PoolFactory:MSG_SENDER_NOT_WHITELISTED");
-        require(IBFactory(_globals.BFactory()).isBPool(stakeAsset),               "PoolFactory:STAKE_ASSET_NOT_BPOOL");
-
         string memory tUUID  = TokenUUID.generateUUID(poolsCreated + 1);
         string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
         string memory symbol = string(abi.encodePacked("LP", tUUID));
@@ -91,7 +92,7 @@ contract PoolFactory {
                 liquidityCap,
                 name,
                 symbol,
-                address(_globals)
+                address(globals)
             );
 
         pools[poolsCreated]   = address(pool);
@@ -113,6 +114,5 @@ contract PoolFactory {
             symbol
         );
         return address(pool);
-    }
-    
+    }  
 }

@@ -7,8 +7,9 @@ import "./TestUtil.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
+import "./user/Governor.sol";
+
 import "../MapleToken.sol";
-import "../MapleGlobals.sol";
 import "../PoolFactory.sol";
 import "../LoanFactory.sol";
 import "../DebtLockerFactory.sol";
@@ -31,6 +32,7 @@ contract PoolDelegate {
 
 contract MapleGlobalsTest is TestUtil {
 
+    Governor                         gov;
     ERC20                     fundsToken;
     MapleToken                       mpl;
     MapleGlobals                 globals;
@@ -49,8 +51,10 @@ contract MapleGlobalsTest is TestUtil {
     MapleTreasury                    trs;
 
     function setUp() public {
+
+        gov         = new Governor();
         mpl         = new MapleToken("MapleToken", "MAPLE", USDC);
-        globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
+        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         poolFactory = new PoolFactory(address(globals));
         loanFactory = new LoanFactory(address(globals));
         dlFactory   = new DebtLockerFactory();
@@ -66,34 +70,34 @@ contract MapleGlobalsTest is TestUtil {
         trs         = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
 
         // The following code was adopted from maple-core/scripts/setup.js
-        globals.setMapleTreasury(address(trs));
-        globals.setPoolDelegateWhitelist(address(sid), true);
-        globals.setLoanAsset(DAI, true);
-        globals.setLoanAsset(USDC, true);
-        globals.setCollateralAsset(DAI, true);
-        globals.setCollateralAsset(USDC, true);
-        globals.setCollateralAsset(WETH, true);
-        globals.setCollateralAsset(WBTC, true);
+        gov.setMapleTreasury(address(trs));
+        gov.setPoolDelegateWhitelist(address(sid), true);
+        gov.setLoanAsset(DAI, true);
+        gov.setLoanAsset(USDC, true);
+        gov.setCollateralAsset(DAI, true);
+        gov.setCollateralAsset(USDC, true);
+        gov.setCollateralAsset(WETH, true);
+        gov.setCollateralAsset(WBTC, true);
 
         // TODO: Assign price feeds from official ChainLink oracles.
 
-        globals.setCalc(address(lfCalc), true);
-        globals.setCalc(address(pCalc), true);
-        globals.setCalc(address(brCalc), true);
+        gov.setCalc(address(lfCalc), true);
+        gov.setCalc(address(pCalc), true);
+        gov.setCalc(address(brCalc), true);
 
-        globals.setValidPoolFactory(address(poolFactory), true);
-        globals.setValidLoanFactory(address(loanFactory), true);
+        gov.setValidPoolFactory(address(poolFactory), true);
+        gov.setValidLoanFactory(address(loanFactory), true);
 
-        globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
-        globals.setValidSubFactory(address(poolFactory), address(dlFactory), true);
-        globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
-        globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
     }
 
     function test_constructor() public {
         assertEq(globals.mapleTreasury(),    address(trs));
-        assertEq(globals.governor(),        address(this));
+        assertEq(globals.governor(),         address(gov));
         assertEq(globals.mpl(),              address(mpl));
         assertEq(globals.gracePeriod(),            5 days);
         assertEq(globals.swapOutRequired(),           100);
@@ -127,27 +131,27 @@ contract MapleGlobalsTest is TestUtil {
     function test_setters() public {
 
         assertTrue(!globals.validPoolFactories(address(sid)));
-        globals.setValidPoolFactory(address(sid), true);
+        gov.setValidPoolFactory(address(sid), true);
         assertTrue(globals.validPoolFactories(address(sid)));
-        globals.setValidPoolFactory(address(sid), false);
+        gov.setValidPoolFactory(address(sid), false);
         assertTrue(!globals.validPoolFactories(address(sid)));
 
         assertTrue(!globals.validLoanFactories(address(sid)));
-        globals.setValidLoanFactory(address(sid), true);
+        gov.setValidLoanFactory(address(sid), true);
         assertTrue(globals.validLoanFactories(address(sid)));
-        globals.setValidLoanFactory(address(sid), false);
+        gov.setValidLoanFactory(address(sid), false);
         assertTrue(!globals.validLoanFactories(address(sid)));
 
         assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
-        globals.setValidSubFactory(address(poolFactory), address(dlFactory), false);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory), false);
         assertTrue(!globals.validSubFactories(address(poolFactory), address(dlFactory)));
-        globals.setValidSubFactory(address(poolFactory), address(dlFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
         assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
         
         assertTrue(!globals.isValidPoolDelegate(address(joe)));
-        globals.setPoolDelegateWhitelist(address(joe), true);
+        gov.setPoolDelegateWhitelist(address(joe), true);
         assertTrue(globals.isValidPoolDelegate(address(joe)));
-        globals.setPoolDelegateWhitelist(address(joe), false);
+        gov.setPoolDelegateWhitelist(address(joe), false);
         assertTrue(!globals.isValidPoolDelegate(address(joe)));
 
         // TODO: Assign price feeds from official ChainLink oracles.
@@ -155,20 +159,20 @@ contract MapleGlobalsTest is TestUtil {
 
         assertTrue(!globals.isValidLoanAsset(WETH));
         assertTrue(!globals.isValidCollateralAsset(CDAI));
-        globals.setLoanAsset(WETH, true);
-        globals.setCollateralAsset(CDAI, true);
+        gov.setLoanAsset(WETH, true);
+        gov.setCollateralAsset(CDAI, true);
         assertTrue(globals.isValidLoanAsset(WETH));
         assertTrue(globals.isValidCollateralAsset(CDAI));
-        globals.setLoanAsset(WETH, false);
-        globals.setCollateralAsset(CDAI, false);
+        gov.setLoanAsset(WETH, false);
+        gov.setCollateralAsset(CDAI, false);
         assertTrue(!globals.isValidLoanAsset(WETH));
         assertTrue(!globals.isValidCollateralAsset(CDAI));
 
         assertTrue(globals.isValidCalc(address(brCalc)));
-        globals.setCalc(address(brCalc), false);
+        gov.setCalc(address(brCalc), false);
         assertTrue(!globals.isValidCalc(address(brCalc)));
 
-        assertEq(globals.governor(),        address(this));
+        assertEq(globals.governor(),         address(gov));
         assertEq(globals.mpl(),              address(mpl));
         assertEq(globals.gracePeriod(),            5 days);
         assertEq(globals.swapOutRequired(),           100);
@@ -177,38 +181,38 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.BFactory(),        BPOOL_FACTORY);
 
         assertEq(globals.investorFee(), 50);
-        globals.setInvestorFee(30);
+        gov.setInvestorFee(30);
         assertEq(globals.investorFee(), 30);
 
         assertEq(globals.treasuryFee(), 50);
-        globals.setTreasuryFee(30);
+        gov.setTreasuryFee(30);
         assertEq(globals.treasuryFee(), 30);
 
         assertEq(globals.drawdownGracePeriod(), 1 days);
-        globals.setDrawdownGracePeriod(3 days);
+        gov.setDrawdownGracePeriod(3 days);
         assertEq(globals.drawdownGracePeriod(), 3 days);
-        globals.setDrawdownGracePeriod(1 days);
+        gov.setDrawdownGracePeriod(1 days);
         assertEq(globals.drawdownGracePeriod(), 1 days);
 
         assertEq(globals.gracePeriod(), 5 days);
-        globals.setGracePeriod(3 days);
+        gov.setGracePeriod(3 days);
         assertEq(globals.gracePeriod(), 3 days);
-        globals.setGracePeriod(7 days);
+        gov.setGracePeriod(7 days);
         assertEq(globals.gracePeriod(), 7 days);
 
         assertEq(globals.swapOutRequired(), 100);
-        globals.setSwapOutRequired(100000);
+        gov.setSwapOutRequired(100000);
         assertEq(globals.swapOutRequired(), 100000);
 
         assertEq(globals.unstakeDelay(), 90 days);
-        globals.setUnstakeDelay(30 days);
+        gov.setUnstakeDelay(30 days);
         assertEq(globals.unstakeDelay(), 30 days);
 
         assertEq(globals.mapleTreasury(), address(trs));
-        globals.setMapleTreasury(address(this));
+        gov.setMapleTreasury(address(this));
         assertEq(globals.mapleTreasury(), address(this));
 
-        globals.setGovernor(address(sid));
+        gov.setGovernor(address(sid));
         assertEq(globals.governor(), address(sid));
 
         assertEq(globals.extendedGracePeriod(), 5 days);
@@ -219,5 +223,4 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(sid.try_setExtendedGracePeriod(address(globals), 20 days));
         assertEq(globals.extendedGracePeriod(), 20 days);
     }
-
 }

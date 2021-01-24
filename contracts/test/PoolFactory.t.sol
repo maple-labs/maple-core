@@ -9,10 +9,11 @@ import "../mocks/token.sol";
 
 import "../interfaces/IBPool.sol";
 
+import "./user/Governor.sol";
+
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import "../MapleToken.sol";
-import "../MapleGlobals.sol";
 import "../PoolFactory.sol";
 import "../StakeLockerFactory.sol";
 import "../LiquidityLockerFactory.sol";
@@ -44,6 +45,7 @@ contract PoolDelegate {
 
 contract PoolFactoryTest is TestUtil {
 
+    Governor                       gov;
     MapleToken                     mpl;
     MapleGlobals               globals;
     PoolFactory            poolFactory;
@@ -58,8 +60,9 @@ contract PoolFactoryTest is TestUtil {
 
     function setUp() public {
 
+        gov         = new Governor();
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
+        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         slFactory   = new StakeLockerFactory();
         llFactory   = new LiquidityLockerFactory();
         poolFactory = new PoolFactory(address(globals));
@@ -67,10 +70,10 @@ contract PoolFactoryTest is TestUtil {
         usdcOracle  = new DSValue();
         ali         = new PoolDelegate();
 
-        globals.setValidPoolFactory(address(poolFactory), true);
+        gov.setValidPoolFactory(address(poolFactory), true);
         
-        globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
 
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
 
@@ -90,7 +93,7 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_no_finalize() public {
-        globals.setPoolDelegateWhitelist(address(ali), true);
+        gov.setPoolDelegateWhitelist(address(ali), true);
         
         assertTrue(!ali.try_createPool(
             address(poolFactory),
@@ -105,7 +108,7 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_error_stakeAsset() public {
-        globals.setPoolDelegateWhitelist(address(ali), true);
+        gov.setPoolDelegateWhitelist(address(ali), true);
         
         assertTrue(!ali.try_createPool(
             address(poolFactory),
@@ -166,7 +169,7 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_invalid_liquidity_cap() public {
-        globals.setPoolDelegateWhitelist(address(ali), true);
+        gov.setPoolDelegateWhitelist(address(ali), true);
         bPool.finalize();
         
         assertTrue(!ali.try_createPool(
@@ -183,7 +186,7 @@ contract PoolFactoryTest is TestUtil {
 
     function test_createPool() public {
 
-        globals.setPoolDelegateWhitelist(address(ali), true);
+        gov.setPoolDelegateWhitelist(address(ali), true);
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);

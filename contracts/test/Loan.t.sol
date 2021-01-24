@@ -7,12 +7,13 @@ import "./TestUtil.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
+import "./user/Governor.sol";
+
 import "../BulletRepaymentCalc.sol";
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
 
 import "../MapleToken.sol";
-import "../MapleGlobals.sol";
 import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
 import "../LoanFactory.sol";
@@ -83,21 +84,11 @@ contract Lender {
     }
 }
 
-contract Governor {
-    function createGlobals(address mpl, address bPoolFactory) external returns (MapleGlobals) {
-        return new MapleGlobals(address(this), address(mpl), bPoolFactory);
-    }
-
-    function try_setGlobals(address loan, address globals) external returns (bool ok) {
-        string memory sig = "setGlobals(address)";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig, globals));
-    }
-}
-
 contract Treasury { }
 
 contract LoanTest is TestUtil {
 
+    Governor                         gov;
     ERC20                     fundsToken;
     MapleToken                       mpl;
     MapleGlobals                 globals;
@@ -112,13 +103,12 @@ contract LoanTest is TestUtil {
     Borrower                         ali;
     Lender                           bob;
     Treasury                         trs;
-    Governor                     fakeGov;
 
     function setUp() public {
 
-        fakeGov     = new Governor();
+        gov         = new Governor();
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
+        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         flFactory   = new FundingLockerFactory();
         clFactory   = new CollateralLockerFactory();
         ethOracle   = new DSValue();
@@ -131,22 +121,22 @@ contract LoanTest is TestUtil {
         ethOracle.poke(500 ether);  // Set ETH price to $500
         usdcOracle.poke(1 ether);   // Set USDC price to $1
 
-        globals.setCalc(address(bulletCalc),         true);
-        globals.setCalc(address(lateFeeCalc),        true);
-        globals.setCalc(address(premiumCalc),        true);
-        globals.setCollateralAsset(WETH,             true);
-        globals.setLoanAsset(USDC,                   true);
-        globals.assignPriceFeed(WETH,  address(ethOracle));
-        globals.assignPriceFeed(USDC, address(usdcOracle));
+        gov.setCalc(address(bulletCalc),         true);
+        gov.setCalc(address(lateFeeCalc),        true);
+        gov.setCalc(address(premiumCalc),        true);
+        gov.setCollateralAsset(WETH,             true);
+        gov.setLoanAsset(USDC,                   true);
+        gov.assignPriceFeed(WETH,  address(ethOracle));
+        gov.assignPriceFeed(USDC, address(usdcOracle));
 
-        globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
-        globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
 
         ali = new Borrower();
         bob = new Lender();
         trs = new Treasury();
 
-        globals.setMapleTreasury(address(trs));
+        gov.setMapleTreasury(address(trs));
 
         mint("WETH", address(ali),   10 ether);
         mint("USDC", address(bob), 5000 * USD);
@@ -186,6 +176,8 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
+        Governor fakeGov = new Governor();
+
         Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY);  // Create upgraded MapleGlobals
@@ -193,8 +185,11 @@ contract LoanTest is TestUtil {
         assertEq(address(loan.globals()), address(globals));
 
         assertTrue(!fakeGov.try_setGlobals(address(loan), address(globals2)));  // Non-governor cannot set new globals
-        loan.setGlobals(address(globals2));          // Governor (address(this)) can set new globals
-        assertEq(address(loan.globals()), address(globals2));    // Globals is updated
+
+        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY);              // Create upgraded MapleGlobals
+
+        assertTrue(gov.try_setGlobals(address(loan), address(globals2)));       // Governor can set new globals
+        assertEq(address(loan.globals()), address(globals2));                   // Globals is updated
     }
 
     function test_fundLoan() public {
@@ -479,5 +474,4 @@ contract LoanTest is TestUtil {
         assertEq(collateralAsset.balanceOf(collateralLocker),  0);
         assertEq(collateralAsset.balanceOf(address(ali)),     _delta + reqCollateral);
     }
-
 }

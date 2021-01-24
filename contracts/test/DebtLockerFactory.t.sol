@@ -3,6 +3,9 @@ pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
+
+import "./user/Governor.sol";
+
 import "../LoanFactory.sol";
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
@@ -22,6 +25,7 @@ contract InterestCalc {
 
 contract DebtLockerFactoryTest is TestUtil {
 
+    Governor                        gov;
     MapleToken                      mpl;
     MapleGlobals                globals;
     FundingLockerFactory      flFactory;
@@ -33,27 +37,29 @@ contract DebtLockerFactoryTest is TestUtil {
     uint256 constant MULTIPLIER = 10 ** 6;
 
     function setUp() public {
-        mpl       = new MapleToken("MapleToken", "MAPL", USDC);                    // Setup Maple token.
-        globals   = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
-        flFactory = new FundingLockerFactory();                                    // Setup Funding Locker Factory to support Loan Factory creation.
-        clFactory = new CollateralLockerFactory();                                 // Setup Collateral Locker Factory to support Loan Factory creation.
-        lFactory  = new LoanFactory(address(globals));                             // Setup Loan Factory to support Loan creation.
 
-        globals.setValidLoanFactory(address(lFactory), true);                      // Set LF in the valid list of LF factories.
-        globals.setValidSubFactory(address(lFactory), address(flFactory), true);   // Set valid factory i.e FLF under the LF.
-        globals.setValidSubFactory(address(lFactory), address(clFactory), true);   // Set valid factory i.e CLF under the LF.
+        gov       = new Governor();
+        mpl       = new MapleToken("MapleToken", "MAPL", USDC);               // Setup Maple token.
+        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);           // Setup Maple Globals.
+        flFactory = new FundingLockerFactory();                               // Setup Funding Locker Factory to support Loan Factory creation.
+        clFactory = new CollateralLockerFactory();                            // Setup Collateral Locker Factory to support Loan Factory creation.
+        lFactory  = new LoanFactory(address(globals));                        // Setup Loan Factory to support Loan creation.
 
-        address interestCalc = address(new InterestCalc());                        // Deploy the Interest calc contract.
-        address lateFeeCalc  = address(new LateFeeCalc(uint256(5)));               // Deploy the LateFee calc contract.
-        address premiumCalc  = address(new PremiumCalc(uint256(5)));               // Deploy the Premium calc contract.
+        gov.setValidLoanFactory(address(lFactory), true);                     // Set LF in the valid list of LF factories.
+        gov.setValidSubFactory(address(lFactory), address(flFactory), true);  // Set valid factory i.e FLF under the LF.
+        gov.setValidSubFactory(address(lFactory), address(clFactory), true);  // Set valid factory i.e CLF under the LF.
+
+        address interestCalc = address(new InterestCalc());                   // Deploy the Interest calc contract.
+        address lateFeeCalc  = address(new LateFeeCalc(uint256(5)));          // Deploy the LateFee calc contract.
+        address premiumCalc  = address(new PremiumCalc(uint256(5)));          // Deploy the Premium calc contract.
 
         address[3] memory calcs = [interestCalc, lateFeeCalc, premiumCalc];
         for (uint8 i = 0; i < calcs.length; i++) {
-            globals.setCalc(address(calcs[i]), true);
+            gov.setCalc(address(calcs[i]), true);
         }
 
-        globals.setLoanAsset(USDC, true);        // Add loan asset in to the valid list.
-        globals.setCollateralAsset(WETH, true);  // Add collateral asset into the valid list
+        gov.setLoanAsset(USDC, true);        // Add loan asset in to the valid list.
+        gov.setCollateralAsset(WETH, true);  // Add collateral asset into the valid list
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];                                // Create specs for a loan.
         loan = ILoan(lFactory.createLoan(USDC, WETH, address(flFactory), address(clFactory), specs, calcs));  // Create loan using LF.

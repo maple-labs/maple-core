@@ -3,15 +3,20 @@ pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
+
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+
+import "../interfaces/ILoan.sol";
+
+import "./user/Governor.sol";
+
 import "../LoanFactory.sol";
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
 import "../MapleToken.sol";
-import "../MapleGlobals.sol";
-import "../interfaces/ILoan.sol";
 import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+
 
 contract Borrower {
     function try_createPool(
@@ -42,6 +47,7 @@ contract LoanFactoryTest is TestUtil {
 
     using SafeMath for uint256;
 
+    Governor                        gov;
     MapleToken                      mpl;
     MapleGlobals                globals;
     FundingLockerFactory      flFactory;
@@ -53,12 +59,13 @@ contract LoanFactoryTest is TestUtil {
     uint256 constant MULTIPLIER = 10 ** 6;
 
     function setUp() public {
-        mpl       = new MapleToken("MapleToken", "MAPL", USDC);                    // Setup Maple token.
-        globals   = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
-        flFactory = new FundingLockerFactory();                                    // Setup Funding Locker Factory to support Loan Factory creation.
-        clFactory = new CollateralLockerFactory();                                 // Setup Collateral Locker Factory to support Loan Factory creation.
-        lFactory  = new LoanFactory(address(globals));                             // Setup Loan Factory to support Loan creation.
-        borrower  = new Borrower();                                                // Create borrower.
+        gov       = new Governor();
+        mpl       = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
+        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
+        flFactory = new FundingLockerFactory();                      // Setup Funding Locker Factory to support Loan Factory creation.
+        clFactory = new CollateralLockerFactory();                   // Setup Collateral Locker Factory to support Loan Factory creation.
+        lFactory  = new LoanFactory(address(globals));               // Setup Loan Factory to support Loan creation.
+        borrower  = new Borrower();                                  // Create borrower.
     }
 
     function set_calcs() public returns (address[3] memory calcs) {
@@ -69,20 +76,20 @@ contract LoanFactoryTest is TestUtil {
         calcs = [interestCalc, lateFeeCalc, premiumCalc];
 
         for (uint8 i = 0; i < calcs.length; i++) {
-            globals.setCalc(address(calcs[i]), true);
+            gov.setCalc(address(calcs[i]), true);
         }
     }
 
     function set_valid_factories() public {
-        globals.setValidLoanFactory(address(lFactory), true);
-        globals.setValidSubFactory(address(lFactory), address(flFactory), true);
-        globals.setValidSubFactory(address(lFactory), address(clFactory), true);
+        gov.setValidLoanFactory(address(lFactory), true);
+        gov.setValidSubFactory(address(lFactory), address(flFactory), true);
+        gov.setValidSubFactory(address(lFactory), address(clFactory), true);
     }
 
     function test_createLoan_invalid_locker_factories() public {
         address[3] memory calcs = set_calcs();
-        globals.setLoanAsset(USDC, true);
-        globals.setCollateralAsset(WETH, true);
+        gov.setLoanAsset(USDC, true);
+        gov.setCollateralAsset(WETH, true);
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
@@ -90,13 +97,13 @@ contract LoanFactoryTest is TestUtil {
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Add flFactory in valid list
-        globals.setValidLoanFactory(address(lFactory), true);
-        globals.setValidSubFactory(address(lFactory), address(flFactory), true);
+        gov.setValidLoanFactory(address(lFactory), true);
+        gov.setValidSubFactory(address(lFactory), address(flFactory), true);
 
         // Still fails as clFactory isn't a valid factory.
         assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
-        globals.setValidSubFactory(address(lFactory), address(clFactory), true);  // Add clFactory in the valid list.
+        gov.setValidSubFactory(address(lFactory), address(clFactory), true);  // Add clFactory in the valid list.
 
         // Should successfully created
         assertTrue(borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
@@ -106,8 +113,8 @@ contract LoanFactoryTest is TestUtil {
     function test_createLoan_invalid_calc_types() public {
         set_valid_factories();
         address[3] memory calcs = set_calcs();
-        globals.setLoanAsset(USDC, true);
-        globals.setCollateralAsset(WETH, true);
+        gov.setLoanAsset(USDC, true);
+        gov.setCollateralAsset(WETH, true);
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
@@ -135,12 +142,12 @@ contract LoanFactoryTest is TestUtil {
         assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
-        globals.setLoanAsset(USDC, true);  // Whitelist loan asset
+        gov.setLoanAsset(USDC, true);  // Whitelist loan asset
         // Still fails as collateral asset is not a valid collateral asset
         assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
-        globals.setCollateralAsset(WETH, true);  // Set collateral asset.
+        gov.setCollateralAsset(WETH, true);  // Set collateral asset.
         // Still fails as loan asset can't be 0x0
         assertTrue(!borrower.try_createPool(address(lFactory), address(0), WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
@@ -169,8 +176,8 @@ contract LoanFactoryTest is TestUtil {
     function test_createLoan_successfully() public {
         set_valid_factories();
         address[3] memory calcs = set_calcs();
-        globals.setLoanAsset(USDC, true);
-        globals.setCollateralAsset(WETH, true);
+        gov.setLoanAsset(USDC, true);
+        gov.setCollateralAsset(WETH, true);
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
