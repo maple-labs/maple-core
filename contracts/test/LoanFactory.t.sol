@@ -86,6 +86,21 @@ contract LoanFactoryTest is TestUtil {
         gov.setValidSubFactory(address(lFactory), address(clFactory), true);
     }
 
+    function test_setGlobals() public {
+        Governor fakeGov = new Governor();
+
+        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY);  // Create upgraded MapleGlobals
+
+        assertEq(address(lFactory.globals()), address(globals));
+
+        assertTrue(!fakeGov.try_setGlobals(address(lFactory), address(globals2)));  // Non-governor cannot set new globals
+
+        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY);                  // Create upgraded MapleGlobals
+
+        assertTrue(gov.try_setGlobals(address(lFactory), address(globals2)));       // Governor can set new globals
+        assertEq(address(lFactory.globals()), address(globals2));                   // Globals is updated
+    }
+
     function test_createLoan_invalid_locker_factories() public {
         address[3] memory calcs = set_calcs();
         gov.setLoanAsset(USDC, true);

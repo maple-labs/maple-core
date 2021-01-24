@@ -92,6 +92,21 @@ contract PoolFactoryTest is TestUtil {
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
     }
 
+    function test_setGlobals() public {
+        Governor fakeGov = new Governor();
+
+        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY);  // Create upgraded MapleGlobals
+
+        assertEq(address(poolFactory.globals()), address(globals));
+
+        assertTrue(!fakeGov.try_setGlobals(address(poolFactory), address(globals2)));  // Non-governor cannot set new globals
+
+        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY);                     // Create upgraded MapleGlobals
+
+        assertTrue(gov.try_setGlobals(address(poolFactory), address(globals2)));       // Governor can set new globals
+        assertEq(address(poolFactory.globals()), address(globals2));                   // Globals is updated
+    }
+
     function test_createPool_no_finalize() public {
         gov.setPoolDelegateWhitelist(address(ali), true);
         

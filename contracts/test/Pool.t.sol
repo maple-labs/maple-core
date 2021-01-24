@@ -315,6 +315,21 @@ contract PoolTest is TestUtil {
         loan3 = hal.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
 
+    function test_setGlobals() public {
+        Governor fakeGov = new Governor();
+
+        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY);  // Create upgraded MapleGlobals
+
+        assertEq(address(pool1.globals()), address(globals));
+
+        assertTrue(!fakeGov.try_setGlobals(address(pool1), address(globals2)));  // Non-governor cannot set new globals
+
+        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY);                  // Create upgraded MapleGlobals
+
+        assertTrue(gov.try_setGlobals(address(pool1), address(globals2)));       // Governor can set new globals
+        assertEq(address(pool1.globals()), address(globals2));                   // Globals is updated
+    }
+
     function test_stake_and_finalize() public {
 
         /*****************************************/
