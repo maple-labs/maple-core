@@ -21,9 +21,6 @@ contract StakeLocker is FDT {
     address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
     address public immutable owner;           // The parent liquidity pool.
 
-    bool private isLPDefunct;    // The LiquidityAsset for the Pool as well as the dividend token for this contract.
-    bool private isLPFinalized;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
-
     mapping(address => uint256) private stakeDate;  // Map address to date value (TODO: Consider making public)
 
     event BalanceUpdated(address who, address token, uint256 balance);
@@ -43,14 +40,17 @@ contract StakeLocker is FDT {
     event   Stake(uint256 _amount, address _staker);
     event Unstake(uint256 _amount, address _staker);
 
-    // TODO: Analyze the purpose of this modifier.
-    modifier delegateLock() {
-        require(msg.sender != IPool(owner).poolDelegate() || isLPDefunct || !isLPFinalized, "StakeLocker:DELEGATE_STAKE_LOCKED");
-        _;
-    }
-
-    modifier isLP() {
-        require(msg.sender == owner, "StakeLocker:MSG_SENDER_NOT_OWNER");
+    /** 
+        canUnstake enables unstaking in the following conditions:
+            1. User is not Pool Delegate and the Pool is in Finalized state.
+            2. User is Pool Delegate and the Pool is in Initialized or Deactivated state.
+    */
+    modifier canUnstake() {
+        require(
+            (msg.sender != IPool(owner).poolDelegate() && IPool(owner).poolState() == 1) || 
+            IPool(owner).poolState() == 0 || IPool(owner).poolState() == 2, 
+            "StakeLocker:ERR_STAKE_LOCKED"
+        );
         _;
     }
     
@@ -79,7 +79,7 @@ contract StakeLocker is FDT {
         @param amt Amount of stakeAsset (BPTs) to withdraw.
     */
     // TODO: Consider localizing this function to Pool.
-    function unstake(uint256 amt) external delegateLock {
+    function unstake(uint256 amt) external canUnstake {
         require(amt <= getUnstakeableBalance(msg.sender),"Stakelocker:AMT_GT_UNSTAKEABLE_BALANCE");
 
         updateFundsReceived();
@@ -91,23 +91,6 @@ contract StakeLocker is FDT {
 
         emit Unstake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
-    }
-
-    /** 
-        @dev Delete the pool.
-    */
-    // TODO: Make sure LP gets the delete function implemented.
-    // TODO: Analyze what this function does.
-    function deleteLP() external isLP {
-        isLPDefunct = true;
-    }
-
-    /** 
-        @dev Finalize the pool.
-    */
-    // TODO: Analyze what this function does.
-    function finalizeLP() external isLP {
-        isLPFinalized = true;
     }
 
     /** 
@@ -157,7 +140,7 @@ contract StakeLocker is FDT {
     //      to these ends to save code.
     //      can improve this so the updated age of tokens reflects their age in the senders wallets
     //      right now it simply is equivalent to the age update if the receiver was making a new stake.
-    function _transfer(address from, address to, uint256 amt) internal override delegateLock {
+    function _transfer(address from, address to, uint256 amt) internal override canUnstake {
         super._transfer(from, to, amt);
         _updateStakeDate(to, amt);
     }

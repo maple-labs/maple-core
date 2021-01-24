@@ -71,6 +71,14 @@ contract PoolDelegate {
         IStakeLocker(stakeLocker).stake(amt);
     }
 
+    function finalize(address pool) external {
+        IPool(pool).finalize();
+    }
+
+    function deactivate(address pool, uint confirmation) external {
+        IPool(pool).deactivate(confirmation);
+    }
+
     function fundLoan(address pool, address loan, address dlFactory, uint256 amt) external {
         IPool(pool).fundLoan(loan, dlFactory, amt);  
     }
@@ -333,8 +341,8 @@ contract PoolTest is TestUtil {
         /********************************/
         /*** Finalize Liquidity Pools ***/
         /********************************/
-        pool1.finalize();
-        pool2.finalize();
+        sid.finalize(address(pool1));
+        joe.finalize(address(pool2));
 
         // TODO: Post-state assertions to finalize().
 
@@ -352,7 +360,7 @@ contract PoolTest is TestUtil {
 
         assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not finalized
 
-        pool1.finalize();
+        sid.finalize(address(pool1));
 
         assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not approved
 
@@ -379,7 +387,7 @@ contract PoolTest is TestUtil {
         // Mint 1000 USDC into this LP account
         mint("USDC", address(bob), 10000 * USD);
 
-        pool1.finalize();
+        sid.finalize(address(pool1));
 
         bob.approve(USDC, address(pool1), MAX_UINT);
 
@@ -411,7 +419,7 @@ contract PoolTest is TestUtil {
         // Mint 100 USDC into this LP account
         mint("USDC", address(bob), 100 * USD);
 
-        pool1.finalize();
+        sid.finalize(address(pool1));
 
         bob.approve(USDC, address(pool1), MAX_UINT);
 
@@ -585,7 +593,7 @@ contract PoolTest is TestUtil {
             sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
-            pool1.finalize();
+            sid.finalize(address(pool1));
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
@@ -683,7 +691,7 @@ contract PoolTest is TestUtil {
             sid.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
-            pool1.finalize();
+            sid.finalize(address(pool1));
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
@@ -844,8 +852,8 @@ contract PoolTest is TestUtil {
             joe.approve(address(bPool), stakeLocker2, MAX_UINT);
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
             joe.stake(pool2.stakeLocker(), bPool.balanceOf(address(joe)) / 2);
-            pool1.finalize();
-            pool2.finalize();
+            sid.finalize(address(pool1));
+            joe.finalize(address(pool2));
         }
        
         address liqLocker1 = pool1.liquidityLocker();
@@ -1058,7 +1066,7 @@ contract PoolTest is TestUtil {
             sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
-            pool1.finalize();
+            sid.finalize(address(pool1));
 
             globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
@@ -1164,7 +1172,7 @@ contract PoolTest is TestUtil {
             sid.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
-            pool1.finalize();
+            sid.finalize(address(pool1));
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
@@ -1437,5 +1445,16 @@ contract PoolTest is TestUtil {
 
     function _getLLBal(Pool who) internal returns(uint256) {
         return IERC20(USDC).balanceOf(who.liquidityLocker());
+    }
+
+    function test_deactivate() public {
+        setUpWithdraw();
+
+        // Pre-state checks.
+        assertTrue(pool1.principalOut() <= 1000 * 10 ** pool1.liquidityAssetDecimals());
+
+        sid.deactivate(address(pool1), 86);
+
+        // Post-state checks.
     }
 }

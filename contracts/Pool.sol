@@ -42,8 +42,8 @@ contract Pool is FDT, CalcBPool {
     uint256 public penaltyDelay;      // Time until total interest is available after a deposit, in seconds.
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the pool.
 
-    bool public isFinalized;  // True if this Pool is setup and the poolDelegate has met staking requirements.
-    bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
+    enum State { Initialized, Finalized, Deactivated }
+    State public poolState;  // The current state of this pool.
 
     mapping(address => uint256)                     public depositDate;  // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
@@ -115,13 +115,8 @@ contract Pool is FDT, CalcBPool {
         penaltyDelay     = 30 days;
     }
 
-    modifier finalized() {
-        require(isFinalized, "Pool:NOT_FINALIZED");
-        _;
-    }
-
-    modifier notDefunct() {
-        require(!isDefunct, "Pool:IS_DEFUNCT");
+    modifier isState(State _state) {
+        require(poolState == _state, "Pool: ERR_FAIL_STATE_CHECK");
         _;
     }
 
@@ -145,11 +140,12 @@ contract Pool is FDT, CalcBPool {
     /**
         @dev Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
     */
-    function finalize() public {
+    function finalize() public isDelegate isState(State.Initialized) {
         (,, bool stakePresent,,) = getInitialStakeRequirements();
         require(stakePresent, "Pool:NOT_ENOUGH_STAKE_TO_FINALIZE");
-        isFinalized = true;
-        IStakeLocker(stakeLocker).finalizeLP();
+        // isFinalized = true;
+        // IStakeLocker(stakeLocker).finalizeLP();
+        poolState = State.Finalized;
     }
 
     /**
@@ -185,7 +181,7 @@ contract Pool is FDT, CalcBPool {
         @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
         @param amt The amount of LiquidityAsset to deposit, in wei.
     */
-    function deposit(uint256 amt) external notDefunct finalized {
+    function deposit(uint256 amt) external isState(State.Finalized) {
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
         updateDepositDate(amt, msg.sender);
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
@@ -216,7 +212,7 @@ contract Pool is FDT, CalcBPool {
         @dev Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
         @param amt The amount of LiquidityAsset to withdraw.
     */
-    function withdraw(uint256 amt) external notDefunct finalized {
+    function withdraw(uint256 amt) external {
         uint256 fdtAmt = _toWad(amt);
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
 
@@ -242,7 +238,7 @@ contract Pool is FDT, CalcBPool {
         @param  dlFactory The debt locker factory to utilize.
         @param  amt       Amount to fund the loan.
     */
-    function fundLoan(address loan, address dlFactory, uint256 amt) external notDefunct finalized isDelegate {
+    function fundLoan(address loan, address dlFactory, uint256 amt) external isState(State.Finalized) isDelegate {
 
         // Auth checks.
         require(globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
@@ -316,11 +312,20 @@ contract Pool is FDT, CalcBPool {
         return claimInfo;
     }
 
+    /**
+        @dev Pool Delegate triggers deactivation, permanently shutting down the pool.
+        @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
+    */
+    function deactivate(uint confirmation) external isState(State.Finalized) isDelegate {
+        require(confirmation == 86, "Pool::INVALID_CONFIRMATION");
+        require(principalOut <= 100 * 10 ** liquidityAssetDecimals);
+    }
+
     /** 
         @dev This is to establish the function signature by which an interest penalty will be calculated.
         @param amt The amount deposited.
         @param who The user who deposited amt.
-        @return The resulting value will be removed from the interest used in a repayment.
+        @return out The resulting value will be removed from the interest used in a repayment.
     */
     function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 out) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
