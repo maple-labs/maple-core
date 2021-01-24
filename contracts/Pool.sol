@@ -214,7 +214,8 @@ contract Pool is FDT, CalcBPool {
         @param amt The amount of LiquidityAsset to withdraw.
     */
     function withdraw(uint256 amt) external {
-        uint256 fdtAmt = _toWad(amt);
+        uint256 wad    = _toWad(amt);
+        uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
 
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
