@@ -17,8 +17,6 @@ import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IDebtLocker.sol";
 import "./token/FDT.sol";
 
-// TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
-
 /// @title Pool is the core contract for liquidity pools.
 contract Pool is FDT, CalcBPool {
 
@@ -34,7 +32,7 @@ contract Pool is FDT, CalcBPool {
     address public immutable slFactory;        // Address of the StakeLocker factory.
     address public immutable superFactory;     // The factory that deployed this Loan.
 
-    uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset. (TODO: Examine the use of this variable, make immutable)
+    uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset.
 
     uint256 public principalOut;      // Sum of all outstanding principal on loans
     uint256 public interestSum;       // Sum of all interest currently inside the liquidity locker
@@ -162,7 +160,6 @@ contract Pool is FDT, CalcBPool {
                 [3] = Amount of pool shares required.
                 [4] = Amount of pool shares present.
     */
-    // TODO: Resolve the dissonance between poolSharesRequired / swapOutAmountRequired / getSwapOutValue
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
 
         address balancerPool = stakeAsset;
@@ -201,7 +198,7 @@ contract Pool is FDT, CalcBPool {
     /**
         @dev Check whether the given `depositAmt` is an acceptable amount by the pool?.
         @param depositAmt Amount of tokens (i.e loanAsset type) is user willing to deposit.
-     */
+    */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
         uint256 totalDeposits = _balanceOfLiquidityLocker().add(principalOut);
         return totalDeposits.add(depositAmt) <= liquidityCap;
@@ -210,7 +207,7 @@ contract Pool is FDT, CalcBPool {
     /**
         @dev Set `liquidityCap`, Only allowed by the pool delegate.
         @param newLiquidityCap New liquidity cap value. 
-     */
+    */
     function setLiquidityCap(uint256 newLiquidityCap) external isDelegate {
         liquidityCap = newLiquidityCap;
     }
@@ -302,10 +299,12 @@ contract Pool is FDT, CalcBPool {
         // Transfer remaining claim (remaining interest + principal + excess) to liquidityLocker
         // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
         // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
-        require(liquidityAsset.transfer(liquidityLocker, principalClaim.add(interestClaim)), "Pool:LL_CLAIM_TRANSFER"); // Ensures that internal accounting is exactly reflective of balance change
+        // Ensures that internal accounting is exactly reflective of balance change
+        require(liquidityAsset.transfer(liquidityLocker, principalClaim.add(interestClaim)), "Pool:LL_CLAIM_TRANSFER"); 
 
         // Update funds received for FDT StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
+        
         // Update the `pointsPerShare` & funds received for FDT Pool tokens.
         updateFundsReceived();
 
@@ -318,10 +317,11 @@ contract Pool is FDT, CalcBPool {
     }
 
     /** 
-        This is to establish the function signature by which an interest penalty will be calculated
-        The resulting value will be removed from the interest used in a repayment
-    **/
-    // TODO: Chris add NatSpec
+        @dev This is to establish the function signature by which an interest penalty will be calculated.
+        @param amt The amount deposited.
+        @param who The user who deposited amt.
+        @return The resulting value will be removed from the interest used in a repayment.
+    */
     function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 out) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
         uint256 unlocked = dTime.div(penaltyDelay).mul(amt) / WAD;
@@ -329,7 +329,11 @@ contract Pool is FDT, CalcBPool {
         out = unlocked > amt ? 0 : amt - unlocked;
     }
 
-    // TODO: Chris add NatSpec
+    /**
+        @dev Update the deposit date.
+        @param amt The amount deposited.
+        @param who The user who deposited amt. 
+    */
     function updateDepositDate(uint256 amt, address who) internal {
         if (depositDate[who] == 0) {
             depositDate[who] = block.timestamp;
@@ -340,7 +344,10 @@ contract Pool is FDT, CalcBPool {
         }
     }
 
-    // TODO: Chris add NatSpec
+    /**
+        @dev Set the delay penalty.
+        @param _penaltyDelay New penalty setting to apply.
+    */
     function setPenaltyDelay(uint256 _penaltyDelay) public isDelegate {
         penaltyDelay = _penaltyDelay;
     }
@@ -348,27 +355,31 @@ contract Pool is FDT, CalcBPool {
     /**
         @dev Allowing delegate/pool manager to set the principal penalty.
         @param _newPrincipalPenalty New principal penalty percentage (in bips) that corresponds to withdrawal amount.
-     */
+    */
     function setPrincipalPenalty(uint256 _newPrincipalPenalty) public isDelegate {
         principalPenalty = _newPrincipalPenalty;
         // TODO: Emit an event
     }
 
+    /**
+        @dev Converts a given amt to WAD precision.
+        @return amt converted to WAD precision.
+    */
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
     }
 
+    /**
+        @dev Fetch the balance of this Pool's liquidity locker.
+        @return Balance of liquidity locker.
+    */
     function _balanceOfLiquidityLocker() internal view returns(uint256) {
         return liquidityAsset.balanceOf(liquidityLocker);
     } 
 
-    /*******************************/
-    /*** FDT Overriden Functions ***/
-    /*******************************/
-
     /**
         @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
-     */
+    */
     function withdrawFunds() public override(FDT) {
         uint256 withdrawableFunds = _prepareWithdraw();
 
@@ -383,10 +394,9 @@ contract Pool is FDT, CalcBPool {
     }
 
     /**
-        @dev Updates the current funds token balance
-        and returns the difference of new and previous funds token balances
-        @return A int256 representing the difference of the new and previous funds token balance
-     */
+        @dev Updates the current funds token balance and returns the difference of new and previous funds token balances.
+        @return A int256 representing the difference of the new and previous funds token balance.
+    */
     function _updateFundsTokenBalance() internal override returns (int256) {
         uint256 _prevFundsTokenBalance = fundsTokenBalance;
 
