@@ -21,8 +21,6 @@ import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
 import "../BulletRepaymentCalc.sol";
 
-import "../chainlink/MaplePriceAggregator.sol";
-
 contract PoolDelegate { }
 
 contract MapleGlobalsTest is TestUtil {
@@ -43,7 +41,6 @@ contract MapleGlobalsTest is TestUtil {
     PoolDelegate                     sid;
     PoolDelegate                     joe;
     MapleTreasury                    trs;
-    MaplePriceAggregator             mpa;
 
     function setUp() public {
         mpl         = new MapleToken("MapleToken", "MAPLE", USDC);
@@ -61,7 +58,6 @@ contract MapleGlobalsTest is TestUtil {
         sid         = new PoolDelegate();
         joe         = new PoolDelegate();
         trs         = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
-        mpa         = new MaplePriceAggregator(); 
 
         // The following code was adopted from maple-core/scripts/setup.js
         globals.setMapleTreasury(address(trs));
