@@ -91,8 +91,7 @@ contract PoolFactory {
                 delegateFee,
                 liquidityCap,
                 name,
-                symbol,
-                address(globals)
+                symbol
             );
 
         pools[poolsCreated]   = address(pool);

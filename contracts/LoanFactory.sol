@@ -39,17 +39,12 @@ contract LoanFactory {
         globals = IGlobals(_globals);
     }
 
-    // Authorization to call Treasury functions.
-    modifier isGovernor() {
-        require(msg.sender == globals.governor(), "LoanFactory:MSG_SENDER_NOT_GOVERNOR");
-        _;
-    }
-
     /**
         @dev Update the maple globals contract
         @param  newGlobals Address of new maple globals contract
     */
-    function setGlobals(address newGlobals) external isGovernor {
+    function setGlobals(address newGlobals) external {
+        require(msg.sender == globals.governor(), "LoanFactory:MSG_SENDER_NOT_GOVERNOR");
         globals = IGlobals(newGlobals);
     }
 
@@ -99,7 +94,6 @@ contract LoanFactory {
             collateralAsset,
             flFactory,
             clFactory,
-            address(_globals),
             specs,
             calcs,
             tUUID

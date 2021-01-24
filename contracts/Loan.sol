@@ -9,6 +9,7 @@ import "./interfaces/IFundingLockerFactory.sol";
 import "./interfaces/ICollateralLocker.sol";
 import "./interfaces/ICollateralLockerFactory.sol";
 import "./interfaces/IERC20Details.sol";
+import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/IPremiumCalc.sol";
@@ -23,8 +24,6 @@ contract Loan is FDT {
     enum State { Live, Active, Matured }  // Live = Created, Active = Drawndown
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
-    
-    IGlobals public globals;  // Maple Globals
 
     IERC20Details public immutable loanAsset;        // Asset deposited by lenders into the FundingLocker, when funding this loan.
     IERC20Details public immutable collateralAsset;  // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
@@ -69,11 +68,6 @@ contract Loan is FDT {
         _;
     }
 
-    modifier isGovernor() {
-        require(msg.sender == globals.governor(), "Loan:MSG_SENDER_NOT_GOVERNOR");
-        _;
-    }
-
     event LoanFunded(uint256 amtFunded, address indexed _fundedBy);
     event BalanceUpdated(address who, address token, uint256 balance);
     event Drawdown(uint256 drawdownAmt);
@@ -94,7 +88,6 @@ contract Loan is FDT {
         @param  _collateralAsset The asset provided as collateral by _borrower.
         @param  _flFactory       Factory to instantiate FundingLocker with.
         @param  _clFactory       Factory to instantiate CollateralLocker with.
-        @param  _globals         The MapleGlobals contract.
         @param  specs            Contains specifications for this loan.
                 specs[0] = apr
                 specs[1] = termDays
@@ -113,7 +106,6 @@ contract Loan is FDT {
         address _collateralAsset,
         address _flFactory,
         address _clFactory,
-        address _globals,
         uint256[6] memory specs,
         address[3] memory calcs,
         string memory tUUID
@@ -130,12 +122,13 @@ contract Loan is FDT {
         collateralAsset = IERC20Details(_collateralAsset);
         flFactory       = _flFactory;
         clFactory       = _clFactory;
-        globals         = IGlobals(_globals);
         createdAt       = block.timestamp;
 
+        IGlobals globals = IGlobals(ILoanFactory(msg.sender).globals());
+
         // Perform validity cross-checks.
-        require(IGlobals(_globals).isValidLoanAsset(_loanAsset),             "Loan:INVALID_LOAN_ASSET");
-        require(IGlobals(_globals).isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
+        require(IGlobals(globals).isValidLoanAsset(_loanAsset),             "Loan:INVALID_LOAN_ASSET");
+        require(IGlobals(globals).isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
 
         require(specs[2] != 0,               "Loan:PAYMENT_INTERVAL_DAYS_EQ_ZERO");
         require(specs[1].mod(specs[2]) == 0, "Loan:INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION");
@@ -162,14 +155,6 @@ contract Loan is FDT {
     }
 
     /**
-        @dev Update the maple globals contract
-        @param  newGlobals Address of new maple globals contract
-    */
-    function setGlobals(address newGlobals) external isGovernor {
-        globals = IGlobals(newGlobals);
-    }
-
-    /**
         @dev Fund this loan and mint debt tokens for mintTo.
         @param  amt    Amount to fund the loan.
         @param  mintTo Address that debt tokens are minted to.
@@ -192,7 +177,7 @@ contract Loan is FDT {
     */
     function drawdown(uint256 amt) external isState(State.Live) isBorrower {
 
-        IGlobals _globals = globals;
+        IGlobals globals = IGlobals(ILoanFactory(superFactory).globals());
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
 
@@ -212,10 +197,10 @@ contract Loan is FDT {
         );
 
         // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to Loan.
-        uint treasuryFee = _globals.treasuryFee();
-        uint investorFee = _globals.investorFee();
+        uint treasuryFee = globals.treasuryFee();
+        uint investorFee = globals.investorFee();
 
-        address treasury = _globals.mapleTreasury();
+        address treasury = globals.mapleTreasury();
 
         // Update investorFee locally.
         feePaid             = amt.mul(investorFee).div(10000);
@@ -287,7 +272,7 @@ contract Loan is FDT {
     */
     function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
 
-        IGlobals _globals = globals;
+        IGlobals globals = IGlobals(ILoanFactory(superFactory).globals());
 
         (
             uint256 total, 
@@ -295,7 +280,7 @@ contract Loan is FDT {
             uint256 interest
         ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
 
-        if (block.timestamp > nextPaymentDue && block.timestamp <= nextPaymentDue.add(_globals.gracePeriod())) {
+        if (block.timestamp > nextPaymentDue && block.timestamp <= nextPaymentDue.add(globals.gracePeriod())) {
             (
                 uint256 totalExtra, 
                 uint256 principalExtra, 
@@ -306,7 +291,7 @@ contract Loan is FDT {
             interest  = interest.add(interestExtra);
             principal = principal.add(principalExtra);
         } 
-        else if (block.timestamp > nextPaymentDue.add(_globals.gracePeriod())) {
+        else if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
             // TODO: Implement handling a default scenario.
             // TODO: Implement handling Pool Delegate (investor) early grace period default trigger.
             // TODO: Implement handling public grace period default trigger.
@@ -365,13 +350,13 @@ contract Loan is FDT {
     */
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
 
-        IGlobals _globals = globals;
+        IGlobals globals = IGlobals(ILoanFactory(superFactory).globals());
 
         uint256 wad = _toWad(amt);  // Convert to WAD precision.
 
         // Fetch value of collateral and funding asset.
-        uint256 loanAssetPrice  = _globals.getPrice(address(loanAsset));
-        uint256 collateralPrice = _globals.getPrice(address(collateralAsset));
+        uint256 loanAssetPrice  = globals.getPrice(address(loanAsset));
+        uint256 collateralPrice = globals.getPrice(address(collateralAsset));
 
         // Calculate collateral required.
         uint256 collateralRequiredUSD = loanAssetPrice.mul(wad).mul(collateralRatio).div(10000);

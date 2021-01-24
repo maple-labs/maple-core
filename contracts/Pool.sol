@@ -9,6 +9,7 @@ import "./interfaces/ILoan.sol";
 import "./interfaces/IBPool.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/ILoanFactory.sol";
+import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IStakeLocker.sol";
 import "./interfaces/IStakeLockerFactory.sol";
 import "./interfaces/ILiquidityLocker.sol";
@@ -21,8 +22,6 @@ import "./token/FDT.sol";
 contract Pool is FDT, CalcBPool {
 
     using SafeMath for uint256;
-
-    IGlobals public globals;  // Maple Globals contract
 
     IERC20  public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
 
@@ -65,7 +64,6 @@ contract Pool is FDT, CalcBPool {
         @param  _liquidityCap   Amount of liquidity tokens accepted by the pool.
         @param  name            Name of pool token.
         @param  symbol          Symbol of pool token.
-        @param  _globals        Globals contract address.
     */
     constructor(
         address _poolDelegate,
@@ -77,8 +75,7 @@ contract Pool is FDT, CalcBPool {
         uint256 _delegateFee,
         uint256 _liquidityCap,
         string memory name,
-        string memory symbol,
-        address _globals
+        string memory symbol
     ) FDT(name, symbol, _liquidityAsset) public {
         require(_liquidityAsset != address(0), "Pool:INVALID_LIQ_ASSET");
         require(_liquidityCap   != uint256(0), "Pool:INVALID_CAP");
@@ -100,7 +97,6 @@ contract Pool is FDT, CalcBPool {
         // Assign misc. state variables.
         stakeAsset   = _stakeAsset;
         slFactory    = _slFactory;
-        globals      = IGlobals(_globals);
         poolDelegate = _poolDelegate;
         stakingFee   = _stakingFee;
         delegateFee  = _delegateFee;
@@ -108,7 +104,7 @@ contract Pool is FDT, CalcBPool {
         liquidityCap = _liquidityCap;
 
         // Initialize the LiquidityLocker and StakeLocker.
-        stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset, _globals);
+        stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset, IPoolFactory(msg.sender).globals());
         liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
 
         // Withdrawal penalty default settings.
@@ -126,19 +122,6 @@ contract Pool is FDT, CalcBPool {
         _;
     }
 
-    modifier isGovernor() {
-        require(msg.sender == globals.governor(), "Loan:MSG_SENDER_NOT_GOVERNOR");
-        _;
-    }
-
-    /**
-        @dev Update the maple globals contract
-        @param  newGlobals Address of new maple globals contract
-    */
-    function setGlobals(address newGlobals) external isGovernor {
-        globals = IGlobals(newGlobals);
-    }
-
     /**
         @dev Deploys and assigns a StakeLocker for this Pool (only used once in constructor).
         @param stakeAsset     Address of the asset used for staking.
@@ -148,7 +131,7 @@ contract Pool is FDT, CalcBPool {
     */
     function createStakeLocker(address stakeAsset, address slFactory, address liquidityAsset, address globals) private returns (address) {
         require(IBPool(stakeAsset).isBound(IGlobals(globals).mpl()) && IBPool(stakeAsset).isFinalized(), "Pool:INVALID_BALANCER_POOL");
-        return IStakeLockerFactory(slFactory).newLocker(stakeAsset, liquidityAsset, globals);
+        return IStakeLockerFactory(slFactory).newLocker(stakeAsset, liquidityAsset);
     }
 
     /**
@@ -169,6 +152,8 @@ contract Pool is FDT, CalcBPool {
                 [4] = Amount of pool shares present.
     */
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
+
+        IGlobals globals = IGlobals(ILoanFactory(superFactory).globals());
 
         address balancerPool = stakeAsset;
         address swapOutAsset = address(liquidityAsset);
@@ -252,12 +237,12 @@ contract Pool is FDT, CalcBPool {
     */
     function fundLoan(address loan, address dlFactory, uint256 amt) external isState(State.Finalized) isDelegate {
 
-        IGlobals _globals = globals;
+        IGlobals globals = IGlobals(ILoanFactory(superFactory).globals());
 
         // Auth checks.
-        require(_globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
+        require(globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
         require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),  "Pool:INVALID_LOAN");
-        require(_globals.isValidSubFactory(superFactory, dlFactory, 1),  "Pool:INVALID_DL_FACTORY");
+        require(globals.isValidSubFactory(superFactory, dlFactory, 1),  "Pool:INVALID_DL_FACTORY");
 
         address _debtLocker = debtLockers[loan][dlFactory];
 

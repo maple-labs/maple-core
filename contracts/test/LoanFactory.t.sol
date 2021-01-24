@@ -208,7 +208,6 @@ contract LoanFactoryTest is TestUtil {
         assertEq(address(loan.collateralAsset()),  WETH, "Incorrect collateral asset");
         assertEq(loan.flFactory(),                 address(flFactory), "Incorrect FLF");
         assertEq(loan.clFactory(),                 address(clFactory), "Incorrect CLF");
-        assertEq(address(loan.globals()),          address(globals), "Incorrect globals address");
         assertEq(loan.createdAt(),                 block.timestamp, "Incorrect created at timestamp");
         assertEq(loan.apr(),                       specs[0], "Incorrect APR");
         assertEq(loan.termDays(),                  specs[1], "Incorrect term days");

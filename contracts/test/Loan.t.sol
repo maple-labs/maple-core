@@ -171,27 +171,6 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),            block.timestamp + loan.paymentIntervalSeconds());
     }
 
-    function test_setGlobals() public {
-        // Create a loan
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
-        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
-
-        Governor fakeGov = new Governor();
-
-        Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-
-        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY);  // Create upgraded MapleGlobals
-
-        assertEq(address(loan.globals()), address(globals));
-
-        assertTrue(!fakeGov.try_setGlobals(address(loan), address(globals2)));  // Non-governor cannot set new globals
-
-        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY);              // Create upgraded MapleGlobals
-
-        assertTrue(gov.try_setGlobals(address(loan), address(globals2)));       // Governor can set new globals
-        assertEq(address(loan.globals()), address(globals2));                   // Globals is updated
-    }
-
     function test_fundLoan() public {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];

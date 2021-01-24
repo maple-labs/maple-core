@@ -25,14 +25,12 @@ contract StakeLockerFactory {
         @return Address of the instantiated stake locker.
         @param stakeAsset     Address of the stakeAsset (generally a balancer pool).
         @param liquidityAsset Address of the liquidityAsset (as defined in the pool).
-        @param globals        Address of the MapleGlobals contract.
     */
     function newLocker(
         address stakeAsset,
-        address liquidityAsset,
-        address globals
+        address liquidityAsset
     ) external returns (address) {
-        address stakeLocker   = address(new StakeLocker(stakeAsset, liquidityAsset, msg.sender, globals));
+        address stakeLocker   = address(new StakeLocker(stakeAsset, liquidityAsset, msg.sender));
         owner[stakeLocker]    = msg.sender;
         isLocker[stakeLocker] = true;
         emit StakeLockerCreated(

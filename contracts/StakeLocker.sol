@@ -5,6 +5,7 @@ pragma solidity >=0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./token/FDT.sol";
 import "./interfaces/IPool.sol";
+import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IGlobals.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
@@ -14,8 +15,6 @@ contract StakeLocker is FDT {
     using SignedSafeMath for int256;
 
     uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division.
-
-    IGlobals public globals;  // Maple globals.
 
     IERC20  public immutable stakeAsset;  // The asset deposited by stakers into this contract, for liquidation during defaults.
     
@@ -29,13 +28,11 @@ contract StakeLocker is FDT {
     constructor(
         address _stakeAsset,
         address _liquidityAsset,
-        address _owner,
-        address _globals
+        address _owner
     ) FDT("Maple Stake Locker", "MPLSTAKE", _liquidityAsset) public {
         liquidityAsset = _liquidityAsset;
         stakeAsset     = IERC20(_stakeAsset);
         owner          = _owner;
-        globals        = IGlobals(_globals);
     }
 
     event   Stake(uint256 _amount, address _staker);
@@ -56,16 +53,8 @@ contract StakeLocker is FDT {
     }
     
     modifier isGovernor() {
-        require(msg.sender == globals.governor(), "StakeLocker:MSG_SENDER_NOT_GOVERNOR");
+        require(msg.sender == IGlobals(IPoolFactory(owner).globals()).governor(), "StakeLocker:MSG_SENDER_NOT_GOVERNOR");
         _;
-    }
-
-    /**
-        @dev Update the maple globals contract
-        @param  newGlobals Address of new maple globals contract
-    */
-    function setGlobals(address newGlobals) external isGovernor {
-        globals = IGlobals(newGlobals);
     }
 
     /**
@@ -134,9 +123,11 @@ contract StakeLocker is FDT {
         @return Amount of BPTs staker can unstake.
     */
     function getUnstakeableBalance(address staker) public view returns (uint256) {
-        uint256 bal = balanceOf(staker);
+        uint256 unstakeDelay = IGlobals(IPoolFactory(owner).globals()).unstakeDelay();
+
+        uint256 bal  = balanceOf(staker);
         uint256 time = (block.timestamp - stakeDate[staker]) * WAD;
-        uint256 out = ((time / (globals.unstakeDelay() + 1)) * bal) / WAD;
+        uint256 out  = ((time / (unstakeDelay + 1)) * bal) / WAD;
         // The plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
         // Also i do indeed want this to return 0 if denominator is less than WAD
         if (out > bal) {

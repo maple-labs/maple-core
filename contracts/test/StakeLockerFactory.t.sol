@@ -26,7 +26,7 @@ contract StakeLockerFactoryTest is TestUtil {
     }
 
     function test_newLocker() public {
-        StakeLocker sl = StakeLocker(slFactory.newLocker(address(mpl), USDC, address(globals)));
+        StakeLocker sl = StakeLocker(slFactory.newLocker(address(mpl), USDC));
         // Validate the storage of slfactory.
         assertEq(slFactory.owner(address(sl)), address(this));
         assertTrue(slFactory.isLocker(address(sl)));
@@ -35,6 +35,5 @@ contract StakeLockerFactoryTest is TestUtil {
         assertEq(address(sl.stakeAsset()), address(mpl),     "Incorrect stake asset address");
         assertEq(sl.liquidityAsset(),      USDC,             "Incorrect address of loan asset");
         assertEq(sl.owner(),               address(this),    "Incorrect owner address");
-        assertEq(address(sl.globals()),    address(globals), "Incorrect globals address");
     }
 }
