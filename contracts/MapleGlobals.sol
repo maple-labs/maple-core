@@ -23,7 +23,8 @@ contract MapleGlobals {
     uint256 public drawdownGracePeriod;  // Amount of time to allow borrower to drawdown on their loan after funding period ends.
     uint256 public investorFee;          // Portion of drawdown that goes to pool delegates/investors
     uint256 public treasuryFee;          // Portion of drawdown that goes to treasury
-    uint256 public extendedGracePeriod;  // TODO
+    uint256 public extendedGracePeriod;  // Extended time period provided to the borrowers to clear the dues and during this period pool delegate are free to liquidate the loan.
+
 
     mapping(address => bool)    public isValidLoanAsset;        // Mapping of valid loan assets
     mapping(address => bool)    public isValidCollateralAsset;  // Mapping of valid collateral assets
@@ -55,7 +56,7 @@ contract MapleGlobals {
         governor            = _governor;
         mpl                 = _mpl;
         gracePeriod         = 5 days;
-        extendedGracePeriod = 10 days; // TODO how much?
+        extendedGracePeriod = 5 days; // TODO how much?
         swapOutRequired     = 100;
         unstakeDelay        = 90 days;
         drawdownGracePeriod = 1 days;
