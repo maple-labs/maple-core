@@ -1513,7 +1513,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
             assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
-            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
+            gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
 
         address fundingLocker  = loan.fundingLocker();
