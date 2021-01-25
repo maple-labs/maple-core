@@ -17,8 +17,6 @@ import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IDebtLocker.sol";
 import "./token/FDT.sol";
 
-// TODO: Implement a delete function, calling stakeLocker's deleteLP() function.
-
 /// @title Pool is the core contract for liquidity pools.
 contract Pool is FDT, CalcBPool {
 
@@ -34,7 +32,7 @@ contract Pool is FDT, CalcBPool {
     address public immutable slFactory;        // Address of the StakeLocker factory.
     address public immutable superFactory;     // The factory that deployed this Loan.
 
-    uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset. (TODO: Examine the use of this variable, make immutable)
+    uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset.
 
     uint256 public principalOut;      // Sum of all outstanding principal on loans
     uint256 public interestSum;       // Sum of all interest currently inside the liquidity locker
@@ -44,8 +42,8 @@ contract Pool is FDT, CalcBPool {
     uint256 public penaltyDelay;      // Time until total interest is available after a deposit, in seconds.
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the pool.
 
-    bool public isFinalized;  // True if this Pool is setup and the poolDelegate has met staking requirements.
-    bool public isDefunct;    // True when the pool is closed, enabling poolDelegate to withdraw their stake.
+    enum State { Initialized, Finalized, Deactivated }
+    State public poolState;  // The current state of this pool.
 
     mapping(address => uint256)                     public depositDate;  // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
@@ -117,13 +115,8 @@ contract Pool is FDT, CalcBPool {
         penaltyDelay     = 30 days;
     }
 
-    modifier finalized() {
-        require(isFinalized, "Pool:NOT_FINALIZED");
-        _;
-    }
-
-    modifier notDefunct() {
-        require(!isDefunct, "Pool:IS_DEFUNCT");
+    modifier isState(State _state) {
+        require(poolState == _state, "Pool:STATE_CHECK");
         _;
     }
 
@@ -147,11 +140,10 @@ contract Pool is FDT, CalcBPool {
     /**
         @dev Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
     */
-    function finalize() public {
+    function finalize() public isDelegate isState(State.Initialized) {
         (,, bool stakePresent,,) = getInitialStakeRequirements();
         require(stakePresent, "Pool:NOT_ENOUGH_STAKE_TO_FINALIZE");
-        isFinalized = true;
-        IStakeLocker(stakeLocker).finalizeLP();
+        poolState = State.Finalized;
     }
 
     /**
@@ -162,7 +154,6 @@ contract Pool is FDT, CalcBPool {
                 [3] = Amount of pool shares required.
                 [4] = Amount of pool shares present.
     */
-    // TODO: Resolve the dissonance between poolSharesRequired / swapOutAmountRequired / getSwapOutValue
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
 
         address balancerPool = stakeAsset;
@@ -188,7 +179,7 @@ contract Pool is FDT, CalcBPool {
         @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
         @param amt The amount of LiquidityAsset to deposit, in wei.
     */
-    function deposit(uint256 amt) external notDefunct finalized {
+    function deposit(uint256 amt) external isState(State.Finalized) {
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
         updateDepositDate(amt, msg.sender);
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
@@ -201,7 +192,7 @@ contract Pool is FDT, CalcBPool {
     /**
         @dev Check whether the given `depositAmt` is an acceptable amount by the pool?.
         @param depositAmt Amount of tokens (i.e loanAsset type) is user willing to deposit.
-     */
+    */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
         uint256 totalDeposits = _balanceOfLiquidityLocker().add(principalOut);
         return totalDeposits.add(depositAmt) <= liquidityCap;
@@ -210,7 +201,7 @@ contract Pool is FDT, CalcBPool {
     /**
         @dev Set `liquidityCap`, Only allowed by the pool delegate.
         @param newLiquidityCap New liquidity cap value. 
-     */
+    */
     function setLiquidityCap(uint256 newLiquidityCap) external isDelegate {
         liquidityCap = newLiquidityCap;
     }
@@ -219,7 +210,7 @@ contract Pool is FDT, CalcBPool {
         @dev Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
         @param amt The amount of LiquidityAsset to withdraw.
     */
-    function withdraw(uint256 amt) external notDefunct finalized {
+    function withdraw(uint256 amt) external {
         uint256 fdtAmt = _toWad(amt);
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
 
@@ -245,7 +236,7 @@ contract Pool is FDT, CalcBPool {
         @param  dlFactory The debt locker factory to utilize.
         @param  amt       Amount to fund the loan.
     */
-    function fundLoan(address loan, address dlFactory, uint256 amt) external notDefunct finalized isDelegate {
+    function fundLoan(address loan, address dlFactory, uint256 amt) external isState(State.Finalized) isDelegate {
 
         // Auth checks.
         require(globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
@@ -302,10 +293,12 @@ contract Pool is FDT, CalcBPool {
         // Transfer remaining claim (remaining interest + principal + excess) to liquidityLocker
         // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
         // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
-        require(liquidityAsset.transfer(liquidityLocker, principalClaim.add(interestClaim)), "Pool:LL_CLAIM_TRANSFER"); // Ensures that internal accounting is exactly reflective of balance change
+        // Ensures that internal accounting is exactly reflective of balance change
+        require(liquidityAsset.transfer(liquidityLocker, principalClaim.add(interestClaim)), "Pool:LL_CLAIM_TRANSFER"); 
 
         // Update funds received for FDT StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
+        
         // Update the `pointsPerShare` & funds received for FDT Pool tokens.
         updateFundsReceived();
 
@@ -317,11 +310,22 @@ contract Pool is FDT, CalcBPool {
         return claimInfo;
     }
 
+    /**
+        @dev Pool Delegate triggers deactivation, permanently shutting down the pool.
+        @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
+    */
+    function deactivate(uint confirmation) external isState(State.Finalized) isDelegate {
+        require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
+        require(principalOut <= 100 * 10 ** liquidityAssetDecimals);
+        poolState = State.Deactivated;
+    }
+
     /** 
-        This is to establish the function signature by which an interest penalty will be calculated
-        The resulting value will be removed from the interest used in a repayment
-    **/
-    // TODO: Chris add NatSpec
+        @dev This is to establish the function signature by which an interest penalty will be calculated.
+        @param amt The amount deposited.
+        @param who The user who deposited amt.
+        @return out The resulting value will be removed from the interest used in a repayment.
+    */
     function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 out) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
         uint256 unlocked = dTime.div(penaltyDelay).mul(amt) / WAD;
@@ -329,7 +333,11 @@ contract Pool is FDT, CalcBPool {
         out = unlocked > amt ? 0 : amt - unlocked;
     }
 
-    // TODO: Chris add NatSpec
+    /**
+        @dev Update the deposit date.
+        @param amt The amount deposited.
+        @param who The user who deposited amt. 
+    */
     function updateDepositDate(uint256 amt, address who) internal {
         if (depositDate[who] == 0) {
             depositDate[who] = block.timestamp;
@@ -340,7 +348,10 @@ contract Pool is FDT, CalcBPool {
         }
     }
 
-    // TODO: Chris add NatSpec
+    /**
+        @dev Set the delay penalty.
+        @param _penaltyDelay New penalty setting to apply.
+    */
     function setPenaltyDelay(uint256 _penaltyDelay) public isDelegate {
         penaltyDelay = _penaltyDelay;
     }
@@ -348,27 +359,31 @@ contract Pool is FDT, CalcBPool {
     /**
         @dev Allowing delegate/pool manager to set the principal penalty.
         @param _newPrincipalPenalty New principal penalty percentage (in bips) that corresponds to withdrawal amount.
-     */
+    */
     function setPrincipalPenalty(uint256 _newPrincipalPenalty) public isDelegate {
         principalPenalty = _newPrincipalPenalty;
         // TODO: Emit an event
     }
 
+    /**
+        @dev Converts a given amt to WAD precision.
+        @return amt converted to WAD precision.
+    */
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
     }
 
+    /**
+        @dev Fetch the balance of this Pool's liquidity locker.
+        @return Balance of liquidity locker.
+    */
     function _balanceOfLiquidityLocker() internal view returns(uint256) {
         return liquidityAsset.balanceOf(liquidityLocker);
     } 
 
-    /*******************************/
-    /*** FDT Overriden Functions ***/
-    /*******************************/
-
     /**
         @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
-     */
+    */
     function withdrawFunds() public override(FDT) {
         uint256 withdrawableFunds = _prepareWithdraw();
 
@@ -383,10 +398,9 @@ contract Pool is FDT, CalcBPool {
     }
 
     /**
-        @dev Updates the current funds token balance
-        and returns the difference of new and previous funds token balances
-        @return A int256 representing the difference of the new and previous funds token balance
-     */
+        @dev Updates the current funds token balance and returns the difference of new and previous funds token balances.
+        @return A int256 representing the difference of the new and previous funds token balance.
+    */
     function _updateFundsTokenBalance() internal override returns (int256) {
         uint256 _prevFundsTokenBalance = fundsTokenBalance;
 
