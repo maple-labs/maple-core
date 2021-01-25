@@ -276,7 +276,7 @@ contract Loan is FDT {
     */
     function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
 
-        IGlobals globals = IGlobals(ILoanFactory(superFactory).globals());
+        IGlobals globals = _globals(superFactory);
 
         (
             uint256 total, 
@@ -354,7 +354,7 @@ contract Loan is FDT {
     */
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
 
-        IGlobals globals = IGlobals(ILoanFactory(superFactory).globals());
+        IGlobals globals = _globals(superFactory);
 
         uint256 wad = _toWad(amt);  // Convert to WAD precision.
 
