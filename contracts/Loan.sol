@@ -124,11 +124,11 @@ contract Loan is FDT {
         clFactory       = _clFactory;
         createdAt       = block.timestamp;
 
-        IGlobals globals = IGlobals(ILoanFactory(msg.sender).globals());
+        IGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks.
-        require(IGlobals(globals).isValidLoanAsset(_loanAsset),             "Loan:INVALID_LOAN_ASSET");
-        require(IGlobals(globals).isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
+        require(globals.isValidLoanAsset(_loanAsset),             "Loan:INVALID_LOAN_ASSET");
+        require(globals.isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
 
         require(specs[2] != 0,               "Loan:PAYMENT_INTERVAL_DAYS_EQ_ZERO");
         require(specs[1].mod(specs[2]) == 0, "Loan:INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION");
@@ -154,6 +154,10 @@ contract Loan is FDT {
         fundingLocker    = IFundingLockerFactory(_flFactory).newLocker(_loanAsset);
     }
 
+    function _globals(address loanFactory) internal view returns(IGlobals) {
+        return IGlobals(ILoanFactory(loanFactory).globals());
+    }
+
     /**
         @dev Fund this loan and mint debt tokens for mintTo.
         @param  amt    Amount to fund the loan.
@@ -177,7 +181,7 @@ contract Loan is FDT {
     */
     function drawdown(uint256 amt) external isState(State.Live) isBorrower {
 
-        IGlobals globals = IGlobals(ILoanFactory(superFactory).globals());
+        IGlobals globals = _globals(superFactory);
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
 
