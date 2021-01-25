@@ -53,8 +53,12 @@ contract StakeLocker is FDT {
     }
     
     modifier isGovernor() {
-        require(msg.sender == IGlobals(IPoolFactory(owner).globals()).governor(), "StakeLocker:MSG_SENDER_NOT_GOVERNOR");
+        require(msg.sender == _globals().governor(), "StakeLocker:MSG_SENDER_NOT_GOVERNOR");
         _;
+    }
+
+    function _globals() internal view returns(IGlobals) {
+        return IGlobals(IPoolFactory(owner).globals());
     }
 
     /**
@@ -123,11 +127,9 @@ contract StakeLocker is FDT {
         @return Amount of BPTs staker can unstake.
     */
     function getUnstakeableBalance(address staker) public view returns (uint256) {
-        uint256 unstakeDelay = IGlobals(IPoolFactory(owner).globals()).unstakeDelay();
-
         uint256 bal  = balanceOf(staker);
         uint256 time = (block.timestamp - stakeDate[staker]) * WAD;
-        uint256 out  = ((time / (unstakeDelay + 1)) * bal) / WAD;
+        uint256 out  = ((time / (_globals().unstakeDelay() + 1)) * bal) / WAD;
         // The plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
         // Also i do indeed want this to return 0 if denominator is less than WAD
         if (out > bal) {
