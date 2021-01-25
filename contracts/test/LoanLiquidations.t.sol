@@ -17,6 +17,7 @@ import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
 import "../LoanFactory.sol";
 
+import "../interfaces/ILoan.sol";
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/I1Inch.sol";
 
@@ -30,6 +31,7 @@ contract Borrower {
         string memory sig = "makePayment()";
         (ok,) = address(loan).call(abi.encodeWithSignature(sig));
     }
+
 
     function try_createLoan(
         address loanFactory,
@@ -46,6 +48,10 @@ contract Borrower {
         (ok,) = address(loanFactory).call(
             abi.encodeWithSignature(sig, loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
         );
+    }
+
+    function triggerDefault(address loan) external {
+        ILoan(loan).triggerDefault();
     }
 
     function approve(address token, address who, uint256 amt) external {
@@ -119,7 +125,7 @@ contract LoanTest is TestUtil {
         loanFactory = new LoanFactory(address(globals));
         dex         = IOneSplit(ONE_INCH_DEX);
 
-        ethOracle.poke(500 ether);  // Set ETH price to $500
+        ethOracle.poke(1377.61 ether);  // Set ETH price to $1377.61 TODO: Use chainlink in tests
         usdcOracle.poke(1 ether);   // Set USDC price to $1
 
         globals.setCalc(address(bulletCalc),         true);
@@ -159,26 +165,14 @@ contract LoanTest is TestUtil {
 
     function test_liquidation() public {
 
-        Loan loan  = createAndFundLoan(address(bulletCalc));
+        Loan loan = createAndFundLoan(address(bulletCalc));
 
-        // Fetch time variables.
-        uint256 start = block.timestamp;
-        uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 gracePeriod = globals.gracePeriod();
-
-        // Warp to late payment..
-        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
-
-        // Pre-state checks.
-        assertEq(uint256(loan.loanState()), 1);
-
-        // Trigger default.
-        assertTrue(ali.try_makePayment(address(loan))); // makePayment() currently triggers default if late
+        loan.triggerDefault();
 
         // Post-state checks.
         assertEq(uint256(loan.loanState()), 3);
-        assertEq(loan.amountReceivable(), 0);
-        assertEq(loan.amountReceived(), 0);
+        assertEq(loan.amountReceivable(), 1);
+        assertEq(loan.amountReceived(), 2);
 
     }
 

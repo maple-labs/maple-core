@@ -241,7 +241,7 @@ contract Loan is FDT {
     uint public amountReceived;
 
     // Internal handling of a default.
-    function _triggerDefault() internal {
+    function triggerDefault() public {
         
         // 1) Swap collateral on 1inch for loanAsset, deposit into this contract.
 
@@ -249,10 +249,14 @@ contract Loan is FDT {
         IOneSplit dex = IOneSplit(globals.OneInchDEX());
         uint256[] memory distribution;
 
+        require(ICollateralLocker(collateralLocker).pull(borrower, collateralAsset.balanceOf(collateralLocker)), "Loan:COLLATERAL_PULL");
+
+        collateralAsset.approve(address(dex), collateralAsset.balanceOf(address(this)));
+        
         (amountReceivable, distribution) = dex.getExpectedReturn(
             IERC20(collateralAsset),
             IERC20(loanAsset),
-            collateralAsset.balanceOf(collateralLocker),
+            collateralAsset.balanceOf(address(this)),
             1,
             0
         );
@@ -266,36 +270,36 @@ contract Loan is FDT {
             0
         );
 
-        // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
+        // // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
 
-        //  2a) If principal owed == 0 after settlement ... send excess loanAsset to Borrower.
-        //  2b) If principal owed >  0 after settlement ... all loanAsset remains in Loan.
-        //      ... update two accounting variables liquidationShortfall, liquidationExcess as appropriate.
+        // //  2a) If principal owed == 0 after settlement ... send excess loanAsset to Borrower.
+        // //  2b) If principal owed >  0 after settlement ... all loanAsset remains in Loan.
+        // //      ... update two accounting variables liquidationShortfall, liquidationExcess as appropriate.
 
-        // 3) Call updateFundsReceived() to snapshot current equity-holders payout.
-        updateFundsReceived();
+        // // 3) Call updateFundsReceived() to snapshot current equity-holders payout.
+        // updateFundsReceived();
 
-        // 4) Transition loanState to Liquidated.
-        loanState = State.Liquidated;
+        // // 4) Transition loanState to Liquidated.
+        // loanState = State.Liquidated;
 
-        // 5) Emit liquidation event.
-        emit Liquidation(
-            0,  // collateralSwapped
-            0,  // loanAssetReturned
-            0,  // liquidationExcess
-            0   // liquidationShortfall
-        );
+        // // 5) Emit liquidation event.
+        // emit Liquidation(
+        //     0,  // collateralSwapped
+        //     0,  // loanAssetReturned
+        //     0,  // liquidationExcess
+        //     0   // liquidationShortfall
+        // );
     }
 
     /**
         @dev Make the next payment for this loan.
-             TODO: Add reenetrancy guard to makePayment() for security in _triggerDefault() txs.
+             TODO: Add reenetrancy guard to makePayment() for security in triggerDefault() txs.
     */
     function makePayment() public isState(State.Active) {
 
         // Trigger a default and liquidate all the Borrower's collateral on 1inch if the payment is late.
         if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
-            _triggerDefault();
+            triggerDefault();
         }
 
         else {
@@ -374,7 +378,7 @@ contract Loan is FDT {
 
         // Trigger a default and liquidate all the Borrower's collateral on 1inch if the payment is late.
         if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
-            _triggerDefault();
+            triggerDefault();
         }
         else {
             (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
