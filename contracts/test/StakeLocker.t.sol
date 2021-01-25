@@ -16,6 +16,7 @@ contract StakeLockerFactoryTest is TestUtil {
     MapleToken                      mpl;
     MapleGlobals                globals;
     StakeLockerFactory        slFactory;
+    StakeLocker                      sl;
 
     function setUp() public {
         gov       = new Governor();
@@ -23,17 +24,7 @@ contract StakeLockerFactoryTest is TestUtil {
         globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
         slFactory = new StakeLockerFactory();                        // Setup Stake Locker Factory to support Stake Locker creation.
         assertEq(slFactory.factoryType(), uint(4), "Incorrect factory type");
-    }
 
-    function test_newLocker() public {
-        StakeLocker sl = StakeLocker(slFactory.newLocker(address(mpl), USDC));
-        // Validate the storage of slfactory.
-        assertEq(slFactory.owner(address(sl)), address(this));
-        assertTrue(slFactory.isLocker(address(sl)));
-
-        // Validate the storage of sl.
-        assertEq(address(sl.stakeAsset()), address(mpl),     "Incorrect stake asset address");
-        assertEq(sl.liquidityAsset(),      USDC,             "Incorrect address of loan asset");
-        assertEq(sl.owner(),               address(this),    "Incorrect owner address");
+        sl = StakeLocker(slFactory.newLocker(address(mpl), USDC));
     }
 }

@@ -7,12 +7,13 @@ import "./TestUtil.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
+import "./user/Governor.sol";
+
 import "../BulletRepaymentCalc.sol";
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
 
 import "../MapleToken.sol";
-import "../MapleGlobals.sol";
 import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
 import "../LoanFactory.sol";
@@ -87,6 +88,7 @@ contract Treasury { }
 
 contract LoanTest is TestUtil {
 
+    Governor                         gov;
     ERC20                     fundsToken;
     MapleToken                       mpl;
     MapleGlobals                 globals;
@@ -104,8 +106,9 @@ contract LoanTest is TestUtil {
 
     function setUp() public {
 
+        gov         = new Governor();
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
+        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         flFactory   = new FundingLockerFactory();
         clFactory   = new CollateralLockerFactory();
         ethOracle   = new DSValue();
@@ -118,22 +121,22 @@ contract LoanTest is TestUtil {
         ethOracle.poke(500 ether);  // Set ETH price to $500
         usdcOracle.poke(1 ether);   // Set USDC price to $1
 
-        globals.setCalc(address(bulletCalc),         true);
-        globals.setCalc(address(lateFeeCalc),        true);
-        globals.setCalc(address(premiumCalc),        true);
-        globals.setCollateralAsset(WETH,             true);
-        globals.setLoanAsset(USDC,                   true);
-        globals.assignPriceFeed(WETH,  address(ethOracle));
-        globals.assignPriceFeed(USDC, address(usdcOracle));
+        gov.setCalc(address(bulletCalc),         true);
+        gov.setCalc(address(lateFeeCalc),        true);
+        gov.setCalc(address(premiumCalc),        true);
+        gov.setCollateralAsset(WETH,             true);
+        gov.setLoanAsset(USDC,                   true);
+        gov.assignPriceFeed(WETH,  address(ethOracle));
+        gov.assignPriceFeed(USDC, address(usdcOracle));
 
-        globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
-        globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
 
         ali = new Borrower();
         bob = new Lender();
         trs = new Treasury();
 
-        globals.setMapleTreasury(address(trs));
+        gov.setMapleTreasury(address(trs));
 
         mint("WETH", address(ali),   10 ether);
         mint("USDC", address(bob), 5000 * USD);
@@ -450,5 +453,4 @@ contract LoanTest is TestUtil {
         assertEq(collateralAsset.balanceOf(collateralLocker),  0);
         assertEq(collateralAsset.balanceOf(address(ali)),     _delta + reqCollateral);
     }
-
 }

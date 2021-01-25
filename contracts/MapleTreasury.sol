@@ -100,6 +100,14 @@ contract MapleTreasury {
     }
 
     /**
+        @dev Update the maple globals contract
+        @param  newGlobals Address of new maple globals contract
+    */
+    function setGlobals(address newGlobals) external isGovernor {
+        globals = newGlobals;
+    }
+
+    /**
         @dev Passes through the current fundsToken to MapleToken.
     */
     function passThroughFundsToken() isGovernor public {

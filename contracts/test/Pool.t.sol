@@ -7,6 +7,8 @@ import "./TestUtil.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
+import "./user/Governor.sol";
+
 import "../interfaces/IBPool.sol";
 import "../interfaces/IPool.sol";
 import "../interfaces/IPoolFactory.sol";
@@ -19,7 +21,6 @@ import "../PremiumCalc.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import "../MapleToken.sol";
-import "../MapleGlobals.sol";
 import "../StakeLockerFactory.sol";
 import "../PoolFactory.sol";
 import "../LiquidityLockerFactory.sol";
@@ -167,6 +168,7 @@ contract PoolTest is TestUtil {
 
     using SafeMath for uint256;
 
+    Governor                               gov;
     ERC20                           fundsToken;
     MapleToken                             mpl;
     MapleGlobals                       globals;
@@ -204,8 +206,9 @@ contract PoolTest is TestUtil {
 
     function setUp() public {
 
+        gov            = new Governor();
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
+        globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan factory functionality.
         clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan factory functionality.
         loanFactory    = new LoanFactory(address(globals));                             // Create Loan factory.
@@ -230,13 +233,13 @@ contract PoolTest is TestUtil {
         hal            = new Borrower();                                                // Actor: Borrower aka Loan contract creator.
         trs            = new Treasury();                                                // Treasury.
 
-        globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
-        globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
 
-        globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
-        globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        globals.setValidSubFactory(address(poolFactory), address(dlFactory1), true);
-        globals.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
+        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory1), true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
 
         ethOracle.poke(500 ether);  // Set ETH price to $500
         usdcOracle.poke(1 ether);   // Set USDC price to $1
@@ -258,9 +261,9 @@ contract PoolTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
-        globals.setPoolDelegateWhitelist(address(sid), true);
-        globals.setPoolDelegateWhitelist(address(joe), true);
-        globals.setMapleTreasury(address(trs));
+        gov.setPoolDelegateWhitelist(address(sid), true);
+        gov.setPoolDelegateWhitelist(address(joe), true);
+        gov.setMapleTreasury(address(trs));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
@@ -270,14 +273,14 @@ contract PoolTest is TestUtil {
         bPool.transfer(address(joe), bPool.balanceOf(address(this)));
 
         // Set Globals
-        globals.setCalc(address(bulletCalc),  true);
-        globals.setCalc(address(lateFeeCalc), true);
-        globals.setCalc(address(premiumCalc), true);
-        globals.setCollateralAsset(WETH, true);
-        globals.setLoanAsset(USDC, true);
-        globals.assignPriceFeed(WETH, address(ethOracle));
-        globals.assignPriceFeed(USDC, address(usdcOracle));
-        globals.setSwapOutRequired(100);
+        gov.setCalc(address(bulletCalc),  true);
+        gov.setCalc(address(lateFeeCalc), true);
+        gov.setCalc(address(premiumCalc), true);
+        gov.setCollateralAsset(WETH, true);
+        gov.setLoanAsset(USDC, true);
+        gov.assignPriceFeed(WETH, address(ethOracle));
+        gov.assignPriceFeed(USDC, address(usdcOracle));
+        gov.setSwapOutRequired(100);
 
         // Create Liquidity Pool
         pool1 = Pool(sid.createPool(
@@ -433,7 +436,7 @@ contract PoolTest is TestUtil {
 
         assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 100 * USD)); // LoanFactory not in globals
 
-        globals.setValidLoanFactory(address(loanFactory), true);
+        gov.setValidLoanFactory(address(loanFactory), true);
 
         assertEq(IERC20(USDC).balanceOf(liqLocker),               100 * USD);  // Balance of Liquidity Locker
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),          0);  // Balance of Funding Locker
@@ -471,7 +474,7 @@ contract PoolTest is TestUtil {
         /*** Fund same loan with a different LTL ***/
         /*******************************************/
         DebtLockerFactory dlFactory2 = new DebtLockerFactory();
-        globals.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
         assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory2), 10 * USD)); // Fund loan for 15 USDC
 
         DebtLocker debtLocker2 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory2)));
@@ -584,7 +587,7 @@ contract PoolTest is TestUtil {
         /*** Create a loan with 0% APR, 0% premium ***/
         /*********************************************/
         premiumCalc = new PremiumCalc(0); // Flat 0% premium
-        globals.setCalc(address(premiumCalc), true);
+        gov.setCalc(address(premiumCalc), true);
 
         uint256[6] memory specs = [0, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
@@ -617,7 +620,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
             assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
-            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
+            gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
 
         address fundingLocker  = loan.fundingLocker();
@@ -715,7 +718,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
             assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
-            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
+            gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
 
         address fundingLocker  = loan.fundingLocker();
@@ -889,7 +892,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool2), 400_000_000 * USD));  // 40% BOB in LP2
             assertTrue(dan.try_deposit(address(pool2), 100_000_000 * USD));  // 10% BOB in LP2
 
-            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
+            gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
         
         address fundingLocker  = loan.fundingLocker();
@@ -1074,7 +1077,7 @@ contract PoolTest is TestUtil {
 
             sid.finalize(address(pool1));
 
-            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
+            gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
 
         /**********************************************************/
@@ -1196,7 +1199,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
             assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
-            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
+            gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
 
         address fundingLocker  = loan.fundingLocker();
@@ -1510,7 +1513,7 @@ contract PoolTest is TestUtil {
             assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
             assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
-            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
+            gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
 
         address fundingLocker  = loan.fundingLocker();

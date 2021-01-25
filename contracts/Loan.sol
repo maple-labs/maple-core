@@ -9,6 +9,7 @@ import "./interfaces/IFundingLockerFactory.sol";
 import "./interfaces/ICollateralLocker.sol";
 import "./interfaces/ICollateralLockerFactory.sol";
 import "./interfaces/IERC20Details.sol";
+import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/IPremiumCalc.sol";
@@ -23,8 +24,7 @@ contract Loan is FDT {
     enum State { Live, Active, Matured }  // Live = Created, Active = Drawndown
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
-    
-    IGlobals      public immutable globals;          // Maple Globals
+
     IERC20Details public immutable loanAsset;        // Asset deposited by lenders into the FundingLocker, when funding this loan.
     IERC20Details public immutable collateralAsset;  // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
 
@@ -88,7 +88,6 @@ contract Loan is FDT {
         @param  _collateralAsset The asset provided as collateral by _borrower.
         @param  _flFactory       Factory to instantiate FundingLocker with.
         @param  _clFactory       Factory to instantiate CollateralLocker with.
-        @param  _globals         The MapleGlobals contract.
         @param  specs            Contains specifications for this loan.
                 specs[0] = apr
                 specs[1] = termDays
@@ -107,7 +106,6 @@ contract Loan is FDT {
         address _collateralAsset,
         address _flFactory,
         address _clFactory,
-        address _globals,
         uint256[6] memory specs,
         address[3] memory calcs,
         string memory tUUID
@@ -124,12 +122,13 @@ contract Loan is FDT {
         collateralAsset = IERC20Details(_collateralAsset);
         flFactory       = _flFactory;
         clFactory       = _clFactory;
-        globals         = IGlobals(_globals);
         createdAt       = block.timestamp;
 
+        IGlobals globals = _globals(msg.sender);
+
         // Perform validity cross-checks.
-        require(IGlobals(_globals).isValidLoanAsset(_loanAsset),             "Loan:INVALID_LOAN_ASSET");
-        require(IGlobals(_globals).isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
+        require(globals.isValidLoanAsset(_loanAsset),             "Loan:INVALID_LOAN_ASSET");
+        require(globals.isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
 
         require(specs[2] != 0,               "Loan:PAYMENT_INTERVAL_DAYS_EQ_ZERO");
         require(specs[1].mod(specs[2]) == 0, "Loan:INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION");
@@ -155,6 +154,10 @@ contract Loan is FDT {
         fundingLocker    = IFundingLockerFactory(_flFactory).newLocker(_loanAsset);
     }
 
+    function _globals(address loanFactory) internal view returns(IGlobals) {
+        return IGlobals(ILoanFactory(loanFactory).globals());
+    }
+
     /**
         @dev Fund this loan and mint debt tokens for mintTo.
         @param  amt    Amount to fund the loan.
@@ -177,6 +180,8 @@ contract Loan is FDT {
         @param  amt Amount of loanAsset borrower draws down, remainder is returned to Loan.
     */
     function drawdown(uint256 amt) external isState(State.Live) isBorrower {
+
+        IGlobals globals = _globals(superFactory);
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
 
@@ -270,6 +275,9 @@ contract Loan is FDT {
                 [3] = Payment Due Date
     */
     function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
+
+        IGlobals globals = _globals(superFactory);
+
         (
             uint256 total, 
             uint256 principal, 
@@ -345,6 +353,8 @@ contract Loan is FDT {
         @return The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
     */
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
+
+        IGlobals globals = _globals(superFactory);
 
         uint256 wad = _toWad(amt);  // Convert to WAD precision.
 
