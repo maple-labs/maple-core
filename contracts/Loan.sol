@@ -21,7 +21,7 @@ contract Loan is FDT {
     using SignedSafeMath  for int256;
     using SafeMath       for uint256;
 
-    enum State { Live, Active, Matured }  // Live = Created, Active = Drawndown
+    enum State { Live, Active, Matured, Liquidated }  // Live = Created, Active = Drawndown
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
 
@@ -57,6 +57,8 @@ contract Loan is FDT {
     uint256 public interestPaid;
     uint256 public feePaid;
     uint256 public excessReturned;
+    uint256 public liquidationShortfall;
+    uint256 public liquidationExcess;
 
     modifier isState(State _state) {
         require(loanState == _state, "Loan:STATE_CHECK");
@@ -79,6 +81,12 @@ contract Loan is FDT {
         uint principalOwed,
         uint nextPaymentDue,
         bool latePayment
+    );
+    event Liquidation(
+        uint collateralSwapped,
+        uint loanAssetReturned,
+        uint liquidationExcess,
+        uint liquidationShortfall
     );
 
     /**
@@ -228,43 +236,77 @@ contract Loan is FDT {
         emit Drawdown(amt);
     }
 
-    /**
-        @dev Make the next payment for this loan.
-    */
-    function makePayment() public isState(State.Active) {
-        (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
+    // Internal handling of a default.
+    function _triggerDefault() internal {
+        // 1) Swap collateral on 1inch for loanAsset, deposit into this contract.
 
-        require(loanAsset.transferFrom(msg.sender, address(this), total), "Loan:MAKE_PAYMENT_TRANSFER_FROM");
+        // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
 
-        // Update internal accounting variables.
-        principalOwed  = principalOwed.sub(principal);
-        principalPaid  = principalPaid.add(principal);
-        interestPaid   = interestPaid.add(interest);
-        nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
-        paymentsRemaining--;
+        //  2a) If principal owed == 0 after settlement ... send excess loanAsset to Borrower.
+        //  2b) If principal owed >  0 after settlement ... all loanAsset remains in Loan.
+        //      ... update two accounting variables liquidationShortfall, liquidationExcess as appropriate.
 
-        emit PaymentMade(
-            total, 
-            principal, 
-            interest, 
-            paymentsRemaining, 
-            principalOwed, 
-            paymentsRemaining > 0 ? nextPaymentDue : 0, 
-            false
-        );
-
-        // Handle final payment.
-        // TODO: Identify any other variables worth resetting on final payment.
-        if (paymentsRemaining == 0) {
-            loanState = State.Matured;
-            nextPaymentDue = 0;
-            require(ICollateralLocker(collateralLocker).pull(borrower, collateralAsset.balanceOf(collateralLocker)), "Loan:COLLATERAL_PULL");
-            emit BalanceUpdated(collateralLocker, address(collateralAsset), collateralAsset.balanceOf(collateralLocker));
-        }
-
+        // 3) Call updateFundsReceived() to snapshot current equity-holders payout.
         updateFundsReceived();
 
-        emit BalanceUpdated(address(this), address(loanAsset),  loanAsset.balanceOf(address(this)));
+        // 4) Transition loanState to Liquidated.
+        loanState = State.Liquidated;
+
+        // 5) Emit liquidation event.
+        emit Liquidation(
+            0,  // collateralSwapped
+            0,  // loanAssetReturned
+            0,  // liquidationExcess
+            0   // liquidationShortfall
+        );
+    }
+
+    /**
+        @dev Make the next payment for this loan.
+             TODO: Add reenetrancy guard to makePayment() for security in _triggerDefault() txs.
+    */
+    function makePayment() public isState(State.Active) {
+
+        // Trigger a default and liquidate all the Borrower's collateral on 1inch if the payment is late.
+        if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
+            _triggerDefault();
+        }
+
+        else {
+            (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
+
+            require(loanAsset.transferFrom(msg.sender, address(this), total), "Loan:MAKE_PAYMENT_TRANSFER_FROM");
+
+            // Update internal accounting variables.
+            principalOwed  = principalOwed.sub(principal);
+            principalPaid  = principalPaid.add(principal);
+            interestPaid   = interestPaid.add(interest);
+            nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
+            paymentsRemaining--;
+
+            emit PaymentMade(
+                total, 
+                principal, 
+                interest, 
+                paymentsRemaining, 
+                principalOwed, 
+                paymentsRemaining > 0 ? nextPaymentDue : 0, 
+                false
+            );
+
+            // Handle final payment.
+            // TODO: Identify any other variables worth resetting on final payment.
+            if (paymentsRemaining == 0) {
+                loanState = State.Matured;
+                nextPaymentDue = 0;
+                require(ICollateralLocker(collateralLocker).pull(borrower, collateralAsset.balanceOf(collateralLocker)), "Loan:COLLATERAL_PULL");
+                emit BalanceUpdated(collateralLocker, address(collateralAsset), collateralAsset.balanceOf(collateralLocker));
+            }
+
+            updateFundsReceived();
+
+            emit BalanceUpdated(address(this), address(loanAsset),  loanAsset.balanceOf(address(this)));
+        }
     }
 
     /**
@@ -294,11 +336,6 @@ contract Loan is FDT {
             total     = total.add(totalExtra);
             interest  = interest.add(interestExtra);
             principal = principal.add(principalExtra);
-        } 
-        else if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
-            // TODO: Implement handling a default scenario.
-            // TODO: Implement handling Pool Delegate (investor) early grace period default trigger.
-            // TODO: Implement handling public grace period default trigger.
         }
         
         return (total, principal, interest, nextPaymentDue);
@@ -308,31 +345,38 @@ contract Loan is FDT {
         @dev Make the full payment for this loan, a.k.a. "calling" the loan.
     */
     function makeFullPayment() public isState(State.Active) {
-        (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
 
-        require(loanAsset.transferFrom(msg.sender, address(this), total),"Loan:MAKE_FULL_PAYMENT_TRANSFER_FROM");
+        // Trigger a default and liquidate all the Borrower's collateral on 1inch if the payment is late.
+        if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
+            _triggerDefault();
+        }
+        else {
+            (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
 
-        loanState = State.Matured;
+            require(loanAsset.transferFrom(msg.sender, address(this), total),"Loan:MAKE_FULL_PAYMENT_TRANSFER_FROM");
 
-        // Update internal accounting variables.
-        // TODO: Identify any other variables worth resetting on full payment.
-        principalOwed     = 0;
-        paymentsRemaining = 0;
-        principalPaid     = principalPaid.add(principal);
-        interestPaid      = interestPaid.add(interest);
+            loanState = State.Matured;
 
-        updateFundsReceived();
+            // Update internal accounting variables.
+            // TODO: Identify any other variables worth resetting on full payment.
+            principalOwed     = 0;
+            paymentsRemaining = 0;
+            principalPaid     = principalPaid.add(principal);
+            interestPaid      = interestPaid.add(interest);
 
-        emit PaymentMade(
-            total,
-            principal,
-            interest,
-            paymentsRemaining,
-            principalOwed,
-            0,
-            false
-        );
-        emit BalanceUpdated(address(this), address(loanAsset),  loanAsset.balanceOf(address(this)));
+            updateFundsReceived();
+
+            emit PaymentMade(
+                total,
+                principal,
+                interest,
+                paymentsRemaining,
+                principalOwed,
+                0,
+                false
+            );
+            emit BalanceUpdated(address(this), address(loanAsset),  loanAsset.balanceOf(address(this)));
+        }
     }
 
     /**
