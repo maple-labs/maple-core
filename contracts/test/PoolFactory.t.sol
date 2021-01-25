@@ -137,11 +137,6 @@ contract PoolFactoryTest is TestUtil {
 
         gov.setValidPoolFactory(address(poolFactory), true);
 
-        // PoolFactory:INVALID_POOL_FACTORY
-        gov.setValidPoolFactory(address(poolFactory), false);
-        assertTrue(createPoolFails());                                   
-        gov.setValidPoolFactory(address(poolFactory), true);
-
         // PoolFactory:INVALID_LL_FACTORY
         gov.setValidSubFactory(address(poolFactory), address(llFactory), false);
         assertTrue(createPoolFails());                                                      

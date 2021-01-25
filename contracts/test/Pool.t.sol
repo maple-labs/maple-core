@@ -340,7 +340,7 @@ contract PoolTest is TestUtil {
         loan3 = hal.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
 
-    function test_getStakeInfo() public {
+    function test_getInitialStakeRequirements() public {
         uint256 minCover; uint256 minCover2; uint256 curCover;
         uint256 minStake; uint256 minStake2; uint256 curStake;
         uint256 calc_minStake; uint256 calc_stakerBal;
@@ -357,7 +357,7 @@ contract PoolTest is TestUtil {
         assertEq(bPool.balanceOf(stakeLocker),                         0);  // Nothing staked
         assertEq(IERC20(stakeLocker).balanceOf(address(sid)),          0);  // Nothing staked
 
-        (minCover, curCover, covered, minStake, curStake) = pool1.getStakeInfo();
+        (minCover, curCover, covered, minStake, curStake) = pool1.getInitialStakeRequirements();
 
         (calc_minStake, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(sid), stakeLocker, minCover);
 
@@ -378,7 +378,7 @@ contract PoolTest is TestUtil {
         assertEq(bPool.balanceOf(stakeLocker),                             minStake - 1);   // minStake - 1 BPTs staked
         assertEq(IERC20(stakeLocker).balanceOf(address(sid)),              minStake - 1);   // PD has minStake - 1 SL tokens
 
-        (minCover2, curCover, covered, minStake2, curStake) = pool1.getStakeInfo();
+        (minCover2, curCover, covered, minStake2, curStake) = pool1.getInitialStakeRequirements();
 
         (, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(sid), stakeLocker, minCover);
 
@@ -399,7 +399,7 @@ contract PoolTest is TestUtil {
         assertEq(bPool.balanceOf(stakeLocker),                            minStake);  // minStake BPTs staked
         assertEq(IERC20(stakeLocker).balanceOf(address(sid)),             minStake);  // PD has minStake SL tokens
 
-        (minCover2, curCover, covered, minStake2, curStake) = pool1.getStakeInfo();
+        (minCover2, curCover, covered, minStake2, curStake) = pool1.getInitialStakeRequirements();
 
         (, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(sid), stakeLocker, minCover);
 
@@ -427,7 +427,7 @@ contract PoolTest is TestUtil {
         /***************************************/
         /*** Stake Less than Required Amount ***/
         /***************************************/
-        (,,, uint256 minStake,) = pool1.getStakeInfo();
+        (,,, uint256 minStake,) = pool1.getInitialStakeRequirements();
         sid.stake(pool1.stakeLocker(), minStake - 1);
 
         // Post-state checks.

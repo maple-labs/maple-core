@@ -24,7 +24,7 @@ contract CalcBPool {
     }
 
     /// @dev Calculates the value of BPT in units of _liquidityAssetContract in 'wei' (decimals) for this token.
-    // TODO: Do we need this?
+    // TODO: Identify use and add NatSpec later.
     function BPTVal(
         address _pool,
         address _pair,

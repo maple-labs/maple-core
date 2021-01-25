@@ -229,7 +229,7 @@ contract Pool is FDT, CalcBPool {
         require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");  // Transfer the principal amount - totPenalty.
 
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
-        if(totalSupply() > 0) updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
+        updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
 
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
