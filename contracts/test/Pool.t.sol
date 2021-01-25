@@ -10,6 +10,7 @@ import "../mocks/token.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IPool.sol";
 import "../interfaces/IPoolFactory.sol";
+import "../interfaces/IERC20Details.sol";
 
 import "../BulletRepaymentCalc.sol";
 import "../LateFeeCalc.sol";
@@ -1448,13 +1449,18 @@ contract PoolTest is TestUtil {
     }
 
     function test_deactivate() public {
+
         setUpWithdraw();
 
+        address liquidityAsset = address(pool1.liquidityAsset());
+        uint liquidityAssetDecimals = IERC20Details(liquidityAsset).decimals();
+
         // Pre-state checks.
-        assertTrue(pool1.principalOut() <= 1000 * 10 ** pool1.liquidityAssetDecimals());
+        // assertTrue(pool1.principalOut() <= 1000 * 10 ** liquidityAssetDecimals);
 
         sid.deactivate(address(pool1), 86);
 
         // Post-state checks.
+        assertEq(int(pool1.poolState()), 2);
     }
 }
