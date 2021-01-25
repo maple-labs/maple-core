@@ -116,7 +116,7 @@ contract Pool is FDT, CalcBPool {
     }
 
     modifier isState(State _state) {
-        require(poolState == _state, "Pool: ERR_FAIL_STATE_CHECK");
+        require(poolState == _state, "Pool:STATE_CHECK");
         _;
     }
 
@@ -315,7 +315,7 @@ contract Pool is FDT, CalcBPool {
         @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
     */
     function deactivate(uint confirmation) external isState(State.Finalized) isDelegate {
-        require(confirmation == 86, "Pool::INVALID_CONFIRMATION");
+        require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
         require(principalOut <= 100 * 10 ** liquidityAssetDecimals);
         poolState = State.Deactivated;
     }

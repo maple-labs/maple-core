@@ -1482,4 +1482,61 @@ contract PoolTest is TestUtil {
         assertTrue(!sid.try_deactivate(pool1));
 
     }
+
+    function test_deactivate_fail() public {
+
+        /*******************************/
+        /*** Finalize liquidity pool ***/
+        /*******************************/
+        {
+            sid.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
+            sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+
+            sid.finalize(address(pool1));
+        }
+        /**************************************************/
+        /*** Mint and deposit funds into liquidity pool ***/
+        /**************************************************/
+        {
+            mint("USDC", address(bob), 1_000_000_000 * USD);
+            mint("USDC", address(che), 1_000_000_000 * USD);
+            mint("USDC", address(dan), 1_000_000_000 * USD);
+
+            bob.approve(USDC, address(pool1), MAX_UINT);
+            che.approve(USDC, address(pool1), MAX_UINT);
+            dan.approve(USDC, address(pool1), MAX_UINT);
+
+            assertTrue(bob.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
+            assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
+            assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
+
+            globals.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
+        }
+
+        address fundingLocker  = loan.fundingLocker();
+        address fundingLocker2 = loan2.fundingLocker();
+
+        /************************************/
+        /*** Fund loan / loan2 (Excess) ***/
+        /************************************/
+        {
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
+
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
+        }
+
+        address liquidityAsset = address(pool1.liquidityAsset());
+        uint liquidityAssetDecimals = IERC20Details(liquidityAsset).decimals();
+
+        // Pre-state checks.
+        assertTrue(pool1.principalOut() >= 100 * 10 ** liquidityAssetDecimals);
+        assertTrue(!sid.try_deactivate(pool1));
+
+    }
 }
