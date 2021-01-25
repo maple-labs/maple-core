@@ -140,54 +140,6 @@ contract LoanTest is TestUtil {
         mint("USDC", address(ali),  500 * USD);
     }
 
-    function test_createLoan() public {
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
-        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
-
-        // Can't create a loan with DAI since stakingAsset uses USDC.
-        assertTrue(!ali.try_createLoan(address(loanFactory), DAI, WETH, address(flFactory), address(clFactory), specs, calcs));
-
-        Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-    
-        assertEq(address(loan.loanAsset()),        USDC);
-        assertEq(address(loan.collateralAsset()),  WETH);
-        assertEq(loan.flFactory(),                 address(flFactory));
-        assertEq(loan.clFactory(),                 address(clFactory));
-        assertEq(loan.borrower(),                  address(ali));
-        assertEq(loan.createdAt(),                 block.timestamp);
-        assertEq(loan.apr(),                       specs[0]);
-        assertEq(loan.termDays(),                  specs[1]);
-        assertEq(loan.paymentsRemaining(),         specs[1] / specs[2]);
-        assertEq(loan.paymentIntervalSeconds(),    specs[2] * 1 days);
-        assertEq(loan.minRaise(),                  specs[3]);
-        assertEq(loan.collateralRatio(),           specs[4]);
-        assertEq(loan.fundingPeriodSeconds(),      specs[5] * 1 days);
-        assertEq(loan.repaymentCalc(),             address(bulletCalc));
-        assertEq(loan.lateFeeCalc(),               address(lateFeeCalc));
-        assertEq(loan.premiumCalc(),               address(premiumCalc));
-        assertEq(loan.nextPaymentDue(),            block.timestamp + loan.paymentIntervalSeconds());
-    }
-
-    function test_fundLoan() public {
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
-        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
-
-        Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-        address fundingLocker = loan.fundingLocker();
-
-        bob.approve(USDC, address(loan), 5000 * USD);
-    
-        assertEq(IERC20(loan).balanceOf(address(ali)),                    0);
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),          0);
-        assertEq(IERC20(USDC).balanceOf(address(bob)),           5000 * USD);
-
-        bob.fundLoan(loan, 5000 * USD, address(ali));
-
-        assertEq(IERC20(loan).balanceOf(address(ali)),           5000 ether);
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 5000 * USD);
-        assertEq(IERC20(USDC).balanceOf(address(bob)),                    0);
-    }
-
     function createAndFundLoan(address _interestStructure) internal returns (Loan loan) {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
@@ -201,11 +153,28 @@ contract LoanTest is TestUtil {
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
     }
 
-    function test_liquidations() public {
+    function test_liquidation() public {
 
         Loan loan = createAndFundLoan(address(bulletCalc));
 
-        // TODO: Implement a liquidation test here.
+        // Fetch time variables.
+        uint256 start = block.timestamp;
+        uint256 nextPaymentDue = loan.nextPaymentDue();
+        uint256 gracePeriod = globals.gracePeriod();
+
+        // Warp to late payment..
+        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+
+        // Pre-state checks.
+        assertEq(uint256(loan.loanState()), 1);
+
+        // Trigger default.
+        assertTrue(ali.try_makePayment(address(loan))); // makePayment() currently triggers default if late
+
+        // Post-state checks.
+        assertEq(uint256(loan.loanState()), 3);
+        
+
 
     }
 
