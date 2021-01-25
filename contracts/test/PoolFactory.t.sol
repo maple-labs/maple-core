@@ -110,8 +110,8 @@ contract PoolFactoryTest is TestUtil {
         assertEq(address(poolFactory.globals()), address(globals2));                   // Globals is updated
     }
         
-    function assertCreatePoolFails() internal {
-        assertTrue(!ali.try_createPool(
+    function createPoolFails() internal returns(bool) {
+        return !ali.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
@@ -244,22 +244,6 @@ contract PoolFactoryTest is TestUtil {
 
     // Tests failure mode in createStakeLocker
     function test_createPool_createStakeLocker_bPool_not_finalized() public {
-        gov.setPoolDelegateWhitelist(address(ali), true);
-        
-        // Pool:INVALID_BALANCER_POOL
-        assertTrue(!ali.try_createPool(
-            address(poolFactory),
-            USDC,
-            address(bPool),
-            address(slFactory),
-            address(llFactory),
-            500,
-            100
-        ));
-    }
-
-    function test_createPool_no_whitelist() public {
-        bPool.finalize();
         setUpWhitelisting();
         
         // Pool:INVALID_BALANCER_POOL
@@ -307,7 +291,6 @@ contract PoolFactoryTest is TestUtil {
         assertEq(address(pool.liquidityAsset()),  USDC);
         assertEq(pool.stakeAsset(),               address(bPool));
         assertEq(pool.slFactory(),                address(slFactory));
-        assertEq(address(pool.globals()),         address(globals));
         assertEq(pool.poolDelegate(),             address(ali));
         assertEq(pool.stakingFee(),               500);
         assertEq(pool.delegateFee(),              100);

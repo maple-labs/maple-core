@@ -446,11 +446,12 @@ contract PoolTest is TestUtil {
         assertEq(bPool.balanceOf(address(sid)),                50 * WAD - minStake);  // PD staked minStake
         assertEq(bPool.balanceOf(stakeLocker),                            minStake);  // minStake BPTs staked
         assertEq(IERC20(stakeLocker).balanceOf(address(sid)),             minStake);  // PD has minStake SL tokens
+        assertEq(uint256(pool1.poolState()), 0);  // Initialized
 
         assertTrue(!joe.try_finalize(address(pool1)));  // Can't finalize if not PD
         assertTrue( sid.try_finalize(address(pool1)));  // PD that staked can finalize
 
-        assertTrue(pool1.isFinalized());
+        assertEq(uint256(pool1.poolState()), 1);  // Finalized
     }
 
     function test_deposit() public {
