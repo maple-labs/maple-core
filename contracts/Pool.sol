@@ -143,8 +143,6 @@ contract Pool is FDT, CalcBPool {
     function finalize() public isDelegate isState(State.Initialized) {
         (,, bool stakePresent,,) = getInitialStakeRequirements();
         require(stakePresent, "Pool:NOT_ENOUGH_STAKE_TO_FINALIZE");
-        // isFinalized = true;
-        // IStakeLocker(stakeLocker).finalizeLP();
         poolState = State.Finalized;
     }
 

@@ -293,8 +293,8 @@ describe("Cycle of an entire loan", function () {
     await Pool_PoolDelegate.finalize();
 
     // Confirm pool is finalized.
-    let finalized = await Pool_PoolDelegate.isFinalized();
-    expect(finalized);
+    let poolState = await Pool_PoolDelegate.poolState();
+    expect(poolState).to.equals(1);
   });
 
   it("(L1) Borrower creating a loan", async function () {
