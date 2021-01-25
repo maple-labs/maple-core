@@ -76,6 +76,11 @@ contract PoolDelegate {
         IPool(pool).finalize();
     }
 
+    function try_deactivate(Pool pool) external returns(bool ok) {
+        string memory sig = "deactivate()";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig));
+    }
+
     function deactivate(address pool, uint confirmation) external {
         IPool(pool).deactivate(confirmation);
     }
@@ -1456,11 +1461,25 @@ contract PoolTest is TestUtil {
         uint liquidityAssetDecimals = IERC20Details(liquidityAsset).decimals();
 
         // Pre-state checks.
-        // assertTrue(pool1.principalOut() <= 1000 * 10 ** liquidityAssetDecimals);
+        assertTrue(pool1.principalOut() <= 100 * 10 ** liquidityAssetDecimals);
 
         sid.deactivate(address(pool1), 86);
 
         // Post-state checks.
         assertEq(int(pool1.poolState()), 2);
+
+        // Deactivation should block the following functionality:
+
+        // deposit()
+        mint("USDC", address(bob), 1_000_000_000 * USD);
+        bob.approve(USDC, address(pool1), uint(-1));
+        assertTrue(!bob.try_deposit(address(pool1), 100_000_000 * USD));
+
+        // fundLoan()
+        assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 1));
+
+        // deactivate()
+        assertTrue(!sid.try_deactivate(pool1));
+
     }
 }

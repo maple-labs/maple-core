@@ -319,6 +319,7 @@ contract Pool is FDT, CalcBPool {
     function deactivate(uint confirmation) external isState(State.Finalized) isDelegate {
         require(confirmation == 86, "Pool::INVALID_CONFIRMATION");
         require(principalOut <= 100 * 10 ** liquidityAssetDecimals);
+        poolState = State.Deactivated;
     }
 
     /** 
