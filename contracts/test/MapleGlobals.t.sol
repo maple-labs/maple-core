@@ -212,10 +212,10 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.governor(), address(sid));
 
         assertEq(globals.extendedGracePeriod(), 10 days);
-        // Fail to set the extendedGracePeriod (aka EGP) because msg.sender != delegate.
+        // Fail to set the extendedGracePeriod (aka EGP) because msg.sender != governor.
         assertTrue(!joe.try_setExtendedGracePeriod(address(globals), 20 days));
 
-        // Successfully set the EGP with right delegate.
+        // Successfully set the EGP with right governor.
         assertTrue(sid.try_setExtendedGracePeriod(address(globals), 20 days));
         assertEq(globals.extendedGracePeriod(), 20 days);
     }
