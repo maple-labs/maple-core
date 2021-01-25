@@ -21,7 +21,13 @@ import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
 import "../BulletRepaymentCalc.sol";
 
-contract PoolDelegate { }
+contract PoolDelegate { 
+
+    function try_setExtendedGracePeriod(address globals, uint256 newEGP) external returns(bool ok) {
+        string memory sig = "setExtendedGracePeriod(uint256)";
+        (ok,) = globals.call(abi.encodeWithSignature(sig, newEGP));
+    }
+}
 
 contract MapleGlobalsTest is TestUtil {
 
@@ -204,6 +210,14 @@ contract MapleGlobalsTest is TestUtil {
 
         globals.setGovernor(address(sid));
         assertEq(globals.governor(), address(sid));
+
+        assertEq(globals.extendedGracePeriod(), 5 days);
+        // Fail to set the extendedGracePeriod (aka EGP) because msg.sender != governor.
+        assertTrue(!joe.try_setExtendedGracePeriod(address(globals), 20 days));
+
+        // Successfully set the EGP with right governor.
+        assertTrue(sid.try_setExtendedGracePeriod(address(globals), 20 days));
+        assertEq(globals.extendedGracePeriod(), 20 days);
     }
 
 }
