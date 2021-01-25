@@ -13,13 +13,14 @@ import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/IPremiumCalc.sol";
+import "./interfaces/I1Inch.sol";
 
 /// @title Loan is the core loan vault contract.
 contract Loan is FDT {
     
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
-    using SafeMath       for uint256;
+    using SafeMath        for uint256;
 
     enum State { Live, Active, Matured, Liquidated }  // Live = Created, Active = Drawndown
 
@@ -236,9 +237,34 @@ contract Loan is FDT {
         emit Drawdown(amt);
     }
 
+    uint public amountReceivable;
+    uint public amountReceived;
+
     // Internal handling of a default.
     function _triggerDefault() internal {
+        
         // 1) Swap collateral on 1inch for loanAsset, deposit into this contract.
+
+        // Test ... amount of loanAsset receivable for swapping collateralAsset.
+        IOneSplit dex = IOneSplit(globals.OneInchDEX());
+        uint256[] memory distribution;
+
+        (amountReceivable, distribution) = dex.getExpectedReturn(
+            IERC20(collateralAsset),
+            IERC20(loanAsset),
+            collateralAsset.balanceOf(collateralLocker),
+            1,
+            0
+        );
+
+        amountReceived = dex.swap(
+            IERC20(collateralAsset),
+            IERC20(loanAsset),
+            collateralAsset.balanceOf(collateralLocker),
+            amountReceivable.mul(99).div(100), // We can modify slippage here. This represents 1%.
+            distribution,
+            0
+        );
 
         // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
 

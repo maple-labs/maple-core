@@ -16,7 +16,9 @@ import "../MapleGlobals.sol";
 import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
 import "../LoanFactory.sol";
+
 import "../interfaces/IERC20Details.sol";
+import "../interfaces/I1Inch.sol";
 
 contract Borrower {
     function try_drawdown(address loan, uint256 amt) external returns (bool ok) {
@@ -101,6 +103,7 @@ contract LoanTest is TestUtil {
     Borrower                         ali;
     Lender                           bob;
     Treasury                         trs;
+    IOneSplit                        dex;
 
     function setUp() public {
 
@@ -114,6 +117,7 @@ contract LoanTest is TestUtil {
         lateFeeCalc = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc = new PremiumCalc(500); // Flat 5% premium
         loanFactory = new LoanFactory(address(globals));
+        dex         = IOneSplit(ONE_INCH_DEX);
 
         ethOracle.poke(500 ether);  // Set ETH price to $500
         usdcOracle.poke(1 ether);   // Set USDC price to $1
@@ -155,7 +159,7 @@ contract LoanTest is TestUtil {
 
     function test_liquidation() public {
 
-        Loan loan = createAndFundLoan(address(bulletCalc));
+        Loan loan  = createAndFundLoan(address(bulletCalc));
 
         // Fetch time variables.
         uint256 start = block.timestamp;
@@ -173,8 +177,8 @@ contract LoanTest is TestUtil {
 
         // Post-state checks.
         assertEq(uint256(loan.loanState()), 3);
-        
-
+        assertEq(loan.amountReceivable(), 0);
+        assertEq(loan.amountReceived(), 0);
 
     }
 

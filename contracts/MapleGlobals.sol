@@ -8,7 +8,8 @@ import "./interfaces/ISubFactory.sol";
 
 contract MapleGlobals {
     
-    address immutable public BFactory;   // Official balancer pool factory.
+    address immutable public BFactory;    // Official balancer pool factory.
+    address immutable public OneInchDEX;  // Official 1Inch DEX.
 
     address public governor;             // Governor is responsible for management of global Maple variables
     address public mpl;                  // Maple Token is the ERC-2222 token for the Maple protocol
@@ -63,6 +64,7 @@ contract MapleGlobals {
         investorFee         = 50;
         treasuryFee         = 50;
         BFactory            = _bFactory;
+        OneInchDEX          = 0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E;
     }
 
     /**
