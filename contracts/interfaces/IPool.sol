@@ -19,4 +19,6 @@ interface IPool {
     function setPrincipalPenalty(uint256) external;
 
     function fundLoan(address, address, uint256) external;
+
+    function finalize() external;
 }
