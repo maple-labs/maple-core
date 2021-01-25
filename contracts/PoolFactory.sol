@@ -35,16 +35,12 @@ contract PoolFactory {
         globals = IGlobals(_globals);
     }
 
-    modifier isGovernor() {
-        require(msg.sender == globals.governor(), "Loan:MSG_SENDER_NOT_GOVERNOR");
-        _;
-    }
-
     /**
         @dev Update the maple globals contract
         @param  newGlobals Address of new maple globals contract
     */
-    function setGlobals(address newGlobals) external isGovernor {
+    function setGlobals(address newGlobals) external {
+        require(msg.sender == globals.governor(), "Loan:MSG_SENDER_NOT_GOVERNOR");
         globals = IGlobals(newGlobals);
     }
 
