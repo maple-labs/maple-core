@@ -5,7 +5,7 @@ require("solidity-coverage");
 const defaultNetwork = process.env.NETWORK || "localhost";
 
 const KALEIDO_URL = process.env.MAPLE_KALEIDO_URL || "";
-const KALEIDO_MNEMONIC = process.env.MAPLE_MNEMONIC || "";
+const KALEIDO_MNEMONIC = process.env.MAPLE_KALEIDO_MNEMONIC || "";
 
 const KOVAN_NODE_URL = process.env.KOVAN_NODE_URL || "";
 const KOVAN_MNEMONIC = process.env.KOVAN_MNEMONIC || "";
