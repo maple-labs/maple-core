@@ -14,7 +14,6 @@ import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/IPremiumCalc.sol";
 import "./interfaces/IOneSplit.sol";
-import "./interfaces/IOneRouterView.sol";
 
 
 /// @title Loan is the core loan vault contract.
@@ -60,6 +59,7 @@ contract Loan is FDT {
     uint256 public interestPaid;
     uint256 public feePaid;
     uint256 public excessReturned;
+    uint256 public liquidatedAmt;
     uint256 public liquidationShortfall;
     uint256 public liquidationExcess;
 
@@ -247,11 +247,7 @@ contract Loan is FDT {
     function triggerDefault() public {
         
         // 1) Swap collateral on 1inch for loanAsset, deposit into this contract.
-
-        address ONE_INCH_DEX_BETA = 0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e; 
-
-        IOneSplit dex = IOneSplit(_globals().ONE_INCH_DEX_BETA());
-        uint256[] memory distribution;
+        IOneSplit dex = IOneSplit(_globals(superFactory).ONE_INCH_DEX_BETA());
 
         uint256 liquidationAmt = collateralAsset.balanceOf(collateralLocker);
 
@@ -259,7 +255,7 @@ contract Loan is FDT {
 
         collateralAsset.approve(address(dex), liquidationAmt);
         
-        (amountReceivable, distribution) = dex.getExpectedReturn(
+        (uint256 amountReceivable, uint256[] memory  distribution) = dex.getExpectedReturn(
             IERC20(collateralAsset),
             IERC20(loanAsset),
             liquidationAmt,
@@ -267,7 +263,7 @@ contract Loan is FDT {
             0
         );
 
-        (amountReceivable, estimateGasAmount, distribution) = dex.getExpectedReturnWithGas(
+        (amountReceivable,, distribution) = dex.getExpectedReturnWithGas(
             IERC20(collateralAsset),
             IERC20(loanAsset),
             liquidationAmt,
@@ -276,7 +272,8 @@ contract Loan is FDT {
             amountReceivable * 70000000000
         );
 
-        amountReceived = dex.swap(
+        uint256 prevBal = loanAsset.balanceOf(address(this));
+        dex.swap(
             IERC20(collateralAsset),
             IERC20(loanAsset),
             liquidationAmt,
@@ -284,20 +281,23 @@ contract Loan is FDT {
             distribution,
             0
         );
+        // TODO: amountReceived wasn't returning anything, even though balance was increasing
+        //       Investigate overriding updateFundsReceived to store liquidationAmt
+        liquidationAmt = loanAsset.balanceOf(address(this)).sub(prevBal);
 
-        // // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
+        // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
 
-        // //  2a) If principal owed == 0 after settlement ... send excess loanAsset to Borrower.
-        // //  2b) If principal owed >  0 after settlement ... all loanAsset remains in Loan.
-        // //      ... update two accounting variables liquidationShortfall, liquidationExcess as appropriate.
+        //  2a) If principal owed == 0 after settlement ... send excess loanAsset to Borrower.
+        //  2b) If principal owed >  0 after settlement ... all loanAsset remains in Loan.
+        //      ... update two accounting variables liquidationShortfall, liquidationExcess as appropriate.
 
-        // // 3) Call updateFundsReceived() to snapshot current equity-holders payout.
-        // updateFundsReceived();
+        // 3) Call updateFundsReceived() to snapshot current equity-holders payout.
+        updateFundsReceived();
 
-        // // 4) Transition loanState to Liquidated.
-        // loanState = State.Liquidated;
+        // 4) Transition loanState to Liquidated.
+        loanState = State.Liquidated;
 
-        // // 5) Emit liquidation event.
+        // 5) Emit liquidation event.
         // emit Liquidation(
         //     0,  // collateralSwapped
         //     0,  // loanAssetReturned

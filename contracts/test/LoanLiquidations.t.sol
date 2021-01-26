@@ -163,20 +163,17 @@ contract LoanTest is TestUtil {
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
     }
 
-    function test_liquidation() public {
+    function test_basic_liquidation() public {
 
         Loan loan = createAndFundLoan(address(bulletCalc));
 
         uint256 beforeBal = IERC20(USDC).balanceOf(address(loan));
 
-        assertEq(beforeBal, 1);
-        loan.triggerDefaultDirect();
+        assertEq(uint256(loan.loanState()), 1);
 
-        // Post-state checks.
+        loan.triggerDefault();
         
-        assertEq(uint256(loan.loanState()), 2);
-        assertEq(loan.amountReceivable(), 3);
-        assertEq(loan.amountReceived(), 4);
-        assertEq(IERC20(USDC).balanceOf(address(loan)) - beforeBal, 5);
+        assertEq(uint256(loan.loanState()), 3);
+        withinPrecision(IERC20(USDC).balanceOf(address(loan)) - beforeBal, loan.drawdownAmount() * loan.collateralRatio() / 10_000, 1);
     }
 }
