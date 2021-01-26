@@ -11,6 +11,8 @@ contract MapleGlobals {
     address immutable public BFactory;    // Official balancer pool factory.
     address immutable public OneInchDEX;  // Official 1Inch DEX.
 
+    address constant public ONE_INCH_DEX_BETA = 0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e; 
+
     address public governor;             // Governor is responsible for management of global Maple variables
     address public mpl;                  // Maple Token is the ERC-2222 token for the Maple protocol
     address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution

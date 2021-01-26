@@ -125,7 +125,7 @@ contract LoanTest is TestUtil {
         loanFactory = new LoanFactory(address(globals));
         dex         = IOneSplit(ONE_INCH_DEX_ROUTER);
 
-        ethOracle.poke(1377.61 ether);  // Set ETH price to $1377.61 TODO: Use chainlink in tests
+        ethOracle.poke(1334.61 ether);  // Set ETH price to $1377.61 TODO: Use chainlink in tests
         usdcOracle.poke(1 ether);   // Set USDC price to $1
 
         globals.setCalc(address(bulletCalc),         true);
@@ -167,13 +167,16 @@ contract LoanTest is TestUtil {
 
         Loan loan = createAndFundLoan(address(bulletCalc));
 
-        loan.triggerDefault();
+        uint256 beforeBal = IERC20(USDC).balanceOf(address(loan));
+
+        assertEq(beforeBal, 1);
+        loan.triggerDefaultDirect();
 
         // Post-state checks.
-        assertEq(uint256(loan.loanState()), 3);
-        assertEq(loan.amountReceivable(), 1);
-        assertEq(loan.amountReceived(), 2);
-
+        
+        assertEq(uint256(loan.loanState()), 2);
+        assertEq(loan.amountReceivable(), 3);
+        assertEq(loan.amountReceived(), 4);
+        assertEq(IERC20(USDC).balanceOf(address(loan)) - beforeBal, 5);
     }
-
 }
