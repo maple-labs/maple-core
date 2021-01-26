@@ -1,28 +1,28 @@
-require("dotenv").config({ path: "../../.env" });
-require("@nomiclabs/hardhat-waffle");
-require("solidity-coverage");
+require('dotenv').config({ path: '../../.env' })
+require('@nomiclabs/hardhat-waffle')
+require('solidity-coverage')
 
-const defaultNetwork = process.env.NETWORK || "localhost";
+const defaultNetwork = process.env.NETWORK || 'localhost'
 
-const KALEIDO_URL = process.env.MAPLE_KALEIDO_URL || "";
-const KALEIDO_MNEMONIC = process.env.MAPLE_MNEMONIC || "";
+const KALEIDO_URL = process.env.MAPLE_KALEIDO_URL || ''
+const KALEIDO_MNEMONIC = process.env.MAPLE_KALEIDO_MNEMONIC || ''
 
-const KOVAN_NODE_URL = process.env.KOVAN_NODE_URL || "";
-const KOVAN_MNEMONIC = process.env.KOVAN_MNEMONIC || "";
+const KOVAN_NODE_URL = process.env.KOVAN_NODE_URL || ''
+const KOVAN_MNEMONIC = process.env.KOVAN_MNEMONIC || ''
 
-const MAINNET_NODE_URL = process.env.MAINNET_NODE_URL || "";
-const MAINNET_MNEMONIC = process.env.MAINNET_MNEMONIC || "";
+const MAINNET_NODE_URL = process.env.MAINNET_NODE_URL || ''
+const MAINNET_MNEMONIC = process.env.MAINNET_MNEMONIC || ''
 
 module.exports = {
   defaultNetwork,
   gasReporter: {
     showMethodSig: true,
-    currency: "KRW",
+    currency: 'KRW',
   },
 
   networks: {
     localhost: {
-      url: "http://localhost:8545",
+      url: 'http://localhost:8545',
     },
     kaleido: {
       timeout: 45000,
@@ -33,16 +33,16 @@ module.exports = {
       accounts: {
         mnemonic: KALEIDO_MNEMONIC,
       },
-      evmVersion: "byzantium",
+      evmVersion: 'byzantium',
     },
 
     coverage: {
-      url: "http://localhost:8555",
+      url: 'http://localhost:8555',
     },
     kovan: {
       url: KOVAN_NODE_URL,
       accounts: {
-        mnemonic: KOVAN_MNEMONIC || "",
+        mnemonic: KOVAN_MNEMONIC || '',
       },
     },
     mainnet: {
@@ -53,7 +53,7 @@ module.exports = {
     },
   },
   solidity: {
-    version: "0.6.11",
+    version: '0.6.11',
     settings: {
       optimizer: {
         enabled: true,
@@ -62,7 +62,7 @@ module.exports = {
     },
   },
   solc: {
-    version: "0.6.11",
+    version: '0.6.11',
     optimizer: {
       enabled: true,
       runs: 200,
@@ -71,4 +71,4 @@ module.exports = {
   mocha: {
     timeout: 200000,
   },
-};
+}
