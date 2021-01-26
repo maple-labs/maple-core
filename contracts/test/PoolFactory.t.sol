@@ -8,6 +8,7 @@ import "../mocks/value.sol";
 import "../mocks/token.sol";
 
 import "../interfaces/IBPool.sol";
+import "../interfaces/IStakeLocker.sol";
 
 import "./user/Governor.sol";
 
@@ -18,6 +19,8 @@ import "../PoolFactory.sol";
 import "../StakeLockerFactory.sol";
 import "../LiquidityLockerFactory.sol";
 import "../Pool.sol";
+
+
 
 interface IBPoolFactory {
     function newBPool() external returns (address);
@@ -106,25 +109,60 @@ contract PoolFactoryTest is TestUtil {
         assertTrue(gov.try_setGlobals(address(poolFactory), address(globals2)));       // Governor can set new globals
         assertEq(address(poolFactory.globals()), address(globals2));                   // Globals is updated
     }
-
-    function test_createPool_no_finalize() public {
-        gov.setPoolDelegateWhitelist(address(ali), true);
         
-        assertTrue(!ali.try_createPool(
+    function createPoolFails() internal returns(bool) {
+        return !ali.try_createPool(
             address(poolFactory),
             USDC,
-            address(bPool),
+            address(bPool),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
             address(slFactory),
             address(llFactory),
             500,
             100,
             MAX_UINT
-        ));
+        );
     }
 
-    function test_createPool_error_stakeAsset() public {
+    function setUpWhitelisting() internal {
+        gov.setValidPoolFactory(address(poolFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setPoolDelegateWhitelist(address(ali), true);
+        gov.setLoanAsset(USDC, true);
+    }
+
+    function test_createPool_globals_validations() public {
+        setUpWhitelisting();
+        bPool.finalize();
+
+        gov.setValidPoolFactory(address(poolFactory), true);
+
+        // PoolFactory:INVALID_LL_FACTORY
+        gov.setValidSubFactory(address(poolFactory), address(llFactory), false);
+        assertTrue(createPoolFails());                                                      
+        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
+
+        // PoolFactory:INVALID_SL_FACTORY
+        gov.setValidSubFactory(address(poolFactory), address(slFactory), false);
+        assertTrue(createPoolFails()); 
+        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
+
+        // PoolFactory:MSG_SENDER_NOT_WHITELISTED
+        gov.setPoolDelegateWhitelist(address(ali), false);
+        assertTrue(createPoolFails()); 
+        gov.setPoolDelegateWhitelist(address(ali), true);
+
+        // PoolFactory:LIQ_ASSET_NOT_WHITELISTED
+        gov.setLoanAsset(USDC, false);
+        assertTrue(createPoolFails());   
+        gov.setLoanAsset(USDC, true);
+    }
+
+    function test_createPool_bad_stakeAsset() public {
+        setUpWhitelisting();
+        bPool.finalize();
         
+        // PoolFactory:STAKE_ASSET_NOT_BPOOL
         assertTrue(!ali.try_createPool(
             address(poolFactory),
             USDC,
@@ -137,13 +175,17 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
-    function test_createPool_no_whitelist() public {
+    function test_createPool_wrong_staking_pair_asset() public {
+        setUpWhitelisting();
         bPool.finalize();
+
+        gov.setLoanAsset(DAI, true);
         
+        // Pool:Pool:INVALID_STAKING_POOL
         assertTrue(!ali.try_createPool(
             address(poolFactory),
-            USDC,
-            address(bPool),
+            DAI,
+            address(bPool),    // This pool uses MPL/USDC, so it can't cover DAI losses
             address(slFactory),
             address(llFactory),
             500,
@@ -152,7 +194,8 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
-    function test_createPool_no_mpl_token() public {
+    // Tests failure mode in createStakeLocker
+    function test_createPool_createStakeLocker_no_mpl_token() public {
 
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
         mint("DAI", address(this), 50_000_000 ether);
@@ -199,7 +242,28 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
+    // Tests failure mode in createStakeLocker
+    function test_createPool_createStakeLocker_bPool_not_finalized() public {
+        setUpWhitelisting();
+        
+        // Pool:INVALID_BALANCER_POOL
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            MAX_UINT
+        ));
+    }
+
     function test_createPool() public {
+
+        setUpWhitelisting();
+
+        gov.setLoanAsset(USDC, true);
 
         gov.setPoolDelegateWhitelist(address(ali), true);
         bPool.finalize();
@@ -218,20 +282,21 @@ contract PoolFactoryTest is TestUtil {
             MAX_UINT
         ));
 
-        Pool lPool = Pool(poolFactory.pools(0));
+        Pool pool = Pool(poolFactory.pools(0));
 
-        assertTrue(address(lPool) != address(0));
-        assertTrue(poolFactory.isPool(address(lPool)));
+        assertTrue(address(pool) != address(0));
+        assertTrue(poolFactory.isPool(address(pool)));
         assertEq(poolFactory.poolsCreated(), 1);
 
-        assertEq(address(lPool.liquidityAsset()),  USDC);
-        assertEq(lPool.stakeAsset(),               address(bPool));
-        assertEq(lPool.poolDelegate(),             address(ali));
-        assertEq(lPool.stakingFee(),               500);
-        assertEq(lPool.delegateFee(),              100);
-        assertEq(lPool.liquidityCap(),             MAX_UINT);
+        assertEq(address(pool.liquidityAsset()),  USDC);
+        assertEq(pool.stakeAsset(),               address(bPool));
+        assertEq(pool.slFactory(),                address(slFactory));
+        assertEq(pool.poolDelegate(),             address(ali));
+        assertEq(pool.stakingFee(),               500);
+        assertEq(pool.delegateFee(),              100);
+        assertEq(pool.liquidityCap(),             MAX_UINT);
 
-        assertTrue(lPool.stakeLocker()     != address(0));
-        assertTrue(lPool.liquidityLocker() != address(0));
+        assertTrue(pool.stakeLocker()     != address(0));
+        assertTrue(pool.liquidityLocker() != address(0));
     }
 }

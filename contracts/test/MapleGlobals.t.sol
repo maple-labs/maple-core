@@ -119,8 +119,8 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(globals.isValidCalc(address(lfCalc)));
         assertTrue(globals.isValidCalc(address(pCalc)));
         assertTrue(globals.isValidCalc(address(brCalc)));
-        assertTrue(globals.validPoolFactories(address(poolFactory)));
-        assertTrue(globals.validLoanFactories(address(loanFactory)));
+        assertTrue(globals.isValidPoolFactory(address(poolFactory)));
+        assertTrue(globals.isValidLoanFactory(address(loanFactory)));
         assertTrue(globals.validSubFactories(address(poolFactory), address(slFactory)));
         assertTrue(globals.validSubFactories(address(poolFactory), address(llFactory)));
         assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
@@ -134,20 +134,20 @@ contract MapleGlobalsTest is TestUtil {
         fakeGov.setGovGlobals(globals);  // Point to globals created by gov
 
         // setValidPoolFactory()
-        assertTrue(!globals.validPoolFactories(address(sid)));             // Use dummy address since poolFactory is already valid
+        assertTrue(!globals.isValidPoolFactory(address(sid)));             // Use dummy address since poolFactory is already valid
         assertTrue(!fakeGov.try_setValidPoolFactory(address(sid), true));  // Non-governor cant set
         assertTrue(     gov.try_setValidPoolFactory(address(sid), true));
-        assertTrue(globals.validPoolFactories(address(sid)));
+        assertTrue(globals.isValidPoolFactory(address(sid)));
         assertTrue(gov.try_setValidPoolFactory(address(sid), false));
-        assertTrue(!globals.validPoolFactories(address(sid)));
+        assertTrue(!globals.isValidPoolFactory(address(sid)));
 
         // setValidLoanFactory()
-        assertTrue(!globals.validLoanFactories(address(sid)));             // Use dummy address since loanFactory is already valid
+        assertTrue(!globals.isValidLoanFactory(address(sid)));             // Use dummy address since loanFactory is already valid
         assertTrue(!fakeGov.try_setValidLoanFactory(address(sid), true));  // Non-governor cant set
         assertTrue(     gov.try_setValidLoanFactory(address(sid), true));
-        assertTrue(globals.validLoanFactories(address(sid)));
+        assertTrue(globals.isValidLoanFactory(address(sid)));
         assertTrue(gov.try_setValidLoanFactory(address(sid), false));
-        assertTrue(!globals.validLoanFactories(address(sid)));
+        assertTrue(!globals.isValidLoanFactory(address(sid)));
 
         // setValidSubFactory()
         assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));

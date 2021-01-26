@@ -77,8 +77,8 @@ contract Pool is FDT, CalcBPool {
         string memory name,
         string memory symbol
     ) FDT(name, symbol, _liquidityAsset) public {
-        require(_liquidityAsset != address(0), "Pool:INVALID_LIQ_ASSET");
-        require(_liquidityCap   != uint256(0), "Pool:INVALID_CAP");
+        require(_globals(msg.sender).isValidLoanAsset(_liquidityAsset), "Pool:LIQ_ASSET_NOT_WHITELISTED");
+        require(_liquidityCap   != uint256(0),                          "Pool:INVALID_CAP");
 
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
 
@@ -149,11 +149,11 @@ contract Pool is FDT, CalcBPool {
 
     /**
         @dev Returns information on the stake requirements.
-        @return [0] = Amount of stake required.
-                [1] = Current swap out value of stake present.
-                [2] = If enough stake is present from Pool Delegate for finalization.
-                [3] = Amount of pool shares required.
-                [4] = Amount of pool shares present.
+        @return [0] = Min amount of liquidityAsset coverage from staking required
+                [1] = Present amount of liquidityAsset coverage from staking
+                [2] = If enough stake is present from Pool Delegate for finalization
+                [3] = Staked BPTs required for minimum liquidityAsset coverage
+                [4] = Current staked BPTs
     */
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
 
@@ -171,7 +171,7 @@ contract Pool is FDT, CalcBPool {
         return (
             swapOutAmountRequired,
             this.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
-            this.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker) >= swapOutAmountRequired,
+            poolAmountPresent >= poolAmountInRequired,
             poolAmountInRequired,
             poolAmountPresent
         );
@@ -184,11 +184,11 @@ contract Pool is FDT, CalcBPool {
     */
     function deposit(uint256 amt) external isState(State.Finalized) {
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
-        updateDepositDate(amt, msg.sender);
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
         uint256 wad = _toWad(amt);
-        _mint(msg.sender, wad);
 
+        updateDepositDate(wad, msg.sender);
+        _mint(msg.sender, wad);
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
 
@@ -214,7 +214,8 @@ contract Pool is FDT, CalcBPool {
         @param amt The amount of LiquidityAsset to withdraw.
     */
     function withdraw(uint256 amt) external {
-        uint256 fdtAmt = _toWad(amt);
+        uint256 wad    = _toWad(amt);
+        uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
 
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
@@ -228,7 +229,7 @@ contract Pool is FDT, CalcBPool {
         require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");  // Transfer the principal amount - totPenalty.
 
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
-        updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
+        updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
 
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
@@ -244,7 +245,7 @@ contract Pool is FDT, CalcBPool {
         IGlobals globals = _globals(superFactory);
 
         // Auth checks.
-        require(globals.validLoanFactories(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
+        require(globals.isValidLoanFactory(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
         require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),  "Pool:INVALID_LOAN");
         require(globals.isValidSubFactory(superFactory, dlFactory, 1),  "Pool:INVALID_DL_FACTORY");
 
@@ -326,36 +327,40 @@ contract Pool is FDT, CalcBPool {
     }
 
     /** 
-        @dev This is to establish the function signature by which an interest penalty will be calculated.
-        @param amt The amount deposited.
-        @param who The user who deposited amt.
-        @return out The resulting value will be removed from the interest used in a repayment.
+        @dev Calculate the amount of funds to deduct from total claimable amount based on how
+             the effective length of time a user has been in a pool. This is a linear decrease
+             until block.timestamp - depositDate[who] >= penaltyDelay, after which it returns 0.
+        @param  amt Total claimable amount 
+        @param  who Address of user claiming
+        @return penalty Total penalty
     */
-    function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 out) {
+    function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 penalty) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
         uint256 unlocked = dTime.div(penaltyDelay).mul(amt) / WAD;
 
-        out = unlocked > amt ? 0 : amt - unlocked;
+        penalty = unlocked > amt ? 0 : amt - unlocked;
     }
 
     /**
-        @dev Update the deposit date.
-        @param amt The amount deposited.
-        @param who The user who deposited amt. 
+        @dev Update the effective deposit date based on how much new capital has been added.
+             If more capital is added, the depositDate moves closer to the current timestamp.
+        @param  amt Total deposit amount
+        @param  who Address of user depositing
     */
     function updateDepositDate(uint256 amt, address who) internal {
         if (depositDate[who] == 0) {
             depositDate[who] = block.timestamp;
         } else {
             uint256 depDate  = depositDate[who];
-            uint256 coef     = (WAD.mul(amt)).div(balanceOf(who) + amt); // Yes, i want 0 if amt is too small
-            depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // date + (now - depDate) * coef
+            uint256 coef     = (WAD.mul(amt)).div(balanceOf(who) + amt);
+            depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // depDate + (now - depDate) * coef
         }
     }
 
     /**
-        @dev Set the delay penalty.
-        @param _penaltyDelay New penalty setting to apply.
+        @dev Set the amount of time required to recover 100% of claimable funds 
+             (i.e. calcWithdrawPenalty = 0)
+        @param _penaltyDelay Effective time needed in pool for user to be able to claim 100% of funds
     */
     function setPenaltyDelay(uint256 _penaltyDelay) public isDelegate {
         penaltyDelay = _penaltyDelay;
@@ -371,8 +376,8 @@ contract Pool is FDT, CalcBPool {
     }
 
     /**
-        @dev Converts a given amt to WAD precision.
-        @return amt converted to WAD precision.
+        @dev Convert liquidityAsset to WAD precision (10 ** 18)
+        @param amt Effective time needed in pool for user to be able to claim 100% of funds
     */
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);

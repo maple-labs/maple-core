@@ -32,8 +32,8 @@ contract MapleGlobals {
     mapping(address => bool)    public isValidPoolDelegate;     // Validation data structure for pool delegates (prevent invalid addresses from creating pools).
     mapping(address => address) public assetPriceFeed;          // Mapping of asset, to the associated oracle price feed.
 
-    mapping(address => bool)                     public validPoolFactories;  // Mapping of valid pool factories.
-    mapping(address => bool)                     public validLoanFactories;  // Mapping of valid loan factories.
+    mapping(address => bool)                     public isValidPoolFactory;  // Mapping of valid pool factories.
+    mapping(address => bool)                     public isValidLoanFactory;  // Mapping of valid loan factories.
     mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories.
 
     
@@ -79,7 +79,7 @@ contract MapleGlobals {
         @param valid       The new bool value for validating poolFactory.
     */
     function setValidPoolFactory(address poolFactory, bool valid) external isGovernor {
-        validPoolFactories[poolFactory] = valid;
+        isValidPoolFactory[poolFactory] = valid;
     }
 
     /**
@@ -88,7 +88,7 @@ contract MapleGlobals {
         @param valid       The new bool value for validating loanFactory.
     */
     function setValidLoanFactory(address loanFactory, bool valid) external isGovernor {
-        validLoanFactories[loanFactory] = valid;
+        isValidLoanFactory[loanFactory] = valid;
     }
 
     /**

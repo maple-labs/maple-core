@@ -3,7 +3,7 @@
 ## Functions:
 [`constructor(address _poolDelegate, address _liquidityAsset, address _stakeAsset, address _slFactory, address _llFactory, uint256 _stakingFee, uint256 _delegateFee, string name, string symbol, address _globals)`](#Pool-constructor-address-address-address-address-address-uint256-uint256-string-string-address-)
 [`finalize()`](#Pool-finalize--)
-[`getInitialStakeRequirements()`](#Pool-getInitialStakeRequirements--)
+[`getStakeInfo()`](#Pool-getStakeInfo--)
 [`deposit(uint256 amt)`](#Pool-deposit-uint256-)
 [`withdraw(uint256 amt)`](#Pool-withdraw-uint256-)
 [`fundLoan(address loan, address dlFactory, uint256 amt)`](#Pool-fundLoan-address-address-uint256-)
@@ -35,7 +35,7 @@ Constructor for a Pool.
 ### `finalize()`
 Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
 
-### `getInitialStakeRequirements()`
+### `getStakeInfo()`
 Returns information on the stake requirements.
         @return [0] = Amount of stake required.
                 [1] = Current swap out value of stake present.
