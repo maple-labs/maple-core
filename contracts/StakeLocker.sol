@@ -58,7 +58,7 @@ contract StakeLocker is FDT {
     }
 
     function _globals() internal view returns(IGlobals) {
-        return IGlobals(IPoolFactory(owner).globals());
+        return IGlobals(IPoolFactory(IPool(owner).superFactory()).globals());
     }
 
     /**
@@ -120,10 +120,11 @@ contract StakeLocker is FDT {
         @param staker The address to view information for.
         @return Amount of BPTs staker can unstake.
     */
+    // TODO: Handle case where unstakeDelay == 0 (use similar/same logic as calcWithdrawPenalty)
     function getUnstakeableBalance(address staker) public view returns (uint256) {
         uint256 bal  = balanceOf(staker);
         uint256 time = (block.timestamp - stakeDate[staker]) * WAD;
-        uint256 out  = ((time / (_globals().unstakeDelay() + 1)) * bal) / WAD;
+        uint256 out  = ((time / (_globals().unstakeDelay())) * bal) / WAD;
         // The plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
         // Also i do indeed want this to return 0 if denominator is less than WAD
         if (out > bal) {

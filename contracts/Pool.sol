@@ -334,6 +334,7 @@ contract Pool is FDT, CalcBPool {
         @param  who Address of user claiming
         @return penalty Total penalty
     */
+    // TODO: Handle case where penaltyDelay == 0
     function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 penalty) {
         uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
         uint256 unlocked = dTime.div(penaltyDelay).mul(amt) / WAD;

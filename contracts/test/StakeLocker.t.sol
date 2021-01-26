@@ -38,25 +38,6 @@ interface IBPoolFactory {
 }
 
 contract PoolDelegate {
-    function try_fundLoan(address pool, address loan, address dlFactory, uint256 amt) external returns (bool ok) {
-        string memory sig = "fundLoan(address,address,uint256)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory, amt));
-    }
-
-    function try_finalize(address pool) external returns (bool ok) {
-        string memory sig = "finalize()";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig));
-    }
-
-    function try_setPrincipalPenalty(address pool, uint256 penalty) external returns (bool ok) {
-        string memory sig = "setPrincipalPenalty(uint256)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, penalty));
-    }
-
-    function try_setPenaltyDelay(address pool, uint256 delay) external returns (bool ok) {
-        string memory sig = "setPenaltyDelay(uint256)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, delay));
-    }
 
     function createPool(
         address poolFactory, 
@@ -93,15 +74,6 @@ contract PoolDelegate {
         IPool(pool).finalize();
     }
 
-    function try_deactivate(Pool pool) external returns(bool ok) {
-        string memory sig = "deactivate()";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig));
-    }
-
-    function deactivate(address pool, uint confirmation) external {
-        IPool(pool).deactivate(confirmation);
-    }
-
     function unstake(address stakeLocker, uint256 amt) external {
         IStakeLocker(stakeLocker).unstake(amt);
     }
@@ -112,19 +84,6 @@ contract PoolDelegate {
 
     function claim(address pool, address loan, address dlFactory) external returns(uint[5] memory) {
         return IPool(pool).claim(loan, dlFactory);  
-    }
-
-    function setPrincipalPenalty(address pool, uint256 penalty) external {
-        IPool(pool).setPrincipalPenalty(penalty);
-    }
-
-    function setPenaltyDelay(address pool, uint256 delay) external {
-        IPool(pool).setPenaltyDelay(delay);
-    }
-
-    function try_setLiquidityCap(Pool pool, uint256 liquidityCap) external returns(bool ok) {
-        string memory sig = "setLiquidityCap(uint256)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, liquidityCap));
     }
 }
 
@@ -155,15 +114,6 @@ contract Staker {
 }
 
 contract LP {
-    function try_deposit(address pool, uint256 amt)  external returns (bool ok) {
-        string memory sig = "deposit(uint256)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function try_withdraw(address pool, uint256 amt)  external returns (bool ok) {
-        string memory sig = "withdraw(uint256)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, amt));
-    }
 
     function approve(address token, address who, uint256 amt) external {
         IERC20(token).approve(who, amt);
@@ -220,15 +170,12 @@ contract StakeLockerTest is TestUtil {
     using SafeMath for uint256;
 
     Governor                               gov;
-    ERC20                           fundsToken;
     MapleToken                             mpl;
     MapleGlobals                       globals;
     FundingLockerFactory             flFactory;
     CollateralLockerFactory          clFactory;
     LoanFactory                    loanFactory;
     Loan                                  loan;
-    Loan                                 loan2;
-    Loan                                 loan3;
     PoolFactory                    poolFactory;
     StakeLockerFactory               slFactory;
     LiquidityLockerFactory           llFactory; 
@@ -273,6 +220,8 @@ contract StakeLockerTest is TestUtil {
         che            = new Staker();                                                  // Actor: Staker of BPTs
         dan            = new Staker();                                                  // Actor: Staker of BPTs
         trs            = new Treasury();                                                // Treasury.
+
+        gov.setValidLoanFactory(address(loanFactory), true);
 
         gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
         gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
@@ -353,21 +302,23 @@ contract StakeLockerTest is TestUtil {
     function test_stake() public {
         uint256 startDate = block.timestamp;
 
-        assertTrue(!che.try_stake(address(stakeLocker),   10 * WAD));  // Hasn't approved BPTs
-        che.approve(address(bPool), address(stakeLocker), 10 * WAD);
+        assertTrue(!che.try_stake(address(stakeLocker),   25 * WAD));  // Hasn't approved BPTs
+        che.approve(address(bPool), address(stakeLocker), 25 * WAD);
 
         uint256 slBal_before = bPool.balanceOf(address(stakeLocker));
 
-        assertEq(bPool.balanceOf(address(che)),         10 * WAD);
+        assertEq(bPool.balanceOf(address(che)),         25 * WAD);
         assertEq(bPool.balanceOf(address(stakeLocker)), 50 * WAD);  // PD stake
+        assertEq(stakeLocker.totalSupply(),             50 * WAD);
         assertEq(stakeLocker.balanceOf(address(che)),          0);
         assertEq(stakeLocker.stakeDate(address(che)),          0);
 
-        assertTrue(che.try_stake(address(stakeLocker), 10 * WAD));  
+        assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));  
 
         assertEq(bPool.balanceOf(address(che)),                 0);
-        assertEq(bPool.balanceOf(address(stakeLocker)),  60 * WAD);  // PD + Staker stake
-        assertEq(stakeLocker.balanceOf(address(che)),    10 * WAD);
+        assertEq(bPool.balanceOf(address(stakeLocker)),  75 * WAD);  // PD + Staker stake
+        assertEq(stakeLocker.totalSupply(),              75 * WAD);
+        assertEq(stakeLocker.balanceOf(address(che)),    25 * WAD);
         assertEq(stakeLocker.stakeDate(address(che)),   startDate);
     }
 
@@ -383,26 +334,45 @@ contract StakeLockerTest is TestUtil {
         bob.approve(WETH, address(loan), MAX_UINT);                        // Borrower approves WETH
         bob.drawdown(address(loan), 10_000_000 * USD);                     // Borrower draws down 10m USDC
 
-        mint("USDC", address(bob), 10_000_000 * USD);   // Mint USDC to Borrower for repayment plus interest         
-        IERC20(USDC).approve(address(pool), MAX_UINT);  // Borrower approves USDC
-        bob.makeFullPayment(address(loan));             // Borrower makes full payment, which includes interest
+        mint("USDC", address(bob), 10_000_000 * USD);  // Mint USDC to Borrower for repayment plus interest         
+        bob.approve(USDC, address(loan), MAX_UINT);    // Borrower approves USDC
+        bob.makeFullPayment(address(loan));            // Borrower makes full payment, which includes interest
 
         sid.claim(address(pool), address(loan),  address(dlFactory));  // PD claims interest, distributing funds to stakeLocker
     }
 
-    function test_unstake_no_unstakeDelay() public {
+    function test_unstake_past_unstakeDelay() public {
         uint256 slBal_before = bPool.balanceOf(address(stakeLocker));
+        uint256 stakeDate    = block.timestamp;
 
         che.approve(address(bPool), address(stakeLocker), 25 * WAD);
         che.stake(address(stakeLocker), 25 * WAD);  
 
-        assertEq(bPool.balanceOf(address(che)),                       0);
-        assertEq(bPool.balanceOf(address(stakeLocker)),        75 * WAD);  // PD + Staker stake
-        assertEq(stakeLocker.balanceOf(address(che)),          25 * WAD);
-        assertEq(stakeLocker.stakeDate(address(che)),   block.timestamp);
-
-        gov.setUnstakeDelay(0);  // Set unstakeDelay to zero - that will be tested in a separate test
+        assertEq(IERC20(USDC).balanceOf(address(che)),          0);
+        assertEq(bPool.balanceOf(address(che)),                 0);
+        assertEq(bPool.balanceOf(address(stakeLocker)),  75 * WAD);  // PD + Staker stake
+        assertEq(stakeLocker.totalSupply(),              75 * WAD);
+        assertEq(stakeLocker.balanceOf(address(che)),    25 * WAD);
+        assertEq(stakeLocker.stakeDate(address(che)),   stakeDate);
 
         setUpLoanAndRepay();
+        hevm.warp(stakeDate + globals.unstakeDelay());
+
+        uint256 totalStakerEarnings    = IERC20(USDC).balanceOf(address(stakeLocker));
+        uint256 cheStakerEarnings_FDT  = stakeLocker.withdrawableFundsOf(address(che));
+        uint256 cheStakerEarnings_calc = totalStakerEarnings * (25 * WAD) / (75 * WAD);  // Che's portion of staker earnings
+
+        che.unstake(address(stakeLocker), 25 * WAD);  // Staker unstakes all BPTs
+
+        withinPrecision(cheStakerEarnings_FDT, cheStakerEarnings_calc, 9);
+
+        assertEq(IERC20(USDC).balanceOf(address(che)),                               cheStakerEarnings_FDT);  // Che got portion of interest
+        assertEq(IERC20(USDC).balanceOf(address(stakeLocker)), totalStakerEarnings - cheStakerEarnings_FDT);  // Interest was transferred out of SL
+
+        assertEq(bPool.balanceOf(address(che)),          25 * WAD);  // Che unstaked BPTs
+        assertEq(bPool.balanceOf(address(stakeLocker)),  50 * WAD);  // PD + Staker stake
+        assertEq(stakeLocker.totalSupply(),              50 * WAD);  // Total supply of stake tokens has decreased
+        assertEq(stakeLocker.balanceOf(address(che)),           0);  // Che has no stake tokens after unstake
+        assertEq(stakeLocker.stakeDate(address(che)),   stakeDate);  // StakeDate remains unchanged (doesn't matter since balanceOf == 0 on next stake)
     }
 } 
