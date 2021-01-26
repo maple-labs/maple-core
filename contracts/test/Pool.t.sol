@@ -126,6 +126,11 @@ contract PoolDelegate {
         string memory sig = "setLiquidityCap(uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, liquidityCap));
     }
+
+    function try_setLockupPeriod(Pool pool, uint256 newPeriod) external returns(bool ok) {
+        string memory sig = "setLockupPeriod(uint256)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, newPeriod));
+    }
 }
 
 contract LP {
@@ -149,6 +154,11 @@ contract LP {
 
     function deposit(address pool, uint256 amt) external {
         Pool(pool).deposit(amt);
+    }
+
+    function try_withdraw(address pool, uint256 amt) external returns(bool ok) {
+        string memory sig = "withdraw(uint256)";
+        (ok,) = pool.call(abi.encodeWithSignature(sig, amt));
     }
 }
 
@@ -1462,6 +1472,13 @@ contract PoolTest is TestUtil {
 
         uint256 start = block.timestamp;
         uint256 delay = pool1.penaltyDelay();
+        uint256 lockup = pool1.lockupPeriod();
+
+        assertEq(pool1.calcWithdrawPenalty(1 * USD, address(bob)), uint256(0));  // Returns 0 when lockupPeriod > penaltyDelay.
+        assertTrue(!joe.try_setLockupPeriod(pool1, 15 days));
+        assertEq(pool1.lockupPeriod(), 90 days);
+        assertTrue(sid.try_setLockupPeriod(pool1, 15 days));
+        assertEq(pool1.lockupPeriod(), 15 days);
 
         assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
 
@@ -1485,19 +1502,51 @@ contract PoolTest is TestUtil {
 
         hevm.warp(start + delay * 1000);
         assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0);
-    }    
+    }
+
+    function test_withdraw_under_lockup_period() public {
+        setUpWithdraw();
+        uint start = block.timestamp;
+
+        mint("USDC", address(kim), 2000 * USD);
+        kim.approve(USDC, address(pool1), MAX_UINT);
+        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
+        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+
+        uint256 withdrawAmount = 1000 * USD;
+        assertTrue(!kim.try_withdraw(address(pool1), withdrawAmount), "Failed to withdraw funds");  // "Pool:FUNDS_LOCKED"
+
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
+        hevm.warp(start + pool1.lockupPeriod() + 5);
+
+        _drawDownLoan(1000 * USD, loan3, hal);
+        _makeLoanPayment(loan3, hal); 
+        sid.claim(address(pool1), address(loan3), address(dlFactory1)); 
+        assertEq(pool1.calcWithdrawPenalty(withdrawAmount, address(kim)), uint256(0));
+
+        uint256 interest = pool1.withdrawableFundsOf(address(kim));
+
+        kim.withdraw(address(pool1), withdrawAmount);
+        uint256 bal1 = IERC20(USDC).balanceOf(address(kim));
+
+        assertEq(bal1 - bal0, interest);
+    }
 
     function test_withdraw_no_principal_penalty() public {
         setUpWithdraw();
-
+        
         uint start = block.timestamp;
 
         sid.setPrincipalPenalty(address(pool1), 0);
+        assertTrue(sid.try_setLockupPeriod(pool1, 0));
+        assertEq(pool1.lockupPeriod(), uint256(0));
+
         mint("USDC", address(kim), 2000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
         assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
 
         uint256 withdrawAmount = 1000 * USD;
+        hevm.warp(start + 1);   // Increasing 1 sec to differentiate the timing of deposit and withdrawal. 
         kim.withdraw(address(pool1), withdrawAmount);
 
         assertEq(IERC20(USDC).balanceOf(address(kim)), 2000 * USD);
@@ -1525,6 +1574,9 @@ contract PoolTest is TestUtil {
         uint start = block.timestamp;
         
         sid.setPrincipalPenalty(address(pool1), 500);
+        assertTrue(sid.try_setLockupPeriod(pool1, 0));
+        assertEq(pool1.lockupPeriod(), uint256(0));
+
         mint("USDC", address(kim), 2000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
 
@@ -1532,6 +1584,7 @@ contract PoolTest is TestUtil {
         uint256 depositAmount = 1000 * USD;
         uint256 lpToken       = 1000 * WAD;
         assertTrue(kim.try_deposit(address(pool1), depositAmount));  // Deposit and withdraw in same tx
+        hevm.warp(start + 1);                                        // Increasing 1 sec to differentiate the timing of deposit and withdrawal. 
         kim.withdraw(address(pool1), depositAmount);
         uint256 bal1 = IERC20(USDC).balanceOf(address(kim));  // Balance after principal penalty
 
