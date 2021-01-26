@@ -250,16 +250,6 @@ contract Loan is FDT {
         // Test ... amount of loanAsset receivable for swapping collateralAsset.
         IOneSplit dex = IOneSplit(globals.OneInchDEX());
         uint256[] memory distribution;
-        
-        (amountReceivable, distribution) = dex.getExpectedReturn(
-            IERC20(collateralAsset),
-            IERC20(loanAsset),
-            collateralAsset.balanceOf(collateralLocker),
-            1,
-            0
-        );
-
-        emit DebugErr(amountReceivable, distribution);
 
         require(ICollateralLocker(collateralLocker).pull(address(this), collateralAsset.balanceOf(collateralLocker)), "Loan:COLLATERAL_PULL");
 
@@ -278,7 +268,7 @@ contract Loan is FDT {
         amountReceived = dex.swap(
             IERC20(collateralAsset),
             IERC20(loanAsset),
-            collateralAsset.balanceOf(collateralLocker),
+            collateralAsset.balanceOf(address(this)),
             amountReceivable.mul(99).div(100), // We can modify slippage here. This represents 1%.
             distribution,
             0
