@@ -19,7 +19,7 @@ import "../LoanFactory.sol";
 
 import "../interfaces/ILoan.sol";
 import "../interfaces/IERC20Details.sol";
-import "../interfaces/I1Inch.sol";
+import "../interfaces/IOneSplit.sol";
 
 contract Borrower {
     function try_drawdown(address loan, uint256 amt) external returns (bool ok) {

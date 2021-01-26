@@ -13,7 +13,7 @@ import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/IPremiumCalc.sol";
-import "./interfaces/I1Inch.sol";
+import "./interfaces/IOneSplit.sol";
 import "./interfaces/IOneRouterView.sol";
 
 
