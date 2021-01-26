@@ -240,6 +240,8 @@ contract Loan is FDT {
     uint public amountReceivable;
     uint public amountReceived;
 
+    event DebugErr(uint, uint256[]);
+
     // Internal handling of a default.
     function triggerDefault() public {
         
@@ -248,8 +250,18 @@ contract Loan is FDT {
         // Test ... amount of loanAsset receivable for swapping collateralAsset.
         IOneSplit dex = IOneSplit(globals.OneInchDEX());
         uint256[] memory distribution;
+        
+        (amountReceivable, distribution) = dex.getExpectedReturn(
+            IERC20(collateralAsset),
+            IERC20(loanAsset),
+            collateralAsset.balanceOf(collateralLocker),
+            1,
+            0
+        );
 
-        require(ICollateralLocker(collateralLocker).pull(borrower, collateralAsset.balanceOf(collateralLocker)), "Loan:COLLATERAL_PULL");
+        emit DebugErr(amountReceivable, distribution);
+
+        require(ICollateralLocker(collateralLocker).pull(address(this), collateralAsset.balanceOf(collateralLocker)), "Loan:COLLATERAL_PULL");
 
         collateralAsset.approve(address(dex), collateralAsset.balanceOf(address(this)));
         
@@ -260,6 +272,8 @@ contract Loan is FDT {
             1,
             0
         );
+
+        emit DebugErr(amountReceivable, distribution);
 
         amountReceived = dex.swap(
             IERC20(collateralAsset),
