@@ -123,7 +123,7 @@ contract LoanTest is TestUtil {
         lateFeeCalc = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc = new PremiumCalc(500); // Flat 5% premium
         loanFactory = new LoanFactory(address(globals));
-        dex         = IOneSplit(ONE_INCH_DEX);
+        dex         = IOneSplit(ONE_INCH_DEX_ROUTER);
 
         ethOracle.poke(1377.61 ether);  // Set ETH price to $1377.61 TODO: Use chainlink in tests
         usdcOracle.poke(1 ether);   // Set USDC price to $1

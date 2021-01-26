@@ -42,11 +42,12 @@ contract TestUtil is DSTest {
     address constant BPOOL_FACTORY        = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd; // Balancer pool factory
     address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router
     address constant ONE_INCH_DEX         = 0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E; // OneInch DEX
+    address constant ONE_INCH_DEX_BETA    = 0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e; // OneInch DEX_BETA
+    address constant ONE_INCH_DEX_ROUTER  = 0x2F2C0E1Dc836c8Eb10907676468CfcDE49C6f643; // OneInch DEX_ROUTER
 
     uint256 constant USD = 10 ** 6;  // USDC precision decimals
     uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
-
 
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 

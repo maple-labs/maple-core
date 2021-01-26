@@ -14,6 +14,8 @@ import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/IPremiumCalc.sol";
 import "./interfaces/I1Inch.sol";
+import "./interfaces/IOneRouterView.sol";
+
 
 /// @title Loan is the core loan vault contract.
 contract Loan is FDT {
@@ -239,16 +241,82 @@ contract Loan is FDT {
 
     uint public amountReceivable;
     uint public amountReceived;
+    uint public estimateGasAmount;
 
     event DebugErr(uint, uint256[]);
 
     // Internal handling of a default.
-    function triggerDefault() public {
+    function triggerDefaultDirect() public {
         
         // 1) Swap collateral on 1inch for loanAsset, deposit into this contract.
 
         // Test ... amount of loanAsset receivable for swapping collateralAsset.
         IOneSplit dex = IOneSplit(globals.OneInchDEX());
+        uint256[] memory distribution;
+
+        require(ICollateralLocker(collateralLocker).pull(address(this), collateralAsset.balanceOf(collateralLocker)), "Loan:COLLATERAL_PULL");
+
+        collateralAsset.approve(address(dex), 100000000000000000000000000000000000);
+        
+        (amountReceivable, distribution) = dex.getExpectedReturn(
+            IERC20(collateralAsset),
+            IERC20(loanAsset),
+            collateralAsset.balanceOf(address(this)),
+            5,
+            0
+        );
+
+        emit DebugErr(amountReceivable, distribution);
+
+        (amountReceivable, estimateGasAmount, distribution) = dex.getExpectedReturnWithGas(
+            IERC20(collateralAsset),
+            IERC20(loanAsset),
+            collateralAsset.balanceOf(address(this)),
+            5,
+            0,
+            amountReceivable * 70000000000
+        );
+
+        emit DebugErr(amountReceivable, distribution);
+
+        amountReceived = dex.swap(
+            IERC20(collateralAsset),
+            IERC20(loanAsset),
+            collateralAsset.balanceOf(address(this)),
+            0, // We can modify slippage here. This represents 1%.
+            distribution,
+            0
+        );
+
+        // // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
+
+        // //  2a) If principal owed == 0 after settlement ... send excess loanAsset to Borrower.
+        // //  2b) If principal owed >  0 after settlement ... all loanAsset remains in Loan.
+        // //      ... update two accounting variables liquidationShortfall, liquidationExcess as appropriate.
+
+        // // 3) Call updateFundsReceived() to snapshot current equity-holders payout.
+        // updateFundsReceived();
+
+        // // 4) Transition loanState to Liquidated.
+        // loanState = State.Liquidated;
+
+        // // 5) Emit liquidation event.
+        // emit Liquidation(
+        //     0,  // collateralSwapped
+        //     0,  // loanAssetReturned
+        //     0,  // liquidationExcess
+        //     0   // liquidationShortfall
+        // );
+    }
+
+    // Internal handling of a default.
+    // https://github.com/1inch-exchange/1inchProtocol/tree/one-router
+    function triggerDefaultRouter() public {
+        
+        // 1) Swap collateral on 1inch for loanAsset, deposit into this contract.
+
+        // Test ... amount of loanAsset receivable for swapping collateralAsset.
+        IOneSplit dex = IOneRouterView(globals.OneInchDEX());
         uint256[] memory distribution;
 
         require(ICollateralLocker(collateralLocker).pull(address(this), collateralAsset.balanceOf(collateralLocker)), "Loan:COLLATERAL_PULL");
@@ -259,8 +327,19 @@ contract Loan is FDT {
             IERC20(collateralAsset),
             IERC20(loanAsset),
             collateralAsset.balanceOf(address(this)),
-            1,
+            5,
             0
+        );
+
+        emit DebugErr(amountReceivable, distribution);
+
+        (amountReceivable, estimateGasAmount, distribution) = dex.getExpectedReturnWithGas(
+            IERC20(collateralAsset),
+            IERC20(loanAsset),
+            collateralAsset.balanceOf(address(this)),
+            5,
+            0,
+            amountReceivable * 70000000000
         );
 
         emit DebugErr(amountReceivable, distribution);
@@ -269,7 +348,7 @@ contract Loan is FDT {
             IERC20(collateralAsset),
             IERC20(loanAsset),
             collateralAsset.balanceOf(address(this)),
-            amountReceivable.mul(99).div(100), // We can modify slippage here. This represents 1%.
+            0, // We can modify slippage here. This represents 1%.
             distribution,
             0
         );
@@ -303,7 +382,7 @@ contract Loan is FDT {
 
         // Trigger a default and liquidate all the Borrower's collateral on 1inch if the payment is late.
         if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
-            triggerDefault();
+            triggerDefaultRouter();
         }
 
         else {
@@ -382,7 +461,7 @@ contract Loan is FDT {
 
         // Trigger a default and liquidate all the Borrower's collateral on 1inch if the payment is late.
         if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
-            triggerDefault();
+            triggerDefaultRouter();
         }
         else {
             (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
