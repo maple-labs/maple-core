@@ -21,7 +21,13 @@ contract Loan is FDT {
     using SignedSafeMath  for int256;
     using SafeMath        for uint256;
 
-    enum State { Live, Active, Matured }  // Live = Created, Active = Drawndown
+    /**
+        Live = The loan has been initialized and is open for funding (assuming funding period not ended).
+        Active = The loan has been drawdown and the borrower is making payments.
+        Matured = The loan is fully paid off and has "matured".
+        Liquidated = The loan has been liquidated.
+    */
+    enum State { Live, Active, Matured, Liquidated }
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
 
