@@ -243,6 +243,9 @@ describe("Cycle of an entire loan", function () {
       PoolABI,
       ethers.provider.getSigner(1)
     );
+
+    // Set lockup Period to 0.
+    await Pool_PoolDelegate.setLockupPeriod(0);
   });
 
   it("(P2) Pool delegate minting BPTs", async function () {
@@ -455,7 +458,7 @@ describe("Cycle of an entire loan", function () {
     await Pool_PoolDelegate.claim(LoanAddress, DLFactoryAddress);
   });
 
-  xit("(P11) Liquidity provider withdrawing USDC", async function () {
+  it("(P11) Liquidity provider withdrawing USDC", async function () {
     // Note: Keep this test commented out, there is critical failure
     //       in the withdraw() function currently.
 
