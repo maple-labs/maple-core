@@ -1546,7 +1546,6 @@ contract PoolTest is TestUtil {
         assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
 
         uint256 withdrawAmount = 1000 * USD;
-        hevm.warp(start + 1);   // Increasing 1 sec to differentiate the timing of deposit and withdrawal. 
         kim.withdraw(address(pool1), withdrawAmount);
 
         assertEq(IERC20(USDC).balanceOf(address(kim)), 2000 * USD);
@@ -1584,7 +1583,6 @@ contract PoolTest is TestUtil {
         uint256 depositAmount = 1000 * USD;
         uint256 lpToken       = 1000 * WAD;
         assertTrue(kim.try_deposit(address(pool1), depositAmount));  // Deposit and withdraw in same tx
-        hevm.warp(start + 1);                                        // Increasing 1 sec to differentiate the timing of deposit and withdrawal. 
         kim.withdraw(address(pool1), depositAmount);
         uint256 bal1 = IERC20(USDC).balanceOf(address(kim));  // Balance after principal penalty
 
