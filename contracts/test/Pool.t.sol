@@ -139,11 +139,6 @@ contract LP {
         (ok,) = address(pool1).call(abi.encodeWithSignature(sig, amt));
     }
 
-    function try_withdraw(address pool1, uint256 amt)  external returns (bool ok) {
-        string memory sig = "withdraw(uint256)";
-        (ok,) = address(pool1).call(abi.encodeWithSignature(sig, amt));
-    }
-
     function approve(address token, address who, uint256 amt) external {
         IERC20(token).approve(who, amt);
     }
@@ -525,8 +520,10 @@ contract PoolTest is TestUtil {
         assertTrue(!bob.try_deposit(address(pool1), 600 * USD), "Should not able to deposit 600 USD");
 
         // Set liquidityCap to zero and withdraw
-        assertTrue(sid.try_setLiquidityCap(pool1, 0), "Failed to set liquidity cap");
-        assertTrue(bob.try_withdraw(address(pool1), 500 * USD), "Fail to withdraw 500 USD");
+        assertTrue(sid.try_setLiquidityCap(pool1, 0),           "Failed to set liquidity cap");
+        assertTrue(sid.try_setLockupPeriod(pool1, 0),           "Failed to set the lockup period");
+        assertEq(pool1.lockupPeriod(), uint256(0),              "Failed to update the lockup period");
+        assertTrue(bob.try_withdraw(address(pool1), 500 * USD), "Failed to withdraw 500 USD");
     }
 
     function test_deposit_depositDate() public {
@@ -558,6 +555,7 @@ contract PoolTest is TestUtil {
         uint256 newDepDate = startDate + coef * (block.timestamp - startDate) / WAD;
         assertEq(pool1.depositDate(address(bob)), newDepDate);  // Gets updated
 
+        assertTrue(sid.try_setLockupPeriod(pool1, uint256(0)));  // Sets 0 as lockup period to allow withdraw. 
         bob.withdraw(address(pool1), newAmt);
 
         assertEq(pool1.depositDate(address(bob)), newDepDate);  // Doesn't change
