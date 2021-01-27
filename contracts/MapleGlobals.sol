@@ -7,8 +7,6 @@ import "./interfaces/IERC20Details.sol";
 import "./interfaces/ISubFactory.sol";
 
 contract MapleGlobals {
-    
-    address constant public ONE_INCH_DEX_BETA = 0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e;  // TODO: Make setter for this
 
     address immutable public BFactory;   // Official balancer pool factory.
 

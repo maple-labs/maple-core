@@ -38,8 +38,6 @@ interface ILoan is IERC20 {
     function superFactory() external view returns (address);
     function termDays() external view returns (uint256);
     function nextPaymentDue() external view returns (uint256);
-    
-    function recoveredFromLiquidation() external view returns (uint256);
 
     // Functions
     function fundLoan(uint256, address) external;
@@ -47,6 +45,4 @@ interface ILoan is IERC20 {
     // TODO: Create IFDT.sol (IFDT, inherit here and other places)
     function updateFundsReceived() external;
     function withdrawFunds() external;
-
-    function triggerDefault() external;
 }

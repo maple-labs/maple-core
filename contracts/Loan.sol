@@ -13,8 +13,6 @@ import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/IPremiumCalc.sol";
-import "./interfaces/IOneSplit.sol";
-
 
 /// @title Loan is the core loan vault contract.
 contract Loan is FDT {
@@ -23,7 +21,7 @@ contract Loan is FDT {
     using SignedSafeMath  for int256;
     using SafeMath        for uint256;
 
-    enum State { Live, Active, Matured, Liquidated }  // Live = Created, Active = Drawndown
+    enum State { Live, Active, Matured }  // Live = Created, Active = Drawndown
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
 
@@ -59,9 +57,6 @@ contract Loan is FDT {
     uint256 public interestPaid;
     uint256 public feePaid;
     uint256 public excessReturned;
-    uint256 public recoveredFromLiquidation;
-    uint256 public liquidationShortfall;
-    uint256 public liquidationExcess;
 
     modifier isState(State _state) {
         require(loanState == _state, "Loan:STATE_CHECK");
@@ -69,7 +64,7 @@ contract Loan is FDT {
     }
 
     modifier isBorrower() {
-        require(msg.sender == borrower, "Loan:INVALID_BORROWER");
+        require(msg.sender == borrower, "Loan:MSG_SENDER_NOT_BORROWER");
         _;
     }
 
@@ -84,12 +79,6 @@ contract Loan is FDT {
         uint principalOwed,
         uint nextPaymentDue,
         bool latePayment
-    );
-    event Liquidation(
-        uint collateralSwapped,
-        uint loanAssetReturned,
-        uint liquidationExcess,
-        uint liquidationShortfall
     );
 
     /**
@@ -204,7 +193,7 @@ contract Loan is FDT {
         // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
         require(
             collateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt)), 
-            "Loan:INSUFFICIENT_APPROVAL"
+            "Loan:INSUFFICIENT_COLLATERAL_APPROVAL"
         );
 
         // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to Loan.
@@ -234,75 +223,6 @@ contract Loan is FDT {
 
         emit Drawdown(amt);
     }    
-
-    /**
-        @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
-    */
-    function triggerDefault() external {
-        
-        IOneSplit dex = IOneSplit(_globals(superFactory).ONE_INCH_DEX_BETA());  // Get 1inch DEX interface
-
-        uint256 liquidationAmt = _getCollateralLockerBalance();  // Get total amount of collateral for liquidation
-
-        require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");  // Pull collateral
-
-        collateralAsset.approve(address(dex), liquidationAmt);  // Approve collateralAsset for use in 1inch
-        
-        // Get expected amount of loanAsset to recover (used for expected + gas calculation)
-        (uint256 amountReceivable, uint256[] memory  distribution) = dex.getExpectedReturn(
-            IERC20(collateralAsset),
-            IERC20(loanAsset),
-            liquidationAmt,
-            5,
-            0
-        );
-
-        // Get expected amount of loanAsset to recover factoring in gas (used for slippage calculation)
-        (amountReceivable,, distribution) = dex.getExpectedReturnWithGas(
-            IERC20(collateralAsset),
-            IERC20(loanAsset),
-            liquidationAmt,
-            5,
-            0,
-            amountReceivable * 70000000000
-        );
-
-        uint256 prevBal = loanAsset.balanceOf(address(this));  // Calculate current balance of loanAsset
-
-        // Liquidate collateral on 1inch, swapping for loanAsset at specified slippage
-        dex.swap(
-            IERC20(collateralAsset),
-            IERC20(loanAsset),
-            liquidationAmt,
-            amountReceivable * 99 / 100, // We can modify slippage here. This represents 1%.
-            distribution,
-            0
-        );
-        // TODO: amountReceived wasn't returning anything, even though balance was increasing
-        //       Investigate overriding updateFundsReceived to store recoveredFromLiquidation
-        // Update accounting to account for amount of loanAsset recovered from liquidation
-        recoveredFromLiquidation = loanAsset.balanceOf(address(this)).sub(prevBal);  
-
-        // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
-
-        //  2a) If principal owed == 0 after settlement ... send excess loanAsset to Borrower.
-        //  2b) If principal owed >  0 after settlement ... all loanAsset remains in Loan.
-        //      ... update two accounting variables liquidationShortfall, liquidationExcess as appropriate.
-
-        // 3) Call updateFundsReceived() to snapshot current equity-holders payout.
-        updateFundsReceived();
-
-        // 4) Transition loanState to Liquidated.
-        loanState = State.Liquidated;
-
-        // 5) Emit liquidation event.
-        // emit Liquidation(
-        //     0,  // collateralSwapped
-        //     0,  // loanAssetReturned
-        //     0,  // liquidationExcess
-        //     0   // liquidationShortfall
-        // );
-    }
 
     /**
         @dev Make the next payment for this loan.
@@ -383,7 +303,7 @@ contract Loan is FDT {
     /**
         @dev Make the full payment for this loan, a.k.a. "calling" the loan.
     */
-    function makeFullPayment() external isState(State.Active) {
+    function makeFullPayment() public isState(State.Active) {
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
 
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
@@ -449,7 +369,7 @@ contract Loan is FDT {
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(10 ** 18).div(10 ** loanAsset.decimals());
     }
-
+    	
     function _checkValidTransferFrom(bool isValid) internal {
         require(isValid, "Loan:INSUFFICIENT_APPROVAL");
     }
