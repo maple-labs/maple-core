@@ -59,7 +59,7 @@ contract Loan is FDT {
     uint256 public interestPaid;
     uint256 public feePaid;
     uint256 public excessReturned;
-    uint256 public liquidatedAmt;
+    uint256 public recoveredFromLiquidation;
     uint256 public liquidationShortfall;
     uint256 public liquidationExcess;
 
@@ -233,24 +233,22 @@ contract Loan is FDT {
         emit BalanceUpdated(treasury,         address(loanAsset),       loanAsset.balanceOf(treasury));
 
         emit Drawdown(amt);
-    }
+    }    
 
-    uint public amountReceivable;
-    uint public amountReceived;
-    uint public estimateGasAmount;
-
-    // Internal handling of a default.
+    /**
+        @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
+    */
     function triggerDefault() external {
         
-        // 1) Swap collateral on 1inch for loanAsset, deposit into this contract.
-        IOneSplit dex = IOneSplit(_globals(superFactory).ONE_INCH_DEX_BETA());
+        IOneSplit dex = IOneSplit(_globals(superFactory).ONE_INCH_DEX_BETA());  // Get 1inch DEX interface
 
-        uint256 liquidationAmt = _getCollateralLockerBalance();
+        uint256 liquidationAmt = _getCollateralLockerBalance();  // Get total amount of collateral for liquidation
 
-        require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");
+        require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");  // Pull collateral
 
-        collateralAsset.approve(address(dex), liquidationAmt);
+        collateralAsset.approve(address(dex), liquidationAmt);  // Approve collateralAsset for use in 1inch
         
+        // Get expected amount of loanAsset to recover (used for expected + gas calculation)
         (uint256 amountReceivable, uint256[] memory  distribution) = dex.getExpectedReturn(
             IERC20(collateralAsset),
             IERC20(loanAsset),
@@ -259,6 +257,7 @@ contract Loan is FDT {
             0
         );
 
+        // Get expected amount of loanAsset to recover factoring in gas (used for slippage calculation)
         (amountReceivable,, distribution) = dex.getExpectedReturnWithGas(
             IERC20(collateralAsset),
             IERC20(loanAsset),
@@ -268,7 +267,9 @@ contract Loan is FDT {
             amountReceivable * 70000000000
         );
 
-        uint256 prevBal = loanAsset.balanceOf(address(this));
+        uint256 prevBal = loanAsset.balanceOf(address(this));  // Calculate current balance of loanAsset
+
+        // Liquidate collateral on 1inch, swapping for loanAsset at specified slippage
         dex.swap(
             IERC20(collateralAsset),
             IERC20(loanAsset),
@@ -278,8 +279,9 @@ contract Loan is FDT {
             0
         );
         // TODO: amountReceived wasn't returning anything, even though balance was increasing
-        //       Investigate overriding updateFundsReceived to store liquidationAmt
-        liquidationAmt = loanAsset.balanceOf(address(this)).sub(prevBal);
+        //       Investigate overriding updateFundsReceived to store recoveredFromLiquidation
+        // Update accounting to account for amount of loanAsset recovered from liquidation
+        recoveredFromLiquidation = loanAsset.balanceOf(address(this)).sub(prevBal);  
 
         // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
 

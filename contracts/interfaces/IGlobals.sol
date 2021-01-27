@@ -24,8 +24,6 @@ interface IGlobals {
 
     function BFactory() external view returns (address);
 
-    function OneInchDEX() external view returns (address);
-
     function ONE_INCH_DEX_BETA() external view returns (address);
 
     function setBFactory() external view returns (uint256);
