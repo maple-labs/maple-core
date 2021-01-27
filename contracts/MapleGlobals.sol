@@ -7,7 +7,7 @@ import "./interfaces/IERC20Details.sol";
 import "./interfaces/ISubFactory.sol";
 
 contract MapleGlobals {
-    
+
     address immutable public BFactory;   // Official balancer pool factory.
 
     address public governor;             // Governor is responsible for management of global Maple variables

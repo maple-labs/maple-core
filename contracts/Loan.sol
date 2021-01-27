@@ -19,7 +19,7 @@ contract Loan is FDT {
     
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
-    using SafeMath       for uint256;
+    using SafeMath        for uint256;
 
     enum State { Live, Active, Matured }  // Live = Created, Active = Drawndown
 
@@ -91,7 +91,7 @@ contract Loan is FDT {
         @param  specs            Contains specifications for this loan.
                 specs[0] = apr
                 specs[1] = termDays
-                specs[2] = paymentIntervalDays
+                specs[2] = paymentIntervalDays (aka PID)
                 specs[3] = minRaise
                 specs[4] = collateralRatio
                 specs[5] = fundingPeriodDays
@@ -130,8 +130,8 @@ contract Loan is FDT {
         require(globals.isValidLoanAsset(_loanAsset),             "Loan:INVALID_LOAN_ASSET");
         require(globals.isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
 
-        require(specs[2] != 0,               "Loan:PAYMENT_INTERVAL_DAYS_EQ_ZERO");
-        require(specs[1].mod(specs[2]) == 0, "Loan:INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION");
+        require(specs[2] != 0,               "Loan:PID_EQ_ZERO");
+        require(specs[1].mod(specs[2]) == 0, "Loan:INVALID_TERM_DAYS");
         require(specs[3] > 0,                "Loan:MIN_RAISE_EQ_ZERO");
         require(specs[5] > 0,                "Loan:FUNDING_PERIOD_EQ_ZERO");
 
@@ -154,10 +154,6 @@ contract Loan is FDT {
         fundingLocker    = IFundingLockerFactory(_flFactory).newLocker(_loanAsset);
     }
 
-    function _globals(address loanFactory) internal view returns(IGlobals) {
-        return IGlobals(ILoanFactory(loanFactory).globals());
-    }
-
     /**
         @dev Fund this loan and mint debt tokens for mintTo.
         @param  amt    Amount to fund the loan.
@@ -166,13 +162,13 @@ contract Loan is FDT {
     // TODO: Update this function signature to use (address, uint)
     function fundLoan(uint256 amt, address mintTo) external isState(State.Live) {
         
-        require(loanAsset.transferFrom(msg.sender, fundingLocker, amt), "Loan:INSUFFICIENT_APPROVAL_FUND_LOAN");
+        _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, fundingLocker, amt));
 
         uint256 wad = _toWad(amt);  // Convert to WAD precision
         _mint(mintTo, wad);         // Mint FDT to `mintTo` i.e Debt locker contract.
 
         emit LoanFunded(amt, mintTo);
-        emit BalanceUpdated(fundingLocker, address(loanAsset), loanAsset.balanceOf(fundingLocker));
+        emit BalanceUpdated(fundingLocker, address(loanAsset), _getFundingLockerBalance());
     }
 
     /**
@@ -185,8 +181,8 @@ contract Loan is FDT {
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
 
-        require(amt >= minRaise,                           "Loan:DRAWDOWN_AMT_LT_MIN_RAISE");
-        require(amt <= loanAsset.balanceOf(fundingLocker), "Loan:DRAWDOWN_AMT_GT_FUNDED_AMT");
+        require(amt >= minRaise,                   "Loan:DRAWDOWN_AMT_LT_MIN_RAISE");
+        require(amt <= _getFundingLockerBalance(), "Loan:DRAWDOWN_AMT_GT_FUNDED_AMT");
 
         // Update the principal owed and drawdown amount for this loan.
         principalOwed  = amt;
@@ -215,26 +211,26 @@ contract Loan is FDT {
         require(_fundingLocker.pull(borrower,      amt.sub(treasuryAmt).sub(feePaid)), "Loan:BORROWER_PULL");      // Transfer drawdown amount to Borrower.
 
         // Update excessReturned locally.
-        excessReturned = loanAsset.balanceOf(fundingLocker);
+        excessReturned = _getFundingLockerBalance();
 
         // Drain remaining funds from FundingLocker.
         require(_fundingLocker.drain(), "Loan:DRAIN");
 
-        emit BalanceUpdated(collateralLocker, address(collateralAsset), collateralAsset.balanceOf(collateralLocker));
-        emit BalanceUpdated(fundingLocker,    address(loanAsset),       loanAsset.balanceOf(fundingLocker));
+        emit BalanceUpdated(collateralLocker, address(collateralAsset), _getCollateralLockerBalance());
+        emit BalanceUpdated(fundingLocker,    address(loanAsset),       _getFundingLockerBalance());
         emit BalanceUpdated(address(this),    address(loanAsset),       loanAsset.balanceOf(address(this)));
         emit BalanceUpdated(treasury,         address(loanAsset),       loanAsset.balanceOf(treasury));
 
         emit Drawdown(amt);
-    }
+    }    
 
     /**
         @dev Make the next payment for this loan.
     */
-    function makePayment() public isState(State.Active) {
+    function makePayment() external isState(State.Active) {
         (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
 
-        require(loanAsset.transferFrom(msg.sender, address(this), total), "Loan:MAKE_PAYMENT_TRANSFER_FROM");
+        _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
 
         // Update internal accounting variables.
         principalOwed  = principalOwed.sub(principal);
@@ -258,8 +254,8 @@ contract Loan is FDT {
         if (paymentsRemaining == 0) {
             loanState = State.Matured;
             nextPaymentDue = 0;
-            require(ICollateralLocker(collateralLocker).pull(borrower, collateralAsset.balanceOf(collateralLocker)), "Loan:COLLATERAL_PULL");
-            emit BalanceUpdated(collateralLocker, address(collateralAsset), collateralAsset.balanceOf(collateralLocker));
+            require(ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance()), "Loan:COLLATERAL_PULL");
+            emit BalanceUpdated(collateralLocker, address(collateralAsset), _getCollateralLockerBalance());
         }
 
         updateFundsReceived();
@@ -310,7 +306,7 @@ contract Loan is FDT {
     function makeFullPayment() public isState(State.Active) {
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
 
-        require(loanAsset.transferFrom(msg.sender, address(this), total),"Loan:MAKE_FULL_PAYMENT_TRANSFER_FROM");
+        _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
 
         loanState = State.Matured;
 
@@ -372,5 +368,21 @@ contract Loan is FDT {
 
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(10 ** 18).div(10 ** loanAsset.decimals());
+    }
+    	
+    function _checkValidTransferFrom(bool isValid) internal {
+        require(isValid, "Loan:INSUFFICIENT_APPROVAL");
+    }
+
+    function _globals(address loanFactory) internal view returns (IGlobals) {
+        return IGlobals(ILoanFactory(loanFactory).globals());
+    }
+
+    function _getCollateralLockerBalance() internal view returns (uint256) {
+        return collateralAsset.balanceOf(collateralLocker);
+    }
+
+    function _getFundingLockerBalance() internal view returns (uint256) {
+        return loanAsset.balanceOf(fundingLocker);
     }
 }

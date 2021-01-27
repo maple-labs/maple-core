@@ -10,7 +10,7 @@ contract LateFeeCalc {
 
     using SafeMath for uint256;
 
-    bytes32 public constant calcType = 'LATEFEE';
+    uint8   public constant calcType = 11;  // "LATEFEE type"
     bytes32 public constant name     = 'FLAT';
     
     uint256 public feeBips;  // The fee in bips, charged on the payment amount.

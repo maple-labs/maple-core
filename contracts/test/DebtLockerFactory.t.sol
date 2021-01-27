@@ -18,7 +18,7 @@ import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
 
 contract InterestCalc {
-    bytes32 public calcType = 'INTEREST';
+    uint8 public constant calcType = 10;
 
     constructor() public {}
 }
