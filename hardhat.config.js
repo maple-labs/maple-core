@@ -1,6 +1,7 @@
 require("dotenv").config({ path: "../../.env" });
 require("@nomiclabs/hardhat-waffle");
 require("solidity-coverage");
+require('hardhat-contract-sizer');
 
 const defaultNetwork = process.env.NETWORK || "localhost";
 
@@ -71,4 +72,9 @@ module.exports = {
   mocha: {
     timeout: 200000,
   },
+  contractSizer: {
+    alphaSort: false,
+    runOnCompile: true,
+    disambiguatePaths: false,
+  }
 };

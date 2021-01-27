@@ -8,7 +8,7 @@ contract BulletRepaymentCalc {
 
 	using SafeMath for uint256;
 
-    bytes32 public constant calcType = "INTEREST";
+    uint8   public constant calcType = 10;  // INTEREST type
     bytes32 public constant name     = "BULLET";
 
     /**

@@ -9,7 +9,7 @@ contract PremiumCalc {
 
     using SafeMath for uint256;
 
-    bytes32 public constant calcType = "PREMIUM";
+    uint8   public constant calcType = 12; // PREMIUM type
     bytes32 public constant name     = "FLAT";
     
     uint256 public premiumBips;  // The amount of principal to charge extra as a premium for calling the loan.
