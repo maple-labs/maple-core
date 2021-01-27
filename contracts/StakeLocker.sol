@@ -21,7 +21,7 @@ contract StakeLocker is FDT {
     address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
     address public immutable owner;           // The parent liquidity pool.
 
-    mapping(address => uint256) private stakeDate;  // Map address to date value (TODO: Consider making public)
+    mapping(address => uint256) public stakeDate;  // Map address to effective deposit date value
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
@@ -58,14 +58,13 @@ contract StakeLocker is FDT {
     }
 
     function _globals() internal view returns(IGlobals) {
-        return IGlobals(IPoolFactory(owner).globals());
+        return IGlobals(IPoolFactory(IPool(owner).superFactory()).globals());
     }
 
     /**
         @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
         @param amt Amount of stakeAsset (BPTs) to deposit.
     */
-    // TODO: Consider localizing this function to Pool.
     function stake(uint256 amt) external {
         require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
 
@@ -80,16 +79,14 @@ contract StakeLocker is FDT {
         @dev Withdraw amt of stakeAsset, burn FDTs for msg.sender.
         @param amt Amount of stakeAsset (BPTs) to withdraw.
     */
-    // TODO: Consider localizing this function to Pool.
     function unstake(uint256 amt) external canUnstake {
-        require(amt <= getUnstakeableBalance(msg.sender),"Stakelocker:AMT_GT_UNSTAKEABLE_BALANCE");
+        require(amt <= getUnstakeableBalance(msg.sender), "Stakelocker:AMT_GT_UNSTAKEABLE_BALANCE");
 
         updateFundsReceived();
         withdrawFunds();
-        _transfer(msg.sender, address(this), amt);
-        _burn(address(this), amt);
+        _burn(msg.sender, amt);
 
-        require(stakeAsset.transferFrom(address(this), msg.sender, amt), "StakeLocker:UNSTAKE_TRANSFER_FROM");
+        require(stakeAsset.transfer(msg.sender, amt), "StakeLocker:UNSTAKE_TRANSFER");
 
         emit Unstake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
@@ -105,19 +102,16 @@ contract StakeLocker is FDT {
 
     /** 
         @dev Updates information used to calculate unstake delay.
-        @param staker The staker who deposited BPTs.
-        @param amt    Amount of BPTs staker has deposited.
+        @param who The staker who deposited BPTs.
+        @param amt Amount of BPTs staker has deposited.
     */
-    function _updateStakeDate(address staker, uint256 amt) internal {
-        if (stakeDate[staker] == 0) {
-            stakeDate[staker] = block.timestamp;
+    function _updateStakeDate(address who, uint256 amt) internal {
+        if (stakeDate[who] == 0) {
+            stakeDate[who] = block.timestamp;
         } else {
-            uint256 date = stakeDate[staker];
-            // Make sure this is executed before mint or line below needs change on denominator
-            uint256 coef = (WAD * amt) / (balanceOf(staker) + amt); // Yes, i want 0 if amt is too small
-            // This addition will start to overflow in about 3^52 years
-            stakeDate[staker] = (date * WAD + (block.timestamp - date) * coef) / WAD;
-            // I know this is insane but its good trust me
+            uint256 stkDate = stakeDate[who];
+            uint256 coef    = (WAD.mul(amt)).div(balanceOf(who) + amt); 
+            stakeDate[who]  = (stkDate.mul(WAD).add((block.timestamp.sub(stkDate)).mul(coef))).div(WAD);  // date + (now - stkDate) * coef
         }
     }
 
@@ -126,10 +120,11 @@ contract StakeLocker is FDT {
         @param staker The address to view information for.
         @return Amount of BPTs staker can unstake.
     */
+    // TODO: Handle case where unstakeDelay == 0 (use similar/same logic as calcWithdrawPenalty)
     function getUnstakeableBalance(address staker) public view returns (uint256) {
         uint256 bal  = balanceOf(staker);
         uint256 time = (block.timestamp - stakeDate[staker]) * WAD;
-        uint256 out  = ((time / (_globals().unstakeDelay() + 1)) * bal) / WAD;
+        uint256 out  = ((time / (_globals().unstakeDelay())) * bal) / WAD;
         // The plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
         // Also i do indeed want this to return 0 if denominator is less than WAD
         if (out > bal) {
