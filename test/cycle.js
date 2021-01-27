@@ -464,7 +464,7 @@ describe("Cycle of an entire loan", function () {
 
     // Withdraw USDC from the pool.
     await Pool_LiquidityProvider.withdraw(
-      BigNumber.from(10).pow(18).mul(2000) // "Burning" 18 decimals worth of shares (maps to 6 decimals worth of USDC)
+      BigNumber.from(10).pow(6).mul(2000) // "Burning" 2000 * 10 ** 18 pool tokens corresponds to 2000 USDC.
     );
   });
 });
