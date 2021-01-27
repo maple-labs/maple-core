@@ -33,13 +33,14 @@ contract CrossAssetSwapTest is TestUtil {
 
         // assertEq(synthSwap.swappable_synth(WETH), address(1));
 
-        mint("DAI", address(this), 200_000_000 * 10 ** 18);
+        mint("USDC", address(this), 200_000_000 * 10 ** 18);
+        IERC20(USDC).approve(SYNTH_SWAP, uint(-1));
 
         address sbtc = synthSwap.swappable_synth(WBTC);
         assertEq(sbtc, address(2));
 
-        uint256 expected = synthSwap.get_swap_into_synth_amount(DAI, sbtc, 100_000_000 * 10 ** 18);
-        uint256 tokenId  = synthSwap.swap_into_synth(DAI, sbtc, 100_000_000 * 10 ** 18, expected);
+        uint256 expected = synthSwap.get_swap_into_synth_amount(USDC, sbtc, 100_000_000 * 10 ** 18);
+        uint256 tokenId  = synthSwap.swap_into_synth(USDC, sbtc, 100_000_000 * 10 ** 18, expected);
 
         assertEq(expected, 1);
         assertEq(tokenId, 2);
