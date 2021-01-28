@@ -340,8 +340,8 @@ contract Pool is FDT, CalcBPool {
     // TODO: Handle case where penaltyDelay == 0
     function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 penalty) {
         if (lockupPeriod < penaltyDelay) {
-            uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
-            uint256 unlocked = dTime.div(penaltyDelay).mul(amt) / WAD;
+            uint256 dTime    = block.timestamp.sub(depositDate[who]);
+            uint256 unlocked = dTime.mul(WAD).div(penaltyDelay).mul(amt).div(WAD);
 
             penalty = unlocked > amt ? 0 : amt - unlocked;
         } else {
