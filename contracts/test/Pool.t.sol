@@ -1549,6 +1549,10 @@ contract PoolTest is TestUtil {
 
         hevm.warp(start + pool1.lockupPeriod()); // Increase the time till first deposit date.
         assertTrue(!kim.try_withdraw(address(pool1), withdrawAmount), "Failed to withdraw funds");  // Not able to withdraw the funds as deposit data get weighted.
+        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));    // Fund the pool again with 1000 USDC.
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 2000 * USD), "Fail to fund the loan");
+        assertTrue(!kim.try_withdraw(address(pool1), withdrawAmount), "Failed to withdraw funds");
+        withdrawAmount += 1000 * USD;
 
         hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
         _drawDownLoan(withdrawAmount, loan3, hal);
