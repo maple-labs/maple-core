@@ -275,21 +275,17 @@ contract Loan is FDT {
         amountLiquidated = returnAmounts[0];
         amountRecovered  = returnAmounts[1];
 
+        // Reduce principal owed by amount received (as much as is required for principal owed == 0).
         if (principalOwed <= amountRecovered) {
             liquidationExcess = amountLiquidated.sub(principalOwed);
             principalOwed = 0;
             loanAsset.transfer(borrower, liquidationExcess); // Send excess to Borrower.
         }
+        // If principal owed >  0 after settlement ... all loanAsset remains in Loan.
         else {
             principalOwed = principalOwed.sub(amountRecovered);
             liquidationShortfall = principalOwed;
         }
-
-        // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
-
-        //  2a) If principal owed == 0 after settlement ... send excess loanAsset to Borrower.
-        //  2b) If principal owed >  0 after settlement ... all loanAsset remains in Loan.
-        //      ... update two accounting variables liquidationShortfall, liquidationExcess as appropriate.
 
         // Call updateFundsReceived() to snapshot payout.
         updateFundsReceived();
@@ -297,12 +293,12 @@ contract Loan is FDT {
         // Transition loanState to Liquidated.
         loanState = State.Liquidated;
 
-        // 5) Emit liquidation event.
+        // Emit liquidation event.
         emit Liquidation(
             returnAmounts[0],  // collateralSwapped
             returnAmounts[1],  // loanAssetReturned
-            0,  // liquidationExcess
-            0   // liquidationShortfall
+            liquidationExcess,
+            liquidationShortfall
         );
 
     }
