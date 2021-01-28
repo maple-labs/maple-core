@@ -340,4 +340,19 @@ contract StakeLockerTest is TestUtil {
         // Non-zero value is passed through.
         assertGt(vals[5], 0);
     }
+
+    function test_claim_default_burn_BPT() public {
+
+        setUpLoanAndDefault();
+
+        // Pre-state stakeLocker checks.
+
+        uint256[6] memory vals = sid.claim(address(pool), address(loan),  address(dlFactory));
+
+        // Post-state stakeLocker checks.
+
+        assertTrue(false);
+      
+
+    }
 } 

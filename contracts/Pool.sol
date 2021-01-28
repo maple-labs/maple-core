@@ -51,6 +51,7 @@ contract Pool is FDT, CalcBPool {
     event LoanFunded(address loan, address debtLocker, uint256 amountFunded);
     event BalanceUpdated(address who, address token, uint256 balance);
     event Claim(address loan, uint interest, uint principal, uint fee);
+    event DefaultSuffered(address loan, uint defaultSuffered, uint BPTBurned);
 
     /**
         @dev Constructor for a Pool.
@@ -265,6 +266,22 @@ contract Pool is FDT, CalcBPool {
         emit LoanFunded(loan, _debtLocker, amt);
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
+    
+    // Helper function for claim() if a default has occurred.
+    function _handleDefault(address loan, uint256 defaultSuffered) internal {
+
+        // Check liquidityAsset swapOut value of StakeLocker coverage.
+        uint availableSwapOut = this.getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
+        uint amtBPTBurned     = IBPool(stakeAsset).exitswapExternAmountOut(
+                                    address(liquidityAsset), 
+                                    availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
+                                    2**256-1
+                                );
+
+        // TODO: Handle the accounting and settlement of UDSC now in Pool.
+
+        emit DefaultSuffered(loan, defaultSuffered, amtBPTBurned);
+    }
 
     /**
         @dev Claim available funds for loan through specified debt locker factory.
@@ -312,6 +329,12 @@ contract Pool is FDT, CalcBPool {
         emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
         emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
+        
+        // Handle default.
+        // TODO: Consider order of operations, where this function should happen in claim() ... is there a better place?
+        if (claimInfo[5] > 0) {
+            _handleDefault(loan, claimInfo[5]);
+        }
 
         return claimInfo;
     }

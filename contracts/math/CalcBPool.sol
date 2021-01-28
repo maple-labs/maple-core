@@ -92,6 +92,43 @@ contract CalcBPool {
         return tokenAmountOut;
     }
 
+    /** 
+        @dev Calculate _pair swap out value of staker BPT balance escrowed in stakeLocker.
+        @param pool        Balancer pool that issues the BPTs.
+        @param pair        Swap out asset (e.g. USDC) to receive when burning BPTs.
+        @param stakeLocker Escrows BPTs deposited by staker.
+        @return USDC swap out value of staker BPTs.
+    */
+    function getSwapOutValueLocker(
+        address pool,
+        address pair,
+        address stakeLocker
+    ) external view returns (uint256) {
+
+        // Fetch balancer pool token information.
+        IBPool bPool            = IBPool(pool);
+        uint256 tokenBalanceOut = bPool.getBalance(pair);
+        uint256 tokenWeightOut  = bPool.getDenormalizedWeight(pair);
+        uint256 poolSupply      = bPool.totalSupply();
+        uint256 totalWeight     = bPool.getTotalDenormalizedWeight();
+        uint256 swapFee         = bPool.getSwapFee();
+
+        // Fetch BPT balance of stakeLocker by staker.
+        uint256 poolAmountIn = bPool.balanceOf(stakeLocker);
+
+        // Returns amount of BPTs required to extract tokenAmountOut.
+        uint256 tokenAmountOut = bPool.calcSingleOutGivenPoolIn(
+            tokenBalanceOut,
+            tokenWeightOut,
+            poolSupply,
+            totalWeight,
+            poolAmountIn,
+            swapFee
+        );
+
+        return poolAmountIn;
+    }
+
     /**
         @dev Calculates BPTs required if burning BPTs for pair, given supplied tokenAmountOutRequired.
         @param  bpool              Balancer pool that issues the BPTs.
