@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
@@ -299,80 +300,44 @@ contract StakeLockerTest is TestUtil {
         assertEq(uint256(pool.poolState()), 1);  // Finalize
     }
 
-    function test_stake() public {
-        uint256 startDate = block.timestamp;
+    function setUpLoanAndDefault() public {
+        // Fund the pool
+        mint("USDC", address(ali), 10_000_000 * USD);
+        ali.approve(USDC, address(pool), MAX_UINT);
+        ali.deposit(address(pool), 10_000_000 * USD);
 
-        assertTrue(!che.try_stake(address(stakeLocker),   25 * WAD));  // Hasn't approved BPTs
-        che.approve(address(bPool), address(stakeLocker), 25 * WAD);
+        // Fund the loan
+        sid.fundLoan(address(pool), address(loan), address(dlFactory), 10_000_000 * USD);
+        uint cReq = loan.collateralRequiredForDrawdown(10_000_000 * USD);
 
-        uint256 slBal_before = bPool.balanceOf(address(stakeLocker));
+        // Drawdown loan
+        mint("WETH", address(bob), cReq);
+        bob.approve(WETH, address(loan), MAX_UINT);
+        bob.drawdown(address(loan), 10_000_000 * USD);
+        
+        // Warp to late payment
+        uint256 start = block.timestamp;
+        uint256 nextPaymentDue = loan.nextPaymentDue();
+        uint256 gracePeriod = globals.gracePeriod();
+        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
-        assertEq(bPool.balanceOf(address(che)),         25 * WAD);
-        assertEq(bPool.balanceOf(address(stakeLocker)), 50 * WAD);  // PD stake
-        assertEq(stakeLocker.totalSupply(),             50 * WAD);
-        assertEq(stakeLocker.balanceOf(address(che)),          0);
-        assertEq(stakeLocker.stakeDate(address(che)),          0);
-
-        assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));  
-
-        assertEq(bPool.balanceOf(address(che)),                 0);
-        assertEq(bPool.balanceOf(address(stakeLocker)),  75 * WAD);  // PD + Staker stake
-        assertEq(stakeLocker.totalSupply(),              75 * WAD);
-        assertEq(stakeLocker.balanceOf(address(che)),    25 * WAD);
-        assertEq(stakeLocker.stakeDate(address(che)),   startDate);
+        // Trigger default
+        loan.triggerDefault();
     }
 
-    function setUpLoanAndRepay() public {
-        mint("USDC", address(ali), 10_000_000 * USD);  // Mint USDC to LP
-        ali.approve(USDC, address(pool), MAX_UINT);    // LP approves USDC
+    function test_claim_default_info() public {
 
-        ali.deposit(address(pool), 10_000_000 * USD);                                      // LP deposits 10m USDC to Pool
-        sid.fundLoan(address(pool), address(loan), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
+        setUpLoanAndDefault();
 
-        uint cReq = loan.collateralRequiredForDrawdown(10_000_000 * USD);  // WETH required for 100_000_000 USDC drawdown on loan
-        mint("WETH", address(bob), cReq);                                  // Mint WETH to borrower
-        bob.approve(WETH, address(loan), MAX_UINT);                        // Borrower approves WETH
-        bob.drawdown(address(loan), 10_000_000 * USD);                     // Borrower draws down 10m USDC
+        /**
+            Now that triggerDefault() is called, the return value defaultSuffered
+            will be greater than 0. Calling claim() is the mechanism which settles,
+            or rather updates accounting in the Pool which in turn will enable us
+            to handle liquidation of BPTs in the Stake Locker accurately.
+        */
+        uint256[6] memory vals = sid.claim(address(pool), address(loan),  address(dlFactory));
 
-        mint("USDC", address(bob), 10_000_000 * USD);  // Mint USDC to Borrower for repayment plus interest         
-        bob.approve(USDC, address(loan), MAX_UINT);    // Borrower approves USDC
-        bob.makeFullPayment(address(loan));            // Borrower makes full payment, which includes interest
-
-        sid.claim(address(pool), address(loan),  address(dlFactory));  // PD claims interest, distributing funds to stakeLocker
-    }
-
-    function test_unstake_past_unstakeDelay() public {
-        uint256 slBal_before = bPool.balanceOf(address(stakeLocker));
-        uint256 stakeDate    = block.timestamp;
-
-        che.approve(address(bPool), address(stakeLocker), 25 * WAD);
-        che.stake(address(stakeLocker), 25 * WAD);  
-
-        assertEq(IERC20(USDC).balanceOf(address(che)),          0);
-        assertEq(bPool.balanceOf(address(che)),                 0);
-        assertEq(bPool.balanceOf(address(stakeLocker)),  75 * WAD);  // PD + Staker stake
-        assertEq(stakeLocker.totalSupply(),              75 * WAD);
-        assertEq(stakeLocker.balanceOf(address(che)),    25 * WAD);
-        assertEq(stakeLocker.stakeDate(address(che)),   stakeDate);
-
-        setUpLoanAndRepay();
-        hevm.warp(stakeDate + globals.unstakeDelay());
-
-        uint256 totalStakerEarnings    = IERC20(USDC).balanceOf(address(stakeLocker));
-        uint256 cheStakerEarnings_FDT  = stakeLocker.withdrawableFundsOf(address(che));
-        uint256 cheStakerEarnings_calc = totalStakerEarnings * (25 * WAD) / (75 * WAD);  // Che's portion of staker earnings
-
-        che.unstake(address(stakeLocker), 25 * WAD);  // Staker unstakes all BPTs
-
-        withinPrecision(cheStakerEarnings_FDT, cheStakerEarnings_calc, 9);
-
-        assertEq(IERC20(USDC).balanceOf(address(che)),                               cheStakerEarnings_FDT);  // Che got portion of interest
-        assertEq(IERC20(USDC).balanceOf(address(stakeLocker)), totalStakerEarnings - cheStakerEarnings_FDT);  // Interest was transferred out of SL
-
-        assertEq(bPool.balanceOf(address(che)),          25 * WAD);  // Che unstaked BPTs
-        assertEq(bPool.balanceOf(address(stakeLocker)),  50 * WAD);  // PD + Staker stake
-        assertEq(stakeLocker.totalSupply(),              50 * WAD);  // Total supply of stake tokens has decreased
-        assertEq(stakeLocker.balanceOf(address(che)),           0);  // Che has no stake tokens after unstake
-        assertEq(stakeLocker.stakeDate(address(che)),   stakeDate);  // StakeDate remains unchanged (doesn't matter since balanceOf == 0 on next stake)
+        // Non-zero value is passed through.
+        assertGt(vals[5], 0);
     }
 } 

@@ -64,11 +64,11 @@ contract Loan is FDT {
     uint256 public interestPaid;
     uint256 public feePaid;
     uint256 public excessReturned;
-
+    uint256 public defaultSuffered;
+    
     // Liquidation variables
     uint256 public amountLiquidated;
     uint256 public amountRecovered;
-    uint256 public liquidationShortfall;
     uint256 public liquidationExcess;
 
     // Liquidation variables
@@ -103,7 +103,7 @@ contract Loan is FDT {
         uint collateralSwapped,
         uint loanAssetReturned,
         uint liquidationExcess,
-        uint liquidationShortfall
+        uint defaultSuffered
     );
 
     /**
@@ -286,8 +286,8 @@ contract Loan is FDT {
         }
         // If principal owed >  0 after settlement ... all loanAsset remains in Loan.
         else {
-            principalOwed        = principalOwed.sub(amountRecovered);
-            liquidationShortfall = principalOwed;
+            principalOwed   = principalOwed.sub(amountRecovered);
+            defaultSuffered = principalOwed;
         }
 
         // Call updateFundsReceived() to snapshot payout.
@@ -301,7 +301,7 @@ contract Loan is FDT {
             returnAmounts[0],  // collateralSwapped
             returnAmounts[1],  // loanAssetReturned
             liquidationExcess,
-            liquidationShortfall
+            defaultSuffered
         );
 
     }
@@ -382,11 +382,6 @@ contract Loan is FDT {
             total     = total.add(totalExtra);
             interest  = interest.add(interestExtra);
             principal = principal.add(principalExtra);
-        } 
-        else if (block.timestamp > nextPaymentDue.add(globals.gracePeriod())) {
-            // TODO: Implement handling a default scenario.
-            // TODO: Implement handling Pool Delegate (investor) early grace period default trigger.
-            // TODO: Implement handling public grace period default trigger.
         }
         
         return (total, principal, interest, nextPaymentDue);

@@ -39,6 +39,9 @@ interface ILoan is IERC20 {
     function termDays() external view returns (uint256);
     function nextPaymentDue() external view returns (uint256);
 
+    // Liquidations
+    function defaultSuffered() external view returns (uint256);
+
     // Functions
     function fundLoan(uint256, address) external;
     function triggerDefault() external;
