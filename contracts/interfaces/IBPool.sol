@@ -13,6 +13,8 @@ interface IBPool {
 
     function finalize() external;
 
+    function gulp(address) external;
+
     function isFinalized() external view returns (bool);
 
     function isBound(address) external view returns (bool);
