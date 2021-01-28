@@ -78,7 +78,7 @@ contract Pool is FDT, CalcBPool {
         string memory name,
         string memory symbol
     ) FDT(name, symbol, _liquidityAsset) public {
-        require(_globals(msg.sender).isValidLoanAsset(_liquidityAsset), "Pool:LIQ_ASSET_NOT_WHITELISTED");
+        require(_globals(msg.sender).isValidLoanAsset(_liquidityAsset), "Pool:INVALID_LIQ_ASSET");
         require(_liquidityCap   != uint256(0),                          "Pool:INVALID_CAP");
 
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
@@ -113,20 +113,6 @@ contract Pool is FDT, CalcBPool {
         penaltyDelay     = 30 days;
     }
 
-    modifier isState(State _state) {
-        require(poolState == _state, "Pool:STATE_CHECK");
-        _;
-    }
-
-    modifier isDelegate() {
-        require(msg.sender == poolDelegate, "Pool:MSG_SENDER_NOT_DELEGATE");
-        _;
-    }
-
-    function _globals(address poolFactory) internal view returns (IGlobals) {
-        return IGlobals(ILoanFactory(poolFactory).globals());
-    }
-
     /**
         @dev Deploys and assigns a StakeLocker for this Pool (only used once in constructor).
         @param stakeAsset     Address of the asset used for staking.
@@ -142,9 +128,11 @@ contract Pool is FDT, CalcBPool {
     /**
         @dev Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
     */
-    function finalize() public isDelegate isState(State.Initialized) {
+    function finalize() external {
+        _isValidState(State.Initialized);
+        _isValidDelegate();
         (,, bool stakePresent,,) = getInitialStakeRequirements();
-        require(stakePresent, "Pool:NOT_ENOUGH_STAKE_TO_FINALIZE");
+        require(stakePresent, "Pool:INSUFFICIENT_STAKE");
         poolState = State.Finalized;
     }
 
@@ -183,7 +171,8 @@ contract Pool is FDT, CalcBPool {
         @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
         @param amt The amount of LiquidityAsset to deposit, in wei.
     */
-    function deposit(uint256 amt) external isState(State.Finalized) {
+    function deposit(uint256 amt) external {
+        _isValidState(State.Finalized);
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
         uint256 wad = _toWad(amt);
@@ -206,7 +195,8 @@ contract Pool is FDT, CalcBPool {
         @dev Set `liquidityCap`, Only allowed by the pool delegate.
         @param newLiquidityCap New liquidity cap value. 
     */
-    function setLiquidityCap(uint256 newLiquidityCap) external isDelegate {
+    function setLiquidityCap(uint256 newLiquidityCap) external {
+        _isValidDelegate();
         liquidityCap = newLiquidityCap;
     }
 
@@ -241,8 +231,9 @@ contract Pool is FDT, CalcBPool {
         @param  dlFactory The debt locker factory to utilize.
         @param  amt       Amount to fund the loan.
     */
-    function fundLoan(address loan, address dlFactory, uint256 amt) external isState(State.Finalized) isDelegate {
-
+    function fundLoan(address loan, address dlFactory, uint256 amt) external {
+        _isValidState(State.Finalized);
+        _isValidDelegate();
         IGlobals globals = _globals(superFactory);
 
         // Auth checks.
@@ -294,7 +285,7 @@ contract Pool is FDT, CalcBPool {
                 [4] = Excess portion claimed.
                 [5] = Liquidation portion claimed.
     */
-    function claim(address loan, address dlFactory) public returns(uint256[6] memory) { 
+    function claim(address loan, address dlFactory) external returns(uint256[6] memory) { 
         
         uint256[6] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
@@ -310,14 +301,14 @@ contract Pool is FDT, CalcBPool {
         // Accounts for rounding error in stakeLocker/poolDelegate/liquidityLocker interest split
         interestSum = interestSum.add(interestClaim);
 
-        require(liquidityAsset.transfer(poolDelegate, poolDelegatePortion), "Pool:PD_CLAIM_TRANSFER");  // Transfer fee and portion of interest to pool delegate
-        require(liquidityAsset.transfer(stakeLocker,  stakeLockerPortion),  "Pool:SL_CLAIM_TRANSFER");  // Transfer portion of interest to stakeLocker
+        _transferLiquidityAsset(poolDelegate, poolDelegatePortion);  // Transfer fee and portion of interest to pool delegate.
+        _transferLiquidityAsset(stakeLocker, stakeLockerPortion);    // Transfer portion of interest to stakeLocker
 
         // Transfer remaining claim (remaining interest + principal + excess) to liquidityLocker
         // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
         // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
         // Ensures that internal accounting is exactly reflective of balance change
-        require(liquidityAsset.transfer(liquidityLocker, principalClaim.add(interestClaim)), "Pool:LL_CLAIM_TRANSFER"); 
+        _transferLiquidityAsset(liquidityLocker, principalClaim.add(interestClaim)); 
 
         // Update funds received for FDT StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();
@@ -343,7 +334,9 @@ contract Pool is FDT, CalcBPool {
         @dev Pool Delegate triggers deactivation, permanently shutting down the pool.
         @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
     */
-    function deactivate(uint confirmation) external isState(State.Finalized) isDelegate {
+    function deactivate(uint confirmation) external {
+        _isValidState(State.Finalized);
+        _isValidDelegate();
         require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
         require(principalOut <= 100 * 10 ** liquidityAssetDecimals);
         poolState = State.Deactivated;
@@ -386,7 +379,8 @@ contract Pool is FDT, CalcBPool {
              (i.e. calcWithdrawPenalty = 0)
         @param _penaltyDelay Effective time needed in pool for user to be able to claim 100% of funds
     */
-    function setPenaltyDelay(uint256 _penaltyDelay) public isDelegate {
+    function setPenaltyDelay(uint256 _penaltyDelay) external {
+        _isValidDelegate();
         penaltyDelay = _penaltyDelay;
     }
 
@@ -394,7 +388,8 @@ contract Pool is FDT, CalcBPool {
         @dev Allowing delegate/pool manager to set the principal penalty.
         @param _newPrincipalPenalty New principal penalty percentage (in bips) that corresponds to withdrawal amount.
     */
-    function setPrincipalPenalty(uint256 _newPrincipalPenalty) public isDelegate {
+    function setPrincipalPenalty(uint256 _newPrincipalPenalty) external {
+        _isValidDelegate();
         principalPenalty = _newPrincipalPenalty;
         // TODO: Emit an event
     }
@@ -413,7 +408,28 @@ contract Pool is FDT, CalcBPool {
     */
     function _balanceOfLiquidityLocker() internal view returns(uint256) {
         return liquidityAsset.balanceOf(liquidityLocker);
+    }
+
+    /**
+        @dev Transfers liquidity asset from address(this) to given `to` address.
+        @param to Whom liquidity asset needs to transferred.
+        @param value Amount of liquidity asset that gets transferred.
+    */
+    function _transferLiquidityAsset(address to, uint256 value) internal {
+        require(liquidityAsset.transfer(to, value), "Pool:CLAIM_TRANSFER");
     } 
+
+    function _isValidState(State _state) internal {
+        require(poolState == _state, "Pool:STATE_CHECK");
+    }
+
+    function _isValidDelegate() internal {
+        require(msg.sender == poolDelegate, "Pool:INVALID_DELEGATE");
+    }
+
+    function _globals(address poolFactory) internal view returns (IGlobals) {
+        return IGlobals(ILoanFactory(poolFactory).globals());
+    }
 
     /**
         @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
@@ -423,7 +439,7 @@ contract Pool is FDT, CalcBPool {
 
         require(
             ILiquidityLocker(liquidityLocker).transfer(msg.sender, withdrawableFunds),
-            "FDT_ERC20Extension.withdrawFunds: TRANSFER_FAILED"
+            "FDT_ERC20:TRANSFER_FAILED"
         );
 
         interestSum = interestSum.sub(withdrawableFunds);
