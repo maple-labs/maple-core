@@ -241,11 +241,11 @@ contract StakeLockerTest is TestUtil {
         IERC20(USDC).approve(address(bPool), MAX_UINT);
         mpl.approve(address(bPool), MAX_UINT);
 
-        bPool.bind(USDC, 50_000_000 * USD, 5 ether);       // Bind 50m USDC with 5 denormalization weight
-        bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
+        bPool.bind(USDC,         1_650_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(address(mpl),   550_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
 
-        assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * USD);
-        assertEq(mpl.balanceOf(address(bPool)),             100_000 * WAD);
+        assertEq(IERC20(USDC).balanceOf(address(bPool)),  1_650_000 * USD);
+        assertEq(mpl.balanceOf(address(bPool)),             550_000 * WAD);
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
@@ -313,32 +313,35 @@ contract StakeLockerTest is TestUtil {
 
     function test_gulp() public {
 
+        Governor fakeGov = new Governor();
+        fakeGov.setGovGlobals(globals);  // Point to globals created by gov
+
         // Drawdown on loan will transfer fee to MPL token contract.
         setUpLoanAndDrawdown();
 
         // Treasury processes fees, sends to MPL token holders.
         // treasury.passThroughFundsToken();
-        gov.try_passThroughFundsToken(address(treasury));
+        assertTrue(!fakeGov.try_passThroughFundsToken(address(treasury)));
+        assertTrue(     gov.try_passThroughFundsToken(address(treasury)));
 
-        uint mplBalance = IERC20(USDC).balanceOf(address(mpl));
-        uint balance = mpl.balanceOf(address(bPool));
-        uint withdrawable = mpl.withdrawableFundsOf(address(bPool));
-        uint preGulpUSDC = bPool.getBalance(USDC);
+        uint256 totalFundsToken = IERC20(USDC).balanceOf(address(mpl));
+        uint256 mplBal          = mpl.balanceOf(address(bPool));
+        uint256 earnings        = mpl.withdrawableFundsOf(address(bPool));
 
-        assertEq(mplBalance, 50000000000);
-        assertEq(balance, 100000000000000000000000);
-        assertEq(withdrawable, 499999999);
+        assertEq(totalFundsToken, loan.drawdownAmount() * globals.treasuryFee() / 10_000);
+        assertEq(mplBal,          550_000 * WAD);
+        withinPrecision(earnings, totalFundsToken * mplBal / mpl.totalSupply(), 9);
 
         // MPL is held by Balancer Pool, claim on behalf of BPool.
         mpl.withdrawFundsOnBehalf(address(bPool));
 
-        // Update BPool with gulp(token).
-        bPool.gulp(USDC);
+        uint256 usdcBal_preGulp = bPool.getBalance(USDC);
 
-        uint postGulpUSDC = bPool.getBalance(USDC);
+        bPool.gulp(USDC); // Update BPool with gulp(token).
 
-        assertEq(preGulpUSDC, 50000000000000);
-        assertEq(postGulpUSDC, preGulpUSDC + withdrawable);
+        uint256 usdcBal_postGulp = bPool.getBalance(USDC);
 
+        assertEq(usdcBal_preGulp,  1_650_000 * USD);
+        assertEq(usdcBal_postGulp, usdcBal_preGulp + earnings); // USDC is transferred into balancer pool, increasing value of MPL
     }
 } 
