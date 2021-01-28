@@ -376,4 +376,19 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(vals_b[5], loan.defaultSuffered() * (3_000_000 * WAD) / (4_000_000 * WAD));
         withinPrecision(vals_a[5] + vals_b[5], loan.defaultSuffered(), 2);
     }
+
+    function test_claim_default_burn_BPT() public {
+
+        setUpLoanAndDefault();
+
+        // Pre-state stakeLocker checks.
+
+        uint256[6] memory vals = sid.claim(address(pool), address(loan),  address(dlFactory));
+
+        // Post-state stakeLocker checks.
+
+        assertTrue(false);
+      
+
+    }
 } 
