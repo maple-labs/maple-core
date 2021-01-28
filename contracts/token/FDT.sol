@@ -66,6 +66,21 @@ abstract contract FDT is IFDT, ERC20 {
     }
 
     /**
+     * @dev Prepares funds withdrawal on behalf of a user
+     * @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
+     */
+    
+    function _prepareWithdrawOnBehalf(address user) internal returns (uint256) {
+        uint256 _withdrawableDividend = withdrawableFundsOf(user);
+
+        withdrawnFunds[user] = withdrawnFunds[user].add(_withdrawableDividend);
+
+        emit FundsWithdrawn(user, _withdrawableDividend);
+
+        return _withdrawableDividend;
+    }
+
+    /**
      * @dev View the amount of funds that an address can withdraw.
      * @param _owner The address of a token holder.
      * @return The amount funds that `_owner` can withdraw.
@@ -153,6 +168,17 @@ abstract contract FDT is IFDT, ERC20 {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(fundsToken.transfer(msg.sender, withdrawableFunds), "FDT:TRANSFER_FAILED");
+
+        _updateFundsTokenBalance();
+    }
+
+    /**
+     * @dev Withdraws all available funds for a token holder, on behalf of token holder
+     */
+    function withdrawFundsOnBehalf(address user) public virtual override {
+        uint256 withdrawableFunds = _prepareWithdrawOnBehalf(user);
+
+        require(fundsToken.transfer(user, withdrawableFunds), "FDT:TRANSFER_FAILED");
 
         _updateFundsTokenBalance();
     }
