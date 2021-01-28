@@ -64,19 +64,11 @@ contract Loan is FDT {
     uint256 public interestPaid;
     uint256 public feePaid;
     uint256 public excessReturned;
-<<<<<<< HEAD
     
     // Liquidation variables
     uint256 public amountLiquidated;
     uint256 public amountRecovered;
     uint256 public defaultSuffered;
-=======
-
-    // Liquidation variables
-    uint256 public amountLiquidated;
-    uint256 public amountRecovered;
-    uint256 public liquidationShortfall;
->>>>>>> 5eebb8d... feat: accounting for liquidationShortfall and liquidationExcess
     uint256 public liquidationExcess;
 
     modifier isState(State _state) {
@@ -280,26 +272,16 @@ contract Loan is FDT {
         amountLiquidated = returnAmounts[0];
         amountRecovered  = returnAmounts[1];
 
-<<<<<<< HEAD
         // Reduce principal owed by amount received (as much as is required for principal owed == 0).
         if (amountRecovered > principalOwed) {
             liquidationExcess = amountRecovered.sub(principalOwed);
-=======
-        if (principalOwed <= amountRecovered) {
-            liquidationExcess = amountLiquidated.sub(principalOwed);
->>>>>>> 5eebb8d... feat: accounting for liquidationShortfall and liquidationExcess
             principalOwed = 0;
             loanAsset.transfer(borrower, liquidationExcess); // Send excess to Borrower.
         }
         // If principal owed >  0 after settlement ... all loanAsset remains in Loan.
         else {
-<<<<<<< HEAD
             principalOwed   = principalOwed.sub(amountRecovered);
             defaultSuffered = principalOwed;
-=======
-            principalOwed = principalOwed.sub(amountRecovered);
-            liquidationShortfall = principalOwed;
->>>>>>> 5eebb8d... feat: accounting for liquidationShortfall and liquidationExcess
         }
 
         // Call updateFundsReceived() to snapshot payout.
