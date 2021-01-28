@@ -184,7 +184,7 @@ contract LoanTest is TestUtil {
         // assertEq(loan.principalOwed(), 1);
         // assertEq(loan.amountLiquidated(), 1);
         // assertEq(loan.amountRecovered(), 1);
-        // assertEq(loan.liquidationShortfall(), 1);
+        // assertEq(loan.defaultSuffered(), 1);
         // assertEq(loan.liquidationExcess(), 1);
 
         // withinPrecision(IERC20(USDC).balanceOf(address(loan)) - beforeBal, loan.drawdownAmount() * loan.collateralRatio() / 10_000, 1);

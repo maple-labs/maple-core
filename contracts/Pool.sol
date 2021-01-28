@@ -275,11 +275,11 @@ contract Pool is FDT, CalcBPool {
                 [2] = Principal portion claimed.
                 [3] = Fee portion claimed.
                 [4] = Excess portion claimed.
-                [5] = TODO: Liquidation portion claimed.
+                [5] = Liquidation portion claimed.
     */
-    function claim(address loan, address dlFactory) public returns(uint[5] memory) { 
+    function claim(address loan, address dlFactory) public returns(uint256[6] memory) { 
         
-        uint[5] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
+        uint256[6] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
         uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
         uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest
