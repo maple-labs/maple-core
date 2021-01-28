@@ -205,7 +205,6 @@ contract LoanLiquidationsTest is TestUtil {
                 assertEq(loanAssetBorr_post - loanAssetBorr_pre, liquidationExcess);
                 assertEq(principalOwed_post,                                     0);
                 assertEq(liquidationExcess,    amountRecovered - principalOwed_pre);
-                assertEq(liquidationExcess,    amountRecovered - principalOwed_pre);
             }
             else {
                 assertEq(principalOwed_post,   principalOwed_pre -amountRecovered);
