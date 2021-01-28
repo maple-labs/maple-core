@@ -23,9 +23,9 @@ contract Loan is FDT {
     using SafeMath        for uint256;
 
     /**
-        Live = The loan has been initialized and is open for funding (assuming funding period not ended).
-        Active = The loan has been drawdown and the borrower is making payments.
-        Matured = The loan is fully paid off and has "matured".
+        Live       = The loan has been initialized and is open for funding (assuming funding period not ended).
+        Active     = The loan has been drawdown and the borrower is making payments.
+        Matured    = The loan is fully paid off and has "matured".
         Liquidated = The loan has been liquidated.
     */
     enum State { Live, Active, Matured, Liquidated }
@@ -269,21 +269,18 @@ contract Loan is FDT {
             block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
         );
 
-        // uint256 public recoveredFromLiquidation;
-        // uint256 public liquidationShortfall;
-        // uint256 public liquidationExcess;
         amountLiquidated = returnAmounts[0];
         amountRecovered  = returnAmounts[1];
 
         // Reduce principal owed by amount received (as much as is required for principal owed == 0).
-        if (principalOwed <= amountRecovered) {
-            liquidationExcess = amountLiquidated.sub(principalOwed);
+        if (principalOwed < amountRecovered) {
+            liquidationExcess = amountRecovered.sub(principalOwed);
             principalOwed = 0;
             loanAsset.transfer(borrower, liquidationExcess); // Send excess to Borrower.
         }
         // If principal owed >  0 after settlement ... all loanAsset remains in Loan.
         else {
-            principalOwed = principalOwed.sub(amountRecovered);
+            principalOwed        = principalOwed.sub(amountRecovered);
             liquidationShortfall = principalOwed;
         }
 

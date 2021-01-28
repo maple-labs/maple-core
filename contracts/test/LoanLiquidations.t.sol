@@ -91,7 +91,7 @@ contract Lender {
 
 contract Treasury { }
 
-contract LoanTest is TestUtil {
+contract LoanLiquidationsTest is TestUtil {
 
     ERC20                     fundsToken;
     MapleToken                       mpl;
@@ -162,31 +162,56 @@ contract LoanTest is TestUtil {
     function test_basic_liquidation() public {
 
         Loan loan = createAndFundLoan(address(bulletCalc));
+        
+        // Fetch pre-state variables.
+        address collateralLocker  = loan.collateralLocker();
+        address collateralAsset   = address(loan.collateralAsset());
+        uint256 collateralBalance = IERC20(collateralAsset).balanceOf(address(collateralLocker));
 
-        uint256 beforeBal = IERC20(USDC).balanceOf(address(loan));
+        uint256 principalOwed_pre = loan.principalOwed();
+        uint256 loanAssetLoan_pre  = IERC20(USDC).balanceOf(address(loan));
+        uint256 loanAssetBorr_pre  = IERC20(USDC).balanceOf(address(ali));
 
-        // Fetch time variables.
-        uint256 start = block.timestamp;
-        uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 gracePeriod = globals.gracePeriod();
+        {
+            // Fetch time variables.
+            uint256 start          = block.timestamp;
+            uint256 nextPaymentDue = loan.nextPaymentDue();
+            uint256 gracePeriod    = globals.gracePeriod();
 
-        // Warp to late payment..
-        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+            // Warp to late payment.
+            hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+        }
 
-        assertEq(uint256(loan.loanState()), 1);
+        // Pre-state triggerDefault() checks.
+        assertEq(uint256(loan.loanState()),                                                     1);
+        assertEq(IERC20(collateralAsset).balanceOf(address(collateralLocker)),  collateralBalance);
 
         loan.triggerDefault();
 
-        assertEq(uint256(loan.loanState()), 3);
-        // assertEq(IERC20(USDC).balanceOf(address(loan)), 0);
+        {
+            uint256 principalOwed_post   = loan.principalOwed();
+            uint256 loanAssetLoan_post   = IERC20(USDC).balanceOf(address(loan));
+            uint256 loanAssetBorr_post   = IERC20(USDC).balanceOf(address(ali));
+            uint256 amountLiquidated     = loan.amountLiquidated();
+            uint256 amountRecovered      = loan.amountRecovered();
+            uint256 liquidationShortfall = loan.liquidationShortfall();
+            uint256 liquidationExcess    = loan.liquidationExcess();
 
-        // Values slightly different everytime due to Uniswap.
-        // assertEq(loan.principalOwed(), 1);
-        // assertEq(loan.amountLiquidated(), 1);
-        // assertEq(loan.amountRecovered(), 1);
-        // assertEq(loan.liquidationShortfall(), 1);
-        // assertEq(loan.liquidationExcess(), 1);
+            // Post-state triggerDefault() checks.
+            assertEq(uint256(loan.loanState()),                                     3);
+            assertEq(IERC20(collateralAsset).balanceOf(address(collateralLocker)),  0);
 
-        // withinPrecision(IERC20(USDC).balanceOf(address(loan)) - beforeBal, loan.drawdownAmount() * loan.collateralRatio() / 10_000, 1);
+            if (principalOwed_pre < amountRecovered) {
+                assertEq(loanAssetBorr_post - loanAssetBorr_pre, liquidationExcess);
+                assertEq(principalOwed_post,                                     0);
+                assertEq(liquidationExcess,    amountRecovered - principalOwed_pre);
+                assertEq(liquidationExcess,    amountRecovered - principalOwed_pre);
+            }
+            else {
+                assertEq(principalOwed_post,   principalOwed_pre -amountRecovered);
+                assertEq(liquidationShortfall,                 principalOwed_post);
+                assertEq(liquidationExcess,                                     0);
+            }
+        }
     }
 }
