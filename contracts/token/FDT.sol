@@ -175,7 +175,7 @@ abstract contract FDT is IFDT, ERC20 {
     /**
      * @dev Withdraws all available funds for a token holder, on behalf of token holder
      */
-    function withdrawFundsOnBehalf(address user) public virtual override {
+    function withdrawFundsOnBehalf(address user) public virtual {
         uint256 withdrawableFunds = _prepareWithdrawOnBehalf(user);
 
         require(fundsToken.transfer(user, withdrawableFunds), "FDT:TRANSFER_FAILED");

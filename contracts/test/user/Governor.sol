@@ -121,4 +121,9 @@ contract Governor {
         string memory sig = "setGovernor(address)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, gov)); 
     }
+
+    function try_passThroughFundsToken(address trs) external returns (bool ok) { 
+        string memory sig = "passThroughFundsToken()";
+        (ok,) = address(trs).call(abi.encodeWithSignature(sig)); 
+    }
 }

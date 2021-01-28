@@ -112,8 +112,10 @@ contract MapleTreasury {
     */
     function passThroughFundsToken() isGovernor public {
         IERC20 _fundsToken = IERC20(fundsToken);
-        require(_fundsToken.transfer(mpl, _fundsToken.balanceOf(address(this))), "MapleTreasury:FUNDS_RECEIVE_TRANSFER");
-        emit PassThrough(msg.sender, _fundsToken.balanceOf(address(this)));
+        uint passThroughAmount = _fundsToken.balanceOf(address(this));
+        require(_fundsToken.transfer(mpl, passThroughAmount), "MapleTreasury:FUNDS_RECEIVE_TRANSFER");
+        IMapleToken(mpl).updateFundsReceived();
+        emit PassThrough(msg.sender, passThroughAmount);
     }
 
     /**
