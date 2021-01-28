@@ -273,7 +273,7 @@ contract Loan is FDT {
         amountRecovered  = returnAmounts[1];
 
         // Reduce principal owed by amount received (as much as is required for principal owed == 0).
-        if (principalOwed < amountRecovered) {
+        if (amountRecovered > principalOwed) {
             liquidationExcess = amountRecovered.sub(principalOwed);
             principalOwed = 0;
             loanAsset.transfer(borrower, liquidationExcess); // Send excess to Borrower.

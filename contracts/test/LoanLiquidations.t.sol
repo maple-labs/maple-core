@@ -200,16 +200,23 @@ contract LoanLiquidationsTest is TestUtil {
             // Post-state triggerDefault() checks.
             assertEq(uint256(loan.loanState()),                                     3);
             assertEq(IERC20(collateralAsset).balanceOf(address(collateralLocker)),  0);
+            assertEq(amountLiquidated,                              collateralBalance);
 
-            if (principalOwed_pre < amountRecovered) {
+            if (amountRecovered > principalOwed_pre) {
                 assertEq(loanAssetBorr_post - loanAssetBorr_pre, liquidationExcess);
                 assertEq(principalOwed_post,                                     0);
                 assertEq(liquidationExcess,    amountRecovered - principalOwed_pre);
+                assertEq(liquidationShortfall,                                   0);
+                assertEq(
+                    amountRecovered,                              
+                    (loanAssetBorr_post - loanAssetBorr_pre) + (loanAssetLoan_post - loanAssetLoan_pre)
+                );
             }
             else {
-                assertEq(principalOwed_post,   principalOwed_pre -amountRecovered);
-                assertEq(liquidationShortfall,                 principalOwed_post);
-                assertEq(liquidationExcess,                                     0);
+                assertEq(principalOwed_post,   principalOwed_pre - amountRecovered);
+                assertEq(liquidationShortfall,                  principalOwed_post);
+                assertEq(liquidationExcess,                                      0);
+                assertEq(amountRecovered,   loanAssetLoan_post - loanAssetLoan_pre);
             }
         }
     }
