@@ -64,6 +64,10 @@ contract Loan is FDT {
     uint256 public interestPaid;
     uint256 public feePaid;
     uint256 public excessReturned;
+    uint256 public amountLiquidated;
+    uint256 public recoveredFromLiquidation;
+    uint256 public liquidationShortfall;
+    uint256 public liquidationExcess;
 
     // Liquidation variables
     uint256 public amountLiquidated;
