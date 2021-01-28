@@ -64,8 +64,10 @@ contract Loan is FDT {
     uint256 public interestPaid;
     uint256 public feePaid;
     uint256 public excessReturned;
+
+    // Liquidation variables
     uint256 public amountLiquidated;
-    uint256 public recoveredFromLiquidation;
+    uint256 public amountRecovered;
     uint256 public liquidationShortfall;
     uint256 public liquidationExcess;
 
@@ -274,13 +276,13 @@ contract Loan is FDT {
         amountRecovered  = returnAmounts[1];
 
         if (principalOwed <= amountRecovered) {
+            liquidationExcess = amountLiquidated.sub(principalOwed);
             principalOwed = 0;
-            liquidationExcess = 
-            // Send excess to Borrower.
+            loanAsset.transfer(borrower, liquidationExcess); // Send excess to Borrower.
         }
         else {
             principalOwed = principalOwed.sub(amountRecovered);
-
+            liquidationShortfall = principalOwed;
         }
 
         // 2) Reduce principal owed by amount received (as much as is required for principal owed == 0).
@@ -308,7 +310,7 @@ contract Loan is FDT {
     /**
         @dev Trigger a default. Does nothing if block.timestamp <= nextPaymentDue + gracePeriod.
     */
-    function triggerDefault() external {
+    function triggerDefault() isState(State.Active) external {
         if (block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod())) {
             _triggerDefault();
         }

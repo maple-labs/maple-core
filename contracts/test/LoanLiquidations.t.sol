@@ -165,13 +165,25 @@ contract LoanTest is TestUtil {
 
         uint256 beforeBal = IERC20(USDC).balanceOf(address(loan));
 
+        // Fetch time variables.
+        uint256 start = block.timestamp;
+        uint256 nextPaymentDue = loan.nextPaymentDue();
+        uint256 gracePeriod = globals.gracePeriod();
+
+        // Warp to late payment..
+        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+
         assertEq(uint256(loan.loanState()), 1);
 
         loan.triggerDefault();
 
         assertEq(uint256(loan.loanState()), 3);
         assertEq(IERC20(USDC).balanceOf(address(loan)), 0);
-        assertEq(IERC20(USDC).balanceOf(address(loan)), 0);
+        assertEq(loan.principalOwed(), 1);
+        assertEq(loan.amountLiquidated(), 1);
+        assertEq(loan.amountRecovered(), 1);
+        assertEq(loan.liquidationShortfall(), 1);
+        assertEq(loan.liquidationExcess(), 1);
         // withinPrecision(IERC20(USDC).balanceOf(address(loan)) - beforeBal, loan.drawdownAmount() * loan.collateralRatio() / 10_000, 1);
     }
 }
