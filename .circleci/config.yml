@@ -89,23 +89,6 @@ jobs:
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
             ./test-ci.sh "FundingLockerFactoryTest"
-  
-    dapp_test_clFactory:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "DebtLockerFactoryTest"
 
   dapp_test_gulp:
     docker:
@@ -140,23 +123,6 @@ jobs:
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
             ./test-ci.sh "LoanTest"
-  
-    dapp_test_clFactory:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "DebtLockerFactoryTest"
 
   dapp_test_loanFactory:
     docker:
@@ -226,40 +192,6 @@ jobs:
             source $BASH_ENV
             ./test-ci.sh "MapleTreasuryTest"
 
-    dapp_test_flFactory:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "FundingLockerFactoryTest"
-  
-    dapp_test_clFactory:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "DebtLockerFactoryTest"
-
   dapp_test_pool:
     docker:
       - image: nixorg/nix:circleci
@@ -293,23 +225,6 @@ jobs:
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
             ./test-ci.sh "PoolFactoryTest"
-  
-    dapp_test_clFactory:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "DebtLockerFactoryTest"
 
   dapp_test_poolLiquidation:
     docker:
