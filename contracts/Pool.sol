@@ -41,6 +41,7 @@ contract Pool is FDT, CalcBPool {
     uint256 public principalPenalty;  // Max penalty on principal in bips on early withdrawal.
     uint256 public penaltyDelay;      // Time until total interest is available after a deposit, in seconds.
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the pool.
+    uint256 public lockupPeriod;      // Unix timestamp until the withdrawal is not allowed.
 
     enum State { Initialized, Finalized, Deactivated }
     State public poolState;  // The current state of this pool.
@@ -111,6 +112,7 @@ contract Pool is FDT, CalcBPool {
         // Withdrawal penalty default settings.
         principalPenalty = 500;
         penaltyDelay     = 30 days;
+        lockupPeriod     = 90 days;
     }
 
     /**
@@ -208,6 +210,7 @@ contract Pool is FDT, CalcBPool {
         uint256 wad    = _toWad(amt);
         uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
+        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
 
         // BPTs were Burned ... 100k USDC was deposited to LiqudiityLocker
         // User 50% equity owner in Pool (LL) is now thinking about withdrawing ...
@@ -372,10 +375,14 @@ contract Pool is FDT, CalcBPool {
     */
     // TODO: Handle case where penaltyDelay == 0
     function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 penalty) {
-        uint256 dTime    = (block.timestamp.sub(depositDate[who])).mul(WAD);
-        uint256 unlocked = dTime.div(penaltyDelay).mul(amt) / WAD;
+        if (lockupPeriod < penaltyDelay) {
+            uint256 dTime    = block.timestamp.sub(depositDate[who]);
+            uint256 unlocked = dTime.mul(WAD).div(penaltyDelay).mul(amt).div(WAD);
 
-        penalty = unlocked > amt ? 0 : amt - unlocked;
+            penalty = unlocked > amt ? 0 : amt - unlocked;
+        } else {
+            penalty = uint256(0);
+        }
     }
 
     /**
@@ -411,7 +418,14 @@ contract Pool is FDT, CalcBPool {
     function setPrincipalPenalty(uint256 _newPrincipalPenalty) external {
         _isValidDelegate();
         principalPenalty = _newPrincipalPenalty;
-        // TODO: Emit an event
+    }
+
+    /**
+        @dev Allowing delegate/pool manager to set the lockup period.
+        @param _newLockupPeriod New lockup period used to restrict the withdrawals.
+     */
+    function setLockupPeriod(uint256 _newLockupPeriod) external isDelegate {
+        lockupPeriod = _newLockupPeriod;
     }
 
     /**

@@ -126,16 +126,16 @@ contract PoolDelegate {
         string memory sig = "setLiquidityCap(uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, liquidityCap));
     }
+
+    function try_setLockupPeriod(Pool pool, uint256 newPeriod) external returns(bool ok) {
+        string memory sig = "setLockupPeriod(uint256)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, newPeriod));
+    }
 }
 
 contract LP {
     function try_deposit(address pool1, uint256 amt)  external returns (bool ok) {
         string memory sig = "deposit(uint256)";
-        (ok,) = address(pool1).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function try_withdraw(address pool1, uint256 amt)  external returns (bool ok) {
-        string memory sig = "withdraw(uint256)";
         (ok,) = address(pool1).call(abi.encodeWithSignature(sig, amt));
     }
 
@@ -149,6 +149,11 @@ contract LP {
 
     function deposit(address pool, uint256 amt) external {
         Pool(pool).deposit(amt);
+    }
+
+    function try_withdraw(address pool, uint256 amt) external returns(bool ok) {
+        string memory sig = "withdraw(uint256)";
+        (ok,) = pool.call(abi.encodeWithSignature(sig, amt));
     }
 }
 
@@ -515,8 +520,10 @@ contract PoolTest is TestUtil {
         assertTrue(!bob.try_deposit(address(pool1), 600 * USD), "Should not able to deposit 600 USD");
 
         // Set liquidityCap to zero and withdraw
-        assertTrue(sid.try_setLiquidityCap(pool1, 0), "Failed to set liquidity cap");
-        assertTrue(bob.try_withdraw(address(pool1), 500 * USD), "Fail to withdraw 500 USD");
+        assertTrue(sid.try_setLiquidityCap(pool1, 0),           "Failed to set liquidity cap");
+        assertTrue(sid.try_setLockupPeriod(pool1, 0),           "Failed to set the lockup period");
+        assertEq(pool1.lockupPeriod(), uint256(0),              "Failed to update the lockup period");
+        assertTrue(bob.try_withdraw(address(pool1), 500 * USD), "Failed to withdraw 500 USD");
     }
 
     function test_deposit_depositDate() public {
@@ -548,6 +555,7 @@ contract PoolTest is TestUtil {
         uint256 newDepDate = startDate + coef * (block.timestamp - startDate) / WAD;
         assertEq(pool1.depositDate(address(bob)), newDepDate);  // Gets updated
 
+        assertTrue(sid.try_setLockupPeriod(pool1, uint256(0)));  // Sets 0 as lockup period to allow withdraw. 
         bob.withdraw(address(pool1), newAmt);
 
         assertEq(pool1.depositDate(address(bob)), newDepDate);  // Doesn't change
@@ -1462,6 +1470,13 @@ contract PoolTest is TestUtil {
 
         uint256 start = block.timestamp;
         uint256 delay = pool1.penaltyDelay();
+        uint256 lockup = pool1.lockupPeriod();
+
+        assertEq(pool1.calcWithdrawPenalty(1 * USD, address(bob)), uint256(0));  // Returns 0 when lockupPeriod > penaltyDelay.
+        assertTrue(!joe.try_setLockupPeriod(pool1, 15 days));
+        assertEq(pool1.lockupPeriod(), 90 days);
+        assertTrue(sid.try_setLockupPeriod(pool1, 15 days));
+        assertEq(pool1.lockupPeriod(), 15 days);
 
         assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
 
@@ -1485,14 +1500,88 @@ contract PoolTest is TestUtil {
 
         hevm.warp(start + delay * 1000);
         assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0);
-    }    
+    }
+
+    function test_withdraw_under_lockup_period() public {
+        setUpWithdraw();
+        uint start = block.timestamp;
+
+        // Mint USDC to kim
+        mint("USDC", address(kim), 5000 * USD);
+        kim.approve(USDC, address(pool1), MAX_UINT);
+        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
+        
+        // Deposit 1000 USDC and check depositDate
+        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+        assertEq(pool1.depositDate(address(kim)), start);
+
+        // Fund loan, drawdown, make payment and claim so kim can claim interest
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
+        _drawDownLoan(1000 * USD, loan3, hal);
+        _makeLoanPayment(loan3, hal); 
+        sid.claim(address(pool1), address(loan3), address(dlFactory1));
+        assertEq(pool1.calcWithdrawPenalty(1000 * USD, address(kim)), uint256(0)); // lockupPeriod > withdrawDelay
+
+        uint256 interest = pool1.withdrawableFundsOf(address(kim));  // Get kims withdrawable funds
+
+        // Warp to exact time that kim can withdraw with weighted deposit date
+        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() - 1);
+        assertTrue(!kim.try_withdraw(address(pool1), 1000 * USD), "Withdraw failure didn't trigger");
+        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
+        assertTrue( kim.try_withdraw(address(pool1), 1000 * USD), "Failed to withdraw funds");
+
+        assertEq(IERC20(USDC).balanceOf(address(kim)) - bal0, interest);
+    }
+
+    function test_withdraw_under_weighted_lockup_period() public {
+        setUpWithdraw();
+        uint start = block.timestamp;
+
+        // Mint USDC to kim
+        mint("USDC", address(kim), 5000 * USD);
+        kim.approve(USDC, address(pool1), MAX_UINT);
+        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
+
+        // Deposit 1000 USDC and check depositDate
+        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+        assertEq(pool1.depositDate(address(kim)), start);
+
+        // Fund loan, drawdown, make payment and claim so kim can claim interest
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
+        _drawDownLoan(1000 * USD, loan3, hal);
+        _makeLoanPayment(loan3, hal); 
+        sid.claim(address(pool1), address(loan3), address(dlFactory1));
+        assertEq(pool1.calcWithdrawPenalty(1000 * USD, address(kim)), uint256(0)); // lockupPeriod > withdrawDelay
+
+        // Warp to exact time that kim can withdraw for the first time
+        hevm.warp(start + pool1.lockupPeriod());  
+        assertEq(block.timestamp - pool1.depositDate(address(kim)), pool1.lockupPeriod());  // Can withdraw at this point
+        
+        // Deposit more USDC into pool, increasing deposit date and locking up funds again
+        assertTrue(kim.try_deposit(address(pool1), 3000 * USD));
+        assertEq(pool1.depositDate(address(kim)) - start, (block.timestamp - start) * (3000 * WAD) / (4000 * WAD));  // Deposit date updating using weighting
+        assertTrue(!kim.try_withdraw(address(pool1), 4000 * USD), "Withdraw failure didn't trigger");                // Not able to withdraw the funds as deposit date was updated
+
+        uint256 interest = pool1.withdrawableFundsOf(address(kim));  // Get kims withdrawable funds
+
+        // Warp to exact time that kim can withdraw with weighted deposit date
+        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() - 1);
+        assertTrue(!kim.try_withdraw(address(pool1), 4000 * USD), "Withdraw failure didn't trigger");
+        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
+        assertTrue( kim.try_withdraw(address(pool1), 4000 * USD), "Failed to withdraw funds");
+
+        assertEq(IERC20(USDC).balanceOf(address(kim)) - bal0, interest);
+    }
 
     function test_withdraw_no_principal_penalty() public {
         setUpWithdraw();
-
+        
         uint start = block.timestamp;
 
         sid.setPrincipalPenalty(address(pool1), 0);
+        assertTrue(sid.try_setLockupPeriod(pool1, 0));
+        assertEq(pool1.lockupPeriod(), uint256(0));
+
         mint("USDC", address(kim), 2000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
         assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
@@ -1525,6 +1614,9 @@ contract PoolTest is TestUtil {
         uint start = block.timestamp;
         
         sid.setPrincipalPenalty(address(pool1), 500);
+        assertTrue(sid.try_setLockupPeriod(pool1, 0));
+        assertEq(pool1.lockupPeriod(), uint256(0));
+
         mint("USDC", address(kim), 2000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
 
