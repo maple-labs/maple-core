@@ -30,11 +30,6 @@ jobs:
             nix-env -iA dapp hevm seth solc-static-versions.solc_0_6_11 -if https://github.com/dapphub/dapptools/tarball/master --option substituters "https://cache.nixos.org https://dapp.cachix.org" --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs"
             dapp update
             DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 200" dapp --use solc:0.6.11 build
-            ls -al
-            cd ../ && ls -al
-            cd ../ && ls -al
-            cd ../ && ls -al 
-            cd ~ && ls -al
       - persist_to_workspace:
           root: ~/project
           paths:
@@ -53,23 +48,11 @@ jobs:
           at: ~/project
       - restore_cache:
           key: nix-deps
-      # - run:
-      #     name: Checkout maple-core
-      #     command: |
-      #       GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-core.git .
-      #       git checkout $CIRCLE_BRANCH
-      # - run:
-      #     name: Install dependencies
-      #     command: |
-      #       nix-channel --add \
-      #       https://nixos.org/channels/nixpkgs-unstable nixpkgs && \
-      #       nix-channel --update
-      #       nix-env -iA nixpkgs.gnugrep nixpkgs.findutils
-      #       nix-env -iA dapp hevm seth solc-static-versions.solc_0_6_11 -if https://github.com/dapphub/dapptools/tarball/master --option substituters "https://cache.nixos.org https://dapp.cachix.org" --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs"
-      #       dapp update
       - run:
           name: Run unit tests
           command: |
+            cd ~/project
+            ls -al 
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
             ./test-ci.sh "CollateralLockerFactoryTest"
