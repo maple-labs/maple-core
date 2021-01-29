@@ -1506,64 +1506,71 @@ contract PoolTest is TestUtil {
         setUpWithdraw();
         uint start = block.timestamp;
 
-        mint("USDC", address(kim), 2000 * USD);
+        // Mint USDC to kim
+        mint("USDC", address(kim), 5000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
         uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
+        
+        // Deposit 1000 USDC and check depositDate
         assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+        assertEq(pool1.depositDate(address(kim)), start);
 
-        uint256 withdrawAmount = 1000 * USD;
-
+        // Fund loan, drawdown, make payment and claim so kim can claim interest
         assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
-        hevm.warp(start + pool1.lockupPeriod() - 1);
-
         _drawDownLoan(1000 * USD, loan3, hal);
         _makeLoanPayment(loan3, hal); 
-        sid.claim(address(pool1), address(loan3), address(dlFactory1)); 
-        assertEq(pool1.calcWithdrawPenalty(withdrawAmount, address(kim)), uint256(0));
+        sid.claim(address(pool1), address(loan3), address(dlFactory1));
+        assertEq(pool1.calcWithdrawPenalty(1000 * USD, address(kim)), uint256(0)); // lockupPeriod > withdrawDelay
 
-        assertTrue(!kim.try_withdraw(address(pool1), withdrawAmount), "Failed to withdraw funds");  // "Pool:FUNDS_LOCKED"
-        hevm.warp(start + pool1.lockupPeriod());
-        uint256 interest = pool1.withdrawableFundsOf(address(kim));
-        assertTrue(kim.try_withdraw(address(pool1), withdrawAmount), "Failed to withdraw funds");
-        uint256 bal1 = IERC20(USDC).balanceOf(address(kim));
+        uint256 interest = pool1.withdrawableFundsOf(address(kim));  // Get kims withdrawable funds
 
-        assertEq(bal1 - bal0, interest);
+        // Warp to exact time that kim can withdraw with weighted deposit date
+        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() - 1);
+        assertTrue(!kim.try_withdraw(address(pool1), 1000 * USD), "Withdraw failure didn't trigger");
+        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
+        assertTrue( kim.try_withdraw(address(pool1), 1000 * USD), "Failed to withdraw funds");
+
+        assertEq(IERC20(USDC).balanceOf(address(kim)) - bal0, interest);
     }
 
     function test_withdraw_under_weighted_lockup_period() public {
         setUpWithdraw();
         uint start = block.timestamp;
 
+        // Mint USDC to kim
         mint("USDC", address(kim), 5000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
         uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
+
+        // Deposit 1000 USDC and check depositDate
         assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+        assertEq(pool1.depositDate(address(kim)), start);
 
-        uint256 withdrawAmount = 1000 * USD;
+        // Fund loan, drawdown, make payment and claim so kim can claim interest
         assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
-        hevm.warp(start + pool1.lockupPeriod() - 1);
-        assertTrue(kim.try_deposit(address(pool1), 2000 * USD));    // Fund the pool again with 2000 USDC.
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 2000 * USD), "Fail to fund the loan");
-        assertTrue(pool1.depositDate(address(kim)) - start > 0, "Fail to make deposit date weighted");
-        withdrawAmount += 2000 * USD;
-
-        hevm.warp(start + pool1.lockupPeriod()); // Increase the time till first deposit date.
-        assertTrue(!kim.try_withdraw(address(pool1), withdrawAmount), "Failed to withdraw funds");  // Not able to withdraw the funds as deposit data get weighted.
-        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));    // Fund the pool again with 1000 USDC.
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 2000 * USD), "Fail to fund the loan");
-        assertTrue(!kim.try_withdraw(address(pool1), withdrawAmount), "Failed to withdraw funds");
-        withdrawAmount += 1000 * USD;
-
-        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
-        _drawDownLoan(withdrawAmount, loan3, hal);
+        _drawDownLoan(1000 * USD, loan3, hal);
         _makeLoanPayment(loan3, hal); 
         sid.claim(address(pool1), address(loan3), address(dlFactory1));
+        assertEq(pool1.calcWithdrawPenalty(1000 * WAD, address(kim)), uint256(0)); // lockupPeriod > withdrawDelay
 
-        uint256 interest = pool1.withdrawableFundsOf(address(kim));
-        assertTrue(kim.try_withdraw(address(pool1), withdrawAmount), "Failed to withdraw funds");
-        uint256 bal1 = IERC20(USDC).balanceOf(address(kim));
+        // Warp to exact time that kim can withdraw for the first time
+        hevm.warp(start + pool1.lockupPeriod());  
+        assertEq(block.timestamp - pool1.depositDate(address(kim)), pool1.lockupPeriod());  // Can withdraw at this point
+        
+        // Deposit more USDC into pool, increasing deposit date and locking up funds again
+        assertTrue(kim.try_deposit(address(pool1), 3000 * USD));
+        assertEq(pool1.depositDate(address(kim)) - start, (block.timestamp - start) * (3000 * WAD) / (4000 * WAD));  // Deposit date updating using weighting
+        assertTrue(!kim.try_withdraw(address(pool1), 4000 * WAD), "Withdraw failure didn't trigger");                // Not able to withdraw the funds as deposit date was updated
 
-        assertEq(bal1 - bal0, interest);
+        uint256 interest = pool1.withdrawableFundsOf(address(kim));  // Get kims withdrawable funds
+
+        // Warp to exact time that kim can withdraw with weighted deposit date
+        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() - 1);
+        assertTrue(!kim.try_withdraw(address(pool1), 4000 * WAD), "Withdraw failure didn't trigger");
+        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
+        assertTrue( kim.try_withdraw(address(pool1), 4000 * WAD), "Failed to withdraw funds");
+
+        assertEq(IERC20(USDC).balanceOf(address(kim)) - bal0, interest);
     }
 
     function test_withdraw_no_principal_penalty() public {
