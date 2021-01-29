@@ -1,0 +1,255 @@
+
+Ali deposits 1000 into Pool1
+Pool 1 funds loan for 1000
+*****************************
+ali_pool_fdt   = 1000
+pool1_llBal    = 0
+principalOut   = 1000
+interestSum    = 0
+pool1_loan_fdt = 1000
+
+
+
+Bob deposits 3000 into Pool2
+Pool 2 funds loan for 3000
+*****************************
+bob_pool_fdt   = 3000
+pool2_llBal    = 0
+principalOut   = 3000
+interestSum    = 0
+pool2_loan_fdt = 3000
+
+
+
+Loan defaults for 4000
+Collateral gets liquidated for 1000 USDC, that is transferred to Loan
+*****************************
+defaultSuffered = 3000
+amountRecovered = 1000
+
+
+
+
+Pool1 claims post liquidation
+*****************************
+---debtLocker Calculations---
+claimBal        = (pool1_loan_fdt / loan_fdt_totalSupply) * amountRecovered
+                = (1000 / 4000) * 1000
+                = 250
+amountRecovered = (newAmountRecovered / sum) * claimBal
+                = (1000 / 1000) * 250
+                = 250
+defaultSuffered = (pool1_loan_fdt / loan_fdt_totalSupply) * Loan.defaultSuffered
+                = (1000 / 4000) * 3000
+                = 750
+
+---Pool Calculations---
+principalClaim = principal + excess + amountRecovered
+               = 0 + 0 + 250
+               = 250
+principalOut   = principalOut - principalClaim
+               = 1000 - 250
+               = 750 (note: this is equal to defaultSuffered)
+updateFundsReceived() (nothing happens since interestSum is not incremented)
+pool1_llBal    = pool1_llBal + principalClaim + interestClaim
+               = 0 + 250 + 0 
+               = 250
+********************************************
+HAPPY PATH - BPTs cover all defaultSuffered
+********************************************
+---Handle Default---
+BPTs are transferred from stakeLocker
+BPTs are burned for 750 USDC
+BPTs are transferred back to stakeLocker
+amountFromBurn = 750
+pool_usdc_bal = pool_usdc_bal + amountFromBurn
+              = 0 + 750
+              = 750 
+principalOut  = principalOut - amountFromBurn
+              = 750 - 750
+              = 0
+USDC is transferred from Pool to LL
+pool1_llBal   = pool1_llBal + amountFromBurn
+              = 250 + 750
+              = 1000
+interestSum doesn't change
+*************************************************************
+SAD PATH - BPTs don't cover all defaultSuffered (proposition)
+*************************************************************
+---Handle Default---
+BPTs are transferred from stakeLocker
+BPTs are burned for 500 USDC
+BPTs are transferred back to stakeLocker
+amountFromBurn = 500
+pool_usdc_bal = pool_usdc_bal + amountFromBurn
+              = 0 + 500
+              = 500 
+principalOut  = principalOut - amountFromBurn
+              = 750 - 500
+              = 250
+pool1_llBal   = pool1_llBal + amountFromBurn
+              = 250 + 500
+              = 750
+interestSum doesn't change
+
+
+
+
+
+
+
+Pool2 claims post liquidation
+*****************************
+---debtLocker Calculations---
+claimBal        = (pool2_loan_fdt / loan_fdt_totalSupply) * amountRecovered
+                = (3000 / 4000) * 1000
+                = 750
+amountRecovered = (newAmountRecovered / sum) * claimBal
+                = (1000 / 1000) * 750
+                = 750
+defaultSuffered = (pool2_loan_fdt / loan_fdt_totalSupply) * Loan.defaultSuffered
+                = (3000 / 4000) * 3000
+                = 2250
+
+---Pool Calculations---
+principalClaim = principal + excess + amountRecovered
+               = 0 + 0 + 750
+               = 750
+principalOut   = principalOut - principalClaim
+               = 3000 - 750
+               = 2250 (note: this is equal to defaultSuffered)
+updateFundsReceived() (nothing happens since interestSum is not incremented)
+pool1_llBal    = pool1_llBal + principalClaim + interestClaim
+               = 0 + 750 + 0 
+               = 750
+
+---Handle Default---
+BPTs are transferred from stakeLocker
+BPTs are burned for 2250 USDC
+BPTs are transferred back to stakeLocker
+
+amountFromBurn = 2250
+
+pool_usdc_bal = pool_usdc_bal + amountFromBurn
+              = 0 + 2250
+              = 2250 
+principalOut  = principalOut - amountFromBurn
+              = 2250 - 2250
+              = 0
+pool1_llBal   = pool1_llBal + amountFromBurn
+              = 750 + 2250
+              = 3000
+interestSum doesn't change
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+***********************************************
+SAD PATH - BPTs don't cover all defaultSuffered
+***********************************************
+
+Pool1 claims post liquidation
+*****************************
+---debtLocker Calculations---
+claimBal        = (pool1_loan_fdt / loan_fdt_totalSupply) * amountRecovered
+                = (1000 / 4000) * 1000
+                = 250
+amountRecovered = (newAmountRecovered / sum) * claimBal
+                = (1000 / 1000) * 250
+                = 250
+defaultSuffered = (pool1_loan_fdt / loan_fdt_totalSupply) * Loan.defaultSuffered
+                = (1000 / 4000) * 3000
+                = 750
+
+---Pool Calculations---
+principalClaim = principal + excess + amountRecovered
+               = 0 + 0 + 250
+               = 250
+principalOut   = principalOut - principalClaim
+               = 1000 - 250
+               = 750 (note: this is equal to defaultSuffered)
+updateFundsReceived() (nothing happens since interestSum is not incremented)
+pool1_llBal    = pool1_llBal + principalClaim + interestClaim
+               = 0 + 250 + 0 
+               = 250
+
+---Handle Default---
+BPTs are transferred from stakeLocker
+BPTs are burned for 750 USDC
+BPTs are transferred back to stakeLocker
+
+amountFromBurn = 750
+
+pool_usdc_bal = pool_usdc_bal + amountFromBurn
+              = 0 + 750
+              = 750 
+principalOut  = principalOut - amountFromBurn
+              = 750 - 750
+              = 0
+pool1_llBal   = pool1_llBal + amountFromBurn
+              = 250 + 750
+              = 1000
+interestSum doesn't change
+
+
+
+
+
+Pool2 claims post liquidation
+*****************************
+---debtLocker Calculations---
+claimBal        = (pool2_loan_fdt / loan_fdt_totalSupply) * amountRecovered
+                = (3000 / 4000) * 1000
+                = 750
+amountRecovered = (newAmountRecovered / sum) * claimBal
+                = (1000 / 1000) * 750
+                = 750
+defaultSuffered = (pool2_loan_fdt / loan_fdt_totalSupply) * Loan.defaultSuffered
+                = (3000 / 4000) * 3000
+                = 2250
+
+---Pool Calculations---
+principalClaim = principal + excess + amountRecovered
+               = 0 + 0 + 750
+               = 750
+principalOut   = principalOut - principalClaim
+               = 3000 - 750
+               = 2250 (note: this is equal to defaultSuffered)
+updateFundsReceived() (nothing happens since interestSum is not incremented)
+pool1_llBal    = pool1_llBal + principalClaim + interestClaim
+               = 0 + 750 + 0 
+               = 750
+
+---Handle Default---
+BPTs are transferred from stakeLocker
+BPTs are burned for 2250 USDC
+BPTs are transferred back to stakeLocker
+
+amountFromBurn = 2250
+
+pool_usdc_bal = pool_usdc_bal + amountFromBurn
+              = 0 + 2250
+              = 2250 
+principalOut  = principalOut - amountFromBurn
+              = 2250 - 2250
+              = 0
+pool1_llBal   = pool1_llBal + amountFromBurn
+              = 750 + 2250
+              = 3000
+interestSum doesn't change
+
+
