@@ -219,7 +219,7 @@ contract Pool is FDT, CalcBPool {
         uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
         uint256 due               = amt.sub(totPenalty);                                                 // Funds due after the penalty deduction from the `amt` that is asked for withdraw.
-        
+
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
         withdrawFunds();            // Transfer full entitled interest.
 
@@ -424,7 +424,8 @@ contract Pool is FDT, CalcBPool {
         @dev Allowing delegate/pool manager to set the lockup period.
         @param _newLockupPeriod New lockup period used to restrict the withdrawals.
      */
-    function setLockupPeriod(uint256 _newLockupPeriod) external isDelegate {
+    function setLockupPeriod(uint256 _newLockupPeriod) external {
+        _isValidDelegate();
         lockupPeriod = _newLockupPeriod;
     }
 
