@@ -170,9 +170,10 @@ workflows:
       - dapp_build:
           context: seth
       - dapp_test: 
-        requires:
-          - dapp_build
           context: seth
+          requires:
+            - dapp_build
+          
 
 
 
