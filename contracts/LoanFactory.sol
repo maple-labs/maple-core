@@ -61,7 +61,7 @@ contract LoanFactory {
                 specs[0] = apr
                 specs[1] = termDays
                 specs[2] = paymentIntervalDays
-                specs[3] = minRaise
+                specs[3] = requestAmount
                 specs[4] = collateralRatio
                 specs[5] = fundingPeriodDays
         @param  calcs           The calculators used for the loan.

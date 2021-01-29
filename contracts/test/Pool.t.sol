@@ -110,7 +110,7 @@ contract PoolDelegate {
         IPool(pool).fundLoan(loan, dlFactory, amt);  
     }
 
-    function claim(address pool, address loan, address dlFactory) external returns(uint[5] memory) {
+    function claim(address pool, address loan, address dlFactory) external returns(uint256[6] memory) {
         return IPool(pool).claim(loan, dlFactory);  
     }
 
@@ -655,7 +655,7 @@ contract PoolTest is TestUtil {
 
         uint256 beforePrincipalOut = pool.principalOut();
         uint256 beforeInterestSum  = pool.interestSum();
-        uint[5] memory claim = pd.claim(address(pool), address(loan),   address(dlFactory));
+        uint256[6] memory claim = pd.claim(address(pool), address(loan),   address(dlFactory));
 
         // Updated LTL state variables
         debtLockerData[4] = debtLocker.interestPaid();

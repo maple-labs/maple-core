@@ -162,7 +162,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.termDays(),                  specs[1]);
         assertEq(loan.paymentsRemaining(),         specs[1] / specs[2]);
         assertEq(loan.paymentIntervalSeconds(),    specs[2] * 1 days);
-        assertEq(loan.minRaise(),                  specs[3]);
+        assertEq(loan.requestAmount(),             specs[3]);
         assertEq(loan.collateralRatio(),           specs[4]);
         assertEq(loan.fundingPeriodSeconds(),      specs[5] * 1 days);
         assertEq(loan.repaymentCalc(),             address(bulletCalc));
@@ -217,7 +217,7 @@ contract LoanTest is TestUtil {
 
         ali.approve(WETH, address(loan), 0.4 ether);
 
-        assertTrue(!ali.try_drawdown(address(loan), 1000 * USD - 1));  // Can't drawdown less than minRaise
+        assertTrue(!ali.try_drawdown(address(loan), 1000 * USD - 1));  // Can't drawdown less than requestAmount
         assertTrue(!ali.try_drawdown(address(loan), 5000 * USD + 1));  // Can't drawdown more than fundingLocker balance
 
         address fundingLocker = loan.fundingLocker();

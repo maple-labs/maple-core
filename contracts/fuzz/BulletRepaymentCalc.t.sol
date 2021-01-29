@@ -71,7 +71,7 @@ contract PoolDelegate {
         IStakeLocker(stakeLocker).stake(amt);
     }
 
-    function claim(address pool, address loan, address dlFactory) external returns(uint[5] memory) {
+    function claim(address pool, address loan, address dlFactory) external returns(uint256[6] memory) {
         return IPool(pool).claim(loan, dlFactory);  
     }
 }

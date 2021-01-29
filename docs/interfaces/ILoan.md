@@ -15,7 +15,7 @@
 [`apr()`](#ILoan-apr--)
 [`paymentsRemaining()`](#ILoan-paymentsRemaining--)
 [`paymentIntervalSeconds()`](#ILoan-paymentIntervalSeconds--)
-[`minRaise()`](#ILoan-minRaise--)
+[`requestAmount()`](#ILoan-requestAmount--)
 [`collateralRatio()`](#ILoan-collateralRatio--)
 [`fundingPeriodSeconds()`](#ILoan-fundingPeriodSeconds--)
 [`createdAt()`](#ILoan-createdAt--)
@@ -75,7 +75,7 @@ No description
 ### `paymentIntervalSeconds()`
 No description
 
-### `minRaise()`
+### `requestAmount()`
 No description
 
 ### `collateralRatio()`

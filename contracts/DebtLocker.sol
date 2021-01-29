@@ -15,11 +15,11 @@ contract DebtLocker {
     IERC20  public immutable loanAsset;  // The loanAsset that this locker will claim.
     address public immutable owner;      // The owner of this Locker (a liquidity pool).
 
-    uint256 public principalPaid;   // Vault total principal paid  at time of claim()
-    uint256 public interestPaid;    // Vault total interest  paid  at time of claim()
-    uint256 public feePaid;         // Vault total fees      paid  at time of claim()
-    uint256 public excessReturned;  // Vault total excess returned at time of claim()
-    // TODO: uint256 liquidationClaimed;
+    uint256 public principalPaid;    // Loan total principal   paid at time of claim()
+    uint256 public interestPaid;     // Loan total interest    paid at time of claim()
+    uint256 public feePaid;          // Loan total fees        paid at time of claim()
+    uint256 public excessReturned;   // Loan total excess  returned at time of claim()
+    uint256 public defaultSuffered;  // Loan total default suffered at time of claim()
     
     modifier isOwner() {
         require(msg.sender == owner, "DebtLocker:MSG_SENDER_NOT_OWNER");
@@ -43,9 +43,9 @@ contract DebtLocker {
                 [2] = Principal Claimed
                 [3] = Fee Claimed
                 [4] = Excess Returned Claimed
-                [5] = TODO: Liquidation Amount Claimed Accounting
+                [5] = Default Suffered
     */
-    function claim() external isOwner returns(uint[5] memory) {
+    function claim() external isOwner returns(uint256[6] memory) {
 
         // Tick FDT via FDT.
         loan.updateFundsReceived();
@@ -54,13 +54,17 @@ contract DebtLocker {
         uint256 newInterest  = loan.interestPaid() - interestPaid;
         uint256 newPrincipal = loan.principalPaid() - principalPaid;
         uint256 newFee       = loan.feePaid() - feePaid;
-        uint256 newExcess    = loan.excessReturned() - excessReturned; // TODO: Determine if we need excess accounting still
+        uint256 newExcess    = loan.excessReturned() - excessReturned;
+        uint256 newDefault   = loan.defaultSuffered() - defaultSuffered;
 
         // Update accounting.
-        interestPaid   = loan.interestPaid();
-        principalPaid  = loan.principalPaid();
-        feePaid        = loan.feePaid();
-        excessReturned = loan.excessReturned();
+        interestPaid    = loan.interestPaid();
+        principalPaid   = loan.principalPaid();
+        feePaid         = loan.feePaid();
+        excessReturned  = loan.excessReturned();
+
+        // Update defaultSuffered value based on ratio of total supply of DebtTokens owned by this DebtLocker.
+        defaultSuffered = loan.defaultSuffered().mul(loan.balanceOf(address(this))).div(loan.totalSupply());
 
         // Withdraw funds via FDT.
         uint256 beforeBal = loanAsset.balanceOf(address(this));  // Current balance of locker (accounts for direct inflows)
@@ -76,10 +80,10 @@ contract DebtLocker {
         uint256 principal = calcAllotment(newPrincipal, sum, claimBal);
         uint256 fee       = calcAllotment(newFee,       sum, claimBal);
         uint256 excess    = calcAllotment(newExcess,    sum, claimBal);
-        
+
         require(loanAsset.transfer(owner, claimBal), "DebtLocker:CLAIM_TRANSFER");
 
-        return([claimBal, interest, principal, fee, excess]);
+        return([claimBal, interest, principal, fee, excess, defaultSuffered]);
     }
 
 }
