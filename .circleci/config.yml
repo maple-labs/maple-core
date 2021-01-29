@@ -32,10 +32,11 @@ jobs:
             cd ../ && ls -al
             cd ../ && ls -al
             cd ../ && ls -al 
+            cd ~ && ls -al
       - persist_to_workspace:
           root: ~/project
           paths:
-            - "~"
+            - "./*"
 
   dapp_test:
     docker:
