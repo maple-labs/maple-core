@@ -1551,7 +1551,7 @@ contract PoolTest is TestUtil {
         _drawDownLoan(1000 * USD, loan3, hal);
         _makeLoanPayment(loan3, hal); 
         sid.claim(address(pool1), address(loan3), address(dlFactory1));
-        assertEq(pool1.calcWithdrawPenalty(1000 * WAD, address(kim)), uint256(0)); // lockupPeriod > withdrawDelay
+        assertEq(pool1.calcWithdrawPenalty(1000 * USD, address(kim)), uint256(0)); // lockupPeriod > withdrawDelay
 
         // Warp to exact time that kim can withdraw for the first time
         hevm.warp(start + pool1.lockupPeriod());  
@@ -1560,15 +1560,15 @@ contract PoolTest is TestUtil {
         // Deposit more USDC into pool, increasing deposit date and locking up funds again
         assertTrue(kim.try_deposit(address(pool1), 3000 * USD));
         assertEq(pool1.depositDate(address(kim)) - start, (block.timestamp - start) * (3000 * WAD) / (4000 * WAD));  // Deposit date updating using weighting
-        assertTrue(!kim.try_withdraw(address(pool1), 4000 * WAD), "Withdraw failure didn't trigger");                // Not able to withdraw the funds as deposit date was updated
+        assertTrue(!kim.try_withdraw(address(pool1), 4000 * USD), "Withdraw failure didn't trigger");                // Not able to withdraw the funds as deposit date was updated
 
         uint256 interest = pool1.withdrawableFundsOf(address(kim));  // Get kims withdrawable funds
 
         // Warp to exact time that kim can withdraw with weighted deposit date
         hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() - 1);
-        assertTrue(!kim.try_withdraw(address(pool1), 4000 * WAD), "Withdraw failure didn't trigger");
+        assertTrue(!kim.try_withdraw(address(pool1), 4000 * USD), "Withdraw failure didn't trigger");
         hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
-        assertTrue( kim.try_withdraw(address(pool1), 4000 * WAD), "Failed to withdraw funds");
+        assertTrue( kim.try_withdraw(address(pool1), 4000 * USD), "Failed to withdraw funds");
 
         assertEq(IERC20(USDC).balanceOf(address(kim)) - bal0, interest);
     }
