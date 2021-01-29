@@ -181,6 +181,26 @@ contract Pool is FDT {
         );
     }
 
+    /**
+        @dev Calculates BPTs required if burning BPTs for pair, given supplied tokenAmountOutRequired.
+        @param  bpool              Balancer pool that issues the BPTs.
+        @param  pair               Swap out asset (e.g. USDC) to receive when burning BPTs.
+        @param  staker             Address that deposited BPTs to stakeLocker.
+        @param  stakeLocker        Escrows BPTs deposited by staker.
+        @param  pairAmountRequired Amount of pair tokens out required.
+        @return [0] = poolAmountIn required
+                [1] = poolAmountIn currently staked.
+    */
+    function getPoolSharesRequired(
+        address bpool,
+        address pair,
+        address staker,
+        address stakeLocker,
+        uint256 pairAmountRequired
+    ) external view returns (uint256, uint256) {
+        return CalcBPool.getPoolSharesRequired(bpool, pair, staker, stakeLocker, pairAmountRequired);
+    }
+
     // Note: Tether is unusable as a LiquidityAsset!
     /**
         @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
