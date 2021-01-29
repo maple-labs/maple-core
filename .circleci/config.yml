@@ -384,6 +384,11 @@ workflows:
   version: 2
   test_all:
     jobs:
+      - dependencies
+      - integration_test:
+          requires:
+            - dependencies
+
       - dapp_build:
           context: seth
       - dapp_test_clFactory: 
@@ -442,14 +447,7 @@ workflows:
           context: seth
           requires:
             - dapp_build
-          
-
-
-
-      # - dependencies
-      # - integration_test:
-      #     requires:
-      #       - dependencies
+            
       # - deploy_kaleido:
       #     context: kaleido
       #     requires:
