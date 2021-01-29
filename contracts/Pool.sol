@@ -19,9 +19,11 @@ import "./interfaces/IDebtLocker.sol";
 import "./token/FDT.sol";
 
 /// @title Pool is the core contract for liquidity pools.
-contract Pool is FDT, CalcBPool {
+contract Pool is FDT {
 
     using SafeMath for uint256;
+
+    uint256 constant WAD = 10 ** 18;
 
     IERC20  public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
 
@@ -168,11 +170,11 @@ contract Pool is FDT, CalcBPool {
         (
             uint256 poolAmountInRequired, 
             uint256 poolAmountPresent
-        ) = this.getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
+        ) = CalcBPool.getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
 
         return (
             swapOutAmountRequired,
-            this.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
+            CalcBPool.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
             poolAmountPresent >= poolAmountInRequired,
             poolAmountInRequired,
             poolAmountPresent
