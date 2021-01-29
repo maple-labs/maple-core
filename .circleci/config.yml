@@ -13,6 +13,8 @@ jobs:
     docker:
       - image: nixorg/nix:circleci
     steps:
+      - restore_cache:
+          key: nix-deps
       - run:
           name: Checkout maple-core
           command: |
@@ -35,7 +37,11 @@ jobs:
       - persist_to_workspace:
           root: ~/project
           paths:
-            - "~"
+            - "./*"
+      - save_cache:
+          paths:
+            - /nix # location depends on npm version
+          key: nix-deps
 
   dapp_test:
     docker:
@@ -44,6 +50,8 @@ jobs:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: ~/project
+      - restore_cache:
+          key: nix-deps
       # - run:
       #     name: Checkout maple-core
       #     command: |
