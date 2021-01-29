@@ -372,8 +372,8 @@ contract StakeLockerTest is TestUtil {
         uint256[6] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
 
         // Non-zero value is passed through.
-        assertGt(vals_a[5], 0);
-        assertGt(vals_b[5], 0);
+        assertEq(vals_a[5], loan.defaultSuffered() * (1_000_000 * WAD) / (4_000_000 * WAD));
+        assertEq(vals_b[5], loan.defaultSuffered() * (3_000_000 * WAD) / (4_000_000 * WAD));
         withinPrecision(vals_a[5] + vals_b[5], loan.defaultSuffered(), 2);
     }
 } 
