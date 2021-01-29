@@ -6,7 +6,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IGlobals.sol";
 
-contract CalcBPool {
+library CalcBPool {
 
     using SafeMath for uint256;
 
@@ -30,7 +30,7 @@ contract CalcBPool {
         address _pair,
         address _staker,
         address _stakeLocker
-    ) external view returns (uint256) {
+    ) public view returns (uint256) {
 
         //calculates the value of BPT in unites of _liquidityAssetContract, in 'wei' (decimals) for this token
 
@@ -66,7 +66,7 @@ contract CalcBPool {
         address pair,
         address staker,
         address stakeLocker
-    ) external view returns (uint256) {
+    ) public view returns (uint256) {
 
         // Fetch balancer pool token information.
         IBPool bPool            = IBPool(pool);
@@ -108,7 +108,7 @@ contract CalcBPool {
         address staker,
         address stakeLocker,
         uint256 pairAmountRequired
-    ) external view returns (uint256, uint256) {
+    ) public view returns (uint256, uint256) {
 
         IBPool bPool = IBPool(bpool);
 
