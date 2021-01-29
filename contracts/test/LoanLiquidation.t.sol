@@ -91,7 +91,7 @@ contract Lender {
 
 contract Treasury { }
 
-contract LoanLiquidationsTest is TestUtil {
+contract LoanLiquidationTest is TestUtil {
 
     ERC20                     fundsToken;
     MapleToken                       mpl;
