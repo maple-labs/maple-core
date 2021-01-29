@@ -28,10 +28,14 @@ jobs:
             nix-env -iA dapp hevm seth solc-static-versions.solc_0_6_11 -if https://github.com/dapphub/dapptools/tarball/master --option substituters "https://cache.nixos.org https://dapp.cachix.org" --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs"
             dapp update
             DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 200" dapp --use solc:0.6.11 build
+            ls -al
+            cd ../ && ls -al
+            cd ../ && ls -al
+            cd ../ && ls -al 
       - persist_to_workspace:
           root: ~/project
           paths:
-            - "./*"
+            - "~"
 
   dapp_test:
     docker:
