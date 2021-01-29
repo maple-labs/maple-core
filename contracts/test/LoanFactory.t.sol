@@ -213,7 +213,7 @@ contract LoanFactoryTest is TestUtil {
         assertEq(loan.termDays(),                  specs[1], "Incorrect term days");
         assertEq(loan.paymentsRemaining(),         specs[1].div(specs[2]), "Incorrect payments remaining");
         assertEq(loan.paymentIntervalSeconds(),    specs[2].mul(1 days), "Incorrect payment interval in seconds");
-        assertEq(loan.minRaise(),                  specs[3], "Incorrect minimum raise value");
+        assertEq(loan.requestAmount(),             specs[3], "Incorrect request amount value");
         assertEq(loan.collateralRatio(),           specs[4], "Incorrect collateral ratio");
         assertEq(loan.fundingPeriodSeconds(),      specs[5].mul(1 days), "Incorrect funding period in seconds");
         assertEq(loan.repaymentCalc(),             calcs[0], "Incorrect repayment calculator");

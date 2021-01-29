@@ -54,7 +54,7 @@ contract Loan is FDT {
     uint256 public paymentsRemaining;
     uint256 public termDays;
     uint256 public paymentIntervalSeconds; 
-    uint256 public minRaise;
+    uint256 public requestAmount;
     uint256 public collateralRatio;
     uint256 public fundingPeriodSeconds;
     uint256 public createdAt;
@@ -111,7 +111,7 @@ contract Loan is FDT {
                 specs[0] = apr
                 specs[1] = termDays
                 specs[2] = paymentIntervalDays (aka PID)
-                specs[3] = minRaise
+                specs[3] = requestAmount
                 specs[4] = collateralRatio
                 specs[5] = fundingPeriodDays
         @param  calcs            The calculators used for the loan.
@@ -159,7 +159,7 @@ contract Loan is FDT {
         termDays               = specs[1];
         paymentsRemaining      = specs[1].div(specs[2]);
         paymentIntervalSeconds = specs[2].mul(1 days);
-        minRaise               = specs[3];
+        requestAmount          = specs[3];
         collateralRatio        = specs[4];
         fundingPeriodSeconds   = specs[5].mul(1 days);
         repaymentCalc          = calcs[0];
@@ -200,7 +200,7 @@ contract Loan is FDT {
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
 
-        require(amt >= minRaise,                   "Loan:DRAWDOWN_AMT_LT_MIN_RAISE");
+        require(amt >= requestAmount,               "Loan:DRAWDOWN_AMT_LT_MIN_RAISE");
         require(amt <= _getFundingLockerBalance(), "Loan:DRAWDOWN_AMT_GT_FUNDED_AMT");
 
         // Update the principal owed and drawdown amount for this loan.

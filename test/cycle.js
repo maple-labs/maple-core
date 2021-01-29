@@ -312,7 +312,7 @@ describe("Cycle of an entire loan", function () {
     const apr = 500; // 5% APR
     const termDays = 180; // (termDays/paymentIntervalDays) = # of Payments
     const paymentIntervalDays = 30;
-    const minRaise = BigNumber.from(10).pow(6).mul(1000); // 1000 USDC
+    const requestAmount = BigNumber.from(10).pow(6).mul(1000); // 1000 USDC
     const collateralRatioBips = 1000; // 10%
     const fundingPeriodDays = 7;
 
@@ -328,7 +328,7 @@ describe("Cycle of an entire loan", function () {
         apr,
         termDays,
         paymentIntervalDays,
-        minRaise,
+        requestAmount,
         collateralRatioBips,
         fundingPeriodDays,
       ],
@@ -347,7 +347,7 @@ describe("Cycle of an entire loan", function () {
           apr,
           termDays,
           paymentIntervalDays,
-          minRaise,
+          requestAmount,
           collateralRatioBips,
           fundingPeriodDays,
         ],
