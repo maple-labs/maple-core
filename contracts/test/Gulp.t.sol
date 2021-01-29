@@ -164,7 +164,7 @@ contract Borrower {
     }
 }
 
-contract StakeLockerTest is TestUtil {
+contract GulpTest is TestUtil {
 
     using SafeMath for uint256;
 
