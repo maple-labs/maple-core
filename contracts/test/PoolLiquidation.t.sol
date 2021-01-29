@@ -83,7 +83,7 @@ contract PoolDelegate {
         IPool(pool).fundLoan(loan, dlFactory, amt);  
     }
 
-    function claim(address pool, address loan, address dlFactory) external returns(uint256[6] memory) {
+    function claim(address pool, address loan, address dlFactory) external returns(uint256[7] memory) {
         return IPool(pool).claim(loan, dlFactory);  
     }
 }
@@ -361,15 +361,8 @@ contract PoolLiquidationTest is TestUtil {
             or rather updates accounting in the Pool which in turn will enable us
             to handle liquidation of BPTs in the Stake Locker accurately.
         */
-        uint256[6] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
-
-        /**
-            Now that triggerDefault() is called, the return value defaultSuffered
-            will be greater than 0. Calling claim() is the mechanism which settles,
-            or rather updates accounting in the Pool which in turn will enable us
-            to handle liquidation of BPTs in the Stake Locker accurately.
-        */
-        uint256[6] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
+        uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
+        uint256[7] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
 
         // Non-zero value is passed through.
         assertEq(vals_a[5], loan.defaultSuffered() * (1_000_000 * WAD) / (4_000_000 * WAD));
@@ -381,14 +374,24 @@ contract PoolLiquidationTest is TestUtil {
 
         setUpLoanAndDefault();
 
-        // Pre-state stakeLocker checks.
+        address stakeLocker_a = pool_a.stakeLocker();
+        address stakeLocker_b = pool_b.stakeLocker();
 
-        uint256[6] memory vals = sid.claim(address(pool), address(loan),  address(dlFactory));
+        // Pre-state stakeLocker checks.
+        uint256 stakeLockerBPTs_pre_a = IBPool(pool_a.stakeAsset()).balanceOf(stakeLocker_a);
+        uint256 stakeLockerBPTs_pre_b = IBPool(pool_a.stakeAsset()).balanceOf(stakeLocker_b);
+
+        uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
+        uint256[7] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
 
         // Post-state stakeLocker checks.
-
-        assertTrue(false);
+        uint256 stakeLockerBPTs_post_a = IBPool(pool_a.stakeAsset()).balanceOf(stakeLocker_a);
+        uint256 stakeLockerBPTs_post_b = IBPool(pool_a.stakeAsset()).balanceOf(stakeLocker_b);
+        
+        assertEq(stakeLockerBPTs_pre_a, 0);
+        assertEq(stakeLockerBPTs_pre_b, 0);
+        assertEq(stakeLockerBPTs_post_a, 0);
+        assertEq(stakeLockerBPTs_post_b, 0);
       
-
     }
 } 

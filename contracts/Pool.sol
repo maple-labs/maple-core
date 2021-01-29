@@ -51,7 +51,7 @@ contract Pool is FDT, CalcBPool {
     event LoanFunded(address loan, address debtLocker, uint256 amountFunded);
     event BalanceUpdated(address who, address token, uint256 balance);
     event Claim(address loan, uint interest, uint principal, uint fee);
-    event DefaultSuffered(address loan, uint defaultSuffered, uint BPTBurned);
+    event DefaultSuffered(address loan, uint defaultSuffered, uint bptsBurned, uint bptsReturned);
 
     /**
         @dev Constructor for a Pool.
@@ -209,6 +209,9 @@ contract Pool is FDT, CalcBPool {
         uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
 
+        // BPTs were Burned ... 100k USDC was deposited to LiqudiityLocker
+        // User 50% equity owner in Pool (LL) is now thinking about withdrawing ...
+
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
         uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
@@ -217,7 +220,8 @@ contract Pool is FDT, CalcBPool {
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
         withdrawFunds();            // Transfer full entitled interest.
 
-        require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");  // Transfer the principal amount - totPenalty.
+        // Transfer the principal amount - totPenalty
+        require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");
 
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
         updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
@@ -262,16 +266,32 @@ contract Pool is FDT, CalcBPool {
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
         // Check liquidityAsset swapOut value of StakeLocker coverage.
-        uint availableSwapOut = this.getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
-        uint amtBPTBurned     = IBPool(stakeAsset).exitswapExternAmountOut(
+        uint256 availableSwapOut = this.getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
+
+        require(
+            IStakeLocker(stakeLocker).pull(address(this), IBPool(stakeAsset).balanceOf(stakeLocker)),
+            "Pool:STAKE_PULL"
+        );
+
+        uint256 bptsBurned  = IBPool(stakeAsset).exitswapExternAmountOut(
                                     address(liquidityAsset), 
                                     availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
                                     2**256-1
-                                );
+                              );
 
-        // TODO: Handle the accounting and settlement of UDSC now in Pool.
+        uint256 bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
+        IStakeLocker(stakeAsset).transfer(stakeLocker, bptsReturned);
 
-        emit DefaultSuffered(loan, defaultSuffered, amtBPTBurned);
+        // Update accounting with liquidityAsset received for burning BPTs.
+        // We get back 100k USDC
+        // Reduce princiaplOut by amount of defaultSuffered
+        // Transfer USDC to liquidityLocker and updateFundsReceived()
+
+        principalOut -= defaultSuffered;
+        interestSum += liquidityAsset.balanceOf(address(this));
+        liquidityAsset.transfer(liquidityLocker, liquidityAsset.balanceOf(address(this)));
+
+        emit DefaultSuffered(loan, defaultSuffered, bptsBurned, bptsReturned);
     }
 
     /**
@@ -285,9 +305,9 @@ contract Pool is FDT, CalcBPool {
                 [4] = Excess portion claimed.
                 [5] = Liquidation portion claimed.
     */
-    function claim(address loan, address dlFactory) external returns(uint256[6] memory) { 
+    function claim(address loan, address dlFactory) external returns(uint256[7] memory) { 
         
-        uint256[6] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
+        uint256[7] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
         uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
         uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest

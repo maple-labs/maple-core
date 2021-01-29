@@ -61,6 +61,20 @@ contract StakeLocker is FDT {
         return IGlobals(IPoolFactory(IPool(owner).superFactory()).globals());
     }
 
+    modifier isPool() {
+        require(msg.sender == owner, "StakeLocker:MSG_SENDER_NOT_POOL");
+        _;
+    }
+
+    /**
+        @dev Transfers amt of stakeAsset to dst.
+        @param  dst Desintation to transfer stakeAsset to.
+        @param  amt Amount of stakeAsset to transfer.
+    */
+    function pull(address dst, uint256 amt) isPool public returns(bool) {
+        return stakeAsset.transfer(dst, amt);
+    }
+
     /**
         @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
         @param amt Amount of stakeAsset (BPTs) to deposit.

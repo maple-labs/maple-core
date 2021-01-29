@@ -12,7 +12,7 @@ interface IPool {
 
     function finalize() external;
 
-    function claim(address, address) external returns(uint256[6] memory);
+    function claim(address, address) external returns(uint256[7] memory);
 
     function testValue() external view returns(uint256);
 
