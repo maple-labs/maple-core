@@ -189,13 +189,13 @@ contract LoanLiquidationsTest is TestUtil {
         loan.triggerDefault();
 
         {
-            uint256 principalOwed_post   = loan.principalOwed();
-            uint256 loanAssetLoan_post   = IERC20(USDC).balanceOf(address(loan));
-            uint256 loanAssetBorr_post   = IERC20(USDC).balanceOf(address(ali));
-            uint256 amountLiquidated     = loan.amountLiquidated();
-            uint256 amountRecovered      = loan.amountRecovered();
-            uint256 liquidationShortfall = loan.liquidationShortfall();
-            uint256 liquidationExcess    = loan.liquidationExcess();
+            uint256 principalOwed_post = loan.principalOwed();
+            uint256 loanAssetLoan_post = IERC20(USDC).balanceOf(address(loan));
+            uint256 loanAssetBorr_post = IERC20(USDC).balanceOf(address(ali));
+            uint256 amountLiquidated   = loan.amountLiquidated();
+            uint256 amountRecovered    = loan.amountRecovered();
+            uint256 defaultSuffered    = loan.defaultSuffered();
+            uint256 liquidationExcess  = loan.liquidationExcess();
 
             // Post-state triggerDefault() checks.
             assertEq(uint256(loan.loanState()),                                     3);
@@ -206,7 +206,7 @@ contract LoanLiquidationsTest is TestUtil {
                 assertEq(loanAssetBorr_post - loanAssetBorr_pre, liquidationExcess);
                 assertEq(principalOwed_post,                                     0);
                 assertEq(liquidationExcess,    amountRecovered - principalOwed_pre);
-                assertEq(liquidationShortfall,                                   0);
+                assertEq(defaultSuffered,                                   0);
                 assertEq(
                     amountRecovered,                              
                     (loanAssetBorr_post - loanAssetBorr_pre) + (loanAssetLoan_post - loanAssetLoan_pre)
@@ -214,7 +214,7 @@ contract LoanLiquidationsTest is TestUtil {
             }
             else {
                 assertEq(principalOwed_post,   principalOwed_pre - amountRecovered);
-                assertEq(liquidationShortfall,                  principalOwed_post);
+                assertEq(defaultSuffered,                  principalOwed_post);
                 assertEq(liquidationExcess,                                      0);
                 assertEq(amountRecovered,   loanAssetLoan_post - loanAssetLoan_pre);
             }

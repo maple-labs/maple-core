@@ -64,17 +64,11 @@ contract Loan is FDT {
     uint256 public interestPaid;
     uint256 public feePaid;
     uint256 public excessReturned;
-    uint256 public defaultSuffered;
     
     // Liquidation variables
     uint256 public amountLiquidated;
     uint256 public amountRecovered;
-    uint256 public liquidationExcess;
-
-    // Liquidation variables
-    uint256 public amountLiquidated;
-    uint256 public amountRecovered;
-    uint256 public liquidationShortfall;
+    uint256 public defaultSuffered;
     uint256 public liquidationExcess;
 
     modifier isState(State _state) {
