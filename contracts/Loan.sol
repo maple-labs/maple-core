@@ -13,6 +13,7 @@ import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/IPremiumCalc.sol";
+import "./interfaces/IUniswapRouter.sol";
 
 /// @title Loan is the core loan vault contract.
 contract Loan is FDT {
@@ -21,7 +22,13 @@ contract Loan is FDT {
     using SignedSafeMath  for int256;
     using SafeMath        for uint256;
 
-    enum State { Live, Active, Matured }  // Live = Created, Active = Drawndown
+    /**
+        Live       = The loan has been initialized and is open for funding (assuming funding period not ended).
+        Active     = The loan has been drawdown and the borrower is making payments.
+        Matured    = The loan is fully paid off and has "matured".
+        Liquidated = The loan has been liquidated.
+    */
+    enum State { Live, Active, Matured, Liquidated }
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
 
@@ -58,6 +65,12 @@ contract Loan is FDT {
     uint256 public feePaid;
     uint256 public excessReturned;
 
+    // Liquidation variables
+    uint256 public amountLiquidated;
+    uint256 public amountRecovered;
+    uint256 public liquidationShortfall;
+    uint256 public liquidationExcess;
+
     modifier isState(State _state) {
         require(loanState == _state, "Loan:STATE_CHECK");
         _;
@@ -79,6 +92,12 @@ contract Loan is FDT {
         uint principalOwed,
         uint nextPaymentDue,
         bool latePayment
+    );
+    event Liquidation(
+        uint collateralSwapped,
+        uint loanAssetReturned,
+        uint liquidationExcess,
+        uint liquidationShortfall
     );
 
     /**
@@ -222,12 +241,79 @@ contract Loan is FDT {
         emit BalanceUpdated(treasury,         address(loanAsset),       loanAsset.balanceOf(treasury));
 
         emit Drawdown(amt);
-    }    
+    }
+
+    /**
+        @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
+    */
+    function _triggerDefault() internal {
+
+        // Pull collateralAsset from collateralLocker.
+        IUniswapRouter uniswap = IUniswapRouter(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+        uint256 liquidationAmt = _getCollateralLockerBalance();
+        require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");
+
+        // Swap collateralAsset for loanAsset.
+        collateralAsset.approve(address(uniswap), liquidationAmt);
+
+        address[] memory path = new address[](2);
+        path[0] = address(collateralAsset);
+        path[1] = address(loanAsset);
+
+        // TODO: Consider oracles for 2nd parameter below.
+        uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
+            collateralAsset.balanceOf(address(this)),
+            0, // The minimum amount of output tokens that must be received for the transaction not to revert.
+            path,
+            address(this),
+            block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
+        );
+
+        amountLiquidated = returnAmounts[0];
+        amountRecovered  = returnAmounts[1];
+
+        // Reduce principal owed by amount received (as much as is required for principal owed == 0).
+        if (amountRecovered > principalOwed) {
+            liquidationExcess = amountRecovered.sub(principalOwed);
+            principalOwed = 0;
+            loanAsset.transfer(borrower, liquidationExcess); // Send excess to Borrower.
+        }
+        // If principal owed >  0 after settlement ... all loanAsset remains in Loan.
+        else {
+            principalOwed        = principalOwed.sub(amountRecovered);
+            liquidationShortfall = principalOwed;
+        }
+
+        // Call updateFundsReceived() to snapshot payout.
+        updateFundsReceived();
+
+        // Transition loanState to Liquidated.
+        loanState = State.Liquidated;
+
+        // Emit liquidation event.
+        emit Liquidation(
+            returnAmounts[0],  // collateralSwapped
+            returnAmounts[1],  // loanAssetReturned
+            liquidationExcess,
+            liquidationShortfall
+        );
+
+    }
+
+    /**
+        @dev Trigger a default. Does nothing if block.timestamp <= nextPaymentDue + gracePeriod.
+    */
+    function triggerDefault() isState(State.Active) external {
+        if (block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod())) {
+            _triggerDefault();
+        }
+    }
 
     /**
         @dev Make the next payment for this loan.
     */
     function makePayment() external isState(State.Active) {
+
         (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
 
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));

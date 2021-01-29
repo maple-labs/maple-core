@@ -41,6 +41,7 @@ interface ILoan is IERC20 {
 
     // Functions
     function fundLoan(uint256, address) external;
+    function triggerDefault() external;
 
     // TODO: Create IFDT.sol (IFDT, inherit here and other places)
     function updateFundsReceived() external;
