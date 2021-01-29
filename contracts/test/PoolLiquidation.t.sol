@@ -166,7 +166,7 @@ contract Borrower {
 
 contract Treasury { }
 
-contract StakeLockerTest is TestUtil {
+contract PoolLiquidationsTest is TestUtil {
 
     using SafeMath for uint256;
 

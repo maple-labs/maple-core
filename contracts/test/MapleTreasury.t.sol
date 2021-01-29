@@ -11,7 +11,7 @@ import "../MapleTreasury.sol";
 
 contract PoolDelegate { }
 
-contract MapleGlobalsTest is TestUtil {
+contract MapleTreasuryTest is TestUtil {
 
     Governor                         gov;
     MapleToken                       mpl;
