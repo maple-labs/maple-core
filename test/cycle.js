@@ -243,6 +243,9 @@ describe("Cycle of an entire loan", function () {
       PoolABI,
       ethers.provider.getSigner(1)
     );
+
+    // Set lockup Period to 0.
+    await Pool_PoolDelegate.setLockupPeriod(0);
   });
 
   it("(P2) Pool delegate minting BPTs", async function () {
@@ -455,13 +458,13 @@ describe("Cycle of an entire loan", function () {
     await Pool_PoolDelegate.claim(LoanAddress, DLFactoryAddress);
   });
 
-  xit("(P11) Liquidity provider withdrawing USDC", async function () {
+  it("(P11) Liquidity provider withdrawing USDC", async function () {
     // Note: Keep this test commented out, there is critical failure
     //       in the withdraw() function currently.
 
     // Withdraw USDC from the pool.
     await Pool_LiquidityProvider.withdraw(
-      BigNumber.from(10).pow(18).mul(2000) // "Burning" 18 decimals worth of shares (maps to 6 decimals worth of USDC)
+      BigNumber.from(10).pow(6).mul(2000) // "Burning" 2000 * 10 ** 18 pool tokens corresponds to 2000 USDC.
     );
   });
 });
