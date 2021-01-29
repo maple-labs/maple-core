@@ -181,7 +181,8 @@ contract StakeLockerTest is TestUtil {
     StakeLockerFactory               slFactory;
     LiquidityLockerFactory           llFactory; 
     DebtLockerFactory                dlFactory;  
-    Pool                                  pool; 
+    Pool                                pool_a;  
+    Pool                                pool_b; 
     DSValue                          ethOracle;
     DSValue                         usdcOracle;
     BulletRepaymentCalc             bulletCalc;
@@ -189,12 +190,14 @@ contract StakeLockerTest is TestUtil {
     PremiumCalc                    premiumCalc;
     IBPool                               bPool;
     PoolDelegate                           sid;
+    PoolDelegate                           joe;
     LP                                     ali;
     Borrower                               bob;
     Staker                                 che;
     Staker                                 dan;
     Treasury                               trs;
-    IStakeLocker                   stakeLocker;
+    IStakeLocker                 stakeLocker_a;
+    IStakeLocker                 stakeLocker_b;
 
     uint256 constant public MAX_UINT = uint(-1);
 
@@ -203,24 +206,25 @@ contract StakeLockerTest is TestUtil {
         gov            = new Governor();
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
-        flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan factory functionality.
-        clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan factory functionality.
-        loanFactory    = new LoanFactory(address(globals));                             // Create Loan factory.
-        slFactory      = new StakeLockerFactory();                                      // Setup the SL factory to facilitate Pool factory functionality.
-        llFactory      = new LiquidityLockerFactory();                                  // Setup the SL factory to facilitate Pool factory functionality.
-        poolFactory    = new PoolFactory(address(globals));                             // Create pool factory.
-        dlFactory      = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        ethOracle      = new DSValue();                                                 // ETH Oracle.
-        usdcOracle     = new DSValue();                                                 // USD Oracle.
-        bulletCalc     = new BulletRepaymentCalc();                                     // Repayment model.
-        lateFeeCalc    = new LateFeeCalc(0);                                            // Flat 0% fee
-        premiumCalc    = new PremiumCalc(500);                                          // Flat 5% premium
-        sid            = new PoolDelegate();                                            // Actor: Manager of the pool.
-        ali            = new LP();                                                      // Actor: Liquidity providers
-        bob            = new Borrower();                                                // Actor: Borrower aka Loan contract creator.
-        che            = new Staker();                                                  // Actor: Staker of BPTs
-        dan            = new Staker();                                                  // Actor: Staker of BPTs
-        trs            = new Treasury();                                                // Treasury.
+        flFactory      = new FundingLockerFactory();         // Setup the FL factory to facilitate Loan factory functionality.
+        clFactory      = new CollateralLockerFactory();      // Setup the CL factory to facilitate Loan factory functionality.
+        loanFactory    = new LoanFactory(address(globals));  // Create Loan factory.
+        slFactory      = new StakeLockerFactory();           // Setup the SL factory to facilitate Pool factory functionality.
+        llFactory      = new LiquidityLockerFactory();       // Setup the SL factory to facilitate Pool factory functionality.
+        poolFactory    = new PoolFactory(address(globals));  // Create pool factory.
+        dlFactory      = new DebtLockerFactory();            // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
+        ethOracle      = new DSValue();                      // ETH Oracle.
+        usdcOracle     = new DSValue();                      // USD Oracle.
+        bulletCalc     = new BulletRepaymentCalc();          // Repayment model.
+        lateFeeCalc    = new LateFeeCalc(0);                 // Flat 0% fee
+        premiumCalc    = new PremiumCalc(500);               // Flat 5% premium
+        sid            = new PoolDelegate();                 // Actor: Manager of the pool_a.
+        joe            = new PoolDelegate();                 // Actor: Manager of the pool_b.
+        ali            = new LP();                           // Actor: Liquidity providers
+        bob            = new Borrower();                     // Actor: Borrower aka Loan contract creator.
+        che            = new Staker();                       // Actor: Staker of BPTs
+        dan            = new Staker();                       // Actor: Staker of BPTs
+        trs            = new Treasury();                     // Treasury.
 
         gov.setValidLoanFactory(address(loanFactory), true);
 
@@ -252,13 +256,15 @@ contract StakeLockerTest is TestUtil {
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
         gov.setPoolDelegateWhitelist(address(sid), true);
+        gov.setPoolDelegateWhitelist(address(joe), true);
         gov.setMapleTreasury(address(trs));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
         assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
 
-        bPool.transfer(address(sid), 50 * WAD);  // Give PD a balance of BPTs to finalize pool
+        bPool.transfer(address(sid), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
+        bPool.transfer(address(joe), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
         bPool.transfer(address(che), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
         bPool.transfer(address(dan), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
 
@@ -272,8 +278,8 @@ contract StakeLockerTest is TestUtil {
         gov.assignPriceFeed(USDC, address(usdcOracle));
         gov.setSwapOutRequired(1_000_000);
 
-        // Create Liquidity Pool
-        pool = Pool(sid.createPool(
+        // Create Liquidity Pool A
+        pool_a = Pool(sid.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -284,7 +290,20 @@ contract StakeLockerTest is TestUtil {
             MAX_UINT  // liquidityCap value
         ));
 
-        stakeLocker = IStakeLocker(pool.stakeLocker());
+        // Create Liquidity Pool
+        pool_b = Pool(joe.createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            MAX_UINT  // liquidityCap value
+        ));
+
+        stakeLocker_a = IStakeLocker(pool_a.stakeLocker());
+        stakeLocker_b = IStakeLocker(pool_b.stakeLocker());
 
         // loan Specifications
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
@@ -293,27 +312,34 @@ contract StakeLockerTest is TestUtil {
         loan = bob.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         // Stake and finalize pool
-        sid.approve(address(bPool), address(stakeLocker), 50 * WAD);
-        sid.stake(address(stakeLocker), 50 * WAD);
-        sid.finalize(address(pool));  // PD that staked can finalize
+        sid.approve(address(bPool), address(stakeLocker_a), 25 * WAD);
+        joe.approve(address(bPool), address(stakeLocker_b), 25 * WAD);
+        sid.stake(address(stakeLocker_a), 25 * WAD);
+        joe.stake(address(stakeLocker_b), 25 * WAD);
+        sid.finalize(address(pool_a));
+        joe.finalize(address(pool_b));
 
-        assertEq(uint256(pool.poolState()), 1);  // Finalize
+        assertEq(uint256(pool_a.poolState()), 1);  // Finalize
+        assertEq(uint256(pool_b.poolState()), 1);  // Finalize
     }
 
     function setUpLoanAndDefault() public {
         // Fund the pool
-        mint("USDC", address(ali), 10_000_000 * USD);
-        ali.approve(USDC, address(pool), MAX_UINT);
-        ali.deposit(address(pool), 10_000_000 * USD);
+        mint("USDC", address(ali), 20_000_000 * USD);
+        ali.approve(USDC, address(pool_a), MAX_UINT);
+        ali.approve(USDC, address(pool_b), MAX_UINT);
+        ali.deposit(address(pool_a), 10_000_000 * USD);
+        ali.deposit(address(pool_b), 10_000_000 * USD);
 
         // Fund the loan
-        sid.fundLoan(address(pool), address(loan), address(dlFactory), 10_000_000 * USD);
-        uint cReq = loan.collateralRequiredForDrawdown(10_000_000 * USD);
+        sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 1_000_000 * USD);
+        joe.fundLoan(address(pool_b), address(loan), address(dlFactory), 3_000_000 * USD);
+        uint cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
 
         // Drawdown loan
         mint("WETH", address(bob), cReq);
         bob.approve(WETH, address(loan), MAX_UINT);
-        bob.drawdown(address(loan), 10_000_000 * USD);
+        bob.drawdown(address(loan), 4_000_000 * USD);
         
         // Warp to late payment
         uint256 start = block.timestamp;
@@ -335,9 +361,19 @@ contract StakeLockerTest is TestUtil {
             or rather updates accounting in the Pool which in turn will enable us
             to handle liquidation of BPTs in the Stake Locker accurately.
         */
-        uint256[6] memory vals = sid.claim(address(pool), address(loan),  address(dlFactory));
+        uint256[6] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
+
+        /**
+            Now that triggerDefault() is called, the return value defaultSuffered
+            will be greater than 0. Calling claim() is the mechanism which settles,
+            or rather updates accounting in the Pool which in turn will enable us
+            to handle liquidation of BPTs in the Stake Locker accurately.
+        */
+        uint256[6] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
 
         // Non-zero value is passed through.
-        assertGt(vals[5], 0);
+        assertEq(vals_a[5], 0);
+        assertEq(vals_b[5], 0);
+        assertEq(vals_a[5] + vals_b[5], loan.defaultSuffered());
     }
 } 

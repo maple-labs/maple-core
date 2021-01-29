@@ -62,7 +62,9 @@ contract DebtLocker {
         principalPaid   = loan.principalPaid();
         feePaid         = loan.feePaid();
         excessReturned  = loan.excessReturned();
-        defaultSuffered = loan.defaultSuffered();
+
+        // Update defaultSuffered value based on ratio of total supply of DebtTokens owned by this DebtLocker.
+        defaultSuffered = loan.defaultSuffered().mul(loan.balanceOf(address(this))).div(loan.totalSupply());
 
         // Withdraw funds via FDT.
         uint256 beforeBal = loanAsset.balanceOf(address(this));  // Current balance of locker (accounts for direct inflows)
@@ -78,7 +80,7 @@ contract DebtLocker {
         uint256 principal = calcAllotment(newPrincipal, sum, claimBal);
         uint256 fee       = calcAllotment(newFee,       sum, claimBal);
         uint256 excess    = calcAllotment(newExcess,    sum, claimBal);
-        
+
         require(loanAsset.transfer(owner, claimBal), "DebtLocker:CLAIM_TRANSFER");
 
         return([claimBal, interest, principal, fee, excess, defaultSuffered]);
