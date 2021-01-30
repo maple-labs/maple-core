@@ -50,7 +50,7 @@ contract Pool is FDT, CalcBPool {
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
 
     event LoanFunded(address loan, address debtLocker, uint256 amountFunded);
-    
+
     event BalanceUpdated(address who, address token, uint256 balance);
 
     event Claim(address loan, uint256 interest, uint256 principal, uint256 fee);
@@ -311,8 +311,8 @@ contract Pool is FDT, CalcBPool {
         else {
             // principalOut decreases by defaultSuffered.
             // interestSum  increases by liquidityAsset received from burn.
-            principalOut -= defaultSuffered;
-            interestSum += liquidityAssetRecoveredFromBurn;
+            principalOut = principalOut.sub(defaultSuffered);
+            interestSum  = interestSum.add(liquidityAssetRecoveredFromBurn);
         }
         
         // Transfer USDC to liquidityLocker.
