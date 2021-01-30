@@ -42,6 +42,8 @@ contract Pool is FDT, CalcBPool {
     uint256 public penaltyDelay;      // Time until total interest is available after a deposit, in seconds.
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the pool.
     uint256 public lockupPeriod;      // Unix timestamp until the withdrawal is not allowed.
+  
+    uint256 public liquidationDelta; // FDT accounting for adjusting the FDT burn or mint amount in deposit() and withdraw()
 
     enum State { Initialized, Finalized, Deactivated }
     State public poolState;  // The current state of this pool.
@@ -177,22 +179,6 @@ contract Pool is FDT, CalcBPool {
         );
     }
 
-    // Note: Tether is unusable as a LiquidityAsset!
-    /**
-        @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
-        @param amt The amount of LiquidityAsset to deposit, in wei.
-    */
-    function deposit(uint256 amt) external {
-        _isValidState(State.Finalized);
-        require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
-        require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
-        uint256 wad = _toWad(amt);
-
-        updateDepositDate(wad, msg.sender);
-        _mint(msg.sender, wad);
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
-    }
-
     /**
         @dev Check whether the given `depositAmt` is an acceptable amount by the pool?.
         @param depositAmt Amount of tokens (i.e loanAsset type) is user willing to deposit.
@@ -212,11 +198,26 @@ contract Pool is FDT, CalcBPool {
     }
 
     /**
+        @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
+        @param amt The amount of LiquidityAsset to deposit, in wei.
+    */
+    function deposit(uint256 amt) external {
+        _isValidState(State.Finalized);
+        require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
+        require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
+        uint256 wad = _toWad(amt);
+
+        updateDepositDate(wad, msg.sender);
+        _mint(msg.sender, wad);
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+    }
+
+    /**
         @dev Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
         @param amt The amount of LiquidityAsset to withdraw.
     */
     function withdraw(uint256 amt) external {
-        uint256 wad    = _toWad(amt);
+        uint256 wad = _toWad(amt);
         uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
@@ -305,16 +306,21 @@ contract Pool is FDT, CalcBPool {
 
         // "SAD PATH" : Handle shortfall in StakeLocker, liquidity providers suffer a loss in withdraw() power.
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
-
+            liquidationDelta = liquidationDelta.add(
+                _toWad(defaultSuffered.sub(liquidityAssetRecoveredFromBurn))
+            );
         }
         // "HAPPY PATH" : Handle normal liquidation with enough liquidityAsset recovered from BPTs burned.
         else {
-            // principalOut decreases by defaultSuffered.
-            // interestSum  increases by liquidityAsset received from burn.
-            principalOut = principalOut.sub(defaultSuffered);
-            interestSum  = interestSum.add(liquidityAssetRecoveredFromBurn);
+            // TODO: Do we need to do anything here?
         }
         
+        // principalOut decreases by defaultSuffered.
+        principalOut = principalOut.sub(defaultSuffered);
+
+        // interestSum increases by liquidityAsset received from BPT burn.
+        interestSum = interestSum.add(liquidityAssetRecoveredFromBurn);
+
         // Transfer USDC to liquidityLocker.
         liquidityAsset.transfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
 

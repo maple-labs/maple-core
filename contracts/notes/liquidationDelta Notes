@@ -1,0 +1,105 @@
+~
+This document explains liquidationDelta value in Pool.sol
+~
+
+When a default occurs in a Loan, and the Pool does not have enough BPTs in the StakeLocker to cover
+the shortfall, the pool needs to update accounting to reflect a loss for investors (liquidity providers).
+
+The Pool will account for this loss by updating a value called liquidationDelta.
+
+"liquidationDelta" reflects the amount of losses investors have suffered in the Pool.
+
+Incrementing this value by the amount of losses suffered each time a default occurs and the StakeLocker
+is unable to mitigate the full loss (theoretically, this could be paramterized such that a Pool can only
+inflit a % amount of a particular loss to the StakeLocker, i.e. 75% and the remainder to the Liquidity Locker, 
+enabling a more traditional style of tranched risk in CLOs).
+
+"liquidationDelta" affects two main functions:
+
+withdraw() and deposit() ...
+
+... withdraw() is affected because "liquidationDelta" is proporitonally subtracted from the withdrawal power of the 
+    number of FDTs a specific investor owns.
+
+... deposit() is affected because "liquidiationDelta" is proportionally added to the minting power, the number of 
+    FDTs a single unit of liquidityAsset will mint upon deposit, in excess of the base 1:1 ratio.
+
+
+Example A:
+
+A #1
+Pool has suffered a 200k loss, the StakeLocker only had 100k staked.
+
+A #2
+The liquidity providers had total 1mm invested into the pool initially, 
+meaning there are 1mm FDT tokens and 1mm USDC in LiquidityLocker.
+
+A #3
+Upon claiming a "defaultSuffered" in a Loan, the Pool settles a loss of 
+100k by incrementing "liquidationDelta" by exactly 100k.
+
+A #4
+The current investors have had their withdrawal power reduced by 10% if they withdraw(), example:
+  
+  #4a => Investor owns 200k FDT tokens (of initial 1mm).
+  #4b => Investor tries to withdraW() / "burn" 200k FDT tokens for liquidityAsset.
+  #4c => Investor suffers "liquidationDelta":
+          withdrawalPower = FDTs Owned - FDTs Owned * ("liquidationDelta" / "LiquidityLockerDeposits"**)
+          withdrawalPower = 200k - 200k * (100k / 1mm) 
+          withdrawalPower = 200k - 20k
+          withdrawalPower = 180k*
+  #4d => Investor action results in following:
+          liquidityLocker transfers 180k USDC out to Investor
+          Pool burns 200k FDT owned by Investor
+          TotalFDTSupply          = 1mm - 200k = 800k
+          LiquidityLockerDeposits = 1mm - 200k = 800k
+
+  *This satifies the transfer of loss to investors requirement.
+  ** This may need to be TotalFDTSupply ... calculations not working with LiquidityLockerDeposits
+
+A #5
+New investors have had their minting power increased by 10% if they deposit(), example:
+
+  #5a => Investor deposits 100k liquidityAsset (USDC)
+  
+  #5b => Investor is able to mint() 112.5k FDT tokens due to enhanced "liquidationDelta" minting power:
+          mintingPower = depositAmt + depositAmt * ("liquidationDelta" / "LiquidityLockerDeposits")
+          mintingPower = 100k + 100k * (100k / 800k)
+          mintingPower = 100k + 12.5k
+          mintingPower = 112.5k
+  
+  #5c => Investor action results in the following:
+          liquidityLocker recieves 100k USDC
+          Pool mints 112.5k FDTs
+          Investor now owns 112.5k FDTs
+          TotalFDTSupply          = 800k + 112.5k = 912.5k
+          LiquidityLockerDeposits = 800k + 100k   = 900k
+  
+  #5d => In the event Investor wants to burn 50% (56.25k) of those FDTs to exit the pool later, his withdrawalPower is:
+          withdrawalPower = FDTs Owned - FDTs Owned * ("liquidationDelta" / "LiquidityLockerDeposits")
+          withdrawalPower = 56.25k - 56.25k * (100k / 900k) 
+          withdrawalPower = 56.25k - 6.25k
+          withdrawalPower = 50k*
+          ~
+          liquidityLocker transfers 50k USDC out to Investor
+          Pool burns 56.25k FDT owned by Investor
+          TotalFDTSupply          = 912.5k - 56.25k = 856.25k
+          LiquidityLockerDeposits = 900k   - 50k    = 850k
+
+  #5e => In the event a different, initial Investor now wants to burn 100k FDT:
+          withdrawalPower = FDTs Owned - FDTs Owned * ("liquidationDelta" / "LiquidityLockerDeposits")
+          withdrawalPower = 100k - 100k * (100k / 850k)
+          withdrawalPower = 100k - 6.25k
+          withdrawalPower = 88k
+          ~
+          liquidityLocker transfers 50k USDC out to Investor
+          Pool burns 56.25k FDT owned by Investor
+          TotalFDTSupply          = 912.5k - 56.25k = 856.25k
+          LiquidityLockerDeposits = 900k - 100k     = 800k
+
+  *This is the same amount new investor has put in, so new investor is not exposed to prior losses.
+
+
+A #6
+A current investor can also deposit() over different time frames and all gains/losses are accurately captured
+for each individual deposit(). 
