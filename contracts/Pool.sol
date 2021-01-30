@@ -4,7 +4,7 @@ pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "./math/CalcBPool.sol";
+import "./library/CalcBPoolLib.sol";
 import "./interfaces/ILoan.sol";
 import "./interfaces/IBPool.sol";
 import "./interfaces/IGlobals.sol";
@@ -168,11 +168,11 @@ contract Pool is FDT {
         (
             uint256 poolAmountInRequired, 
             uint256 poolAmountPresent
-        ) = CalcBPool.getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
+        ) = CalcBPoolLib.getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
 
         return (
             swapOutAmountRequired,
-            CalcBPool.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
+            CalcBPoolLib.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
             poolAmountPresent >= poolAmountInRequired,
             poolAmountInRequired,
             poolAmountPresent
@@ -196,7 +196,7 @@ contract Pool is FDT {
         address stakeLocker,
         uint256 pairAmountRequired
     ) external view returns (uint256, uint256) {
-        return CalcBPool.getPoolSharesRequired(bpool, pair, staker, stakeLocker, pairAmountRequired);
+        return CalcBPoolLib.getPoolSharesRequired(bpool, pair, staker, stakeLocker, pairAmountRequired);
     }
 
     // Note: Tether is unusable as a LiquidityAsset!

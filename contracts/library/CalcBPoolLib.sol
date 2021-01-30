@@ -6,7 +6,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IGlobals.sol";
 
-library CalcBPool {
+library CalcBPoolLib {
 
     using SafeMath for uint256;
 
