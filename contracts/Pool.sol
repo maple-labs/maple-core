@@ -4,7 +4,7 @@ pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "./math/CalcBPool.sol";
+import "./library/CalcBPool.sol";
 import "./interfaces/ILoan.sol";
 import "./interfaces/IBPool.sol";
 import "./interfaces/IGlobals.sol";
@@ -19,9 +19,12 @@ import "./interfaces/IDebtLocker.sol";
 import "./token/FDT.sol";
 
 /// @title Pool is the core contract for liquidity pools.
-contract Pool is FDT, CalcBPool {
+contract Pool is FDT {
 
-    using SafeMath for uint256;
+    using SafeMath  for uint256;
+    using CalcBPool for address;
+
+    uint256 constant WAD = 10 ** 18;
 
     IERC20  public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
 
@@ -42,6 +45,8 @@ contract Pool is FDT, CalcBPool {
     uint256 public penaltyDelay;      // Time until total interest is available after a deposit, in seconds.
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the pool.
     uint256 public lockupPeriod;      // Unix timestamp until the withdrawal is not allowed.
+  
+    uint256 public liquidationDelta; // FDT accounting for adjusting the FDT burn or mint amount in deposit() and withdraw()
 
     enum State { Initialized, Finalized, Deactivated }
     State public poolState;  // The current state of this pool.
@@ -50,9 +55,18 @@ contract Pool is FDT, CalcBPool {
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
 
     event LoanFunded(address loan, address debtLocker, uint256 amountFunded);
+
     event BalanceUpdated(address who, address token, uint256 balance);
-    event Claim(address loan, uint interest, uint principal, uint fee);
-    event DefaultSuffered(address loan, uint defaultSuffered, uint bptsBurned, uint bptsReturned);
+
+    event Claim(address loan, uint256 interest, uint256 principal, uint256 fee);
+
+    event DefaultSuffered(
+        address loan, 
+        uint256 defaultSuffered, 
+        uint256 bptsBurned, 
+        uint256 bptsReturned,
+        uint256 liquidityAssetRecoveredFromBurn
+    );
 
     /**
         @dev Constructor for a Pool.
@@ -157,31 +171,35 @@ contract Pool is FDT, CalcBPool {
         (
             uint256 poolAmountInRequired, 
             uint256 poolAmountPresent
-        ) = this.getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
+        ) = balancerPool.getPoolSharesRequired(swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
 
         return (
             swapOutAmountRequired,
-            this.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
+            balancerPool.getSwapOutValue(swapOutAsset, poolDelegate, stakeLocker),
             poolAmountPresent >= poolAmountInRequired,
             poolAmountInRequired,
             poolAmountPresent
         );
     }
 
-    // Note: Tether is unusable as a LiquidityAsset!
     /**
-        @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
-        @param amt The amount of LiquidityAsset to deposit, in wei.
+        @dev Calculates BPTs required if burning BPTs for pair, given supplied tokenAmountOutRequired.
+        @param  bpool              Balancer pool that issues the BPTs.
+        @param  pair               Swap out asset (e.g. USDC) to receive when burning BPTs.
+        @param  staker             Address that deposited BPTs to stakeLocker.
+        @param  stakeLocker        Escrows BPTs deposited by staker.
+        @param  pairAmountRequired Amount of pair tokens out required.
+        @return [0] = poolAmountIn required
+                [1] = poolAmountIn currently staked.
     */
-    function deposit(uint256 amt) external {
-        _isValidState(State.Finalized);
-        require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
-        require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
-        uint256 wad = _toWad(amt);
-
-        updateDepositDate(wad, msg.sender);
-        _mint(msg.sender, wad);
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+    function getPoolSharesRequired(
+        address bpool,
+        address pair,
+        address staker,
+        address stakeLocker,
+        uint256 pairAmountRequired
+    ) external view returns (uint256, uint256) {
+        return bpool.getPoolSharesRequired(pair, staker, stakeLocker, pairAmountRequired);
     }
 
     /**
@@ -203,11 +221,26 @@ contract Pool is FDT, CalcBPool {
     }
 
     /**
+        @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
+        @param amt The amount of LiquidityAsset to deposit, in wei.
+    */
+    function deposit(uint256 amt) external {
+        _isValidState(State.Finalized);
+        require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
+        require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
+        uint256 wad = _toWad(amt);
+
+        updateDepositDate(wad, msg.sender);
+        _mint(msg.sender, wad);
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+    }
+
+    /**
         @dev Liquidity providers can withdraw LiqudityAsset from the LiquidityLocker, burning FDTs.
         @param amt The amount of LiquidityAsset to withdraw.
     */
     function withdraw(uint256 amt) external {
-        uint256 wad    = _toWad(amt);
+        uint256 wad = _toWad(amt);
         uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
@@ -219,7 +252,7 @@ contract Pool is FDT, CalcBPool {
         uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
         uint256 due               = amt.sub(totPenalty);                                                 // Funds due after the penalty deduction from the `amt` that is asked for withdraw.
-        
+
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
         withdrawFunds();            // Transfer full entitled interest.
 
@@ -229,7 +262,7 @@ contract Pool is FDT, CalcBPool {
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
         updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
 
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+        _emitBalanceUpdatedEvent();
     }
 
     /**
@@ -262,39 +295,59 @@ contract Pool is FDT, CalcBPool {
         ILiquidityLocker(liquidityLocker).fundLoan(loan, _debtLocker, amt);
         
         emit LoanFunded(loan, _debtLocker, amt);
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+        _emitBalanceUpdatedEvent();
     }
+    
+    event DebugS(uint, uint);
     
     // Helper function for claim() if a default has occurred.
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
         // Check liquidityAsset swapOut value of StakeLocker coverage.
-        uint256 availableSwapOut = this.getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
+        uint256 availableSwapOut = stakeAsset.getSwapOutValueLocker(address(liquidityAsset), stakeLocker);
 
+        // Pull BPTs from StakeLocker.
         require(
             IStakeLocker(stakeLocker).pull(address(this), IBPool(stakeAsset).balanceOf(stakeLocker)),
             "Pool:STAKE_PULL"
         );
 
+        // Burn enough BPTs for liquidityAsset to cover defaultSuffered.
         uint256 bptsBurned  = IBPool(stakeAsset).exitswapExternAmountOut(
                                     address(liquidityAsset), 
                                     availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
                                     2**256-1
-                              );
+                            );
 
+        // Return remaining BPTs to stakeLocker.
         uint256 bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
         IStakeLocker(stakeAsset).transfer(stakeLocker, bptsReturned);
 
-        // Update accounting with liquidityAsset received for burning BPTs.
-        // We get back 100k USDC
-        // Reduce princiaplOut by amount of defaultSuffered
-        // Transfer USDC to liquidityLocker and updateFundsReceived()
+        uint256 liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this));
 
-        principalOut -= defaultSuffered;
-        interestSum += liquidityAsset.balanceOf(address(this));
-        liquidityAsset.transfer(liquidityLocker, liquidityAsset.balanceOf(address(this)));
+        emit DebugS(defaultSuffered, liquidityAssetRecoveredFromBurn);
 
-        emit DefaultSuffered(loan, defaultSuffered, bptsBurned, bptsReturned);
+        // "SAD PATH" : Handle shortfall in StakeLocker, liquidity providers suffer a loss in withdraw() power.
+        if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
+            liquidationDelta = liquidationDelta.add(
+                _toWad(defaultSuffered.sub(liquidityAssetRecoveredFromBurn))
+            );
+        }
+        // "HAPPY PATH" : Handle normal liquidation with enough liquidityAsset recovered from BPTs burned.
+        else {
+            // TODO: Do we need to do anything here?
+        }
+        
+        // principalOut decreases by defaultSuffered.
+        principalOut = principalOut.sub(defaultSuffered);
+
+        // interestSum increases by liquidityAsset received from BPT burn.
+        interestSum = interestSum.add(liquidityAssetRecoveredFromBurn);
+
+        // Transfer USDC to liquidityLocker.
+        liquidityAsset.transfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
+
+        emit DefaultSuffered(loan, defaultSuffered, bptsBurned, bptsReturned, liquidityAssetRecoveredFromBurn);
     }
 
     /**
@@ -332,23 +385,25 @@ contract Pool is FDT, CalcBPool {
         // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
         // Ensures that internal accounting is exactly reflective of balance change
         _transferLiquidityAsset(liquidityLocker, principalClaim.add(interestClaim)); 
-
-        // Update funds received for FDT StakeLocker tokens.
-        IStakeLocker(stakeLocker).updateFundsReceived();
-        
-        // Update the `pointsPerShare` & funds received for FDT Pool tokens.
-        updateFundsReceived();
-
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
-        emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
-
-        emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
         
         // Handle default.
         // TODO: Consider order of operations, where this function should happen in claim() ... is there a better place?
         if (claimInfo[5] > 0) {
             _handleDefault(loan, claimInfo[5]);
         }
+
+        // Update funds received for FDT StakeLocker tokens.
+        IStakeLocker(stakeLocker).updateFundsReceived();
+        
+        // Update the `pointsPerShare` & funds received for FDT Pool tokens.
+        // TODO: Explain how this actually does updateFundsReceived() on > 0 liquidityAsset amount
+        //       when balance is always 0 because we just transferred liquidityAsset out 3x above ??
+        updateFundsReceived();
+
+        _emitBalanceUpdatedEvent();
+        emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
+
+        emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
 
         return claimInfo;
     }
@@ -424,7 +479,8 @@ contract Pool is FDT, CalcBPool {
         @dev Allowing delegate/pool manager to set the lockup period.
         @param _newLockupPeriod New lockup period used to restrict the withdrawals.
      */
-    function setLockupPeriod(uint256 _newLockupPeriod) external isDelegate {
+    function setLockupPeriod(uint256 _newLockupPeriod) external {
+        _isValidDelegate();
         lockupPeriod = _newLockupPeriod;
     }
 
@@ -463,6 +519,10 @@ contract Pool is FDT, CalcBPool {
 
     function _globals(address poolFactory) internal view returns (IGlobals) {
         return IGlobals(ILoanFactory(poolFactory).globals());
+    }
+
+    function _emitBalanceUpdatedEvent() internal {
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
 
     /**

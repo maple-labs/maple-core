@@ -65,7 +65,7 @@ contract DebtLocker {
         excessReturned  = loan.excessReturned();
 
         // TODO: Improve this
-        amountRecovered = loan.amountRecovered();
+        amountRecovered = loan.amountRecovered().mul(loan.balanceOf(address(this))).div(loan.totalSupply());
 
         // Update defaultSuffered value based on ratio of total supply of DebtTokens owned by this DebtLocker.
         defaultSuffered = loan.defaultSuffered().mul(loan.balanceOf(address(this))).div(loan.totalSupply());
