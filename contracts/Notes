@@ -84,13 +84,108 @@ amountFromBurn = 500
 pool_usdc_bal = pool_usdc_bal + amountFromBurn
               = 0 + 500
               = 500 
-principalOut  = principalOut - amountFromBurn
+burnShortfall = defaultSuffered - amountFromBurn
               = 750 - 500
               = 250
+principalOut  = principalOut - defaultSuffered
+              = 750 - 750
+              = 0
 pool1_llBal   = pool1_llBal + amountFromBurn
               = 250 + 500
               = 750
 interestSum doesn't change
+
+---FDT burnShortfall Accounting---
+pointsPerShare = pointsPerShare + newBurnShortfall / fdtSupply
+               = 0 + 250 / 1000
+               = 0.25
+
+Alice withdraws 300
+Burn 300 FDTs
+"withdrawableFunds" (actually distributed losses) = balanceOf * pointsPerShare - withdrawnFunds
+                                                  = 1000 * 0.25 - 0
+                                                  = 250
+pointsCorrection = pointsCorrection + pointsPerShare * amtBurned
+                 = 0 + 0.25 * 300
+                 = 75
+ 
+
+Transfer 300 - losses = 300 - 250 = 50
+withdrawnFunds = 250
+
+Alice withdraws 700
+Burn 700 FDTs
+"withdrawableFunds" (actually distributed losses) = balanceOf * pointsPerShare - withdrawnFunds + pointsCorrection
+                                                  = 700 * 0.25 - 250 + 75
+                                                  = 0
+
+Transfer 700 - losses = 700 - 0 = 700
+
+Total burned = 1000
+Total withdrawn = 750
+
+
+
+
+
+---FDT burnShortfall Accounting PLUS 100 INTEREST---
+--Interest accounting--
+pointsPerShare = pointsPerShare + newBurnShortfall / fdtSupply
+               = 0 + 100 / 1000
+               = 0.1
+
+--Loss accounting--
+pointsPerShare = pointsPerShare + newBurnShortfall / fdtSupply
+               = 0 + 250 / 1000
+               = 0.25
+
+Alice withdraws 300
+Burn 300 FDTs
+--Interest accounting--
+"withdrawableFunds" = balanceOf * pointsPerShare - withdrawnFunds
+                    = 1000 * 0.1 - 0
+                    = 100
+pointsCorrection = pointsCorrection + pointsPerShare * amtBurned
+                 = 0 + 0.1 * 300
+                 = 30
+
+--Loss accounting--
+"withdrawableFunds" (actually distributed losses) = balanceOf * pointsPerShare - withdrawnFunds
+                                                  = 1000 * 0.25 - 0
+                                                  = 250
+pointsCorrection = pointsCorrection + pointsPerShare * amtBurned
+                 = 0 + 0.25 * 300
+                 = 75
+ 
+
+Transfer 300 + interest - losses = 300 + 100 - 250 = 150
+
+--Interest Accounting--
+withdrawnFunds = 100
+
+--Loss accounting--
+withdrawnFunds = 250
+
+Alice withdraws 700
+Burn 700 FDTs
+--Interest accounting--
+"withdrawableFunds" = balanceOf * pointsPerShare - withdrawnFunds + pointsCorrection
+                    = 700 * 0.1 - 100 + 30
+                    = 0
+
+--Loss accounting--
+"withdrawableFunds" (actually distributed losses) = balanceOf * pointsPerShare - withdrawnFunds + pointsCorrection
+                                                  = 700 * 0.25 - 250 + 75
+                                                  = 0
+
+Transfer 700 + interest - losses = 700 + 0 - 0 = 700
+
+Total burned = 1000
+Total withdrawn = 850 (100 interest)
+
+
+
+
 
 
 
