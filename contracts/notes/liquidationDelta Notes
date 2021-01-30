@@ -86,7 +86,10 @@ New investors have had their minting power increased by 10% if they deposit(), e
           TotalFDTSupply          = 912.5k - 56.25k = 856.25k
           LiquidityLockerDeposits = 900k   - 50k    = 850k
 
-  #5e => In the event a different, initial Investor now wants to burn 100k FDT:
+          *This is the same amount new investor has put in, so new investor is not exposed to prior losses.
+
+  #5e => ERROR !! MATH FAILS HERE !!
+  #5e => In the event one of the intial Investors now wants to burn 100k FDT:
           withdrawalPower = FDTs Owned - FDTs Owned * ("liquidationDelta" / "LiquidityLockerDeposits")
           withdrawalPower = 100k - 100k * (100k / 850k)
           withdrawalPower = 100k - 6.25k
@@ -96,8 +99,6 @@ New investors have had their minting power increased by 10% if they deposit(), e
           Pool burns 56.25k FDT owned by Investor
           TotalFDTSupply          = 912.5k - 56.25k = 856.25k
           LiquidityLockerDeposits = 900k - 100k     = 800k
-
-  *This is the same amount new investor has put in, so new investor is not exposed to prior losses.
 
 
 A #6

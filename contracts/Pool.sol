@@ -4,7 +4,7 @@ pragma solidity >=0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "./math/CalcBPool.sol";
+import "./library/CalcBPool.sol";
 import "./interfaces/ILoan.sol";
 import "./interfaces/IBPool.sol";
 import "./interfaces/IGlobals.sol";
@@ -19,9 +19,12 @@ import "./interfaces/IDebtLocker.sol";
 import "./token/FDT.sol";
 
 /// @title Pool is the core contract for liquidity pools.
-contract Pool is FDT, CalcBPool {
+contract Pool is FDT {
 
-    using SafeMath for uint256;
+    using SafeMath  for uint256;
+    using CalcBPool for address;
+
+    uint256 constant WAD = 10 ** 18;
 
     IERC20  public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
 
@@ -168,15 +171,51 @@ contract Pool is FDT, CalcBPool {
         (
             uint256 poolAmountInRequired, 
             uint256 poolAmountPresent
-        ) = this.getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
+        ) = balancerPool.getPoolSharesRequired(swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
 
         return (
             swapOutAmountRequired,
-            this.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
+            balancerPool.getSwapOutValue(swapOutAsset, poolDelegate, stakeLocker),
             poolAmountPresent >= poolAmountInRequired,
             poolAmountInRequired,
             poolAmountPresent
         );
+    }
+
+    /**
+        @dev Calculates BPTs required if burning BPTs for pair, given supplied tokenAmountOutRequired.
+        @param  bpool              Balancer pool that issues the BPTs.
+        @param  pair               Swap out asset (e.g. USDC) to receive when burning BPTs.
+        @param  staker             Address that deposited BPTs to stakeLocker.
+        @param  stakeLocker        Escrows BPTs deposited by staker.
+        @param  pairAmountRequired Amount of pair tokens out required.
+        @return [0] = poolAmountIn required
+                [1] = poolAmountIn currently staked.
+    */
+    function getPoolSharesRequired(
+        address bpool,
+        address pair,
+        address staker,
+        address stakeLocker,
+        uint256 pairAmountRequired
+    ) external view returns (uint256, uint256) {
+        return bpool.getPoolSharesRequired(pair, staker, stakeLocker, pairAmountRequired);
+    }
+
+    // Note: Tether is unusable as a LiquidityAsset!
+    /**
+        @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
+        @param amt The amount of LiquidityAsset to deposit, in wei.
+    */
+    function deposit(uint256 amt) external {
+        _isValidState(State.Finalized);
+        require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
+        require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
+        uint256 wad = _toWad(amt);
+
+        updateDepositDate(wad, msg.sender);
+        _mint(msg.sender, wad);
+        _emitBalanceUpdatedEvent();
     }
 
     /**
@@ -239,7 +278,7 @@ contract Pool is FDT, CalcBPool {
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
         updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
 
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+        _emitBalanceUpdatedEvent();
     }
 
     /**
@@ -272,7 +311,7 @@ contract Pool is FDT, CalcBPool {
         ILiquidityLocker(liquidityLocker).fundLoan(loan, _debtLocker, amt);
         
         emit LoanFunded(loan, _debtLocker, amt);
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+        _emitBalanceUpdatedEvent();
     }
     
     event DebugS(uint, uint);
@@ -281,7 +320,7 @@ contract Pool is FDT, CalcBPool {
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
         // Check liquidityAsset swapOut value of StakeLocker coverage.
-        uint256 availableSwapOut = this.getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
+        uint256 availableSwapOut = stakeAsset.getSwapOutValueLocker(address(liquidityAsset), stakeLocker);
 
         // Pull BPTs from StakeLocker.
         require(
@@ -294,7 +333,7 @@ contract Pool is FDT, CalcBPool {
                                     address(liquidityAsset), 
                                     availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
                                     2**256-1
-                              );
+                            );
 
         // Return remaining BPTs to stakeLocker.
         uint256 bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
@@ -377,7 +416,7 @@ contract Pool is FDT, CalcBPool {
         //       when balance is always 0 because we just transferred liquidityAsset out 3x above ??
         updateFundsReceived();
 
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+        _emitBalanceUpdatedEvent();
         emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
         emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
@@ -496,6 +535,10 @@ contract Pool is FDT, CalcBPool {
 
     function _globals(address poolFactory) internal view returns (IGlobals) {
         return IGlobals(ILoanFactory(poolFactory).globals());
+    }
+
+    function _emitBalanceUpdatedEvent() internal {
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
 
     /**
