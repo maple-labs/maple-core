@@ -202,22 +202,6 @@ contract Pool is FDT {
         return bpool.getPoolSharesRequired(pair, staker, stakeLocker, pairAmountRequired);
     }
 
-    // Note: Tether is unusable as a LiquidityAsset!
-    /**
-        @dev Liquidity providers can deposit LiqudityAsset into the LiquidityLocker, minting FDTs.
-        @param amt The amount of LiquidityAsset to deposit, in wei.
-    */
-    function deposit(uint256 amt) external {
-        _isValidState(State.Finalized);
-        require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
-        require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
-        uint256 wad = _toWad(amt);
-
-        updateDepositDate(wad, msg.sender);
-        _mint(msg.sender, wad);
-        _emitBalanceUpdatedEvent();
-    }
-
     /**
         @dev Check whether the given `depositAmt` is an acceptable amount by the pool?.
         @param depositAmt Amount of tokens (i.e loanAsset type) is user willing to deposit.
