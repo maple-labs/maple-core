@@ -265,33 +265,48 @@ contract Pool is FDT, CalcBPool {
         emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
     }
     
+    event DebugS(uint, uint);
+    
     // Helper function for claim() if a default has occurred.
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
         // Check liquidityAsset swapOut value of StakeLocker coverage.
         uint256 availableSwapOut = this.getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
 
+        // Pull BPTs from StakeLocker.
         require(
             IStakeLocker(stakeLocker).pull(address(this), IBPool(stakeAsset).balanceOf(stakeLocker)),
             "Pool:STAKE_PULL"
         );
 
+        // Burn enough BPTs for liquidityAsset to cover defaultSuffered.
         uint256 bptsBurned  = IBPool(stakeAsset).exitswapExternAmountOut(
                                     address(liquidityAsset), 
                                     availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
                                     2**256-1
                               );
 
+        // Return remaining BPTs to stakeLocker.
         uint256 bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
         IStakeLocker(stakeAsset).transfer(stakeLocker, bptsReturned);
 
-        // Update accounting with liquidityAsset received for burning BPTs.
-        // We get back 100k USDC
-        // Reduce princiaplOut by amount of defaultSuffered
-        // Transfer USDC to liquidityLocker and updateFundsReceived()
+        uint256 liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this));
 
-        principalOut -= defaultSuffered;
-        interestSum += liquidityAsset.balanceOf(address(this));
+        emit DebugS(defaultSuffered, liquidityAssetRecoveredFromBurn);
+
+        // "SAD PATH" : Handle shortfall in StakeLocker, liquidity providers suffer a loss in withdraw() power.
+        if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
+
+        }
+        // "HAPPY PATH" : Handle normal liquidation with enough liquidityAsset recovered from BPTs burned.
+        else {
+            // principalOut decreases by defaultSuffered.
+            // interestSum  increases by liquidityAsset received from burn.
+            principalOut -= defaultSuffered;
+            interestSum += liquidityAsset.balanceOf(address(this));
+        }
+        
+        // Transfer USDC to liquidityLocker.
         liquidityAsset.transfer(liquidityLocker, liquidityAsset.balanceOf(address(this)));
 
         emit DefaultSuffered(loan, defaultSuffered, bptsBurned, bptsReturned);
@@ -332,23 +347,25 @@ contract Pool is FDT, CalcBPool {
         // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
         // Ensures that internal accounting is exactly reflective of balance change
         _transferLiquidityAsset(liquidityLocker, principalClaim.add(interestClaim)); 
-
-        // Update funds received for FDT StakeLocker tokens.
-        IStakeLocker(stakeLocker).updateFundsReceived();
-        
-        // Update the `pointsPerShare` & funds received for FDT Pool tokens.
-        updateFundsReceived();
-
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
-        emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
-
-        emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
         
         // Handle default.
         // TODO: Consider order of operations, where this function should happen in claim() ... is there a better place?
         if (claimInfo[5] > 0) {
             _handleDefault(loan, claimInfo[5]);
         }
+
+        // Update funds received for FDT StakeLocker tokens.
+        IStakeLocker(stakeLocker).updateFundsReceived();
+        
+        // Update the `pointsPerShare` & funds received for FDT Pool tokens.
+        // TODO: Explain how this actually does updateFundsReceived() on > 0 liquidityAsset amount
+        //       when balance is always 0 because we just transferred liquidityAsset out 3x above ??
+        updateFundsReceived();
+
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+        emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
+
+        emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
 
         return claimInfo;
     }
