@@ -21,7 +21,8 @@ contract StakeLocker is FDT {
     address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
     address public immutable owner;           // The parent liquidity pool.
 
-    mapping(address => uint256) public stakeDate;  // Map address to effective deposit date value
+    mapping(address => uint256) public stakeDate;    // Map address to effective deposit date value
+    mapping(address => bool)    public whitelisted;  // Map address to effective deposit date value
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
@@ -66,6 +67,22 @@ contract StakeLocker is FDT {
         _;
     }
 
+    modifier isWhitelisted() {
+        require(
+            whitelisted[msg.sender] || msg.sender == IPool(owner).poolDelegate(), 
+            "StakeLocker:MSG_SENDER_NOT_WHITELISTED");
+        _;
+    }
+
+    /**
+        @dev Update user status on the whitelist. Only Pool owner can call this.
+        @param user   The address to set status for.
+        @param status The status of user on whitelist.
+    */
+    function setWhitelist(address user, bool status) isPool public {
+        whitelisted[user] = status;
+    }
+
     /**
         @dev Transfers amt of stakeAsset to dst.
         @param  dst Desintation to transfer stakeAsset to.
@@ -79,7 +96,7 @@ contract StakeLocker is FDT {
         @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
         @param amt Amount of stakeAsset (BPTs) to deposit.
     */
-    function stake(uint256 amt) external {
+    function stake(uint256 amt) external isWhitelisted {
         require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
 
         _updateStakeDate(msg.sender, amt);
@@ -152,6 +169,10 @@ contract StakeLocker is FDT {
     //      can improve this so the updated age of tokens reflects their age in the senders wallets
     //      right now it simply is equivalent to the age update if the receiver was making a new stake.
     function _transfer(address from, address to, uint256 amt) internal override canUnstake {
+        require(
+            whitelisted[to] || msg.sender == IPool(owner).poolDelegate(), 
+            "StakeLocker:RECIPIENT_NOT_WHITELISTED"
+        );
         super._transfer(from, to, amt);
         _updateStakeDate(to, amt);
     }

@@ -70,6 +70,10 @@ contract PoolDelegate {
         IStakeLocker(stakeLocker).stake(amt);
     }
 
+    function setWhitelistStakeLocker(address pool, address user, bool status) external {
+        IPool(pool).setWhitelistStakeLocker(user, status);
+    }
+
     function finalize(address pool) external {
         IPool(pool).finalize();
     }
@@ -101,6 +105,15 @@ contract Staker {
 
     function approve(address token, address who, uint256 amt) external {
         IERC20(token).approve(who, amt);
+    }
+
+    function try_transfer(address token, address dst, uint256 amt) external returns(bool ok) {
+        string memory sig = "transfer(address, uint256)";
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, dst, amt));
+    }
+
+    function transfer(address token, address dst, uint256 amt) external {
+        IERC20(token).transfer(dst, amt);
     }
 
     function stake(address stakeLocker, uint256 amt) external {
@@ -305,6 +318,11 @@ contract StakeLockerTest is TestUtil {
         assertTrue(!che.try_stake(address(stakeLocker),   25 * WAD));  // Hasn't approved BPTs
         che.approve(address(bPool), address(stakeLocker), 25 * WAD);
 
+        assertTrue(!che.try_stake(address(stakeLocker),   25 * WAD));  // Isn't yet whitelisted
+        che.approve(address(bPool), address(stakeLocker), 25 * WAD);
+
+        sid.setWhitelistStakeLocker(address(pool), address(che), true);
+
         uint256 slBal_before = bPool.balanceOf(address(stakeLocker));
 
         assertEq(bPool.balanceOf(address(che)),         25 * WAD);
@@ -320,6 +338,23 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.totalSupply(),              75 * WAD);
         assertEq(stakeLocker.balanceOf(address(che)),    25 * WAD);
         assertEq(stakeLocker.stakeDate(address(che)),   startDate);
+    }
+
+    function test_stake_transfer_restrictions() public {
+
+        sid.setWhitelistStakeLocker(address(pool), address(che), true); // Add Staker to whitelist
+
+        che.approve(address(bPool), address(stakeLocker), 25 * WAD); // Stake tokens
+        assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));
+
+        assertTrue(!che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // No transfer to non-whitelisted user
+
+        sid.setWhitelistStakeLocker(address(pool), address(ali), true); // Add ali to whitelist
+
+        assertTrue(!che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // Yes transfer to whitelisted user
+
+        assertTrue(!che.try_transfer(address(stakeLocker), address(sid), 1 * WAD)); // Yes transfer to pool delegate
+
     }
 
     function setUpLoanAndRepay() public {
