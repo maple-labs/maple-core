@@ -485,6 +485,9 @@ contract LoanTest is TestUtil {
         assertEq(flBalance_post, 0);
         assertEq(loanState_post, 4);
 
+        assertEq(flBalance_pre, 5000 * USD);
+        assertEq(loanBalance_post, 5000 * USD);
+
         assertEq(loan.excessReturned(), loanBalance_post);
 
         // Can't unwind() loan after it has already been called.

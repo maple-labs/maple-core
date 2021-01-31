@@ -171,7 +171,7 @@ contract Borrower {
 
 contract Treasury { }
 
-contract PoolLiquidationTest is TestUtil {
+contract PoolExcessTest is TestUtil {
 
     using SafeMath for uint256;
 
@@ -351,6 +351,8 @@ contract PoolLiquidationTest is TestUtil {
 
         uint256 principalOut_a_pre = pool_a.principalOut();
         uint256 principalOut_b_pre = pool_b.principalOut();
+        uint256 llBalance_a_pre = IERC20(pool_a.liquidityAsset()).balanceOf(pool_a.liquidityLocker());
+        uint256 llBalance_b_pre = IERC20(pool_b.liquidityAsset()).balanceOf(pool_b.liquidityLocker());
 
         // Claim unwind() excessReturned
         uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
@@ -358,14 +360,21 @@ contract PoolLiquidationTest is TestUtil {
 
         uint256 principalOut_a_post = pool_a.principalOut();
         uint256 principalOut_b_post = pool_b.principalOut();
+        uint256 llBalance_a_post = IERC20(pool_a.liquidityAsset()).balanceOf(pool_a.liquidityLocker());
+        uint256 llBalance_b_post = IERC20(pool_b.liquidityAsset()).balanceOf(pool_b.liquidityLocker());
 
         assertEq(principalOut_a_pre - principalOut_a_post, vals_a[4]);   
         assertEq(principalOut_b_pre - principalOut_b_post, vals_b[4]);
+        assertEq(llBalance_a_post - llBalance_a_pre, vals_a[4]);   
+        assertEq(llBalance_b_post - llBalance_b_pre, vals_b[4]);
 
         // pool_a invested 1mm USD
         // pool_b invested 3mm USD
-        assertEq(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD);   
-        assertEq(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD);
+        // assertEq(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD);   
+        // assertEq(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD);
+
+        withinPrecision(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD, 1);
+        withinPrecision(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD, 1);
 
 
     }
