@@ -351,9 +351,9 @@ contract StakeLockerTest is TestUtil {
 
         sid.setWhitelistStakeLocker(address(pool), address(ali), true); // Add ali to whitelist
 
-        assertTrue(!che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // Yes transfer to whitelisted user
+        assertTrue(che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // Yes transfer to whitelisted user
 
-        assertTrue(!che.try_transfer(address(stakeLocker), address(sid), 1 * WAD)); // Yes transfer to pool delegate
+        assertTrue(che.try_transfer(address(stakeLocker), address(sid), 1 * WAD)); // Yes transfer to pool delegate
 
     }
 

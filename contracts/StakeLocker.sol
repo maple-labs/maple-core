@@ -58,20 +58,20 @@ contract StakeLocker is FDT {
         _;
     }
 
-    function _globals() internal view returns(IGlobals) {
-        return IGlobals(IPoolFactory(IPool(owner).superFactory()).globals());
-    }
-
     modifier isPool() {
         require(msg.sender == owner, "StakeLocker:MSG_SENDER_NOT_POOL");
         _;
     }
 
-    modifier isWhitelisted() {
+    function _isWhitelisted() internal {
         require(
             whitelisted[msg.sender] || msg.sender == IPool(owner).poolDelegate(), 
-            "StakeLocker:MSG_SENDER_NOT_WHITELISTED");
-        _;
+            "StakeLocker:MSG_SENDER_NOT_WHITELISTED"
+        );
+    }
+
+    function _globals() internal view returns(IGlobals) {
+        return IGlobals(IPoolFactory(IPool(owner).superFactory()).globals());
     }
 
     /**
@@ -96,7 +96,8 @@ contract StakeLocker is FDT {
         @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
         @param amt Amount of stakeAsset (BPTs) to deposit.
     */
-    function stake(uint256 amt) external isWhitelisted {
+    function stake(uint256 amt) external {
+        _isWhitelisted();
         require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
 
         _updateStakeDate(msg.sender, amt);
@@ -164,16 +165,20 @@ contract StakeLocker is FDT {
         return out;
     }
 
+    event DebugS(address, address, uint);
+
     // TODO: Make this handle transfer of time lock more properly, parameterize _updateStakeDate
     //      to these ends to save code.
     //      can improve this so the updated age of tokens reflects their age in the senders wallets
     //      right now it simply is equivalent to the age update if the receiver was making a new stake.
-    function _transfer(address from, address to, uint256 amt) internal override canUnstake {
-        require(
-            whitelisted[to] || msg.sender == IPool(owner).poolDelegate(), 
-            "StakeLocker:RECIPIENT_NOT_WHITELISTED"
-        );
+    function _transfer(address from, address to, uint256 amt) internal override /*canUnstake*/ {
+        // emit DebugS(from, to, amt);
+        // require(
+        //     whitelisted[to] || msg.sender == IPool(owner).poolDelegate(), 
+        //     "StakeLocker:RECIPIENT_NOT_WHITELISTED"
+        // );
+        // emit DebugS(from, to, amt);
         super._transfer(from, to, amt);
-        _updateStakeDate(to, amt);
+        // _updateStakeDate(to, amt);
     }
 }
