@@ -242,19 +242,21 @@ contract Pool is FDT {
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
 
-        uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
-        uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
-        uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
-        uint256 due               = amt.sub(totPenalty);                                                 // Funds due after the penalty deduction from the `amt` that is asked for withdraw.
+        uint256 interstEarned = withdrawableFundsOf(msg.sender);       // Calculate interest earned
+        uint256 firstPenalty  = principalPenalty.mul(amt).div(10000);  // Calculate flat principal penalty
+        uint256 totalPenalty  = calcWithdrawPenalty(                   // Calculate total penalty
+                                    allocatedInterest.add(firstPenalty), 
+                                    msg.sender
+                                );
 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
         withdrawFunds();            // Transfer full entitled interest.
 
-        // Transfer the principal amount - totPenalty
-        require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");
+        // Transfer the principal amount - totalPenalty
+        require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, amt.sub(totalPenalty)), "Pool::WITHDRAW_TRANSFER");
 
-        interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
-        updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
+        interestSum = interestSum.add(totalPenalty);  // Update the `interestSum` with the penalty amount. 
+        updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totalPenalty`.
 
         _emitBalanceUpdatedEvent();
     }
@@ -472,6 +474,27 @@ contract Pool is FDT {
     function setWhitelistStakeLocker(address user, bool status) external {
         _isValidDelegate();
         IStakeLocker(stakeLocker).setWhitelist(user, status);
+    }
+
+    /**
+        @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
+        @param user Address to check claimableFunds for
+        @return Amount of claimable funds (liquidityAsset) a user can pull from LiquidityLocker
+    */
+    function claimableFunds(address user) public view returns(uint256) {
+        if (depositDate[msg.sender].add(lockupPeriod) <= block.timestamp) {
+            return 0;
+        }
+        else {
+            uint256 userBalance    = balanceOf(msg.sender);
+            uint256 interestEarned = withdrawableFundsOf(msg.sender);               // Calculate interest earned
+            uint256 firstPenalty   = principalPenalty.mul(userBalance).div(10000);  // Calculate flat principal penalty
+            uint256 totalPenalty   = calcWithdrawPenalty(                           // Calculate total penalty
+                                        allocatedInterest.add(firstPenalty),
+                                        msg.sender
+                                    );
+            return userBalance.sub(totalPenalty);   // Return full amount minus any penalties.
+        }
     }
 
     /**
