@@ -238,7 +238,7 @@ contract Pool is FDT {
         @param amt The amount of LiquidityAsset to withdraw.
     */
     function withdraw(uint256 amt) external {
-        uint256 wad = _toWad(amt);
+        uint256 wad    = _toWad(amt);
         uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
@@ -306,11 +306,11 @@ contract Pool is FDT {
         );
 
         // Burn enough BPTs for liquidityAsset to cover defaultSuffered.
-        uint256 bptsBurned  = IBPool(stakeAsset).exitswapExternAmountOut(
-                                    address(liquidityAsset), 
-                                    availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
-                                    2**256-1
-                            );
+        uint256 bptsBurned = IBPool(stakeAsset).exitswapExternAmountOut(
+                                 address(liquidityAsset), 
+                                 availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
+                                 uint256(-1)
+                             );
 
         // Return remaining BPTs to stakeLocker.
         uint256 bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
@@ -379,8 +379,6 @@ contract Pool is FDT {
         IStakeLocker(stakeLocker).updateFundsReceived();
         
         // Update the `pointsPerShare` & funds received for FDT Pool tokens.
-        // TODO: Explain how this actually does updateFundsReceived() on > 0 liquidityAsset amount
-        //       when balance is always 0 because we just transferred liquidityAsset out 3x above ??
         updateFundsReceived();
 
         _emitBalanceUpdatedEvent();

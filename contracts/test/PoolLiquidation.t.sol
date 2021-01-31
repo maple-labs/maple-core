@@ -378,18 +378,20 @@ contract PoolLiquidationTest is TestUtil {
         address liquidityLocker_b = pool_b.liquidityLocker();
 
         // Pre-state liquidityLocker checks.
-        uint256 liquidityLocker_pre_a = IERC20(pool_a.liquidityAsset()).balanceOf(liquidityLocker_a);
-        uint256 liquidityLocker_pre_b = IERC20(pool_b.liquidityAsset()).balanceOf(liquidityLocker_b);
+        uint256 liquidityLocker_pre_a = IERC20(USDC).balanceOf(liquidityLocker_a);
+        uint256 liquidityLocker_pre_b = IERC20(USDC).balanceOf(liquidityLocker_b);
 
         uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
         uint256[7] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
 
         // Post-state liquidityLocker checks.
-        uint256 liquidityLocker_post_a = IERC20(pool_a.liquidityAsset()).balanceOf(liquidityLocker_a);
-        uint256 liquidityLocker_post_b = IERC20(pool_b.liquidityAsset()).balanceOf(liquidityLocker_b);
+        uint256 liquidityLocker_post_a = IERC20(USDC).balanceOf(liquidityLocker_a);
+        uint256 liquidityLocker_post_b = IERC20(USDC).balanceOf(liquidityLocker_b);
         
         assertEq(liquidityLocker_post_a - liquidityLocker_pre_a, vals_a[5]);
         assertEq(liquidityLocker_post_b - liquidityLocker_pre_b, vals_b[5]);
+        assertGt(vals_a[5], 0);
+        assertGt(vals_b[5], 0);
       
     }
 } 
