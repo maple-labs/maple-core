@@ -243,9 +243,6 @@ contract Pool is FDT {
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
 
-        // BPTs were Burned ... 100k USDC was deposited to LiqudiityLocker
-        // User 50% equity owner in Pool (LL) is now thinking about withdrawing ...
-
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
         uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
@@ -317,7 +314,7 @@ contract Pool is FDT {
 
         // Return remaining BPTs to stakeLocker.
         uint256 bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
-        IStakeLocker(stakeAsset).transfer(stakeLocker, bptsReturned);
+        IBPool(stakeAsset).transfer(stakeLocker, bptsReturned);
 
         uint256 liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this));
 
