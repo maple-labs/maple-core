@@ -20,6 +20,7 @@ contract DebtLocker {
     uint256 public feePaid;          // Loan total fees        paid at time of claim()
     uint256 public excessReturned;   // Loan total excess  returned at time of claim()
     uint256 public defaultSuffered;  // Loan total default suffered at time of claim()
+    uint256 public amountRecovered;  // Liquidity asset (a.k.a. loan asset) recovered from liquidation of Loan collateral
     
     modifier isOwner() {
         require(msg.sender == owner, "DebtLocker:MSG_SENDER_NOT_OWNER");
@@ -44,8 +45,9 @@ contract DebtLocker {
                 [3] = Fee Claimed
                 [4] = Excess Returned Claimed
                 [5] = Default Suffered
+                [6] = Amount Recovered (from Liquidation)
     */
-    function claim() external isOwner returns(uint256[6] memory) {
+    function claim() external isOwner returns(uint256[7] memory) {
 
         // Tick FDT via FDT.
         loan.updateFundsReceived();
@@ -55,13 +57,15 @@ contract DebtLocker {
         uint256 newPrincipal = loan.principalPaid() - principalPaid;
         uint256 newFee       = loan.feePaid() - feePaid;
         uint256 newExcess    = loan.excessReturned() - excessReturned;
-        uint256 newDefault   = loan.defaultSuffered() - defaultSuffered;
 
         // Update accounting.
         interestPaid    = loan.interestPaid();
         principalPaid   = loan.principalPaid();
         feePaid         = loan.feePaid();
         excessReturned  = loan.excessReturned();
+
+        // TODO: Improve this
+        amountRecovered = loan.amountRecovered().mul(loan.balanceOf(address(this))).div(loan.totalSupply());
 
         // Update defaultSuffered value based on ratio of total supply of DebtTokens owned by this DebtLocker.
         defaultSuffered = loan.defaultSuffered().mul(loan.balanceOf(address(this))).div(loan.totalSupply());
@@ -83,7 +87,7 @@ contract DebtLocker {
 
         require(loanAsset.transfer(owner, claimBal), "DebtLocker:CLAIM_TRANSFER");
 
-        return([claimBal, interest, principal, fee, excess, defaultSuffered]);
+        return([claimBal, interest, principal, fee, excess, defaultSuffered, amountRecovered]);
     }
 
 }

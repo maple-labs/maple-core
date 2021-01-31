@@ -40,7 +40,7 @@ contract PoolFactory {
         @param  newGlobals Address of new maple globals contract
     */
     function setGlobals(address newGlobals) external {
-        require(msg.sender == globals.governor(), "Loan:MSG_SENDER_NOT_GOVERNOR");
+        require(msg.sender == globals.governor(), "Loan:INVALID_GOVERNOR");
         globals = IGlobals(newGlobals);
     }
 
@@ -69,7 +69,7 @@ contract PoolFactory {
             // TODO: Do we need to validate isValidPoolFactory here? Its not being used anywhere currently
             require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");
             require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PoolFactory:INVALID_SL_FACTORY");
-            require(_globals.isValidPoolDelegate(msg.sender),                         "PoolFactory:MSG_SENDER_NOT_WHITELISTED");
+            require(_globals.isValidPoolDelegate(msg.sender),                         "PoolFactory:INVALID_DELEGATE");
             require(IBFactory(_globals.BFactory()).isBPool(stakeAsset),               "PoolFactory:STAKE_ASSET_NOT_BPOOL");
         }
         

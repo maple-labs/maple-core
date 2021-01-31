@@ -83,7 +83,7 @@ contract PoolDelegate {
         IPool(pool).fundLoan(loan, dlFactory, amt);  
     }
 
-    function claim(address pool, address loan, address dlFactory) external returns(uint256[6] memory) {
+    function claim(address pool, address loan, address dlFactory) external returns(uint256[7] memory) {
         return IPool(pool).claim(loan, dlFactory);  
     }
 }
@@ -361,19 +361,37 @@ contract PoolLiquidationTest is TestUtil {
             or rather updates accounting in the Pool which in turn will enable us
             to handle liquidation of BPTs in the Stake Locker accurately.
         */
-        uint256[6] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
-
-        /**
-            Now that triggerDefault() is called, the return value defaultSuffered
-            will be greater than 0. Calling claim() is the mechanism which settles,
-            or rather updates accounting in the Pool which in turn will enable us
-            to handle liquidation of BPTs in the Stake Locker accurately.
-        */
-        uint256[6] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
+        uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
+        uint256[7] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
 
         // Non-zero value is passed through.
         assertEq(vals_a[5], loan.defaultSuffered() * (1_000_000 * WAD) / (4_000_000 * WAD));
         assertEq(vals_b[5], loan.defaultSuffered() * (3_000_000 * WAD) / (4_000_000 * WAD));
         withinPrecision(vals_a[5] + vals_b[5], loan.defaultSuffered(), 2);
+    }
+
+    function test_claim_default_burn_BPT() public {
+
+        setUpLoanAndDefault();
+
+        address liquidityLocker_a = pool_a.liquidityLocker();
+        address liquidityLocker_b = pool_b.liquidityLocker();
+
+        // Pre-state liquidityLocker checks.
+        uint256 liquidityLocker_pre_a = IERC20(USDC).balanceOf(liquidityLocker_a);
+        uint256 liquidityLocker_pre_b = IERC20(USDC).balanceOf(liquidityLocker_b);
+
+        uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
+        uint256[7] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
+
+        // Post-state liquidityLocker checks.
+        uint256 liquidityLocker_post_a = IERC20(USDC).balanceOf(liquidityLocker_a);
+        uint256 liquidityLocker_post_b = IERC20(USDC).balanceOf(liquidityLocker_b);
+        
+        assertEq(liquidityLocker_post_a - liquidityLocker_pre_a, vals_a[5]);
+        assertEq(liquidityLocker_post_b - liquidityLocker_pre_b, vals_b[5]);
+        assertGt(vals_a[5], 0);
+        assertGt(vals_b[5], 0);
+      
     }
 } 
