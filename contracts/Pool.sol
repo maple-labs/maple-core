@@ -245,8 +245,8 @@ contract Pool is FDT {
         uint256 interestEarned = withdrawableFundsOf(msg.sender);       // Calculate interest earned
         uint256 firstPenalty   = principalPenalty.mul(amt).div(10000);  // Calculate flat principal penalty
         uint256 totalPenalty   = calcWithdrawPenalty(                   // Calculate total penalty
-                                    interestEarned.add(firstPenalty), 
-                                    msg.sender
+                                     interestEarned.add(firstPenalty), 
+                                     msg.sender
                                  );
                                 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
@@ -481,21 +481,21 @@ contract Pool is FDT {
         @param lp Liquidity Provider to check claimableFunds for 
         @return Amount of claimable funds (liquidityAsset) a Liquidity Provider can pull from LiquidityLocker
     */
-    function claimableFunds(address lp) public view returns(uint256) {
+    function claimableFunds(address lp) public view returns(uint256, uint256) {
 
         // Deposit is still within lockupPeriod, user has 0 claimableFunds under this condition.
         if (depositDate[lp].add(lockupPeriod) > block.timestamp) {
-            return 0; 
+            return (0, withdrawableFundsOf(lp)); 
         }
         else {
             uint256 userBalance    = balanceOf(lp);
-            uint256 interestEarned = withdrawableFundsOf(lp);               // Calculate interest earned
+            uint256 interestEarned = withdrawableFundsOf(lp);                       // Calculate interest earned
             uint256 firstPenalty   = principalPenalty.mul(userBalance).div(10000);  // Calculate flat principal penalty
             uint256 totalPenalty   = calcWithdrawPenalty(                           // Calculate total penalty
-                                        interestEarned.add(firstPenalty),
-                                        lp
-                                    );
-            return userBalance.sub(totalPenalty);   // Return full amount minus any penalties.
+                                         interestEarned.add(firstPenalty),
+                                         lp
+                                     );
+            return (userBalance.sub(totalPenalty), interestEarned);   // Return full amount minus any penalties.
         }
     }
 
