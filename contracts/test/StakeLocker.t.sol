@@ -380,6 +380,7 @@ contract StakeLockerTest is TestUtil {
         uint256 slBal_before = bPool.balanceOf(address(stakeLocker));
         uint256 stakeDate    = block.timestamp;
 
+        sid.setWhitelistStakeLocker(address(pool), address(che), true);
         che.approve(address(bPool), address(stakeLocker), 25 * WAD);
         che.stake(address(stakeLocker), 25 * WAD);  
 

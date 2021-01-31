@@ -22,7 +22,7 @@ contract StakeLocker is FDT {
     address public immutable owner;           // The parent liquidity pool.
 
     mapping(address => uint256) public stakeDate;    // Map address to effective deposit date value
-    mapping(address => bool)    public whitelisted;  // Map address to effective deposit date value
+    mapping(address => bool)    public whitelisted;  // Map address to whitelist status
 
     event BalanceUpdated(address who, address token, uint256 balance);
 
