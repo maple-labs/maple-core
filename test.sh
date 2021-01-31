@@ -11,6 +11,6 @@ export DAPP_SRC="contracts"
 export SOLC_FLAGS="--optimize --optimize-runs 200"
 
 dapp build
-LANG=C.UTF-8 dapp test --match "test_claim_default_burn_BPT" --rpc-url "$ETH_RPC_URL" --verbose
+LANG=C.UTF-8 dapp test --match "test_unwind_loan" --rpc-url "$ETH_RPC_URL" --verbose
 
 # --match "contracts/test/MapleGlobals.t.sol" 

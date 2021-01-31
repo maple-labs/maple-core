@@ -47,6 +47,11 @@ contract Borrower {
         );
     }
 
+    function try_unwind(address loan) external returns (bool ok) {
+        string memory sig = "unwind()";
+        (ok,) = address(loan).call(abi.encodeWithSignature(sig));
+    }
+
     function approve(address token, address who, uint256 amt) external {
         IERC20(token).approve(who, amt);
     }
@@ -452,5 +457,37 @@ contract LoanTest is TestUtil {
         // Collateral locker after state.
         assertEq(collateralAsset.balanceOf(collateralLocker),  0);
         assertEq(collateralAsset.balanceOf(address(ali)),     _delta + reqCollateral);
+    }
+
+    function test_unwind_loan() public {
+
+        Loan loan = createAndFundLoan(address(bulletCalc));
+
+        // Warp to the drawdownGracePeriod ... can't call unwind() yet
+        hevm.warp(loan.createdAt() + globals.drawdownGracePeriod());
+        assertTrue(!ali.try_unwind(address(loan)));
+
+        uint256 flBalance_pre   = IERC20(loan.loanAsset()).balanceOf(loan.fundingLocker());
+        uint256 loanBalance_pre = IERC20(loan.loanAsset()).balanceOf(address(loan));
+        uint256 loanState_pre   = uint256(loan.loanState());
+
+        // Warp 1 more second ... can call unwind()
+        hevm.warp(loan.createdAt() + globals.drawdownGracePeriod() + 1);
+        assertTrue(ali.try_unwind(address(loan)));
+
+        uint256 flBalance_post   = IERC20(loan.loanAsset()).balanceOf(loan.fundingLocker());
+        uint256 loanBalance_post = IERC20(loan.loanAsset()).balanceOf(address(loan));
+        uint256 loanState_post   = uint256(loan.loanState());
+
+        assertEq(loanBalance_pre, 0);
+        assertEq(loanState_pre,   0);
+
+        assertEq(flBalance_post, 0);
+        assertEq(loanState_post, 4);
+
+        assertEq(loan.excessReturned(), loanBalance_post);
+
+        // Can't unwind() loan after it has already been called.
+        assertTrue(!ali.try_unwind(address(loan)));
     }
 }

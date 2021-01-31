@@ -27,8 +27,9 @@ contract Loan is FDT {
         Active     = The loan has been drawdown and the borrower is making payments.
         Matured    = The loan is fully paid off and has "matured".
         Liquidated = The loan has been liquidated.
+        Expired    = The loan has passed the funding period, and is no longer expired.
     */
-    enum State { Live, Active, Matured, Liquidated }
+    enum State { Live, Active, Matured, Liquidated, Expired }
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
 
@@ -188,6 +189,26 @@ contract Loan is FDT {
 
         emit LoanFunded(amt, mintTo);
         emit BalanceUpdated(fundingLocker, address(loanAsset), _getFundingLockerBalance());
+    }
+
+    /**
+        @dev If the borrower has not drawndown loan past grace period, return capital to lenders.
+    */
+    function unwind() external isState(State.Live) {
+
+        IGlobals globals = _globals(superFactory);
+
+        // Only callable if time has passed drawdown grace period, set in MapleGlobals.
+        require(block.timestamp > createdAt.add(globals.drawdownGracePeriod()));
+
+        // Drain funding from FundingLocker, transfers all loanAsset to this Loan.
+        IFundingLocker(fundingLocker).drain();
+
+        // Update accounting for claim()
+        excessReturned += IERC20(loanAsset).balanceOf(address(this));
+
+        // Transition state to Expired.
+        loanState = State.Expired;
     }
 
     /**
