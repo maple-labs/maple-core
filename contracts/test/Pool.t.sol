@@ -1804,44 +1804,16 @@ contract PoolTest is TestUtil {
 
         uint depositDate = pool1.depositDate(address(kim)).add(pool1.lockupPeriod());
 
-        assertEq(depositDate, 0);
-        assertEq(pool1.lockupPeriod(), 0);
-        assertEq(pool1.depositDate(address(kim)), 0);
-
         hevm.warp(depositDate - 1);
         uint claimable_kim = pool1.claimableFunds(address(kim));
 
-        assertEq(claimable_kim, 2);
+        // Deposit is still in lock-up
+        assertEq(claimable_kim, 0);
 
         hevm.warp(depositDate);
         claimable_kim = pool1.claimableFunds(address(kim));
 
-        assertEq(claimable_kim, 3);
-
-        hevm.warp(depositDate + 15000000);
-        claimable_kim = pool1.claimableFunds(address(kim));
-
-        assertEq(claimable_kim, 4);
-
-        // uint claimable_kim = pool1.claimableFunds(address(kim));
-
-        // assertEq(claimable_kim, 1);
-
-        // // Warp to exact time that kim can withdraw with weighted deposit date
-        // hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() - 1);
-
-        // claimable_kim = pool1.claimableFunds(address(kim));
-        // assertEq(claimable_kim, 2);
-
-        // hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
-
-        // claimable_kim = pool1.claimableFunds(address(kim));
-        // assertEq(claimable_kim, 3);
-
-        // hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() + 1);
-
-        // claimable_kim = pool1.claimableFunds(address(kim));
-        // assertEq(claimable_kim, 4);
+        assertGt(claimable_kim, 0);
 
     }
 }
