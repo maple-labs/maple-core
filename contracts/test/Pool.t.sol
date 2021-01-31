@@ -1784,4 +1784,64 @@ contract PoolTest is TestUtil {
         assertTrue(!sid.try_deactivate(pool1));
 
     }
+
+    function test_view_balance() public {
+        setUpWithdraw();
+
+        uint start = block.timestamp;
+
+        // Mint and deposit 1000 USDC
+        mint("USDC", address(kim), 5000 * USD);
+        kim.approve(USDC, address(pool1), MAX_UINT);
+        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
+        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+
+        // Fund loan, drawdown, make payment and claim so kim can claim interest
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
+        _drawDownLoan(1000 * USD, loan3, hal);
+        _makeLoanPayment(loan3, hal); 
+        sid.claim(address(pool1), address(loan3), address(dlFactory1));
+
+        uint depositDate = pool1.depositDate(address(kim)).add(pool1.lockupPeriod());
+
+        assertEq(depositDate, 0);
+        assertEq(pool1.lockupPeriod(), 0);
+        assertEq(pool1.depositDate(address(kim)), 0);
+
+        hevm.warp(depositDate - 1);
+        uint claimable_kim = pool1.claimableFunds(address(kim));
+
+        assertEq(claimable_kim, 2);
+
+        hevm.warp(depositDate);
+        claimable_kim = pool1.claimableFunds(address(kim));
+
+        assertEq(claimable_kim, 3);
+
+        hevm.warp(depositDate + 15000000);
+        claimable_kim = pool1.claimableFunds(address(kim));
+
+        assertEq(claimable_kim, 4);
+
+        // uint claimable_kim = pool1.claimableFunds(address(kim));
+
+        // assertEq(claimable_kim, 1);
+
+        // // Warp to exact time that kim can withdraw with weighted deposit date
+        // hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() - 1);
+
+        // claimable_kim = pool1.claimableFunds(address(kim));
+        // assertEq(claimable_kim, 2);
+
+        // hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
+
+        // claimable_kim = pool1.claimableFunds(address(kim));
+        // assertEq(claimable_kim, 3);
+
+        // hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() + 1);
+
+        // claimable_kim = pool1.claimableFunds(address(kim));
+        // assertEq(claimable_kim, 4);
+
+    }
 }

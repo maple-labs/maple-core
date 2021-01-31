@@ -242,13 +242,13 @@ contract Pool is FDT {
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
 
-        uint256 interstEarned = withdrawableFundsOf(msg.sender);       // Calculate interest earned
-        uint256 firstPenalty  = principalPenalty.mul(amt).div(10000);  // Calculate flat principal penalty
-        uint256 totalPenalty  = calcWithdrawPenalty(                   // Calculate total penalty
-                                    allocatedInterest.add(firstPenalty), 
+        uint256 interestEarned = withdrawableFundsOf(msg.sender);       // Calculate interest earned
+        uint256 firstPenalty   = principalPenalty.mul(amt).div(10000);  // Calculate flat principal penalty
+        uint256 totalPenalty   = calcWithdrawPenalty(                   // Calculate total penalty
+                                    interestEarned.add(firstPenalty), 
                                     msg.sender
-                                );
-
+                                 );
+                                
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
         withdrawFunds();            // Transfer full entitled interest.
 
@@ -411,7 +411,7 @@ contract Pool is FDT {
         @return penalty Total penalty
     */
     // TODO: Handle case where penaltyDelay == 0
-    function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 penalty) {
+    function calcWithdrawPenalty(uint256 amt, address who) public view returns (uint256 penalty) {
         if (lockupPeriod < penaltyDelay) {
             uint256 dTime    = block.timestamp.sub(depositDate[who]);
             uint256 unlocked = dTime.mul(WAD).div(penaltyDelay).mul(amt).div(WAD);
@@ -483,17 +483,18 @@ contract Pool is FDT {
     */
     function claimableFunds(address user) public view returns(uint256) {
         if (depositDate[msg.sender].add(lockupPeriod) <= block.timestamp) {
-            return 0;
+            return 0; // withdraw() would revert, thus user has 0 claimableFunds under this condition.
         }
         else {
-            uint256 userBalance    = balanceOf(msg.sender);
-            uint256 interestEarned = withdrawableFundsOf(msg.sender);               // Calculate interest earned
-            uint256 firstPenalty   = principalPenalty.mul(userBalance).div(10000);  // Calculate flat principal penalty
-            uint256 totalPenalty   = calcWithdrawPenalty(                           // Calculate total penalty
-                                        allocatedInterest.add(firstPenalty),
-                                        msg.sender
-                                    );
-            return userBalance.sub(totalPenalty);   // Return full amount minus any penalties.
+            return 1;
+            // uint256 userBalance    = balanceOf(msg.sender);
+            // uint256 interestEarned = withdrawableFundsOf(msg.sender);               // Calculate interest earned
+            // uint256 firstPenalty   = principalPenalty.mul(userBalance).div(10000);  // Calculate flat principal penalty
+            // uint256 totalPenalty   = calcWithdrawPenalty(                           // Calculate total penalty
+            //                             interestEarned.add(firstPenalty),
+            //                             msg.sender
+            //                         );
+            // return userBalance.sub(totalPenalty);   // Return full amount minus any penalties.
         }
     }
 
