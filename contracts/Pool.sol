@@ -45,8 +45,6 @@ contract Pool is FDT {
     uint256 public penaltyDelay;      // Time until total interest is available after a deposit, in seconds.
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the pool.
     uint256 public lockupPeriod;      // Unix timestamp until the withdrawal is not allowed.
-  
-    uint256 public liquidationDelta; // FDT accounting for adjusting the FDT burn or mint amount in deposit() and withdraw()
 
     enum State { Initialized, Finalized, Deactivated }
     State public poolState;  // The current state of this pool.
@@ -298,8 +296,6 @@ contract Pool is FDT {
         _emitBalanceUpdatedEvent();
     }
     
-    event DebugS(uint, uint);
-    
     // Helper function for claim() if a default has occurred.
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
@@ -325,24 +321,14 @@ contract Pool is FDT {
 
         uint256 liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this));
 
-        emit DebugS(defaultSuffered, liquidityAssetRecoveredFromBurn);
-
         // "SAD PATH" : Handle shortfall in StakeLocker, liquidity providers suffer a loss in withdraw() power.
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
-            liquidationDelta = liquidationDelta.add(
-                _toWad(defaultSuffered.sub(liquidityAssetRecoveredFromBurn))
-            );
+            // TODO: Implement accounting for "SAD PATH" (i.e. DoubleFDT)
         }
         // "HAPPY PATH" : Handle normal liquidation with enough liquidityAsset recovered from BPTs burned.
         else {
-            // TODO: Do we need to do anything here?
+            // TODO: Implement accounting ... if any is needed at all (?) for "HAPPY PATH"
         }
-        
-        // principalOut decreases by defaultSuffered.
-        principalOut = principalOut.sub(defaultSuffered);
-
-        // interestSum increases by liquidityAsset received from BPT burn.
-        interestSum = interestSum.add(liquidityAssetRecoveredFromBurn);
 
         // Transfer USDC to liquidityLocker.
         liquidityAsset.transfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
