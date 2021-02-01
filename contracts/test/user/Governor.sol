@@ -36,6 +36,8 @@ contract Governor {
     function setUnstakeDelay(uint256 delay)                           external { globals.setUnstakeDelay(delay); }
     function setGovernor(address gov)                                 external { globals.setGovernor(gov); }
 
+    function setDefaultUniswapPath(address from, address to, address mid) external { globals.setDefaultUniswapPath(from, to, mid); }
+
     // Try functions
     function try_setGlobals(address target, address globals) external returns (bool ok) {
         string memory sig = "setGlobals(address)";

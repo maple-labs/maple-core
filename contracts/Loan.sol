@@ -258,8 +258,6 @@ contract Loan is FDT {
 
         IGlobals globals = _globals(superFactory);
 
-        address[] memory path_bilateral  = new address[](2);
-
         if (
             globals.defaultUniswapPath(address(collateralAsset), address(loanAsset)) != address(loanAsset)
         ) {

@@ -137,7 +137,7 @@ contract LoanLiquidationTest is TestUtil {
         globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
 
         globals.setDefaultUniswapPath(WETH, USDC, USDC);
-        globals.setDefaultUniswapPath(WBTC, USDC, USDC);
+        globals.setDefaultUniswapPath(WBTC, USDC, WETH);
 
         ali = new Borrower();
         bob = new Lender();
@@ -166,7 +166,7 @@ contract LoanLiquidationTest is TestUtil {
 
     function test_basic_liquidation() public {
 
-        Loan loan = createAndFundLoan(address(bulletCalc), WBTC);
+        Loan loan = createAndFundLoan(address(bulletCalc), WETH);
         
         // Fetch pre-state variables.
         address collateralLocker  = loan.collateralLocker();
