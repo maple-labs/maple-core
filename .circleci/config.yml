@@ -27,8 +27,9 @@ jobs:
             https://nixos.org/channels/nixpkgs-unstable nixpkgs && \
             nix-channel --update
             nix-env -iA nixpkgs.gnugrep nixpkgs.findutils
-            nix-env -iA dapp hevm seth solc-static-versions.solc_0_6_11 -if https://github.com/dapphub/dapptools/tarball/3e183bf7df66d7fe98690c8e06ba3e87ff2ac835 --option substituters "https://cache.nixos.org https://dapp.cachix.org" --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs"
+            nix-env -iA dapp hevm seth solc-static-versions.solc_0_6_11 -if https://github.com/dapphub/dapptools/tarball/dc992eb2e9d05bee150156add790bddb160fc80c --option substituters "https://cache.nixos.org https://dapp.cachix.org" --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs"
             dapp update
+            export DAPP_LINK_TEST_LIBRARIES=1
             DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 200" dapp --use solc:0.6.11 build
       - persist_to_workspace:
           root: ~/project
