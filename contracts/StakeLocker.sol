@@ -171,14 +171,36 @@ contract StakeLocker is FDT {
     //      to these ends to save code.
     //      can improve this so the updated age of tokens reflects their age in the senders wallets
     //      right now it simply is equivalent to the age update if the receiver was making a new stake.
-    function _transfer(address from, address to, uint256 amt) internal override /*canUnstake*/ {
-        // emit DebugS(from, to, amt);
-        // require(
-        //     whitelisted[to] || msg.sender == IPool(owner).poolDelegate(), 
-        //     "StakeLocker:RECIPIENT_NOT_WHITELISTED"
-        // );
-        // emit DebugS(from, to, amt);
+    function _transfer(address from, address to, uint256 amt) internal override canUnstake {
+        require(
+            whitelisted[to] || to == IPool(owner).poolDelegate(), 
+            "StakeLocker:RECIPIENT_NOT_WHITELISTED"
+        );
+        emit DebugS(from, to, amt);
         super._transfer(from, to, amt);
-        // _updateStakeDate(to, amt);
+        _updateStakeDate(to, amt);
     }
+
+    /**
+     * @dev See {IERC20-transferFrom}.
+     *
+     * Emits an {Approval} event indicating the updated allowance. This is not
+     * required by the EIP. See the note at the beginning of {ERC20}.
+     *
+     * Requirements:
+     *
+     * - `sender` and `recipient` cannot be the zero address.
+     * - `sender` must have a balance of at least `amount`.
+     * - the caller must have allowance for ``sender``'s tokens of at least
+     * `amount`.
+     */
+    // function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
+    //     require(
+    //         whitelisted[recipient] || recipient == IPool(owner).poolDelegate(), 
+    //         "StakeLocker:RECIPIENT_NOT_WHITELISTED"
+    //     );
+    //     _transfer(sender, recipient, amount);
+    //     _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
+    //     return true;
+    // }
 }

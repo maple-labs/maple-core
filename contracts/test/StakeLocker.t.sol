@@ -108,8 +108,13 @@ contract Staker {
     }
 
     function try_transfer(address token, address dst, uint256 amt) external returns(bool ok) {
-        string memory sig = "transfer(address, uint256)";
+        string memory sig = "transfer(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, dst, amt));
+    }
+
+    function try_transferFrom(address token, address from, address to, uint256 amt) external returns(bool ok) {
+        string memory sig = "transferFrom(address,address,uint256)";
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, from, to, amt));
     }
 
     function transfer(address token, address dst, uint256 amt) external {
@@ -344,6 +349,8 @@ contract StakeLockerTest is TestUtil {
 
         sid.setWhitelistStakeLocker(address(pool), address(che), true); // Add Staker to whitelist
 
+        // transfer() checks
+
         che.approve(address(bPool), address(stakeLocker), 25 * WAD); // Stake tokens
         assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));
 
@@ -354,6 +361,15 @@ contract StakeLockerTest is TestUtil {
         assertTrue(che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // Yes transfer to whitelisted user
 
         assertTrue(che.try_transfer(address(stakeLocker), address(sid), 1 * WAD)); // Yes transfer to pool delegate
+
+        // transferFrom() checks
+        che.approve(address(stakeLocker), address(dan), 5 * WAD);
+        sid.setWhitelistStakeLocker(address(pool), address(ali), false); // Remove ali to whitelist
+        sid.setWhitelistStakeLocker(address(pool), address(dan), true); // Add dan to whitelist
+
+        assertTrue(!dan.try_transferFrom(address(stakeLocker), address(che), address(ali), 1 * WAD)); // No transferFrom to non-whitelisted user
+        assertTrue(dan.try_transferFrom(address(stakeLocker), address(che), address(dan), 1 * WAD)); // Yes transferFrom to whitelisted user
+        assertTrue(dan.try_transferFrom(address(stakeLocker), address(che), address(sid), 1 * WAD)); // Yes transferFrom to pool delegate
 
     }
 
