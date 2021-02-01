@@ -128,12 +128,16 @@ contract LoanLiquidationTest is TestUtil {
         globals.setCalc(address(lateFeeCalc),        true);
         globals.setCalc(address(premiumCalc),        true);
         globals.setCollateralAsset(WETH,             true);
+        globals.setCollateralAsset(WBTC,             true);
         globals.setLoanAsset(USDC,                   true);
         globals.assignPriceFeed(WETH,  address(ethOracle));
         globals.assignPriceFeed(USDC, address(usdcOracle));
 
         globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
         globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
+
+        globals.setDefaultUniswapPath(WETH, USDC, USDC);
+        globals.setDefaultUniswapPath(WBTC, USDC, USDC);
 
         ali = new Borrower();
         bob = new Lender();
@@ -142,26 +146,27 @@ contract LoanLiquidationTest is TestUtil {
         globals.setMapleTreasury(address(trs));
 
         mint("WETH", address(ali),   10 ether);
+        mint("WBTC", address(ali),   10 ether);
         mint("USDC", address(bob), 5000 * USD);
         mint("USDC", address(ali),  500 * USD);
     }
 
-    function createAndFundLoan(address _interestStructure) internal returns (Loan loan) {
+    function createAndFundLoan(address _interestStructure, address _collateral) internal returns (Loan loan) {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
-        loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan = ali.createLoan(loanFactory, USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
 
         bob.approve(USDC, address(loan), 5000 * USD);
 
         bob.fundLoan(loan, 5000 * USD, address(ali));
-        ali.approve(WETH, address(loan), 0.4 ether);
+        ali.approve(_collateral, address(loan), 0.4 ether);
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
     }
 
     function test_basic_liquidation() public {
 
-        Loan loan = createAndFundLoan(address(bulletCalc));
+        Loan loan = createAndFundLoan(address(bulletCalc), WBTC);
         
         // Fetch pre-state variables.
         address collateralLocker  = loan.collateralLocker();

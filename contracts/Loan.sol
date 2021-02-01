@@ -256,21 +256,47 @@ contract Loan is FDT {
         // Swap collateralAsset for loanAsset.
         collateralAsset.approve(address(uniswap), liquidationAmt);
 
-        address[] memory path = new address[](2);
-        path[0] = address(collateralAsset);
-        path[1] = address(loanAsset);
+        IGlobals globals = _globals(superFactory);
 
-        // TODO: Consider oracles for 2nd parameter below.
-        uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
-            collateralAsset.balanceOf(address(this)),
-            0, // The minimum amount of output tokens that must be received for the transaction not to revert.
-            path,
-            address(this),
-            block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
-        );
+        address[] memory path_bilateral  = new address[](2);
 
-        amountLiquidated = returnAmounts[0];
-        amountRecovered  = returnAmounts[1];
+        if (
+            globals.defaultUniswapPath(address(collateralAsset), address(loanAsset)) != address(loanAsset)
+        ) {
+            address[] memory path_triangular = new address[](3);
+            path_triangular[0] = address(collateralAsset);
+            path_triangular[1] = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
+            path_triangular[2] = address(loanAsset);
+                
+            // TODO: Consider oracles for 2nd parameter below.
+            uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
+                collateralAsset.balanceOf(address(this)),
+                0, // The minimum amount of output tokens that must be received for the transaction not to revert.
+                path_triangular,
+                address(this),
+                block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
+            );
+
+            amountLiquidated = returnAmounts[0];
+            amountRecovered  = returnAmounts[2];
+        }
+        else {
+            address[] memory path_bilateral  = new address[](2);
+            path_bilateral[0] = address(collateralAsset);
+            path_bilateral[1] = address(loanAsset);
+                
+            // TODO: Consider oracles for 2nd parameter below.
+            uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
+                collateralAsset.balanceOf(address(this)),
+                0, // The minimum amount of output tokens that must be received for the transaction not to revert.
+                path_bilateral,
+                address(this),
+                block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
+            );
+
+            amountLiquidated = returnAmounts[0];
+            amountRecovered  = returnAmounts[1];
+        }
 
         // Reduce principal owed by amount received (as much as is required for principal owed == 0).
         if (amountRecovered > principalOwed) {
@@ -292,8 +318,8 @@ contract Loan is FDT {
 
         // Emit liquidation event.
         emit Liquidation(
-            returnAmounts[0],  // collateralSwapped
-            returnAmounts[1],  // loanAssetReturned
+            amountLiquidated,  // collateralSwapped
+            amountRecovered,  // loanAssetReturned
             liquidationExcess,
             defaultSuffered
         );
