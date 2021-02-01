@@ -9,8 +9,9 @@ export DAPP_SKIP_BUILD=1
 export DAPP_SOLC_VERSION=0.6.11
 export DAPP_SRC="contracts"
 export SOLC_FLAGS="--optimize --optimize-runs 200"
+export DAPP_LINK_TEST_LIBRARIES=1
 
 dapp build
-LANG=C.UTF-8 dapp test --match "contracts/test/" --rpc-url "$ETH_RPC_URL" --verbose
+LANG=C.UTF-8 dapp test --match "contracts/test" --rpc-url "$ETH_RPC_URL" --verbose
 
 # --match "contracts/test/MapleGlobals.t.sol" 
