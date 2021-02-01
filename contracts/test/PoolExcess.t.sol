@@ -370,11 +370,8 @@ contract PoolExcessTest is TestUtil {
 
         // pool_a invested 1mm USD
         // pool_b invested 3mm USD
-        // assertEq(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD);   
-        // assertEq(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD);
-
-        withinPrecision(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD, 1);
-        withinPrecision(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD, 1);
+        withinDff(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD, 1);
+        withinDff(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD, 1);
 
 
     }
