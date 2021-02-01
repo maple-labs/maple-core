@@ -1805,15 +1805,55 @@ contract PoolTest is TestUtil {
         uint depositDate = pool1.depositDate(address(kim)).add(pool1.lockupPeriod());
 
         hevm.warp(depositDate - 1);
-        uint claimable_kim = pool1.claimableFunds(address(kim));
+        (uint claimable_kim,) = pool1.claimableFunds(address(kim));
 
         // Deposit is still in lock-up
         assertEq(claimable_kim, 0);
 
         hevm.warp(depositDate);
-        claimable_kim = pool1.claimableFunds(address(kim));
+        (claimable_kim, ) = pool1.claimableFunds(address(kim));
 
         assertGt(claimable_kim, 0);
+
+    }
+
+    function test_view_balance_claim_a() public {
+        setUpWithdraw();
+
+        uint start = block.timestamp;
+
+        // Mint and deposit 1000 USDC
+        mint("USDC", address(kim), 5000 * USD);
+        kim.approve(USDC, address(pool1), MAX_UINT);
+        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
+        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+
+        // Fund loan, drawdown, make payment and claim so kim can claim interest
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
+        _drawDownLoan(1000 * USD, loan3, hal);
+        _makeLoanPayment(loan3, hal); 
+        sid.claim(address(pool1), address(loan3), address(dlFactory1));
+
+        uint depositDate = pool1.depositDate(address(kim)).add(pool1.lockupPeriod());
+
+        hevm.warp(depositDate - 1);
+        (uint claimable_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
+
+        // Deposit is still in lock-up
+        assertEq(claimable_kim, 0);
+
+        hevm.warp(depositDate);
+        (claimable_kim, interest_kim) = pool1.claimableFunds(address(kim));
+        assertGt(claimable_kim, 0);
+        assertGt(interest_kim, 0);
+
+        uint256 kim_bal_pre = IERC20(pool1.liquidityAsset()).balanceOf(address(kim));
+        
+        assertTrue(kim.try_withdraw(address(pool1), claimable_kim), "Failed to withdraw claimable_kim");
+        
+        uint256 kim_bal_post = IERC20(pool1.liquidityAsset()).balanceOf(address(kim));
+
+        assertEq(kim_bal_post - kim_bal_pre, claimable_kim + interest_kim);
 
     }
 }

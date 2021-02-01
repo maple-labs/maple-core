@@ -248,12 +248,14 @@ contract Pool is FDT {
                                      interestEarned.add(firstPenalty), 
                                      msg.sender
                                  );
+
+        (uint256 amt,) = claimableFunds(msg.sender);
                                 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
         withdrawFunds();            // Transfer full entitled interest.
 
         // Transfer the principal amount - totalPenalty
-        require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, amt.sub(totalPenalty)), "Pool::WITHDRAW_TRANSFER");
+        require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, amt), "Pool::WITHDRAW_TRANSFER");
 
         interestSum = interestSum.add(totalPenalty);  // Update the `interestSum` with the penalty amount. 
         updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totalPenalty`.
@@ -495,7 +497,7 @@ contract Pool is FDT {
                                          interestEarned.add(firstPenalty),
                                          lp
                                      );
-            return (userBalance.sub(totalPenalty), interestEarned);   // Return full amount minus any penalties.
+            return (_fromWad(userBalance.sub(totalPenalty)), interestEarned);   // Return full amount minus any penalties.
         }
     }
 
@@ -505,6 +507,14 @@ contract Pool is FDT {
     */
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
+    }
+
+    /**
+        @dev Convert liquidityAsset to WAD precision (10 ** 18)
+        @param amt Effective time needed in pool for user to be able to claim 100% of funds
+    */
+    function _fromWad(uint256 amt) internal view returns(uint256) {
+        return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 
     /**
