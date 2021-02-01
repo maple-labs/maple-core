@@ -42,6 +42,11 @@ contract Governor {
         (ok,) = address(target).call(abi.encodeWithSignature(sig, globals));
     }
 
+    function try_setDefaultUniswapPath(address from, address to, address mid) external returns (bool ok) { 
+        string memory sig = "setDefaultUniswapPath(address,address,address)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, from, to, mid)); 
+    }
+
     function try_setCalc(address calc, bool valid) external returns (bool ok) { 
         string memory sig = "setCalc(address,bool)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, calc, valid)); 
