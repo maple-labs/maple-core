@@ -65,7 +65,7 @@ contract StakeLocker is FDT {
 
     function _isWhitelisted(address user) internal {
         require(
-            whitelisted[user] || user== IPool(owner).poolDelegate(), 
+            whitelisted[user] || user == IPool(owner).poolDelegate(), 
             "StakeLocker:MSG_SENDER_NOT_WHITELISTED"
         );
     }
