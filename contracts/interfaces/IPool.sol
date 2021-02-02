@@ -25,4 +25,6 @@ interface IPool {
     function fundLoan(address, address, uint256) external;
 
     function superFactory() external view returns (address);
+    
+    function setWhitelistStakeLocker(address, bool) external;
 }

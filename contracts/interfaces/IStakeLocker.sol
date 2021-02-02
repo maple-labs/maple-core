@@ -12,4 +12,5 @@ interface IStakeLocker is IERC20 {
     function updateFundsReceived() external;
     function withdrawableFundsOf(address) external view returns(uint256);
     function pull(address, uint256) external returns (bool);
+    function setWhitelist(address, bool) external;
 }
