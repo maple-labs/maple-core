@@ -26,6 +26,9 @@ const CORE = {
   PoolFactory: "PoolFactory",
   LoanFactory: "LoanFactory",
 
+  // External Library
+  CalcBPool: "CalcBPool",
+
   // Lockers
   LiquidityLocker: "LiquidityLocker",
   CollateralLocker: "CollateralLocker",

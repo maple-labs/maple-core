@@ -19,10 +19,12 @@ async function main() {
     BFactory.address,
   ]);
 
+  const calcBPool = await deploy(CORE.CalcBPool);
+
   await deploy(CORE.DebtLockerFactory);
   await deploy(CORE.StakeLockerFactory);
   await deploy(CORE.LiquidityLockerFactory);
-  await deploy(CORE.PoolFactory, [mapleGlobals.address]);
+  await deploy(CORE.PoolFactory, [mapleGlobals.address, { libraries: { CalcBPool: calcBPool.address} }]);
 
   await deploy(CORE.MapleTreasury, [
     MapleToken.address,
