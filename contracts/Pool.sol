@@ -22,7 +22,6 @@ import "./token/FDT.sol";
 contract Pool is FDT {
 
     using SafeMath  for uint256;
-    using CalcBPool for address;
 
     uint256 constant WAD = 10 ** 18;
 
@@ -169,11 +168,11 @@ contract Pool is FDT {
         (
             uint256 poolAmountInRequired, 
             uint256 poolAmountPresent
-        ) = balancerPool.getPoolSharesRequired(swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
+        ) = CalcBPool.getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
 
         return (
             swapOutAmountRequired,
-            balancerPool.getSwapOutValue(swapOutAsset, poolDelegate, stakeLocker),
+            CalcBPool.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
             poolAmountPresent >= poolAmountInRequired,
             poolAmountInRequired,
             poolAmountPresent
@@ -197,7 +196,7 @@ contract Pool is FDT {
         address stakeLocker,
         uint256 pairAmountRequired
     ) external view returns (uint256, uint256) {
-        return bpool.getPoolSharesRequired(pair, staker, stakeLocker, pairAmountRequired);
+        return CalcBPool.getPoolSharesRequired(bpool, pair, staker, stakeLocker, pairAmountRequired);
     }
 
     /**
@@ -297,7 +296,7 @@ contract Pool is FDT {
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
         // Check liquidityAsset swapOut value of StakeLocker coverage.
-        uint256 availableSwapOut = stakeAsset.getSwapOutValueLocker(address(liquidityAsset), stakeLocker);
+        uint256 availableSwapOut = CalcBPool.getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
 
         // Pull BPTs from StakeLocker.
         require(
