@@ -24,7 +24,7 @@ async function main() {
   await deploy(CORE.DebtLockerFactory);
   await deploy(CORE.StakeLockerFactory);
   await deploy(CORE.LiquidityLockerFactory);
-  await deploy(CORE.PoolFactory, [mapleGlobals.address, { libraries: { CalcBPool: calcBPool.address} }]);
+  await deploy(CORE.PoolFactory, [mapleGlobals.address], { libraries: { CalcBPool: calcBPool.address} });
 
   await deploy(CORE.MapleTreasury, [
     MapleToken.address,
