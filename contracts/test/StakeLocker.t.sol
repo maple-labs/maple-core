@@ -260,8 +260,8 @@ contract StakeLockerTest is TestUtil {
         IERC20(USDC).approve(address(bPool), MAX_UINT);
         mpl.approve(address(bPool), MAX_UINT);
 
-        bPool.bind(USDC, 50_000_000 * USD, 5 ether);       // Bind 50m USDC with 5 denormalization weight
-        bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
+        bPool.bind(USDC, 50_000_000 * USD, 5 ether);       // Bind 50M USDC with 5 denormalization weight
+        bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100K MPL with 5 denormalization weight
 
         assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * USD);
         assertEq(mpl.balanceOf(address(bPool)),             100_000 * WAD);
@@ -315,6 +315,60 @@ contract StakeLockerTest is TestUtil {
         sid.finalize(address(pool));  // PD that staked can finalize
 
         assertEq(uint256(pool.poolState()), 1);  // Finalize
+    }
+
+    function test_stake_to_measure_effect_on_stake_date() external {
+        uint256 currentDate = block.timestamp;
+
+        sid.setWhitelistStakeLocker(address(pool), address(che), true);
+        sid.setWhitelistStakeLocker(address(pool), address(dan), true);
+        che.approve(address(bPool), address(stakeLocker), uint256(-1));
+        dan.approve(address(bPool), address(stakeLocker), uint256(-1));
+
+        assert_for_stake(address(che), 25 * WAD, 50 * WAD, 50 * WAD, 0, 0);
+        assert_for_stake(address(dan), 25 * WAD, 50 * WAD, 50 * WAD, 0, 0);
+
+        assertTrue(che.try_stake(address(stakeLocker), 5 * WAD)); 
+        assert_for_stake(address(che), 20 * WAD, 55 * WAD, 55 * WAD, 5 * WAD, currentDate);
+        assertEq(stakeLocker.getUnstakeableBalance(address(che)), 0);
+
+        currentDate = currentDate + 1 days;
+        hevm.warp(currentDate);
+
+        assertEq(stakeLocker.getUnstakeableBalance(address(che)), 55555555555555555);
+        assertTrue(dan.try_stake(address(stakeLocker), 4 * WAD));
+        assert_for_stake(address(dan), 21 * WAD, 59 * WAD, 59 * WAD, 4 * WAD, currentDate);
+        assertEq(stakeLocker.getUnstakeableBalance(address(dan)), 0);
+
+        uint256 oldStakeDate = stakeLocker.stakeDate(address(che));
+        uint256 newStakeDate = get_new_stake_date(address(che), 5 * WAD);
+        assertTrue(che.try_stake(address(stakeLocker), 5 * WAD)); 
+        assert_for_stake(address(che), 15 * WAD, 64 * WAD, 64 * WAD, 10 * WAD, newStakeDate);
+        assertEq(newStakeDate - oldStakeDate, 12 hours);  // coef will be 0.5 days.
+        assertEq(stakeLocker.getUnstakeableBalance(address(che)), 55555555555555550);
+
+        currentDate = currentDate + 5 days;
+        hevm.warp(currentDate);
+
+        oldStakeDate = stakeLocker.stakeDate(address(dan));
+        newStakeDate = get_new_stake_date(address(dan), 16 * WAD);
+        assertTrue(dan.try_stake(address(stakeLocker), 16 * WAD));
+        assert_for_stake(address(dan), 5 * WAD, 80 * WAD, 80 * WAD, 20 * WAD, newStakeDate);
+        assertEq(newStakeDate - oldStakeDate, 96 hours );  // coef will be 0.8 days. 4 days
+    }
+
+    function get_new_stake_date(address who, uint256 amt) public returns(uint256 newStakeDate) {
+        uint256 stkDate = stakeLocker.stakeDate(who);
+        uint256 coef = (WAD * amt) / (stakeLocker.balanceOf(who) + amt);
+        newStakeDate = stkDate + (((now - stkDate) * coef) / WAD);
+    }
+
+    function assert_for_stake(address staker, uint256 sBPoolBal, uint256 slBPoolBal, uint256 slTotalSupply, uint256 sSlBal, uint256 sSlStakeDate) public {
+        assertEq(bPool.balanceOf(staker),                sBPoolBal,     "Incorrect balance of staker");
+        assertEq(bPool.balanceOf(address(stakeLocker)),  slBPoolBal,    "Incorrect balance of stake locker");
+        assertEq(stakeLocker.totalSupply(),              slTotalSupply, "Incorrect total supply of stake locker");
+        assertEq(stakeLocker.balanceOf(staker),          sSlBal,        "Incorrect balance of staker for stake locker");
+        assertEq(stakeLocker.stakeDate(staker),          sSlStakeDate,  "Incorrect stake date for staker");
     }
 
     function test_stake() public {
