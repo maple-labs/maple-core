@@ -210,6 +210,23 @@ jobs:
             source $BASH_ENV
             ./test-ci.sh "PoolTest"
 
+  dapp_test_poolExcess:
+    docker:
+      - image: nixorg/nix:circleci
+    steps:
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: ~/project
+      - restore_cache:
+          key: nix-deps
+      - run:
+          name: Run unit tests
+          command: |
+            cd ~/project
+            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
+            source $BASH_ENV
+            ./test-ci.sh "PoolExcessTest"
+
   dapp_test_poolFactory:
     docker:
       - image: nixorg/nix:circleci
@@ -429,6 +446,10 @@ workflows:
           requires:
             - dapp_build
       - dapp_test_pool: 
+          context: seth
+          requires:
+            - dapp_build
+      - dapp_test_poolExcess: 
           context: seth
           requires:
             - dapp_build

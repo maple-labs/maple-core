@@ -465,6 +465,16 @@ contract Pool is FDT {
     }
 
     /**
+        @dev Update user status on StakeLocker whitelist.
+        @param user   The address to set status for.
+        @param status The status of user on whitelist.
+    */
+    function setWhitelistStakeLocker(address user, bool status) external {
+        _isValidDelegate();
+        IStakeLocker(stakeLocker).setWhitelist(user, status);
+    }
+
+    /**
         @dev Convert liquidityAsset to WAD precision (10 ** 18)
         @param amt Effective time needed in pool for user to be able to claim 100% of funds
     */

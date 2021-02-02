@@ -93,6 +93,19 @@ contract TestUtil is DSTest {
         }
     }
 
+    // Verify equality within difference
+    function withinDff(uint256 val0, uint256 val1, uint256 expectedDiff) public {
+        uint actualDiff = val0 > val1 ? val0 - val1 : val1 - val0;
+        bool check = actualDiff <= expectedDiff;   
+
+        if (!check){
+            emit log_named_uint("Error: approx a == b not satisfied, accuracy difference ", expectedDiff);
+            emit log_named_uint("  Expected", val0);
+            emit log_named_uint("    Actual", val1);
+            fail();
+        }
+    }
+
     // function test_cheat_code_for_slot() public {
     //     address CDAI = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
     
