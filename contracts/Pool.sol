@@ -249,7 +249,8 @@ contract Pool is FDT {
                                      msg.sender
                                  );
 
-        (uint256 amt,) = claimableFunds(msg.sender);
+        (uint256 lockerClaim, uint256 interestClaim) = claimableFunds(msg.sender);
+        require(lockerClaim + interestClaim >= amt, "Pool:ERR_AMT_GT_CLAIMABLE");
                                 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
         withdrawFunds();            // Transfer full entitled interest.
