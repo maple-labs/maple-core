@@ -157,7 +157,7 @@ contract StakeLocker is FDT {
         uint256 bal          = balanceOf(staker);
         uint256 passedTime   = block.timestamp - stakeDate[staker];
         uint256 unstakeDelay = _globals().unstakeDelay();
-        uint256 out          = unstakeDelay != uint256(0) ? (passedTime.mul(WAD).div(unstakeDelay)).mul(bal).div(WAD) : passedTime.mul(bal);
+        uint256 out          = unstakeDelay != uint256(0) ? (passedTime.mul(WAD).div(unstakeDelay)).mul(bal).div(WAD) : bal;
         balance = out > bal ? bal : out;
     }
 
