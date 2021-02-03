@@ -46,7 +46,7 @@ contract Loan is FDT {
     address public immutable premiumCalc;       // The premium calculator for this loan.
     address public immutable superFactory;      // The factory that deployed this Loan.
 
-    address public constant uniswapRouter = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
     uint256 public principalOwed;   // The principal owed (initially the drawdown amount).
     uint256 public drawdownAmount;  // The amount the borrower drew down, historical reference for calculators.
@@ -183,24 +183,24 @@ contract Loan is FDT {
         _emitBalanceUpdateEventForFundingLocker();
     }
 
-    /**	
-        @dev If the borrower has not drawndown loan past grace period, return capital to lenders.	
-    */	
-    function unwind() external {	
-        _isValidState(State.Live);	
-        IGlobals globals = _globals(superFactory);	
+    /**
+        @dev If the borrower has not drawndown loan past grace period, return capital to lenders.
+    */
+    function unwind() external {
+        _isValidState(State.Live);
+        IGlobals globals = _globals(superFactory);
 
-        // Only callable if time has passed drawdown grace period, set in MapleGlobals.	
-        require(block.timestamp > createdAt.add(globals.drawdownGracePeriod()));	
+        // Only callable if time has passed drawdown grace period, set in MapleGlobals.
+        require(block.timestamp > createdAt.add(globals.drawdownGracePeriod()));
 
-        // Drain funding from FundingLocker, transfers all loanAsset to this Loan.	
-        IFundingLocker(fundingLocker).drain();	
+        // Drain funding from FundingLocker, transfers all loanAsset to this Loan.
+        IFundingLocker(fundingLocker).drain();
 
-        // Update accounting for claim()	
-        excessReturned += loanAsset.balanceOf(address(this));	
+        // Update accounting for claim()
+        excessReturned += loanAsset.balanceOf(address(this));
 
-        // Transition state to Expired.	
-        loanState = State.Expired;	
+        // Transition state to Expired.
+        loanState = State.Expired;
     }
 
     /**
@@ -266,7 +266,7 @@ contract Loan is FDT {
         require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");
 
         // Swap collateralAsset for loanAsset.
-        collateralAsset.approve(uniswapRouter, liquidationAmt);
+        collateralAsset.approve(UNISWAP_ROUTER, liquidationAmt);
 
         IGlobals globals = _globals(superFactory);
 
@@ -278,7 +278,7 @@ contract Loan is FDT {
         path.push(address(loanAsset));
 
         // TODO: Consider oracles for 2nd parameter below.
-        uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
+        uint[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
             collateralAsset.balanceOf(address(this)),
             0, // The minimum amount of output tokens that must be received for the transaction not to revert.
             path,
