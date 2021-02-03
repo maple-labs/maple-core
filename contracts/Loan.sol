@@ -26,6 +26,7 @@ contract Loan is FDT {
         Live       = The loan has been initialized and is open for funding (assuming funding period not ended).
         Active     = The loan has been drawdown and the borrower is making payments.
         Matured    = The loan is fully paid off and has "matured".
+        Expired    = The loan did not initiate, and all funding was returned to lenders.
         Liquidated = The loan has been liquidated.
     */
     enum State { Live, Active, Matured, Expired, Liquidated }
@@ -72,16 +73,6 @@ contract Loan is FDT {
     uint256 public amountRecovered;
     uint256 public defaultSuffered;
     uint256 public liquidationExcess;
-
-    modifier isState(State _state) {
-        require(loanState == _state, "Loan:STATE_CHECK");
-        _;
-    }
-
-    modifier isBorrower() {
-        require(msg.sender == borrower, "Loan:MSG_SENDER_NOT_BORROWER");
-        _;
-    }
 
     event LoanFunded(uint256 amtFunded, address indexed _fundedBy);
     event BalanceUpdated(address who, address token, uint256 balance);
@@ -282,8 +273,8 @@ contract Loan is FDT {
         // Generate path.
         address[] storage path;
         path.push(address(collateralAsset));
-        address secondAsset = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
-        if (secondAsset != address(loanAsset)) { path.push(secondAsset); }
+        address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
+        if (uniswapAssetForPath != address(loanAsset)) { path.push(uniswapAssetForPath); }
         path.push(address(loanAsset));
 
         // TODO: Consider oracles for 2nd parameter below.

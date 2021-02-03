@@ -136,57 +136,33 @@ contract MapleTreasury {
         
         IERC20(_asset).approve(uniswapRouter, IERC20(_asset).balanceOf(address(this)));
 
-        IGlobals _globals = IGlobals(globals);
+        IGlobals globals = _globals(superFactory);
 
-        if (
-            _globals.defaultUniswapPath(address(_asset), address(fundsToken)) != address(fundsToken)
-        ) {
-            address[] memory path_triangular = new address[](3);
-            path_triangular[0] = address(_asset);
-            path_triangular[1] = _globals.defaultUniswapPath(address(_asset), address(fundsToken));
-            path_triangular[2] = address(fundsToken);
-                
-            // TODO: Consider oracles for 2nd parameter below.
-            uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
-                IERC20(_asset).balanceOf(address(this)),
-                0, // The minimum amount of output tokens that must be received for the transaction not to revert.
-                path_triangular,
-                address(this),
-                block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
-            );
+        // Generate path.
+        address[] storage path;
+        path.push(address(collateralAsset));
+        address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
+        if (uniswapAssetForPath != address(loanAsset)) { path.push(uniswapAssetForPath); }
+        path.push(address(loanAsset));
 
-            IMapleToken(mpl).updateFundsReceived();
+        // TODO: Consider oracles for 2nd parameter below.
+        uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
+            collateralAsset.balanceOf(address(this)),
+            0, // The minimum amount of output tokens that must be received for the transaction not to revert.
+            path,
+            address(this),
+            block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
+        );
 
-            emit ERC20Conversion(
-                _asset,
-                msg.sender,
-                returnAmounts[0],
-                returnAmounts[1]
-            );
-        }
-        else {
-            address[] memory path_bilateral  = new address[](2);
-            path_bilateral[0] = address(_asset);
-            path_bilateral[1] = address(fundsToken);
-                
-            // TODO: Consider oracles for 2nd parameter below.
-            uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
-                IERC20(_asset).balanceOf(address(this)),
-                0, // The minimum amount of output tokens that must be received for the transaction not to revert.
-                path_bilateral,
-                address(this),
-                block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
-            );
+        require(_fundsToken.transfer(mpl, returnAmounts[path.length - 1]), "MapleTreasury:FUNDS_RECEIVE_TRANSFER");
+        IMapleToken(mpl).updateFundsReceived();
 
-            IMapleToken(mpl).updateFundsReceived();
-
-            emit ERC20Conversion(
-                _asset,
-                msg.sender,
-                returnAmounts[0],
-                returnAmounts[2]
-            );
-        }
+        emit ERC20Conversion(
+            _asset,
+            msg.sender,
+            returnAmounts[0],
+            returnAmounts[path.length - 1]
+        );
     }
 
     /**
