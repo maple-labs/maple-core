@@ -42,9 +42,6 @@ async function main() {
   await deploy(CORE.CollateralLockerFactory);
   await deploy(CORE.LoanFactory, [mapleGlobals.address]);
   
-  console.log(CORE.LateFeeCalc);
-  console.log(CORE.MapleDummyPriceFeed);
-
   // Price Feed deployments
   const priceFeedUSDC = await deploy(CORE.MapleDummyPriceFeedUSDC, [ 1 * 10**8, USDC.address])
   const priceFeedWETH = await deploy(CORE.MapleDummyPriceFeedWETH, [ 1630 * 10**8, WETH.address])
