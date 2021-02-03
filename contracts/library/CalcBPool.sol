@@ -13,7 +13,7 @@ library CalcBPool {
     uint256 constant WAD = 10 ** 18;
 
     /// @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision.
-    function bdiv(uint256 a, uint256 b) internal pure returns (uint256) {
+    function bdiv(uint256 a, uint256 b) public pure returns (uint256) {
         require(b != 0, "ERR_DIV_ZERO");
         uint256 c0 = a * WAD;
         require(a == 0 || c0 / a == WAD, "ERR_DIV_INTERNAL"); // bmul overflow
@@ -30,7 +30,7 @@ library CalcBPool {
         address _pair,
         address _staker,
         address _stakeLocker
-    ) internal view returns (uint256) {
+    ) public view returns (uint256) {
 
         //calculates the value of BPT in unites of _liquidityAssetContract, in 'wei' (decimals) for this token
 
@@ -66,7 +66,7 @@ library CalcBPool {
         address pair,
         address staker,
         address stakeLocker
-    ) internal view returns (uint256) {
+    ) public view returns (uint256) {
 
         // Fetch balancer pool token information.
         IBPool bPool            = IBPool(pool);
@@ -103,7 +103,7 @@ library CalcBPool {
         address pool,
         address pair,
         address stakeLocker
-    ) internal view returns (uint256) {
+    ) public view returns (uint256) {
 
         // Fetch balancer pool token information.
         IBPool bPool            = IBPool(pool);
@@ -145,7 +145,7 @@ library CalcBPool {
         address staker,
         address stakeLocker,
         uint256 pairAmountRequired
-    ) internal view returns (uint256, uint256) {
+    ) public view returns (uint256, uint256) {
 
         IBPool bPool = IBPool(bpool);
 
