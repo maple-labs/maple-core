@@ -338,14 +338,20 @@ contract StakeLockerTest is TestUtil {
         assertTrue(dan.try_stake(address(stakeLocker), 4 * WAD));
         assert_for_stake(address(dan), 21 * WAD, 59 * WAD, 59 * WAD, 4 * WAD, currentDate);
         assertEq(stakeLocker.getUnstakeableBalance(address(dan)), 0);
-        assertEq(stakeLocker.getUnstakeableBalance(address(che)), 55555555555555555);
 
         uint256 oldStakeDate = stakeLocker.stakeDate(address(che));
         uint256 newStakeDate = get_new_stake_date(address(che), 5 * WAD);
+
+        uint256 che_unstakeableBal_before = stakeLocker.getUnstakeableBalance(address(che));
+        assertEq(che_unstakeableBal_before, 55555555555555555);
+
         assertTrue(che.try_stake(address(stakeLocker), 5 * WAD)); 
+
+        uint256 che_unstakeableBal_after = stakeLocker.getUnstakeableBalance(address(che));
+        assertEq(che_unstakeableBal_after, 55555555555555550);
+
         assert_for_stake(address(che), 15 * WAD, 64 * WAD, 64 * WAD, 10 * WAD, newStakeDate);
         assertEq(newStakeDate - oldStakeDate, 12 hours);  // coef will be 0.5 days.
-        assertEq(stakeLocker.getUnstakeableBalance(address(che)), 55555555555555550);
 
         currentDate = currentDate + 5 days;
         hevm.warp(currentDate);
