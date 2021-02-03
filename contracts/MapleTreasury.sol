@@ -150,11 +150,10 @@ contract MapleTreasury {
             _asset.balanceOf(address(this)),
             0, // The minimum amount of output tokens that must be received for the transaction not to revert.
             path,
-            address(this),
+            mpl, // Transfer tokens to MPL (MapleToken contract)
             block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
         );
 
-        require(_fundsToken.transfer(mpl, returnAmounts[path.length - 1]), "MapleTreasury:FUNDS_RECEIVE_TRANSFER");
         IMapleToken(mpl).updateFundsReceived();
 
         emit ERC20Conversion(
