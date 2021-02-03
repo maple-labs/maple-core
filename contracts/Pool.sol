@@ -477,7 +477,9 @@ contract Pool is FDT {
     /**
         @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
         @param lp Liquidity Provider to check claimableFunds for 
-        @return Amount of claimable funds (liquidityAsset) a Liquidity Provider can pull from LiquidityLocker
+        @return [0] = Total amount claimable.
+                [1] = Principal amount claimable.
+                [2] = Interest amount claimable.
     */
     function claimableFunds(address lp) public view returns(uint256, uint256, uint256) {
 
