@@ -203,7 +203,7 @@ contract LoanLiquidationTest is TestUtil {
             uint256 liquidationExcess  = loan.liquidationExcess();
 
             // Post-state triggerDefault() checks.
-            assertEq(uint256(loan.loanState()),                                     3);
+            assertEq(uint256(loan.loanState()),                                     4);
             assertEq(IERC20(collateralAsset).balanceOf(address(collateralLocker)),  0);
             assertEq(amountLiquidated,                              collateralBalance);
 
