@@ -396,20 +396,6 @@ describe("Cycle of an entire loan", function () {
   });
 
   it("(P7) Liquidity provider withdrawing USDC", async function () {
-
-    // balance = await USDC_Staker.balanceOf(PoolAddress);
-
-    // add = Pool_PoolDelegate.liquidityLocker();
-
-    // balance_two = await USDC_Staker.balanceOf(add);
-
-    // console.log(parseInt(balance["_hex"]));
-    // console.log(parseInt(balance_two["_hex"]));
-
-    // claimable = await Pool_LiquidityProvider.claimableFunds(Accounts[1]);
-    // console.log(parseInt(claimable[0]["_hex"]));
-    // console.log(parseInt(claimable[1]["_hex"]));
-
     // Withdraw USDC from the pool.
     await Pool_LiquidityProvider.withdraw(
       BigNumber.from(10).pow(6).mul(500) // "Burning" 500 * 10 ** 18 pool tokens corresponds to 500 USDC.
@@ -477,22 +463,9 @@ describe("Cycle of an entire loan", function () {
     // Note: Keep this test commented out, there is critical failure
     //       in the withdraw() function currently.
 
-    // balance = await USDC_Staker.balanceOf(PoolAddress);
-
-    // add = Pool_PoolDelegate.liquidityLocker();
-
-    // balance_two = await USDC_Staker.balanceOf(add);
-
-    // console.log(parseInt(balance["_hex"]));
-    // console.log(parseInt(balance_two["_hex"]));
-
-    // claimable = await Pool_LiquidityProvider.claimableFunds(Accounts[1]);
-    // console.log(parseInt(claimable[0]["_hex"]));
-    // console.log(parseInt(claimable[1]["_hex"]));
-
     // Withdraw USDC from the pool.
     await Pool_LiquidityProvider.withdraw(
-      BigNumber.from(10).pow(6).mul(1000) // "Burning" 2000 * 10 ** 18 pool tokens corresponds to 2000 USDC.
+      BigNumber.from(10).pow(6).mul(2000) // "Burning" 2000 * 10 ** 18 pool tokens corresponds to 2000 USDC.
     );
   });
 });

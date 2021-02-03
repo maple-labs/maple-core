@@ -242,24 +242,19 @@ contract Pool is FDT {
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
 
-        uint256 interestEarned = withdrawableFundsOf(msg.sender);       // Calculate interest earned
-        uint256 firstPenalty   = principalPenalty.mul(amt).div(10000);  // Calculate flat principal penalty
-        uint256 totalPenalty   = calcWithdrawPenalty(                   // Calculate total penalty
-                                     interestEarned.add(firstPenalty), 
-                                     msg.sender
-                                 );
+        uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
+        uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
+        uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
+        uint256 due               = amt.sub(totPenalty);                                                 // Funds due after the penalty deduction from the `amt` that is asked for withdraw.
 
-        (uint256 lockerClaim, uint256 interestClaim) = claimableFunds(msg.sender);
-        require(lockerClaim + interestClaim >= amt, "Pool:ERR_AMT_GT_CLAIMABLE");
-                                
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
         withdrawFunds();            // Transfer full entitled interest.
 
-        // Transfer the principal amount - totalPenalty
-        require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, amt), "Pool::WITHDRAW_TRANSFER");
+        // Transfer the principal amount - totPenalty
+        require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");
 
-        interestSum = interestSum.add(totalPenalty);  // Update the `interestSum` with the penalty amount. 
-        updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totalPenalty`.
+        interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount. 
+        updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
 
         _emitBalanceUpdatedEvent();
     }
