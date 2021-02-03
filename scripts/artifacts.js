@@ -44,6 +44,11 @@ const CORE = {
   BulletRepaymentCalc: "BulletRepaymentCalc",
   PremiumCalc: "PremiumCalc",
   LateFeeCalc: "LateFeeCalc",
+
+  // dummy
+  MapleDummyPriceFeedUSDC: 'MapleDummyPriceFeedUSDC',
+  MapleDummyPriceFeedWETH: 'MapleDummyPriceFeedWETH',
+  MapleDummyPriceFeedWBTC: 'MapleDummyPriceFeedWBTC',
 };
 
 const DEPS = {

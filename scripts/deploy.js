@@ -7,6 +7,8 @@ async function main() {
 
   // Get artifacts for Dependencies
   const USDC = getArtifacts(DEPS.USDC);
+  const WETH = getArtifacts(DEPS.WETH);
+  const WBTC = getArtifacts(DEPS.WBTC);
   const BFactory = getArtifacts(DEPS.BFactory);
   const UniswapV2Router02 = getArtifacts(DEPS.UniswapV2Router02);
 
@@ -39,6 +41,20 @@ async function main() {
   await deploy(CORE.FundingLockerFactory);
   await deploy(CORE.CollateralLockerFactory);
   await deploy(CORE.LoanFactory, [mapleGlobals.address]);
+  
+  console.log(CORE.LateFeeCalc);
+  console.log(CORE.MapleDummyPriceFeed);
+
+  // Price Feed deployments
+  const priceFeedUSDC = await deploy(CORE.MapleDummyPriceFeedUSDC, [ 1 * 10**8, USDC.address])
+  const priceFeedWETH = await deploy(CORE.MapleDummyPriceFeedWETH, [ 1630 * 10**8, WETH.address])
+  const priceFeedWBTC = await deploy(CORE.MapleDummyPriceFeedWBTC, [ 37100 * 10**8, WBTC.address])
+
+
+  await mapleGlobals.setPriceOracle(USDC.address, priceFeedUSDC.address);
+  await mapleGlobals.setPriceOracle(WETH.address, priceFeedWETH.address);
+  await mapleGlobals.setPriceOracle(WBTC.address, priceFeedWBTC.address);
+
 }
 
 main()
