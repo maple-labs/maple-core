@@ -206,7 +206,7 @@ contract Loan is FDT {
         IFundingLocker(fundingLocker).drain();	
 
         // Update accounting for claim()	
-        excessReturned += IERC20(loanAsset).balanceOf(address(this));	
+        excessReturned += loanAsset.balanceOf(address(this));	
 
         // Transition state to Expired.	
         loanState = State.Expired;	
@@ -234,10 +234,7 @@ contract Loan is FDT {
         loanState = State.Active;
 
         // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
-        require(
-            collateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt)), 
-            "Loan:INSUFFICIENT_COLLATERAL"
-        );
+        _checkValidTransferFrom(collateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt)));
 
         // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to Loan.
         uint treasuryFee = globals.treasuryFee();
@@ -290,7 +287,7 @@ contract Loan is FDT {
         path.push(address(loanAsset));
 
         // TODO: Consider oracles for 2nd parameter below.
-        uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
+        uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
             collateralAsset.balanceOf(address(this)),
             0, // The minimum amount of output tokens that must be received for the transaction not to revert.
             path,
@@ -327,17 +324,6 @@ contract Loan is FDT {
             defaultSuffered
         );
 
-    }
-
-    function _swapExactTokensForTokens(address[] memory path) internal returns(uint256[] memory returnAmounts) {
-        // TODO: Consider oracles for 2nd parameter below.
-        return IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
-            collateralAsset.balanceOf(address(this)),
-            0, // The minimum amount of output tokens that must be received for the transaction not to revert.
-            path,
-            address(this),
-            block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
-        );
     }
 
     /**
