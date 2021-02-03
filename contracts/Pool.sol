@@ -485,10 +485,10 @@ contract Pool is FDT {
 
         // Deposit is still within lockupPeriod, user has 0 claimableFunds under this condition.
         if (depositDate[lp].add(lockupPeriod) > block.timestamp) {
-            return (0, 0, withdrawableFundsOf(lp)); 
+            return (withdrawableFundsOf(lp), 0, withdrawableFundsOf(lp)); 
         }
         else {
-            uint256 userBalance    = balanceOf(lp);
+            uint256 userBalance    = _fromWad(balanceOf(lp)); // was balanceOf(lp)
             uint256 interestEarned = withdrawableFundsOf(lp);                       // Calculate interest earned
             uint256 firstPenalty   = principalPenalty.mul(userBalance).div(10000);  // Calculate flat principal penalty
             uint256 totalPenalty   = calcWithdrawPenalty(                           // Calculate total penalty
@@ -496,8 +496,8 @@ contract Pool is FDT {
                                          lp
                                      );
             return (
-                _fromWad(userBalance.sub(totalPenalty)).add(interestEarned), 
-                _fromWad(userBalance.sub(totalPenalty)), 
+                userBalance.sub(totalPenalty).add(interestEarned), 
+                userBalance.sub(totalPenalty), 
                 interestEarned
             );
         }

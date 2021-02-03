@@ -525,8 +525,9 @@ contract PoolTest is TestUtil {
         assertEq(pool1.lockupPeriod(), uint256(0),              "Failed to update the lockup period");
         
         (uint claimable, uint principal, uint interest) = pool1.claimableFunds(address(bob));
-        
-        assertTrue(bob.try_withdraw(address(pool1), claimable/*500 * USD*/), "Failed to withdraw 500 USD");
+
+        assertEq(claimable, 500 * USD);
+        assertTrue(bob.try_withdraw(address(pool1), claimable), "Failed to withdraw 500 USD");
     }
 
     function test_deposit_depositDate() public {
@@ -1663,23 +1664,29 @@ contract PoolTest is TestUtil {
         hevm.warp(start + pool1.penaltyDelay() - 10 days);                 // Fast-forward to claim all proportionate interest.
         _makeLoanPayment(loan3, hal);                                      // Make loan payment.
         sid.claim(address(pool1), address(loan3), address(dlFactory1));    // Fund claimed by the pool
+        {
+            uint256 withdrawAmount = depositAmount;
+            uint256 interest       = pool1.withdrawableFundsOf(address(kim));
+            uint256 priPenalty     = pool1.principalPenalty().mul(withdrawAmount).div(10000);            // Calculate flat principal penalty.
+            uint256 totPenalty     = pool1.calcWithdrawPenalty(interest.add(priPenalty), address(kim));  // Get total penalty, however it may be calculated.
+            uint256 oldInterestSum = pool1.interestSum();
+            
+            (total_kim, principal_kim, interest_kim) = pool1.claimableFunds(address(kim));
+            bal1 = IERC20(USDC).balanceOf(address(kim));
 
-        uint256 withdrawAmount = depositAmount;
-        uint256 interest       = pool1.withdrawableFundsOf(address(kim));
-        uint256 priPenalty     = pool1.principalPenalty().mul(withdrawAmount).div(10000);            // Calculate flat principal penalty.
-        uint256 totPenalty     = pool1.calcWithdrawPenalty(interest.add(priPenalty), address(kim));  // Get total penalty, however it may be calculated.
-        uint256 oldInterestSum = pool1.interestSum();
-        
-        kim.withdraw(address(pool1), withdrawAmount);
-        bal1 = IERC20(USDC).balanceOf(address(kim));
-        uint256 balanceDiff = bal1 > bal0 ? bal1 - bal0 : bal0 - bal1;
-        uint256 extraAmount = totPenalty > interest ? totPenalty - interest : interest - totPenalty;
+            kim.withdraw(address(pool1), withdrawAmount);
 
-        assertTrue(totPenalty != uint256(0));
-        withinPrecision(balanceDiff, extraAmount, 6);                                                                                     // All of principal returned, plus interest
-        assertEq(pool1.balanceOf(address(kim)),                 0,                    "Failed to burn the tokens");                       // LP tokens get burned.
-        assertEq(pool1.totalSupply(),                           beforeTotalSupply,    "Failed to decrement the supply");                  // Supply get reset.
-        assertEq(oldInterestSum.sub(interest).add(totPenalty),  pool1.interestSum(),  "Failed to update the interest sum");               // Interest sum is increased by totPenalty and decreased by the entitled interest.
+            uint256 bal2 = IERC20(USDC).balanceOf(address(kim));
+            uint256 balanceDiff = bal2 > bal0 ? bal2 - bal0 : bal0 - bal2;
+            uint256 extraAmount = totPenalty > interest ? totPenalty - interest : interest - totPenalty;
+
+            assertEq(total_kim, bal2 - bal1);
+            assertTrue(totPenalty != uint256(0));
+            withinPrecision(balanceDiff, extraAmount, 6);                                                                                     // All of principal returned, plus interest
+            assertEq(pool1.balanceOf(address(kim)),                 0,                    "Failed to burn the tokens");                       // LP tokens get burned.
+            assertEq(pool1.totalSupply(),                           beforeTotalSupply,    "Failed to decrement the supply");                  // Supply get reset.
+            assertEq(oldInterestSum.sub(interest).add(totPenalty),  pool1.interestSum(),  "Failed to update the interest sum");               // Interest sum is increased by totPenalty and decreased by the entitled interest.
+        }
     }
 
     function test_setPenaltyDelay() public {
@@ -1825,13 +1832,17 @@ contract PoolTest is TestUtil {
 
         // Deposit is still in lock-up
         assertEq(principal_kim, 0);
+        assertEq(interest_kim, pool1.withdrawableFundsOf(address(kim)));
         assertEq(total_kim, 0);
+        assertEq(total_kim, principal_kim + interest_kim);
 
         hevm.warp(depositDate);
         (total_kim, principal_kim, interest_kim) = pool1.claimableFunds(address(kim));
+
         assertGt(principal_kim, 0);
         assertGt(interest_kim, 0);
         assertGt(total_kim, 0);
+        assertEq(total_kim, principal_kim + interest_kim);
 
         uint256 kim_bal_pre = IERC20(pool1.liquidityAsset()).balanceOf(address(kim));
         
