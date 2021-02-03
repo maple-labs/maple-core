@@ -27,9 +27,8 @@ contract Loan is FDT {
         Active     = The loan has been drawdown and the borrower is making payments.
         Matured    = The loan is fully paid off and has "matured".
         Liquidated = The loan has been liquidated.
-        Expired    = The loan has passed the funding period, and is no longer expired.
     */
-    enum State { Live, Active, Matured, Liquidated, Expired }
+    enum State { Live, Active, Matured, Liquidated }
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
 
@@ -71,6 +70,16 @@ contract Loan is FDT {
     uint256 public amountRecovered;
     uint256 public defaultSuffered;
     uint256 public liquidationExcess;
+
+    modifier isState(State _state) {
+        require(loanState == _state, "Loan:STATE_CHECK");
+        _;
+    }
+
+    modifier isBorrower() {
+        require(msg.sender == borrower, "Loan:MSG_SENDER_NOT_BORROWER");
+        _;
+    }
 
     event LoanFunded(uint256 amtFunded, address indexed _fundedBy);
     event BalanceUpdated(address who, address token, uint256 balance);
@@ -170,8 +179,8 @@ contract Loan is FDT {
         @param  mintTo Address that debt tokens are minted to.
     */
     // TODO: Update this function signature to use (address, uint)
-    function fundLoan(uint256 amt, address mintTo) external {
-        _isValidState(State.Live);
+    function fundLoan(uint256 amt, address mintTo) external isState(State.Live) {
+        
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, fundingLocker, amt));
 
         uint256 wad = _toWad(amt);  // Convert to WAD precision
@@ -182,32 +191,11 @@ contract Loan is FDT {
     }
 
     /**
-        @dev If the borrower has not drawndown loan past grace period, return capital to lenders.
-    */
-    function unwind() external {
-        _isValidState(State.Live);
-        IGlobals globals = _globals(superFactory);
-
-        // Only callable if time has passed drawdown grace period, set in MapleGlobals.
-        require(block.timestamp > createdAt.add(globals.drawdownGracePeriod()));
-
-        // Drain funding from FundingLocker, transfers all loanAsset to this Loan.
-        IFundingLocker(fundingLocker).drain();
-
-        // Update accounting for claim()
-        excessReturned += IERC20(loanAsset).balanceOf(address(this));
-
-        // Transition state to Expired.
-        loanState = State.Expired;
-    }
-
-    /**
         @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from Funding to Active.
         @param  amt Amount of loanAsset borrower draws down, remainder is returned to Loan.
     */
-    function drawdown(uint256 amt) external {
-        _isValidBorrower();
-        _isValidState(State.Live);
+    function drawdown(uint256 amt) external isState(State.Live) isBorrower {
+
         IGlobals globals = _globals(superFactory);
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
@@ -224,7 +212,7 @@ contract Loan is FDT {
         // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
         require(
             collateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt)), 
-            "Loan:INSUFFICIENT_COLL_ASSET"
+            "Loan:INSUFFICIENT_COLLATERAL_APPROVAL"
         );
 
         // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to Loan.
@@ -270,43 +258,24 @@ contract Loan is FDT {
 
         IGlobals globals = _globals(superFactory);
 
-        if (
-            globals.defaultUniswapPath(address(collateralAsset), address(loanAsset)) != address(loanAsset)
-        ) {
-            address[] memory path_triangular = new address[](3);
-            path_triangular[0] = address(collateralAsset);
-            path_triangular[1] = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
-            path_triangular[2] = address(loanAsset);
-                
-            // TODO: Consider oracles for 2nd parameter below.
-            uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
-                collateralAsset.balanceOf(address(this)),
-                0, // The minimum amount of output tokens that must be received for the transaction not to revert.
-                path_triangular,
-                address(this),
-                block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
-            );
+        // Generate path.
+        address[] storage path;
+        path.push(address(collateralAsset));
+        address secondAsset = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
+        if (secondAsset != address(loanAsset)) { path.push(secondAsset); }
+        path.push(address(loanAsset));
 
-            amountLiquidated = returnAmounts[0];
-            amountRecovered  = returnAmounts[2];
-        }
-        else {
-            address[] memory path_bilateral  = new address[](2);
-            path_bilateral[0] = address(collateralAsset);
-            path_bilateral[1] = address(loanAsset);
-                
-            // TODO: Consider oracles for 2nd parameter below.
-            uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
-                collateralAsset.balanceOf(address(this)),
-                0, // The minimum amount of output tokens that must be received for the transaction not to revert.
-                path_bilateral,
-                address(this),
-                block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
-            );
+        // TODO: Consider oracles for 2nd parameter below.
+        uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
+            collateralAsset.balanceOf(address(this)),
+            0, // The minimum amount of output tokens that must be received for the transaction not to revert.
+            path,
+            address(this),
+            block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
+        );
 
-            amountLiquidated = returnAmounts[0];
-            amountRecovered  = returnAmounts[1];
-        }
+        amountLiquidated = returnAmounts[0];
+        amountRecovered  = returnAmounts[path.length - 1];
 
         // Reduce principal owed by amount received (as much as is required for principal owed == 0).
         if (amountRecovered > principalOwed) {
@@ -339,8 +308,7 @@ contract Loan is FDT {
     /**
         @dev Trigger a default. Does nothing if block.timestamp <= nextPaymentDue + gracePeriod.
     */
-    function triggerDefault() external {
-        _isValidState(State.Active);
+    function triggerDefault() isState(State.Active) external {
         if (block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod())) {
             _triggerDefault();
         }
@@ -349,8 +317,8 @@ contract Loan is FDT {
     /**
         @dev Make the next payment for this loan.
     */
-    function makePayment() external {
-        _isValidState(State.Active);
+    function makePayment() external isState(State.Active) {
+
         (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
 
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
@@ -421,8 +389,7 @@ contract Loan is FDT {
     /**
         @dev Make the full payment for this loan, a.k.a. "calling" the loan.
     */
-    function makeFullPayment() public {
-        _isValidState(State.Active);
+    function makeFullPayment() public isState(State.Active) {
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
 
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
@@ -452,12 +419,14 @@ contract Loan is FDT {
 
     /**
         @dev Returns information on full payment amount.
-        @return total i.e Principal + Interest.
-        @return principal only principal amount.
-        @return interest Interest earned.
+        @return [0] = Principal + Interest
+                [1] = Principal 
+                [2] = Interest
+                [3] = Payment Due Date
     */
-    function getFullPayment() public view returns(uint256 total, uint256 principal, uint256 interest) {
-        (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
+    function getFullPayment() public view returns(uint256, uint256, uint256) {
+        (uint256 total, uint256 principal, uint256 interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
+        return (total, principal, interest);
     }
 
     /**
@@ -501,13 +470,5 @@ contract Loan is FDT {
 
     function _getFundingLockerBalance() internal view returns (uint256) {
         return loanAsset.balanceOf(fundingLocker);
-    }
-
-    function _isValidState(State _state) internal {
-        require(loanState == _state, "Loan:INVALID_STATE");
-    }
-
-    function _isValidBorrower() internal {
-        require(msg.sender == borrower, "Loan:INVALID_BORROWER");
     }
 }
