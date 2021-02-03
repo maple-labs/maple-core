@@ -28,5 +28,5 @@ interface IPool {
     
     function setWhitelistStakeLocker(address, bool) external;
 
-    function claimableFunds(address) external view returns(uint256, uint256);
+    function claimableFunds(address) external view returns(uint256, uint256, uint256);
 }

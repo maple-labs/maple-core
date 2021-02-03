@@ -1805,13 +1805,13 @@ contract PoolTest is TestUtil {
         uint depositDate = pool1.depositDate(address(kim)).add(pool1.lockupPeriod());
 
         hevm.warp(depositDate - 1);
-        (uint claimable_kim,) = pool1.claimableFunds(address(kim));
+        (uint claimable_kim,,) = pool1.claimableFunds(address(kim));
 
         // Deposit is still in lock-up
         assertEq(claimable_kim, 0);
 
         hevm.warp(depositDate);
-        (claimable_kim, ) = pool1.claimableFunds(address(kim));
+        (claimable_kim,,) = pool1.claimableFunds(address(kim));
 
         assertGt(claimable_kim, 0);
 
@@ -1837,13 +1837,13 @@ contract PoolTest is TestUtil {
         uint depositDate = pool1.depositDate(address(kim)).add(pool1.lockupPeriod());
 
         hevm.warp(depositDate - 1);
-        (uint claimable_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
+        (,uint claimable_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
 
         // Deposit is still in lock-up
         assertEq(claimable_kim, 0);
 
         hevm.warp(depositDate);
-        (claimable_kim, interest_kim) = pool1.claimableFunds(address(kim));
+        (,claimable_kim, interest_kim) = pool1.claimableFunds(address(kim));
         assertGt(claimable_kim, 0);
         assertGt(interest_kim, 0);
 

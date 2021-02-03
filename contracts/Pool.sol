@@ -479,11 +479,11 @@ contract Pool is FDT {
         @param lp Liquidity Provider to check claimableFunds for 
         @return Amount of claimable funds (liquidityAsset) a Liquidity Provider can pull from LiquidityLocker
     */
-    function claimableFunds(address lp) public view returns(uint256, uint256) {
+    function claimableFunds(address lp) public view returns(uint256, uint256, uint256) {
 
         // Deposit is still within lockupPeriod, user has 0 claimableFunds under this condition.
         if (depositDate[lp].add(lockupPeriod) > block.timestamp) {
-            return (0, withdrawableFundsOf(lp)); 
+            return (0, 0, withdrawableFundsOf(lp)); 
         }
         else {
             uint256 userBalance    = balanceOf(lp);
@@ -493,7 +493,11 @@ contract Pool is FDT {
                                          interestEarned.add(firstPenalty),
                                          lp
                                      );
-            return (_fromWad(userBalance.sub(totalPenalty)), interestEarned);   // Return full amount minus any penalties.
+            return (
+                _fromWad(userBalance.sub(totalPenalty)).add(interestEarned), 
+                _fromWad(userBalance.sub(totalPenalty)), 
+                interestEarned
+            );
         }
     }
 
