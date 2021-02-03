@@ -35,6 +35,7 @@ contract Governor {
     function setSwapOutRequired(uint256 swapAmt)                      external { globals.setSwapOutRequired(swapAmt); }
     function setUnstakeDelay(uint256 delay)                           external { globals.setUnstakeDelay(delay); }
     function setGovernor(address gov)                                 external { globals.setGovernor(gov); }
+    function setPriceOracle(address asset, address oracle)            external { globals.setPriceOracle(asset, oracle); }
 
     // Try functions
     function try_setGlobals(address target, address globals) external returns (bool ok) {
@@ -120,6 +121,11 @@ contract Governor {
     function try_setGovernor(address gov) external returns (bool ok) { 
         string memory sig = "setGovernor(address)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, gov)); 
+    }
+
+    function try_setPriceOracle(address asset, address oracle) external returns (bool ok) { 
+        string memory sig = "setPriceOracle(address,address)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, asset, oracle)); 
     }
 
     function try_passThroughFundsToken(address trs) external returns (bool ok) { 
