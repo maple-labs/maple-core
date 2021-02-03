@@ -363,12 +363,12 @@ contract StakeLockerTest is TestUtil {
         newStakeDate = stkDate + (((now - stkDate) * coef) / WAD);
     }
 
-    function assert_for_stake(address staker, uint256 sBPoolBal, uint256 slBPoolBal, uint256 slTotalSupply, uint256 sSlBal, uint256 sSlStakeDate) public {
-        assertEq(bPool.balanceOf(staker),                sBPoolBal,     "Incorrect balance of staker");
-        assertEq(bPool.balanceOf(address(stakeLocker)),  slBPoolBal,    "Incorrect balance of stake locker");
-        assertEq(stakeLocker.totalSupply(),              slTotalSupply, "Incorrect total supply of stake locker");
-        assertEq(stakeLocker.balanceOf(staker),          sSlBal,        "Incorrect balance of staker for stake locker");
-        assertEq(stakeLocker.stakeDate(staker),          sSlStakeDate,  "Incorrect stake date for staker");
+    function assert_for_stake(address staker, uint256 staker_BPoolBal, uint256 sl_BPoolBal, uint256 sl_TotalSupply, uint256 staker_SlBal, uint256 staker_SlStakeDate) public {
+        assertEq(bPool.balanceOf(staker),                staker_BPoolBal,     "Incorrect balance of staker");
+        assertEq(bPool.balanceOf(address(stakeLocker)),  sl_BPoolBal,         "Incorrect balance of stake locker");
+        assertEq(stakeLocker.totalSupply(),              sl_TotalSupply,      "Incorrect total supply of stake locker");
+        assertEq(stakeLocker.balanceOf(staker),          staker_SlBal,        "Incorrect balance of staker for stake locker");
+        assertEq(stakeLocker.stakeDate(staker),          staker_SlStakeDate,  "Incorrect stake date for staker");
     }
 
     function test_stake() public {
