@@ -322,7 +322,16 @@ contract Loan is FDT {
     */
     function triggerDefault() external {
         _isValidState(State.Active);
-        if (block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod())) {
+
+        uint256 gracePeriodTill          = nextPaymentDue.add(_globals(superFactory).gracePeriod());
+        bool isGracePeriodPassed         = block.timestamp > gracePeriodTill;
+        bool isWithInExtendedGracePeriod = isGracePeriodPassed && block.timestamp <= gracePeriodTill.add(_globals(superFactory).extendedGracePeriod());
+
+        // It checks following conditions - 
+        // 1. If `current time - nexPaymentDue` is within the (gracePeriod, gracePeriod + ExtendedGracePeriod] & `msg.sender` is
+        //  a pool delegate (Assumption: Only pool delegate will have non zero balance) then liquidate the loans or
+        // 2. If `current time - nexPaymentDue` is greater than gracePeriod + ExtendedGracePeriod then any msg.sender can liquidate the loans.
+        if ((isWithInExtendedGracePeriod && balanceOf(msg.sender) > 0) || (isGracePeriodPassed && !isWithInExtendedGracePeriod)) {
             _triggerDefault();
         }
     }
