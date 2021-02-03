@@ -1645,47 +1645,65 @@ contract PoolTest is TestUtil {
         uint256 bal1 = IERC20(USDC).balanceOf(address(kim));  // Balance after principal penalty
 
         assertEq(bal0 - bal1, 50 * USD); // 5% principal penalty.
+    }
+
+    function test_withdraw_principal_and_interest_penalty() public {
+        setUpWithdraw();
+
+        uint start = block.timestamp;
         
-        uint256 beforeTotalSupply = pool1.totalSupply();
-        uint256 beforeLLBalance   = IERC20(USDC).balanceOf(pool1.liquidityLocker());
+        sid.setPrincipalPenalty(address(pool1), 500);
+        assertTrue(sid.try_setLockupPeriod(pool1, 0));
+        assertEq(pool1.lockupPeriod(), uint256(0));
+
+        mint("USDC", address(kim), 2000 * USD);
+        kim.approve(USDC, address(pool1), MAX_UINT);
+        
 
         // Do another deposit with same amount
-        bal0 = IERC20(USDC).balanceOf(address(kim));
+        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));  // Get balance before deposit
+        uint256 depositAmount = 1000 * USD;
+        uint256 lpToken       = 1000 * WAD;
+        uint256 beforeTotalSupply = pool1.totalSupply();
 
-        assertTrue(kim.try_deposit(address(pool1),  depositAmount));                                                           // Add another 1000 USDC.
-        assertEq(pool1.balanceOf(address(kim)),     lpToken, "Failed to update LP balance");                                   // Verify the LP token balance.
-        assertEq(pool1.totalSupply(),               beforeTotalSupply.add(lpToken), "Failed to update the TS");                // Pool total supply get increase by the lpToken.
-        assertEq(_getLLBal(pool1),                  beforeLLBalance.add(depositAmount), "Failed to update the LL balance");    // Make sure liquidity locker balance get increases.
-
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");  // Fund the loan.
-        assertEq(_getLLBal(pool1),                  beforeLLBalance, "Failed to update the LL balance");                          // Make sure liquidity locker balance get increases.
-
-        _drawDownLoan(1000 * USD, loan3, hal);                             // Draw down the loan.
-        hevm.warp(start + pool1.penaltyDelay() - 10 days);                 // Fast-forward to claim all proportionate interest.
-        _makeLoanPayment(loan3, hal);                                      // Make loan payment.
-        sid.claim(address(pool1), address(loan3), address(dlFactory1));    // Fund claimed by the pool
         {
-            uint256 withdrawAmount = depositAmount;
+            uint256 beforeLLBalance = IERC20(USDC).balanceOf(pool1.liquidityLocker());
+
+            assertTrue(kim.try_deposit(address(pool1),  depositAmount));                                                           // Add another 1000 USDC.
+            assertEq(pool1.balanceOf(address(kim)),     lpToken, "Failed to update LP balance");                                   // Verify the LP token balance.
+            assertEq(pool1.totalSupply(),               beforeTotalSupply.add(lpToken), "Failed to update the TS");                // Pool total supply get increase by the lpToken.
+            assertEq(_getLLBal(pool1),                  beforeLLBalance.add(depositAmount), "Failed to update the LL balance");    // Make sure liquidity locker balance get increases.
+
+            assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");  // Fund the loan.
+            assertEq(_getLLBal(pool1),                  beforeLLBalance, "Failed to update the LL balance");                          // Make sure liquidity locker balance get increases.
+
+            _drawDownLoan(1000 * USD, loan3, hal);                             // Draw down the loan.
+            hevm.warp(start + pool1.penaltyDelay() - 10 days);                 // Fast-forward to claim all proportionate interest, taking a penalty
+            _makeLoanPayment(loan3, hal);                                      // Make loan payment.
+            sid.claim(address(pool1), address(loan3), address(dlFactory1));    // Fund claimed by the pool
+        }
+
+        {
             uint256 interest       = pool1.withdrawableFundsOf(address(kim));
-            uint256 priPenalty     = pool1.principalPenalty().mul(withdrawAmount).div(10000);            // Calculate flat principal penalty.
-            uint256 totPenalty     = pool1.calcWithdrawPenalty(interest.add(priPenalty), address(kim));  // Get total penalty, however it may be calculated.
+            uint256 priPenalty     = pool1.principalPenalty().mul(depositAmount).div(10000);             // Calculate flat principal penalty.
+            uint256 totPenalty     = pool1.calcWithdrawPenalty(interest.add(priPenalty), address(kim));  // Get total penalty
             uint256 oldInterestSum = pool1.interestSum();
             
-            (total_kim, principal_kim, interest_kim) = pool1.claimableFunds(address(kim));
-            bal1 = IERC20(USDC).balanceOf(address(kim));
+            (uint256 total_kim, uint256 principal_kim, uint256 interest_kim) = pool1.claimableFunds(address(kim));
+            uint256 bal1 = IERC20(USDC).balanceOf(address(kim));  // Get balance before withdraw
 
-            kim.withdraw(address(pool1), withdrawAmount);
+            kim.withdraw(address(pool1), depositAmount);
 
-            uint256 bal2 = IERC20(USDC).balanceOf(address(kim));
-            uint256 balanceDiff = bal2 > bal0 ? bal2 - bal0 : bal0 - bal2;
-            uint256 extraAmount = totPenalty > interest ? totPenalty - interest : interest - totPenalty;
+            uint256 bal2 = IERC20(USDC).balanceOf(address(kim));                                          // Get balance after withdraw
+            uint256 balanceDiff = bal2 > bal0 ? bal2 - bal0 : bal0 - bal2;                                // Get balance difference between before deposit and after withdraw
+            uint256 extraAmount = totPenalty > interest ? totPenalty - interest : interest - totPenalty;  // Get amount from interest/pentalty
 
             assertEq(total_kim, bal2 - bal1);
             assertTrue(totPenalty != uint256(0));
-            withinPrecision(balanceDiff, extraAmount, 6);                                                                                     // All of principal returned, plus interest
-            assertEq(pool1.balanceOf(address(kim)),                 0,                    "Failed to burn the tokens");                       // LP tokens get burned.
-            assertEq(pool1.totalSupply(),                           beforeTotalSupply,    "Failed to decrement the supply");                  // Supply get reset.
-            assertEq(oldInterestSum.sub(interest).add(totPenalty),  pool1.interestSum(),  "Failed to update the interest sum");               // Interest sum is increased by totPenalty and decreased by the entitled interest.
+            withinPrecision(balanceDiff, extraAmount, 6);                                                                        // All of principal returned, plus interest
+            assertEq(pool1.balanceOf(address(kim)),                 0,                    "Failed to burn the tokens");          // LP tokens get burned.
+            assertEq(pool1.totalSupply(),                           beforeTotalSupply,    "Failed to decrement the supply");     // Supply get reset.
+            assertEq(oldInterestSum.sub(interest).add(totPenalty),  pool1.interestSum(),  "Failed to update the interest sum");  // Interest sum is increased by totPenalty and decreased by the entitled interest.
         }
     }
 
@@ -1814,20 +1832,20 @@ contract PoolTest is TestUtil {
         uint start = block.timestamp;
 
         // Mint and deposit 1000 USDC
-        mint("USDC", address(kim), 5000 * USD);
+        mint("USDC", address(kim), 1_000_000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
         uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
-        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+        assertTrue(kim.try_deposit(address(pool1), 1_000_000 * USD));
 
         // Fund loan, drawdown, make payment and claim so kim can claim interest
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
-        _drawDownLoan(1000 * USD, loan3, hal);
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1_000_000 * USD), "Fail to fund the loan");
+        _drawDownLoan(1_000_000 * USD, loan3, hal);
         _makeLoanPayment(loan3, hal); 
         sid.claim(address(pool1), address(loan3), address(dlFactory1));
 
-        uint depositDate = pool1.depositDate(address(kim)).add(pool1.lockupPeriod());
+        uint withdrawDate = pool1.depositDate(address(kim)).add(pool1.lockupPeriod());
 
-        hevm.warp(depositDate - 1);
+        hevm.warp(withdrawDate - 1);
         (uint total_kim, uint principal_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
 
         // Deposit is still in lock-up
@@ -1836,7 +1854,7 @@ contract PoolTest is TestUtil {
         assertEq(total_kim, 0);
         assertEq(total_kim, principal_kim + interest_kim);
 
-        hevm.warp(depositDate);
+        hevm.warp(withdrawDate);
         (total_kim, principal_kim, interest_kim) = pool1.claimableFunds(address(kim));
 
         assertGt(principal_kim, 0);
