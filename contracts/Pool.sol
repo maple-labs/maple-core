@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "./token/FDT.sol";
+import "./token/PoolFDT.sol";
 
 import "./interfaces/IBPool.sol";
 import "./interfaces/IDebtLocker.sol";
@@ -20,7 +20,7 @@ import "./library/CalcBPool.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 /// @title Pool is the core contract for liquidity pools.
-contract Pool is FDT {
+contract Pool is PoolFDT {
 
     using SafeMath  for uint256;
 
@@ -39,8 +39,10 @@ contract Pool is FDT {
 
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset.
 
+    // Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + bptShortfall
+    //        liquidityLockerBal + principalOut = fdtTotalSupply + interestSum - bptShortfall
+
     uint256 public principalOut;      // Sum of all outstanding principal on loans
-    uint256 public interestSum;       // Sum of all interest currently inside the liquidity locker
     uint256 public stakingFee;        // The fee for stakers (in basis points).
     uint256 public delegateFee;       // The fee for delegates (in basis points).
     uint256 public principalPenalty;  // Max penalty on principal in bips on early withdrawal.
@@ -92,7 +94,7 @@ contract Pool is FDT {
         uint256 _liquidityCap,
         string memory name,
         string memory symbol
-    ) FDT(name, symbol, _liquidityAsset) public {
+    ) PoolFDT(name, symbol) public {
         require(_globals(msg.sender).isValidLoanAsset(_liquidityAsset), "Pool:INVALID_LIQ_ASSET");
         require(_liquidityCap   != uint256(0),                          "Pool:INVALID_CAP");
 
@@ -141,13 +143,19 @@ contract Pool is FDT {
         return IStakeLockerFactory(_slFactory).newLocker(_stakeAsset, _liquidityAsset);
     }
 
+    event Debug(string, uint);
+
     /**
         @dev Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
     */
     function finalize() external {
         _isValidState(State.Initialized);
         _isValidDelegate();
-        (,, bool stakePresent,,) = getInitialStakeRequirements();
+        (uint swapOutAmountRequired, uint swapOutval, bool stakePresent, uint poolAmountInRequired, uint poolAmountPresent) = getInitialStakeRequirements();
+        emit Debug("swapOutAmountRequired", swapOutAmountRequired);
+        emit Debug("swapOutval", swapOutval);
+        emit Debug("poolAmountInRequired", poolAmountInRequired);
+        emit Debug("poolAmountPresent", poolAmountPresent);
         require(stakePresent, "Pool:INSUFFICIENT_STAKE");
         poolState = State.Finalized;
     }
@@ -294,18 +302,30 @@ contract Pool is FDT {
         emit LoanFunded(loan, _debtLocker, amt);
         _emitBalanceUpdatedEvent();
     }
+
+
     
     // Helper function for claim() if a default has occurred.
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
-        // Check liquidityAsset swapOut value of StakeLocker coverage.
-        uint256 availableSwapOut = CalcBPool.getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
+        // Check liquidityAsset swapOut value of StakeLocker coverage
+        uint256 availableSwapOut = stakeAsset.getSwapOutValueLocker(address(liquidityAsset), stakeLocker);
+        uint256 maxSwapOut       = liquidityAsset.balanceOf(address(stakeAsset)).mul(IBPool(stakeAsset).MAX_OUT_RATIO()).div(WAD);  // Max amount that can be swapped 
+
+        availableSwapOut = availableSwapOut > maxSwapOut ? maxSwapOut : availableSwapOut;
 
         // Pull BPTs from StakeLocker.
         require(
             IStakeLocker(stakeLocker).pull(address(this), IBPool(stakeAsset).balanceOf(stakeLocker)),
             "Pool:STAKE_PULL"
         );
+
+        // To maintain accounting, account for accidental transfers into Pool
+        uint256 preBurnBalance = liquidityAsset.balanceOf(address(this));
+
+        emit Debug("availableSwapOut", availableSwapOut);
+        emit Debug("preBurnBalance", preBurnBalance);
+        emit Debug("defaultSuffered", defaultSuffered);
 
         // Burn enough BPTs for liquidityAsset to cover defaultSuffered.
         uint256 bptsBurned = IBPool(stakeAsset).exitswapExternAmountOut(
@@ -318,14 +338,17 @@ contract Pool is FDT {
         uint256 bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
         IBPool(stakeAsset).transfer(stakeLocker, bptsReturned);
 
-        uint256 liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this));
+        uint256 liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this)).sub(preBurnBalance);
 
-        // "SAD PATH" : Handle shortfall in StakeLocker, liquidity providers suffer a loss in withdraw() power.
+        emit Debug("bptsBurned", bptsBurned);
+        emit Debug("bptsReturned", bptsReturned);
+        emit Debug("liquidityAssetRecoveredFromBurn", liquidityAssetRecoveredFromBurn);
+
+        // Handle shortfall in StakeLocker, liquidity providers suffer a loss
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
-            // TODO: Implement accounting for "SAD PATH" (i.e. DoubleFDT)
-        }
-        // "HAPPY PATH" : Handle normal liquidation with enough liquidityAsset recovered from BPTs burned.
-        else {
+            bptShortfall = bptShortfall.add(defaultSuffered - liquidityAssetRecoveredFromBurn);
+            updateLossesReceived();
+        } else {
             // TODO: Implement accounting ... if any is needed at all (?) for "HAPPY PATH"
         }
 
@@ -371,8 +394,7 @@ contract Pool is FDT {
         // Ensures that internal accounting is exactly reflective of balance change
         _transferLiquidityAsset(liquidityLocker, principalClaim.add(interestClaim)); 
         
-        // Handle default.
-        // TODO: Consider order of operations, where this function should happen in claim() ... is there a better place?
+        // Handle default if defaultSuffed > 0
         if (claimInfo[5] > 0) {
             _handleDefault(loan, claimInfo[5]);
         }
@@ -571,7 +593,7 @@ contract Pool is FDT {
     /**
         @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
     */
-    function withdrawFunds() public override(FDT) {
+    function withdrawFunds() public override {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
@@ -584,15 +606,54 @@ contract Pool is FDT {
         _updateFundsTokenBalance();
     }
 
-    /**
-        @dev Updates the current funds token balance and returns the difference of new and previous funds token balances.
-        @return A int256 representing the difference of the new and previous funds token balance.
-    */
-    function _updateFundsTokenBalance() internal override returns (int256) {
-        uint256 _prevFundsTokenBalance = fundsTokenBalance;
+    // /**
+    //     @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
+    // */
+    // function withdrawFunds() public override(FDT) {
+    //     uint256 withdrawableFunds = _prepareWithdraw();
 
-        fundsTokenBalance = interestSum;
+    //     require(
+    //         ILiquidityLocker(liquidityLocker).transfer(msg.sender, withdrawableFunds),
+    //         "FDT_ERC20:TRANSFER_FAILED"
+    //     );
 
-        return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
-    }
+    //     interestSum = interestSum.sub(withdrawableFunds);
+
+    //     _updateFundsTokenBalance();
+    // }
+
+    // /**
+    //     @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
+    // */
+    // function recognizeLosses() internal override(FDT) returns (uint256 losses) {
+    //     losses = _prepareLossesWithdraw();
+
+    //     bptShortfall = bptShortfall.sub(losses);
+
+    //     _updateLossesTokenBalance();
+    // }
+
+    // /**
+    //     @dev Updates the current funds token balance and returns the difference of new and previous funds token balances.
+    //     @return A int256 representing the difference of the new and previous funds token balance.
+    // */
+    // function _updateFundsTokenBalance() internal override returns (int256) {
+    //     uint256 _prevFundsTokenBalance = interestBalance;
+
+    //     interestBalance = interestSum;
+
+    //     return int256(interestBalance).sub(int256(_prevFundsTokenBalance));
+    // }
+
+    // /**
+    //     @dev Updates the current funds token balance and returns the difference of new and previous funds token balances.
+    //     @return A int256 representing the difference of the new and previous funds token balance.
+    // */
+    // function _updateLossesBalance() internal override returns (int256) {
+    //     uint256 _prevLossesTokenBalance = lossesBalance;
+
+    //     lossesBalance = bptShortfall;
+
+    //     return int256(lossesBalance).sub(int256(_prevLossesTokenBalance));
+    // }
 }

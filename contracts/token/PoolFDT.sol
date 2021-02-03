@@ -8,21 +8,42 @@ import "./IFDT.sol";
 import "../math/SafeMathUint.sol";
 import "../math/SafeMathInt.sol";
 
-abstract contract DoubleFDT is IFDT, ERC20 {
+abstract contract PoolFDT is IFDT, ERC20 {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
     using SafeMathInt    for  int256;
 
+    uint256 public interestSum;   // Sum of all withdrawable interest 
+    uint256 public bptShortfall;  // Sum of all unrecognized losses 
+
     uint256 public interestBalance;  // The amount of earned interest present and accounted for in this contract.
-    uint256 public lossBalance;      // The amount of losses present and accounted for in this contract.
+    uint256 public lossesBalance;    // The amount of losses present and accounted for in this contract.
 
     uint256 internal constant pointsMultiplier = 2 ** 128;
+
     uint256 internal pointsPerShare;
     uint256 internal lossesPerShare;
 
     mapping(address => int256)  internal pointsCorrection;
-    mapping(address => uint256) internal withdrawnFunds; // 3
+    mapping(address => int256)  internal lossesCorrection;
+
+    mapping(address => uint256) internal withdrawnFunds;
+    mapping(address => uint256) internal recognizedLosses;
+
+    /**
+     * @dev This event emits when new losses are distributed
+     * @param by the address of the sender who distributed losses
+     * @param lossesDistributed the amount of losses received for distribution
+     */
+    event LossesDistributed(address indexed by, uint256 lossesDistributed);
+
+    /**
+     * @dev This event emits when distributed losses are recognized by a token holder.
+     * @param by the address of the receiver of losses
+     * @param lossesRecognized the amount of losses that were recognized
+     */
+    event LossesRecognized(address indexed by, uint256 lossesRecognized);
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) public { }
 
@@ -30,13 +51,13 @@ abstract contract DoubleFDT is IFDT, ERC20 {
      * prev. distributeDividends
      * @dev Distributes funds to token holders.
      * @dev It reverts if the total supply of tokens is 0.
-     * It emits the `FundsDistributed` event if the amount of received ether is greater than 0.
+     * It emits the `FundsDistributed` event if the amount of received funds is greater than 0.
      * About undistributed funds:
      *   In each distribution, there is a small amount of funds which does not get distributed,
      *     which is `(msg.value * pointsMultiplier) % totalSupply()`.
      *   With a well-chosen `pointsMultiplier`, the amount funds that are not getting distributed
      *     in a distribution can be less than 1 (base unit).
-     *   We can actually keep track of the undistributed ether in a distribution
+     *   We can actually keep track of the undistributed funds in a distribution
      *     and try to distribute it in the next distribution ....... todo implement
      */
     function _distributeFunds(uint256 value) internal {
@@ -52,13 +73,13 @@ abstract contract DoubleFDT is IFDT, ERC20 {
      * prev. distributeDividends
      * @dev Distributes losses to token holders.
      * @dev It reverts if the total supply of tokens is 0.
-     * It emits the `FundsDistributed` event if the amount of received ether is greater than 0.
+     * It emits the `FundsDistributed` event if the amount of received losses is greater than 0.
      * About undistributed losses:
      *   In each distribution, there is a small amount of losses which does not get distributed,
      *     which is `(msg.value * pointsMultiplier) % totalSupply()`.
      *   With a well-chosen `pointsMultiplier`, the amount losses that are not getting distributed
      *     in a distribution can be less than 1 (base unit).
-     *   We can actually keep track of the undistributed ether in a distribution
+     *   We can actually keep track of the undistributed losses in a distribution
      *     and try to distribute it in the next distribution ....... todo implement
      */
     function _distributeLosses(uint256 value) internal {
@@ -87,17 +108,17 @@ abstract contract DoubleFDT is IFDT, ERC20 {
 
     /**
      * @dev Prepares losses withdrawal
-     * @dev It emits a `LossesWithdrawn` event if the amount of withdrawn ether is greater than 0.
+     * @dev It emits a `LossesWithdrawn` event if the amount of withdrawn losses is greater than 0.
      */
     
     function _prepareLossesWithdraw() internal returns (uint256) {
-        uint256 _withdrawableDividend = withdrawableLossesOf(msg.sender);
+        uint256 _recognizeableDividend = recognizeableLossesOf(msg.sender);
 
-        withdrawnLosses[msg.sender] = withdrawnLosses[msg.sender].add(_withdrawableDividend);
+        recognizedLosses[msg.sender] = recognizedLosses[msg.sender].add(_recognizeableDividend);
 
-        emit LossesWithdrawn(msg.sender, _withdrawableDividend);
+        emit LossesRecognized(msg.sender, _recognizeableDividend);
 
-        return _withdrawableDividend;
+        return _recognizeableDividend;
     }
 
     /**
@@ -114,8 +135,8 @@ abstract contract DoubleFDT is IFDT, ERC20 {
      * @param _owner The address of a token holder.
      * @return The amount losses that `_owner` can withdraw.
      */
-    function withdrawableLossesOf(address _owner) public view override returns (uint256) {
-        return accumulativeLossesOf(_owner).sub(withdrawnLosses[_owner]);
+    function recognizeableLossesOf(address _owner) public view returns (uint256) {
+        return accumulativeLossesOf(_owner).sub(recognizedLosses[_owner]);
     }
 
     /**
@@ -128,12 +149,12 @@ abstract contract DoubleFDT is IFDT, ERC20 {
     }
 
     /**
-     * @dev View the amount of losses that an address has withdrawn.
+     * @dev View the amount of losses that an address has recognized.
      * @param _owner The address of a token holder.
-     * @return The amount of losses that `_owner` has withdrawn.
+     * @return The amount of losses that `_owner` has recognized.
      */
-    function withdrawnLossesOf(address _owner) public view returns (uint256) {
-        return withdrawnLosses[_owner];
+    function recognizedLossesOf(address _owner) public view returns (uint256) {
+        return recognizedLosses[_owner];
     }
 
     /**
@@ -228,54 +249,6 @@ abstract contract DoubleFDT is IFDT, ERC20 {
     }
 
     /**
-     * @dev Withdraws all available funds for a token holder
-     */
-    function withdrawFunds() public virtual override {
-        uint256 withdrawableFunds = _prepareWithdraw();
-
-        require(fundsToken.transfer(msg.sender, withdrawableFunds), "FDT:TRANSFER_FAILED");
-
-        _updateFundsTokenBalance();
-    }
-
-    /**
-     * @dev Withdraws all available losses for a token holder (TODO: figure out how to implement)
-     */
-    function withdrawLosses() public virtual override {
-        uint256 withdrawableLosses = _prepareWithdraw();
-
-        require(fundsToken.transfer(msg.sender, withdrawableLosses), "FDT:TRANSFER_FAILED");
-
-        _updateLossesTokenBalance();
-    }
-
-    /**
-     * @dev Updates the current funds token balance
-     * and returns the difference of new and previous funds token balances
-     * @return A int256 representing the difference of the new and previous funds token balance
-     */
-    function _updateFundsTokenBalance() internal virtual returns (int256) {
-        uint256 _prevFundsTokenBalance = interestBalance;
-
-        interestBalance = fundsToken.balanceOf(address(this));
-
-        return int256(interestBalance).sub(int256(_prevFundsTokenBalance));
-    }
-
-    /**
-     * @dev Updates the current losses balance
-     * and returns the difference of new and previous losses balances
-     * @return A int256 representing the difference of the new and previous losses balance
-     */
-    function _updateLossesBalance() internal virtual returns (int256) {
-        uint256 _prevLossesBalance = interestBalance;
-
-        lossesBalance = fundsToken.balanceOf(address(this)); // TODO: Figure out how to implement
-
-        return int256(lossesBalance).sub(int256(_prevLossesBalance));
-    }
-
-    /**
      * @dev Register a payment of funds in tokens. May be called directly after a deposit is made.
      * @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
      * funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
@@ -299,5 +272,40 @@ abstract contract DoubleFDT is IFDT, ERC20 {
         if (newLosses > 0) {
             _distributeLosses(newLosses.toUint256Safe());
         }
+    }
+
+    /**
+        @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
+    */
+    function recognizeLosses() internal returns (uint256 losses) {
+        losses = _prepareLossesWithdraw();
+
+        bptShortfall = bptShortfall.sub(losses);
+
+        _updateLossesBalance();
+    }
+
+    /**
+        @dev Updates the current funds token balance and returns the difference of new and previous funds token balances.
+        @return A int256 representing the difference of the new and previous funds token balance.
+    */
+    function _updateFundsTokenBalance() internal returns (int256) {
+        uint256 _prevFundsTokenBalance = interestBalance;
+
+        interestBalance = interestSum;
+
+        return int256(interestBalance).sub(int256(_prevFundsTokenBalance));
+    }
+
+    /**
+        @dev Updates the current funds token balance and returns the difference of new and previous funds token balances.
+        @return A int256 representing the difference of the new and previous funds token balance.
+    */
+    function _updateLossesBalance() internal returns (int256) {
+        uint256 _prevLossesTokenBalance = lossesBalance;
+
+        lossesBalance = bptShortfall;
+
+        return int256(lossesBalance).sub(int256(_prevLossesTokenBalance));
     }
 }

@@ -138,7 +138,7 @@ contract PoolLiquidationTest is TestUtil {
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
-        assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
+        assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted TODO: Find a way to mint more than 100 BPTs
 
         bPool.transfer(address(sid), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
         bPool.transfer(address(joe), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
@@ -165,7 +165,7 @@ contract PoolLiquidationTest is TestUtil {
             MAX_UINT  // liquidityCap value
         ));
 
-        // Create Liquidity Pool
+        // Create Liquidity Pool B
         pool_b = Pool(joe.createPool(
             address(poolFactory),
             USDC,
@@ -269,4 +269,100 @@ contract PoolLiquidationTest is TestUtil {
         assertGt(vals_b[5], 0);
       
     }
+
+    function test_claim_default_burn_BPT_shortfall() public {
+
+        // Fund the pool
+        mint("USDC", address(ali), 1_000_000_000 * USD);
+        ali.approve(USDC, address(pool_a), MAX_UINT);
+        ali.approve(USDC, address(pool_b), MAX_UINT);
+        ali.deposit(address(pool_a), 100_000_000 * USD);
+        ali.deposit(address(pool_b), 300_000_000 * USD);
+
+        // Fund the loan
+        sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 100_000_000 * USD);
+        joe.fundLoan(address(pool_b), address(loan), address(dlFactory), 300_000_000 * USD);
+        uint cReq = loan.collateralRequiredForDrawdown(400_000_000 * USD);
+
+        // Drawdown loan
+        mint("WETH", address(bob), cReq);
+        bob.approve(WETH, address(loan), MAX_UINT);
+        bob.drawdown(address(loan), 400_000_000 * USD);
+        
+        // Warp to late payment
+        uint256 start = block.timestamp;
+        uint256 nextPaymentDue = loan.nextPaymentDue();
+        uint256 gracePeriod = globals.gracePeriod();
+        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+
+        // Trigger default
+        loan.triggerDefault();
+
+        address liquidityLocker_a = pool_a.liquidityLocker();
+        address liquidityLocker_b = pool_b.liquidityLocker();
+
+        // Pre-state liquidityLocker checks.
+        uint256 liquidityLocker_pre_a = IERC20(USDC).balanceOf(liquidityLocker_a);
+        // uint256 liquidityLocker_pre_b = IERC20(USDC).balanceOf(liquidityLocker_b);
+
+        uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
+        // uint256[7] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
+
+        // Post-state liquidityLocker checks.
+        uint256 liquidityLocker_post_a = IERC20(USDC).balanceOf(liquidityLocker_a);
+        // uint256 liquidityLocker_post_b = IERC20(USDC).balanceOf(liquidityLocker_b);
+        
+        assertEq(liquidityLocker_post_a - liquidityLocker_pre_a, vals_a[5]);
+
+        uint ali_beforeBal = IERC20(USDC).balanceOf(address(ali));
+        ali.withdraw(address(pool_a), 100_000_000 * USD);
+        uint ali_afterBal = IERC20(USDC).balanceOf(address(ali));
+
+        assertEq(ali_afterBal - ali_beforeBal, 1);
+        // assertEq(liquidityLocker_post_b - liquidityLocker_pre_b, vals_b[5]);
+        // assertGt(vals_a[5], 0);
+        // assertGt(vals_b[5], 0);
+
+        assertTrue(false);
+      
+    }
 } 
+
+
+// function exitswapExternAmountOut(address tokenOut, uint tokenAmountOut, uint maxPoolAmountIn)
+//         external
+//         _logs_
+//         _lock_
+//         returns (uint poolAmountIn)
+//     {
+//         require(_finalized, "ERR_NOT_FINALIZED");
+//         require(_records[tokenOut].bound, "ERR_NOT_BOUND");
+//         require(tokenAmountOut <= bmul(_records[tokenOut].balance, MAX_OUT_RATIO), "ERR_MAX_OUT_RATIO");
+
+//         Record storage outRecord = _records[tokenOut];
+
+//         poolAmountIn = calcPoolInGivenSingleOut(
+//                             outRecord.balance,
+//                             outRecord.denorm,
+//                             _totalSupply,
+//                             _totalWeight,
+//                             tokenAmountOut,
+//                             _swapFee
+//                         );
+
+//         require(poolAmountIn != 0, "ERR_MATH_APPROX");
+//         require(poolAmountIn <= maxPoolAmountIn, "ERR_LIMIT_IN");
+
+//         outRecord.balance = bsub(outRecord.balance, tokenAmountOut);
+
+//         uint exitFee = bmul(poolAmountIn, EXIT_FEE);
+
+//         emit LOG_EXIT(msg.sender, tokenOut, tokenAmountOut);
+
+//         _pullPoolShare(msg.sender, poolAmountIn);
+//         _burnPoolShare(bsub(poolAmountIn, exitFee));
+//         _pushPoolShare(_factory, exitFee);
+//         _pushUnderlying(tokenOut, msg.sender, tokenAmountOut);        
+
+//         return poolAmountIn;
+//     }
