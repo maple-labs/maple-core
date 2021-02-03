@@ -441,7 +441,6 @@ contract Loan is FDT {
     */
     function getFullPayment() public view returns(uint256 total, uint256 principal, uint256 interest) {
         (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
-        return (total, principal, interest);
     }
 
     /**

@@ -32,6 +32,10 @@ contract MapleGlobals {
     mapping(address => bool)    public isValidPoolDelegate;     // Validation data structure for pool delegates (prevent invalid addresses from creating pools).
     
     // Determines the liquidation path of various assets in Loans and Treasury.
+    // The value provided will determine whether or not to perform a bilateral or triangular swap on Uniswap.
+    // For example, defaultUniswapPath[WETH][USDC] value would indicate what asset to convert WETH into before
+    // conversion to USDC. If defaultUniswapPath[WETH][USDC] == USDC ... then the swap is bilateral and no middle
+    // asset is swapped. If defaultUniswapPath[WETH][USDC] == WBTC ... then swap WETH for WBTC, then WBTC for USDC.
     mapping(address => mapping(address => address)) public defaultUniswapPath; 
 
     // Mapping of asset, to the associated oracle price feed.
