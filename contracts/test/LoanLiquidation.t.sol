@@ -131,6 +131,9 @@ contract LoanLiquidationTest is TestUtil {
         globals.setLoanAsset(USDC,                   true);
         globals.assignPriceFeed(WETH,  address(ethOracle));
         globals.assignPriceFeed(USDC, address(usdcOracle));
+        globals.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
+        globals.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
+        globals.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
 
         globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
         globals.setValidSubFactory(address(loanFactory), address(clFactory), true);

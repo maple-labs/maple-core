@@ -249,10 +249,10 @@ contract MapleGlobals {
         @param asset The asset to fetch price.
         @return The price of asset.
     */
-    function getLatestPrice(address asset) public view returns (int) {
+    function getLatestPrice(address asset) public view returns (uint256) {
         address oracle = oracleFor[asset];
         (,int price,,,) = AggregatorV3Interface(oracle).latestRoundData();
-        return price;
+        return uint256(price);
     }
 
     /**
