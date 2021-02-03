@@ -17,3 +17,5 @@ coverage.json
 key.json
 .env
 
+# HEVM
+hevm*
