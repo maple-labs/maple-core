@@ -127,27 +127,27 @@ contract MapleTreasury {
 
     /**
         @dev Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
-        @param _asset The ERC-20 asset to convert.
+        @param asset The ERC-20 asset to convert.
     */
-    function convertERC20(address _asset) isGovernor public {
-        require(_asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
+    function convertERC20(address asset) isGovernor public {
+        require(asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
         
         IUniswapRouter uniswap     = IUniswapRouter(uniswapRouter);
         IERC20         _fundsToken = IERC20(fundsToken);
-        IGlobals       globals     = _globals(superFactory);
+        IERC20         _asset      = IERC20(asset);
         
-        IERC20(_asset).approve(uniswapRouter, IERC20(_asset).balanceOf(address(this)));
+        _asset.approve(uniswapRouter, _asset.balanceOf(address(this)));
 
         // Generate path.
         address[] storage path;
-        path.push(address(collateralAsset));
-        address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
-        if (uniswapAssetForPath != address(loanAsset)) { path.push(uniswapAssetForPath); }
-        path.push(address(loanAsset));
+        path.push(address(asset));
+        address uniswapAssetForPath = IGlobals(globals).defaultUniswapPath(address(asset), address(fundsToken));
+        if (uniswapAssetForPath != address(asset)) { path.push(uniswapAssetForPath); }
+        path.push(address(asset));
 
         // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
-            collateralAsset.balanceOf(address(this)),
+            _asset.balanceOf(address(this)),
             0, // The minimum amount of output tokens that must be received for the transaction not to revert.
             path,
             address(this),
@@ -158,7 +158,7 @@ contract MapleTreasury {
         IMapleToken(mpl).updateFundsReceived();
 
         emit ERC20Conversion(
-            _asset,
+            asset,
             msg.sender,
             returnAmounts[0],
             returnAmounts[path.length - 1]
