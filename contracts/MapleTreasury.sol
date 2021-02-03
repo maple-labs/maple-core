@@ -132,11 +132,11 @@ contract MapleTreasury {
     function convertERC20(address _asset) isGovernor public {
         require(_asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
         
-        IUniswapRouter uniswap = IUniswapRouter(uniswapRouter);
+        IUniswapRouter uniswap     = IUniswapRouter(uniswapRouter);
+        IERC20         _fundsToken = IERC20(fundsToken);
+        IGlobals       globals     = _globals(superFactory);
         
         IERC20(_asset).approve(uniswapRouter, IERC20(_asset).balanceOf(address(this)));
-
-        IGlobals globals = _globals(superFactory);
 
         // Generate path.
         address[] storage path;
