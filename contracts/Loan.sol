@@ -274,7 +274,9 @@ contract Loan is FDT {
         address[] storage path;
         path.push(address(collateralAsset));
         address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
-        if (uniswapAssetForPath != address(loanAsset)) { path.push(uniswapAssetForPath); }
+        if (uniswapAssetForPath != address(loanAsset) && uniswapAssetForPath != address(0)) {
+            path.push(uniswapAssetForPath); 
+        }
         path.push(address(loanAsset));
 
         // TODO: Consider oracles for 2nd parameter below.

@@ -169,7 +169,7 @@ contract LoanTest is TestUtil {
         uint pre = IERC20(USDC).balanceOf(address(ali));
 
         assertEq(IERC20(WETH).balanceOf(address(ali)),    10 ether);  // Borrower collateral balance
-        assertEq(IERC20(loan).balanceOf(address(ali)),  5000 ether);  // Borrower loan token balance
+        assertEq(IERC20(loan).balanceOf(address(bob)),  5000 ether);  // Lender loan token balance
         assertEq(IERC20(USDC).balanceOf(fundingLocker), 5000 * USD);  // Funding locker reqAssset balance
         assertEq(IERC20(USDC).balanceOf(address(loan)),          0);  // Loan vault reqAsset balance
         assertEq(loan.drawdownAmount(),                          0);  // Drawdown amount
@@ -184,13 +184,11 @@ contract LoanTest is TestUtil {
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
 
         address collateralLocker = loan.collateralLocker();
-
-
+        
         // TODO: Come up with better test for live price feeds.
-
-        // assertEq(IERC20(WETH).balanceOf(address(ali)),            9.6 ether);  // Borrower collateral balance
-        // assertEq(IERC20(WETH).balanceOf(collateralLocker),        0.4 ether);  // Collateral locker collateral balance
-        assertEq(IERC20(loan).balanceOf(address(ali)),           5000 ether);  // Borrower loan token balance
+        assertEq(IERC20(WETH).balanceOf(address(ali)),            9.6 ether);  // Borrower collateral balance
+        assertEq(IERC20(WETH).balanceOf(collateralLocker),        0.4 ether);  // Collateral locker collateral balance
+        assertEq(IERC20(loan).balanceOf(address(bob)),           5000 ether);  // Lender loan token balance
         assertEq(IERC20(USDC).balanceOf(fundingLocker),                   0);  // Funding locker reqAssset balance
         assertEq(IERC20(USDC).balanceOf(address(loan)),          4005 * USD);  // Loan vault reqAsset balance
         assertEq(IERC20(USDC).balanceOf(address(ali)),      990 * USD + pre);  // Lender reqAsset balance
@@ -467,7 +465,7 @@ contract LoanTest is TestUtil {
         hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + 10 );
 
         assertTrue(bob.try_trigger_default(address(loan)), "Should not fail to default the loan");
-        assertEq(loan.loanState(), 3,                      "Loan State should change to `Liquidated`");
+        assertEq(loan.loanState(), 4,                      "Loan State should change to `Liquidated`");
     }
 
     function test_trigger_default_by_commoner() external  {
@@ -484,6 +482,6 @@ contract LoanTest is TestUtil {
         hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + globals.extendedGracePeriod() + 1);
 
         assertTrue(com.try_trigger_default(address(loan)), "Should not fail to default the loan");
-        assertEq(loan.loanState(), 3,                      "Loan State should change to `Liquidated`");
+        assertEq(loan.loanState(), 4,                      "Loan State should change to `Liquidated`");
     }
 }
