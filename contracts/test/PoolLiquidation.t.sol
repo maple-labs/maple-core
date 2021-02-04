@@ -235,6 +235,9 @@ contract PoolLiquidationTest is TestUtil {
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
 
+        gov.setDefaultUniswapPath(WETH, USDC, USDC);
+        gov.setDefaultUniswapPath(WBTC, USDC, WETH);
+
         ethOracle.poke(500 ether);  // Set ETH price to $500
         usdcOracle.poke(1 ether);   // Set USDC price to $1
 
