@@ -317,8 +317,6 @@ contract Loan is FDT {
 
     }
 
-    event LogA(uint256 balance, bool _isGracePeriodPassed, bool _isWithinExtendedGracePeriod, uint256 currentTime, uint256 extendedGracePeriod);
-
     /**
         @dev Trigger a default. Does nothing if block.timestamp <= nextPaymentDue + gracePeriod.
     */
@@ -335,7 +333,6 @@ contract Loan is FDT {
         // 2. If `current time - nexPaymentDue` is greater than gracePeriod + ExtendedGracePeriod then any msg.sender can liquidate the loans.
         if ((withinExtendedGracePeriod && balanceOf(msg.sender) > 0) || (pastGracePeriod && !withinExtendedGracePeriod)) {
             _triggerDefault();
-            emit LogA(balanceOf(msg.sender), pastGracePeriod, withinExtendedGracePeriod, now, gracePeriodEnd.add(_globals(superFactory).extendedGracePeriod()) );
         }
     }
 
