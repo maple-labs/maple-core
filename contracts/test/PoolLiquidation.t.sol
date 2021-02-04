@@ -275,19 +275,16 @@ contract PoolLiquidationTest is TestUtil {
         // Fund the pool
         mint("USDC", address(ali), 1_000_000_000 * USD);
         ali.approve(USDC, address(pool_a), MAX_UINT);
-        ali.approve(USDC, address(pool_b), MAX_UINT);
-        ali.deposit(address(pool_a), 100_000_000 * USD);
-        ali.deposit(address(pool_b), 300_000_000 * USD);
+        ali.deposit(address(pool_a), 500_000_000 * USD);
 
         // Fund the loan
         sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 100_000_000 * USD);
-        joe.fundLoan(address(pool_b), address(loan), address(dlFactory), 300_000_000 * USD);
-        uint cReq = loan.collateralRequiredForDrawdown(400_000_000 * USD);
+        uint cReq = loan.collateralRequiredForDrawdown(100_000_000 * USD);
 
         // Drawdown loan
         mint("WETH", address(bob), cReq);
         bob.approve(WETH, address(loan), MAX_UINT);
-        bob.drawdown(address(loan), 400_000_000 * USD);
+        bob.drawdown(address(loan), 100_000_000 * USD);
         
         // Warp to late payment
         uint256 start = block.timestamp;
@@ -299,29 +296,23 @@ contract PoolLiquidationTest is TestUtil {
         loan.triggerDefault();
 
         address liquidityLocker_a = pool_a.liquidityLocker();
-        address liquidityLocker_b = pool_b.liquidityLocker();
 
         // Pre-state liquidityLocker checks.
         uint256 liquidityLocker_pre_a = IERC20(USDC).balanceOf(liquidityLocker_a);
-        // uint256 liquidityLocker_pre_b = IERC20(USDC).balanceOf(liquidityLocker_b);
 
         uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
-        // uint256[7] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
 
         // Post-state liquidityLocker checks.
         uint256 liquidityLocker_post_a = IERC20(USDC).balanceOf(liquidityLocker_a);
-        // uint256 liquidityLocker_post_b = IERC20(USDC).balanceOf(liquidityLocker_b);
         
         assertEq(liquidityLocker_post_a - liquidityLocker_pre_a, vals_a[5]);
 
         uint ali_beforeBal = IERC20(USDC).balanceOf(address(ali));
-        ali.withdraw(address(pool_a), 100_000_000 * USD);
+        ali.withdraw(address(pool_a), 500_000_000 * USD);
         uint ali_afterBal = IERC20(USDC).balanceOf(address(ali));
 
         assertEq(ali_afterBal - ali_beforeBal, 1);
-        // assertEq(liquidityLocker_post_b - liquidityLocker_pre_b, vals_b[5]);
         // assertGt(vals_a[5], 0);
-        // assertGt(vals_b[5], 0);
 
         assertTrue(false);
       

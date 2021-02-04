@@ -254,9 +254,21 @@ contract Pool is PoolFDT {
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
 
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
+        uint256 recognizedLosses  = recognizeableLossesOf(msg.sender);                                   // Calculated losses
         uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
-        uint256 due               = amt.sub(totPenalty);                                                 // Funds due after the penalty deduction from the `amt` that is asked for withdraw.
+
+        emit Debug("allocatedInterest", allocatedInterest);
+        emit Debug("recognizedLosses", recognizedLosses);
+        emit Debug("priPenalty", priPenalty);
+        emit Debug("totPenalty", totPenalty);
+
+        // Amount that is due after penalties and realized losses are accounted for. 
+        // Total penalty is distributed to other LPs as interest, recognizedLosses are absorbed by the LP.
+        uint256 due = amt.sub(totPenalty).sub(recognizedLosses);
+
+        emit Debug("due", due);
+        emit Debug("LL Bal", liquidityAsset.balanceOf(address(liquidityLocker)));
 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
         withdrawFunds();            // Transfer full entitled interest.
@@ -351,6 +363,7 @@ contract Pool is PoolFDT {
         } else {
             // TODO: Implement accounting ... if any is needed at all (?) for "HAPPY PATH"
         }
+        emit Debug("bptShortfall", bptShortfall);
 
         // Transfer USDC to liquidityLocker.
         liquidityAsset.transfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
@@ -367,7 +380,8 @@ contract Pool is PoolFDT {
                 [2] = Principal portion claimed.
                 [3] = Fee portion claimed.
                 [4] = Excess portion claimed.
-                [5] = Liquidation portion claimed.
+                [5] = Recovered portion claimed (from liquidations).
+                [6] = Default suffered.
     */
     function claim(address loan, address dlFactory) external returns(uint256[7] memory) { 
         
@@ -376,7 +390,7 @@ contract Pool is PoolFDT {
         uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
         uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest
 
-        uint256 principalClaim = claimInfo[2].add(claimInfo[4]);  // Principal + excess
+        uint256 principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);  // Principal + excess + amountRecovered
         uint256 interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10000)).sub(stakeLockerPortion);  // Leftover interest
 
         // Subtract outstanding principal by principal claimed plus excess returned
@@ -395,8 +409,8 @@ contract Pool is PoolFDT {
         _transferLiquidityAsset(liquidityLocker, principalClaim.add(interestClaim)); 
         
         // Handle default if defaultSuffed > 0
-        if (claimInfo[5] > 0) {
-            _handleDefault(loan, claimInfo[5]);
+        if (claimInfo[6] > 0) {
+            _handleDefault(loan, claimInfo[6]);
         }
 
         // Update funds received for FDT StakeLocker tokens.
@@ -406,7 +420,7 @@ contract Pool is PoolFDT {
         updateFundsReceived();
 
         _emitBalanceUpdatedEvent();
-        emit BalanceUpdated(stakeLocker,     address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
+        emit BalanceUpdated(stakeLocker, address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
         emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
 
