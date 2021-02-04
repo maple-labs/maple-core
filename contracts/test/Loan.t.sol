@@ -483,7 +483,7 @@ contract LoanTest is TestUtil {
         assertEq(loanState_pre,   0);
 
         assertEq(flBalance_post, 0);
-        assertEq(loanState_post, 4);
+        assertEq(loanState_post, 3);
 
         assertEq(flBalance_pre, 5000 * USD);
         assertEq(loanBalance_post, 5000 * USD);
