@@ -19,6 +19,7 @@ interface ILoan is IERC20 {
     function premiumCalc() external view returns (address);
     function loanState() external view returns (uint256);
     function globals() external view returns (address);
+    function collateralRequiredForDrawdown(uint256) external view returns(uint256);
 
     // Loan Specifications
     function apr() external view returns (uint256);

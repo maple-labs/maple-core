@@ -17,17 +17,26 @@ import "../LoanFactory.sol";
 import "../PremiumCalc.sol";
 
 import "../interfaces/IERC20Details.sol";
+import "../interfaces/ILoan.sol";
 
 import "../mocks/token.sol";
 import "../mocks/value.sol";
 
 contract Treasury { }
 
+contract Commoner {
+    function try_trigger_default(address loan) external returns (bool ok) {
+        string memory sig = "triggerDefault()";
+        (ok,) = loan.call(abi.encodeWithSignature(sig));
+    }
+}
+
 contract LoanTest is TestUtil {
 
     Borrower                         ali;
     Governor                         gov;
     Lender                           bob;
+    Commoner                         com;
 
     BulletRepaymentCalc       bulletCalc;
     CollateralLockerFactory    clFactory;
@@ -46,6 +55,7 @@ contract LoanTest is TestUtil {
         ali         = new Borrower();       // Actor: Borrower of the Loan.
         gov         = new Governor();       // Actor: Governor of Maple.
         bob         = new Lender();         // Actor: Individual lender.
+        com         = new Commoner();       // Actor: Any user or an incentive seeker.
 
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -133,7 +143,7 @@ contract LoanTest is TestUtil {
 
         bob.approve(USDC, address(loan), 5000 * USD);
     
-        bob.fundLoan(address(loan), 5000 * USD, address(ali));
+        bob.fundLoan(address(loan), 5000 * USD, address(bob));
     }
 
     function test_collateralRequiredForDrawdown() public {
@@ -425,5 +435,55 @@ contract LoanTest is TestUtil {
 
         // Can't unwind() loan after it has already been called.
         assertTrue(!ali.try_unwind(address(loan)));
+    }
+
+    function test_trigger_default() public {
+        ILoan loan = ILoan(address(createAndFundLoan(address(bulletCalc))));
+
+        uint256 reqCollateral = loan.collateralRequiredForDrawdown(5000 * USD);
+        ali.approve(WETH, address(loan), reqCollateral);
+
+        assertTrue(ali.try_drawdown(address(loan), 5000 * USD));  // Draw down the loan.
+
+        assertTrue(bob.try_trigger_default(address(loan)), "Should fail to trigger default by lender");   // Should fail to trigger default because current time is still less than the `nextPaymentDue`.
+        assertEq(loan.loanState(), 1,                      "Loan State should remain `Active`");
+        assertTrue(com.try_trigger_default(address(loan)), "Should fail to trigger default by commoner"); // Failed because commoner in not allowed to default the loan till the extendedGracePeriod passed.
+        assertEq(loan.loanState(), 1,                      "Loan State should remain `Active`");
+
+        hevm.warp(loan.nextPaymentDue() + 1);
+
+        assertTrue(bob.try_trigger_default(address(loan)), "Still fails to default the loan by lender");   // Failed because still loan has gracePeriod to repay the dues.
+        assertEq(loan.loanState(), 1,                      "Loan State should remain `Active`");
+        assertTrue(com.try_trigger_default(address(loan)), "Still fails to default the loan by commoner"); // Failed because still commoner is not allowed to default the loan.
+        assertEq(loan.loanState(), 1,                      "Loan State should remain `Active`");
+
+        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
+
+        assertTrue(bob.try_trigger_default(address(loan)),  "Still fails to default the loan by lender");   // Failed because still loan has gracePeriod to repay the dues.
+        assertEq(loan.loanState(), 1,                       "Loan State should remain `Active`");
+        assertTrue(com.try_trigger_default(address(loan)), "Still fails to default the loan by commoner"); // Failed because still commoner is not allowed to default the loan.
+        assertEq(loan.loanState(), 1,                       "Loan State should remain `Active`");
+
+        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + 10 );
+
+        assertTrue(bob.try_trigger_default(address(loan)), "Should not fail to default the loan");
+        assertEq(loan.loanState(), 3,                      "Loan State should change to `Liquidated`");
+    }
+
+    function test_trigger_default_by_commoner() external  {
+        ILoan loan = ILoan(address(createAndFundLoan(address(bulletCalc))));
+
+        uint256 reqCollateral = loan.collateralRequiredForDrawdown(5000 * USD);
+        ali.approve(WETH, address(loan), reqCollateral);
+
+        assertTrue(ali.try_drawdown(address(loan), 5000 * USD));  // Draw down the loan.
+
+        assertTrue(com.try_trigger_default(address(loan)), "Should fail to trigger default by commoner"); // Failed because commoner in not allowed to default the loan till the extendedGracePeriod passed.
+        assertEq(loan.loanState(), 1,                      "Loan State should remain `Active`");
+
+        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + globals.extendedGracePeriod() + 1);
+
+        assertTrue(com.try_trigger_default(address(loan)), "Should not fail to default the loan");
+        assertEq(loan.loanState(), 3,                      "Loan State should change to `Liquidated`");
     }
 }
