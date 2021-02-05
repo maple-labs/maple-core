@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.11;
 
-contract MapleDummyPriceFeedWETH {
+contract MockPriceFeedWBTC {
     
     int256 price;
     address asset;

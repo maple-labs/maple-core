@@ -46,9 +46,9 @@ const CORE = {
   LateFeeCalc: "LateFeeCalc",
 
   // dummy
-  MapleDummyPriceFeedUSDC: 'MapleDummyPriceFeedUSDC',
-  MapleDummyPriceFeedWETH: 'MapleDummyPriceFeedWETH',
-  MapleDummyPriceFeedWBTC: 'MapleDummyPriceFeedWBTC',
+  MockPriceFeedUSDC: 'MockPriceFeedUSDC',
+  MockPriceFeedWETH: 'MockPriceFeedWETH',
+  MockPriceFeedWBTC: 'MockPriceFeedWBTC',
 };
 
 const DEPS = {

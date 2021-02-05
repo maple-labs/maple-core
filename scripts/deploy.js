@@ -43,9 +43,9 @@ async function main() {
   await deploy(CORE.LoanFactory, [mapleGlobals.address]);
   
   // Price Feed deployments
-  const priceFeedUSDC = await deploy(CORE.MapleDummyPriceFeedUSDC, [ 1 * 10**8, USDC.address])
-  const priceFeedWETH = await deploy(CORE.MapleDummyPriceFeedWETH, [ 1630 * 10**8, WETH.address])
-  const priceFeedWBTC = await deploy(CORE.MapleDummyPriceFeedWBTC, [ 37100 * 10**8, WBTC.address])
+  const priceFeedUSDC = await deploy(CORE.MockPriceFeedUSDC, [ 1 * 10**8, USDC.address])
+  const priceFeedWETH = await deploy(CORE.MockPriceFeedWETH, [ 1630 * 10**8, WETH.address])
+  const priceFeedWBTC = await deploy(CORE.MockPriceFeedWBTC, [ 37100 * 10**8, WBTC.address])
 
 
   await mapleGlobals.setPriceOracle(USDC.address, priceFeedUSDC.address);
