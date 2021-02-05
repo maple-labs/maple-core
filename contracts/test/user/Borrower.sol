@@ -48,6 +48,10 @@ contract Borrower {
         );
     }
 
+    function triggerDefault(address loan) external {
+        ILoan(loan).triggerDefault();
+    }
+
 
     /*********************/
     /*** TRY FUNCTIONS ***/

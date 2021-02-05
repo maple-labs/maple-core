@@ -28,5 +28,15 @@ contract LP {
     /*********************/
     /*** TRY FUNCTIONS ***/
     /*********************/
+
+    function try_deposit(address pool1, uint256 amt)  external returns (bool ok) {
+        string memory sig = "deposit(uint256)";
+        (ok,) = address(pool1).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_withdraw(address pool, uint256 amt) external returns(bool ok) {
+        string memory sig = "withdraw(uint256)";
+        (ok,) = pool.call(abi.encodeWithSignature(sig, amt));
+    }
     
 }

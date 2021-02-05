@@ -38,10 +38,6 @@ import "../mocks/value.sol";
 
 import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-interface IBPoolFactory {
-    function newBPool() external returns (address);
-}
-
 contract GulpTest is TestUtil {
 
     using SafeMath for uint256;
@@ -53,23 +49,22 @@ contract GulpTest is TestUtil {
     Staker                                 che;
     Staker                                 dan;
     
-    MapleToken                             mpl;
-    MapleGlobals                       globals;
-    MapleTreasury                     treasury;
-    FundingLockerFactory             flFactory;
+    BulletRepaymentCalc             bulletCalc;
     CollateralLockerFactory          clFactory;
+    DebtLockerFactory                dlFactory;
+    FundingLockerFactory             flFactory;
+    LateFeeCalc                    lateFeeCalc;
+    LiquidityLockerFactory           llFactory;
     LoanFactory                    loanFactory;
     Loan                                  loan;
-    PoolFactory                    poolFactory;
-    StakeLockerFactory               slFactory;
-    LiquidityLockerFactory           llFactory; 
-    DebtLockerFactory                dlFactory;  
+    MapleGlobals                       globals;
+    MapleToken                             mpl;
+    MapleTreasury                     treasury;
     Pool                                  pool; 
-    DSValue                          ethOracle;
-    DSValue                         usdcOracle;
-    BulletRepaymentCalc             bulletCalc;
-    LateFeeCalc                    lateFeeCalc;
+    PoolFactory                    poolFactory;
     PremiumCalc                    premiumCalc;
+    StakeLockerFactory               slFactory;
+
     IBPool                               bPool;
     IStakeLocker                   stakeLocker;
 
@@ -78,11 +73,11 @@ contract GulpTest is TestUtil {
     function setUp() public {
 
         bob            = new Borrower();                      // Actor: Borrower of the Loan.
-        gov            = new Governor();                      // Actor: Governor of Maple Protocol
+        gov            = new Governor();                      // Actor: Governor of Maple.
         ali            = new LP();                            // Actor: Liquidity provider.
-        sid            = new PoolDelegate();                  // Actor: Manager of the pool.
-        che            = new Staker();                        // Actor: Stakes BPTs in pool.
-        dan            = new Staker();                        // Actor: Staker BPTs in pool.
+        sid            = new PoolDelegate();                  // Actor: Manager of the Pool.
+        che            = new Staker();                        // Actor: Stakes BPTs in Pool.
+        dan            = new Staker();                        // Actor: Staker BPTs in Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -95,8 +90,6 @@ contract GulpTest is TestUtil {
         llFactory      = new LiquidityLockerFactory();        // Setup the SL factory to facilitate Pool factory functionality.
         poolFactory    = new PoolFactory(address(globals));   // Create pool factory.
         dlFactory      = new DebtLockerFactory();             // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        ethOracle      = new DSValue();                       // ETH Oracle.
-        usdcOracle     = new DSValue();                       // USD Oracle.
         bulletCalc     = new BulletRepaymentCalc();           // Repayment model.
         lateFeeCalc    = new LateFeeCalc(0);                  // Flat 0% fee
         premiumCalc    = new PremiumCalc(500);                // Flat 5% premium
@@ -110,14 +103,11 @@ contract GulpTest is TestUtil {
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
 
-        ethOracle.poke(500 ether);  // Set ETH price to $500
-        usdcOracle.poke(1 ether);   // Set USDC price to $1
-
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);
 
         // Initialize MPL/USDC Balancer pool (without finalizing)
-        bPool = IBPool(IBPoolFactory(BPOOL_FACTORY).newBPool());
+        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
 
         IERC20(USDC).approve(address(bPool), MAX_UINT);
         mpl.approve(address(bPool), MAX_UINT);
@@ -147,9 +137,8 @@ contract GulpTest is TestUtil {
         gov.setCalc(address(premiumCalc), true);
         gov.setCollateralAsset(WETH, true);
         gov.setLoanAsset(USDC, true);
-        gov.assignPriceFeed(WETH, address(ethOracle));
-        gov.assignPriceFeed(USDC, address(usdcOracle));
         gov.setSwapOutRequired(1_000_000);
+        
         gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
         gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
         gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);

@@ -5,11 +5,12 @@ pragma experimental ABIEncoderV2;
 import "./TestUtil.sol";
 
 import "./user/Governor.sol";
+import "./user/PoolDelegate.sol";
 
 import "../BulletRepaymentCalc.sol";
 import "../CollateralLockerFactory.sol";
-import "../FundingLockerFactory.sol";
 import "../DebtLockerFactory.sol";
+import "../FundingLockerFactory.sol";
 import "../LateFeeCalc.sol";
 import "../LiquidityLockerFactory.sol";
 import "../LoanFactory.sol";
@@ -22,38 +23,33 @@ import "../StakeLockerFactory.sol";
 import "../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-contract PoolDelegate { 
-
-    function try_setExtendedGracePeriod(address globals, uint256 newEGP) external returns(bool ok) {
-        string memory sig = "setExtendedGracePeriod(uint256)";
-        (ok,) = globals.call(abi.encodeWithSignature(sig, newEGP));
-    }
-}
-
 contract MapleGlobalsTest is TestUtil {
 
     Governor                         gov;
     PoolDelegate                     sid;
     PoolDelegate                     joe;
 
-    ERC20                     fundsToken;
-    MapleToken                       mpl;
-    MapleGlobals                 globals;
-    FundingLockerFactory       flFactory;
-    CollateralLockerFactory    clFactory;
-    LoanFactory              loanFactory;
-    PoolFactory              poolFactory;
-    StakeLockerFactory         slFactory;
-    LiquidityLockerFactory     llFactory; 
-    DebtLockerFactory          dlFactory;
     BulletRepaymentCalc           brCalc;
+    CollateralLockerFactory    clFactory;
+    DebtLockerFactory          dlFactory;
+    FundingLockerFactory       flFactory;
     LateFeeCalc                   lfCalc;
-    PremiumCalc                    pCalc;
+    LiquidityLockerFactory     llFactory;
+    LoanFactory              loanFactory;
+    MapleGlobals                 globals;
+    MapleToken                       mpl;
     MapleTreasury                    trs;
+    PoolFactory              poolFactory;
+    PremiumCalc                    pCalc;
+    StakeLockerFactory         slFactory;
+
+    ERC20                     fundsToken;
 
     function setUp() public {
 
-        gov         = new Governor();
+        gov         = new Governor();       // Actor: Governor of Maple.
+        sid         = new PoolDelegate();   // Actor: Manager of the Pool.
+        joe         = new PoolDelegate();   // Actor: Manager of the Pool.
 
         mpl         = new MapleToken("MapleToken", "MAPLE", USDC);
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -67,8 +63,6 @@ contract MapleGlobalsTest is TestUtil {
         lfCalc      = new LateFeeCalc(0);
         pCalc       = new PremiumCalc(200);
         brCalc      = new BulletRepaymentCalc();
-        sid         = new PoolDelegate();
-        joe         = new PoolDelegate();
         trs         = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
 
         // The following code was adopted from maple-core/scripts/setup.js

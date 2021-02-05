@@ -32,7 +32,6 @@ contract DebtLockerFactoryTest is TestUtil {
     DebtLockerFactory         dlFactory;
     FundingLockerFactory      flFactory;
     LoanFactory                lFactory;
-
     MapleToken                      mpl;
     MapleGlobals                globals;
     

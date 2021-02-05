@@ -4,9 +4,9 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-// import "./user/Borrower.sol";
+import "./user/Borrower.sol";
 import "./user/Governor.sol";
-// import "./user/Lender.sol";
+import "./user/Lender.sol";
 
 import "../BulletRepaymentCalc.sol";
 import "../CollateralLockerFactory.sol";
@@ -23,98 +23,6 @@ import "../interfaces/ILoan.sol";
 import "../mocks/token.sol";
 import "../mocks/value.sol";
 
-contract Borrower {
-
-    function triggerDefault(address loan) external {
-        ILoan(loan).triggerDefault();
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function createLoan(
-        LoanFactory loanFactory,
-        address loanAsset, 
-        address collateralAsset, 
-        address flFactory,
-        address clFactory,
-        uint256[6] memory specs,
-        address[3] memory calcs
-    ) 
-        external returns (Loan loan) 
-    {
-        loan = Loan(
-            loanFactory.createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
-    }
-
-    function try_createPool(
-        address loanFactory, 
-        address loanAsset,
-        address collateralAsset,
-        address flFactory, 
-        address clFactory,
-        uint256[6] memory specs,
-        address[3] memory calcs
-    ) 
-        external returns (bool ok) 
-    {
-        string memory sig = "createLoan(address,address,address,address,uint256[6],address[3])";
-        (ok,) = address(loanFactory).call(
-            abi.encodeWithSignature(sig, loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
-    }
-    
-    function try_drawdown(address loan, uint256 amt) external returns (bool ok) {
-        string memory sig = "drawdown(uint256)";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function try_makePayment(address loan) external returns (bool ok) {
-        string memory sig = "makePayment()";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig));
-    }
-
-    function try_createLoan(
-        address loanFactory,
-        address loanAsset,
-        address collateralAsset,
-        address flFactory,
-        address clFactory,
-        uint256[6] memory specs,
-        address[3] memory calcs
-    ) 
-        external returns (bool ok) 
-    {
-        string memory sig = "createLoan(address,address,uint256[],address[])";
-        (ok,) = address(loanFactory).call(
-            abi.encodeWithSignature(sig, loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
-    }
-
-    function try_unwind(address loan) external returns (bool ok) {
-        string memory sig = "unwind()";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig));
-    }
-}
-
-contract Lender {
-    function fundLoan(Loan loan, uint256 amt, address who) external {
-        loan.fundLoan(amt, who);
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    // To assert failures
-    function try_drawdown(address loan, uint256 amt) external returns (bool ok) {
-        string memory sig = "drawdown(uint256)";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig, amt));
-    }
-}
-
 contract Treasury { }
 
 contract LoanLiquidationTest is TestUtil {
@@ -123,58 +31,52 @@ contract LoanLiquidationTest is TestUtil {
     Governor                         gov;
     Lender                           bob;
 
-    ERC20                     fundsToken;
+    BulletRepaymentCalc       bulletCalc;
+    CollateralLockerFactory    clFactory;
+    FundingLockerFactory       flFactory;
+    LateFeeCalc              lateFeeCalc;
+    LoanFactory              loanFactory;
     MapleToken                       mpl;
     MapleGlobals                 globals;
-    FundingLockerFactory       flFactory;
-    CollateralLockerFactory    clFactory;
-    DSValue                    ethOracle;
-    DSValue                   usdcOracle;
-    BulletRepaymentCalc       bulletCalc;
-    LateFeeCalc              lateFeeCalc;
     PremiumCalc              premiumCalc;
-    LoanFactory              loanFactory;
     Treasury                         trs;
+
+    ERC20                     fundsToken;
 
     function setUp() public {
 
+        ali         = new Borrower();   // Actor: Borrower of the Loan.
+        gov         = new Governor();   // Actor: Governor of Maple.
+        bob         = new Lender();     // Actor: Individual lender.
+
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
+        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
         flFactory   = new FundingLockerFactory();
         clFactory   = new CollateralLockerFactory();
-        ethOracle   = new DSValue();
-        usdcOracle  = new DSValue();
         bulletCalc  = new BulletRepaymentCalc();
         lateFeeCalc = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc = new PremiumCalc(500); // Flat 5% premium
         loanFactory = new LoanFactory(address(globals));
+        trs         = new Treasury();
 
-        ethOracle.poke(1334.61 ether);  // Set ETH price to $1377.61 TODO: Use chainlink in tests
-        usdcOracle.poke(1 ether);   // Set USDC price to $1
 
-        globals.setCalc(address(bulletCalc),         true);
-        globals.setCalc(address(lateFeeCalc),        true);
-        globals.setCalc(address(premiumCalc),        true);
-        globals.setCollateralAsset(WETH,             true);
-        globals.setCollateralAsset(WBTC,             true);
-        globals.setLoanAsset(USDC,                   true);
-        globals.assignPriceFeed(WETH,  address(ethOracle));
-        globals.assignPriceFeed(USDC, address(usdcOracle));
-        globals.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-        globals.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
-        globals.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
+        gov.setCalc(address(bulletCalc),         true);
+        gov.setCalc(address(lateFeeCalc),        true);
+        gov.setCalc(address(premiumCalc),        true);
+        gov.setCollateralAsset(WETH,             true);
+        gov.setCollateralAsset(WBTC,             true);
+        gov.setLoanAsset(USDC,                   true);
+        
+        gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
+        gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
+        gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
 
-        globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
-        globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
 
-        globals.setDefaultUniswapPath(WETH, USDC, USDC);
-        globals.setDefaultUniswapPath(WBTC, USDC, WETH);
-
-        ali = new Borrower();
-        bob = new Lender();
-        trs = new Treasury();
-
-        globals.setMapleTreasury(address(trs));
+        gov.setDefaultUniswapPath(WETH, USDC, USDC);
+        gov.setDefaultUniswapPath(WBTC, USDC, WETH);
+        gov.setMapleTreasury(address(trs));
 
         mint("WETH", address(ali),   10 ether);
         mint("WBTC", address(ali),   10 ether);
@@ -186,11 +88,11 @@ contract LoanLiquidationTest is TestUtil {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
-        loan = ali.createLoan(loanFactory, USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
+        loan = ali.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
 
         bob.approve(USDC, address(loan), 5000 * USD);
 
-        bob.fundLoan(loan, 5000 * USD, address(ali));
+        bob.fundLoan(address(loan), 5000 * USD, address(ali));
         ali.approve(_collateral, address(loan), 0.4 ether);
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
     }

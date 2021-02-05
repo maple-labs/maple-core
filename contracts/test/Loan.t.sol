@@ -29,18 +29,17 @@ contract LoanTest is TestUtil {
     Governor                         gov;
     Lender                           bob;
 
-    ERC20                     fundsToken;
+    BulletRepaymentCalc       bulletCalc;
+    CollateralLockerFactory    clFactory;
+    FundingLockerFactory       flFactory;
+    LateFeeCalc              lateFeeCalc;
+    LoanFactory              loanFactory;
     MapleToken                       mpl;
     MapleGlobals                 globals;
-    FundingLockerFactory       flFactory;
-    CollateralLockerFactory    clFactory;
-    DSValue                    ethOracle;
-    DSValue                   usdcOracle;
-    BulletRepaymentCalc       bulletCalc;
-    LateFeeCalc              lateFeeCalc;
     PremiumCalc              premiumCalc;
-    LoanFactory              loanFactory;
     Treasury                         trs;
+
+    ERC20                     fundsToken;
 
     function setUp() public {
 
@@ -52,24 +51,18 @@ contract LoanTest is TestUtil {
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         flFactory   = new FundingLockerFactory();
         clFactory   = new CollateralLockerFactory();
-        ethOracle   = new DSValue();
-        usdcOracle  = new DSValue();
         bulletCalc  = new BulletRepaymentCalc();
         lateFeeCalc = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc = new PremiumCalc(500); // Flat 5% premium
         loanFactory = new LoanFactory(address(globals));
         trs         = new Treasury();
 
-        ethOracle.poke(500 ether);  // Set ETH price to $500
-        usdcOracle.poke(1 ether);   // Set USDC price to $1
-
         gov.setCalc(address(bulletCalc),         true);
         gov.setCalc(address(lateFeeCalc),        true);
         gov.setCalc(address(premiumCalc),        true);
         gov.setCollateralAsset(WETH,             true);
         gov.setLoanAsset(USDC,                   true);
-        gov.assignPriceFeed(WETH,  address(ethOracle));
-        gov.assignPriceFeed(USDC, address(usdcOracle));
+        
         gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
         gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
         gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);

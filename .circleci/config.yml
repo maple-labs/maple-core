@@ -193,7 +193,7 @@ jobs:
             source $BASH_ENV
             ./test-ci.sh "MapleTreasuryTest"
 
-  dapp_test_pool:
+  dapp_test_pool_1:
     docker:
       - image: nixorg/nix:circleci
     steps:
@@ -208,7 +208,24 @@ jobs:
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
-            ./test-ci.sh "PoolTest"
+            ./test-ci.sh "Pool_1Test"
+
+  dapp_test_pool_2:
+    docker:
+      - image: nixorg/nix:circleci
+    steps:
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: ~/project
+      - restore_cache:
+          key: nix-deps
+      - run:
+          name: Run unit tests
+          command: |
+            cd ~/project
+            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
+            source $BASH_ENV
+            ./test-ci.sh "Pool_2Test"
 
   dapp_test_poolExcess:
     docker:
@@ -445,7 +462,11 @@ workflows:
           context: seth
           requires:
             - dapp_build
-      - dapp_test_pool: 
+      - dapp_test_pool_1: 
+          context: seth
+          requires:
+            - dapp_build
+      - dapp_test_pool_2: 
           context: seth
           requires:
             - dapp_build

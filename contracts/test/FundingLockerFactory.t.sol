@@ -14,9 +14,9 @@ contract FundingLockerFactoryTest is TestUtil {
 
     Governor                        gov;
     
+    FundingLockerFactory      flFactory;
     MapleToken                      mpl;
     MapleGlobals                globals;
-    FundingLockerFactory      flFactory;
 
     function setUp() public {
 

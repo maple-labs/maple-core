@@ -31,11 +31,12 @@ contract LoanFactoryTest is TestUtil {
     Borrower                   borrower;
     Governor                        gov;
 
+    CollateralLockerFactory   clFactory;
+    FundingLockerFactory      flFactory;
+    LoanFactory                lFactory;
     MapleToken                      mpl;
     MapleGlobals                globals;
-    FundingLockerFactory      flFactory;
-    CollateralLockerFactory   clFactory;
-    LoanFactory                lFactory;
+
     ILoan                          loan;
 
     uint256 constant MULTIPLIER = 10 ** 6;

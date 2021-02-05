@@ -20,7 +20,9 @@ contract MapleTreasuryTest is TestUtil {
     MapleTreasury                    trs;
 
     function setUp() public {
-        gov     = new Governor();
+
+        gov     = new Governor();   // Actor: Governor of Maple.
+
         mpl     = new MapleToken("MapleToken", "MAPLE", USDC);
         globals = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         trs     = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 

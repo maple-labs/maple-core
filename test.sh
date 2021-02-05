@@ -12,15 +12,13 @@ export SOLC_FLAGS="--optimize --optimize-runs 200"
 export DAPP_LINK_TEST_LIBRARIES=1
 
 dapp build
-LANG=C.UTF-8 dapp test --match "contracts/test/Loan.t.sol" --rpc-url "$ETH_RPC_URL" --verbose
+LANG=C.UTF-8 dapp test --match "contracts/test" --rpc-url "$ETH_RPC_URL" --verbose
 
 # --match "contracts/test/CollateralLockerFactory.t.sol"
 # --match "contracts/test/DebtLockerFactory.t.sol"
 # --match "contracts/test/FundingLockerFactory.t.sol"
 # --match "contracts/test/Gulp.t.sol"
-
 # --match "contracts/test/Loan.t.sol"
-
 # --match "contracts/test/LoanFactory.t.sol"
 # --match "contracts/test/LoanLiquidation.t.sol"
 # --match "contracts/test/MapleGlobals.t.sol"

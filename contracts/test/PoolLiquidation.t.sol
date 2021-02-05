@@ -5,164 +5,38 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
+import "./user/Borrower.sol";
+import "./user/Governor.sol";
+import "./user/LP.sol";
+import "./user/PoolDelegate.sol";
+import "./user/Staker.sol";
+
+import "../interfaces/IBFactory.sol";
+import "../interfaces/IBPool.sol";
+import "../interfaces/IERC20Details.sol";
+import "../interfaces/IPool.sol";
+import "../interfaces/IPoolFactory.sol";
+import "../interfaces/IStakeLocker.sol";
+
+import "../BulletRepaymentCalc.sol";
+import "../DebtLocker.sol";
+import "../DebtLockerFactory.sol";
+import "../CollateralLockerFactory.sol";
+import "../FundingLockerFactory.sol";
+import "../MapleToken.sol";
+import "../LateFeeCalc.sol";
+import "../LiquidityLockerFactory.sol";
+import "../Loan.sol";
+import "../LoanFactory.sol";
+import "../Pool.sol";
+import "../PoolFactory.sol";
+import "../PremiumCalc.sol";
+import "../StakeLockerFactory.sol";
+
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
-import "./user/Governor.sol";
-
-import "../interfaces/IBPool.sol";
-import "../interfaces/IPool.sol";
-import "../interfaces/IStakeLocker.sol";
-import "../interfaces/IPoolFactory.sol";
-import "../interfaces/IERC20Details.sol";
-
-import "../BulletRepaymentCalc.sol";
-import "../LateFeeCalc.sol";
-import "../PremiumCalc.sol";
-
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
-import "../MapleToken.sol";
-import "../StakeLockerFactory.sol";
-import "../PoolFactory.sol";
-import "../LiquidityLockerFactory.sol";
-import "../DebtLockerFactory.sol";
-import "../DebtLocker.sol";
-import "../FundingLockerFactory.sol";
-import "../CollateralLockerFactory.sol";
-import "../LoanFactory.sol";
-import "../Loan.sol";
-import "../Pool.sol";
-
-interface IBPoolFactory {
-    function newBPool() external returns (address);
-}
-
-contract PoolDelegate {
-
-    function createPool(
-        address poolFactory, 
-        address liquidityAsset,
-        address stakeAsset,
-        address slFactory, 
-        address llFactory,
-        uint256 stakingFee,
-        uint256 delegateFee,
-        uint256 liquidityCap
-    ) 
-        external returns (address liquidityPool) 
-    {
-        liquidityPool = IPoolFactory(poolFactory).createPool(
-            liquidityAsset,
-            stakeAsset,
-            slFactory,
-            llFactory,
-            stakingFee,
-            delegateFee,
-            liquidityCap
-        );
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function stake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).stake(amt);
-    }
-
-    function finalize(address pool) external {
-        IPool(pool).finalize();
-    }
-
-    function unstake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).unstake(amt);
-    }
-
-    function fundLoan(address pool, address loan, address dlFactory, uint256 amt) external {
-        IPool(pool).fundLoan(loan, dlFactory, amt);  
-    }
-
-    function claim(address pool, address loan, address dlFactory) external returns(uint256[7] memory) {
-        return IPool(pool).claim(loan, dlFactory);  
-    }
-}
-
-contract Staker {
-
-    function try_stake(address stakeLocker, uint256 amt) external returns(bool ok) {
-        string memory sig = "stake(uint256)";
-        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function try_unstake(address stakeLocker, uint256 amt) external returns(bool ok) {
-        string memory sig = "unstake(uint256)";
-        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function stake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).stake(amt);
-    }
-
-    function unstake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).unstake(amt);
-    }
-
-}
-
-contract LP {
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function withdraw(address pool, uint256 amt) external {
-        Pool(pool).withdraw(amt);
-    }
-
-    function deposit(address pool, uint256 amt) external {
-        Pool(pool).deposit(amt);
-    }
-}
-
-contract Borrower {
-
-    function makePayment(address loan) external {
-        Loan(loan).makePayment();
-    }
-
-    function makeFullPayment(address loan) external {
-        Loan(loan).makeFullPayment();
-    }
-
-    function drawdown(address loan, uint256 _drawdownAmount) external {
-        Loan(loan).drawdown(_drawdownAmount);
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function createLoan(
-        LoanFactory loanFactory,
-        address loanAsset, 
-        address collateralAsset, 
-        address flFactory,
-        address clFactory,
-        uint256[6] memory specs,
-        address[3] memory calcs
-    ) 
-        external returns (Loan loanVault) 
-    {
-        loanVault = Loan(
-            loanFactory.createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
-    }
-}
+import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract Treasury { }
 
@@ -183,8 +57,6 @@ contract PoolLiquidationTest is TestUtil {
     DebtLockerFactory                dlFactory;  
     Pool                                pool_a;  
     Pool                                pool_b; 
-    DSValue                          ethOracle;
-    DSValue                         usdcOracle;
     BulletRepaymentCalc             bulletCalc;
     LateFeeCalc                    lateFeeCalc;
     PremiumCalc                    premiumCalc;
@@ -213,8 +85,6 @@ contract PoolLiquidationTest is TestUtil {
         llFactory      = new LiquidityLockerFactory();       // Setup the SL factory to facilitate Pool factory functionality.
         poolFactory    = new PoolFactory(address(globals));  // Create pool factory.
         dlFactory      = new DebtLockerFactory();            // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        ethOracle      = new DSValue();                      // ETH Oracle.
-        usdcOracle     = new DSValue();                      // USD Oracle.
         bulletCalc     = new BulletRepaymentCalc();          // Repayment model.
         lateFeeCalc    = new LateFeeCalc(0);                 // Flat 0% fee
         premiumCalc    = new PremiumCalc(500);               // Flat 5% premium
@@ -234,6 +104,7 @@ contract PoolLiquidationTest is TestUtil {
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
+        
         gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
         gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
         gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
@@ -241,14 +112,11 @@ contract PoolLiquidationTest is TestUtil {
         gov.setDefaultUniswapPath(WETH, USDC, USDC);
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
 
-        ethOracle.poke(500 ether);  // Set ETH price to $500
-        usdcOracle.poke(1 ether);   // Set USDC price to $1
-
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);
 
         // Initialize MPL/USDC Balancer pool (without finalizing)
-        bPool = IBPool(IBPoolFactory(BPOOL_FACTORY).newBPool());
+        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
 
         IERC20(USDC).approve(address(bPool), MAX_UINT);
         mpl.approve(address(bPool), MAX_UINT);
@@ -280,8 +148,6 @@ contract PoolLiquidationTest is TestUtil {
         gov.setCalc(address(premiumCalc), true);
         gov.setCollateralAsset(WETH, true);
         gov.setLoanAsset(USDC, true);
-        gov.assignPriceFeed(WETH, address(ethOracle));
-        gov.assignPriceFeed(USDC, address(usdcOracle));
         gov.setSwapOutRequired(1_000_000);
 
         // Create Liquidity Pool A
@@ -315,7 +181,7 @@ contract PoolLiquidationTest is TestUtil {
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan = bob.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         // Stake and finalize pool
         sid.approve(address(bPool), address(stakeLocker_a), 25 * WAD);
