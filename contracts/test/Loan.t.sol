@@ -463,7 +463,7 @@ contract LoanTest is TestUtil {
         assertTrue(!com.try_trigger_default(address(loan)),  "Still fails to default the loan by commoner"); // Failed because still commoner is not allowed to default the loan.
         assertEq(loan.loanState(), 1,                        "Loan State should remain `Active`");
 
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + 10 );
+        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + 1);
 
         assertTrue(bob.try_trigger_default(address(loan)),  "Should not fail to default the loan");
         assertEq(loan.loanState(), 4,                       "Loan State should change to `Liquidated`");
@@ -476,6 +476,8 @@ contract LoanTest is TestUtil {
         ali.approve(WETH, address(loan), reqCollateral);
 
         assertTrue(ali.try_drawdown(address(loan), 5000 * USD));  // Draw down the loan.
+
+        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + globals.extendedGracePeriod());
 
         assertTrue(!com.try_trigger_default(address(loan)), "Should fail to trigger default by commoner"); // Failed because commoner in not allowed to default the loan till the extendedGracePeriod passed.
         assertEq(loan.loanState(), 1,                       "Loan State should remain `Active`");

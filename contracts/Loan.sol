@@ -331,7 +331,7 @@ contract Loan is FDT {
 
         // It checks following conditions - 
         // 1. If `current time - nextPaymentDue` is within the (gracePeriod, gracePeriod + extendedGracePeriod] & `msg.sender` is
-        //  a pool delegate (Assumption: Only pool delegate will have non zero balance) then liquidate the loan.
+        //    a pool delegate (Assumption: Only pool delegate will have non zero balance) then liquidate the loan.
         // 2. If `current time - nextPaymentDue` is greater than gracePeriod + extendedGracePeriod then any msg.sender can liquidate the loan.
         require((withinExtendedGracePeriod && balanceOf(msg.sender) > 0) || (pastGracePeriod && !withinExtendedGracePeriod), "Loan:FAILED_TO_LIQUIDATE");
         _triggerDefault();
