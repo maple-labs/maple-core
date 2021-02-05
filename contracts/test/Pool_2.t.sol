@@ -187,6 +187,82 @@ contract PoolTest is TestUtil {
         loan2 = fay.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan3 = hal.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
+
+    function checkClaim(DebtLocker debtLocker, Loan loan, PoolDelegate pd, IERC20 reqAsset, Pool pool, address dlFactory) internal {
+        uint256[10] memory balances = [
+            reqAsset.balanceOf(address(debtLocker)),
+            reqAsset.balanceOf(address(pool)),
+            reqAsset.balanceOf(address(pd)),
+            reqAsset.balanceOf(pool.stakeLocker()),
+            reqAsset.balanceOf(pool.liquidityLocker()),
+            0,0,0,0,0
+        ];
+
+        uint256[4] memory loanData = [
+            loan.interestPaid(),
+            loan.principalPaid(),
+            loan.feePaid(),
+            loan.excessReturned()
+        ];
+
+        uint256[8] memory debtLockerData = [
+            debtLocker.interestPaid(),
+            debtLocker.principalPaid(),
+            debtLocker.feePaid(),
+            debtLocker.excessReturned(),
+            0,0,0,0
+        ];
+
+        uint256 beforePrincipalOut = pool.principalOut();
+        uint256 beforeInterestSum  = pool.interestSum();
+        uint256[7] memory claim = pd.claim(address(pool), address(loan),   address(dlFactory));
+
+        // Updated LTL state variables
+        debtLockerData[4] = debtLocker.interestPaid();
+        debtLockerData[5] = debtLocker.principalPaid();
+        debtLockerData[6] = debtLocker.feePaid();
+        debtLockerData[7] = debtLocker.excessReturned();
+
+        balances[5] = reqAsset.balanceOf(address(debtLocker));
+        balances[6] = reqAsset.balanceOf(address(pool));
+        balances[7] = reqAsset.balanceOf(address(pd));
+        balances[8] = reqAsset.balanceOf(pool.stakeLocker());
+        balances[9] = reqAsset.balanceOf(pool.liquidityLocker());
+
+        uint256 sumTransfer;
+        uint256 sumNetNew;
+
+        for(uint i = 0; i < 4; i++) sumNetNew += (loanData[i] - debtLockerData[i]);
+
+        {
+            for(uint i = 0; i < 4; i++) {
+                assertEq(debtLockerData[i + 4], loanData[i]);  // LTL updated to reflect loan state
+
+                // Category portion of claim * LTL asset balance 
+                // Eg. (interestClaimed / totalClaimed) * balance = Portion of total claim balance that is interest
+                uint256 loanShare = (loanData[i] - debtLockerData[i]) * 1 ether / sumNetNew * claim[0] / 1 ether;
+                assertEq(loanShare, claim[i + 1]);
+
+                sumTransfer += balances[i + 6] - balances[i + 1]; // Sum up all transfers that occured from claim
+            }
+            assertEq(claim[0], sumTransfer); // Assert balance from withdrawFunds equals sum of transfers
+        }
+
+        {
+            assertEq(balances[5] - balances[0], 0);      // LTL locker should have transferred ALL funds claimed to LP
+            assertTrue(balances[6] - balances[1] < 10);  // LP         should have transferred ALL funds claimed to LL, SL, and PD (with rounding error)
+
+            assertEq(balances[7] - balances[2], claim[3] + claim[1] * pool.delegateFee() / 10_000);  // Pool delegate claim (feePaid + delegateFee portion of interest)
+            assertEq(balances[8] - balances[3],            claim[1] * pool.stakingFee()  / 10_000);  // Staking Locker claim (feePaid + stakingFee portion of interest)
+
+            withinPrecision(pool.interestSum() - beforeInterestSum, claim[1] - claim[1] * (pool.delegateFee() + pool.stakingFee()) / 10_000, 11);  // interestSum incremented by remainder of interest
+
+            // Liquidity Locker balance change should EXACTLY equal state variable change
+            assertEq(balances[9] - balances[4], (beforePrincipalOut - pool.principalOut()) + (pool.interestSum() - beforeInterestSum));
+
+            assertTrue(beforePrincipalOut - pool.principalOut() == claim[2] + claim[4]); // principalOut incremented by claimed principal + excess
+        }
+    }
     
     function test_claim_multipleLP() public {
 
