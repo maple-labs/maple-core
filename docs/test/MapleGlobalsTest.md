@@ -2,8 +2,9 @@
 
 ## Functions:
 [`setUp()`](#MapleGlobalsTest-setUp--)
+[`test_constructor()`](#MapleGlobalsTest-test_constructor--)
+[`test_setup()`](#MapleGlobalsTest-test_setup--)
 [`test_setters()`](#MapleGlobalsTest-test_setters--)
-[`test_add_tokens()`](#MapleGlobalsTest-test_add_tokens--)
 
 
 ## <u>Functions</u>
@@ -11,10 +12,13 @@
 ### `setUp()`
 No description
 
-### `test_setters()`
+### `test_constructor()`
 No description
 
-### `test_add_tokens()`
+### `test_setup()`
+No description
+
+### `test_setters()`
 No description
 
 ## <u>Events</u>

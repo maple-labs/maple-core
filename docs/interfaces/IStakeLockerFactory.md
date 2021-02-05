@@ -1,14 +1,14 @@
 
 
 ## Functions:
-[`newLocker(address _stakeAsset, address _liquidityAsset, address _globals)`](#IStakeLockerFactory-newLocker-address-address-address-)
+[`newLocker(address _stakeAsset, address _liquidityAsset)`](#IStakeLockerFactory-newLocker-address-address-)
 [`owner(address)`](#IStakeLockerFactory-owner-address-)
 [`isLocker(address)`](#IStakeLockerFactory-isLocker-address-)
 
 
 ## <u>Functions</u>
 
-### `newLocker(address _stakeAsset, address _liquidityAsset, address _globals)`
+### `newLocker(address _stakeAsset, address _liquidityAsset)`
 No description
 
 ### `owner(address)`

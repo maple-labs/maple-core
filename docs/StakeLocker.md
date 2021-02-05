@@ -1,11 +1,11 @@
 
 
 ## Functions:
-[`constructor(address _stakeAsset, address _liquidityAsset, address _owner, address _globals)`](#StakeLocker-constructor-address-address-address-address-)
+[`constructor(address _stakeAsset, address _liquidityAsset, address _owner)`](#StakeLocker-constructor-address-address-address-)
+[`setWhitelist(address user, bool status)`](#StakeLocker-setWhitelist-address-bool-)
+[`pull(address dst, uint256 amt)`](#StakeLocker-pull-address-uint256-)
 [`stake(uint256 amt)`](#StakeLocker-stake-uint256-)
 [`unstake(uint256 amt)`](#StakeLocker-unstake-uint256-)
-[`deleteLP()`](#StakeLocker-deleteLP--)
-[`finalizeLP()`](#StakeLocker-finalizeLP--)
 [`withdrawETH(address payable dst)`](#StakeLocker-withdrawETH-address-payable-)
 [`getUnstakeableBalance(address staker)`](#StakeLocker-getUnstakeableBalance-address-)
 
@@ -16,8 +16,18 @@
 
 ## <u>Functions</u>
 
-### `constructor(address _stakeAsset, address _liquidityAsset, address _owner, address _globals)`
+### `constructor(address _stakeAsset, address _liquidityAsset, address _owner)`
 No description
+
+### `setWhitelist(address user, bool status)`
+Update user status on the whitelist. Only Pool owner can call this.
+        @param user   The address to set status for.
+        @param status The status of user on whitelist.
+
+### `pull(address dst, uint256 amt)`
+Transfers amt of stakeAsset to dst.
+        @param  dst Desintation to transfer stakeAsset to.
+        @param  amt Amount of stakeAsset to transfer.
 
 ### `stake(uint256 amt)`
 Deposit amt of stakeAsset, mint FDTs to msg.sender.
@@ -27,12 +37,6 @@ Deposit amt of stakeAsset, mint FDTs to msg.sender.
 Withdraw amt of stakeAsset, burn FDTs for msg.sender.
         @param amt Amount of stakeAsset (BPTs) to withdraw.
 
-### `deleteLP()`
-Delete the pool.
-
-### `finalizeLP()`
-Finalize the pool.
-
 ### `withdrawETH(address payable dst)`
 Withdraw ETH directly from this locker.
         @param dst Address to send ETH to.
@@ -40,7 +44,7 @@ Withdraw ETH directly from this locker.
 ### `getUnstakeableBalance(address staker)`
 Returns information for staker's unstakeable balance.
         @param staker The address to view information for.
-        @return Amount of BPTs staker can unstake.
+        @return balance Amount of BPTs staker can unstake.
 
 ## <u>Events</u>
 

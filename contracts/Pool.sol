@@ -17,7 +17,7 @@ import "./interfaces/IStakeLockerFactory.sol";
 
 import "./library/CalcBPool.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 /// @title Pool is the core contract for liquidity pools.
 contract Pool is FDT {

@@ -6,6 +6,7 @@
 [`withdrawnFundsOf(address _owner)`](#FDT-withdrawnFundsOf-address-)
 [`accumulativeFundsOf(address _owner)`](#FDT-accumulativeFundsOf-address-)
 [`withdrawFunds()`](#FDT-withdrawFunds--)
+[`withdrawFundsOnBehalf(address user)`](#FDT-withdrawFundsOnBehalf-address-)
 [`updateFundsReceived()`](#FDT-updateFundsReceived--)
 
 
@@ -51,6 +52,9 @@ accumulativeFundsOf(_owner) = withdrawableFundsOf(_owner) + withdrawnFundsOf(_ow
 
 ### `withdrawFunds()`
 Withdraws all available funds for a token holder
+
+### `withdrawFundsOnBehalf(address user)`
+Withdraws all available funds for a token holder, on behalf of token holder
 
 ### `updateFundsReceived()`
 Register a payment of funds in tokens. May be called directly after a deposit is made.
