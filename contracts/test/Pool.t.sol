@@ -527,7 +527,6 @@ contract PoolTest is TestUtil {
         
         (uint claimable, uint principal, uint interest) = pool1.claimableFunds(address(bob));
 
-
         assertEq(claimable, 500 * USD);
         assertTrue(bob.try_withdraw(address(pool1), claimable), "Failed to withdraw 500 USD");
     }
@@ -1594,9 +1593,9 @@ contract PoolTest is TestUtil {
         
         (uint total_kim, uint principal_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
 
-        assertEq(total_kim, 1000 * USD);
+        assertEq(total_kim,     1000 * USD);
         assertEq(principal_kim, 1000 * USD);
-        assertEq(interest_kim, 0);
+        assertEq(interest_kim,           0);
 
         uint256 withdrawAmount = 1000 * USD;
         kim.withdraw(address(pool1), withdrawAmount);
@@ -1639,9 +1638,9 @@ contract PoolTest is TestUtil {
         
         (uint total_kim, uint principal_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
 
-        assertEq(total_kim, 950 * USD);
+        assertEq(total_kim,     950 * USD);
         assertEq(principal_kim, 950 * USD);
-        assertEq(interest_kim, 0);
+        assertEq(interest_kim,          0);
 
         kim.withdraw(address(pool1), depositAmount);
         uint256 bal1 = IERC20(USDC).balanceOf(address(kim));  // Balance after principal penalty
@@ -1661,7 +1660,6 @@ contract PoolTest is TestUtil {
         mint("USDC", address(kim), 2000 * USD);
         kim.approve(USDC, address(pool1), MAX_UINT);
         
-
         // Do another deposit with same amount
         uint256 bal0 = IERC20(USDC).balanceOf(address(kim));  // Get balance before deposit
         uint256 depositAmount = 1000 * USD;

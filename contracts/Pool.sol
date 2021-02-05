@@ -488,7 +488,7 @@ contract Pool is FDT {
             return (withdrawableFundsOf(lp), 0, withdrawableFundsOf(lp)); 
         }
         else {
-            uint256 userBalance    = _fromWad(balanceOf(lp)); // was balanceOf(lp)
+            uint256 userBalance    = _fromWad(balanceOf(lp));
             uint256 interestEarned = withdrawableFundsOf(lp);                       // Calculate interest earned
             uint256 firstPenalty   = principalPenalty.mul(userBalance).div(10000);  // Calculate flat principal penalty
             uint256 totalPenalty   = calcWithdrawPenalty(                           // Calculate total penalty
