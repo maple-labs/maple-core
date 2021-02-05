@@ -6,6 +6,8 @@ import "./interfaces/IPriceFeed.sol";
 import "./interfaces/IERC20Details.sol";
 import "./interfaces/ISubFactory.sol";
 
+interface ICalc { function calcType() external returns (uint8); }
+
 interface AggregatorV3Interface {
   function latestRoundData() external view
     returns (
@@ -39,7 +41,7 @@ contract MapleGlobals {
 
     mapping(address => bool)    public isValidLoanAsset;        // Mapping of valid loan assets
     mapping(address => bool)    public isValidCollateralAsset;  // Mapping of valid collateral assets
-    mapping(address => bool)    public isValidCalc;             // Mapping of valid calculator contracts
+    mapping(address => bool)    public validCalcs;              // Mapping of valid calculator contracts
     mapping(address => bool)    public isValidPoolDelegate;     // Validation data structure for pool delegates (prevent invalid addresses from creating pools).
     
     // Determines the liquidation path of various assets in Loans and Treasury.
@@ -146,6 +148,15 @@ contract MapleGlobals {
     }
 
     /**
+        @dev    Check the validity of a calculator.
+        @param  calc The calculator address
+        @param  calcType  The calculator type
+    */
+    function isValidCalc(address calc, uint8 calcType) external returns(bool) {
+        return validCalcs[calc] && ICalc(calc).calcType() == calcType;
+    }
+
+    /**
         @dev Update validity of pool delegate (those able to create pools).
         @param  delegate The address to manage permissions for.
         @param  valid    The new permissions of delegate.
@@ -199,7 +210,7 @@ contract MapleGlobals {
         @param  valid The validity of calc.
     */
     function setCalc(address calc, bool valid) public isGovernor {
-        isValidCalc[calc] = valid;
+        validCalcs[calc] = valid;
     }
 
     /**
