@@ -165,7 +165,15 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!globals.isValidPoolDelegate(address(joe)));
 
         // TODO: Assign price feeds from official ChainLink oracles.
-        // TODO: Test the assignePriceFeed() and getPrice() functions.
+        // TODO: Test the assignPriceFeed() and getPrice() functions.
+
+        assertTrue(!fakeGov.try_setDefaultUniswapPath(WETH, USDC, USDC));  // Non-governor cant set
+        assertEq(globals.defaultUniswapPath(WETH, USDC), address(0));
+        assertEq(globals.defaultUniswapPath(WBTC, USDC), address(0));
+        assertTrue(gov.try_setDefaultUniswapPath(WETH, USDC, USDC));
+        assertTrue(gov.try_setDefaultUniswapPath(WBTC, USDC, WETH));
+        assertEq(globals.defaultUniswapPath(WETH, USDC), USDC);
+        assertEq(globals.defaultUniswapPath(WBTC, USDC), WETH);
 
         assertTrue(!globals.isValidLoanAsset(WETH));
         assertTrue(!globals.isValidCollateralAsset(CDAI));

@@ -36,10 +36,19 @@ contract Governor {
     function setUnstakeDelay(uint256 delay)                           external { globals.setUnstakeDelay(delay); }
     function setGovernor(address gov)                                 external { globals.setGovernor(gov); }
 
+    function setDefaultUniswapPath(address from, address to, address mid) external { 
+        globals.setDefaultUniswapPath(from, to, mid); 
+    }
+
     // Try functions
     function try_setGlobals(address target, address globals) external returns (bool ok) {
         string memory sig = "setGlobals(address)";
         (ok,) = address(target).call(abi.encodeWithSignature(sig, globals));
+    }
+
+    function try_setDefaultUniswapPath(address from, address to, address mid) external returns (bool ok) { 
+        string memory sig = "setDefaultUniswapPath(address,address,address)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, from, to, mid)); 
     }
 
     function try_setCalc(address calc, bool valid) external returns (bool ok) { 
