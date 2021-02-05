@@ -309,10 +309,10 @@ contract Pool is FDT {
 
         // Burn enough BPTs for liquidityAsset to cover defaultSuffered.
         uint256 bptsBurned = IBPool(stakeAsset).exitswapExternAmountOut(
-                                 address(liquidityAsset), 
-                                 availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
-                                 uint256(-1)
-                             );
+                                address(liquidityAsset), 
+                                availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
+                                uint256(-1)
+                            );
 
         // Return remaining BPTs to stakeLocker.
         uint256 bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
@@ -495,15 +495,28 @@ contract Pool is FDT {
             uint256 interestEarned = withdrawableFundsOf(lp);                       // Calculate interest earned
             uint256 firstPenalty   = principalPenalty.mul(userBalance).div(10000);  // Calculate flat principal penalty
             uint256 totalPenalty   = calcWithdrawPenalty(                           // Calculate total penalty
-                                         interestEarned.add(firstPenalty),
-                                         lp
-                                     );
+                                        interestEarned.add(firstPenalty),
+                                        lp
+                                    );
             return (
                 userBalance.sub(totalPenalty).add(interestEarned), 
                 userBalance.sub(totalPenalty), 
                 interestEarned
             );
         }
+    }
+
+    /**
+        @dev Liquidate the loan. Pool delegate could liquidate a loan only when
+            loan completes its grace period.
+            This will increase the `pointsPerShare` contribution of the debt lockers (i.e holders of loan FDT).
+            Pool delegate can claim its proportion of fund using the `claim()` function.
+        @param loan Address of the loan contract that is need to be liquidated.
+        @param dlFactory Address of the debt locker factory that is used to generate the corresponding debt locker.
+     */
+    function liquidateLoan(address loan, address dlFactory) external {
+        _isValidDelegate();
+        IDebtLocker(debtLockers[loan][dlFactory]).liquidateLoan();
     }
 
     /**

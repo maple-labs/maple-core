@@ -330,9 +330,9 @@ contract Loan is FDT {
         bool withinExtendedGracePeriod = pastGracePeriod && block.timestamp <= gracePeriodEnd.add(_globals(superFactory).extendedGracePeriod());
 
         // It checks following conditions - 
-        // 1. If `current time - nexPaymentDue` is within the (gracePeriod, gracePeriod + ExtendedGracePeriod] & `msg.sender` is
-        //  a pool delegate (Assumption: Only pool delegate will have non zero balance) then liquidate the loans or
-        // 2. If `current time - nexPaymentDue` is greater than gracePeriod + ExtendedGracePeriod then any msg.sender can liquidate the loans.
+        // 1. If `current time - nextPaymentDue` is within the (gracePeriod, gracePeriod + extendedGracePeriod] & `msg.sender` is
+        //  a pool delegate (Assumption: Only pool delegate will have non zero balance) then liquidate the loan.
+        // 2. If `current time - nextPaymentDue` is greater than gracePeriod + extendedGracePeriod then any msg.sender can liquidate the loan.
         if ((withinExtendedGracePeriod && balanceOf(msg.sender) > 0) || (pastGracePeriod && !withinExtendedGracePeriod)) {
             _triggerDefault();
         }
