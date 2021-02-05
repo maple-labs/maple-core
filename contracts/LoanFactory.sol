@@ -5,8 +5,6 @@ import "./Loan.sol";
 
 import "./library/TokenUUID.sol";
 
-interface ICalc { function calcType() external returns (uint8); }
-
 /// @title LoanFactory instantiates Loan contracts.
 contract LoanFactory {
 
@@ -85,9 +83,9 @@ contract LoanFactory {
         require(_globals.isValidSubFactory(address(this), flFactory, FUNDING_LOCKER_FACTORY),    "LF:INVALID_FL_FACTORY");
         require(_globals.isValidSubFactory(address(this), clFactory, COLLATERAL_LOCKER_FACTORY), "LF:INVALID_CL_FACTORY");
 
-        require(_globals.isValidCalc(calcs[0]) && ICalc(calcs[0]).calcType()  == INTEREST_CALC_TYPE, "LF:INVALID_INTEREST_CALC");
-        require(_globals.isValidCalc(calcs[1]) && ICalc(calcs[1]).calcType()  == LATEFEE_CALC_TYPE,  "LF:INVALID_LATE_FEE_CALC");
-        require(_globals.isValidCalc(calcs[2]) && ICalc(calcs[2]).calcType()  == PREMIUM_CALC_TYPE,  "LF:INVALID_PREMIUM_CALC");
+        require(_globals.isValidCalc(calcs[0], INTEREST_CALC_TYPE), "LF:INVALID_INTEREST_CALC");
+        require(_globals.isValidCalc(calcs[1],  LATEFEE_CALC_TYPE), "LF:INVALID_LATE_FEE_CALC");
+        require(_globals.isValidCalc(calcs[2],  PREMIUM_CALC_TYPE), "LF:INVALID_PREMIUM_CALC");
         
         // Deploy loan vault contract.
 	    string memory tUUID = TokenUUID.generateUUID(loansCreated + 1);

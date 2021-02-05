@@ -45,6 +45,16 @@ contract MapleGlobalsTest is TestUtil {
 
     ERC20                     fundsToken;
 
+    uint8 public constant CL_FACTORY = 0;           // Factory type of `CollateralLockerFactory`.
+    uint8 public constant DL_FACTORY = 1;           // Factory type of `DebtLockerFactory`.
+    uint8 public constant FL_FACTORY = 2;           // Factory type of `FundingLockerFactory`.
+    uint8 public constant LL_FACTORY = 3;           // Factory type of `LiquidityLockerFactory`.
+    uint8 public constant SL_FACTORY = 4;           // Factory type of `StakeLockerFactory`.
+
+    uint8 public constant INTEREST_CALC_TYPE = 10;  // Calc type of `BulletRepaymentCalc`.
+    uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`.
+    uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`.
+
     function setUp() public {
 
         gov         = new Governor();       // Actor: Governor of Maple.
@@ -106,22 +116,37 @@ contract MapleGlobalsTest is TestUtil {
 
     function test_setup() public {
         assertTrue(globals.isValidPoolDelegate(address(sid)));
+
         assertTrue(globals.isValidLoanAsset(DAI));
         assertTrue(globals.isValidLoanAsset(USDC));
+
         assertTrue(globals.isValidCollateralAsset(DAI));
         assertTrue(globals.isValidCollateralAsset(USDC));
         assertTrue(globals.isValidCollateralAsset(WETH));
         assertTrue(globals.isValidCollateralAsset(WBTC));
-        assertTrue(globals.isValidCalc(address(lfCalc)));
-        assertTrue(globals.isValidCalc(address(pCalc)));
-        assertTrue(globals.isValidCalc(address(brCalc)));
+
+        assertTrue(globals.validCalcs(address(lfCalc)));
+        assertTrue(globals.validCalcs(address(pCalc)));
+        assertTrue(globals.validCalcs(address(brCalc)));
+
+        assertTrue(globals.isValidCalc(address(lfCalc),  LATEFEE_CALC_TYPE));
+        assertTrue(globals.isValidCalc(address(pCalc),   PREMIUM_CALC_TYPE));
+        assertTrue(globals.isValidCalc(address(brCalc), INTEREST_CALC_TYPE));
+
         assertTrue(globals.isValidPoolFactory(address(poolFactory)));
         assertTrue(globals.isValidLoanFactory(address(loanFactory)));
+
         assertTrue(globals.validSubFactories(address(poolFactory), address(slFactory)));
         assertTrue(globals.validSubFactories(address(poolFactory), address(llFactory)));
         assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(clFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(flFactory)));
+        
+        assertTrue(globals.isValidSubFactory(address(poolFactory), address(slFactory), SL_FACTORY));
+        assertTrue(globals.isValidSubFactory(address(poolFactory), address(llFactory), LL_FACTORY));
+        assertTrue(globals.isValidSubFactory(address(poolFactory), address(dlFactory), DL_FACTORY));
+        assertTrue(globals.isValidSubFactory(address(loanFactory), address(clFactory), CL_FACTORY));
+        assertTrue(globals.isValidSubFactory(address(loanFactory), address(flFactory), FL_FACTORY));
     }
 
     function test_setters() public {
@@ -186,10 +211,10 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!globals.isValidLoanAsset(WETH));
         assertTrue(!globals.isValidCollateralAsset(CDAI));
 
-        assertTrue(globals.isValidCalc(address(brCalc)));
+        assertTrue(globals.validCalcs(address(brCalc)));
         assertTrue(!fakeGov.try_setCalc(address(brCalc), false));  // Non-governor cant set
         assertTrue(     gov.try_setCalc(address(brCalc), false));
-        assertTrue(!globals.isValidCalc(address(brCalc)));
+        assertTrue(!globals.validCalcs(address(brCalc)));
 
         assertEq(globals.governor(),         address(gov));
         assertEq(globals.mpl(),              address(mpl));
