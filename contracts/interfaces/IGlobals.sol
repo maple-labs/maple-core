@@ -40,7 +40,7 @@ interface IGlobals {
 
     function getPrice(address) external view returns (uint256);
 
-    function isValidCalc(address) external view returns (bool);
+    function isValidCalc(address, uint8) external view returns (bool);
 
     function isValidLoanFactory(address) external view returns (bool);
 

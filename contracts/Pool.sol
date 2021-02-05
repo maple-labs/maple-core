@@ -26,6 +26,8 @@ contract Pool is FDT {
 
     uint256 constant WAD = 10 ** 18;
 
+    uint8 public constant DL_FACTORY = 1;   // Factory type of `DebtLockerFactory`.
+
     IERC20  public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
 
     address public immutable poolDelegate;     // The pool delegate, who maintains full authority over this Pool.
@@ -272,9 +274,9 @@ contract Pool is FDT {
         IGlobals globals = _globals(superFactory);
 
         // Auth checks.
-        require(globals.isValidLoanFactory(ILoan(loan).superFactory()), "Pool:INVALID_LOAN_FACTORY");
-        require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),  "Pool:INVALID_LOAN");
-        require(globals.isValidSubFactory(superFactory, dlFactory, 1),  "Pool:INVALID_DL_FACTORY");
+        require(globals.isValidLoanFactory(ILoan(loan).superFactory()),         "Pool:INVALID_LOAN_FACTORY");
+        require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),          "Pool:INVALID_LOAN");
+        require(globals.isValidSubFactory(superFactory, dlFactory, DL_FACTORY), "Pool:INVALID_DL_FACTORY");
 
         address _debtLocker = debtLockers[loan][dlFactory];
 
