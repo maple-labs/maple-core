@@ -27,4 +27,6 @@ interface IPool {
     function superFactory() external view returns (address);
     
     function setWhitelistStakeLocker(address, bool) external;
+
+    function claimableFunds(address) external view returns(uint256, uint256, uint256);
 }
