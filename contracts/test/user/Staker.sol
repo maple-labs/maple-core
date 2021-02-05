@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "../../interfaces/IStakeLocker.sol";
 
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract Staker {
 
@@ -38,5 +38,5 @@ contract Staker {
         string memory sig = "unstake(uint256)";
         (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, amt));
     }
-    
+
 }

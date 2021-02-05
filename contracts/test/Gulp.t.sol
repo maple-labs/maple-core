@@ -18,12 +18,13 @@ import "../interfaces/IPool.sol";
 import "../interfaces/IStakeLocker.sol";
 import "../interfaces/IPoolFactory.sol";
 import "../interfaces/IERC20Details.sol";
+import "../interfaces/IBFactory.sol";
 
 import "../BulletRepaymentCalc.sol";
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import "../MapleToken.sol";
 import "../StakeLockerFactory.sol";
@@ -172,7 +173,7 @@ contract GulpTest is TestUtil {
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan = bob.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         // Stake and finalize pool
         sid.approve(address(bPool), address(stakeLocker), 50 * WAD);

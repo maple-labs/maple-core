@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity >=0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "./token/FDT.sol";
 
-import "./library/CalcBPool.sol";
-import "./interfaces/ILoan.sol";
 import "./interfaces/IBPool.sol";
+import "./interfaces/IDebtLockerFactory.sol";
+import "./interfaces/IDebtLocker.sol";
 import "./interfaces/IGlobals.sol";
+import "./interfaces/ILiquidityLocker.sol";
+import "./interfaces/ILiquidityLockerFactory.sol";
+import "./interfaces/ILoan.sol";
 import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IStakeLocker.sol";
 import "./interfaces/IStakeLockerFactory.sol";
-import "./interfaces/ILiquidityLocker.sol";
-import "./interfaces/ILiquidityLockerFactory.sol";
-import "./interfaces/IDebtLockerFactory.sol";
-import "./interfaces/IDebtLocker.sol";
-import "./token/FDT.sol";
+
+import "./library/CalcBPool.sol";
+
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 /// @title Pool is the core contract for liquidity pools.
 contract Pool is FDT {

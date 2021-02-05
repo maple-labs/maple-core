@@ -2,8 +2,8 @@
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "./interfaces/IPriceFeed.sol";
 import "./interfaces/IERC20Details.sol";
+import "./interfaces/IPriceFeed.sol";
 import "./interfaces/ISubFactory.sol";
 
 interface AggregatorV3Interface {

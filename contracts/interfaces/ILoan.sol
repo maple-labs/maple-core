@@ -45,6 +45,7 @@ interface ILoan is IERC20 {
 
     // Functions
     function fundLoan(uint256, address) external;
+    function makePayment() external;
     function triggerDefault() external;
     function unwind() external;
 

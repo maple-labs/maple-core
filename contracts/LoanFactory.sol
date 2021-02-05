@@ -2,6 +2,7 @@
 pragma solidity >=0.6.11;
 
 import "./Loan.sol";
+
 import "./library/TokenUUID.sol";
 
 interface ICalc { function calcType() external returns (uint8); }

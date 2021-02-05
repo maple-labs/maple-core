@@ -7,6 +7,10 @@ import "./TestUtil.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
+// import "./user/Borrower.sol";
+import "./user/Governor.sol";
+// import "./user/Lender.sol";
+
 import "../BulletRepaymentCalc.sol";
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
@@ -21,32 +25,6 @@ import "../interfaces/ILoan.sol";
 import "../interfaces/IERC20Details.sol";
 
 contract Borrower {
-    function try_drawdown(address loan, uint256 amt) external returns (bool ok) {
-        string memory sig = "drawdown(uint256)";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function try_makePayment(address loan) external returns (bool ok) {
-        string memory sig = "makePayment()";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig));
-    }
-
-    function try_createLoan(
-        address loanFactory,
-        address loanAsset,
-        address collateralAsset,
-        address flFactory,
-        address clFactory,
-        uint256[6] memory specs,
-        address[3] memory calcs
-    ) 
-        external returns (bool ok) 
-    {
-        string memory sig = "createLoan(address,address,uint256[],address[])";
-        (ok,) = address(loanFactory).call(
-            abi.encodeWithSignature(sig, loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
-    }
 
     function triggerDefault(address loan) external {
         ILoan(loan).triggerDefault();
@@ -93,6 +71,10 @@ contract Treasury { }
 
 contract LoanLiquidationTest is TestUtil {
 
+    Borrower                         ali;
+    Governor                         gov;
+    Lender                           bob;
+
     ERC20                     fundsToken;
     MapleToken                       mpl;
     MapleGlobals                 globals;
@@ -104,8 +86,6 @@ contract LoanLiquidationTest is TestUtil {
     LateFeeCalc              lateFeeCalc;
     PremiumCalc              premiumCalc;
     LoanFactory              loanFactory;
-    Borrower                         ali;
-    Lender                           bob;
     Treasury                         trs;
 
     function setUp() public {

@@ -12,8 +12,6 @@ export SOLC_FLAGS="--optimize --optimize-runs 200"
 export DAPP_LINK_TEST_LIBRARIES=1
 
 dapp build
-LANG=C.UTF-8 dapp test --match "contracts/test" --rpc-url "$ETH_RPC_URL" --verbose
-# test_deposit_with_liquidity_cap
-# test_view_balance
+LANG=C.UTF-8 dapp test --match "contracts/test/CollateralLockerFactoryTest.t.sol" --rpc-url "$ETH_RPC_URL" --verbose
 
-# --match "contracts/test/MapleGlobals.t.sol" 
+# --match "contracts/test/CollateralLockerFactoryTest.t.sol" 

@@ -2,9 +2,9 @@
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/IBPool.sol";
+import "../../interfaces/IPool.sol";
 
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract LP {
 
@@ -17,11 +17,11 @@ contract LP {
     }
 
     function withdraw(address pool, uint256 amt) external {
-        Pool(pool).withdraw(amt);
+        IPool(pool).withdraw(amt);
     }
 
     function deposit(address pool, uint256 amt) external {
-        Pool(pool).deposit(amt);
+        IPool(pool).deposit(amt);
     }
 
 

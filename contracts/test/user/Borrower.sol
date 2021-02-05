@@ -3,8 +3,12 @@ pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "../../interfaces/IStakeLocker.sol";
+import "../../interfaces/ILoan.sol";
+import "../../interfaces/ILoanFactory.sol";
 
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../../Loan.sol";
+
+import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract Borrower {
 
@@ -13,15 +17,15 @@ contract Borrower {
     /************************/
     
     function makePayment(address loan) external {
-        Loan(loan).makePayment();
+        ILoan(loan).makePayment();
     }
 
     function makeFullPayment(address loan) external {
-        Loan(loan).makeFullPayment();
+        ILoan(loan).makeFullPayment();
     }
 
     function drawdown(address loan, uint256 _drawdownAmount) external {
-        Loan(loan).drawdown(_drawdownAmount);
+        ILoan(loan).drawdown(_drawdownAmount);
     }
 
     function approve(address token, address who, uint256 amt) external {
@@ -29,7 +33,7 @@ contract Borrower {
     }
 
     function createLoan(
-        LoanFactory loanFactory,
+        address loanFactory,
         address loanAsset, 
         address collateralAsset, 
         address flFactory,
@@ -37,10 +41,10 @@ contract Borrower {
         uint256[6] memory specs,
         address[3] memory calcs
     ) 
-        external returns (Loan loanVault) 
+        external returns (Loan loan) 
     {
-        loanVault = Loan(
-            loanFactory.createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
+        loan = Loan(
+            ILoanFactory(loanFactory).createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
         );
     }
 

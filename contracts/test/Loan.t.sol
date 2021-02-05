@@ -91,7 +91,7 @@ contract LoanTest is TestUtil {
         // Can't create a loan with DAI since stakingAsset uses USDC.
         assertTrue(!ali.try_createLoan(address(loanFactory), DAI, WETH, address(flFactory), address(clFactory), specs, calcs));
 
-        Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        Loan loan = ali.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     
         assertEq(address(loan.loanAsset()),        USDC);
         assertEq(address(loan.collateralAsset()),  WETH);
@@ -116,7 +116,7 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        Loan loan = ali.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         address fundingLocker = loan.fundingLocker();
 
         bob.approve(USDC, address(loan), 5000 * USD);
@@ -136,7 +136,7 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
-        loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan = ali.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         bob.approve(USDC, address(loan), 5000 * USD);
     

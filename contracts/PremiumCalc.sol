@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./interfaces/ILoan.sol";
+
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 /// @title PremiumCalc applies a flat fee on the princpal owed when paying off the loan in full.
 contract PremiumCalc {
