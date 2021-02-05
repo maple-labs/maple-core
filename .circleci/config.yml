@@ -169,6 +169,7 @@ jobs:
       - restore_cache:
           key: nix-deps
       - run:
+          no_output_timeout: 30m
           name: Run unit tests
           command: |
             cd ~/project
