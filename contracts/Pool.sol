@@ -321,8 +321,11 @@ contract Pool is PoolFDT {
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
         // Check liquidityAsset swapOut value of StakeLocker coverage
-        uint256 availableSwapOut = stakeAsset.getSwapOutValueLocker(address(liquidityAsset), stakeLocker);
-        uint256 maxSwapOut       = liquidityAsset.balanceOf(address(stakeAsset)).mul(IBPool(stakeAsset).MAX_OUT_RATIO()).div(WAD);  // Max amount that can be swapped 
+        uint256 availableSwapOut = CalcBPool.getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
+        uint256 maxSwapOut       = liquidityAsset.balanceOf(stakeAsset).mul(IBPool(stakeAsset).MAX_OUT_RATIO()).div(WAD);  // Max amount that can be swapped 
+
+        emit Debug("availableSwapOut", availableSwapOut);
+        emit Debug("maxSwapOut", maxSwapOut);
 
         availableSwapOut = availableSwapOut > maxSwapOut ? maxSwapOut : availableSwapOut;
 
@@ -335,7 +338,7 @@ contract Pool is PoolFDT {
         // To maintain accounting, account for accidental transfers into Pool
         uint256 preBurnBalance = liquidityAsset.balanceOf(address(this));
 
-        emit Debug("availableSwapOut", availableSwapOut);
+        
         emit Debug("preBurnBalance", preBurnBalance);
         emit Debug("defaultSuffered", defaultSuffered);
 
@@ -368,6 +371,12 @@ contract Pool is PoolFDT {
         // Transfer USDC to liquidityLocker.
         liquidityAsset.transfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
 
+        emit Debug("principalOut", principalOut);
+
+        principalOut = principalOut.sub(liquidityAssetRecoveredFromBurn);
+
+         emit Debug("principalOut", principalOut);
+
         emit DefaultSuffered(loan, defaultSuffered, bptsBurned, bptsReturned, liquidityAssetRecoveredFromBurn);
     }
 
@@ -375,13 +384,13 @@ contract Pool is PoolFDT {
         @dev Claim available funds for loan through specified debt locker factory.
         @param  loan      Address of the loan to claim from.
         @param  dlFactory The debt locker factory (always maps to a single debt locker).
-        @return [0] = Total amount claimed.
-                [1] = Interest portion claimed.
-                [2] = Principal portion claimed.
-                [3] = Fee portion claimed.
-                [4] = Excess portion claimed.
-                [5] = Recovered portion claimed (from liquidations).
-                [6] = Default suffered.
+        @return [0] = Total amount claimed
+                [1] = Interest  portion claimed
+                [2] = Principal portion claimed
+                [3] = Fee       portion claimed
+                [4] = Excess    portion claimed
+                [5] = Recovered portion claimed (from liquidations)
+                [6] = Default suffered
     */
     function claim(address loan, address dlFactory) external returns(uint256[7] memory) { 
         
@@ -390,7 +399,7 @@ contract Pool is PoolFDT {
         uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
         uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest
 
-        uint256 principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);  // Principal + excess + amountRecovered
+        uint256 principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);                                     // Principal + excess + amountRecovered
         uint256 interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10000)).sub(stakeLockerPortion);  // Leftover interest
 
         // Subtract outstanding principal by principal claimed plus excess returned
@@ -402,16 +411,14 @@ contract Pool is PoolFDT {
         _transferLiquidityAsset(poolDelegate, poolDelegatePortion);  // Transfer fee and portion of interest to pool delegate.
         _transferLiquidityAsset(stakeLocker, stakeLockerPortion);    // Transfer portion of interest to stakeLocker
 
-        // Transfer remaining claim (remaining interest + principal + excess) to liquidityLocker
+        // Transfer remaining claim (remaining interest + principal + excess + recovered) to liquidityLocker
         // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
         // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
         // Ensures that internal accounting is exactly reflective of balance change
         _transferLiquidityAsset(liquidityLocker, principalClaim.add(interestClaim)); 
         
-        // Handle default if defaultSuffed > 0
-        if (claimInfo[6] > 0) {
-            _handleDefault(loan, claimInfo[6]);
-        }
+        // Handle default if defaultSuffered > 0
+        if (claimInfo[6] > 0) _handleDefault(loan, claimInfo[6]);
 
         // Update funds received for FDT StakeLocker tokens.
         IStakeLocker(stakeLocker).updateFundsReceived();

@@ -92,6 +92,8 @@ library CalcBPool {
         return tokenAmountOut;
     }
 
+    event Debug(string, uint);
+
     /** 
         @dev Calculate _pair swap out value of staker BPT balance escrowed in stakeLocker.
         @param pool        Balancer pool that issues the BPTs.
@@ -103,7 +105,7 @@ library CalcBPool {
         address pool,
         address pair,
         address stakeLocker
-    ) public view returns (uint256) {
+    ) public returns (uint256) {
 
         // Fetch balancer pool token information.
         IBPool bPool            = IBPool(pool);
@@ -115,6 +117,13 @@ library CalcBPool {
 
         // Fetch BPT balance of stakeLocker by staker.
         uint256 poolAmountIn = bPool.balanceOf(stakeLocker);
+
+        emit Debug("tokenBalanceOut", tokenBalanceOut);
+        emit Debug("tokenWeightOut", tokenWeightOut);
+        emit Debug("poolSupply", poolSupply);
+        emit Debug("totalWeight", totalWeight);
+        emit Debug("swapFee", swapFee);
+        emit Debug("poolAmountIn", poolAmountIn);
 
         // Returns amount of BPTs required to extract tokenAmountOut.
         uint256 tokenAmountOut = bPool.calcSingleOutGivenPoolIn(

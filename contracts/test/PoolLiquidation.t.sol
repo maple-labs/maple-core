@@ -189,7 +189,7 @@ contract PoolLiquidationTest is TestUtil {
         // Stake and finalize pool
         sid.approve(address(bPool), address(stakeLocker_a), 25 * WAD);
         joe.approve(address(bPool), address(stakeLocker_b), 25 * WAD);
-        sid.stake(address(stakeLocker_a), 25 * WAD);
+        sid.stake(address(stakeLocker_a), 10 * WAD);  // Less than 1/6, so that all BPTs can be burned in tests
         joe.stake(address(stakeLocker_b), 25 * WAD);
         sid.finalize(address(pool_a));
         joe.finalize(address(pool_b));
@@ -212,9 +212,9 @@ contract PoolLiquidationTest is TestUtil {
         uint cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
 
         // Drawdown loan
-        mint("WETH", address(bob), cReq);
-        bob.approve(WETH, address(loan), MAX_UINT);
-        bob.drawdown(address(loan), 4_000_000 * USD);
+        mint("WETH", address(che), cReq);
+        che.approve(WETH, address(loan), MAX_UINT);
+        che.drawdown(address(loan), 4_000_000 * USD);
         
         // Warp to late payment
         uint256 start = block.timestamp;
@@ -273,18 +273,26 @@ contract PoolLiquidationTest is TestUtil {
     function test_claim_default_burn_BPT_shortfall() public {
 
         // Fund the pool
-        mint("USDC", address(ali), 1_000_000_000 * USD);
+        mint("USDC", address(ali), 500_000_000 * USD);
+        mint("USDC", address(bob),  10_000_000 * USD);
+
         ali.approve(USDC, address(pool_a), MAX_UINT);
-        ali.deposit(address(pool_a), 500_000_000 * USD);
+        bob.approve(USDC, address(pool_a), MAX_UINT);
+        ali.deposit(address(pool_a), 500_000_000 * USD);  // Ali symbolizes all other LPs, test focuses on Bob
+        bob.deposit(address(pool_a), 10_000_000 * USD);
+
+        // TPV = LL + PO = 510 + 0
 
         // Fund the loan
         sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 100_000_000 * USD);
         uint cReq = loan.collateralRequiredForDrawdown(100_000_000 * USD);
 
+        // TPV = LL + PO = 410 + 100 = 510
+
         // Drawdown loan
-        mint("WETH", address(bob), cReq);
-        bob.approve(WETH, address(loan), MAX_UINT);
-        bob.drawdown(address(loan), 100_000_000 * USD);
+        mint("WETH", address(che), cReq);
+        che.approve(WETH, address(loan), MAX_UINT);
+        che.drawdown(address(loan), 100_000_000 * USD);
         
         // Warp to late payment
         uint256 start = block.timestamp;
@@ -295,23 +303,57 @@ contract PoolLiquidationTest is TestUtil {
         // Trigger default
         loan.triggerDefault();
 
-        address liquidityLocker_a = pool_a.liquidityLocker();
+        // TPV = LL + PO = 410 + 100 = 510
+
+        address liquidityLocker = pool_a.liquidityLocker();
+        address stakeLocker     = pool_a.stakeLocker();
 
         // Pre-state liquidityLocker checks.
-        uint256 liquidityLocker_pre_a = IERC20(USDC).balanceOf(liquidityLocker_a);
+        uint256 liquidityLockerBal_pre = IERC20(USDC).balanceOf(liquidityLocker);
+        uint256 slBPTBal_pre           = bPool.balanceOf(stakeLocker);
+        uint256 principalOut_pre       = pool_a.principalOut();
+        uint256 bptShortfall_pre       = pool_a.bptShortfall();
+
+        // LLBalance
+        // principalOut
+        // BPT bal of stakeLocker
+        // bptShortfall
 
         uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
 
-        // Post-state liquidityLocker checks.
-        uint256 liquidityLocker_post_a = IERC20(USDC).balanceOf(liquidityLocker_a);
+        // TPV = LL + PO - shortfall
+
+        uint256 liquidityLockerBal_post = IERC20(USDC).balanceOf(liquidityLocker);
+        uint256 slBPTBal_post           = bPool.balanceOf(stakeLocker);
+        uint256 principalOut_post       = pool_a.principalOut();
+        uint256 bptShortfall_post       = pool_a.bptShortfall();
+
+        assertEq(liquidityLockerBal_pre,  1);
+        assertEq(liquidityLockerBal_post, 2);
+        assertEq(slBPTBal_pre,            3);
+        assertEq(slBPTBal_post,           4);
+        assertEq(principalOut_pre,        5);
+        assertEq(principalOut_post,       6);
+        assertEq(bptShortfall_pre,        7);
+        assertEq(bptShortfall_post,       8);
+
+        assertEq(bptShortfall_pre, 0);  // No bptShortfall before bpt burning occurs
+        assertEq(liquidityLockerBal_pre  + principalOut_pre,                      510_000_000 * USD);
+        assertEq(liquidityLockerBal_post + principalOut_post + bptShortfall_post, 510_000_000 * USD); // LLBal + PO goes down, bptShortfall distributes that loss
+        assertEq(principalOut_post, 0);  // All outstanding loans are finished
+
+        // assertEq(liquidityLockerBal_post - liquidityLockerBal_pre, principalOut_pre - principalOut_post);  // LLBal + PO = LLBal + PO before and after claim is made
+
+        // // Post-state liquidityLocker checks.
+        // uint256 liquidityLocker_post_a = IERC20(USDC).balanceOf(liquidityLocker_a);
         
-        assertEq(liquidityLocker_post_a - liquidityLocker_pre_a, vals_a[5]);
+        // assertEq(liquidityLocker_post_a - liquidityLocker_pre_a, vals_a[5]);
 
-        uint ali_beforeBal = IERC20(USDC).balanceOf(address(ali));
-        ali.withdraw(address(pool_a), 500_000_000 * USD);
-        uint ali_afterBal = IERC20(USDC).balanceOf(address(ali));
+        // uint bob_beforeBal = IERC20(USDC).balanceOf(address(bob));
+        // bob.withdraw(address(pool_a), 10_000_000 * USD);
+        // uint bob_afterBal = IERC20(USDC).balanceOf(address(bob));
 
-        assertEq(ali_afterBal - ali_beforeBal, 1);
+        // assertEq(bob_afterBal - bob_beforeBal, 1);
         // assertGt(vals_a[5], 0);
 
         assertTrue(false);
