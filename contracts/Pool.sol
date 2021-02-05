@@ -409,7 +409,7 @@ contract Pool is FDT {
         @return penalty Total penalty
     */
     // TODO: Handle case where penaltyDelay == 0
-    function calcWithdrawPenalty(uint256 amt, address who) public returns (uint256 penalty) {
+    function calcWithdrawPenalty(uint256 amt, address who) public view returns (uint256 penalty) {
         if (lockupPeriod < penaltyDelay) {
             uint256 dTime    = block.timestamp.sub(depositDate[who]);
             uint256 unlocked = dTime.mul(WAD).div(penaltyDelay).mul(amt).div(WAD);
@@ -475,11 +475,48 @@ contract Pool is FDT {
     }
 
     /**
+        @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
+        @param lp Liquidity Provider to check claimableFunds for 
+        @return [0] = Total amount claimable.
+                [1] = Principal amount claimable.
+                [2] = Interest amount claimable.
+    */
+    function claimableFunds(address lp) public view returns(uint256, uint256, uint256) {
+
+        // Deposit is still within lockupPeriod, user has 0 claimableFunds under this condition.
+        if (depositDate[lp].add(lockupPeriod) > block.timestamp) {
+            return (withdrawableFundsOf(lp), 0, withdrawableFundsOf(lp)); 
+        }
+        else {
+            uint256 userBalance    = _fromWad(balanceOf(lp));
+            uint256 interestEarned = withdrawableFundsOf(lp);                       // Calculate interest earned
+            uint256 firstPenalty   = principalPenalty.mul(userBalance).div(10000);  // Calculate flat principal penalty
+            uint256 totalPenalty   = calcWithdrawPenalty(                           // Calculate total penalty
+                                         interestEarned.add(firstPenalty),
+                                         lp
+                                     );
+            return (
+                userBalance.sub(totalPenalty).add(interestEarned), 
+                userBalance.sub(totalPenalty), 
+                interestEarned
+            );
+        }
+    }
+
+    /**
         @dev Convert liquidityAsset to WAD precision (10 ** 18)
         @param amt Effective time needed in pool for user to be able to claim 100% of funds
     */
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
+    }
+
+    /**
+        @dev Convert liquidityAsset to WAD precision (10 ** 18)
+        @param amt Effective time needed in pool for user to be able to claim 100% of funds
+    */
+    function _fromWad(uint256 amt) internal view returns(uint256) {
+        return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 
     /**

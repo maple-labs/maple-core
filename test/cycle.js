@@ -58,6 +58,7 @@ require("dotenv").config();
 // JS Globals
 const { expect, assert } = require("chai");
 const { BigNumber } = require("ethers");
+const hre = require("hardhat");
 const artpath = `../../contracts/localhost/`;
 
 // Maple Core Contracts
