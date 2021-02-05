@@ -6,6 +6,17 @@ import "./interfaces/IPriceFeed.sol";
 import "./interfaces/IERC20Details.sol";
 import "./interfaces/ISubFactory.sol";
 
+interface AggregatorV3Interface {
+  function latestRoundData() external view
+    returns (
+      uint80 roundId,
+      int256 answer,
+      uint256 startedAt,
+      uint256 updatedAt,
+      uint80 answeredInRound
+    );
+}
+
 contract MapleGlobals {
 
     address immutable public BFactory;   // Official balancer pool factory.
@@ -38,8 +49,9 @@ contract MapleGlobals {
     // asset is swapped. If defaultUniswapPath[WETH][USDC] == WBTC ... then swap WETH for WBTC, then WBTC for USDC.
     mapping(address => mapping(address => address)) public defaultUniswapPath; 
 
-    // Mapping of asset, to the associated oracle price feed.
-    mapping(address => address) public assetPriceFeed;
+    
+    mapping(address => address) public assetPriceFeed;          // Mapping of asset, to the associated oracle price feed.
+    mapping(address => address) public oracleFor;               // ChainLink oracle for a given asset.
 
     mapping(address => bool)                     public isValidPoolFactory;  // Mapping of valid pool factories.
     mapping(address => bool)                     public isValidLoanFactory;  // Mapping of valid loan factories.
@@ -252,5 +264,25 @@ contract MapleGlobals {
     */
     function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
         unstakeDelay = _unstakeDelay;
+    }
+
+    /**
+        @dev Fetch price for asset from ChainLink oracles.
+        @param asset The asset to fetch price.
+        @return The price of asset.
+    */
+    function getLatestPrice(address asset) public view returns (uint256) {
+        address oracle = oracleFor[asset];
+        (,int price,,,) = AggregatorV3Interface(oracle).latestRoundData();
+        return uint256(price);
+    }
+
+    /**
+        @dev Governor can specify a new unstake delay value.
+        @param asset The new unstake delay.
+        @param oracle The new unstake delay.
+    */
+    function setPriceOracle(address asset, address oracle) public isGovernor {
+        oracleFor[asset] = oracle;
     }
 }

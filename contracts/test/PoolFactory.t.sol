@@ -77,6 +77,9 @@ contract PoolFactoryTest is TestUtil {
         
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
+        gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
+        gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
+        gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
 
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
 

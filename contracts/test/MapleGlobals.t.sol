@@ -249,6 +249,15 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setUnstakeDelay(20 days));
         assertEq(globals.unstakeDelay(),        20 days);
 
+        assertTrue(!fakeGov.try_setPriceOracle(WETH, address(1)));
+        assertTrue(     gov.try_setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419));
+        assertTrue(     gov.try_setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c));
+        assertEq(globals.oracleFor(WETH),             0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
+        assertEq(globals.oracleFor(WBTC),             0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
+
+        // assertEq(globals.getLatestPrice(WETH), 0); // Shows real WETH value from ChainLink
+        // assertEq(globals.getLatestPrice(WBTC), 0); // Shows real WBTC value from ChainLink
+
         assertTrue(!fakeGov.try_setGovernor(address(fakeGov)));
         assertTrue(     gov.try_setGovernor(address(fakeGov)));
         assertEq(globals.governor(), address(fakeGov));

@@ -47,6 +47,8 @@ interface IGlobals {
     function isValidSubFactory(address, address, uint8) external view returns (bool);
 
     function isValidPoolFactory(address) external view returns (bool);
-
+    
+    function getLatestPrice(address) external view returns (uint256);
+    
     function defaultUniswapPath(address, address) external view returns (address);
 }
