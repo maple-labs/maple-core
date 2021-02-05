@@ -8,11 +8,11 @@
 [`investorFee()`](#IGlobals-investorFee--)
 [`gracePeriod()`](#IGlobals-gracePeriod--)
 [`drawdownGracePeriod()`](#IGlobals-drawdownGracePeriod--)
-[`stakeAmountRequired()`](#IGlobals-stakeAmountRequired--)
+[`swapOutRequired()`](#IGlobals-swapOutRequired--)
 [`isValidLoanAsset(address)`](#IGlobals-isValidLoanAsset-address-)
 [`isValidCollateralAsset(address)`](#IGlobals-isValidCollateralAsset-address-)
-[`mapleBPool()`](#IGlobals-mapleBPool--)
-[`mapleBPoolAssetPair()`](#IGlobals-mapleBPoolAssetPair--)
+[`BFactory()`](#IGlobals-BFactory--)
+[`setBFactory()`](#IGlobals-setBFactory--)
 [`isValidPoolDelegate(address)`](#IGlobals-isValidPoolDelegate-address-)
 [`validLoanAssets()`](#IGlobals-validLoanAssets--)
 [`validCollateralAssets()`](#IGlobals-validCollateralAssets--)
@@ -20,7 +20,12 @@
 [`loanFactory()`](#IGlobals-loanFactory--)
 [`poolFactory()`](#IGlobals-poolFactory--)
 [`getPrice(address)`](#IGlobals-getPrice-address-)
-[`isValidCalc(address)`](#IGlobals-isValidCalc-address-)
+[`isValidCalc(address, uint8)`](#IGlobals-isValidCalc-address-uint8-)
+[`isValidLoanFactory(address)`](#IGlobals-isValidLoanFactory-address-)
+[`isValidSubFactory(address, address, uint8)`](#IGlobals-isValidSubFactory-address-address-uint8-)
+[`isValidPoolFactory(address)`](#IGlobals-isValidPoolFactory-address-)
+[`getLatestPrice(address)`](#IGlobals-getLatestPrice-address-)
+[`defaultUniswapPath(address, address)`](#IGlobals-defaultUniswapPath-address-address-)
 
 
 ## <u>Functions</u>
@@ -46,7 +51,7 @@ No description
 ### `drawdownGracePeriod()`
 No description
 
-### `stakeAmountRequired()`
+### `swapOutRequired()`
 No description
 
 ### `isValidLoanAsset(address)`
@@ -55,10 +60,10 @@ No description
 ### `isValidCollateralAsset(address)`
 No description
 
-### `mapleBPool()`
+### `BFactory()`
 No description
 
-### `mapleBPoolAssetPair()`
+### `setBFactory()`
 No description
 
 ### `isValidPoolDelegate(address)`
@@ -82,7 +87,22 @@ No description
 ### `getPrice(address)`
 No description
 
-### `isValidCalc(address)`
+### `isValidCalc(address, uint8)`
+No description
+
+### `isValidLoanFactory(address)`
+No description
+
+### `isValidSubFactory(address, address, uint8)`
+No description
+
+### `isValidPoolFactory(address)`
+No description
+
+### `getLatestPrice(address)`
+No description
+
+### `defaultUniswapPath(address, address)`
 No description
 
 ## <u>Events</u>

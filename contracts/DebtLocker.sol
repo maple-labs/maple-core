@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity >=0.6.11;
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+
 import "./interfaces/ILoan.sol";
+
+import "../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract DebtLocker {
 

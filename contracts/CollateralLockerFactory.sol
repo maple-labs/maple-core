@@ -2,6 +2,7 @@
 pragma solidity >=0.6.11;
 
 import "./CollateralLocker.sol";
+
 import "./interfaces/ILoanFactory.sol";
 
 contract CollateralLockerFactory {

@@ -2,8 +2,7 @@
 
 ## Functions:
 [`owner()`](#IDebtLocker-owner--)
-[`loanToken()`](#IDebtLocker-loanToken--)
-[`fetch()`](#IDebtLocker-fetch--)
+[`loanAsset()`](#IDebtLocker-loanAsset--)
 [`claim()`](#IDebtLocker-claim--)
 
 
@@ -12,10 +11,7 @@
 ### `owner()`
 No description
 
-### `loanToken()`
-No description
-
-### `fetch()`
+### `loanAsset()`
 No description
 
 ### `claim()`

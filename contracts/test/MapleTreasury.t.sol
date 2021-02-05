@@ -14,12 +14,15 @@ contract PoolDelegate { }
 contract MapleTreasuryTest is TestUtil {
 
     Governor                         gov;
-    MapleToken                       mpl;
+
     MapleGlobals                 globals;
+    MapleToken                       mpl;
     MapleTreasury                    trs;
 
     function setUp() public {
-        gov     = new Governor();
+
+        gov     = new Governor();   // Actor: Governor of Maple.
+
         mpl     = new MapleToken("MapleToken", "MAPLE", USDC);
         globals = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         trs     = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 

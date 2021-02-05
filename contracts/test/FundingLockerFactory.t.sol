@@ -13,13 +13,15 @@ import "../FundingLockerFactory.sol";
 contract FundingLockerFactoryTest is TestUtil {
 
     Governor                        gov;
+    
+    FundingLockerFactory      flFactory;
     MapleToken                      mpl;
     MapleGlobals                globals;
-    FundingLockerFactory      flFactory;
 
     function setUp() public {
 
-        gov       = new Governor();
+        gov       = new Governor();                                  // Actor: Governor of Maple.
+
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
         globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
         flFactory = new FundingLockerFactory();                      // Setup Funding Locker Factory to support Loan Factory creation.

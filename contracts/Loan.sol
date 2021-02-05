@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity >=0.6.11;
 
-import "./token/FDT.sol";
-import "./interfaces/IGlobals.sol";
-import "./interfaces/IFundingLocker.sol";
-import "./interfaces/IFundingLockerFactory.sol";
 import "./interfaces/ICollateralLocker.sol";
 import "./interfaces/ICollateralLockerFactory.sol";
 import "./interfaces/IERC20Details.sol";
-import "./interfaces/ILoanFactory.sol";
-import "./interfaces/IRepaymentCalc.sol";
+import "./interfaces/IFundingLocker.sol";
+import "./interfaces/IFundingLockerFactory.sol";
+import "./interfaces/IGlobals.sol";
 import "./interfaces/ILateFeeCalc.sol";
+import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IPremiumCalc.sol";
+import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/IUniswapRouter.sol";
+
+import "./token/FDT.sol";
 
 /// @title Loan is the core loan vault contract.
 contract Loan is FDT {

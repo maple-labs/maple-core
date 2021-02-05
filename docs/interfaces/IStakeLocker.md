@@ -6,9 +6,11 @@
 [`unstake(uint256 _amountStakedAsset)`](#IStakeLocker-unstake-uint256-)
 [`withdrawUnstaked(uint256 _amountUnstaked)`](#IStakeLocker-withdrawUnstaked-uint256-)
 [`withdrawInterest()`](#IStakeLocker-withdrawInterest--)
-[`deleteLP()`](#IStakeLocker-deleteLP--)
-[`finalizeLP()`](#IStakeLocker-finalizeLP--)
 [`updateFundsReceived()`](#IStakeLocker-updateFundsReceived--)
+[`withdrawableFundsOf(address)`](#IStakeLocker-withdrawableFundsOf-address-)
+[`pull(address, uint256)`](#IStakeLocker-pull-address-uint256-)
+[`setWhitelist(address, bool)`](#IStakeLocker-setWhitelist-address-bool-)
+[`getUnstakeableBalance(address staker)`](#IStakeLocker-getUnstakeableBalance-address-)
 
 
 ## <u>Functions</u>
@@ -28,13 +30,19 @@ No description
 ### `withdrawInterest()`
 No description
 
-### `deleteLP()`
-No description
-
-### `finalizeLP()`
-No description
-
 ### `updateFundsReceived()`
+No description
+
+### `withdrawableFundsOf(address)`
+No description
+
+### `pull(address, uint256)`
+No description
+
+### `setWhitelist(address, bool)`
+No description
+
+### `getUnstakeableBalance(address staker)`
 No description
 
 ## <u>Events</u>

@@ -10,8 +10,10 @@
 [`clFactory()`](#ILoan-clFactory--)
 [`borrower()`](#ILoan-borrower--)
 [`repaymentCalc()`](#ILoan-repaymentCalc--)
+[`lateFeeCalc()`](#ILoan-lateFeeCalc--)
 [`premiumCalc()`](#ILoan-premiumCalc--)
 [`loanState()`](#ILoan-loanState--)
+[`globals()`](#ILoan-globals--)
 [`apr()`](#ILoan-apr--)
 [`paymentsRemaining()`](#ILoan-paymentsRemaining--)
 [`paymentIntervalSeconds()`](#ILoan-paymentIntervalSeconds--)
@@ -26,7 +28,17 @@
 [`feePaid()`](#ILoan-feePaid--)
 [`excessReturned()`](#ILoan-excessReturned--)
 [`getNextPayment()`](#ILoan-getNextPayment--)
+[`superFactory()`](#ILoan-superFactory--)
+[`termDays()`](#ILoan-termDays--)
+[`nextPaymentDue()`](#ILoan-nextPaymentDue--)
+[`defaultSuffered()`](#ILoan-defaultSuffered--)
+[`amountRecovered()`](#ILoan-amountRecovered--)
 [`fundLoan(uint256, address)`](#ILoan-fundLoan-uint256-address-)
+[`makePayment()`](#ILoan-makePayment--)
+[`drawdown(uint256)`](#ILoan-drawdown-uint256-)
+[`makeFullPayment()`](#ILoan-makeFullPayment--)
+[`triggerDefault()`](#ILoan-triggerDefault--)
+[`unwind()`](#ILoan-unwind--)
 [`updateFundsReceived()`](#ILoan-updateFundsReceived--)
 [`withdrawFunds()`](#ILoan-withdrawFunds--)
 
@@ -60,10 +72,16 @@ No description
 ### `repaymentCalc()`
 No description
 
+### `lateFeeCalc()`
+No description
+
 ### `premiumCalc()`
 No description
 
 ### `loanState()`
+No description
+
+### `globals()`
 No description
 
 ### `apr()`
@@ -108,7 +126,37 @@ No description
 ### `getNextPayment()`
 No description
 
+### `superFactory()`
+No description
+
+### `termDays()`
+No description
+
+### `nextPaymentDue()`
+No description
+
+### `defaultSuffered()`
+No description
+
+### `amountRecovered()`
+No description
+
 ### `fundLoan(uint256, address)`
+No description
+
+### `makePayment()`
+No description
+
+### `drawdown(uint256)`
+No description
+
+### `makeFullPayment()`
+No description
+
+### `triggerDefault()`
+No description
+
+### `unwind()`
 No description
 
 ### `updateFundsReceived()`

@@ -2,6 +2,7 @@
 pragma solidity >=0.6.11;
 
 import "./Loan.sol";
+
 import "./library/TokenUUID.sol";
 
 /// @title LoanFactory instantiates Loan contracts.

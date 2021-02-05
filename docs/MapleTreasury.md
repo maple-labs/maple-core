@@ -5,8 +5,9 @@
 [`fallback()`](#MapleTreasury-fallback--)
 [`receive()`](#MapleTreasury-receive--)
 [`setFundsToken(address _newFundsToken)`](#MapleTreasury-setFundsToken-address-)
+[`setGlobals(address newGlobals)`](#MapleTreasury-setGlobals-address-)
 [`passThroughFundsToken()`](#MapleTreasury-passThroughFundsToken--)
-[`convertERC20(address _asset)`](#MapleTreasury-convertERC20-address-)
+[`convertERC20(address asset)`](#MapleTreasury-convertERC20-address-)
 [`convertETH(uint256 _amountOut, uint256 _amountIn)`](#MapleTreasury-convertETH-uint256-uint256-)
 
 ## Events:
@@ -34,12 +35,16 @@ No description
 Adjust the token to convert assets to (and then send to MapleToken).
         @param _newFundsToken The new FundsToken with respect to MapleToken ERC-2222.
 
+### `setGlobals(address newGlobals)`
+Update the maple globals contract
+        @param  newGlobals Address of new maple globals contract
+
 ### `passThroughFundsToken()`
 Passes through the current fundsToken to MapleToken.
 
-### `convertERC20(address _asset)`
+### `convertERC20(address asset)`
 Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
-        @param _asset The ERC-20 asset to convert.
+        @param asset The ERC-20 asset to convert.
 
 ### `convertETH(uint256 _amountOut, uint256 _amountIn)`
 Convert ETH through Uniswap via bilateral transaction (two asset path).

@@ -6,6 +6,7 @@
 [`bind(address, uint256, uint256)`](#IBPool-bind-address-uint256-uint256-)
 [`balanceOf(address)`](#IBPool-balanceOf-address-)
 [`finalize()`](#IBPool-finalize--)
+[`gulp(address)`](#IBPool-gulp-address-)
 [`isFinalized()`](#IBPool-isFinalized--)
 [`isBound(address)`](#IBPool-isBound-address-)
 [`getNumTokens()`](#IBPool-getNumTokens--)
@@ -18,6 +19,7 @@
 [`getFinalTokens()`](#IBPool-getFinalTokens--)
 [`calcSingleOutGivenPoolIn(uint256 tokenBalanceOut, uint256 tokenWeightOut, uint256 poolSupply, uint256 totalWeight, uint256 poolAmountIn, uint256 swapFee)`](#IBPool-calcSingleOutGivenPoolIn-uint256-uint256-uint256-uint256-uint256-uint256-)
 [`calcPoolInGivenSingleOut(uint256 tokenBalanceOut, uint256 tokenWeightOut, uint256 poolSupply, uint256 totalWeight, uint256 tokenAmountOut, uint256 swapFee)`](#IBPool-calcPoolInGivenSingleOut-uint256-uint256-uint256-uint256-uint256-uint256-)
+[`exitswapExternAmountOut(address tokenOut, uint256 tokenAmountOut, uint256 maxPoolAmountIn)`](#IBPool-exitswapExternAmountOut-address-uint256-uint256-)
 
 
 ## <u>Functions</u>
@@ -35,6 +37,9 @@ No description
 No description
 
 ### `finalize()`
+No description
+
+### `gulp(address)`
 No description
 
 ### `isFinalized()`
@@ -71,6 +76,9 @@ No description
 No description
 
 ### `calcPoolInGivenSingleOut(uint256 tokenBalanceOut, uint256 tokenWeightOut, uint256 poolSupply, uint256 totalWeight, uint256 tokenAmountOut, uint256 swapFee)`
+No description
+
+### `exitswapExternAmountOut(address tokenOut, uint256 tokenAmountOut, uint256 maxPoolAmountIn)`
 No description
 
 ## <u>Events</u>

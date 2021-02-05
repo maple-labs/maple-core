@@ -4,79 +4,54 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "../mocks/value.sol";
-import "../mocks/token.sol";
+import "./user/Governor.sol";
+import "./user/PoolDelegate.sol";
 
+import "../LiquidityLockerFactory.sol";
+import "../MapleToken.sol";
+import "../Pool.sol";
+import "../PoolFactory.sol";
+import "../StakeLockerFactory.sol";
+
+import "../interfaces/IBFactory.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IStakeLocker.sol";
 
-import "./user/Governor.sol";
+import "../mocks/token.sol";
+import "../mocks/value.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
-import "../MapleToken.sol";
-import "../PoolFactory.sol";
-import "../StakeLockerFactory.sol";
-import "../LiquidityLockerFactory.sol";
-import "../Pool.sol";
-
-
-
-interface IBPoolFactory {
-    function newBPool() external returns (address);
-}
-
-contract PoolDelegate {
-    function try_createPool(
-        address poolFactory, 
-        address liquidityAsset,
-        address stakeAsset,
-        address slFactory, 
-        address llFactory,
-        uint256 stakingFee,
-        uint256 delegateFee,
-        uint256 liquidityCap
-    ) 
-        external returns (bool ok) 
-    {
-        string memory sig = "createPool(address,address,address,address,uint256,uint256,uint256)";
-        (ok,) = address(poolFactory).call(
-            abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, slFactory, llFactory, stakingFee, delegateFee, liquidityCap)
-        );
-    }
-}
+import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract PoolFactoryTest is TestUtil {
 
     Governor                       gov;
+    PoolDelegate                   ali;
+
     MapleToken                     mpl;
     MapleGlobals               globals;
     PoolFactory            poolFactory;
     StakeLockerFactory       slFactory;
-    LiquidityLockerFactory   llFactory;  
-    DSValue                  daiOracle;
-    DSValue                 usdcOracle;
-    PoolDelegate                   ali;
+    LiquidityLockerFactory   llFactory;
     IBPool                       bPool;
 
     uint256 public constant MAX_UINT = uint256(-1);
 
     function setUp() public {
 
-        gov         = new Governor();
+        gov         = new Governor();       // Actor: Governor of Maple.
+        ali         = new PoolDelegate();   // Actor: Manager of the Pool.
+
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         slFactory   = new StakeLockerFactory();
         llFactory   = new LiquidityLockerFactory();
         poolFactory = new PoolFactory(address(globals));
-        daiOracle   = new DSValue();
-        usdcOracle  = new DSValue();
-        ali         = new PoolDelegate();
 
         gov.setValidPoolFactory(address(poolFactory), true);
         
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
+        
         gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
         gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
         gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
@@ -84,7 +59,7 @@ contract PoolFactoryTest is TestUtil {
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
 
         // Initialize MPL/USDC Balancer pool (without finalizing)
-        bPool = IBPool(IBPoolFactory(BPOOL_FACTORY).newBPool());
+        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
 
         IERC20(USDC).approve(address(bPool), uint(-1));
         mpl.approve(address(bPool), uint(-1));
@@ -204,7 +179,7 @@ contract PoolFactoryTest is TestUtil {
         mint("DAI", address(this), 50_000_000 ether);
 
         // Initialize USDC/USDC Balancer pool (Doesn't include mpl)
-        bPool = IBPool(IBPoolFactory(BPOOL_FACTORY).newBPool());
+        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
 
         IERC20(DAI).approve(address(bPool), uint(-1));
         IERC20(USDC).approve(address(bPool), uint(-1));

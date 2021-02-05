@@ -4,145 +4,71 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "../mocks/value.sol";
-import "../mocks/token.sol";
-
+import "./user/Borrower.sol";
 import "./user/Governor.sol";
+import "./user/Lender.sol";
 
 import "../BulletRepaymentCalc.sol";
+import "../CollateralLockerFactory.sol";
+import "../FundingLockerFactory.sol";
+import "../MapleToken.sol";
 import "../LateFeeCalc.sol";
+import "../LoanFactory.sol";
 import "../PremiumCalc.sol";
 
-import "../MapleToken.sol";
-import "../FundingLockerFactory.sol";
-import "../CollateralLockerFactory.sol";
-import "../LoanFactory.sol";
 import "../interfaces/IERC20Details.sol";
 
-contract Borrower {
-    function try_drawdown(address loan, uint256 amt) external returns (bool ok) {
-        string memory sig = "drawdown(uint256)";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function try_makePayment(address loan) external returns (bool ok) {
-        string memory sig = "makePayment()";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig));
-    }
-
-    function try_createLoan(
-        address loanFactory,
-        address loanAsset,
-        address collateralAsset,
-        address flFactory,
-        address clFactory,
-        uint256[6] memory specs,
-        address[3] memory calcs
-    ) 
-        external returns (bool ok) 
-    {
-        string memory sig = "createLoan(address,address,uint256[],address[])";
-        (ok,) = address(loanFactory).call(
-            abi.encodeWithSignature(sig, loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
-    }
-
-    function try_unwind(address loan) external returns (bool ok) {
-        string memory sig = "unwind()";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig));
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function createLoan(
-        LoanFactory loanFactory,
-        address loanAsset, 
-        address collateralAsset, 
-        address flFactory,
-        address clFactory,
-        uint256[6] memory specs,
-        address[3] memory calcs
-    ) 
-        external returns (Loan loan) 
-    {
-        loan = Loan(
-            loanFactory.createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
-    }
-}
-
-contract Lender {
-    function fundLoan(Loan loan, uint256 amt, address who) external {
-        loan.fundLoan(amt, who);
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    // To assert failures
-    function try_drawdown(address loan, uint256 amt) external returns (bool ok) {
-        string memory sig = "drawdown(uint256)";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig, amt));
-    }
-}
+import "../mocks/token.sol";
+import "../mocks/value.sol";
 
 contract Treasury { }
 
 contract LoanTest is TestUtil {
 
+    Borrower                         ali;
     Governor                         gov;
-    ERC20                     fundsToken;
+    Lender                           bob;
+
+    BulletRepaymentCalc       bulletCalc;
+    CollateralLockerFactory    clFactory;
+    FundingLockerFactory       flFactory;
+    LateFeeCalc              lateFeeCalc;
+    LoanFactory              loanFactory;
     MapleToken                       mpl;
     MapleGlobals                 globals;
-    FundingLockerFactory       flFactory;
-    CollateralLockerFactory    clFactory;
-    DSValue                    ethOracle;
-    DSValue                   usdcOracle;
-    BulletRepaymentCalc       bulletCalc;
-    LateFeeCalc              lateFeeCalc;
     PremiumCalc              premiumCalc;
-    LoanFactory              loanFactory;
-    Borrower                         ali;
-    Lender                           bob;
     Treasury                         trs;
+
+    ERC20                     fundsToken;
 
     function setUp() public {
 
-        gov         = new Governor();
+        ali         = new Borrower();       // Actor: Borrower of the Loan.
+        gov         = new Governor();       // Actor: Governor of Maple.
+        bob         = new Lender();         // Actor: Individual lender.
+
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         flFactory   = new FundingLockerFactory();
         clFactory   = new CollateralLockerFactory();
-        ethOracle   = new DSValue();
-        usdcOracle  = new DSValue();
         bulletCalc  = new BulletRepaymentCalc();
         lateFeeCalc = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc = new PremiumCalc(500); // Flat 5% premium
         loanFactory = new LoanFactory(address(globals));
-
-        ethOracle.poke(500 ether);  // Set ETH price to $500
-        usdcOracle.poke(1 ether);   // Set USDC price to $1
+        trs         = new Treasury();
 
         gov.setCalc(address(bulletCalc),         true);
         gov.setCalc(address(lateFeeCalc),        true);
         gov.setCalc(address(premiumCalc),        true);
         gov.setCollateralAsset(WETH,             true);
         gov.setLoanAsset(USDC,                   true);
-        gov.assignPriceFeed(WETH,  address(ethOracle));
-        gov.assignPriceFeed(USDC, address(usdcOracle));
+        
         gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
         gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
         gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
 
         gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
         gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
-
-        ali = new Borrower();
-        bob = new Lender();
-        trs = new Treasury();
 
         gov.setMapleTreasury(address(trs));
 
@@ -158,7 +84,7 @@ contract LoanTest is TestUtil {
         // Can't create a loan with DAI since stakingAsset uses USDC.
         assertTrue(!ali.try_createLoan(address(loanFactory), DAI, WETH, address(flFactory), address(clFactory), specs, calcs));
 
-        Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        Loan loan = ali.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     
         assertEq(address(loan.loanAsset()),        USDC);
         assertEq(address(loan.collateralAsset()),  WETH);
@@ -183,7 +109,7 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        Loan loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        Loan loan = ali.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         address fundingLocker = loan.fundingLocker();
 
         bob.approve(USDC, address(loan), 5000 * USD);
@@ -192,7 +118,7 @@ contract LoanTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),          0);
         assertEq(IERC20(USDC).balanceOf(address(bob)),           5000 * USD);
 
-        bob.fundLoan(loan, 5000 * USD, address(ali));
+        bob.fundLoan(address(loan), 5000 * USD, address(ali));
 
         assertEq(IERC20(loan).balanceOf(address(ali)),           5000 ether);
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 5000 * USD);
@@ -203,11 +129,11 @@ contract LoanTest is TestUtil {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
-        loan = ali.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan = ali.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         bob.approve(USDC, address(loan), 5000 * USD);
     
-        bob.fundLoan(loan, 5000 * USD, address(ali));
+        bob.fundLoan(address(loan), 5000 * USD, address(ali));
     }
 
     function test_collateralRequiredForDrawdown() public {

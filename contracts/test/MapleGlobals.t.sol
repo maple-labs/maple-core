@@ -4,51 +4,46 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
 import "./user/Governor.sol";
+import "./user/PoolDelegate.sol";
 
-import "../MapleToken.sol";
-import "../PoolFactory.sol";
-import "../LoanFactory.sol";
-import "../DebtLockerFactory.sol";
-import "../StakeLockerFactory.sol";
-import "../LiquidityLockerFactory.sol";
-import "../FundingLockerFactory.sol";
-import "../CollateralLockerFactory.sol";
-import "../MapleTreasury.sol";
-import "../LateFeeCalc.sol";
-import "../PremiumCalc.sol";
 import "../BulletRepaymentCalc.sol";
+import "../CollateralLockerFactory.sol";
+import "../DebtLockerFactory.sol";
+import "../FundingLockerFactory.sol";
+import "../LateFeeCalc.sol";
+import "../LiquidityLockerFactory.sol";
+import "../LoanFactory.sol";
+import "../MapleToken.sol";
+import "../MapleTreasury.sol";
+import "../PoolFactory.sol";
+import "../PremiumCalc.sol";
+import "../StakeLockerFactory.sol";
 
-contract PoolDelegate { 
-
-    function try_setExtendedGracePeriod(address globals, uint256 newEGP) external returns(bool ok) {
-        string memory sig = "setExtendedGracePeriod(uint256)";
-        (ok,) = globals.call(abi.encodeWithSignature(sig, newEGP));
-    }
-}
+import "../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract MapleGlobalsTest is TestUtil {
 
     Governor                         gov;
-    ERC20                     fundsToken;
-    MapleToken                       mpl;
-    MapleGlobals                 globals;
-    FundingLockerFactory       flFactory;
-    CollateralLockerFactory    clFactory;
-    LoanFactory              loanFactory;
-    PoolFactory              poolFactory;
-    StakeLockerFactory         slFactory;
-    LiquidityLockerFactory     llFactory; 
-    DebtLockerFactory          dlFactory;
-    BulletRepaymentCalc           brCalc;
-    LateFeeCalc                   lfCalc;
-    PremiumCalc                    pCalc;
     PoolDelegate                     sid;
     PoolDelegate                     joe;
+
+    BulletRepaymentCalc           brCalc;
+    CollateralLockerFactory    clFactory;
+    DebtLockerFactory          dlFactory;
+    FundingLockerFactory       flFactory;
+    LateFeeCalc                   lfCalc;
+    LiquidityLockerFactory     llFactory;
+    LoanFactory              loanFactory;
+    MapleGlobals                 globals;
+    MapleToken                       mpl;
     MapleTreasury                    trs;
+    PoolFactory              poolFactory;
+    PremiumCalc                    pCalc;
+    StakeLockerFactory         slFactory;
+
+    ERC20                     fundsToken;
 
     uint8 public constant CL_FACTORY = 0;           // Factory type of `CollateralLockerFactory`.
     uint8 public constant DL_FACTORY = 1;           // Factory type of `DebtLockerFactory`.
@@ -62,7 +57,10 @@ contract MapleGlobalsTest is TestUtil {
 
     function setUp() public {
 
-        gov         = new Governor();
+        gov         = new Governor();       // Actor: Governor of Maple.
+        sid         = new PoolDelegate();   // Actor: Manager of the Pool.
+        joe         = new PoolDelegate();   // Actor: Manager of the Pool.
+
         mpl         = new MapleToken("MapleToken", "MAPLE", USDC);
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         poolFactory = new PoolFactory(address(globals));
@@ -75,8 +73,6 @@ contract MapleGlobalsTest is TestUtil {
         lfCalc      = new LateFeeCalc(0);
         pCalc       = new PremiumCalc(200);
         brCalc      = new BulletRepaymentCalc();
-        sid         = new PoolDelegate();
-        joe         = new PoolDelegate();
         trs         = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
 
         // The following code was adopted from maple-core/scripts/setup.js

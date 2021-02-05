@@ -8,6 +8,7 @@
 [`test_drawdown()`](#LoanTest-test_drawdown--)
 [`test_makePaymentBullet()`](#LoanTest-test_makePaymentBullet--)
 [`test_makePaymentLateBullet()`](#LoanTest-test_makePaymentLateBullet--)
+[`test_unwind_loan()`](#LoanTest-test_unwind_loan--)
 
 
 ## <u>Functions</u>
@@ -31,6 +32,9 @@ No description
 No description
 
 ### `test_makePaymentLateBullet()`
+No description
+
+### `test_unwind_loan()`
 No description
 
 ## <u>Events</u>

@@ -6,16 +6,17 @@ import "./TestUtil.sol";
 
 import "./user/Governor.sol";
 
-import "../LoanFactory.sol";
-import "../LateFeeCalc.sol";
-import "../PremiumCalc.sol";
+import "../CollateralLockerFactory.sol";
 import "../DebtLocker.sol";
-import "../MapleToken.sol";
-import "../MapleGlobals.sol";
-import "../interfaces/ILoan.sol";
 import "../DebtLockerFactory.sol";
 import "../FundingLockerFactory.sol";
-import "../CollateralLockerFactory.sol";
+import "../LateFeeCalc.sol";
+import "../LoanFactory.sol";
+import "../MapleGlobals.sol";
+import "../MapleToken.sol";
+import "../PremiumCalc.sol";
+
+import "../interfaces/ILoan.sol";
 
 contract InterestCalc {
     uint8 public constant calcType = 10;
@@ -26,19 +27,22 @@ contract InterestCalc {
 contract DebtLockerFactoryTest is TestUtil {
 
     Governor                        gov;
+
+    CollateralLockerFactory   clFactory;
+    DebtLockerFactory         dlFactory;
+    FundingLockerFactory      flFactory;
+    LoanFactory                lFactory;
     MapleToken                      mpl;
     MapleGlobals                globals;
-    FundingLockerFactory      flFactory;
-    CollateralLockerFactory   clFactory;
-    LoanFactory                lFactory;
+    
     ILoan                          loan;
-    DebtLockerFactory         dlFactory;
 
     uint256 constant MULTIPLIER = 10 ** 6;
 
     function setUp() public {
 
-        gov       = new Governor();
+        gov       = new Governor();                                           // Actor: Governor of Maple.
+
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);               // Setup Maple token.
         globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);           // Setup Maple Globals.
         flFactory = new FundingLockerFactory();                               // Setup Funding Locker Factory to support Loan Factory creation.

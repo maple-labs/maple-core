@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./interfaces/ILoan.sol";
+
+import "../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 contract BulletRepaymentCalc {
 
