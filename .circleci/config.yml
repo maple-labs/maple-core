@@ -169,8 +169,8 @@ jobs:
       - restore_cache:
           key: nix-deps
       - run:
-          no_output_timeout: 30m
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV

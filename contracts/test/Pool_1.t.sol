@@ -54,27 +54,27 @@ contract PoolTest is TestUtil {
     PoolDelegate                           sid;
     PoolDelegate                           joe;
 
-    ERC20                           fundsToken;
-    MapleToken                             mpl;
-    MapleGlobals                       globals;
-    FundingLockerFactory             flFactory;
+    BulletRepaymentCalc             bulletCalc;
     CollateralLockerFactory          clFactory;
-    LoanFactory                    loanFactory;
+    DebtLockerFactory               dlFactory1;
+    DebtLockerFactory               dlFactory2;
+    FundingLockerFactory             flFactory;
+    LateFeeCalc                    lateFeeCalc;
+    LiquidityLockerFactory           llFactory;
     Loan                                  loan;
     Loan                                 loan2;
     Loan                                 loan3;
+    LoanFactory                    loanFactory;
+    MapleGlobals                       globals;
+    MapleToken                             mpl;
     PoolFactory                    poolFactory;
-    StakeLockerFactory               slFactory;
-    LiquidityLockerFactory           llFactory; 
-    DebtLockerFactory               dlFactory1; 
-    DebtLockerFactory               dlFactory2; 
-    Pool                                 pool1; 
-    Pool                                 pool2; 
-    BulletRepaymentCalc             bulletCalc;
-    LateFeeCalc                    lateFeeCalc;
+    Pool                                 pool1;
+    Pool                                 pool2;
     PremiumCalc                    premiumCalc;
+    StakeLockerFactory               slFactory;
     Treasury                               trs;
     
+    ERC20                           fundsToken;
     IBPool                               bPool;
 
     uint256 constant public MAX_UINT = uint(-1);
@@ -85,12 +85,12 @@ contract PoolTest is TestUtil {
         fay            = new Borrower();                                                // Actor: Borrower of the Loan.
         hal            = new Borrower();                                                // Actor: Borrower of the Loan.
         gov            = new Governor();                                                // Actor: Governor of Maple.
-        sid            = new PoolDelegate();                                            // Actor: Manager of the Pool.
-        joe            = new PoolDelegate();                                            // Actor: Manager of the Pool.
         bob            = new LP();                                                      // Actor: Liquidity provider.
         che            = new LP();                                                      // Actor: Liquidity provider.
         dan            = new LP();                                                      // Actor: Liquidity provider.
         kim            = new LP();                                                      // Actor: Liquidity provider.
+        sid            = new PoolDelegate();                                            // Actor: Manager of the Pool.
+        joe            = new PoolDelegate();                                            // Actor: Manager of the Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);

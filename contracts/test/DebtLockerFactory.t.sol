@@ -6,15 +6,15 @@ import "./TestUtil.sol";
 
 import "./user/Governor.sol";
 
+import "../CollateralLockerFactory.sol";
 import "../DebtLocker.sol";
-import "../LoanFactory.sol";
-import "../LateFeeCalc.sol";
-import "../PremiumCalc.sol";
-import "../MapleGlobals.sol";
-import "../MapleToken.sol";
 import "../DebtLockerFactory.sol";
 import "../FundingLockerFactory.sol";
-import "../CollateralLockerFactory.sol";
+import "../LateFeeCalc.sol";
+import "../LoanFactory.sol";
+import "../MapleGlobals.sol";
+import "../MapleToken.sol";
+import "../PremiumCalc.sol";
 
 import "../interfaces/ILoan.sol";
 

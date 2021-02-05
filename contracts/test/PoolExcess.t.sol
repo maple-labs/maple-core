@@ -51,23 +51,24 @@ contract PoolExcessTest is TestUtil {
     Staker                                 che;
     Staker                                 dan;
 
+    BulletRepaymentCalc             bulletCalc;
+    CollateralLockerFactory          clFactory;
+    DebtLockerFactory                dlFactory;
+    FundingLockerFactory             flFactory;
+    LateFeeCalc                    lateFeeCalc;
+    Loan                                  loan;
+    LoanFactory                    loanFactory;
+    LiquidityLockerFactory           llFactory;
     MapleToken                             mpl;
     MapleGlobals                       globals;
-    FundingLockerFactory             flFactory;
-    CollateralLockerFactory          clFactory;
-    LoanFactory                    loanFactory;
-    Loan                                  loan;
-    PoolFactory                    poolFactory;
-    StakeLockerFactory               slFactory;
-    LiquidityLockerFactory           llFactory;
-    DebtLockerFactory                dlFactory;
     Pool                                pool_a;
     Pool                                pool_b;
-    BulletRepaymentCalc             bulletCalc;
-    LateFeeCalc                    lateFeeCalc;
+    PoolFactory                    poolFactory;
     PremiumCalc                    premiumCalc;
-    IBPool                               bPool;
+    StakeLockerFactory               slFactory;
     Treasury                               trs;
+
+    IBPool                               bPool;
     IStakeLocker                 stakeLocker_a;
     IStakeLocker                 stakeLocker_b;
 

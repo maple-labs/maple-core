@@ -23,11 +23,11 @@ import "../DebtLocker.sol";
 import "../DebtLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
 import "../FundingLockerFactory.sol";
-import "../MapleToken.sol";
 import "../LateFeeCalc.sol";
 import "../LiquidityLockerFactory.sol";
 import "../Loan.sol";
 import "../LoanFactory.sol";
+import "../MapleToken.sol";
 import "../Pool.sol";
 import "../PoolFactory.sol";
 import "../PremiumCalc.sol";
@@ -44,30 +44,32 @@ contract PoolLiquidationTest is TestUtil {
 
     using SafeMath for uint256;
 
-    Governor                               gov;
-    MapleToken                             mpl;
-    MapleGlobals                       globals;
-    FundingLockerFactory             flFactory;
-    CollateralLockerFactory          clFactory;
-    LoanFactory                    loanFactory;
-    Loan                                  loan;
-    PoolFactory                    poolFactory;
-    StakeLockerFactory               slFactory;
-    LiquidityLockerFactory           llFactory; 
-    DebtLockerFactory                dlFactory;  
-    Pool                                pool_a;  
-    Pool                                pool_b; 
-    BulletRepaymentCalc             bulletCalc;
-    LateFeeCalc                    lateFeeCalc;
-    PremiumCalc                    premiumCalc;
-    IBPool                               bPool;
-    PoolDelegate                           sid;
-    PoolDelegate                           joe;
-    LP                                     ali;
     Borrower                               bob;
+    Governor                               gov;
+    LP                                     ali;
     Staker                                 che;
     Staker                                 dan;
+    PoolDelegate                           sid;
+    PoolDelegate                           joe;
+
+    BulletRepaymentCalc             bulletCalc;
+    CollateralLockerFactory          clFactory;
+    DebtLockerFactory                dlFactory;
+    FundingLockerFactory             flFactory;
+    LateFeeCalc                    lateFeeCalc;
+    LiquidityLockerFactory           llFactory;
+    LoanFactory                    loanFactory;
+    Loan                                  loan;
+    MapleGlobals                       globals;
+    MapleToken                             mpl;
+    PoolFactory                    poolFactory;
+    StakeLockerFactory               slFactory; 
+    Pool                                pool_a;  
+    Pool                                pool_b; 
+    PremiumCalc                    premiumCalc;
     Treasury                               trs;
+
+    IBPool                               bPool;
     IStakeLocker                 stakeLocker_a;
     IStakeLocker                 stakeLocker_b;
 
@@ -75,7 +77,14 @@ contract PoolLiquidationTest is TestUtil {
 
     function setUp() public {
 
-        gov            = new Governor();
+        bob            = new Borrower();                     // Actor: Borrower of the Loan.
+        gov            = new Governor();                     // Actor: Governor of Maple.
+        sid            = new PoolDelegate();                 // Actor: Manager of the pool_a.
+        joe            = new PoolDelegate();                 // Actor: Manager of the pool_b.
+        ali            = new LP();                           // Actor: Liquidity provider.
+        che            = new Staker();                       // Actor: Stakes BPTs in Pool.
+        dan            = new Staker();                       // Actor: Stakes BPTs in Pool.
+
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         flFactory      = new FundingLockerFactory();         // Setup the FL factory to facilitate Loan factory functionality.
@@ -88,12 +97,6 @@ contract PoolLiquidationTest is TestUtil {
         bulletCalc     = new BulletRepaymentCalc();          // Repayment model.
         lateFeeCalc    = new LateFeeCalc(0);                 // Flat 0% fee
         premiumCalc    = new PremiumCalc(500);               // Flat 5% premium
-        sid            = new PoolDelegate();                 // Actor: Manager of the pool_a.
-        joe            = new PoolDelegate();                 // Actor: Manager of the pool_b.
-        ali            = new LP();                           // Actor: Liquidity providers
-        bob            = new Borrower();                     // Actor: Borrower aka Loan contract creator.
-        che            = new Staker();                       // Actor: Staker of BPTs
-        dan            = new Staker();                       // Actor: Staker of BPTs
         trs            = new Treasury();                     // Treasury.
 
         gov.setValidLoanFactory(address(loanFactory), true);
