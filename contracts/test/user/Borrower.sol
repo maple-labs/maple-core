@@ -68,7 +68,7 @@ contract Borrower {
     ) 
         external returns (bool ok) 
     {
-        string memory sig = "createLoan(address,address,uint256[],address[])";
+        string memory sig = "createLoan(address,address,address,address,uint256[6],address[3])";
         (ok,) = address(loanFactory).call(
             abi.encodeWithSignature(sig, loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
         );
