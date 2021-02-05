@@ -7,7 +7,11 @@ import "./TestUtil.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
+import "./user/Borrower.sol";
 import "./user/Governor.sol";
+import "./user/LP.sol";
+import "./user/PoolDelegate.sol";
+import "./user/Staker.sol";
 
 import "../interfaces/IBPool.sol";
 import "../interfaces/IPool.sol";
@@ -38,137 +42,17 @@ interface IBPoolFactory {
     function newBPool() external returns (address);
 }
 
-contract PoolDelegate {
-
-    function createPool(
-        address poolFactory, 
-        address liquidityAsset,
-        address stakeAsset,
-        address slFactory, 
-        address llFactory,
-        uint256 stakingFee,
-        uint256 delegateFee,
-        uint256 liquidityCap
-    ) 
-        external returns (address liquidityPool) 
-    {
-        liquidityPool = IPoolFactory(poolFactory).createPool(
-            liquidityAsset,
-            stakeAsset,
-            slFactory,
-            llFactory,
-            stakingFee,
-            delegateFee,
-            liquidityCap
-        );
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function stake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).stake(amt);
-    }
-
-    function finalize(address pool) external {
-        IPool(pool).finalize();
-    }
-
-    function unstake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).unstake(amt);
-    }
-
-    function fundLoan(address pool, address loan, address dlFactory, uint256 amt) external {
-        IPool(pool).fundLoan(loan, dlFactory, amt);  
-    }
-
-    function claim(address pool, address loan, address dlFactory) external returns(uint256[7] memory) {
-        return IPool(pool).claim(loan, dlFactory);  
-    }
-}
-
-contract Staker {
-
-    function try_stake(address stakeLocker, uint256 amt) external returns(bool ok) {
-        string memory sig = "stake(uint256)";
-        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function try_unstake(address stakeLocker, uint256 amt) external returns(bool ok) {
-        string memory sig = "unstake(uint256)";
-        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function stake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).stake(amt);
-    }
-
-    function unstake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).unstake(amt);
-    }
-
-}
-
-contract LP {
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function withdraw(address pool, uint256 amt) external {
-        Pool(pool).withdraw(amt);
-    }
-
-    function deposit(address pool, uint256 amt) external {
-        Pool(pool).deposit(amt);
-    }
-}
-
-contract Borrower {
-
-    function makePayment(address loan) external {
-        Loan(loan).makePayment();
-    }
-
-    function makeFullPayment(address loan) external {
-        Loan(loan).makeFullPayment();
-    }
-
-    function drawdown(address loan, uint256 _drawdownAmount) external {
-        Loan(loan).drawdown(_drawdownAmount);
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function createLoan(
-        LoanFactory loanFactory,
-        address loanAsset, 
-        address collateralAsset, 
-        address flFactory,
-        address clFactory,
-        uint256[6] memory specs,
-        address[3] memory calcs
-    ) 
-        external returns (Loan loanVault) 
-    {
-        loanVault = Loan(
-            loanFactory.createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
-    }
-}
-
 contract GulpTest is TestUtil {
 
     using SafeMath for uint256;
 
+    Borrower                               bob;
     Governor                               gov;
+    LP                                     ali;
+    PoolDelegate                           sid;
+    Staker                                 che;
+    Staker                                 dan;
+    
     MapleToken                             mpl;
     MapleGlobals                       globals;
     MapleTreasury                     treasury;
@@ -187,21 +71,23 @@ contract GulpTest is TestUtil {
     LateFeeCalc                    lateFeeCalc;
     PremiumCalc                    premiumCalc;
     IBPool                               bPool;
-    PoolDelegate                           sid;
-    LP                                     ali;
-    Borrower                               bob;
-    Staker                                 che;
-    Staker                                 dan;
     IStakeLocker                   stakeLocker;
 
     uint256 constant public MAX_UINT = uint(-1);
 
     function setUp() public {
 
-        gov            = new Governor();
+        bob            = new Borrower();                      // Actor: Borrower of the Loan.
+        gov            = new Governor();                      // Actor: Governor of Maple Protocol
+        ali            = new LP();                            // Actor: Liquidity provider.
+        sid            = new PoolDelegate();                  // Actor: Manager of the pool.
+        che            = new Staker();                        // Actor: Stakes BPTs in pool.
+        dan            = new Staker();                        // Actor: Staker BPTs in pool.
+
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         treasury       = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals));
+
         flFactory      = new FundingLockerFactory();          // Setup the FL factory to facilitate Loan factory functionality.
         clFactory      = new CollateralLockerFactory();       // Setup the CL factory to facilitate Loan factory functionality.
         loanFactory    = new LoanFactory(address(globals));   // Create Loan factory.
@@ -214,11 +100,6 @@ contract GulpTest is TestUtil {
         bulletCalc     = new BulletRepaymentCalc();           // Repayment model.
         lateFeeCalc    = new LateFeeCalc(0);                  // Flat 0% fee
         premiumCalc    = new PremiumCalc(500);                // Flat 5% premium
-        sid            = new PoolDelegate();                  // Actor: Manager of the pool.
-        ali            = new LP();                            // Actor: Liquidity providers
-        bob            = new Borrower();                      // Actor: Borrower aka Loan contract creator.
-        che            = new Staker();                        // Actor: Staker of BPTs
-        dan            = new Staker();                        // Actor: Staker of BPTs
 
         gov.setValidLoanFactory(address(loanFactory), true);
 

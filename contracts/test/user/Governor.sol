@@ -6,6 +6,10 @@ import "../../MapleGlobals.sol";
 
 contract Governor {
 
+    /************************/
+    /*** DIRECT FUNCTIONS ***/
+    /************************/
+
     MapleGlobals globals;
 
     function createGlobals(address mpl, address bPoolFactory) external returns (MapleGlobals) {
@@ -40,8 +44,12 @@ contract Governor {
     function setDefaultUniswapPath(address from, address to, address mid) external { 
         globals.setDefaultUniswapPath(from, to, mid); 
     }
+    
 
-    // Try functions
+    /*********************/
+    /*** TRY FUNCTIONS ***/
+    /*********************/
+
     function try_setGlobals(address target, address globals) external returns (bool ok) {
         string memory sig = "setGlobals(address)";
         (ok,) = address(target).call(abi.encodeWithSignature(sig, globals));

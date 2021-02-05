@@ -26,6 +26,7 @@ contract InterestCalc {
 contract DebtLockerFactoryTest is TestUtil {
 
     Governor                        gov;
+
     MapleToken                      mpl;
     MapleGlobals                globals;
     FundingLockerFactory      flFactory;
@@ -38,7 +39,8 @@ contract DebtLockerFactoryTest is TestUtil {
 
     function setUp() public {
 
-        gov       = new Governor();
+        gov       = new Governor();                                           // Actor: Governor of Maple.
+
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);               // Setup Maple token.
         globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);           // Setup Maple Globals.
         flFactory = new FundingLockerFactory();                               // Setup Funding Locker Factory to support Loan Factory creation.

@@ -13,12 +13,15 @@ import "../CollateralLockerFactory.sol";
 contract CollateralLockerFactoryTest is TestUtil {
 
     Governor                        gov;
+
     MapleToken                      mpl;
     MapleGlobals                globals;
     CollateralLockerFactory   clFactory;
 
     function setUp() public {
-        gov         = new Governor();
+
+        gov         = new Governor();                                  // Actor: Governor of Maple.
+
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
         clFactory   = new CollateralLockerFactory();                   // Setup Collateral Locker Factory to support Loan Factory creation.

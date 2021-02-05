@@ -40,7 +40,7 @@ jobs:
             - /nix # location depends on npm version
           key: nix-deps
 
-  dapp_test_clFactory:
+  dapp_test_collateralLockerFactory:
     docker:
       - image: nixorg/nix:circleci
     steps:
@@ -57,7 +57,7 @@ jobs:
             source $BASH_ENV
             ./test-ci.sh "CollateralLockerFactoryTest"
 
-  dapp_test_dlFactory:
+  dapp_test_debtLockerFactory:
     docker:
       - image: nixorg/nix:circleci
     steps:
@@ -74,7 +74,7 @@ jobs:
             source $BASH_ENV
             ./test-ci.sh "DebtLockerFactoryTest"
 
-  dapp_test_flFactory:
+  dapp_test_fundingLockerFactory:
     docker:
       - image: nixorg/nix:circleci
     steps:
@@ -159,7 +159,7 @@ jobs:
             source $BASH_ENV
             ./test-ci.sh "LoanLiquidationTest"
   
-  dapp_test_globals:
+  dapp_test_mapleGlobals:
     docker:
       - image: nixorg/nix:circleci
     steps:
@@ -176,7 +176,7 @@ jobs:
             source $BASH_ENV
             ./test-ci.sh "MapleGlobalsTest"
 
-  dapp_test_treasury:
+  dapp_test_mapleTreasury:
     docker:
       - image: nixorg/nix:circleci
     steps:
@@ -278,7 +278,7 @@ jobs:
             source $BASH_ENV
             ./test-ci.sh "StakeLockerTest"
   
-  dapp_test_slFactory:
+  dapp_test_stakeLockerFactory:
     docker:
       - image: nixorg/nix:circleci
     steps:
@@ -409,15 +409,15 @@ workflows:
 
       - dapp_build:
           context: seth
-      - dapp_test_clFactory: 
+      - dapp_test_collateralLockerFactory: 
           context: seth
           requires:
             - dapp_build
-      - dapp_test_dlFactory: 
+      - dapp_test_debtLockerFactory: 
           context: seth
           requires:
             - dapp_build
-      - dapp_test_flFactory: 
+      - dapp_test_fundingLockerFactory: 
           context: seth
           requires:
             - dapp_build
@@ -437,11 +437,11 @@ workflows:
           context: seth
           requires:
             - dapp_build
-      - dapp_test_globals: 
+      - dapp_test_mapleGlobals: 
           context: seth
           requires:
             - dapp_build
-      - dapp_test_treasury: 
+      - dapp_test_mapleTreasury: 
           context: seth
           requires:
             - dapp_build
@@ -465,7 +465,7 @@ workflows:
           context: seth
           requires:
             - dapp_build
-      - dapp_test_slFactory: 
+      - dapp_test_stakeLockerFactory: 
           context: seth
           requires:
             - dapp_build
