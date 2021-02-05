@@ -247,8 +247,8 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.oracleFor(WETH),             0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
         assertEq(globals.oracleFor(WBTC),             0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
 
-        assertEq(globals.getLatestPrice(WETH), 0);
-        assertEq(globals.getLatestPrice(WBTC), 0);
+        // assertEq(globals.getLatestPrice(WETH), 0); // Shows real WETH value from ChainLink
+        // assertEq(globals.getLatestPrice(WBTC), 0); // Shows real WBTC value from ChainLink
 
         assertTrue(!fakeGov.try_setGovernor(address(fakeGov)));
         assertTrue(     gov.try_setGovernor(address(fakeGov)));
