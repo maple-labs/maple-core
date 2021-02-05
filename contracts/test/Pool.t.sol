@@ -500,6 +500,7 @@ contract PoolTest is TestUtil {
         mint("USDC", address(bob), 10000 * USD);
 
         sid.finalize(address(pool1));
+        sid.setPrincipalPenalty(address(pool1), 0);
 
         bob.approve(USDC, address(pool1), MAX_UINT);
 
@@ -525,6 +526,7 @@ contract PoolTest is TestUtil {
         assertEq(pool1.lockupPeriod(), uint256(0),              "Failed to update the lockup period");
         
         (uint claimable, uint principal, uint interest) = pool1.claimableFunds(address(bob));
+
 
         assertEq(claimable, 500 * USD);
         assertTrue(bob.try_withdraw(address(pool1), claimable), "Failed to withdraw 500 USD");
@@ -1851,7 +1853,6 @@ contract PoolTest is TestUtil {
         // Deposit is still in lock-up
         assertEq(principal_kim, 0);
         assertEq(interest_kim, pool1.withdrawableFundsOf(address(kim)));
-        assertEq(total_kim, 0);
         assertEq(total_kim, principal_kim + interest_kim);
 
         hevm.warp(withdrawDate);
