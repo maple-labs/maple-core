@@ -6,16 +6,17 @@ import "./TestUtil.sol";
 
 import "./user/Governor.sol";
 
+import "../DebtLocker.sol";
 import "../LoanFactory.sol";
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
-import "../DebtLocker.sol";
-import "../MapleToken.sol";
 import "../MapleGlobals.sol";
-import "../interfaces/ILoan.sol";
+import "../MapleToken.sol";
 import "../DebtLockerFactory.sol";
 import "../FundingLockerFactory.sol";
 import "../CollateralLockerFactory.sol";
+
+import "../interfaces/ILoan.sol";
 
 contract InterestCalc {
     uint8 public constant calcType = 10;
@@ -27,13 +28,15 @@ contract DebtLockerFactoryTest is TestUtil {
 
     Governor                        gov;
 
+    CollateralLockerFactory   clFactory;
+    DebtLockerFactory         dlFactory;
+    FundingLockerFactory      flFactory;
+    LoanFactory                lFactory;
+
     MapleToken                      mpl;
     MapleGlobals                globals;
-    FundingLockerFactory      flFactory;
-    CollateralLockerFactory   clFactory;
-    LoanFactory                lFactory;
+    
     ILoan                          loan;
-    DebtLockerFactory         dlFactory;
 
     uint256 constant MULTIPLIER = 10 ** 6;
 

@@ -4,22 +4,22 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "../mocks/value.sol";
-import "../mocks/token.sol";
-
 import "./user/Borrower.sol";
 import "./user/Governor.sol";
 import "./user/Lender.sol";
 
 import "../BulletRepaymentCalc.sol";
+import "../CollateralLockerFactory.sol";
+import "../FundingLockerFactory.sol";
+import "../MapleToken.sol";
 import "../LateFeeCalc.sol";
+import "../LoanFactory.sol";
 import "../PremiumCalc.sol";
 
-import "../MapleToken.sol";
-import "../FundingLockerFactory.sol";
-import "../CollateralLockerFactory.sol";
-import "../LoanFactory.sol";
 import "../interfaces/IERC20Details.sol";
+
+import "../mocks/token.sol";
+import "../mocks/value.sol";
 
 contract Treasury { }
 

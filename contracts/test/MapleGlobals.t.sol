@@ -4,23 +4,23 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
 import "./user/Governor.sol";
 
-import "../MapleToken.sol";
-import "../PoolFactory.sol";
-import "../LoanFactory.sol";
-import "../DebtLockerFactory.sol";
-import "../StakeLockerFactory.sol";
-import "../LiquidityLockerFactory.sol";
-import "../FundingLockerFactory.sol";
-import "../CollateralLockerFactory.sol";
-import "../MapleTreasury.sol";
-import "../LateFeeCalc.sol";
-import "../PremiumCalc.sol";
 import "../BulletRepaymentCalc.sol";
+import "../CollateralLockerFactory.sol";
+import "../FundingLockerFactory.sol";
+import "../DebtLockerFactory.sol";
+import "../LateFeeCalc.sol";
+import "../LiquidityLockerFactory.sol";
+import "../LoanFactory.sol";
+import "../MapleToken.sol";
+import "../MapleTreasury.sol";
+import "../PoolFactory.sol";
+import "../PremiumCalc.sol";
+import "../StakeLockerFactory.sol";
+
+import "../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract PoolDelegate { 
 
@@ -33,6 +33,9 @@ contract PoolDelegate {
 contract MapleGlobalsTest is TestUtil {
 
     Governor                         gov;
+    PoolDelegate                     sid;
+    PoolDelegate                     joe;
+
     ERC20                     fundsToken;
     MapleToken                       mpl;
     MapleGlobals                 globals;
@@ -46,13 +49,12 @@ contract MapleGlobalsTest is TestUtil {
     BulletRepaymentCalc           brCalc;
     LateFeeCalc                   lfCalc;
     PremiumCalc                    pCalc;
-    PoolDelegate                     sid;
-    PoolDelegate                     joe;
     MapleTreasury                    trs;
 
     function setUp() public {
 
         gov         = new Governor();
+
         mpl         = new MapleToken("MapleToken", "MAPLE", USDC);
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         poolFactory = new PoolFactory(address(globals));

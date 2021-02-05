@@ -6,17 +6,17 @@ import "./TestUtil.sol";
 
 import "./user/Governor.sol";
 
-import "../MapleToken.sol";
 import "../CollateralLocker.sol";
 import "../CollateralLockerFactory.sol";
+import "../MapleToken.sol";
 
 contract CollateralLockerFactoryTest is TestUtil {
 
     Governor                        gov;
 
+    CollateralLockerFactory   clFactory;
     MapleToken                      mpl;
     MapleGlobals                globals;
-    CollateralLockerFactory   clFactory;
 
     function setUp() public {
 

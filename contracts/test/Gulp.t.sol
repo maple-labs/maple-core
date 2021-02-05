@@ -4,40 +4,39 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "../mocks/value.sol";
-import "../mocks/token.sol";
-
 import "./user/Borrower.sol";
 import "./user/Governor.sol";
 import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
 import "./user/Staker.sol";
 
-import "../interfaces/IBPool.sol";
-import "../interfaces/IPool.sol";
-import "../interfaces/IStakeLocker.sol";
-import "../interfaces/IPoolFactory.sol";
-import "../interfaces/IERC20Details.sol";
-import "../interfaces/IBFactory.sol";
-
 import "../BulletRepaymentCalc.sol";
+import "../CollateralLockerFactory.sol";
+import "../DebtLocker.sol";
+import "../DebtLockerFactory.sol";
+import "../FundingLockerFactory.sol";
 import "../LateFeeCalc.sol";
+import "../LiquidityLockerFactory.sol";
+import "../Loan.sol";
+import "../LoanFactory.sol";
+import "../MapleToken.sol";
+import "../MapleTreasury.sol";
+import "../Pool.sol";
+import "../PoolFactory.sol";
 import "../PremiumCalc.sol";
+import "../StakeLockerFactory.sol";
+
+import "../interfaces/IBFactory.sol";
+import "../interfaces/IBPool.sol";
+import "../interfaces/IERC20Details.sol";
+import "../interfaces/IStakeLocker.sol";
+import "../interfaces/IPool.sol";
+import "../interfaces/IPoolFactory.sol";
+
+import "../mocks/token.sol";
+import "../mocks/value.sol";
 
 import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
-import "../MapleToken.sol";
-import "../StakeLockerFactory.sol";
-import "../PoolFactory.sol";
-import "../LiquidityLockerFactory.sol";
-import "../DebtLockerFactory.sol";
-import "../DebtLocker.sol";
-import "../FundingLockerFactory.sol";
-import "../CollateralLockerFactory.sol";
-import "../LoanFactory.sol";
-import "../Loan.sol";
-import "../Pool.sol";
-import "../MapleTreasury.sol";
 
 interface IBPoolFactory {
     function newBPool() external returns (address);

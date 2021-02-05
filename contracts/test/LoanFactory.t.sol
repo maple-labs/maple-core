@@ -4,19 +4,19 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-
-import "../interfaces/ILoan.sol";
-
 import "./user/Borrower.sol";
 import "./user/Governor.sol";
 
+import "../CollateralLockerFactory.sol";
+import "../FundingLockerFactory.sol";
 import "../LoanFactory.sol";
 import "../LateFeeCalc.sol";
-import "../PremiumCalc.sol";
 import "../MapleToken.sol";
-import "../FundingLockerFactory.sol";
-import "../CollateralLockerFactory.sol";
+import "../PremiumCalc.sol";
+
+import "../interfaces/ILoan.sol";
+
+import "../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 contract InterestCalc {
     uint8 public constant calcType = 10;

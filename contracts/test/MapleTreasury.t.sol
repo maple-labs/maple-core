@@ -14,8 +14,9 @@ contract PoolDelegate { }
 contract MapleTreasuryTest is TestUtil {
 
     Governor                         gov;
-    MapleToken                       mpl;
+
     MapleGlobals                 globals;
+    MapleToken                       mpl;
     MapleTreasury                    trs;
 
     function setUp() public {
