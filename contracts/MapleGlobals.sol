@@ -41,6 +41,15 @@ contract MapleGlobals {
     mapping(address => bool)    public isValidCollateralAsset;  // Mapping of valid collateral assets
     mapping(address => bool)    public isValidCalc;             // Mapping of valid calculator contracts
     mapping(address => bool)    public isValidPoolDelegate;     // Validation data structure for pool delegates (prevent invalid addresses from creating pools).
+    
+    // Determines the liquidation path of various assets in Loans and Treasury.
+    // The value provided will determine whether or not to perform a bilateral or triangular swap on Uniswap.
+    // For example, defaultUniswapPath[WETH][USDC] value would indicate what asset to convert WETH into before
+    // conversion to USDC. If defaultUniswapPath[WETH][USDC] == USDC ... then the swap is bilateral and no middle
+    // asset is swapped. If defaultUniswapPath[WETH][USDC] == WBTC ... then swap WETH for WBTC, then WBTC for USDC.
+    mapping(address => mapping(address => address)) public defaultUniswapPath; 
+
+    
     mapping(address => address) public assetPriceFeed;          // Mapping of asset, to the associated oracle price feed.
     mapping(address => address) public oracleFor;               // ChainLink oracle for a given asset.
 
@@ -111,6 +120,19 @@ contract MapleGlobals {
     */
     function setValidSubFactory(address superFactory, address subFactory, bool valid) external isGovernor {
         validSubFactories[superFactory][subFactory] = valid;
+    }
+
+    /**
+        @dev    Set the path to swap an asset through Uniswap.
+        @param  from The asset being swapped.
+        @param  to   The final asset to receive.*
+        @param  mid  The middle path. 
+        
+        * Set to == mid to enable a bilateral swap (single path swap).
+          Set to != mid to enable a triangular swap (multi path swap).
+    */
+    function setDefaultUniswapPath(address from, address to, address mid) external isGovernor {
+        defaultUniswapPath[from][to] = mid;
     }
 
     /**

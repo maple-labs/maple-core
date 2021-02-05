@@ -132,37 +132,33 @@ contract StakeLocker is FDT {
         dst.transfer(address(this).balance);
     }
 
+
     /** 
         @dev Updates information used to calculate unstake delay.
         @param who The staker who deposited BPTs.
         @param amt Amount of BPTs staker has deposited.
     */
     function _updateStakeDate(address who, uint256 amt) internal {
-        if (stakeDate[who] == 0) {
+        uint256 stkDate = stakeDate[who];
+        if (stkDate == 0) {
             stakeDate[who] = block.timestamp;
         } else {
-            uint256 stkDate = stakeDate[who];
-            uint256 coef    = (WAD.mul(amt)).div(balanceOf(who) + amt); 
-            stakeDate[who]  = (stkDate.mul(WAD).add((block.timestamp.sub(stkDate)).mul(coef))).div(WAD);  // date + (now - stkDate) * coef
+            uint256 coef    = WAD.mul(amt).div(balanceOf(who) + amt); 
+            stakeDate[who]  = stkDate.add(((block.timestamp.sub(stkDate)).mul(coef)).div(WAD));  // date + (now - stkDate) * coef
         }
     }
 
     /**
         @dev Returns information for staker's unstakeable balance.
         @param staker The address to view information for.
-        @return Amount of BPTs staker can unstake.
+        @return balance Amount of BPTs staker can unstake.
     */
-    // TODO: Handle case where unstakeDelay == 0 (use similar/same logic as calcWithdrawPenalty)
-    function getUnstakeableBalance(address staker) public view returns (uint256) {
-        uint256 bal  = balanceOf(staker);
-        uint256 time = (block.timestamp - stakeDate[staker]) * WAD;
-        uint256 out  = ((time / (_globals().unstakeDelay())) * bal) / WAD;
-        // The plus one is to avoid division by 0 if unstakeDelay is 0, creating 1 second inaccuracy
-        // Also i do indeed want this to return 0 if denominator is less than WAD
-        if (out > bal) {
-            out = bal;
-        }
-        return out;
+    function getUnstakeableBalance(address staker) public view returns (uint256 balance) {
+        uint256 bal          = balanceOf(staker);
+        uint256 passedTime   = block.timestamp - stakeDate[staker];
+        uint256 unstakeDelay = _globals().unstakeDelay();
+        uint256 out          = unstakeDelay != uint256(0) ? (passedTime.mul(WAD).div(unstakeDelay)).mul(bal).div(WAD) : bal;
+        balance = out > bal ? bal : out;
     }
 
     // TODO: Make this handle transfer of time lock more properly, parameterize _updateStakeDate

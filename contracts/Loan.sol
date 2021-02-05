@@ -26,10 +26,10 @@ contract Loan is FDT {
         Live       = The loan has been initialized and is open for funding (assuming funding period not ended).
         Active     = The loan has been drawdown and the borrower is making payments.
         Matured    = The loan is fully paid off and has "matured".
+        Expired    = The loan did not initiate, and all funding was returned to lenders.
         Liquidated = The loan has been liquidated.
-        Expired    = The loan has passed the funding period, and is no longer expired.
     */
-    enum State { Live, Active, Matured, Liquidated, Expired }
+    enum State { Live, Active, Matured, Expired, Liquidated }
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
 
@@ -45,6 +45,8 @@ contract Loan is FDT {
     address public immutable lateFeeCalc;       // The late fee calculator for this loan.
     address public immutable premiumCalc;       // The premium calculator for this loan.
     address public immutable superFactory;      // The factory that deployed this Loan.
+
+    address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
     uint256 public principalOwed;   // The principal owed (initially the drawdown amount).
     uint256 public drawdownAmount;  // The amount the borrower drew down, historical reference for calculators.
@@ -178,7 +180,7 @@ contract Loan is FDT {
         _mint(mintTo, wad);         // Mint FDT to `mintTo` i.e Debt locker contract.
 
         emit LoanFunded(amt, mintTo);
-        emit BalanceUpdated(fundingLocker, address(loanAsset), _getFundingLockerBalance());
+        _emitBalanceUpdateEventForFundingLocker();
     }
 
     /**
@@ -195,7 +197,7 @@ contract Loan is FDT {
         IFundingLocker(fundingLocker).drain();
 
         // Update accounting for claim()
-        excessReturned += IERC20(loanAsset).balanceOf(address(this));
+        excessReturned += loanAsset.balanceOf(address(this));
 
         // Transition state to Expired.
         loanState = State.Expired;
@@ -206,14 +208,15 @@ contract Loan is FDT {
         @param  amt Amount of loanAsset borrower draws down, remainder is returned to Loan.
     */
     function drawdown(uint256 amt) external {
+
         _isValidBorrower();
         _isValidState(State.Live);
         IGlobals globals = _globals(superFactory);
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
 
-        require(amt >= requestAmount,               "Loan:DRAWDOWN_AMT_LT_MIN_RAISE");
-        require(amt <= _getFundingLockerBalance(), "Loan:DRAWDOWN_AMT_GT_FUNDED_AMT");
+        require(amt >= requestAmount,               "Loan:AMT_LT_MIN_RAISE");
+        require(amt <= _getFundingLockerBalance(),  "Loan:AMT_GT_FUNDED_AMT");
 
         // Update the principal owed and drawdown amount for this loan.
         principalOwed  = amt;
@@ -222,10 +225,7 @@ contract Loan is FDT {
         loanState = State.Active;
 
         // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
-        require(
-            collateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt)), 
-            "Loan:INSUFFICIENT_COLL_ASSET"
-        );
+        _checkValidTransferFrom(collateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt)));
 
         // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to Loan.
         uint treasuryFee = globals.treasuryFee();
@@ -237,9 +237,9 @@ contract Loan is FDT {
         feePaid             = amt.mul(investorFee).div(10000);
         uint256 treasuryAmt = amt.mul(treasuryFee).div(10000);  // Calculate amt to send to MapleTreasury
 
-        require(_fundingLocker.pull(treasury,      treasuryAmt),                       "Loan:TREASURY_FEE_PULL");  // Send treasuryFee directly to MapleTreasury
-        require(_fundingLocker.pull(address(this), feePaid),                           "Loan:INVESTOR_FEE_PULL");  // Pull investorFee into this Loan.
-        require(_fundingLocker.pull(borrower,      amt.sub(treasuryAmt).sub(feePaid)), "Loan:BORROWER_PULL");      // Transfer drawdown amount to Borrower.
+        _transferFee(_fundingLocker, treasury,      treasuryAmt);                        // Send treasuryFee directly to MapleTreasury.
+        _transferFee(_fundingLocker, address(this), feePaid);                            // Transfer `feePaid` to the this i.e loan contract.
+        _transferFee(_fundingLocker, borrower,      amt.sub(treasuryAmt).sub(feePaid));  // Transfer drawdown amount to Borrower.
 
         // Update excessReturned locally.
         excessReturned = _getFundingLockerBalance();
@@ -247,11 +247,12 @@ contract Loan is FDT {
         // Drain remaining funds from FundingLocker.
         require(_fundingLocker.drain(), "Loan:DRAIN");
 
-        emit BalanceUpdated(collateralLocker, address(collateralAsset), _getCollateralLockerBalance());
-        emit BalanceUpdated(fundingLocker,    address(loanAsset),       _getFundingLockerBalance());
-        emit BalanceUpdated(address(this),    address(loanAsset),       loanAsset.balanceOf(address(this)));
-        emit BalanceUpdated(treasury,         address(loanAsset),       loanAsset.balanceOf(treasury));
+        _emitBalanceUpdateEventForCollateralLocker();
+        _emitBalanceUpdateEventForFundingLocker();
+        _emitBalanceUpdateEventForLoan();
 
+        emit BalanceUpdated(treasury, address(loanAsset), loanAsset.balanceOf(treasury));
+        
         emit Drawdown(amt);
     }
 
@@ -261,19 +262,23 @@ contract Loan is FDT {
     function _triggerDefault() internal {
 
         // Pull collateralAsset from collateralLocker.
-        IUniswapRouter uniswap = IUniswapRouter(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
         uint256 liquidationAmt = _getCollateralLockerBalance();
         require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");
 
         // Swap collateralAsset for loanAsset.
-        collateralAsset.approve(address(uniswap), liquidationAmt);
+        collateralAsset.approve(UNISWAP_ROUTER, liquidationAmt);
 
-        address[] memory path = new address[](2);
-        path[0] = address(collateralAsset);
-        path[1] = address(loanAsset);
+        IGlobals globals = _globals(superFactory);
+
+        // Generate path.
+        address[] storage path;
+        path.push(address(collateralAsset));
+        address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
+        if (uniswapAssetForPath != address(loanAsset)) { path.push(uniswapAssetForPath); }
+        path.push(address(loanAsset));
 
         // TODO: Consider oracles for 2nd parameter below.
-        uint[] memory returnAmounts = uniswap.swapExactTokensForTokens(
+        uint[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
             collateralAsset.balanceOf(address(this)),
             0, // The minimum amount of output tokens that must be received for the transaction not to revert.
             path,
@@ -282,7 +287,7 @@ contract Loan is FDT {
         );
 
         amountLiquidated = returnAmounts[0];
-        amountRecovered  = returnAmounts[1];
+        amountRecovered  = returnAmounts[path.length - 1];
 
         // Reduce principal owed by amount received (as much as is required for principal owed == 0).
         if (amountRecovered > principalOwed) {
@@ -304,8 +309,8 @@ contract Loan is FDT {
 
         // Emit liquidation event.
         emit Liquidation(
-            returnAmounts[0],  // collateralSwapped
-            returnAmounts[1],  // loanAssetReturned
+            amountLiquidated,  // collateralSwapped
+            amountRecovered,  // loanAssetReturned
             liquidationExcess,
             defaultSuffered
         );
@@ -326,7 +331,9 @@ contract Loan is FDT {
         @dev Make the next payment for this loan.
     */
     function makePayment() external {
+
         _isValidState(State.Active);
+
         (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
 
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
@@ -354,12 +361,11 @@ contract Loan is FDT {
             loanState = State.Matured;
             nextPaymentDue = 0;
             require(ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance()), "Loan:COLLATERAL_PULL");
-            emit BalanceUpdated(collateralLocker, address(collateralAsset), _getCollateralLockerBalance());
+            _emitBalanceUpdateEventForCollateralLocker();
         }
 
         updateFundsReceived();
-
-        emit BalanceUpdated(address(this), address(loanAsset),  loanAsset.balanceOf(address(this)));
+        _emitBalanceUpdateEventForLoan();
     }
 
     /**
@@ -399,6 +405,7 @@ contract Loan is FDT {
     */
     function makeFullPayment() public {
         _isValidState(State.Active);
+
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
 
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
@@ -423,14 +430,14 @@ contract Loan is FDT {
             0,
             false
         );
-        emit BalanceUpdated(address(this), address(loanAsset),  loanAsset.balanceOf(address(this)));
+        _emitBalanceUpdateEventForLoan();
     }
 
     /**
         @dev Returns information on full payment amount.
-        @return total i.e Principal + Interest.
-        @return principal only principal amount.
-        @return interest Interest earned.
+        @return total Principal and interest owed, combined.
+        @return principal Principal owed.
+        @return interest Interest owed.
     */
     function getFullPayment() public view returns(uint256 total, uint256 principal, uint256 interest) {
         (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
@@ -462,7 +469,7 @@ contract Loan is FDT {
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(10 ** 18).div(10 ** loanAsset.decimals());
     }
-    	
+
     function _checkValidTransferFrom(bool isValid) internal {
         require(isValid, "Loan:INSUFFICIENT_APPROVAL");
     }
@@ -479,11 +486,27 @@ contract Loan is FDT {
         return loanAsset.balanceOf(fundingLocker);
     }
 
-    function _isValidState(State _state) internal {
-        require(loanState == _state, "Loan:INVALID_STATE");
+    function _isValidState(State _state) internal {	
+        require(loanState == _state, "Loan:INVALID_STATE");	
+    }	
+
+    function _isValidBorrower() internal {	
+        require(msg.sender == borrower, "Loan:INVALID_BORROWER");	
     }
 
-    function _isValidBorrower() internal {
-        require(msg.sender == borrower, "Loan:INVALID_BORROWER");
+    function _transferFee(IFundingLocker from, address to, uint256 value) internal {
+        require(from.pull(to, value), "Loan:FAILED_TO_TRANSFER_FEE");
+    }
+
+    function _emitBalanceUpdateEventForLoan() internal {
+        emit BalanceUpdated(address(this), address(loanAsset), loanAsset.balanceOf(address(this)));
+    }
+
+    function _emitBalanceUpdateEventForFundingLocker() internal {
+        emit BalanceUpdated(fundingLocker, address(loanAsset), _getFundingLockerBalance());
+    }
+
+    function _emitBalanceUpdateEventForCollateralLocker() internal {
+        emit BalanceUpdated(collateralLocker, address(collateralAsset), _getCollateralLockerBalance());
     }
 }
