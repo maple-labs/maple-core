@@ -3,9 +3,8 @@ pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "../../interfaces/IPool.sol";
-import "../../interfaces/IStakeLocker.sol";
 import "../../interfaces/IPoolFactory.sol";
-import "../../interfaces/IBPool.sol";
+import "../../interfaces/IStakeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 

@@ -2,7 +2,6 @@
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../interfaces/IStakeLocker.sol";
 import "../../interfaces/ILoan.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";

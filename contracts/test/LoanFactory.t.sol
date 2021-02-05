@@ -93,7 +93,7 @@ contract LoanFactoryTest is TestUtil {
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Add flFactory in valid list
@@ -101,12 +101,12 @@ contract LoanFactoryTest is TestUtil {
         gov.setValidSubFactory(address(lFactory), address(flFactory), true);
 
         // Still fails as clFactory isn't a valid factory.
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
         gov.setValidSubFactory(address(lFactory), address(clFactory), true);  // Add clFactory in the valid list.
 
         // Should successfully created
-        assertTrue(borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");  // Should be incremented by 1.
     }
 
@@ -118,19 +118,19 @@ contract LoanFactoryTest is TestUtil {
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[1], calcs[1], calcs[2]]));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[1], calcs[1], calcs[2]]));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Incorrect type for second calculator contract.
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[0], calcs[2], calcs[2]]));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[0], calcs[2], calcs[2]]));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Incorrect type for third calculator contract.
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[0], calcs[1], calcs[0]]));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[0], calcs[1], calcs[0]]));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Should successfully created
-        assertTrue(borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");  // Should be incremented by 1.
     }
 
@@ -139,37 +139,37 @@ contract LoanFactoryTest is TestUtil {
         address[3] memory calcs = set_calcs();
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         gov.setLoanAsset(USDC, true);  // Whitelist loan asset
         // Still fails as collateral asset is not a valid collateral asset
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         gov.setCollateralAsset(WETH, true);  // Set collateral asset.
         // Still fails as loan asset can't be 0x0
-        assertTrue(!borrower.try_createPool(address(lFactory), address(0), WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), address(0), WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Fails because of error - ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 0, 10_000_000 * MULTIPLIER, 30, 5], calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 0, 10_000_000 * MULTIPLIER, 30, 5], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Fails because of error - ERR_INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 19, 2, 10_000_000 * MULTIPLIER, 30, 5], calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 19, 2, 10_000_000 * MULTIPLIER, 30, 5], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Fails because of error - ERR_MIN_RAISE_EQUALS_ZERO
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [uint256(10), 10, 2, uint256(0), 30, 5], calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [uint256(10), 10, 2, uint256(0), 30, 5], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // fails because of error - ERR_FUNDING_PERIOD_EQUALS_ZERO
-        assertTrue(!borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 0], calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 0], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Should successfully created
-        assertTrue(borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");  // Should be incremented by 1.
     }
 
@@ -182,7 +182,7 @@ contract LoanFactoryTest is TestUtil {
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
 
         // Verify the loan gets created successfully.
-        assertTrue(borrower.try_createPool(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");  // Should be incremented by 1.
         ILoan loan = ILoan(lFactory.loans(0));                                 // Intital value of loansCreated.
         assertTrue(lFactory.isLoan(address(loan)));                            // Should be considered as a loan.

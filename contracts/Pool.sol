@@ -4,8 +4,8 @@ pragma solidity >=0.6.11;
 import "./token/FDT.sol";
 
 import "./interfaces/IBPool.sol";
-import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IDebtLocker.sol";
+import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/ILiquidityLocker.sol";
 import "./interfaces/ILiquidityLockerFactory.sol";
