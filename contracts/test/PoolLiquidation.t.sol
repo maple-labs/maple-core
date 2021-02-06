@@ -337,21 +337,22 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(bptShortfall_pre,        7);
         assertEq(bptShortfall_post,       8);
 
-        assertEq(bptShortfall_pre, 0);  // No bptShortfall before bpt burning occurs
+        assertEq(slBPTBal_pre,  10 * WAD);
+        assertLt(slBPTBal_post,     1E10); // Dusty stakeLocker BPT return bal (less than 1e-8 WAD), meaning essentially all BPTs were burned
+
+        assertEq(bptShortfall_pre,                 0);  // No bptShortfall before bpt burning occurs
+        assertGt(bptShortfall_post, 40_000_000 * USD);  // Over $40m in shortfall after liquidation and BPT burn
+
         assertEq(liquidityLockerBal_pre  + principalOut_pre,                      510_000_000 * USD);
         assertEq(liquidityLockerBal_post + principalOut_post + bptShortfall_post, 510_000_000 * USD); // LLBal + PO goes down, bptShortfall distributes that loss
-        assertEq(principalOut_post, 0);  // All outstanding loans are finished
+        assertTrue(principalOut_post < 10);  // Principal out will collect dust
 
-        // assertEq(liquidityLockerBal_post - liquidityLockerBal_pre, principalOut_pre - principalOut_post);  // LLBal + PO = LLBal + PO before and after claim is made
+        uint bob_beforeBal = IERC20(USDC).balanceOf(address(bob));
+        bob.withdraw(address(pool_a), 10_000_000 * USD);
+        uint bob_afterBal = IERC20(USDC).balanceOf(address(bob));
 
-        // // Post-state liquidityLocker checks.
-        // uint256 liquidityLocker_post_a = IERC20(USDC).balanceOf(liquidityLocker_a);
-        
-        // assertEq(liquidityLocker_post_a - liquidityLocker_pre_a, vals_a[5]);
-
-        // uint bob_beforeBal = IERC20(USDC).balanceOf(address(bob));
-        // bob.withdraw(address(pool_a), 10_000_000 * USD);
-        // uint bob_afterBal = IERC20(USDC).balanceOf(address(bob));
+        assertEq(bob_beforeBal,       9);
+        assertEq(bob_afterBal,       10);
 
         // assertEq(bob_afterBal - bob_beforeBal, 1);
         // assertGt(vals_a[5], 0);

@@ -373,9 +373,9 @@ contract Pool is PoolFDT {
 
         emit Debug("principalOut", principalOut);
 
-        principalOut = principalOut.sub(liquidityAssetRecoveredFromBurn);
+        principalOut = principalOut.sub(defaultSuffered);
 
-         emit Debug("principalOut", principalOut);
+        emit Debug("principalOut", principalOut);
 
         emit DefaultSuffered(loan, defaultSuffered, bptsBurned, bptsReturned, liquidityAssetRecoveredFromBurn);
     }
@@ -399,7 +399,7 @@ contract Pool is PoolFDT {
         uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
         uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest
 
-        uint256 principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);                                     // Principal + excess + amountRecovered
+        uint256 principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);                                    // Principal + excess + amountRecovered
         uint256 interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10000)).sub(stakeLockerPortion);  // Leftover interest
 
         // Subtract outstanding principal by principal claimed plus excess returned
