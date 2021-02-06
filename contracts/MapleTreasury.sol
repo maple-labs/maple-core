@@ -127,16 +127,46 @@ contract MapleTreasury {
     */
 
     /**
+        @dev Helper function for calculating min amount from a swap (adjustable for price slippage).
+    */
+    function _calcMinAmount(uint256 collateralPrice, uint256 swapOutPrice, uint256 liquidationAmt) internal view return(uint256) {
+        
+        // Calculate amount out expected (abstract precision).
+        uint abstractMinOut = liquidationAmt.mul(collateralPrice).div(swapOutPrice);
+
+        // Convert to proper precision, return value.
+        uint decimalsCollateral = collateralAsset.decimals();
+        uint decimalsLoanAsset  = loanAsset.decimals();
+
+        if (decimalsCollateral == decimalsLoanAsset) {
+            return abstractMinOut;
+        }
+        else if (decimalsCollateral > decimalsLoanAsset) {
+            return abstractMinOut.div(10 ** (decimalsCollateral - decimalsLoanAsset));
+        }
+        else {
+            return abstractMinOut.mul(10 ** (decimalsLoanAsset - decimalsCollateral));
+        }
+    }
+
+    /**
         @dev Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
         @param asset The ERC-20 asset to convert.
     */
     function convertERC20(address asset) isGovernor public {
         require(asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
         
-        IERC20 _asset = IERC20(asset);
-        
-        _asset.approve(uniswapRouter, _asset.balanceOf(address(this)));
+        IUniswapRouter uniswap     = IUniswapRouter(uniswapRouter);
+        IERC20         _fundsToken = IERC20(fundsToken);
+        IERC20         _asset      = IERC20(asset);
 
+        uint assetBalance = _asset.balanceOf(address(this));
+        uint assetPrice   = globals.getLatestPrice(asset);
+        uint swapOutPrice = globals.getLatestPrice(fundsToken);
+        uint minAmount    = _calcMinAmount(assetPrice, swapOutPrice, assetBalance);
+
+        _asset.approve(uniswapRouter, _asset.balanceOf(address(this)));
+        
         // Generate path.
         address[] storage path;
         path.push(address(asset));
@@ -146,11 +176,11 @@ contract MapleTreasury {
 
         // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
-            _asset.balanceOf(address(this)),
-            0, // The minimum amount of output tokens that must be received for the transaction not to revert.
+            assetBalance,
+            minAmount.mul(90).div(100), // 10% slippage accepted. The minimum amount of output tokens that must be returned, otherwise tx reverts.
             path,
             mpl, // Transfer tokens to MPL (MapleToken contract)
-            block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
+            block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
         );
 
         IMapleToken(mpl).updateFundsReceived();

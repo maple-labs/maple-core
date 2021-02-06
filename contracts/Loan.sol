@@ -257,6 +257,29 @@ contract Loan is FDT {
     }
 
     /**
+        @dev Helper function for calculating min amount from a swap (adjustable for price slippage).
+    */
+    function _calcMinAmount(uint256 collateralPrice, uint256 swapOutPrice, uint256 liquidationAmt) internal view return(uint256) {
+        
+        // Calculate amount out expected (abstract precision).
+        uint abstractMinOut = liquidationAmt.mul(collateralPrice).div(swapOutPrice);
+
+        // Convert to proper precision, return value.
+        uint decimalsCollateral = collateralAsset.decimals();
+        uint decimalsLoanAsset  = loanAsset.decimals();
+
+        if (decimalsCollateral == decimalsLoanAsset) {
+            return abstractMinOut;
+        }
+        else if (decimalsCollateral > decimalsLoanAsset) {
+            return abstractMinOut.div(10 ** (decimalsCollateral - decimalsLoanAsset));
+        }
+        else {
+            return abstractMinOut.mul(10 ** (decimalsLoanAsset - decimalsCollateral));
+        }
+    }
+
+    /**
         @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
     */
     function _triggerDefault() internal {
@@ -270,6 +293,10 @@ contract Loan is FDT {
 
         IGlobals globals = _globals(superFactory);
 
+        uint collateralPrice = globals.getLatestPrice(address(collateralAsset));
+        uint swapOutPrice    = globals.getLatestPrice(address(loanAsset));
+        uint minAmount       = _calcMinAmount(collateralPrice, swapOutPrice, liquidationAmt);
+
         // Generate path.
         address[] storage path;
         path.push(address(collateralAsset));
@@ -282,10 +309,10 @@ contract Loan is FDT {
         // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
             collateralAsset.balanceOf(address(this)),
-            0, // The minimum amount of output tokens that must be received for the transaction not to revert.
+            minAmount.mul(90).div(100), // 10% slippage accepted. The minimum amount of output tokens that must be returned, otherwise tx reverts.
             path,
             address(this),
-            block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
+            block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
         );
 
         amountLiquidated = returnAmounts[0];
