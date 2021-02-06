@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
+import "./interfaces/IERC20Details.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/IMapleToken.sol";
 import "./interfaces/IUniswapRouter.sol";
@@ -129,23 +130,23 @@ contract MapleTreasury {
     /**
         @dev Helper function for calculating min amount from a swap (adjustable for price slippage).
     */
-    function _calcMinAmount(uint256 collateralPrice, uint256 swapOutPrice, uint256 liquidationAmt) internal view returns(uint256) {
+    function _calcMinAmount(uint256 assetPrice, uint256 swapOutPrice, uint256 swapAmt, address asset) internal view returns(uint256) {
         
         // Calculate amount out expected (abstract precision).
-        uint abstractMinOut = liquidationAmt.mul(collateralPrice).div(swapOutPrice);
+        uint abstractMinOut = swapAmt.mul(assetPrice).div(swapOutPrice);
 
         // Convert to proper precision, return value.
-        uint decimalsCollateral = collateralAsset.decimals();
-        uint decimalsLoanAsset  = loanAsset.decimals();
+        uint decimalsAsset = IERC20Details(asset).decimals();
+        uint decimalsSwap  = IERC20Details(fundsToken).decimals();
 
-        if (decimalsCollateral == decimalsLoanAsset) {
+        if (decimalsAsset == decimalsSwap) {
             return abstractMinOut;
         }
-        else if (decimalsCollateral > decimalsLoanAsset) {
-            return abstractMinOut.div(10 ** (decimalsCollateral - decimalsLoanAsset));
+        else if (decimalsAsset > decimalsSwap) {
+            return abstractMinOut.div(10 ** (decimalsAsset - decimalsSwap));
         }
         else {
-            return abstractMinOut.mul(10 ** (decimalsLoanAsset - decimalsCollateral));
+            return abstractMinOut.mul(10 ** (decimalsSwap - decimalsAsset));
         }
     }
 
@@ -157,20 +158,21 @@ contract MapleTreasury {
         require(asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
         
         IUniswapRouter uniswap     = IUniswapRouter(uniswapRouter);
+        IGlobals       _globals    = IGlobals(globals);
         IERC20         _fundsToken = IERC20(fundsToken);
         IERC20         _asset      = IERC20(asset);
 
         uint assetBalance = _asset.balanceOf(address(this));
-        uint assetPrice   = globals.getLatestPrice(asset);
-        uint swapOutPrice = globals.getLatestPrice(fundsToken);
-        uint minAmount    = _calcMinAmount(assetPrice, swapOutPrice, assetBalance);
+        uint assetPrice   = _globals.getLatestPrice(asset);
+        uint swapOutPrice = _globals.getLatestPrice(fundsToken);
+        uint minAmount    = _calcMinAmount(assetPrice, swapOutPrice, assetBalance, asset);
 
         _asset.approve(uniswapRouter, _asset.balanceOf(address(this)));
         
         // Generate path.
         address[] storage path;
         path.push(address(asset));
-        address uniswapAssetForPath = IGlobals(globals).defaultUniswapPath(address(asset), address(fundsToken));
+        address uniswapAssetForPath = _globals.defaultUniswapPath(address(asset), address(fundsToken));
         if (uniswapAssetForPath != address(asset)) { path.push(uniswapAssetForPath); }
         path.push(address(asset));
 
