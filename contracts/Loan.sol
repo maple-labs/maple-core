@@ -259,7 +259,7 @@ contract Loan is FDT {
     /**
         @dev Helper function for calculating min amount from a swap (adjustable for price slippage).
     */
-    function _calcMinAmount(uint256 collateralPrice, uint256 swapOutPrice, uint256 liquidationAmt) internal view return(uint256) {
+    function _calcMinAmount(uint256 collateralPrice, uint256 swapOutPrice, uint256 liquidationAmt) internal view returns(uint256) {
         
         // Calculate amount out expected (abstract precision).
         uint abstractMinOut = liquidationAmt.mul(collateralPrice).div(swapOutPrice);
