@@ -50,9 +50,9 @@ contract Governor {
     /*** TRY FUNCTIONS ***/
     /*********************/
 
-    function try_setGlobals(address target, address globals) external returns (bool ok) {
+    function try_setGlobals(address target, address _globals) external returns (bool ok) {
         string memory sig = "setGlobals(address)";
-        (ok,) = address(target).call(abi.encodeWithSignature(sig, globals));
+        (ok,) = address(target).call(abi.encodeWithSignature(sig, _globals));
     }
 
     function try_setDefaultUniswapPath(address from, address to, address mid) external returns (bool ok) { 

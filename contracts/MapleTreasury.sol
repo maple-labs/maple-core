@@ -133,9 +133,7 @@ contract MapleTreasury {
     function convertERC20(address asset) isGovernor public {
         require(asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
         
-        IUniswapRouter uniswap     = IUniswapRouter(uniswapRouter);
-        IERC20         _fundsToken = IERC20(fundsToken);
-        IERC20         _asset      = IERC20(asset);
+        IERC20 _asset = IERC20(asset);
         
         _asset.approve(uniswapRouter, _asset.balanceOf(address(this)));
 

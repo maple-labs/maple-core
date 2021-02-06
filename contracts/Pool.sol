@@ -131,14 +131,14 @@ contract Pool is FDT {
 
     /**
         @dev Deploys and assigns a StakeLocker for this Pool (only used once in constructor).
-        @param stakeAsset     Address of the asset used for staking.
-        @param slFactory      Address of the StakeLocker factory used for instantiation.
-        @param liquidityAsset Address of the liquidity asset, required when burning stakeAsset.
-        @param globals        Address of the Maple Globals contract.
+        @param _stakeAsset     Address of the asset used for staking.
+        @param _slFactory      Address of the StakeLocker factory used for instantiation.
+        @param _liquidityAsset Address of the liquidity asset, required when burning _stakeAsset.
+        @param globals         IGlobals for Maple Globals contract.
     */
-    function createStakeLocker(address stakeAsset, address slFactory, address liquidityAsset, IGlobals globals) private returns (address) {
-        require(IBPool(stakeAsset).isBound(globals.mpl()) && IBPool(stakeAsset).isFinalized(), "Pool:INVALID_BALANCER_POOL");
-        return IStakeLockerFactory(slFactory).newLocker(stakeAsset, liquidityAsset);
+    function createStakeLocker(address _stakeAsset, address _slFactory, address _liquidityAsset, IGlobals globals) private returns (address) {
+        require(IBPool(_stakeAsset).isBound(globals.mpl()) && IBPool(_stakeAsset).isFinalized(), "Pool:INVALID_BALANCER_POOL");
+        return IStakeLockerFactory(_slFactory).newLocker(_stakeAsset, _liquidityAsset);
     }
 
     /**
@@ -187,7 +187,7 @@ contract Pool is FDT {
         @param  bpool              Balancer pool that issues the BPTs.
         @param  pair               Swap out asset (e.g. USDC) to receive when burning BPTs.
         @param  staker             Address that deposited BPTs to stakeLocker.
-        @param  stakeLocker        Escrows BPTs deposited by staker.
+        @param  _stakeLocker       Escrows BPTs deposited by staker.
         @param  pairAmountRequired Amount of pair tokens out required.
         @return [0] = poolAmountIn required
                 [1] = poolAmountIn currently staked.
@@ -196,10 +196,10 @@ contract Pool is FDT {
         address bpool,
         address pair,
         address staker,
-        address stakeLocker,
+        address _stakeLocker,
         uint256 pairAmountRequired
     ) external view returns (uint256, uint256) {
-        return CalcBPool.getPoolSharesRequired(bpool, pair, staker, stakeLocker, pairAmountRequired);
+        return CalcBPool.getPoolSharesRequired(bpool, pair, staker, _stakeLocker, pairAmountRequired);
     }
 
     /**
@@ -552,11 +552,11 @@ contract Pool is FDT {
         require(liquidityAsset.transfer(to, value), "Pool:CLAIM_TRANSFER");
     } 
 
-    function _isValidState(State _state) internal {
+    function _isValidState(State _state) internal view {
         require(poolState == _state, "Pool:STATE_CHECK");
     }
 
-    function _isValidDelegate() internal {
+    function _isValidDelegate() internal view {
         require(msg.sender == poolDelegate, "Pool:INVALID_DELEGATE");
     }
 

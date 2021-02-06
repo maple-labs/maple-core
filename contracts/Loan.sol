@@ -480,7 +480,7 @@ contract Loan is FDT {
         return amt.mul(10 ** 18).div(10 ** loanAsset.decimals());
     }
 
-    function _checkValidTransferFrom(bool isValid) internal {
+    function _checkValidTransferFrom(bool isValid) internal pure {
         require(isValid, "Loan:INSUFFICIENT_APPROVAL");
     }
 
@@ -496,11 +496,11 @@ contract Loan is FDT {
         return loanAsset.balanceOf(fundingLocker);
     }
 
-    function _isValidState(State _state) internal {	
+    function _isValidState(State _state) internal view {	
         require(loanState == _state, "Loan:INVALID_STATE");	
     }	
 
-    function _isValidBorrower() internal {	
+    function _isValidBorrower() internal view {	
         require(msg.sender == borrower, "Loan:INVALID_BORROWER");	
     }
 

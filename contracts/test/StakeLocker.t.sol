@@ -242,8 +242,6 @@ contract StakeLockerTest is TestUtil {
 
         sid.setWhitelistStakeLocker(address(pool), address(che), true);
 
-        uint256 slBal_before = bPool.balanceOf(address(stakeLocker));
-
         assertEq(bPool.balanceOf(address(che)),         25 * WAD);
         assertEq(bPool.balanceOf(address(stakeLocker)), 50 * WAD);  // PD stake
         assertEq(stakeLocker.totalSupply(),             50 * WAD);
@@ -307,7 +305,6 @@ contract StakeLockerTest is TestUtil {
     }
 
     function test_unstake_past_unstakeDelay() public {
-        uint256 slBal_before = bPool.balanceOf(address(stakeLocker));
         uint256 stakeDate    = block.timestamp;
 
         sid.setWhitelistStakeLocker(address(pool), address(che), true);

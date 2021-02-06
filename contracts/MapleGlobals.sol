@@ -26,9 +26,6 @@ contract MapleGlobals {
     address public governor;             // Governor is responsible for management of global Maple variables
     address public mpl;                  // Maple Token is the ERC-2222 token for the Maple protocol
     address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
-    address public loanFactory;          // Loan vault factory (TODO: Need to handle multiple)
-    address public poolFactory;          // Loan vault factory (TODO: Need to handle multiple)
-
 
     uint256 public gracePeriod;          // Represents the amount of time a borrower has to make a missed payment before a default can be triggered.
     uint256 public swapOutRequired;      // Represents the swap out amount required from staked assets for a Pool's liquidity asset, for default purposes.
@@ -141,7 +138,12 @@ contract MapleGlobals {
         @dev    Check the validity of a subFactory as it relates to a superFactory.
         @param  superFactory The core factory (e.g. PoolFactory, LoanFactory)
         @param  subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory)
-        @param  factoryType  The type expected for the subFactory.
+        @param  factoryType  The type expected for the subFactory. References listed below.
+            0 = COLLATERAL_LOCKER_FACTORY
+            1 = DEBT_LOCKER_FACTORY
+            2 = FUNDING_LOCKER_FACTORY
+            3 = LIQUIDUITY_LOCKER_FACTORY
+            4 = STAKE_LOCKER_FACTORY
     */
     function isValidSubFactory(address superFactory, address subFactory, uint8 factoryType) external view returns(bool) {
         return validSubFactories[superFactory][subFactory] && ISubFactory(subFactory).factoryType() == factoryType;

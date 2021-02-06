@@ -411,9 +411,6 @@ contract BulletRepaymentCalcTest is TestUtil {
         premiumFee = premiumFee % 10_000;
 
         setUpRepayments(loanAmt, 100, 1, 1, 100, premiumFee);
-        
-        // Calculate theoretical values and sum up actual values
-        uint256 totalPaid = loanAmt + loanAmt * premiumCalc.premiumBips() / 10_000;
 
         mint("USDC",      address(eli),  loanAmt * 1000); // Mint enough to pay interest
         eli.approve(USDC, address(loan), loanAmt * 1000);
