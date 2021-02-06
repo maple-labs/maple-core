@@ -51,6 +51,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -68,6 +69,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -85,6 +87,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -102,6 +105,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -119,6 +123,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -136,6 +141,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -153,6 +159,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -188,6 +195,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -205,6 +213,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -222,6 +231,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -257,6 +267,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -274,6 +285,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
@@ -291,6 +303,7 @@ jobs:
           key: nix-deps
       - run:
           name: Run unit tests
+          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
