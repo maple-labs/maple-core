@@ -508,15 +508,15 @@ contract Pool is FDT {
 
     /**
         @dev Liquidate the loan. Pool delegate could liquidate a loan only when
-            loan completes its grace period.
-            This will increase the `pointsPerShare` contribution of the debt lockers (i.e holders of loan FDT).
-            Pool delegate can claim its proportion of fund using the `claim()` function.
+             loan completes its grace period.
+             This will increase the `pointsPerShare` contribution of the debt lockers (i.e holders of loan FDT).
+             Pool delegate can claim its proportion of fund using the `claim()` function.
         @param loan Address of the loan contract that is need to be liquidated.
         @param dlFactory Address of the debt locker factory that is used to generate the corresponding debt locker.
      */
-    function liquidateLoan(address loan, address dlFactory) external {
+    function triggerDefault(address loan, address dlFactory) external {
         _isValidDelegate();
-        IDebtLocker(debtLockers[loan][dlFactory]).liquidateLoan();
+        IDebtLocker(debtLockers[loan][dlFactory]).triggerDefault();
     }
 
     /**

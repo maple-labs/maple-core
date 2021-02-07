@@ -143,7 +143,7 @@ contract MapleGlobals {
         @param  subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory)
         @param  factoryType  The type expected for the subFactory.
     */
-    function isValidSubFactory(address superFactory, address subFactory, uint8 factoryType) external returns(bool) {
+    function isValidSubFactory(address superFactory, address subFactory, uint8 factoryType) external view returns(bool) {
         return validSubFactories[superFactory][subFactory] && ISubFactory(subFactory).factoryType() == factoryType;
     }
 

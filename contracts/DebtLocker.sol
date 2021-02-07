@@ -94,7 +94,7 @@ contract DebtLocker {
     /**
         @dev Liquidate a loan that is hold by this contract. Only called by the pool contract.
      */
-    function liquidateLoan() external isOwner {
+    function triggerDefault() external isOwner {
         loan.triggerDefault();
     }
 
