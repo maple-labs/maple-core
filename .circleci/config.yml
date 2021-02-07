@@ -402,15 +402,15 @@ jobs:
 
 workflows:
   version: 2
-  # test_all:
-  #   jobs:
+  test_all:
+    jobs:
   #     - dependencies
   #     - integration_test:
   #         requires:
   #           - dependencies
 
-  #     - dapp_build:
-  #         context: seth
+      - dapp_build:
+          context: seth
   #     - dapp_test_collateralLockerFactory: 
   #         context: seth
   #         requires:
