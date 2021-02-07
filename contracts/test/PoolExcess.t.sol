@@ -236,8 +236,8 @@ contract PoolExcessTest is TestUtil {
 
         // pool_a invested 1mm USD
         // pool_b invested 3mm USD
-        withinDff(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD, 1);
-        withinDff(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD, 1);
+        withinDiff(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD, 1);
+        withinDiff(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD, 1);
 
 
     }

@@ -44,11 +44,12 @@ contract PoolLiquidationTest is TestUtil {
 
     using SafeMath for uint256;
 
-    Borrower                               bob;
+    Borrower                               che;
     Governor                               gov;
     LP                                     ali;
-    Staker                                 che;
+    LP                                     bob;
     Staker                                 dan;
+    Staker                                 eli;
     PoolDelegate                           sid;
     PoolDelegate                           joe;
 
@@ -77,13 +78,14 @@ contract PoolLiquidationTest is TestUtil {
 
     function setUp() public {
 
-        bob            = new Borrower();                     // Actor: Borrower of the Loan.
+        che            = new Borrower();                     // Actor: Borrower of the Loan.
         gov            = new Governor();                     // Actor: Governor of Maple.
         sid            = new PoolDelegate();                 // Actor: Manager of the pool_a.
         joe            = new PoolDelegate();                 // Actor: Manager of the pool_b.
         ali            = new LP();                           // Actor: Liquidity provider.
-        che            = new Staker();                       // Actor: Stakes BPTs in Pool.
+        bob            = new LP();                           // Actor: Liquidity provider.
         dan            = new Staker();                       // Actor: Stakes BPTs in Pool.
+        eli            = new Staker();                       // Actor: Stakes BPTs in Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -184,7 +186,7 @@ contract PoolLiquidationTest is TestUtil {
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan = che.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         // Stake and finalize pool
         sid.approve(address(bPool), address(stakeLocker_a), 25 * WAD);
@@ -240,12 +242,12 @@ contract PoolLiquidationTest is TestUtil {
         uint256[7] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
 
         // Non-zero value is passed through.
-        assertEq(vals_a[5], loan.defaultSuffered() * (1_000_000 * WAD) / (4_000_000 * WAD));
-        assertEq(vals_b[5], loan.defaultSuffered() * (3_000_000 * WAD) / (4_000_000 * WAD));
-        withinPrecision(vals_a[5] + vals_b[5], loan.defaultSuffered(), 2);
+        assertEq(vals_a[6], loan.defaultSuffered() * (1_000_000 * WAD) / (4_000_000 * WAD));
+        assertEq(vals_b[6], loan.defaultSuffered() * (3_000_000 * WAD) / (4_000_000 * WAD));
+        withinPrecision(vals_a[6] + vals_b[6], loan.defaultSuffered(), 2);
     }
 
-    function test_claim_default_burn_BPT() public {
+    function test_claim_default_burn_BPT_full_recover() public {
 
         setUpLoanAndDefault();
 
@@ -253,21 +255,39 @@ contract PoolLiquidationTest is TestUtil {
         address liquidityLocker_b = pool_b.liquidityLocker();
 
         // Pre-state liquidityLocker checks.
-        uint256 liquidityLocker_pre_a = IERC20(USDC).balanceOf(liquidityLocker_a);
-        uint256 liquidityLocker_pre_b = IERC20(USDC).balanceOf(liquidityLocker_b);
+        uint256 liquidityLockerBal_pre_a = IERC20(USDC).balanceOf(liquidityLocker_a);
+        uint256 liquidityLockerBal_pre_b = IERC20(USDC).balanceOf(liquidityLocker_b);
 
-        uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
-        uint256[7] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
+        uint256 principalOut_pre_a = pool_a.principalOut();
+        uint256 principalOut_pre_b = pool_b.principalOut();
+
+        sid.claim(address(pool_a), address(loan),  address(dlFactory));
+        joe.claim(address(pool_b), address(loan),  address(dlFactory));
 
         // Post-state liquidityLocker checks.
-        uint256 liquidityLocker_post_a = IERC20(USDC).balanceOf(liquidityLocker_a);
-        uint256 liquidityLocker_post_b = IERC20(USDC).balanceOf(liquidityLocker_b);
+        uint256 liquidityLockerBal_post_a = IERC20(USDC).balanceOf(liquidityLocker_a);
+        uint256 liquidityLockerBal_post_b = IERC20(USDC).balanceOf(liquidityLocker_b);
+
+        uint256 principalOut_post_a = pool_a.principalOut();
+        uint256 principalOut_post_b = pool_b.principalOut();
+
+        assertEq(principalOut_pre_a, 1_000_000 * USD);
+        assertEq(principalOut_pre_b, 3_000_000 * USD);
+
+        assertEq(liquidityLockerBal_pre_a, 9_000_000 * USD);
+        assertEq(liquidityLockerBal_pre_b, 7_000_000 * USD);
         
-        assertEq(liquidityLocker_post_a - liquidityLocker_pre_a, vals_a[5]);
-        assertEq(liquidityLocker_post_b - liquidityLocker_pre_b, vals_b[5]);
-        assertGt(vals_a[5], 0);
-        assertGt(vals_b[5], 0);
-      
+        withinDiff(liquidityLockerBal_post_a - liquidityLockerBal_pre_a, 1_000_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
+        withinDiff(liquidityLockerBal_post_b - liquidityLockerBal_pre_b, 3_000_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
+
+        withinDiff(principalOut_post_a, 0, 1);  // Principal out is set to zero (with dust)
+        withinDiff(principalOut_post_b, 0, 1);  // Principal out is set to zero (with dust)
+
+        assertEq(liquidityLockerBal_pre_a  + principalOut_pre_a,  10_000_000 * USD);  // Total pool value = 9m + 1m = 10m
+        assertEq(liquidityLockerBal_post_a + principalOut_post_a, 10_000_000 * USD);  // Total pool value = 10m + 0 = 10m (successful full coverage from liquidation + staker burn)
+
+        assertEq(liquidityLockerBal_pre_b  + principalOut_pre_b,  10_000_000 * USD);  // Total pool value = 7m + 3m = 10m
+        assertEq(liquidityLockerBal_post_b + principalOut_post_b, 10_000_000 * USD);  // Total pool value = 1m + 0 = 10m (successful full coverage from liquidation + staker burn)
     }
 
     function test_claim_default_burn_BPT_shortfall() public {
@@ -280,6 +300,8 @@ contract PoolLiquidationTest is TestUtil {
         bob.approve(USDC, address(pool_a), MAX_UINT);
         ali.deposit(address(pool_a), 500_000_000 * USD);  // Ali symbolizes all other LPs, test focuses on Bob
         bob.deposit(address(pool_a), 10_000_000 * USD);
+
+        sid.setPenaltyDelay(address(pool_a), 0);  // So Bob can withdraw without penalty
 
         // TPV = LL + PO = 510 + 0
 
@@ -337,6 +359,9 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(bptShortfall_pre,        7);
         assertEq(bptShortfall_post,       8);
 
+        assertEq(principalOut_pre,       1_000_000 * USD);
+        assertEq(liquidityLockerBal_pre, 9_000_000 * USD);
+
         assertEq(slBPTBal_pre,  10 * WAD);
         assertLt(slBPTBal_post,     1E10); // Dusty stakeLocker BPT return bal (less than 1e-8 WAD), meaning essentially all BPTs were burned
 
@@ -345,11 +370,28 @@ contract PoolLiquidationTest is TestUtil {
 
         assertEq(liquidityLockerBal_pre  + principalOut_pre,                      510_000_000 * USD);
         assertEq(liquidityLockerBal_post + principalOut_post + bptShortfall_post, 510_000_000 * USD); // LLBal + PO goes down, bptShortfall distributes that loss
-        assertTrue(principalOut_post < 10);  // Principal out will collect dust
 
-        uint bob_beforeBal = IERC20(USDC).balanceOf(address(bob));
-        bob.withdraw(address(pool_a), 10_000_000 * USD);
-        uint bob_afterBal = IERC20(USDC).balanceOf(address(bob));
+        withinDiff(principalOut_post, 0, 1);  // Principal out is set to zero (with dust)
+
+        uint256 bob_recognizeableLosses = pool_a.recognizeableLossesOf(address(bob));
+
+        assertTrue(!bob.try_withdraw(address(pool_a), bob_recognizeableLosses - 1));  // Cannot withdraw less than recognizeableLosses
+
+        uint bob_usdcBal_pre = IERC20(USDC).balanceOf(address(bob));
+        uint bob_poolBal_pre = pool_a.balanceOf(address(bob));
+
+        assertTrue(bob.try_withdraw(address(pool_a), bob_recognizeableLosses));
+
+        uint bob_usdcBal_post = IERC20(USDC).balanceOf(address(bob));
+        uint bob_poolBal_post = pool_a.balanceOf(address(bob));
+
+        liquidityLockerBal_pre  = liquidityLockerBal_post;
+        liquidityLockerBal_post = IERC20(USDC).balanceOf(liquidityLocker);
+
+        assertEq(bob_usdcBal_post - bob_usdcBal_pre, 0);                        // Bob's USDC value withdrawn did not increase
+        assertEq(bob_poolBal_pre - bob_poolBal_post, bob_recognizeableLosses);  // Bob's FDTs have been burned
+
+        assertEq(liquidityLockerBal_pre - liquidityLockerBal_post, bob_recognizeableLosses);
 
         assertEq(bob_beforeBal,       9);
         assertEq(bob_afterBal,       10);
