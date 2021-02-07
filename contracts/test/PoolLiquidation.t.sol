@@ -388,13 +388,17 @@ contract PoolLiquidationTest is TestUtil {
         liquidityLockerBal_pre  = liquidityLockerBal_post;
         liquidityLockerBal_post = IERC20(USDC).balanceOf(liquidityLocker);
 
-        assertEq(bob_usdcBal_post - bob_usdcBal_pre, 0);                        // Bob's USDC value withdrawn did not increase
-        assertEq(bob_poolBal_pre - bob_poolBal_post, bob_recognizeableLosses);  // Bob's FDTs have been burned
+        bptShortfall_pre  = bptShortfall_post;
+        bptShortfall_post = pool_a.bptShortfall();
+
+        assertEq(bob_usdcBal_post - bob_usdcBal_pre,                         0);  // Bob's USDC value withdrawn did not increase
+        assertEq(bob_poolBal_pre  - bob_poolBal_post,  bob_recognizeableLosses);  // Bob's FDTs have been burned
+        assertEq(bptShortfall_pre - bptShortfall_post, bob_recognizeableLosses);  // BPT shortfall accounting has been decremented by Bob's recognized losses
 
         assertEq(liquidityLockerBal_pre - liquidityLockerBal_post, bob_recognizeableLosses);
 
-        assertEq(bob_beforeBal,       9);
-        assertEq(bob_afterBal,       10);
+        // assertEq(bob_beforeBal,       9);
+        // assertEq(bob_afterBal,       10);
 
         // assertEq(bob_afterBal - bob_beforeBal, 1);
         // assertGt(vals_a[5], 0);
