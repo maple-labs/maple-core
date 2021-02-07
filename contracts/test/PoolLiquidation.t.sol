@@ -295,6 +295,19 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(liquidityLockerBal_post_b + principalOut_post_b, 10_000_000 * USD);  // Total pool value = 1m + 0 = 10m (successful full coverage from liquidation + staker burn)
     }
 
+    function assertPoolAccounting(Pool pool) internal {
+        uint256 liquidityAssetDecimals = IERC20Details(address(pool.liquidityAsset())).decimals();
+
+        uint256 liquidityLockerBal = pool.liquidityAsset().balanceOf(pool.liquidityLocker());
+        uint256 fdtTotalSupply     = pool.totalSupply().mul(10 ** liquidityAssetDecimals).div(WAD);  // Convert to liquidityAsset precision
+        uint256 principalOut       = pool.principalOut();
+        uint256 interestSum        = pool.interestSum();
+        uint256 bptShortfall       = pool.bptShortfall();
+
+        // Total Pool Value = LLBal + PO = fdtSupply + interestSum + aggregate unrecognized losses
+        assertEq(liquidityLockerBal + principalOut, fdtTotalSupply + interestSum - bptShortfall, "Pool accounting compromised");
+    }
+
     function test_claim_default_burn_BPT_shortfall() public {
 
         {
@@ -307,20 +320,22 @@ contract PoolLiquidationTest is TestUtil {
             ali.deposit(address(pool_a), 500_000_000 * USD);  // Ali symbolizes all other LPs, test focuses on Bob
             bob.deposit(address(pool_a), 10_000_000 * USD);
 
-            sid.setPenaltyDelay(address(pool_a), 0);  // So Bob can withdraw without penalty
+            assertPoolAccounting(pool_a);
 
-            // TPV = LL + PO = 510 + 0
+            sid.setPenaltyDelay(address(pool_a), 0);  // So Bob can withdraw without penalty
 
             // Fund the loan
             sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 100_000_000 * USD);
             uint cReq = loan.collateralRequiredForDrawdown(100_000_000 * USD);
 
-            // TPV = LL + PO = 410 + 100 = 510
+            assertPoolAccounting(pool_a);
 
             // Drawdown loan
             mint("WETH", address(che), cReq);
             che.approve(WETH, address(loan), MAX_UINT);
             che.drawdown(address(loan), 100_000_000 * USD);
+
+            assertPoolAccounting(pool_a);
         }
 
         // Warp to late payment
@@ -329,131 +344,130 @@ contract PoolLiquidationTest is TestUtil {
         // Trigger default
         loan.triggerDefault();
 
+        // Instantiate all test variables
         TestObj memory liquidityLockerBal;
         TestObj memory slBPTBal;
+        TestObj memory fdtSupply;
         TestObj memory principalOut;
         TestObj memory bptShortfall;
         TestObj memory bob_usdcBal;
         TestObj memory bob_poolBal;
-
-        // TPV = LL + PO = 410 + 100 = 510
+        TestObj memory bob_recognizeableLosses;
 
         address liquidityLocker = pool_a.liquidityLocker();
         address stakeLocker     = pool_a.stakeLocker();
 
-        // Pre-state liquidityLocker checks.
+        /**************************************************/
+        /*** Loan Default Accounting with BPT Shortfall ***/
+        /**************************************************/
+
+        // Pre-claim accounting checks
         liquidityLockerBal.pre = IERC20(USDC).balanceOf(liquidityLocker);
         slBPTBal.pre           = bPool.balanceOf(stakeLocker);
+        fdtSupply.pre          = pool_a.totalSupply();
         principalOut.pre       = pool_a.principalOut();
         bptShortfall.pre       = pool_a.bptShortfall();
 
-        // LLBalance
-        // principalOut
-        // BPT bal of stakeLocker
-        // bptShortfall
+        uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
 
-        // uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
+        assertPoolAccounting(pool_a);
 
-        // // TPV = LL + PO - shortfall
-
+        // Pre-claim accounting checks
         liquidityLockerBal.post = IERC20(USDC).balanceOf(liquidityLocker);
         slBPTBal.post           = bPool.balanceOf(stakeLocker);
+        fdtSupply.post          = pool_a.totalSupply();
         principalOut.post       = pool_a.principalOut();
         bptShortfall.post       = pool_a.bptShortfall();
 
-        assertEq(liquidityLockerBal.pre,  1);
-        assertEq(liquidityLockerBal.post, 2);
-        assertEq(slBPTBal.pre,            3);
-        assertEq(slBPTBal.post,           4);
-        assertEq(principalOut.pre,        5);
-        assertEq(principalOut.post,       6);
-        assertEq(bptShortfall.pre,        7);
-        assertEq(bptShortfall.post,       8);
+        assertEq(principalOut.pre,       100_000_000 * USD);  // Total Pool Value (TPV) = PO + LLBal = 510m
+        assertEq(liquidityLockerBal.pre, 410_000_000 * USD);
 
-        assertEq(principalOut.pre,       1_000_000 * USD);
-        assertEq(liquidityLockerBal.pre, 9_000_000 * USD);
-
-        assertEq(slBPTBal.pre,  10 * WAD);
-        assertLt(slBPTBal.post,     1E10); // Dusty stakeLocker BPT return bal (less than 1e-8 WAD), meaning essentially all BPTs were burned
+        assertEq(slBPTBal.pre,  10 * WAD);  // Assert pre-burn BPT balance
+        assertLt(slBPTBal.post,     1E10);  // Dusty stakeLocker BPT return bal (less than 1e-8 WAD), meaning essentially all BPTs were burned
 
         assertEq(bptShortfall.pre,                 0);  // No bptShortfall before bpt burning occurs
         assertGt(bptShortfall.post, 40_000_000 * USD);  // Over $40m in shortfall after liquidation and BPT burn
 
-        assertEq(liquidityLockerBal.pre  + principalOut.pre,                      510_000_000 * USD);
-        assertEq(liquidityLockerBal.post + principalOut.post + bptShortfall.post, 510_000_000 * USD); // LLBal + PO goes down, bptShortfall distributes that loss
+        assertEq(fdtSupply.pre,  510_000_000 * WAD);  // TPV = fdtSupply + interestSum - shortfall = PO + LLBal
+        assertEq(fdtSupply.post, 510_000_000 * WAD);  // TPV = 510m + 0 - 0
 
-        withinDiff(principalOut.post, 0, 1);  // Principal out is set to zero (with dust)
+        assertEq(liquidityLockerBal.pre  + principalOut.pre,                      510_000_000 * USD);  // TPV = LLBal + PO + shortfall = 510m (shortfall = aggregate unrecognizedLosses of LPs)
+        assertEq(liquidityLockerBal.post + principalOut.post + bptShortfall.post, 510_000_000 * USD);  // LLBal + PO goes down, bptShortfall distributes that loss - TPV = LL + PO + SF stays constant
 
-        uint256 bob_recognizeableLosses = pool_a.recognizeableLossesOf(address(bob));
+        withinDiff(principalOut.post, 0, 1);  // Principal out is set to zero after claim has been made (with dust)
 
-        assertTrue(!bob.try_withdraw(address(pool_a), bob_recognizeableLosses - 1));  // Cannot withdraw less than recognizeableLosses
+        /********************************************************/
+        /*** Liquidity Provider Minimum Withdrawal Accounting ***/
+        /********************************************************/
 
-        bob_usdcBal.pre = IERC20(USDC).balanceOf(address(bob));
-        bob_poolBal.pre = pool_a.balanceOf(address(bob));
+        bob_recognizeableLosses.pre = pool_a.recognizeableLossesOf(address(bob));  // Unrealized losses of bob from shortfall
 
-        assertTrue(bob.try_withdraw(address(pool_a), bob_recognizeableLosses));
+        assertTrue(!bob.try_withdraw(address(pool_a), bob_recognizeableLosses.pre - 1));  // Cannot withdraw less than recognizeableLosses
 
-        bob_usdcBal.post = IERC20(USDC).balanceOf(address(bob));
-        bob_poolBal.post = pool_a.balanceOf(address(bob));
+        bob_usdcBal.pre = IERC20(USDC).balanceOf(address(bob));  // Bob USDC bal
+        bob_poolBal.pre = pool_a.balanceOf(address(bob));        // Bob FDT  bal
 
-        liquidityLockerBal.pre  = liquidityLockerBal.post;
-        liquidityLockerBal.post = IERC20(USDC).balanceOf(liquidityLocker);
+        // Withdraw lowest possible amount (amt == recognizeableLosses)
+        // NOTE: LPs can withdraw more than this amount, it will just go towards their USDC
+        assertTrue(bob.try_withdraw(address(pool_a), bob_recognizeableLosses.pre));
 
-        bptShortfall.pre  = bptShortfall.post;
-        bptShortfall.post = pool_a.bptShortfall();
+        assertPoolAccounting(pool_a);
 
-        assertEq(bob_usdcBal.post - bob_usdcBal.pre,                         0);  // Bob's USDC value withdrawn did not increase
-        assertEq(bob_poolBal.pre  - bob_poolBal.post,  bob_recognizeableLosses);  // Bob's FDTs have been burned
-        assertEq(bptShortfall.pre - bptShortfall.post, bob_recognizeableLosses);  // BPT shortfall accounting has been decremented by Bob's recognized losses
+        bob_recognizeableLosses.post = pool_a.recognizeableLossesOf(address(bob));  // Unrealized losses of bob after withdrawal
 
-        assertEq(liquidityLockerBal.pre - liquidityLockerBal.post, bob_recognizeableLosses);
+        bob_usdcBal.post = IERC20(USDC).balanceOf(address(bob));  // Bob USDC bal
+        bob_poolBal.post = pool_a.balanceOf(address(bob));        // Bob FDT  bal
 
-        // assertEq(bob_beforeBal,       9);
-        // assertEq(bob_afterBal,       10);
+        liquidityLockerBal.pre  = liquidityLockerBal.post;                  // Update pre/post variables for withdrawal checks
+        liquidityLockerBal.post = IERC20(USDC).balanceOf(liquidityLocker);  // Update pre/post variables for withdrawal checks
 
-        // assertEq(bob_afterBal - bob_beforeBal, 1);
-        // assertGt(vals_a[5], 0);
+        fdtSupply.pre  = fdtSupply.post;        // Update pre/post variables for withdrawal checks
+        fdtSupply.post = pool_a.totalSupply();  // Update pre/post variables for withdrawal checks
 
-        assertTrue(false);
-      
+        bptShortfall.pre  = bptShortfall.post;      // Update pre/post variables for withdrawal checks
+        bptShortfall.post = pool_a.bptShortfall();  // Update pre/post variables for withdrawal checks
+
+        assertEq(bob_recognizeableLosses.post, 0);  // After withdrawal, bob has zero unrecognized losses
+
+        assertEq(bob_usdcBal.pre,  0);  // Deposited entire balance into pool
+        assertEq(bob_usdcBal.post, 0);  // Withdrew enough just to realize losses, no USDC was transferred out of LL
+
+        assertEq(bob_usdcBal.post - bob_usdcBal.pre,   0);                                        // Bob's USDC value withdrawn did not increase
+        assertEq(bob_poolBal.pre  - bob_poolBal.post,  bob_recognizeableLosses.pre * WAD / 1E6);  // Bob's FDTs have been burned (doing assertion in WAD precision)
+        assertEq(fdtSupply.pre    - fdtSupply.post,    bob_recognizeableLosses.pre * WAD / 1E6);  // Bob's FDTs have been burned (doing assertion in WAD precision)
+        assertEq(bptShortfall.pre - bptShortfall.post, bob_recognizeableLosses.pre);              // BPT shortfall accounting has been decremented by Bob's recognized losses 
+
+        assertEq(liquidityLockerBal.pre - liquidityLockerBal.post, 0);  // No USDC was transferred out of LL
+
+        /**********************************************************/
+        /*** Liquidity Provider Post-Loss Withdrawal Accounting ***/
+        /**********************************************************/
+
+        bob_usdcBal.pre = bob_usdcBal.post;  // Bob USDC bal
+        bob_poolBal.pre = bob_poolBal.post;  // Bob FDT  bal
+
+        uint256 withdrawAmt = bob_poolBal.pre * 1E6 / WAD;
+
+        assertTrue(bob.try_withdraw(address(pool_a), withdrawAmt));  // Withdraw max amount
+
+        assertPoolAccounting(pool_a);
+
+        bob_usdcBal.post = IERC20(USDC).balanceOf(address(bob));  // Bob USDC bal
+        bob_poolBal.post = pool_a.balanceOf(address(bob));        // Bob FDT  bal
+
+        liquidityLockerBal.pre  = liquidityLockerBal.post;                  // Update pre/post variables for withdrawal checks
+        liquidityLockerBal.post = IERC20(USDC).balanceOf(liquidityLocker);  // Update pre/post variables for withdrawal checks
+
+        fdtSupply.pre  = fdtSupply.post;        // Update pre/post variables for withdrawal checks
+        fdtSupply.post = pool_a.totalSupply();  // Update pre/post variables for withdrawal checks
+
+        assertEq(bob_usdcBal.pre,  0);            // Deposited entire balance into pool
+        assertEq(bob_usdcBal.post, withdrawAmt);  // Withdrew enough just to realize losses, no USDC was transferred out of LL
+
+        assertEq(bob_poolBal.post, 0);  // Withdrew entire amount, so all remaining BPTs are burned
+
+        assertEq(fdtSupply.pre - fdtSupply.post, bob_poolBal.pre); // Bob's FDTs have been burned
+
+        assertEq(liquidityLockerBal.pre - liquidityLockerBal.post, withdrawAmt);  // All Bob's USDC was transferred out of LL
     }
 } 
-
-
-// function exitswapExternAmountOut(address tokenOut, uint tokenAmountOut, uint maxPoolAmountIn)
-//         external
-//         _logs_
-//         _lock_
-//         returns (uint poolAmountIn)
-//     {
-//         require(_finalized, "ERR_NOT_FINALIZED");
-//         require(_records[tokenOut].bound, "ERR_NOT_BOUND");
-//         require(tokenAmountOut <= bmul(_records[tokenOut].balance, MAX_OUT_RATIO), "ERR_MAX_OUT_RATIO");
-
-//         Record storage outRecord = _records[tokenOut];
-
-//         poolAmountIn = calcPoolInGivenSingleOut(
-//                             outRecord.balance,
-//                             outRecord.denorm,
-//                             _totalSupply,
-//                             _totalWeight,
-//                             tokenAmountOut,
-//                             _swapFee
-//                         );
-
-//         require(poolAmountIn != 0, "ERR_MATH_APPROX");
-//         require(poolAmountIn <= maxPoolAmountIn, "ERR_LIMIT_IN");
-
-//         outRecord.balance = bsub(outRecord.balance, tokenAmountOut);
-
-//         uint exitFee = bmul(poolAmountIn, EXIT_FEE);
-
-//         emit LOG_EXIT(msg.sender, tokenOut, tokenAmountOut);
-
-//         _pullPoolShare(msg.sender, poolAmountIn);
-//         _burnPoolShare(bsub(poolAmountIn, exitFee));
-//         _pushPoolShare(_factory, exitFee);
-//         _pushUnderlying(tokenOut, msg.sender, tokenAmountOut);        
-
-//         return poolAmountIn;
-//     }

@@ -271,14 +271,14 @@ contract Pool is PoolFDT {
         emit Debug("LL Bal", liquidityAsset.balanceOf(address(liquidityLocker)));
 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
-        withdrawFunds();            // Transfer full entitled interest.
+        recognizeLosses();          // Update loss accounting for LP,   decrement bptShortfall
+        withdrawFunds();            // Transfer full entitled interest, decrement interestSum
 
         // Transfer the principal amount - totPenalty
         require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");
 
         interestSum  = interestSum.add(totPenalty);         // Update the `interestSum` with the penalty amount.
-        bptShortfall = bptShortfall.sub(recognizedLosses);  // Update the `bptShortfall` with the losses that have been realized by the LP
-        updateFundsReceived();  // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
+        updateFundsReceived();                              // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
 
         _emitBalanceUpdatedEvent();
     }
