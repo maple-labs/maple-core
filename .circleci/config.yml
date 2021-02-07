@@ -404,73 +404,73 @@ workflows:
   version: 2
   test_all:
     jobs:
-      - dependencies
-      - integration_test:
-          requires:
-            - dependencies
+  #     - dependencies
+  #     - integration_test:
+  #         requires:
+  #           - dependencies
 
       - dapp_build:
           context: seth
-      - dapp_test_collateralLockerFactory: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_debtLockerFactory: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_fundingLockerFactory: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_gulp: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_loan: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_loanFactory: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_loanLiquidation: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_mapleGlobals: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_mapleTreasury: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_pool: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_poolExcess: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_poolFactory: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_poolLiquidation: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_stakeLocker: 
-          context: seth
-          requires:
-            - dapp_build
-      - dapp_test_stakeLockerFactory: 
-          context: seth
-          requires:
-            - dapp_build
+  #     - dapp_test_collateralLockerFactory: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_debtLockerFactory: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_fundingLockerFactory: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_gulp: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_loan: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_loanFactory: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_loanLiquidation: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_mapleGlobals: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_mapleTreasury: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_pool: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_poolExcess: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_poolFactory: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_poolLiquidation: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_stakeLocker: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
+  #     - dapp_test_stakeLockerFactory: 
+  #         context: seth
+  #         requires:
+  #           - dapp_build
             
       # - deploy_kaleido:
       #     context: kaleido
