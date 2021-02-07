@@ -37,8 +37,6 @@ contract LoanFactoryTest is TestUtil {
     MapleToken                      mpl;
     MapleGlobals                globals;
 
-    ILoan                          loan;
-
     uint256 constant MULTIPLIER = 10 ** 6;
 
     function setUp() public {

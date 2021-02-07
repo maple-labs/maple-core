@@ -463,18 +463,16 @@ contract PoolTest is TestUtil {
         /*******************************************/
         /*** Fund same loan with a different LTL ***/
         /*******************************************/
-        DebtLockerFactory dlFactory3 = new DebtLockerFactory();
-        gov.setValidSubFactory(address(poolFactory), address(dlFactory3), true);
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory3), 10 * USD)); // Fund loan for 15 USDC
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory2), 10 * USD)); // Fund loan for 15 USDC
 
-        DebtLocker debtLocker2 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory3)));
+        DebtLocker debtLocker2 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory2)));
 
         assertEq(address(debtLocker2.loan()), address(loan));
         assertEq(debtLocker2.owner(), address(pool1));
         assertEq(address(debtLocker2.loanAsset()), USDC);
 
-        assertEq(dlFactory3.owner(address(debtLocker2)), address(pool1));
-        assertTrue(dlFactory3.isLocker(address(debtLocker2)));
+        assertEq(dlFactory2.owner(address(debtLocker2)), address(pool1));
+        assertTrue(dlFactory2.isLocker(address(debtLocker2)));
 
         assertEq(IERC20(USDC).balanceOf(liqLocker),              45 * USD);  // Balance of Liquidity Locker
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 55 * USD);  // Balance of Funding Locker
