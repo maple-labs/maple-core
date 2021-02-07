@@ -91,4 +91,11 @@ contract DebtLocker {
         return([claimBal, interest, principal, fee, excess, defaultSuffered, amountRecovered]);
     }
 
+    /**
+        @dev Liquidate a loan that is hold by this contract. Only called by the pool contract.
+     */
+    function triggerDefault() external isOwner {
+        loan.triggerDefault();
+    }
+
 }

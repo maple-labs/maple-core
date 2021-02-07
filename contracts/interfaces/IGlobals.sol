@@ -51,4 +51,6 @@ interface IGlobals {
     function getLatestPrice(address) external view returns (uint256);
     
     function defaultUniswapPath(address, address) external view returns (address);
+
+    function extendedGracePeriod() external view returns (uint256);
 }

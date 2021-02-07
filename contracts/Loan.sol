@@ -158,7 +158,7 @@ contract Loan is FDT {
         repaymentCalc          = calcs[0];
         lateFeeCalc            = calcs[1];
         premiumCalc            = calcs[2];
-        nextPaymentDue         = createdAt.add(paymentIntervalSeconds);
+        nextPaymentDue         = block.timestamp.add(paymentIntervalSeconds);
         superFactory           = msg.sender;
 
         // Deploy locker
@@ -274,7 +274,9 @@ contract Loan is FDT {
         address[] storage path;
         path.push(address(collateralAsset));
         address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
-        if (uniswapAssetForPath != address(loanAsset)) { path.push(uniswapAssetForPath); }
+        if (uniswapAssetForPath != address(loanAsset) && uniswapAssetForPath != address(0)) {
+            path.push(uniswapAssetForPath); 
+        }
         path.push(address(loanAsset));
 
         // TODO: Consider oracles for 2nd parameter below.
@@ -322,9 +324,17 @@ contract Loan is FDT {
     */
     function triggerDefault() external {
         _isValidState(State.Active);
-        if (block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod())) {
-            _triggerDefault();
-        }
+
+        uint256 gracePeriodEnd         = nextPaymentDue.add(_globals(superFactory).gracePeriod());
+        bool pastGracePeriod           = block.timestamp > gracePeriodEnd;
+        bool withinExtendedGracePeriod = pastGracePeriod && block.timestamp <= gracePeriodEnd.add(_globals(superFactory).extendedGracePeriod());
+
+        // It checks following conditions - 
+        // 1. If `current time - nextPaymentDue` is within the (gracePeriod, gracePeriod + extendedGracePeriod] & `msg.sender` is
+        //    a pool delegate (Assumption: Only pool delegate will have non zero balance) then liquidate the loan.
+        // 2. If `current time - nextPaymentDue` is greater than gracePeriod + extendedGracePeriod then any msg.sender can liquidate the loan.
+        require((withinExtendedGracePeriod && balanceOf(msg.sender) > 0) || (pastGracePeriod && !withinExtendedGracePeriod), "Loan:FAILED_TO_LIQUIDATE");
+        _triggerDefault();
     }
 
     /**
