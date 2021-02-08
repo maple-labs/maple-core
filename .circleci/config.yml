@@ -25,7 +25,7 @@ jobs:
           command: |
             dapp update
             export DAPP_LINK_TEST_LIBRARIES=1
-            DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 200" dapp --use solc:0.6.11 build
+            DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 200" dapp build
       - persist_to_workspace:
           root: ~/project
           paths:
