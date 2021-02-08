@@ -16,6 +16,11 @@ jobs:
       - restore_cache:
           key: nix-deps
       - run:
+          name: Basic setup
+          command: |
+            apt install curl
+            curl -o /usr/local/bin/circleci https://circle-downloads.s3.amazonaws.com/releases/build_agent_wrapper/circleci && chmod +x /usr/local/bin/circleci
+      - run:
           name: Checkout maple-core
           command: |
             GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-core.git .
@@ -50,7 +55,6 @@ jobs:
           at: ~/project
       - restore_cache:
           key: nix-deps
-      - run: curl -o /usr/local/bin/circleci https://circle-downloads.s3.amazonaws.com/releases/build_agent_wrapper/circleci && chmod +x /usr/local/bin/circleci
       - run:
           name: Run unit tests
           command: |
