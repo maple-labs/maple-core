@@ -143,8 +143,6 @@ contract Pool is PoolFDT {
         return IStakeLockerFactory(_slFactory).newLocker(_stakeAsset, _liquidityAsset);
     }
 
-    event Debug(string, uint);
-
     /**
         @dev Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
     */
