@@ -259,24 +259,14 @@ contract Loan is FDT {
     /**
         @dev Helper function for calculating min amount from a swap (adjustable for price slippage).
     */
-    function _calcMinAmount(uint256 collateralPrice, uint256 swapOutPrice, uint256 liquidationAmt) internal view returns(uint256) {
+    function _calcMinAmount(uint256 collateralPrice, uint256 loanAssetPrice, uint256 liquidationAmt) internal view returns(uint256) {
         
         // Calculate amount out expected (abstract precision).
-        uint abstractMinOut = liquidationAmt.mul(collateralPrice).div(swapOutPrice);
+        // TODO: Chances of trimming of values (Need some test to validate the math).
+        uint abstractMinOut = liquidationAmt.mul(collateralPrice).div(loanAssetPrice);
 
         // Convert to proper precision, return value.
-        uint decimalsCollateral = collateralAsset.decimals();
-        uint decimalsLoanAsset  = loanAsset.decimals();
-
-        if (decimalsCollateral == decimalsLoanAsset) {
-            return abstractMinOut;
-        }
-        else if (decimalsCollateral > decimalsLoanAsset) {
-            return abstractMinOut.div(10 ** (decimalsCollateral - decimalsLoanAsset));
-        }
-        else {
-            return abstractMinOut.mul(10 ** (decimalsLoanAsset - decimalsCollateral));
-        }
+        return abstractMinOut.mul(10 ** loanAsset.decimals()).div(10 ** collateralAsset.decimals());
     }
 
     /**
@@ -293,9 +283,9 @@ contract Loan is FDT {
 
         IGlobals globals = _globals(superFactory);
 
-        uint collateralPrice = globals.getLatestPrice(address(collateralAsset));
-        uint swapOutPrice    = globals.getLatestPrice(address(loanAsset));
-        uint minAmount       = _calcMinAmount(collateralPrice, swapOutPrice, liquidationAmt);
+        uint collateralPrice = globals.getLatestPrice(address(collateralAsset));                 // Collateral asset per USD.
+        uint loanAssetPrice  = globals.getLatestPrice(address(loanAsset));                       // Loan asset per USD.
+        uint minAmount       = _calcMinAmount(collateralPrice, loanAssetPrice, liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
 
         // Generate path.
         address[] storage path;

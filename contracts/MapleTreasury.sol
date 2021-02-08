@@ -131,23 +131,11 @@ contract MapleTreasury {
         @dev Helper function for calculating min amount from a swap (adjustable for price slippage).
     */
     function _calcMinAmount(uint256 assetPrice, uint256 swapOutPrice, uint256 swapAmt, address asset) internal view returns(uint256) {
-        
         // Calculate amount out expected (abstract precision).
         uint abstractMinOut = swapAmt.mul(assetPrice).div(swapOutPrice);
 
         // Convert to proper precision, return value.
-        uint decimalsAsset = IERC20Details(asset).decimals();
-        uint decimalsSwap  = IERC20Details(fundsToken).decimals();
-
-        if (decimalsAsset == decimalsSwap) {
-            return abstractMinOut;
-        }
-        else if (decimalsAsset > decimalsSwap) {
-            return abstractMinOut.div(10 ** (decimalsAsset - decimalsSwap));
-        }
-        else {
-            return abstractMinOut.mul(10 ** (decimalsSwap - decimalsAsset));
-        }
+        return abstractMinOut.mul(10 ** IERC20Details(fundsToken).decimals()).div(10 ** IERC20Details(asset).decimals());
     }
 
     /**
