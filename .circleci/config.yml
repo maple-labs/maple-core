@@ -53,7 +53,7 @@ jobs:
             source $BASH_ENV
             TEST=$(circleci tests glob contracts/*.sol)
             TEST2=$(circleci tests glob contracts/test/*.sol)
-            TEST3=$(circleci tests glob contracts/test/*.sol | circleci --split-by=name)
+            TEST3=$(circleci tests glob contracts/test/*.sol | circleci tests split --split-by=name)
             echo $TEST
             echo $TEST2
             echo $TEST3
