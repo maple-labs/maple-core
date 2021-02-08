@@ -126,7 +126,7 @@ library CalcBPool {
             swapFee
         );
 
-        return poolAmountIn;
+        return tokenAmountOut;
     }
 
     /**

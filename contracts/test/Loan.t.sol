@@ -146,13 +146,13 @@ contract LoanTest is TestUtil {
         bob.fundLoan(address(loan), 5000 * USD, address(bob));
     }
 
-    function test_collateralRequiredForDrawdown() public {
-        Loan loan = createAndFundLoan(address(bulletCalc));
+    // function test_collateralRequiredForDrawdown() public {
+    //     Loan loan = createAndFundLoan(address(bulletCalc));
 
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
-        // assertEq(reqCollateral, 0.4 ether);
-        // TODO: Come up with better test for live price feeds.
-    }
+    //     uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
+    //     // assertEq(reqCollateral, 0.4 ether);
+    //     // TODO: Come up with better test for live price feeds.
+    // }
 
     function test_drawdown() public {
         Loan loan = createAndFundLoan(address(bulletCalc));
@@ -183,8 +183,6 @@ contract LoanTest is TestUtil {
 
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
 
-        address collateralLocker = loan.collateralLocker();
-        
         // TODO: Come up with better test for live price feeds.
         // assertEq(IERC20(WETH).balanceOf(address(ali)),            9.6 ether);  // Borrower collateral balance
         // assertEq(IERC20(WETH).balanceOf(collateralLocker),        0.4 ether);  // Collateral locker collateral balance
@@ -218,7 +216,6 @@ contract LoanTest is TestUtil {
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));  // Borrow draws down 1000 USDC
 
         address collateralLocker = loan.collateralLocker();
-        address fundingLocker    = loan.fundingLocker();
 
         // Warp to *300 seconds* before next payment is due
         assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());
@@ -310,7 +307,6 @@ contract LoanTest is TestUtil {
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));  // Borrow draws down 1000 USDC
 
         address collateralLocker = loan.collateralLocker();
-        address fundingLocker    = loan.fundingLocker();
 
         // Warp to *300 seconds* before next payment is due
         assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());
