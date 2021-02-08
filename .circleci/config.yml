@@ -43,7 +43,7 @@ jobs:
   dapp_test:
     docker:
       - image: nixorg/nix:circleci
-      parallelism: 4
+    parallelism: 4
     steps:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
