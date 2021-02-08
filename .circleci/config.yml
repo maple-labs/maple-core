@@ -51,13 +51,8 @@ jobs:
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
-            TEST=$(circleci tests glob contracts/*.sol)
-            TEST2=$(circleci tests glob contracts/test/*.sol)
-            TEST3=$(circleci tests glob contracts/test/*.sol | circleci tests split --split-by=name)
-            echo $TEST
-            echo $TEST2
-            echo $TEST3
-            ./test-ci.sh $TEST3
+            TEST=$(circleci tests glob contracts/test/*.sol | circleci tests split --split-by=name)
+            ./test-ci.sh $TEST
           no_output_timeout: 60m
       - store_test_results:
           path: tmp
