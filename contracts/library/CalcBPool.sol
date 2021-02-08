@@ -103,7 +103,7 @@ library CalcBPool {
         address pool,
         address pair,
         address stakeLocker
-    ) public returns (uint256) {
+    ) public view returns (uint256) {
 
         // Fetch balancer pool token information.
         IBPool bPool            = IBPool(pool);
