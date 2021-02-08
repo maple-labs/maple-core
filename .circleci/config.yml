@@ -53,9 +53,11 @@ jobs:
             source $BASH_ENV
             TEST=$(circleci tests glob contracts/*.sol)
             TEST2=$(circleci tests glob contracts/test/*.sol)
+            TEST3=$(circleci tests glob contracts/test/*.sol | circleci --split-by=name)
             echo $TEST
             echo $TEST2
-            ./test-ci.sh $TEST2
+            echo $TEST3
+            ./test-ci.sh $TEST3
           no_output_timeout: 60m
       - store_test_results:
           path: tmp
