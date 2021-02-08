@@ -43,7 +43,7 @@ jobs:
   dapp_test:
     docker:
       - image: nixorg/nix:circleci
-    parallelism: 4
+    parallelism: 16
     steps:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
@@ -58,6 +58,10 @@ jobs:
             source $BASH_ENV
             ./test-ci.sh "contracts/test"
           no_output_timeout: 30m
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: ./test-results/dapptools/results.xml
   
   dependencies:
     <<: *defaults
