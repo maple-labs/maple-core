@@ -1,0 +1,267 @@
+# Orb 'circleci/gcp-cli@1' resolved to 'circleci/gcp-cli@1.8.5'
+version: 2
+jobs:
+  dapp_build:
+    docker:
+    - image: bakii0499/dapptools:0.1.0
+    steps:
+    - restore_cache:
+        key: nix-deps-02
+    - run:
+        name: Build contracts
+        command: |
+          ls -al
+          dapp update
+          export DAPP_LINK_TEST_LIBRARIES=1
+          DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 200" dapp --use solc:0.6.11 build
+    - persist_to_workspace:
+        root: ~/project
+        paths:
+        - ./*
+    - save_cache:
+        paths:
+        - /nix/deps/02
+        key: nix-deps-02
+  dapp_test:
+    docker:
+    - image: bakii0499/dapptools:0.1.0
+    parallelism: 16
+    steps:
+    - attach_workspace:
+        at: ~/project
+    - restore_cache:
+        key: nix-deps-02
+    - run:
+        name: Run unit tests
+        command: |
+          cd ~/project
+          echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
+          source $BASH_ENV
+          TEST=$(circleci tests glob contracts/test | circleci tests split --split-by=name)
+          echo $TEST
+          ./test-ci.sh $TEST
+        no_output_timeout: 60m
+    - store_test_results:
+        path: tmp
+    - store_artifacts:
+        path: ../tmp/results.xml
+workflows:
+  version: 2
+  test_all:
+    jobs:
+    - dapp_build:
+        context: seth
+    - dapp_test:
+        requires:
+        - dapp_build
+        context: seth
+
+# Original config.yml file:
+# version: 2.1
+# 
+# orbs:
+#   gcp-cli: circleci/gcp-cli@1
+# 
+# aliases:
+#   - &defaults
+#     docker:
+#       - image: circleci/node:14
+# 
+# jobs:
+#   dapp_build:
+#     docker:
+#       - image: bakii0499/dapptools:0.1.0
+#     steps:
+#       - restore_cache:
+#           key: nix-deps-02
+#       # - run:
+#       #     name: Checkout maple-core
+#       #     command: |
+#       #       GIT_SSH_COMMAND=\"ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no\" git clone git@github.com:maple-labs/maple-core.git .
+#       #       git checkout $CIRCLE_BRANCH
+#       - run:
+#           name: Build contracts
+#           command: |
+#             ls -al
+#             dapp update
+#             export DAPP_LINK_TEST_LIBRARIES=1
+#             DAPP_SRC=\"contracts\" SOLC_FLAGS=\"--optimize --optimize-runs 200\" dapp --use solc:0.6.11 build
+#       - persist_to_workspace:
+#           root: ~/project
+#           paths:
+#             - \"./*\"
+#       - save_cache:
+#           paths:
+#             - /nix/deps/02 # location depends on npm version
+#           key: nix-deps-02
+# 
+#   dapp_test:
+#     docker:
+#       - image: bakii0499/dapptools:0.1.0
+#     parallelism: 16
+#     steps:
+#       - attach_workspace:
+#           # Must be absolute path or relative path from working_directory
+#           at: ~/project
+#       - restore_cache:
+#           key: nix-deps-02
+#       - run:
+#           name: Run unit tests
+#           command: |
+#             cd ~/project
+#             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
+#             source $BASH_ENV
+#             TEST=$(circleci tests glob contracts/test | circleci tests split --split-by=name)
+#             echo $TEST
+#             ./test-ci.sh $TEST
+#           no_output_timeout: 60m
+#       - store_test_results:
+#           path: tmp
+#       - store_artifacts:
+#           path: ../tmp/results.xml
+#   
+#   dependencies:
+#     <<: *defaults
+#     steps:
+#       - run:
+#           name: Checkout maple-beta-scaffold
+#           command: GIT_SSH_COMMAND=\"ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no\" git clone git@github.com:maple-labs/maple-beta-scaffold.git .
+#       - restore_cache:
+#           key: v1-npm-deps-{{ checksum \"~/project/yarn.lock\" }}
+#       - run:
+#           name: Checkout mbs dependencies
+#           command: GIT_SSH_COMMAND=\"ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no\" yarn setup
+#       - run:
+#           name: Checkout current maple-core branch
+#           command: cd ~/project/packages/maple-core && git checkout $CIRCLE_BRANCH
+#       - run:
+#           name: Install maple-core deps
+#           command: yarn
+#       - save_cache:
+#           paths:
+#             - ~/usr/local/lib/node_modules # location depends on npm version
+#           key: v1-npm-deps-{{ checksum \"~/project/yarn.lock\" }}
+#       - persist_to_workspace:
+#           root: ~/project
+#           paths:
+#             - \"./*\"
+# 
+#   integration_test:
+#     <<: *defaults
+#     steps:
+#       - attach_workspace:
+#           # Must be absolute path or relative path from working_directory
+#           at: ~/project
+#       - run:
+#           name: Run mbs chain
+#           command: cd ~/project && yarn chain >> /dev/null
+#           background: true
+#       - run:
+#           name: Wait for chain to start
+#           command: sleep 3
+#       - run:
+#           name: Set Env Variables
+#           command: |
+#             echo 'export NETWORK=\"localhost\"' >> $BASH_ENV
+#             source $BASH_ENV
+#       - run:
+#           name: Deploy Core and Dependency Contracts to Hardhat Chain
+#           command: cd ~/project && yarn deploy
+#       - run:
+#           name: Run Integration on Localhost Network
+#           command: cd ~/project && yarn test
+#       - run:
+#           name: Stop Hardhat chain
+#           command: pkill node
+# 
+#   deploy_kaleido:
+#     <<: *defaults
+#     steps:
+#       - attach_workspace:
+#           # Must be absolute path or relative path from working_directory
+#           at: ~/project
+#       - run:
+#           name: Update PATH and Define Environment Variable at Runtime
+#           command: |
+#             echo 'export MAPLE_KALEIDO_URL=$MAPLE_KALEIDO_URL' >> $BASH_ENV
+#             echo 'export MAPLE_MNEMONIC=$MAPLE_MNEMONIC' >> $BASH_ENV
+#             echo 'export NETWORK=\"kaleido\"' >> $BASH_ENV
+#             echo 'export NODE_ENV=\"private\"' >> $BASH_ENV
+#             source $BASH_ENV
+#       - run:
+#           name: Deploy contracts to Kaleido
+#           command: cd ~/project && yarn deploy && yarn test
+#       - persist_to_workspace:
+#           root: ~/project
+#           paths:
+#             - \"./*\"
+# 
+#   upload_kaleido_artifacts_master:
+#     executor:
+#       name: gcp-cli/google
+#     steps:
+#       - attach_workspace:
+#           # Must be absolute path or relative path from working_directory
+#           at: ~/project
+#       - gcp-cli/initialize
+#       - run:
+#           name: Upload files to gcloud bucket
+#           command: |
+#             gsutil -m rsync -r ~/project/packages/contracts/private gs://maple-artifacts/contract-artifacts/kaleido/$CIRCLE_BUILD_NUM
+#             gsutil -m rsync -r ~/project/packages/contracts/private gs://maple-artifacts/contract-artifacts/kaleido/current
+# 
+#   upload_kaleido_artifacts_develop:
+#     executor:
+#       name: gcp-cli/google
+#     steps:
+#       - attach_workspace:
+#           # Must be absolute path or relative path from working_directory
+#           at: ~/project
+#       - gcp-cli/initialize
+#       - run:
+#           name: Upload files to gcloud bucket
+#           command: |
+#             gsutil -m rsync -r ~/project/packages/contracts/private gs://maple-artifacts/contract-artifacts/kaleido/develop
+# 
+# workflows:
+#   version: 2
+#   test_all:
+#     jobs:
+#   #     - dependencies
+#   #     - integration_test:
+#   #         requires:
+#   #           - dependencies
+# 
+#       - dapp_build:
+#           context: seth
+#       - dapp_test: 
+#           context: seth
+#           requires:
+#             - dapp_build
+#             
+#       # - deploy_kaleido:
+#       #     context: kaleido
+#       #     requires:
+#       #       - dapp_test
+#       #       - integration_test
+#       #     filters:
+#       #       branches:
+#       #         only:
+#       #           - master
+#       #           - develop
+#       # - upload_kaleido_artifacts_master:
+#       #     context: google-cloud
+#       #     requires:
+#       #       - deploy_kaleido
+#       #     filters:
+#       #       branches:
+#       #         only:
+#       #           - master
+#       # - upload_kaleido_artifacts_develop:
+#       #     context: google-cloud
+#       #     requires:
+#       #       - deploy_kaleido
+#       #     filters:
+#       #       branches:
+#       #         only:
+#       #           - develop
