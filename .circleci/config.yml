@@ -52,11 +52,11 @@ jobs:
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
             ./test-ci.sh | circleci tests split --split-by=timings
-          no_output_timeout: 30m
+          no_output_timeout: 60m
       - store_test_results:
-          path: test-results
+          path: tmp
       - store_artifacts:
-          path: ./test-results/dapptools/results.xml
+          path: ../tmp/results.xml
   
   dependencies:
     <<: *defaults
