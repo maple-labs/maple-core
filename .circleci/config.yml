@@ -14,7 +14,7 @@ jobs:
       - image: bakii0499/dapptools:0.1.0
     steps:
       - restore_cache:
-          key: nix-deps-01
+          key: nix-deps-02
       - run:
           name: Checkout maple-core
           command: |
@@ -32,8 +32,8 @@ jobs:
             - "./*"
       - save_cache:
           paths:
-            - /nix # location depends on npm version
-          key: nix-deps-01
+            - /nix/deps/02 # location depends on npm version
+          key: nix-deps-02
 
   dapp_test:
     docker:
@@ -44,7 +44,7 @@ jobs:
           # Must be absolute path or relative path from working_directory
           at: ~/project
       - restore_cache:
-          key: nix-deps-01
+          key: nix-deps-02
       - run:
           name: Run unit tests
           command: |
