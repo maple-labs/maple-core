@@ -137,6 +137,7 @@ contract StakingRewardsTest is TestUtil {
 
     function assertRewardsAccounting(
         address user,
+        uint256 totalSupply,
         uint256 rewardPerTokenStored, 
         uint256 userRewardPerTokenPaid, 
         uint256 earned, 
@@ -145,6 +146,7 @@ contract StakingRewardsTest is TestUtil {
     ) 
         public 
     {
+        assertEq(stakingRewards.totalSupply(),                totalSupply);
         assertEq(stakingRewards.rewardPerTokenStored(),       rewardPerTokenStored);
         assertEq(stakingRewards.userRewardPerTokenPaid(user), userRewardPerTokenPaid);
         assertEq(stakingRewards.earned(user),                 earned);
@@ -154,17 +156,20 @@ contract StakingRewardsTest is TestUtil {
 
     function test_rewards_single_epoch() public {
         ali.approve(address(stakingRewards), 100 ether);
+        bob.approve(address(stakingRewards), 100 ether);
         ali.stake(10 ether);
 
-        mpl.transfer(address(stakingRewards), 60_000 ether); // 60k MPL per week => 3.12m MPL per year
+        mpl.transfer(address(stakingRewards), 60_000 ether);  // 60k MPL per week => 3.12m MPL per year
 
         stakingRewards.notifyRewardAmount(60_000 ether);
 
         uint256 rewardRate = stakingRewards.rewardRate();
         uint256 start      = block.timestamp;
 
+        /*** Ali time = 0 post-stake ***/
         assertRewardsAccounting({
             user:                   address(ali),  // User accounting for
+            totalSupply:            10 ether,      // Ali's stake
             rewardPerTokenStored:   0,             // Starting state
             userRewardPerTokenPaid: 0,             // Starting state
             earned:                 0,             // Starting state
@@ -174,8 +179,10 @@ contract StakingRewardsTest is TestUtil {
 
         ali.getReward();  // Get reward at time = 0
 
+        /*** Ali time = (0 days) post-claim ***/
         assertRewardsAccounting({
             user:                   address(ali),  // User accounting for
+            totalSupply:            10 ether,      // Ali's stake
             rewardPerTokenStored:   0,             // Starting state (getReward has no effect at time = 0)
             userRewardPerTokenPaid: 0,             // Starting state (getReward has no effect at time = 0)
             earned:                 0,             // Starting state (getReward has no effect at time = 0)
@@ -183,77 +190,200 @@ contract StakingRewardsTest is TestUtil {
             rewardTokenBal:         0              // Starting state (getReward has no effect at time = 0)
         });
 
-        hevm.warp(start + 1 hours);  // Warp to time = 1 hours
+        hevm.warp(start + 1 days);  // Warp to time = (1 days) (dTime = 1 days)
 
+        uint256 dTime_1_rpt = rewardRate * 1 days * WAD / 10 ether;  // Reward per token (RPT) that was used before bob entered the pool (accrued over dTime = 1 days)
+
+        /*** Ali time = (1 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(ali),          // User accounting for
-            rewardPerTokenStored:   0,                     // Not updated yet
-            userRewardPerTokenPaid: 0,                     // Not updated yet
-            earned:                 rewardRate * 1 hours,  // Time-based calculation
-            rewards:                0,                     // Not updated yet
-            rewardTokenBal:         0                      // Nothing claimed
+            user:                   address(ali),                  // User accounting for
+            totalSupply:            10 ether,                      // Ali's stake
+            rewardPerTokenStored:   0,                             // Not updated yet
+            userRewardPerTokenPaid: 0,                             // Not updated yet
+            earned:                 dTime_1_rpt * 10 ether / WAD,  // Time-based calculation
+            rewards:                0,                             // Not updated yet
+            rewardTokenBal:         0                              // Nothing claimed
         });
 
-        ali.getReward();  // Get reward at time = 1 hours
+        ali.getReward();  // Get reward at time = (1 days) 
 
+        /*** Ali time = (1 days) post-claim ***/
         assertRewardsAccounting({
-            user:                   address(ali),                                               // User accounting for
-            rewardPerTokenStored:   rewardRate * 1 hours * WAD / stakingRewards.totalSupply(),  // Updated for 100% ownership in pool after 1hr
-            userRewardPerTokenPaid: stakingRewards.rewardPerToken(),                            // Updated on updateReward
-            earned:                 0,                                                          // Time-based calculation and userRewardPerTokenPaid cancel out
-            rewards:                0,                                                          // Updated on updateReward to earned(), then set to zero on getReward
-            rewardTokenBal:         rewardRate * 1 hours                                        // Updated on getReward, user has claimed rewards (equal to original earned() amt at this timestamp))
+            user:                   address(ali),                 // User accounting for
+            totalSupply:            10 ether,                     // Ali's stake
+            rewardPerTokenStored:   dTime_1_rpt,                  // Updated on updateReward
+            userRewardPerTokenPaid: dTime_1_rpt,                  // Updated on updateReward for 100% ownership in pool after 1hr
+            earned:                 0,                            // Time-based calculation and userRewardPerTokenPaid cancel out
+            rewards:                0,                            // Updated on updateReward to earned(), then set to zero on getReward
+            rewardTokenBal:         dTime_1_rpt * 10 ether / WAD  // Updated on getReward, user has claimed rewards (equal to original earned() amt at this timestamp))
         });
 
-        // withinDiff(dai.balanceOf(address(ali)), 1 ether, REWARDS_TOLERANCE);
-        // withinDiff(stakingRewards.earned(address(ali)), 0 ether, REWARDS_TOLERANCE);
+        bob.stake(10 ether); // Bob stakes 10 ether, giving him 50% stake in the pool rewards going forward
 
-        // bob.doStake(10 ether);
+        /*** Bob time = (1 days) post-stake ***/
+        assertRewardsAccounting({
+            user:                   address(bob),  // User accounting for
+            totalSupply:            20 ether,      // Ali + Bob stake (makes rewardPerTokenStored smaller)
+            rewardPerTokenStored:   dTime_1_rpt,   // Updated on updateReward (value is halved due to totalSupply)
+            userRewardPerTokenPaid: dTime_1_rpt,   // Updated on updateReward, prevents bob from claiming past rewards
+            earned:                 0,             // Time-based calculation and userRewardPerTokenPaid cancel out
+            rewards:                0,             // Not updated yet
+            rewardTokenBal:         0              // Not updated yet
+        });
 
-        // withinDiff(dai.balanceOf(address(bob)), 0 ether, REWARDS_TOLERANCE);
-        // withinDiff(stakingRewards.earned(address(bob)), 0 ether, REWARDS_TOLERANCE);
+        hevm.warp(start + 2 days);  // Warp to time = (2 days) (dTime = 1 days)
 
-        // hevm.warp(now + 2 hours);
+        uint256 dTime_2_rpt = rewardRate * 1 days * WAD / 20 ether;  // Reward per token (RPT) that was used after  bob entered the pool (accrued over dTime = 1 days, on second day)
 
-        // withinDiff(stakingRewards.earned(address(ali)), 1 ether, REWARDS_TOLERANCE);
-        // withinDiff(stakingRewards.earned(address(bob)), 1 ether, REWARDS_TOLERANCE);
+        /*** Ali time = (2 days) pre-claim ***/
+        assertRewardsAccounting({
+            user:                   address(ali),                  // User accounting for
+            totalSupply:            20 ether,                      // Ali + Bob stake (makes rewardPerTokenStored smaller)
+            rewardPerTokenStored:   dTime_1_rpt,                   // Not updated yet
+            userRewardPerTokenPaid: dTime_1_rpt,                   // Used so Ali can't do multiple claims
+            earned:                 dTime_2_rpt * 10 ether / WAD,  // Ali has not claimed any rewards that have accrued during day 2
+            rewards:                0,                             // Updated on updateReward to earned(), then set to zero on getReward
+            rewardTokenBal:         dTime_1_rpt * 10 ether / WAD   // From previous claim
+        });
 
-        // bob.doGetReward();
+        /*** Bob time = (2 days) pre-claim ***/
+        assertRewardsAccounting({
+            user:                   address(bob),                  // User accounting for
+            totalSupply:            20 ether,                      // Ali + Bob stake (makes rewardPerTokenStored smaller)
+            rewardPerTokenStored:   dTime_1_rpt,                   // Not updated yet
+            userRewardPerTokenPaid: dTime_1_rpt,                   // Used so Bob can't do claims on past rewards
+            earned:                 dTime_2_rpt * 10 ether / WAD,  // Bob has not claimed any rewards that have accrued during day 2
+            rewards:                0,                             // Not updated yet
+            rewardTokenBal:         0                              // Not updated yet
+        });
 
-        // withinDiff(stakingRewards.earned(address(ali)), 1 ether, REWARDS_TOLERANCE);
-        // withinDiff(dai.balanceOf(address(bob)), 1 ether, REWARDS_TOLERANCE);
-        // withinDiff(stakingRewards.earned(address(bob)), 0 ether, REWARDS_TOLERANCE);
+        bob.stake(20 ether); // Bob stakes another 20 ether, giving him 75% stake in the pool rewards going forward
 
-        // vat.mint(address(distributor), rad(27 ether));
-        // distributor.drip();
+        /*** Bob time = (2 days) post-stake ***/
+        assertRewardsAccounting({
+            user:                   address(bob),                  // User accounting for
+            totalSupply:            40 ether,                      // Ali + Bob stake (makes rewardPerTokenStored smaller)
+            rewardPerTokenStored:   dTime_1_rpt + dTime_2_rpt,     // Updated on stake to snapshot rewardPerToken up to that point
+            userRewardPerTokenPaid: dTime_1_rpt + dTime_2_rpt,     // Used so Bob can't do claims on past rewards
+            earned:                 dTime_2_rpt * 10 ether / WAD,  // Earned updated to reflect all unclaimed earnings pre stake
+            rewards:                dTime_2_rpt * 10 ether / WAD,  // Rewards updated to earnings on updateReward
+            rewardTokenBal:         0                              // Not updated yet
+        });
 
-        // assertEq(stakingRewards.rewardRate(), uint256(48 ether) / 1 days, 1);
-        // assertEq(stakingRewards.lastUpdateTime(), now);
-        // assertEq(stakingRewards.periodFinish(), now + 1 days);
+        hevm.warp(start + 2 days + 1 hours);  // Warp to time = (2 days + 1 hours) (dTime = 1 hours)
 
-        // withinDiff(stakingRewards.earned(address(ali)), 1 ether, REWARDS_TOLERANCE);
-        // withinDiff(stakingRewards.earned(address(bob)), 0 ether, REWARDS_TOLERANCE);
+        uint256 dTime_3_rpt = rewardRate * 1 hours * WAD / 40 ether;  // Reward per token (RPT) that was used after bob staked more into the pool (accrued over dTime = 1 hours)
 
-        // hevm.warp(now + 1 hours);
+        /*** Ali time = (2 days + 1 hours) pre-claim ***/
+        assertRewardsAccounting({
+            user:                   address(ali),                                  // User accounting for
+            totalSupply:            40 ether,                                      // Ali + Bob stake (makes rewardPerTokenStored smaller)
+            rewardPerTokenStored:   dTime_1_rpt + dTime_2_rpt,                     // Not updated yet
+            userRewardPerTokenPaid: dTime_1_rpt,                                   // Used so Ali can't do multiple claims
+            earned:                 (dTime_2_rpt + dTime_3_rpt) * 10 ether / WAD,  // Ali has not claimed any rewards that have accrued during day 2
+            rewards:                0,                                             // Not updated yet
+            rewardTokenBal:         dTime_1_rpt * 10 ether / WAD                   // From previous claim
+        });
 
-        // withinDiff(dai.balanceOf(address(ali)), 1 ether, REWARDS_TOLERANCE);
-        // withinDiff(stakingRewards.earned(address(ali)), 2 ether, REWARDS_TOLERANCE);
-        // withinDiff(dai.balanceOf(address(bob)), 1 ether, REWARDS_TOLERANCE);
-        // withinDiff(stakingRewards.earned(address(bob)), 1 ether, REWARDS_TOLERANCE);
+        /*** Bob time = (2 days + 1 hours) pre-claim ***/
+        assertRewardsAccounting({
+            user:                   address(bob),                                             // User accounting for
+            totalSupply:            40 ether,                                                 // Ali + Bob stake (makes rewardPerTokenStored smaller)
+            rewardPerTokenStored:   dTime_1_rpt + dTime_2_rpt,                                // Not updated yet
+            userRewardPerTokenPaid: dTime_1_rpt + dTime_2_rpt,                                // Used so Bob can't do claims on past rewards
+            earned:                 (dTime_2_rpt * 10 ether + dTime_3_rpt * 30 ether) / WAD,  // Bob's earnings since he entered the pool
+            rewards:                dTime_2_rpt * 10 ether / WAD,                             // Rewards updated to reflect all unclaimed earnings pre stake
+            rewardTokenBal:         0                                                         // Not updated yet
+        });
 
-        // ali.doGetReward();
-        // bob.doGetReward();
+        bob.getReward();  // Get reward at time = (2 days + 1 hours)
 
-        // withinDiff(dai.balanceOf(address(ali)), 3 ether, REWARDS_TOLERANCE);
-        // withinDiff(dai.balanceOf(address(bob)), 2 ether, REWARDS_TOLERANCE);
+        /*** Bob time = (2 days + 1 hours) post-claim ***/
+        assertRewardsAccounting({
+            user:                   address(bob),                                            // User accounting for
+            totalSupply:            40 ether,                                                // Ali + Bob stake (makes rewardPerTokenStored smaller)
+            rewardPerTokenStored:   dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,                 // Updated on updateReward
+            userRewardPerTokenPaid: dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,                 // Used so Bob can't do multiple claims
+            earned:                 0,                                                       // Time-based calculation and userRewardPerTokenPaid cancel out
+            rewards:                0,                                                       // Updated on updateReward to earned(), then set to zero on getReward
+            rewardTokenBal:         (dTime_2_rpt * 10 ether + dTime_3_rpt * 30 ether) / WAD  // Updated on getReward, user has claimed rewards (equal to original earned() amt at this timestamp))
+        });
 
-        // hevm.warp(now + 7 days);
+        bob.getReward();  // Try double claim
 
-        // ali.doGetReward();
-        // bob.doGetReward();
+        /*** Bob time = (2 days + 1 hours) post-claim (ASSERT NOTHING CHANGES) ***/
+        assertRewardsAccounting({
+            user:                   address(bob),                                            // User accounting for
+            totalSupply:            40 ether,                                                // Ali + Bob stake (makes rewardPerTokenStored smaller)
+            rewardPerTokenStored:   dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,                 // Updated on updateReward
+            userRewardPerTokenPaid: dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,                 // Used so Bob can't do multiple claims
+            earned:                 0,                                                       // Time-based calculation and userRewardPerTokenPaid cancel out
+            rewards:                0,                                                       // Updated on updateReward to earned(), then set to zero on getReward
+            rewardTokenBal:         (dTime_2_rpt * 10 ether + dTime_3_rpt * 30 ether) / WAD  // Updated on getReward, user has claimed rewards (equal to original earned() amt at this timestamp))
+        });
 
-        // withinDiff(dai.balanceOf(address(ali)), 26 ether, REWARDS_TOLERANCE);
-        // withinDiff(dai.balanceOf(address(bob)), 25 ether, REWARDS_TOLERANCE);
+        ali.withdraw(5 ether);  // Ali withdraws 5 ether at time = (2 days + 1 hours)
+
+        /*** Ali time = (2 days) pre-claim ***/
+        assertRewardsAccounting({
+            user:                   address(ali),                                  // User accounting for
+            totalSupply:            35 ether,                                      // Ali + Bob stake, lower now that Ali withdrew
+            rewardPerTokenStored:   dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,       // Not updated yet
+            userRewardPerTokenPaid: dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,       // Used so Ali can't claim past earnings
+            earned:                 (dTime_2_rpt + dTime_3_rpt) * 10 ether / WAD,  // Ali has not claimed any rewards that have accrued during dTime2 and dTime3
+            rewards:                (dTime_2_rpt + dTime_3_rpt) * 10 ether / WAD,  // Updated on updateReward to earned()
+            rewardTokenBal:         dTime_1_rpt * 10 ether / WAD                   // From previous claim
+        });
+
+        hevm.warp(start + 3 days + 1 hours);  // Warp to time = (3 days + 1 hours) (dTime = 1 days)
+
+        uint256 dTime_4_rpt = rewardRate * 1 days * WAD / 35 ether;  // Reward per token (RPT) that was used after ali withdrew from the pool (accrued over dTime = 1 days)
+
+        /*** Ali time = (3 days + 1 hours) pre-exit ***/
+        assertRewardsAccounting({
+            user:                     address(ali),                             // User accounting for
+            totalSupply:              35 ether,                                 // Ali + Bob stake 
+            rewardPerTokenStored:     dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,  // Not updated yet
+            userRewardPerTokenPaid:   dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,  // Used so Ali can't do multiple claims
+            earned:                 ((dTime_2_rpt + dTime_3_rpt) * 10 ether + dTime_4_rpt * 5 ether) / WAD,            // Ali has not claimed any rewards that have accrued during dTime4
+            rewards:                 (dTime_2_rpt + dTime_3_rpt) * 10 ether / WAD,                                       // Not updated yet
+            rewardTokenBal:           dTime_1_rpt * 10 ether / WAD              // From previous claim
+        });
+
+        /*** Bob time = (2 days + 1 hours) pre-exit ***/
+        assertRewardsAccounting({
+            user:                   address(bob),                                            // User accounting for
+            totalSupply:            35 ether,                                                // Ali + Bob stake 
+            rewardPerTokenStored:   dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,                 // Not updated yet
+            userRewardPerTokenPaid: dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,                 // Used so Bob can't do multiple claims
+            earned:                 dTime_4_rpt * 30 ether / WAD,                            // Bob has not claimed any rewards that have accrued during dTime4
+            rewards:                0,                                                       // Not updated yet
+            rewardTokenBal:         (dTime_2_rpt * 10 ether + dTime_3_rpt * 30 ether) / WAD  // From previous claim
+        });
+
+        ali.exit();  // Ali exits 5 ether  at time = (3 days + 1 hours)
+        bob.exit();  // Bob exits 20 ether at time = (3 days + 1 hours)
+
+        /*** Ali time = (3 days + 1 hours) post-exit ***/
+        assertRewardsAccounting({
+            user:                   address(ali),                                                                         // User accounting for
+            totalSupply:            0,                                                                                    // Ali + Bob withdrew all stake
+            rewardPerTokenStored:   dTime_1_rpt + dTime_2_rpt + dTime_3_rpt + dTime_4_rpt,                                // Updated on updateReward
+            userRewardPerTokenPaid: dTime_1_rpt + dTime_2_rpt + dTime_3_rpt + dTime_4_rpt,                                // Used so Ali can't do multiple claims
+            earned:                 0,                                                                                    // Time-based calculation and userRewardPerTokenPaid cancel out
+            rewards:                0,                                                                                    // Updated on updateReward to earned(), then set to zero on getReward
+            rewardTokenBal:         ((dTime_1_rpt + dTime_2_rpt + dTime_3_rpt) * 10 ether + dTime_4_rpt * 5 ether) / WAD  // Total earnings from pool
+        });
+
+        /*** Bob time = (2 days + 1 hours) post-exit ***/
+        assertRewardsAccounting({
+            user:                   address(bob),                                                            // User accounting for
+            totalSupply:            0,                                                                       // Ali + Bob withdrew all stake
+            rewardPerTokenStored:   dTime_1_rpt + dTime_2_rpt + dTime_3_rpt + dTime_4_rpt,                   // Updated on updateReward
+            userRewardPerTokenPaid: dTime_1_rpt + dTime_2_rpt + dTime_3_rpt + dTime_4_rpt,                   // Used so Bob can't do multiple claims
+            earned:                 0,                                                                       // Time-based calculation and userRewardPerTokenPaid cancel out
+            rewards:                0,                                                                       // Updated on updateReward to earned(), then set to zero on getReward
+            rewardTokenBal:         (dTime_2_rpt * 10 ether + (dTime_3_rpt + dTime_4_rpt) * 30 ether) / WAD  // Total earnings from pool
+        });
     }
-
 }
