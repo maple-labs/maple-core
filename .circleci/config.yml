@@ -11,23 +11,18 @@ aliases:
 jobs:
   dapp_build:
     docker:
-      - image: nixorg/nix:circleci
+      - image: bakii0499/dapptools:0.1.0
     steps:
       - restore_cache:
-          key: nix-deps
+          key: nix-deps-02
       - run:
           name: Checkout maple-core
           command: |
             GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-core.git .
             git checkout $CIRCLE_BRANCH
       - run:
-          name: Install dependencies
+          name: Build contracts
           command: |
-            nix-channel --add \
-            https://nixos.org/channels/nixpkgs-unstable nixpkgs && \
-            nix-channel --update
-            nix-env -iA nixpkgs.gnugrep nixpkgs.findutils
-            nix-env -iA dapp hevm seth solc-static-versions.solc_0_6_11 -if https://github.com/dapphub/dapptools/tarball/dc992eb2e9d05bee150156add790bddb160fc80c --option substituters "https://cache.nixos.org https://dapp.cachix.org" --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= dapp.cachix.org-1:9GJt9Ja8IQwR7YW/aF0QvCa6OmjGmsKoZIist0dG+Rs"
             dapp update
             export DAPP_LINK_TEST_LIBRARIES=1
             DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 200" dapp --use solc:0.6.11 build
@@ -37,278 +32,28 @@ jobs:
             - "./*"
       - save_cache:
           paths:
-            - /nix # location depends on npm version
-          key: nix-deps
+            - /nix/deps/02 # location depends on npm version
+          key: nix-deps-02
 
-  dapp_test_collateralLockerFactory:
+  dapp_test:
     docker:
-      - image: nixorg/nix:circleci
+      - image: bakii0499/dapptools:0.1.0
+    parallelism: 16
     steps:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: ~/project
       - restore_cache:
-          key: nix-deps
+          key: nix-deps-02
       - run:
           name: Run unit tests
-          no_output_timeout: 30m
           command: |
             cd ~/project
             echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
             source $BASH_ENV
-            ./test-ci.sh "CollateralLockerFactoryTest"
-
-  dapp_test_debtLockerFactory:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "DebtLockerFactoryTest"
-
-  dapp_test_fundingLockerFactory:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "FundingLockerFactoryTest"
-
-  dapp_test_gulp:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "GulpTest"
-
-  dapp_test_loan:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "LoanTest"
-
-  dapp_test_loanFactory:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "LoanFactoryTest"
-
-  dapp_test_loanLiquidation:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "LoanLiquidationTest"
-  
-  dapp_test_mapleGlobals:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "MapleGlobalsTest"
-
-  dapp_test_mapleTreasury:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "MapleTreasuryTest"
-
-  dapp_test_pool:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "PoolTest"
-
-  dapp_test_poolExcess:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "PoolExcessTest"
-
-  dapp_test_poolFactory:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "PoolFactoryTest"
-
-  dapp_test_poolLiquidation:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "PoolLiquidationTest"
-
-  dapp_test_stakeLocker:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "StakeLockerTest"
-  
-  dapp_test_stakeLockerFactory:
-    docker:
-      - image: nixorg/nix:circleci
-    steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: ~/project
-      - restore_cache:
-          key: nix-deps
-      - run:
-          name: Run unit tests
-          no_output_timeout: 30m
-          command: |
-            cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            ./test-ci.sh "StakeLockerFactoryTest"
+            TEST=$(circleci tests glob contracts/test/*.sol | circleci tests split --split-by=name)
+            ./test-ci.sh $TEST
+          no_output_timeout: 60m
   
   dependencies:
     <<: *defaults
@@ -417,73 +162,17 @@ workflows:
   version: 2
   test_all:
     jobs:
-  #     - dependencies
-  #     - integration_test:
-  #         requires:
-  #           - dependencies
+      - dependencies
+      - integration_test:
+          requires:
+            - dependencies
 
       - dapp_build:
           context: seth
-  #     - dapp_test_collateralLockerFactory: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_debtLockerFactory: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_fundingLockerFactory: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_gulp: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_loan: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_loanFactory: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_loanLiquidation: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_mapleGlobals: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_mapleTreasury: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_pool: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_poolExcess: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_poolFactory: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_poolLiquidation: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_stakeLocker: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
-  #     - dapp_test_stakeLockerFactory: 
-  #         context: seth
-  #         requires:
-  #           - dapp_build
+      - dapp_test: 
+          context: seth
+          requires:
+            - dapp_build
             
       # - deploy_kaleido:
       #     context: kaleido
