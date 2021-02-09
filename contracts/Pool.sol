@@ -257,10 +257,10 @@ contract Pool is PoolFDT {
         uint256 due = amt.sub(totPenalty).sub(recognizedLosses);
 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance.
-        recognizeLosses();          // Update loss accounting for LP,   decrement bptShortfall
-        withdrawFunds();            // Transfer full entitled interest, decrement interestSum
+        recognizeLosses();          // Update loss accounting for LP,   decrement `bptShortfall`
+        withdrawFunds();            // Transfer full entitled interest, decrement `interestSum`
 
-        // Transfer the principal amount - totPenalty
+        // Transfer amt - totPenalty - recognizedLosses
         require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");
 
         interestSum  = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount.
