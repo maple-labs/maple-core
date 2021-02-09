@@ -166,10 +166,10 @@ workflows:
   version: 2
   test_all:
     jobs:
-  #     - dependencies
-  #     - integration_test:
-  #         requires:
-  #           - dependencies
+      - dependencies
+      - integration_test:
+          requires:
+            - dependencies
 
       - dapp_build:
           context: seth
