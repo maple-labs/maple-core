@@ -7,7 +7,7 @@ import "./interfaces/IPoolFactory.sol";
 
 import "./token/FDT.sol";
 
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
 contract StakeLocker is FDT {
