@@ -40,7 +40,7 @@ contract Governor {
     function setUnstakeDelay(uint256 delay)                           external { globals.setUnstakeDelay(delay); }
     function setGovernor(address gov)                                 external { globals.setGovernor(gov); }
     function setPriceOracle(address asset, address oracle)            external { globals.setPriceOracle(asset, oracle); }
-    function setMaxSwapSlippage(uint256 newSlippage)           external { globals.setMaxSwapSlippage(newSlippage); }
+    function setMaxSwapSlippage(uint256 newSlippage)                  external { globals.setMaxSwapSlippage(newSlippage); }
 
     function setDefaultUniswapPath(address from, address to, address mid) external { 
         globals.setDefaultUniswapPath(from, to, mid); 

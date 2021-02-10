@@ -135,22 +135,19 @@ contract MapleTreasury {
     function convertERC20(address asset) isGovernor public {
         require(asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
         
-        IUniswapRouter uniswap     = IUniswapRouter(uniswapRouter);
         IGlobals       _globals    = IGlobals(globals);
-        IERC20         _fundsToken = IERC20(fundsToken);
-        IERC20         _asset      = IERC20(asset);
 
-        uint assetBalance = _asset.balanceOf(address(this));
+        uint assetBalance = IERC20(asset).balanceOf(address(this));
         uint minAmount    = Util.calcMinAmount(_globals, asset, fundsToken, assetBalance);
 
-        _asset.approve(uniswapRouter, assetBalance);
+        IERC20(asset).approve(uniswapRouter, assetBalance);
         
         // Generate path.
         address[] storage path;
-        path.push(address(asset));
-        address uniswapAssetForPath = _globals.defaultUniswapPath(address(asset), address(fundsToken));
-        if (uniswapAssetForPath != address(asset)) { path.push(uniswapAssetForPath); }
-        path.push(address(asset));
+        path.push(asset);
+        address uniswapAssetForPath = _globals.defaultUniswapPath(asset, fundsToken);
+        if (uniswapAssetForPath != asset) { path.push(uniswapAssetForPath); }
+        path.push(asset);
 
         // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(

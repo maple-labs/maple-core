@@ -112,7 +112,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.investorFee(),                50);
         assertEq(globals.treasuryFee(),                50);
         assertEq(globals.BFactory(),        BPOOL_FACTORY);
-        assertEq(globals.maxSwapSlippage(),  10000);
+        assertEq(globals.maxSwapSlippage(),          1000);
     }
 
     function test_setup() public {
@@ -280,14 +280,14 @@ contract MapleGlobalsTest is TestUtil {
         // assertEq(globals.getLatestPrice(WETH), 0); // Shows real WETH value from ChainLink
         // assertEq(globals.getLatestPrice(WBTC), 0); // Shows real WBTC value from ChainLink
 
+        assertTrue(!fakeGov.try_setMaxSwapSlippage(12));  // 0.12 %
+        assertTrue(     gov.try_setMaxSwapSlippage(12));
+        assertEq(globals.maxSwapSlippage(), 12);
+
         assertTrue(!fakeGov.try_setGovernor(address(fakeGov)));
         assertTrue(     gov.try_setGovernor(address(fakeGov)));
         assertEq(globals.governor(), address(fakeGov));
         assertTrue(fakeGov.try_setGovernor(address(gov)));  // Assert new governor has permissions
         assertEq(globals.governor(), address(gov));
-
-        assertTrue(!fakeGov.try_setMaxSwapSlippage(12));  // 0.12 %
-        assertTrue(gov.try_setMaxSwapSlippage(12));
-        assertEq(globals.maxSwapSlippage(), 12);
     }
 }

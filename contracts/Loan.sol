@@ -258,7 +258,7 @@ contract Loan is FDT {
     }
 
     /**
-        @dev Public getter to know how much minimum aount of loan asset will get by swapping collateral asset.
+        @dev Public getter to know how much minimum amount of loan asset will get by swapping collateral asset.
      */
     function getExpectedAmountRecovered() public view returns(uint256) {
         uint256 liquidationAmt = _getCollateralLockerBalance();
