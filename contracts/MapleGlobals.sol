@@ -21,25 +21,25 @@ interface AggregatorV3Interface {
 
 contract MapleGlobals {
 
-    address immutable public BFactory;   // Official balancer pool factory.
+    address immutable public BFactory;      // Official balancer pool factory.
 
-    address public governor;             // Governor is responsible for management of global Maple variables
-    address public mpl;                  // Maple Token is the ERC-2222 token for the Maple protocol
-    address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
+    address public governor;                // Governor is responsible for management of global Maple variables
+    address public mpl;                     // Maple Token is the ERC-2222 token for the Maple protocol
+    address public mapleTreasury;           // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
 
-    uint256 public gracePeriod;          // Represents the amount of time a borrower has to make a missed payment before a default can be triggered.
-    uint256 public swapOutRequired;      // Represents the swap out amount required from staked assets for a Pool's liquidity asset, for default purposes.
-    uint256 public unstakeDelay;         // Parameter for unstake delay, with relation to StakeLocker withdrawals.
-    uint256 public drawdownGracePeriod;  // Amount of time to allow borrower to drawdown on their loan after funding period ends.
-    uint256 public investorFee;          // Portion of drawdown that goes to pool delegates/investors
-    uint256 public treasuryFee;          // Portion of drawdown that goes to treasury
-    uint256 public extendedGracePeriod;  // Extended time period provided to the borrowers to clear the dues and during this period pool delegate are free to liquidate the loan.
+    uint256 public gracePeriod;             // Represents the amount of time a borrower has to make a missed payment before a default can be triggered.
+    uint256 public swapOutRequired;         // Represents the swap out amount required from staked assets for a Pool's liquidity asset, for default purposes.
+    uint256 public unstakeDelay;            // Parameter for unstake delay, with relation to StakeLocker withdrawals.
+    uint256 public drawdownGracePeriod;     // Amount of time to allow borrower to drawdown on their loan after funding period ends.
+    uint256 public investorFee;             // Portion of drawdown that goes to pool delegates/investors
+    uint256 public treasuryFee;             // Portion of drawdown that goes to treasury
+    uint256 public extendedGracePeriod;     // Extended time period provided to the borrowers to clear the dues and during this period pool delegate are free to liquidate the loan.
+    uint256 public maxSwapSlippage;         // Maximum amount of slippage if the no. of tokens is less than the slippage percentage then tx should revert.
 
-
-    mapping(address => bool)    public isValidLoanAsset;        // Mapping of valid loan assets
-    mapping(address => bool)    public isValidCollateralAsset;  // Mapping of valid collateral assets
-    mapping(address => bool)    public validCalcs;              // Mapping of valid calculator contracts
-    mapping(address => bool)    public isValidPoolDelegate;     // Validation data structure for pool delegates (prevent invalid addresses from creating pools).
+    mapping(address => bool) public isValidLoanAsset;        // Mapping of valid loan assets
+    mapping(address => bool) public isValidCollateralAsset;  // Mapping of valid collateral assets
+    mapping(address => bool) public validCalcs;              // Mapping of valid calculator contracts
+    mapping(address => bool) public isValidPoolDelegate;     // Validation data structure for pool delegates (prevent invalid addresses from creating pools).
     
     // Determines the liquidation path of various assets in Loans and Treasury.
     // The value provided will determine whether or not to perform a bilateral or triangular swap on Uniswap.
@@ -73,16 +73,26 @@ contract MapleGlobals {
         @param  _bFactory The official Balancer pool factory.
     */
     constructor(address _governor, address _mpl, address _bFactory) public {
-        governor            = _governor;
-        mpl                 = _mpl;
-        gracePeriod         = 5 days;
-        extendedGracePeriod = 5 days; // TODO how much?
-        swapOutRequired     = 100;
-        unstakeDelay        = 90 days;
-        drawdownGracePeriod = 1 days;
-        investorFee         = 50;
-        treasuryFee         = 50;
-        BFactory            = _bFactory;
+        governor             = _governor;
+        mpl                  = _mpl;
+        gracePeriod          = 5 days;
+        extendedGracePeriod  = 5 days; // TODO how much?
+        swapOutRequired      = 100;
+        unstakeDelay         = 90 days;
+        drawdownGracePeriod  = 1 days;
+        investorFee          = 50;
+        treasuryFee          = 50;
+        BFactory             = _bFactory;
+        maxSwapSlippage      = 1000; // 10 %
+    }
+
+    /**
+        @dev    Update the allowed uniswap slippage percentage.
+                Always a multiplication of 100. 0.12% => 12 while 12% is 1200.
+        @param  newSlippage New slippage percentage.
+     */
+    function setMaxSwapSlippage(uint256 newSlippage) external isGovernor {
+        maxSwapSlippage = newSlippage;
     }
 
     /**

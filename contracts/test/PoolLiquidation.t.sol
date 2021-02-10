@@ -122,6 +122,8 @@ contract PoolLiquidationTest is TestUtil {
         gov.setDefaultUniswapPath(WETH, USDC, USDC);
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
 
+        gov.setMaxSwapSlippage(2000);  // Set to 20% for the sake of the BPT shortfall test, TODO: address this when using launch params
+
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);
 

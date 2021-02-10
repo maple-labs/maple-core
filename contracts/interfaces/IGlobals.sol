@@ -53,4 +53,6 @@ interface IGlobals {
     function defaultUniswapPath(address, address) external view returns (address);
 
     function extendedGracePeriod() external view returns (uint256);
+    
+    function maxSwapSlippage() external view returns (uint256);
 }

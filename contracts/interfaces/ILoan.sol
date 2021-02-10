@@ -43,6 +43,7 @@ interface ILoan is IERC20 {
     // Liquidations
     function defaultSuffered() external view returns (uint256);
     function amountRecovered() external view returns (uint256);
+    function getExpectedAmountRecovered() external view returns(uint256);
 
     // Functions
     function fundLoan(uint256, address) external;

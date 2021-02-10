@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
+import "./library/Util.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/IMapleToken.sol";
+import "./interfaces/IERC20Details.sol";
 import "./interfaces/IUniswapRouter.sol";
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
@@ -120,37 +122,32 @@ contract MapleTreasury {
     }
 
     /**
-    TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
-            and also to prevent front-running of transactions.
-            The price feed should be used for USDC conversion, supplied in the ...
-            2nd parameter of the swapExactTokensForTokens() function.
-    */
-
-    /**
         @dev Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
         @param asset The ERC-20 asset to convert.
     */
     function convertERC20(address asset) isGovernor public {
         require(asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
         
-        IERC20 _asset = IERC20(asset);
-        
-        _asset.approve(uniswapRouter, _asset.balanceOf(address(this)));
+        IGlobals _globals = IGlobals(globals);
 
+        uint assetBalance = IERC20(asset).balanceOf(address(this));
+        uint minAmount    = Util.calcMinAmount(_globals, asset, fundsToken, assetBalance);
+
+        IERC20(asset).approve(uniswapRouter, assetBalance);
+        
         // Generate path.
         address[] storage path;
-        path.push(address(asset));
-        address uniswapAssetForPath = IGlobals(globals).defaultUniswapPath(address(asset), address(fundsToken));
-        if (uniswapAssetForPath != address(asset)) { path.push(uniswapAssetForPath); }
-        path.push(address(asset));
+        path.push(asset);
+        address uniswapAssetForPath = _globals.defaultUniswapPath(asset, fundsToken);
+        if (uniswapAssetForPath != asset) { path.push(uniswapAssetForPath); }
+        path.push(asset);
 
-        // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
-            _asset.balanceOf(address(this)),
-            0, // The minimum amount of output tokens that must be received for the transaction not to revert.
+            assetBalance,
+            minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
             path,
             mpl, // Transfer tokens to MPL (MapleToken contract)
-            block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
+            block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
         );
 
         IMapleToken(mpl).updateFundsReceived();
@@ -164,10 +161,7 @@ contract MapleTreasury {
     }
 
     /**
-    TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
-            and also to prevent front-running of transactions.
-            The price feed should be used for USDC conversion, supplied in the ...
-            2nd parameter of the swapETHForExactTokens() function.
+    TODO: Do we still need this?
     */
 
     /**

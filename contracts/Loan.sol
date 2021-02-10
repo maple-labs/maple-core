@@ -12,6 +12,7 @@ import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IPremiumCalc.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/IUniswapRouter.sol";
+import "./library/Util.sol";
 
 import "./token/FDT.sol";
 
@@ -257,6 +258,14 @@ contract Loan is FDT {
     }
 
     /**
+        @dev Public getter to know how much minimum amount of loan asset will get by swapping collateral asset.
+     */
+    function getExpectedAmountRecovered() public view returns(uint256) {
+        uint256 liquidationAmt = _getCollateralLockerBalance();
+        return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(loanAsset), liquidationAmt);
+    }
+
+    /**
         @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
     */
     function _triggerDefault() internal {
@@ -270,6 +279,8 @@ contract Loan is FDT {
 
         IGlobals globals = _globals(superFactory);
 
+        uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), address(loanAsset), liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
+
         // Generate path.
         address[] storage path;
         path.push(address(collateralAsset));
@@ -279,13 +290,12 @@ contract Loan is FDT {
         }
         path.push(address(loanAsset));
 
-        // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
             collateralAsset.balanceOf(address(this)),
-            0, // The minimum amount of output tokens that must be received for the transaction not to revert.
+            minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10000)),
             path,
             address(this),
-            block.timestamp + 1000 // Unix timestamp after which the transaction will revert.
+            block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
         );
 
         amountLiquidated = returnAmounts[0];
