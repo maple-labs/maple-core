@@ -2,86 +2,58 @@ pragma solidity >=0.6.11;
 
 import "./TestUtil.sol";
 
+import "./user/Farmer.sol";
+import "./user/Governor.sol";
+import "./user/PoolDelegate.sol";
+
+import "../DebtLockerFactory.sol";
+import "../LiquidityLockerFactory.sol";
 import "../MapleToken.sol";
-import "../StakingRewards.sol";
-
-contract Farmer {
-
-    Pool           public pool;
-    StakingRewards public stakingRewards;
-    IERC20         public liquidityAsset;
-
-    constructor(Pool _pool, StakingRewards _stakingRewards, IERC20 _liquidityAsset) public {
-        pool           = _pool;
-        stakingRewards = _stakingRewards;
-        liquidityAsset = _liquidityAsset;
-    }
-
-    /************************/
-    /*** DIRECT FUNCTIONS ***/
-    /************************/
-
-    function approve(address who, uint256 amt) public {
-        liquidityAsset.approve(who, amt);
-    }
-
-    function stake(uint256 amt) public {
-        stakingRewards.stake(amt);
-    }
-
-    function withdraw(uint256 amt) public {
-        stakingRewards.withdraw(amt);
-    }
-
-    function getReward() public {
-        stakingRewards.getReward();
-    }
-
-    function exit() public {
-        stakingRewards.exit();
-    }
-
-    /*********************/
-    /*** TRY FUNCTIONS ***/
-    /*********************/
-
-    function try_stake(uint256 amt) external returns (bool ok) {
-        string memory sig = "stake(uint256)";
-        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function try_withdraw(uint256 amt) external returns (bool ok) {
-        string memory sig = "withdraw(uint256)";
-        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, amt));
-    }
-}
+import "../Pool.sol";
+import "../PoolFactory.sol";
+import "../StakeLockerFactory.sol";
 
 contract StakingRewardsTest is TestUtil {
-    address me;
 
-    StakingRewards stakingRewards;
-    MapleToken                mpl;
-    IERC20         liquidityAsset;  // TODO: Change this name to FDT-related
+    Farmer                            ali;
+    Farmer                            bob;
+    Farmer                            che;
+    Governor                          gov;
+    PoolDelegate                      sid;
 
-    Farmer ali;
-    Farmer bob;
-    Farmer che;
+    DebtLockerFactory           dlFactory;
+    LiquidityLockerFactory      llFactory;
+    MapleGlobals                  globals;
+    MapleToken                        mpl;
+    PoolFactory               poolFactory;
+    Pool                             pool;
+    StakeLockerFactory          slFactory;
+    
+    IBPool                          bPool;
 
-    uint256 constant REWARDS_TOLERANCE = uint256(1 ether) / 1 days;
+    StakingRewards         stakingRewards;
+
+    uint256 constant public MAX_UINT = uint(-1);
 
     function setUp() public {
 
-        mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
-        slFactory      = new StakeLockerFactory();                                      // Setup the SL factory to facilitate Pool factory functionality.
-        llFactory      = new LiquidityLockerFactory();                                  // Setup the SL factory to facilitate Pool factory functionality.
-        poolFactory    = new PoolFactory(address(globals));                             // Create pool factory.
-        dlFactory1     = new DebtLockerFactory();   
+        ali = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
+        bob = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
+        che = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
+        gov = new Governor();                    // Actor: Governor of Maple.
+        sid = new PoolDelegate();                // Actor: Manager of the Pool.
+
+        mpl         = new MapleToken("MapleToken", "MAPL", USDC);
+        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        slFactory   = new StakeLockerFactory();                        // Setup the SL factory to facilitate Pool factory functionality.
+        llFactory   = new LiquidityLockerFactory();                    // Setup the SL factory to facilitate Pool factory functionality.
+        poolFactory = new PoolFactory(address(globals));               // Create pool factory.
+        dlFactory   = new DebtLockerFactory();   
 
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(dlFactory1), true);
-        gov.setPoolDelegateWhitelist(address(sid), true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
+        gov.setPoolDelegateWhitelist(address(sid),                       true);
 
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);
@@ -90,17 +62,18 @@ contract StakingRewardsTest is TestUtil {
         bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
 
         IERC20(USDC).approve(address(bPool), MAX_UINT);
-        mpl.approve(address(bPool), MAX_UINT);
+        mpl.approve(address(bPool),          MAX_UINT);
 
-        bPool.bind(USDC, 50_000_000 * USD, 5 ether);       // Bind 50m USDC with 5 denormalization weight
-        bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
+        bPool.bind(USDC,         50_000_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(address(mpl),    100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
         bPool.finalize();
         bPool.transfer(address(sid), bPool.balanceOf(address(this)) / 2);
 
+        gov.setLoanAsset(USDC, true);
         gov.setSwapOutRequired(1_000_000);
 
         // Create Liquidity Pool
-        pool1 = Pool(sid.createPool(
+        pool = Pool(sid.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -111,37 +84,33 @@ contract StakingRewardsTest is TestUtil {
             MAX_UINT  // liquidityCap value
         ));
 
-        address stakeLocker = pool1.stakeLocker();
+        address stakeLocker = pool.stakeLocker();
         sid.approve(address(bPool), stakeLocker, uint(-1));
-        sid.stake(stakeLocker, IERC20(stakeLocker).balanceOf(address(sid))); // Add one more wei of BPT to get to minStake amount
-        sid.finalize(address(pool1));
+        sid.stake(stakeLocker, bPool.balanceOf(address(sid))); // Stake all BPTs against pool through stakeLocker
+        sid.finalize(address(pool));
 
+        // Create new staking rewards contract with MPL rewards and Pool FDTs as the stake token
+        stakingRewards = new StakingRewards(address(gov), address(mpl), address(pool));  
 
+        ali = new Farmer(stakingRewards, pool);
+        bob = new Farmer(stakingRewards, pool);
+        che = new Farmer(stakingRewards, pool);
 
+        mint("USDC", address(ali), 1000 * USD);
+        mint("USDC", address(bob), 1000 * USD);
+        mint("USDC", address(che), 1000 * USD);
 
+        ali.approve(USDC, address(pool), MAX_UINT);
+        bob.approve(USDC, address(pool), MAX_UINT);
+        che.approve(USDC, address(pool), MAX_UINT);
 
-
-
-
-        me = address(this);
-
-        mpl = new MapleToken("MapleToken", "MPL", USDC);  // TODO: Move all admin functionality to the governor
-
-        liquidityAsset = IERC20(DAI);  // TODO: Change this to Pool FDT (using DAI because of WAD precision)
-
-        stakingRewards = new StakingRewards(address(this), address(mpl), DAI);
-
-        ali = new Farmer(stakingRewards, liquidityAsset);
-        bob = new Farmer(stakingRewards, liquidityAsset);
-        che = new Farmer(stakingRewards, liquidityAsset);
-
-        mint("DAI", address(ali), 1000 ether);
-        mint("DAI", address(bob), 1000 ether);
-        mint("DAI", address(che), 1000 ether);
+        ali.deposit(address(pool), 1000 * USD);  // Mints 1000 ether of Pool FDT tokens
+        bob.deposit(address(pool), 1000 * USD);  // Mints 1000 ether of Pool FDT tokens
+        che.deposit(address(pool), 1000 * USD);  // Mints 1000 ether of Pool FDT tokens
     }
 
     function test_stake() public {
-        assertEq(liquidityAsset.balanceOf(address(ali)), 1000 ether);
+        assertEq(pool.balanceOf(address(ali)), 1000 ether);
         assertEq(stakingRewards.balanceOf(address(ali)),                 0);
         assertEq(stakingRewards.totalSupply(),                           0);
 
@@ -152,7 +121,7 @@ contract StakingRewardsTest is TestUtil {
         assertTrue(!ali.try_stake(0));          // Can't stake zero
         assertTrue( ali.try_stake(100 ether));  // Can stake after approval
 
-        assertEq(liquidityAsset.balanceOf(address(ali)), 900 ether);
+        assertEq(pool.balanceOf(address(ali)), 900 ether);
         assertEq(stakingRewards.balanceOf(address(ali)),        100 ether);
         assertEq(stakingRewards.totalSupply(),                  100 ether);
     }
@@ -161,14 +130,14 @@ contract StakingRewardsTest is TestUtil {
         ali.approve(address(stakingRewards), 100 ether);
         ali.stake(100 ether);
 
-        assertEq(liquidityAsset.balanceOf(address(ali)), 900 ether);
+        assertEq(pool.balanceOf(address(ali)), 900 ether);
         assertEq(stakingRewards.balanceOf(address(ali)),        100 ether);
         assertEq(stakingRewards.totalSupply(),                  100 ether);
 
         assertTrue(!ali.try_withdraw(0));          // Can't withdraw zero
         assertTrue( ali.try_withdraw(100 ether));  // Can withdraw 
 
-        assertEq(liquidityAsset.balanceOf(address(ali)), 1000 ether);
+        assertEq(pool.balanceOf(address(ali)), 1000 ether);
         assertEq(stakingRewards.balanceOf(address(ali)),                 0);
         assertEq(stakingRewards.totalSupply(),                           0);
     }
