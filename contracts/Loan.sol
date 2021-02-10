@@ -293,7 +293,7 @@ contract Loan is FDT {
         // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
             collateralAsset.balanceOf(address(this)),
-            minAmount.mul(90).div(100), // 10% slippage accepted. The minimum amount of output tokens that must be returned, otherwise tx reverts.
+            minAmount.mul(globals.allowedUniswapSlippage()).div(10000), // 10% slippage accepted. The minimum amount of output tokens that must be returned, otherwise tx reverts.
             path,
             address(this),
             block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.

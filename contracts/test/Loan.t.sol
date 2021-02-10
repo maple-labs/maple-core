@@ -483,4 +483,17 @@ contract LoanTest is TestUtil {
         assertTrue(com.try_trigger_default(address(loan)), "Should not fail to default the loan");
         assertEq(loan.loanState(), 4,                      "Loan State should change to `Liquidated`");
     }
+
+    function test_calc_min_amount() external {
+        Loan loan = createAndFundLoan(address(bulletCalc));
+
+        uint256 reqCollateral = loan.collateralRequiredForDrawdown(5000 * USD);
+        ali.approve(WETH, address(loan), reqCollateral);
+
+        assertTrue(ali.try_drawdown(address(loan), 5000 * USD));  // Draw down the loan.
+
+        uint256 expectedAmount = (reqCollateral * globals.getLatestPrice(address(loan.collateralAsset()))) / globals.getLatestPrice(address(loan.loanAsset()));
+
+        assertEq((expectedAmount * USD) / WAD, loan.getAmountOfLoanAssetSwappedWithCollateral());
+    }
 }
