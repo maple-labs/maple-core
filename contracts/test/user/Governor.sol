@@ -152,7 +152,7 @@ contract Governor {
     }
 
     function try_setMaxSwapSlippage(uint256 newSlippage) external returns (bool ok) { 
-        string memory sig = "setMaxSwapSlippage()";
-        (ok,) = address(globals).call(abi.encodeWithSignature(sig)); 
+        string memory sig = "setMaxSwapSlippage(uint256)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, newSlippage)); 
     }
 }
