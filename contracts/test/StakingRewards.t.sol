@@ -19,6 +19,7 @@ contract StakingRewardsTest is TestUtil {
     Farmer                            bob;
     Farmer                            che;
     Governor                          gov;
+    Governor                      fakeGov;
     PoolDelegate                      sid;
 
     DebtLockerFactory           dlFactory;
@@ -37,11 +38,12 @@ contract StakingRewardsTest is TestUtil {
 
     function setUp() public {
 
-        ali = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
-        bob = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
-        che = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
-        gov = new Governor();                    // Actor: Governor of Maple.
-        sid = new PoolDelegate();                // Actor: Manager of the Pool.
+        ali     = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
+        bob     = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
+        che     = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
+        gov     = new Governor();                    // Actor: Governor of Maple.
+        fakeGov = new Governor();                    // Actor: Governor of Maple.
+        sid     = new PoolDelegate();                // Actor: Manager of the Pool.
 
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -90,7 +92,9 @@ contract StakingRewardsTest is TestUtil {
         sid.finalize(address(pool));
 
         // Create new staking rewards contract with MPL rewards and Pool FDTs as the stake token
-        stakingRewards = new StakingRewards(address(gov), address(mpl), address(pool));  
+        stakingRewards = gov.createStakingRewards(address(mpl), address(pool)); 
+
+        fakeGov.setGovStakingRewards(stakingRewards); // Used to assert failures 
 
         ali = new Farmer(stakingRewards, pool);
         bob = new Farmer(stakingRewards, pool);
@@ -109,6 +113,132 @@ contract StakingRewardsTest is TestUtil {
         che.deposit(address(pool), 1000 * USD);  // Mints 1000 ether of Pool FDT tokens
     }
 
+    /*******************************/
+    /*** Admin functions testing ***/
+    /*******************************/
+    function test_notifyRewardAmount() public {
+        assertEq(stakingRewards.periodFinish(),              0);
+        assertEq(stakingRewards.rewardRate(),                0);
+        assertEq(stakingRewards.rewardsDuration(),      7 days);  // Pre set value
+        assertEq(stakingRewards.lastUpdateTime(),            0);  
+        assertEq(stakingRewards.rewardPerTokenStored(),      0); 
+
+        mpl.transfer(address(stakingRewards), 60_000 ether); // 60k MPL per week => 3.12m MPL per year
+
+        assertTrue(!fakeGov.try_notifyRewardAmount(60_000 ether));
+        assertTrue(     gov.try_notifyRewardAmount(60_000 ether));
+
+        assertEq(stakingRewards.rewardRate(),     uint256(60_000 ether) / 7 days);
+        assertEq(stakingRewards.lastUpdateTime(),                block.timestamp);
+        assertEq(stakingRewards.periodFinish(),         block.timestamp + 7 days);
+    }
+
+    function test_updatePeriodFinish() public {
+        assertEq(stakingRewards.periodFinish(), 0);
+
+        assertTrue(!fakeGov.try_updatePeriodFinish(block.timestamp + 30 days));
+        assertTrue(     gov.try_updatePeriodFinish(block.timestamp + 30 days));
+
+        assertEq(stakingRewards.periodFinish(), block.timestamp + 30 days);
+    }
+
+    function test_recoverERC20() public {
+        mint("USDC", address(ali), 1000 * USD);
+
+        assertEq(IERC20(USDC).balanceOf(address(ali)),            1000 * USD);
+        assertEq(IERC20(USDC).balanceOf(address(gov)),                     0);
+        assertEq(IERC20(USDC).balanceOf(address(stakingRewards)),          0);
+        assertEq(stakingRewards.balanceOf(address(ali)),                   0);
+        assertEq(stakingRewards.totalSupply(),                             0);
+        
+        ali.transfer(USDC, address(stakingRewards), 1000 * USD); // Ali transfers USDC directly into Staking rewards
+        
+        assertEq(IERC20(USDC).balanceOf(address(ali)),                     0);
+        assertEq(IERC20(USDC).balanceOf(address(gov)),                     0);
+        assertEq(IERC20(USDC).balanceOf(address(stakingRewards)), 1000 * USD);
+        assertEq(stakingRewards.balanceOf(address(ali)),                   0);
+        assertEq(stakingRewards.totalSupply(),                             0);
+
+        assertTrue(!fakeGov.try_recoverERC20(USDC, 400 * USD));
+        assertTrue(     gov.try_recoverERC20(USDC, 400 * USD));
+
+        assertEq(IERC20(USDC).balanceOf(address(ali)),                     0);
+        assertEq(IERC20(USDC).balanceOf(address(gov)),             400 * USD);
+        assertEq(IERC20(USDC).balanceOf(address(stakingRewards)),  600 * USD);
+        assertEq(stakingRewards.balanceOf(address(ali)),                   0);
+        assertEq(stakingRewards.totalSupply(),                             0);
+
+        assertTrue(!fakeGov.try_recoverERC20(USDC, 600 * USD));
+        assertTrue(     gov.try_recoverERC20(USDC, 600 * USD));
+
+        assertEq(IERC20(USDC).balanceOf(address(ali)),                     0);
+        assertEq(IERC20(USDC).balanceOf(address(gov)),            1000 * USD);
+        assertEq(IERC20(USDC).balanceOf(address(stakingRewards)),          0);
+        assertEq(stakingRewards.balanceOf(address(ali)),                   0);
+        assertEq(stakingRewards.totalSupply(),                             0);
+    }
+
+    function test_setRewardsDuration() public {
+        assertEq(stakingRewards.periodFinish(),         0);
+        assertEq(stakingRewards.rewardsDuration(), 7 days);
+
+        mpl.transfer(address(stakingRewards), 60_000 ether); // 60k MPL per week => 3.12m MPL per year
+
+        gov.notifyRewardAmount(60_000 ether);
+
+        assertEq(stakingRewards.periodFinish(),    block.timestamp + 7 days);
+        assertEq(stakingRewards.rewardsDuration(),                   7 days);
+
+        assertTrue(!fakeGov.try_setRewardsDuration(30 days));
+        assertTrue(    !gov.try_setRewardsDuration(30 days)); // Won't work because current rewards period hasn't ended
+
+        hevm.warp(stakingRewards.periodFinish());
+
+        assertTrue(!gov.try_setRewardsDuration(30 days)); // Won't work because current rewards period hasn't ended
+
+        hevm.warp(stakingRewards.periodFinish() + 1);
+
+        assertTrue(gov.try_setRewardsDuration(30 days)); // Works because current rewards period has ended
+
+        assertEq(stakingRewards.rewardsDuration(), 30 days);
+    }
+
+    function test_setPaused() public {
+        assertTrue(!stakingRewards.paused());
+
+        // Ali can stake
+        ali.approve(address(stakingRewards), 100 ether);
+        assertTrue(ali.try_stake(100 ether));             
+
+        // Set to paused
+        assertTrue(!fakeGov.try_setPaused(true));
+        assertTrue(     gov.try_setPaused(true));
+
+        assertTrue(stakingRewards.paused());
+
+        // Bob can't stake
+        bob.approve(address(stakingRewards), 100 ether);
+        assertTrue(!bob.try_stake(100 ether));
+
+        // Ali can withdraw
+        ali.approve(address(stakingRewards), 100 ether);
+        assertTrue(ali.try_withdraw(100 ether));
+
+        // Set to unpaused
+        assertTrue(!fakeGov.try_setPaused(false));
+        assertTrue(     gov.try_setPaused(false));
+
+        assertTrue(!stakingRewards.paused());
+
+        // Bob can stake
+        bob.approve(address(stakingRewards), 100 ether);
+        assertTrue(bob.try_stake(100 ether));
+
+    }
+
+    /****************************/
+    /*** LP functions testing ***/
+    /****************************/
     function test_stake() public {
         assertEq(pool.balanceOf(address(ali)), 1000 ether);
         assertEq(stakingRewards.balanceOf(address(ali)),                 0);
@@ -142,22 +272,6 @@ contract StakingRewardsTest is TestUtil {
         assertEq(stakingRewards.totalSupply(),                           0);
     }
 
-    function test_notify_reward_amount() public {
-        assertEq(stakingRewards.periodFinish(),              0);
-        assertEq(stakingRewards.rewardRate(),                0);
-        assertEq(stakingRewards.rewardsDuration(),      7 days);  // Pre set value
-        assertEq(stakingRewards.lastUpdateTime(),            0);  
-        assertEq(stakingRewards.rewardPerTokenStored(),      0); 
-
-        mpl.transfer(address(stakingRewards), 60_000 ether); // 60k MPL per week => 3.12m MPL per year
-
-        stakingRewards.notifyRewardAmount(60_000 ether);
-
-        assertEq(stakingRewards.rewardRate(),     uint256(60_000 ether) / 7 days);
-        assertEq(stakingRewards.lastUpdateTime(),                block.timestamp);
-        assertEq(stakingRewards.periodFinish(),         block.timestamp + 7 days);
-    }
-
     function assertRewardsAccounting(
         address user,
         uint256 totalSupply,
@@ -177,6 +291,9 @@ contract StakingRewardsTest is TestUtil {
         assertEq(mpl.balanceOf(user),                         rewardTokenBal);
     }
 
+    /**********************************/
+    /*** Rewards accounting testing ***/
+    /**********************************/
     function test_rewards_single_epoch() public {
         ali.approve(address(stakingRewards), 100 ether);
         bob.approve(address(stakingRewards), 100 ether);
@@ -184,7 +301,7 @@ contract StakingRewardsTest is TestUtil {
 
         mpl.transfer(address(stakingRewards), 60_000 ether);  // 60k MPL per week => 3.12m MPL per year
 
-        stakingRewards.notifyRewardAmount(60_000 ether);
+        gov.notifyRewardAmount(60_000 ether);
 
         uint256 rewardRate = stakingRewards.rewardRate();
         uint256 start      = block.timestamp;

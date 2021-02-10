@@ -1,3 +1,5 @@
+pragma solidity >=0.6.11;
+
 import "./LP.sol";
 
 import "../../StakingRewards.sol";
@@ -18,6 +20,10 @@ contract Farmer is LP {
 
     function approve(address who, uint256 amt) public {
         poolFDT.approve(who, amt);
+    }
+
+    function transfer(address asset, address to, uint256 amt) public {
+        IERC20(asset).transfer(to, amt);
     }
 
     function stake(uint256 amt) public {
