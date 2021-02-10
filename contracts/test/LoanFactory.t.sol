@@ -16,7 +16,7 @@ import "../PremiumCalc.sol";
 
 import "../interfaces/ILoan.sol";
 
-import "../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 contract InterestCalc {
     uint8 public constant calcType = 10;
