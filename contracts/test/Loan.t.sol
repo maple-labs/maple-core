@@ -494,6 +494,6 @@ contract LoanTest is TestUtil {
 
         uint256 expectedAmount = (reqCollateral * globals.getLatestPrice(address(loan.collateralAsset()))) / globals.getLatestPrice(address(loan.loanAsset()));
 
-        assertEq((expectedAmount * USD) / WAD, loan.getAmountOfLoanAssetSwappedWithCollateral());
+        assertEq((expectedAmount * USD) / WAD, loan.getExpectedAmountRecovered());
     }
 }

@@ -54,5 +54,5 @@ interface IGlobals {
 
     function extendedGracePeriod() external view returns (uint256);
     
-    function allowedUniswapSlippage() external view returns (uint256);
+    function maxSwapSlippage() external view returns (uint256);
 }

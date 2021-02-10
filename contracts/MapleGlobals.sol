@@ -34,7 +34,7 @@ contract MapleGlobals {
     uint256 public investorFee;             // Portion of drawdown that goes to pool delegates/investors
     uint256 public treasuryFee;             // Portion of drawdown that goes to treasury
     uint256 public extendedGracePeriod;     // Extended time period provided to the borrowers to clear the dues and during this period pool delegate are free to liquidate the loan.
-    uint256 public allowedUniswapSlippage;  // Maximum amount of slippage if the no. of tokens is less than the slippage percentage then tx should revert.
+    uint256 public maxSwapSlippage;  // Maximum amount of slippage if the no. of tokens is less than the slippage percentage then tx should revert.
 
 
     mapping(address => bool) public isValidLoanAsset;        // Mapping of valid loan assets
@@ -84,7 +84,7 @@ contract MapleGlobals {
         investorFee            = 50;
         treasuryFee            = 50;
         BFactory               = _bFactory;
-        allowedUniswapSlippage = 1000; // 10 %
+        maxSwapSlippage = 1000; // 10 %
     }
 
     /**
@@ -92,8 +92,8 @@ contract MapleGlobals {
                 Always a multiplication of 100. 0.12% => 12 while 12 % is 1200.
         @param  newSlippage New slippage percentage.
      */
-    function setAllowedUniswapSlippage(uint256 newSlippage) external isGovernor {
-        allowedUniswapSlippage = newSlippage;
+    function setMaxSwapSlippage(uint256 newSlippage) external isGovernor {
+        maxSwapSlippage = newSlippage;
     }
 
     /**

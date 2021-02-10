@@ -155,7 +155,7 @@ contract MapleTreasury {
         // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
             assetBalance,
-            minAmount.mul(_globals.allowedUniswapSlippage()).div(10000), // 10% slippage accepted. The minimum amount of output tokens that must be returned, otherwise tx reverts.
+            minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
             path,
             mpl, // Transfer tokens to MPL (MapleToken contract)
             block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.

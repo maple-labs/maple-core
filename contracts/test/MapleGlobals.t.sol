@@ -112,7 +112,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.investorFee(),                50);
         assertEq(globals.treasuryFee(),                50);
         assertEq(globals.BFactory(),        BPOOL_FACTORY);
-        assertEq(globals.allowedUniswapSlippage(),  10000);
+        assertEq(globals.maxSwapSlippage(),  10000);
     }
 
     function test_setup() public {
@@ -286,8 +286,8 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(fakeGov.try_setGovernor(address(gov)));  // Assert new governor has permissions
         assertEq(globals.governor(), address(gov));
 
-        assertTrue(!fakeGov.try_setAllowedUniswapSlippage(12));  // 0.12 %
-        assertTrue(gov.try_setAllowedUniswapSlippage(12));
-        assertEq(globals.allowedUniswapSlippage(), 12);
+        assertTrue(!fakeGov.try_setMaxSwapSlippage(12));  // 0.12 %
+        assertTrue(gov.try_setMaxSwapSlippage(12));
+        assertEq(globals.maxSwapSlippage(), 12);
     }
 }

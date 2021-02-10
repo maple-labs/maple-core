@@ -40,7 +40,7 @@ contract Governor {
     function setUnstakeDelay(uint256 delay)                           external { globals.setUnstakeDelay(delay); }
     function setGovernor(address gov)                                 external { globals.setGovernor(gov); }
     function setPriceOracle(address asset, address oracle)            external { globals.setPriceOracle(asset, oracle); }
-    function setAllowedUniswapSlippage(uint256 newSlippage)           external { globals.setAllowedUniswapSlippage(newSlippage); }
+    function setMaxSwapSlippage(uint256 newSlippage)           external { globals.setMaxSwapSlippage(newSlippage); }
 
     function setDefaultUniswapPath(address from, address to, address mid) external { 
         globals.setDefaultUniswapPath(from, to, mid); 
@@ -151,8 +151,8 @@ contract Governor {
         (ok,) = address(trs).call(abi.encodeWithSignature(sig)); 
     }
 
-    function try_setAllowedUniswapSlippage(uint256 newSlippage) external returns (bool ok) { 
-        string memory sig = "setAllowedUniswapSlippage()";
+    function try_setMaxSwapSlippage(uint256 newSlippage) external returns (bool ok) { 
+        string memory sig = "setMaxSwapSlippage()";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig)); 
     }
 }

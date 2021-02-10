@@ -260,7 +260,7 @@ contract Loan is FDT {
     /**
         @dev Public getter to know how much minimum aount of loan asset will get by swapping collateral asset.
      */
-    function getAmountOfLoanAssetSwappedWithCollateral() public view returns(uint256) {
+    function getExpectedAmountRecovered() public view returns(uint256) {
         uint256 liquidationAmt = _getCollateralLockerBalance();
         return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(loanAsset), liquidationAmt);
     }
@@ -277,7 +277,7 @@ contract Loan is FDT {
         // Swap collateralAsset for loanAsset.
         collateralAsset.approve(UNISWAP_ROUTER, liquidationAmt);
 
-        IGlobals globals  = _globals(superFactory);
+        IGlobals globals = _globals(superFactory);
 
         uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), address(loanAsset), liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
 
@@ -293,7 +293,7 @@ contract Loan is FDT {
         // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
             collateralAsset.balanceOf(address(this)),
-            minAmount.mul(globals.allowedUniswapSlippage()).div(10000), // 10% slippage accepted. The minimum amount of output tokens that must be returned, otherwise tx reverts.
+            minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10000)),
             path,
             address(this),
             block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
