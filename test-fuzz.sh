@@ -10,4 +10,4 @@ export DAPP_SRC="contracts"
 export SOLC_FLAGS="--optimize --optimize-runs 200"
 export DAPP_LINK_TEST_LIBRARIES=1
 
-LANG=C.UTF-8 dapp test --match "contracts/fuzz" --rpc-url "$ETH_RPC_URL" --verbose --fuzz-runs 1
+LANG=C.UTF-8 dapp test --match "contracts/fuzz" --rpc-url "$ETH_RPC_URL" --verbose --fuzz-runs 5
