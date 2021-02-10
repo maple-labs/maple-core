@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "./interfaces/IERC20Details.sol";
+import "./library/Util.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/IMapleToken.sol";
+import "./interfaces/IERC20Details.sol";
 import "./interfaces/IUniswapRouter.sol";
 
 import "../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
@@ -128,17 +129,6 @@ contract MapleTreasury {
     */
 
     /**
-        @dev Helper function for calculating min amount from a swap (adjustable for price slippage).
-    */
-    function _calcMinAmount(uint256 assetPrice, uint256 swapOutPrice, uint256 swapAmt, address asset) internal view returns(uint256) {
-        // Calculate amount out expected (abstract precision).
-        uint abstractMinOut = swapAmt.mul(assetPrice).div(swapOutPrice);
-
-        // Convert to proper precision, return value.
-        return abstractMinOut.mul(10 ** IERC20Details(fundsToken).decimals()).div(10 ** IERC20Details(asset).decimals());
-    }
-
-    /**
         @dev Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
         @param asset The ERC-20 asset to convert.
     */
@@ -151,11 +141,9 @@ contract MapleTreasury {
         IERC20         _asset      = IERC20(asset);
 
         uint assetBalance = _asset.balanceOf(address(this));
-        uint assetPrice   = _globals.getLatestPrice(asset);
-        uint swapOutPrice = _globals.getLatestPrice(fundsToken);
-        uint minAmount    = _calcMinAmount(assetPrice, swapOutPrice, assetBalance, asset);
+        uint minAmount    = Util.calcMinAmount(_globals, asset, fundsToken, assetBalance);
 
-        _asset.approve(uniswapRouter, _asset.balanceOf(address(this)));
+        _asset.approve(uniswapRouter, assetBalance);
         
         // Generate path.
         address[] storage path;

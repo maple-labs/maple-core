@@ -12,6 +12,7 @@ import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IPremiumCalc.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/IUniswapRouter.sol";
+import "./library/Util.sol";
 
 import "./token/FDT.sol";
 
@@ -257,16 +258,11 @@ contract Loan is FDT {
     }
 
     /**
-        @dev Helper function for calculating min amount from a swap (adjustable for price slippage).
-    */
-    function _calcMinAmount(uint256 collateralPrice, uint256 loanAssetPrice, uint256 liquidationAmt) internal view returns(uint256) {
-        
-        // Calculate amount out expected (abstract precision).
-        // TODO: Chances of trimming of values (Need some test to validate the math).
-        uint abstractMinOut = liquidationAmt.mul(collateralPrice).div(loanAssetPrice);
-
-        // Convert to proper precision, return value.
-        return abstractMinOut.mul(10 ** loanAsset.decimals()).div(10 ** collateralAsset.decimals());
+        @dev Public getter to know how much minimum aount of loan asset will get by swapping collateral asset.
+     */
+    function getAmountOfLoanAssetSwappedWithCollateral() public view returns(uint256) {
+        uint256 liquidationAmt = _getCollateralLockerBalance();
+        return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(loanAsset), liquidationAmt);
     }
 
     /**
@@ -281,11 +277,9 @@ contract Loan is FDT {
         // Swap collateralAsset for loanAsset.
         collateralAsset.approve(UNISWAP_ROUTER, liquidationAmt);
 
-        IGlobals globals = _globals(superFactory);
+        IGlobals globals  = _globals(superFactory);
 
-        uint collateralPrice = globals.getLatestPrice(address(collateralAsset));                 // Collateral asset per USD.
-        uint loanAssetPrice  = globals.getLatestPrice(address(loanAsset));                       // Loan asset per USD.
-        uint minAmount       = _calcMinAmount(collateralPrice, loanAssetPrice, liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
+        uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), address(loanAsset), liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
 
         // Generate path.
         address[] storage path;
