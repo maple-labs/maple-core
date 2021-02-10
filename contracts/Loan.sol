@@ -290,7 +290,6 @@ contract Loan is FDT {
         }
         path.push(address(loanAsset));
 
-        // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
             collateralAsset.balanceOf(address(this)),
             minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10000)),

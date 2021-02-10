@@ -15,13 +15,6 @@ interface User {
     function approve(address, uint256) external;
 }
 
-// TODO: Create master contracts for the following "users":
-//  (1) PoolDelegate
-//  (2) Borrower
-//  (3) Liquidity Provider
-//  (4) Individual Lender
-//  (5) Staker
-
 contract TestUtil is DSTest {
     Hevm hevm;
 

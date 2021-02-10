@@ -122,20 +122,13 @@ contract MapleTreasury {
     }
 
     /**
-    TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
-            and also to prevent front-running of transactions.
-            The price feed should be used for USDC conversion, supplied in the ...
-            2nd parameter of the swapExactTokensForTokens() function.
-    */
-
-    /**
         @dev Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
         @param asset The ERC-20 asset to convert.
     */
     function convertERC20(address asset) isGovernor public {
         require(asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
         
-        IGlobals       _globals    = IGlobals(globals);
+        IGlobals _globals = IGlobals(globals);
 
         uint assetBalance = IERC20(asset).balanceOf(address(this));
         uint minAmount    = Util.calcMinAmount(_globals, asset, fundsToken, assetBalance);
@@ -149,7 +142,6 @@ contract MapleTreasury {
         if (uniswapAssetForPath != asset) { path.push(uniswapAssetForPath); }
         path.push(asset);
 
-        // TODO: Consider oracles for 2nd parameter below.
         uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
             assetBalance,
             minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
@@ -169,10 +161,7 @@ contract MapleTreasury {
     }
 
     /**
-    TODO:  Implement price oracle to ensure best quality execution (1% slippage) ...
-            and also to prevent front-running of transactions.
-            The price feed should be used for USDC conversion, supplied in the ...
-            2nd parameter of the swapETHForExactTokens() function.
+    TODO: Do we still need this?
     */
 
     /**

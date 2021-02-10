@@ -421,7 +421,6 @@ contract Pool is PoolFDT {
         @param  who Address of user claiming
         @return penalty Total penalty
     */
-    // TODO: Handle case where penaltyDelay == 0
     function calcWithdrawPenalty(uint256 amt, address who) public view returns (uint256 penalty) {
         if (lockupPeriod < penaltyDelay) {
             uint256 dTime    = block.timestamp.sub(depositDate[who]);
