@@ -8,7 +8,7 @@ import "../../interfaces/IStakeLocker.sol";
 import "../../interfaces/ILoan.sol";
 import "../../interfaces/ILoanFactory.sol";
 
-import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract Borrower {
 

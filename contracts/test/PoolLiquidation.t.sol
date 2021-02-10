@@ -36,7 +36,7 @@ import "../StakeLockerFactory.sol";
 import "../mocks/value.sol";
 import "../mocks/token.sol";
 
-import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract Treasury { }
 
