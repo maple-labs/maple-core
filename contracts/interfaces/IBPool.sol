@@ -7,6 +7,8 @@ interface IBPool {
 
     function INIT_POOL_SUPPLY() external view returns (uint256);
 
+    function MAX_OUT_RATIO() external view returns (uint256);
+
     function bind(address, uint256, uint256) external;
 
     function balanceOf(address) external view returns (uint256);

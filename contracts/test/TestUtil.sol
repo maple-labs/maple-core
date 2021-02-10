@@ -94,7 +94,7 @@ contract TestUtil is DSTest {
     }
 
     // Verify equality within difference
-    function withinDff(uint256 val0, uint256 val1, uint256 expectedDiff) public {
+    function withinDiff(uint256 val0, uint256 val1, uint256 expectedDiff) public {
         uint actualDiff = val0 > val1 ? val0 - val1 : val1 - val0;
         bool check = actualDiff <= expectedDiff;   
 
