@@ -6,45 +6,39 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
-// Inheritance
-// import "./interfaces/IStakingRewards.sol";
-// import "./RewardsDistributionRecipient.sol";
-// import "./Pausable.sol";
-
-
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
-contract StakingRewards is /* IStakingRewards, RewardsDistributionRecipient, */ ReentrancyGuard /*, Pausable */ {
+contract StakingRewards is ReentrancyGuard /*, Pausable */ {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
 
     address public owner;
-    IERC20  public rewardsToken;
-    IERC20  public stakingToken;
-    uint256 public periodFinish = 0;
-    uint256 public rewardRate = 0;
+
+    IERC20  public immutable rewardsToken;
+    IERC20  public immutable stakingToken;
+
+    uint256 public periodFinish    = 0;
+    uint256 public rewardRate      = 0;
     uint256 public rewardsDuration = 7 days;
+
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
+    uint256 public lastPauseTime;
+    bool    public paused;
 
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
 
-    uint256 private _totalSupply;
+    uint256                     private _totalSupply;
     mapping(address => uint256) private _balances;
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
-        address _owner,
-        // address _rewardsDistribution,
-        address _rewardsToken,
-        address _stakingToken
-    ) public /* Owned(_owner) */ {
+    constructor(address _owner, address _rewardsToken, address _stakingToken) public {
+        owner        = _owner;
         rewardsToken = IERC20(_rewardsToken);
         stakingToken = IERC20(_stakingToken);
-        // rewardsDistribution = _rewardsDistribution;
     }
 
     /* ========== VIEWS ========== */
@@ -112,8 +106,7 @@ contract StakingRewards is /* IStakingRewards, RewardsDistributionRecipient, */ 
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
-    // TODO: Change to governor restricted
-    function notifyRewardAmount(uint256 reward) external /* onlyRewardsDistribution */ updateReward(address(0)) {
+    function notifyRewardAmount(uint256 reward) external onlyOwner updateReward(address(0)) {
         if (block.timestamp >= periodFinish) {
             rewardRate = reward.div(rewardsDuration);
         } else {
@@ -135,24 +128,42 @@ contract StakingRewards is /* IStakingRewards, RewardsDistributionRecipient, */ 
     }
 
     // End rewards emission earlier
-    function updatePeriodFinish(uint timestamp) external /* onlyOwner */ updateReward(address(0)) {
+    function updatePeriodFinish(uint timestamp) external onlyOwner updateReward(address(0)) {
         periodFinish = timestamp;
     }
 
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
-    function recoverERC20(address tokenAddress, uint256 tokenAmount) external /* onlyOwner */ {
+    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
         require(tokenAddress != address(stakingToken), "Cannot withdraw the staking token");
         IERC20(tokenAddress).safeTransfer(owner, tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 
-    function setRewardsDuration(uint256 _rewardsDuration) external /* onlyOwner */ {
+    function setRewardsDuration(uint256 _rewardsDuration) external onlyOwner {
         require(
             block.timestamp > periodFinish,
             "Previous rewards period must be complete before changing the duration for the new period"
         );
         rewardsDuration = _rewardsDuration;
         emit RewardsDurationUpdated(rewardsDuration);
+    }
+
+    /**
+     * @notice Change the paused state of the contract
+     * @dev Only the contract owner may call this.
+     */
+    function setPaused(bool _paused) external onlyOwner {
+        // Ensure we're actually changing the state before we do anything
+        if (_paused == paused) return;
+
+        // Set our paused state.
+        paused = _paused;
+
+        // If applicable, set the last pause time.
+        if (paused) lastPauseTime = block.timestamp;
+
+        // Let everyone know that our pause state has changed.
+        emit PauseChanged(paused);
     }
 
     /* ========== MODIFIERS ========== */
@@ -167,6 +178,16 @@ contract StakingRewards is /* IStakingRewards, RewardsDistributionRecipient, */ 
         _;
     }
 
+    modifier onlyOwner() {
+        require(msg.sender == owner, "MSG_SENDER_NOT_OWNER");
+        _;
+    }
+
+    modifier notPaused {
+        require(!paused, "This action cannot be performed while the contract is paused");
+        _;
+    }
+
     /* ========== EVENTS ========== */
 
     event RewardAdded(uint256 reward);
@@ -175,4 +196,5 @@ contract StakingRewards is /* IStakingRewards, RewardsDistributionRecipient, */ 
     event RewardPaid(address indexed user, uint256 reward);
     event RewardsDurationUpdated(uint256 newDuration);
     event Recovered(address token, uint256 amount);
+    event PauseChanged(bool isPaused);
 }
