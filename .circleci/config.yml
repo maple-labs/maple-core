@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Build contracts
           command: |
-            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git submodule update --init --recursive cache/dapp-cache
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" dapp update && git submodule update --init --recursive cache/dapp-cache
             export DAPP_LINK_TEST_LIBRARIES=1
             DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 200" dapp --use solc:0.6.11 build
       - persist_to_workspace:
