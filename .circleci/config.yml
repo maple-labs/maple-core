@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Build contracts
           command: |
-            dapp update
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" dapp update
             export DAPP_LINK_TEST_LIBRARIES=1
             DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 200" dapp --use solc:0.6.11 build
       - persist_to_workspace:
@@ -38,7 +38,6 @@ jobs:
   dapp_test:
     docker:
       - image: bakii0499/dapptools:0.1.0
-    parallelism: 16
     steps:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
@@ -49,10 +48,8 @@ jobs:
           name: Run unit tests
           command: |
             cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
-            TEST=$(circleci tests glob contracts/test/*.sol | circleci tests split --split-by=name)
-            ./test-ci.sh $TEST
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git submodule update --init cache/dapp-cache
+            ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY ./test-ci.sh
           no_output_timeout: 60m
   
   dependencies:
