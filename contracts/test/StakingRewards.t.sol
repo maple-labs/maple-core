@@ -481,13 +481,13 @@ contract StakingRewardsTest is TestUtil {
 
         /*** Ali time = (3 days + 1 hours) pre-exit ***/
         assertRewardsAccounting({
-            user:                     address(ali),                             // User accounting for
-            totalSupply:              35 ether,                                 // Ali + Bob stake 
-            rewardPerTokenStored:     dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,  // Not updated yet
-            userRewardPerTokenPaid:   dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,  // Used so Ali can't do multiple claims
-            earned:                 ((dTime_2_rpt + dTime_3_rpt) * 10 ether + dTime_4_rpt * 5 ether) / WAD,            // Ali has not claimed any rewards that have accrued during dTime4
-            rewards:                 (dTime_2_rpt + dTime_3_rpt) * 10 ether / WAD,                                       // Not updated yet
-            rewardTokenBal:           dTime_1_rpt * 10 ether / WAD              // From previous claim
+            user:                     address(ali),                                                          // User accounting for
+            totalSupply:              35 ether,                                                              // Ali + Bob stake 
+            rewardPerTokenStored:     dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,                               // Not updated yet
+            userRewardPerTokenPaid:   dTime_1_rpt + dTime_2_rpt + dTime_3_rpt,                               // Used so Ali can't do multiple claims
+            earned:                 ((dTime_2_rpt + dTime_3_rpt) * 10 ether + dTime_4_rpt * 5 ether) / WAD,  // Ali has not claimed any rewards that have accrued during dTime4
+            rewards:                 (dTime_2_rpt + dTime_3_rpt) * 10 ether / WAD,                           // Not updated yet
+            rewardTokenBal:           dTime_1_rpt * 10 ether / WAD                                           // From previous claim
         });
 
         /*** Bob time = (2 days + 1 hours) pre-exit ***/
@@ -525,5 +525,22 @@ contract StakingRewardsTest is TestUtil {
             rewards:                0,                                                                       // Updated on updateReward to earned(), then set to zero on getReward
             rewardTokenBal:         (dTime_2_rpt * 10 ether + (dTime_3_rpt + dTime_4_rpt) * 30 ether) / WAD  // Total earnings from pool
         });
+    }
+
+    function test_rewards_multi_epoch() public {
+        ali.approve(address(stakingRewards), 100 ether);
+        bob.approve(address(stakingRewards), 100 ether);
+        ali.stake(10 ether);
+
+        gov.setRewardsDuration(30 days);
+
+        mpl.transfer(address(stakingRewards), 25_000 ether);  // 60k MPL per week => 3.12m MPL per year
+
+        gov.notifyRewardAmount(25_000 ether);
+
+        uint256 rewardRate = stakingRewards.rewardRate();
+        uint256 start      = block.timestamp;
+
+        assertEq(rewardRate, 25_000 ether / 30 days);
     }
 }
