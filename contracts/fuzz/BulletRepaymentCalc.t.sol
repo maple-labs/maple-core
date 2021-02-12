@@ -225,7 +225,6 @@ contract BulletRepaymentCalcTest is TestUtil {
         // Calculate theoretical values and sum up actual values
         uint256 totalPaid;
         uint256 sumTotal;
-        uint256 sumInterest;
         {
             uint256 paymentIntervalDays = loan.paymentIntervalSeconds().div(1 days);
             uint256 totalInterest       = loanAmt * apr / 10_000 * paymentIntervalDays / 365 * loan.paymentsRemaining();
@@ -248,18 +247,15 @@ contract BulletRepaymentCalcTest is TestUtil {
             assertEq(principal, principal_bullet);
             assertEq(interest,   interest_bullet);
 
-            sumTotal  += total;
-            sumInterest += interest;
+            sumTotal += total;
 
-            // paymentsRemaining = 1
-
-            eli.makePayment(address(loan)); // paymentsRemaining--
+            eli.makePayment(address(loan)); 
 
             if (loan.paymentsRemaining() > 0) {
-                assertEq(lastTotal,        total);
+                assertEq(total,        lastTotal);
+                assertEq(interest,  lastInterest);
                 assertEq(total,         interest);
                 assertEq(principal,            0);
-                assertEq(interest,  lastInterest);
             } else {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
@@ -286,11 +282,11 @@ contract BulletRepaymentCalcTest is TestUtil {
         {
             uint256 paymentIntervalDays = loan.paymentIntervalSeconds().div(1 days);
             uint256 totalInterest       = loanAmt * apr / 10_000 * paymentIntervalDays / 365 * loan.paymentsRemaining();
-                    totalPaid           = loanAmt + totalInterest + (loanAmt + totalInterest) * lateFeeCalc.feeBips() / 10_000;
+                    totalPaid           = loanAmt + totalInterest + totalInterest * lateFeeCalc.feeBips() / 10_000;
         }
 
         hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
-        (,, uint256 lastInterest,) =  loan.getNextPayment();
+        (uint256 lastTotal,,,) =  loan.getNextPayment();
 
         mint("USDC",      address(eli),  loanAmt * 1000); // Mint enough to pay interest
         eli.approve(USDC, address(loan), loanAmt * 1000);
@@ -300,24 +296,26 @@ contract BulletRepaymentCalcTest is TestUtil {
         while (loan.paymentsRemaining() > 0) {
             hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
 
-            (uint256 total,        uint256 principal,        uint256 interest,)       =  loan.getNextPayment();                    // USDC required for payment on loan
-            (uint256 total_bullet, uint256 principal_bullet, uint256 interest_bullet) =  bulletCalc.getNextPayment(address(loan)); // USDC required for payment on loan
-            (uint256 total_late,   uint256 principal_late,   uint256 interest_late)   =  lateFeeCalc.getLateFee(address(loan));    // USDC required for payment on loan
-
-            eli.makePayment(address(loan));
+            (uint256 total,        uint256 principal,        uint256 interest,)       = loan.getNextPayment();                    // USDC required for payment on loan
+            (uint256 total_bullet, uint256 principal_bullet, uint256 interest_bullet) = bulletCalc.getNextPayment(address(loan)); // USDC required for payment on loan
+            (uint256 total_late,   uint256 principal_late,   uint256 interest_late)   = lateFeeCalc.getLateFee(address(loan));    // USDC required for payment on loan
 
             assertEq(total,         total_bullet +     total_late);
             assertEq(principal, principal_bullet + principal_late);
             assertEq(interest,   interest_bullet +  interest_late);
 
-            assertEq(interest_late, total_bullet * lateFeeCalc.feeBips() / 10_000);
-            assertEq(interest_late, total_late);
-            assertEq(principal_late, 0);
-
             sumTotal += total;
+            
+            eli.makePayment(address(loan));
 
             if (loan.paymentsRemaining() > 0) {
-                assertEq(interest,  lastInterest);
+                assertEq(total,        lastTotal);
+                assertEq(total,         interest);
+                assertEq(principal,            0);
+
+                assertEq(interest_late, total_bullet * lateFeeCalc.feeBips() / 10_000);
+                assertEq(interest_late, total_late);
+                assertEq(principal_late, 0);
             } else {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
@@ -325,7 +323,7 @@ contract BulletRepaymentCalcTest is TestUtil {
                 assertEq(beforeBal - IERC20(USDC).balanceOf(address(eli)), sumTotal); // Pays back all principal, plus interest
             }
             
-            lastInterest = interest;
+            lastTotal = total;
         }
     }
 
