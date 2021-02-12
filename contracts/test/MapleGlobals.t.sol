@@ -19,6 +19,8 @@ import "../MapleTreasury.sol";
 import "../PoolFactory.sol";
 import "../PremiumCalc.sol";
 import "../StakeLockerFactory.sol";
+import "../oracles/MockPriceFeedWBTC.sol";
+import "../oracles/MockPriceFeedWETH.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -42,6 +44,8 @@ contract MapleGlobalsTest is TestUtil {
     PoolFactory              poolFactory;
     PremiumCalc                    pCalc;
     StakeLockerFactory         slFactory;
+    MockPriceFeedWETH         wETHOracle;
+    MockPriceFeedWBTC         wBTCOracle;
 
     ERC20                     fundsToken;
 
@@ -74,6 +78,8 @@ contract MapleGlobalsTest is TestUtil {
         pCalc       = new PremiumCalc(200);
         brCalc      = new BulletRepaymentCalc();
         trs         = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
+        wETHOracle  = new MockPriceFeedWETH(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, address(this), int256(0), WETH);
+        wBTCOracle  = new MockPriceFeedWBTC(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c, address(this), int256(0), WBTC);
 
         // The following code was adopted from maple-core/scripts/setup.js
         gov.setMapleTreasury(address(trs));
@@ -269,16 +275,17 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(   globals.extendedGracePeriod(),  5 days);
         assertTrue(!fakeGov.try_setUnstakeDelay(20 days));
         assertTrue(     gov.try_setUnstakeDelay(20 days));
-        assertEq(   globals.unstakeDelay(),        20 days);
+        assertEq(globals.unstakeDelay(),        20 days);
+        
 
         assertTrue(!fakeGov.try_setPriceOracle(WETH, address(1)));
-        assertTrue(     gov.try_setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419));
-        assertTrue(     gov.try_setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c));
-        assertEq(   globals.oracleFor(WETH),         0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-        assertEq(   globals.oracleFor(WBTC),         0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
+        assertTrue(     gov.try_setPriceOracle(WETH, address(wETHOracle)));
+        assertTrue(     gov.try_setPriceOracle(WBTC, address(wBTCOracle)));
+        assertEq(globals.oracleFor(WETH),            address(wETHOracle));
+        assertEq(globals.oracleFor(WBTC),            address(wBTCOracle));
 
-        // assertEq(globals.getLatestPrice(WETH), 0); // Shows real WETH value from ChainLink
-        // assertEq(globals.getLatestPrice(WBTC), 0); // Shows real WBTC value from ChainLink
+        assertTrue(globals.getLatestPrice(WETH) != 0); // Shows real WETH value from ChainLink
+        assertTrue(globals.getLatestPrice(WBTC) != 0); // Shows real WBTC value from ChainLink
 
         assertTrue(!fakeGov.try_setMaxSwapSlippage(12));  // 0.12 %
         assertTrue(     gov.try_setMaxSwapSlippage(12));

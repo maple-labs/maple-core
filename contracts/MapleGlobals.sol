@@ -4,20 +4,10 @@ pragma experimental ABIEncoderV2;
 
 import "./interfaces/IERC20Details.sol";
 import "./interfaces/IPriceFeed.sol";
+import "./interfaces/IOracle.sol";
 import "./interfaces/ISubFactory.sol";
 
 interface ICalc { function calcType() external returns (uint8); }
-
-interface AggregatorV3Interface {
-  function latestRoundData() external view
-    returns (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    );
-}
 
 contract MapleGlobals {
 
@@ -296,9 +286,7 @@ contract MapleGlobals {
         @return The price of asset.
     */
     function getLatestPrice(address asset) public view returns (uint256) {
-        address oracle = oracleFor[asset];
-        (,int price,,,) = AggregatorV3Interface(oracle).latestRoundData();
-        return uint256(price);
+        return uint256(IOracle(oracleFor[asset]).getLatestPrice());
     }
 
     /**

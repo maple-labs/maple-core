@@ -7,7 +7,7 @@ import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 contract ChainLinkOracle is Ownable {
 
-    IChainlinkAggregatorV3 internal priceFeed;
+    IChainlinkAggregatorV3 public priceFeed;
     IGlobals public globals;
 
     bool    public manualOverride;

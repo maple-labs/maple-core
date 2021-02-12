@@ -32,6 +32,8 @@ import "../PoolFactory.sol";
 import "../PremiumCalc.sol";
 import "../StakeLockerFactory.sol";
 
+import "../oracles/ChainLinkOracle.sol";
+
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract Treasury { }
@@ -62,6 +64,9 @@ contract StakeLockerTest is TestUtil {
     PoolFactory                    poolFactory;
     StakeLockerFactory               slFactory;
     Treasury                               trs;
+    ChainLinkOracle                 wETHOracle;
+    ChainLinkOracle                 wBTCOracle;
+    ChainLinkOracle                  uSDOracle;
 
     IBPool                               bPool;
     IStakeLocker                   stakeLocker;
@@ -100,9 +105,13 @@ contract StakeLockerTest is TestUtil {
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
 
-        gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-        gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
-        gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
+        wETHOracle = new ChainLinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, WETH, address(this));
+        wBTCOracle = new ChainLinkOracle(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c, WBTC, address(this));
+        uSDOracle  = new ChainLinkOracle(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, USDC, address(this));
+        
+        gov.setPriceOracle(WETH, address(wETHOracle));
+        gov.setPriceOracle(WBTC, address(wBTCOracle));
+        gov.setPriceOracle(USDC, address(uSDOracle));
 
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);

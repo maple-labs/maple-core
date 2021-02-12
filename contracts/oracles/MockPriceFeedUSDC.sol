@@ -5,8 +5,10 @@ import "./ChainLinkOracle.sol";
 
 contract MockPriceFeedUSDC is ChainLinkOracle {
     
-    constructor(address _owner, int256 _priceFeed, address _asset) ChainLinkOracle(address(0x1), _asset, _owner) public {
-        manualOverride = true;
-        manualPrice = _priceFeed;
+    constructor(address _aggregator, address _owner, int256 _priceFeed, address _asset) ChainLinkOracle(_aggregator, _asset, _owner) public {
+        if (_aggregator == address(1)) {
+            manualOverride = true;
+            manualPrice = _priceFeed;
+        }
     }
 }
