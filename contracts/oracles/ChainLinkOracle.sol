@@ -10,39 +10,39 @@ contract ChainLinkOracle {
     IGlobals public globals;
 
     bool    public manualOverride;
-    address public currencyAddress;
-    int     public manualPrice;
+    address public assetAddress;
+    int256  public manualPrice;
 
     event ChangeAggregatorFeed(address _newMedianizer, address _oldMedianizer);
-    event SetManualPrice(int _oldPrice, int _newPrice);
+    event SetManualPrice(int256 _oldPrice, int256 _newPrice);
     event SetManualOverride(bool _override);
 
     /**
         @dev Creates a new Chainlink based oracle
         @param _aggregator Address of Chainlink aggregator.
-        @param _currencyAddress Address of currency (0x0 for ETH).
+        @param _assetAddress Address of currency (0x0 for ETH).
         @param _globals Address of the `MapleGlobal` contract.
       */
-    constructor(address _aggregator, address _currencyAddress, address _globals) public {
+    constructor(address _aggregator, address _assetAddress, address _globals) public {
         require(_aggregator != address(0), "ChainLinkOracle:INVALID_AGGREGATOR_ADDRESS");
         priceFeed       = IChainlinkAggregatorV3(_aggregator);
-        currencyAddress = _currencyAddress;
+        assetAddress    = _assetAddress;
         globals         = IGlobals(_globals);
     }
 
     /**
         @dev Returns the latest price.
      */
-    function getLatestPrice() public view returns (int) {
+    function getLatestPrice() public view returns (int256) {
         if (manualOverride) return manualPrice;
         (
             uint80 roundID, 
-            int price,
+            int256 price,
             uint startedAt,
             uint timeStamp,
             uint80 answeredInRound
         ) = priceFeed.latestRoundData();
-        require(price != int(0), "ChainLinkOracle:ZERO_PRICE");
+        require(price != int256(0), "ChainLinkOracle:ZERO_PRICE");
         return price;
     }
 
@@ -61,14 +61,14 @@ contract ChainLinkOracle {
     /**
         @dev Returns address of oracle currency (0x0 for ETH).
     */
-    function getCurrencyAddress() external view returns(address) {
-        return currencyAddress;
+    function getAssetAddress() external view returns(address) {
+        return assetAddress;
     }
 
     /**
        @dev Returns denomination of price.
     */
-    function getCurrencyDenominated() external view returns(bytes32) {
+    function getDenomination() external view returns(bytes32) {
         // All Chainlink oracles are denominated in USD
         return bytes32("USD");
     }
@@ -77,7 +77,7 @@ contract ChainLinkOracle {
         @dev Set a manual price. NA - this will only be used if manualOverride == true
         @param _price Price to set
     */
-    function setManualPrice(int _price) external {
+    function setManualPrice(int256 _price) external {
         _isValidGovernor();
         emit SetManualPrice(manualPrice, _price);
         manualPrice = _price;
@@ -94,7 +94,7 @@ contract ChainLinkOracle {
     }
 
     function _isValidGovernor() internal view {
-        require(globals.governor() == msg.sender, "ChainLink:NOT_AUTHORISED");
+        require(globals.governor() == msg.sender, "ChainLink:NOT_AUTHORIZED");
     }
 
 }
