@@ -20,7 +20,7 @@ contract Governor {
     }
 
     function createStakingRewards(address mpl, address pool) external returns (StakingRewards) {
-        stakingRewards = new StakingRewards(address(this), mpl, pool);
+        stakingRewards = new StakingRewards(mpl, pool);
         return stakingRewards;
     }
 
