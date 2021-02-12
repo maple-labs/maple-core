@@ -116,6 +116,20 @@ contract StakingRewardsTest is TestUtil {
     /*******************************/
     /*** Admin Functions Testing ***/
     /*******************************/
+    function test_transferOwnership() public {
+        assertEq(stakingRewards.owner(), address(gov));
+
+        assertTrue(!fakeGov.try_transferOwnership(address(fakeGov)));
+        assertTrue(     gov.try_transferOwnership(address(fakeGov)));
+
+        assertEq(stakingRewards.owner(), address(fakeGov));
+
+        assertTrue(   !gov.try_transferOwnership(address(gov)));
+        assertTrue(fakeGov.try_transferOwnership(address(gov)));
+
+        assertEq(stakingRewards.owner(), address(gov));        
+    }
+
     function test_notifyRewardAmount() public {
         assertEq(stakingRewards.periodFinish(),              0);
         assertEq(stakingRewards.rewardRate(),                0);

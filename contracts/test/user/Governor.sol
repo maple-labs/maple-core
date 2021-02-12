@@ -56,6 +56,7 @@ contract Governor {
     function setDefaultUniswapPath(address from, address to, address mid) external { globals.setDefaultUniswapPath(from, to, mid); }
 
     /*** StakingReards Setters ***/ 
+    function transferOwnership(address newOwner)      external { stakingRewards.transferOwnership(newOwner); }
     function notifyRewardAmount(uint256 reward)       external { stakingRewards.notifyRewardAmount(reward); }
     function updatePeriodFinish(uint256 timestamp)    external { stakingRewards.updatePeriodFinish(timestamp); }
     function recoverERC20(address asset, uint256 amt) external { stakingRewards.recoverERC20(asset, amt); }
@@ -174,6 +175,10 @@ contract Governor {
     }
     
     /*** StakingRewards Setters ***/ 
+    function try_transferOwnership(address newOwner) external returns (bool ok) { 
+        string memory sig = "transferOwnership(address)";
+        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, newOwner)); 
+    }
     function try_notifyRewardAmount(uint256 reward) external returns (bool ok) { 
         string memory sig = "notifyRewardAmount(uint256)";
         (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, reward)); 

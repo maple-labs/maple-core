@@ -44,7 +44,7 @@ contract StakingRewards is ReentrancyGuard, Ownable {
 
     function _updateReward(address account) internal {
         rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
+        lastUpdateTime       = lastTimeRewardApplicable();
         if (account != address(0)) {
             rewards[account] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
@@ -83,13 +83,13 @@ contract StakingRewards is ReentrancyGuard, Ownable {
         return rewardRate.mul(rewardsDuration);
     }
 
-    function stake(uint256 amount) external nonReentrant {
+    function stake(uint256 amount) external {
         _notPaused();
         _updateReward(msg.sender);
         require(amount > 0, "REWARDS:STAKE_EQ_ZERO");
+        stakingToken.transferFrom(msg.sender, address(this), amount);
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
-        stakingToken.transferFrom(msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
     }
 
