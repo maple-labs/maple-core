@@ -11,17 +11,14 @@ contract StakingRewards is ReentrancyGuard /*, Pausable */ {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    /* ========== STATE VARIABLES ========== */
-
     address public owner;
 
     IERC20  public immutable rewardsToken;
     IERC20  public immutable stakingToken;
 
-    uint256 public periodFinish    = 0;
-    uint256 public rewardRate      = 0;
-    uint256 public rewardsDuration = 7 days;
-
+    uint256 public periodFinish;
+    uint256 public rewardRate;
+    uint256 public rewardsDuration;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
     uint256 public lastPauseTime;
@@ -30,15 +27,40 @@ contract StakingRewards is ReentrancyGuard /*, Pausable */ {
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
 
-    uint256                     private _totalSupply;
+    uint256 private _totalSupply;
+    
     mapping(address => uint256) private _balances;
 
-    /* ========== CONSTRUCTOR ========== */
+    event RewardAdded(uint256 reward);
+    event Staked(address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
+    event RewardPaid(address indexed user, uint256 reward);
+    event RewardsDurationUpdated(uint256 newDuration);
+    event Recovered(address token, uint256 amount);
+    event PauseChanged(bool isPaused);
 
     constructor(address _owner, address _rewardsToken, address _stakingToken) public {
-        owner        = _owner;
-        rewardsToken = IERC20(_rewardsToken);
-        stakingToken = IERC20(_stakingToken);
+        owner           = _owner;
+        rewardsToken    = IERC20(_rewardsToken);
+        stakingToken    = IERC20(_stakingToken);
+        rewardsDuration = 7 days;
+    }
+
+    function _updateReward(address account) internal {
+        rewardPerTokenStored = rewardPerToken();
+        lastUpdateTime = lastTimeRewardApplicable();
+        if (account != address(0)) {
+            rewards[account] = earned(account);
+            userRewardPerTokenPaid[account] = rewardPerTokenStored;
+        }
+    }
+
+    function _onlyOwner() internal view {
+        require(msg.sender == owner, "REWARDS:MSG_SENDER_NOT_OWNER");
+    }
+
+    function _notPaused() internal view {
+        require(!paused, "REWARDS:CONTRACT_PAUSED");
     }
 
     /* ========== VIEWS ========== */
@@ -75,23 +97,27 @@ contract StakingRewards is ReentrancyGuard /*, Pausable */ {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(uint256 amount) external nonReentrant notPaused updateReward(msg.sender) {
-        require(amount > 0, "Cannot stake 0");
+    function stake(uint256 amount) external nonReentrant {
+        _notPaused();
+        _updateReward(msg.sender);
+        require(amount > 0, "REWARDS:STAKE_EQ_ZERO");
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "Cannot withdraw 0");
+    function withdraw(uint256 amount) public nonReentrant {
+        _updateReward(msg.sender);
+        require(amount > 0, "REWARDS:WITHDRAW_EQ_ZERO");
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getReward() public nonReentrant {
+        _updateReward(msg.sender);
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
@@ -105,8 +131,9 @@ contract StakingRewards is ReentrancyGuard /*, Pausable */ {
         getReward();
     }
 
-    /* ========== RESTRICTED FUNCTIONS ========== */
-    function notifyRewardAmount(uint256 reward) external onlyOwner updateReward(address(0)) {
+    function notifyRewardAmount(uint256 reward) external {
+        _onlyOwner();
+        _updateReward(address(0));
         if (block.timestamp >= periodFinish) {
             rewardRate = reward.div(rewardsDuration);
         } else {
@@ -120,7 +147,7 @@ contract StakingRewards is ReentrancyGuard /*, Pausable */ {
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
         uint balance = rewardsToken.balanceOf(address(this));
-        require(rewardRate <= balance.div(rewardsDuration), "Provided reward too high");
+        require(rewardRate <= balance.div(rewardsDuration), "REWARDS:REWARD_TOO_HIGH");
 
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp.add(rewardsDuration);
@@ -128,22 +155,23 @@ contract StakingRewards is ReentrancyGuard /*, Pausable */ {
     }
 
     // End rewards emission earlier
-    function updatePeriodFinish(uint timestamp) external onlyOwner updateReward(address(0)) {
+    function updatePeriodFinish(uint timestamp) external {
+        _onlyOwner();
+        _updateReward(address(0));
         periodFinish = timestamp;
     }
 
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
-    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
-        require(tokenAddress != address(stakingToken), "Cannot withdraw the staking token");
+    function recoverERC20(address tokenAddress, uint256 tokenAmount) external {
+        _onlyOwner();
+        require(tokenAddress != address(stakingToken), "REWARDS:CANNOT_RECOVER_STAKE_TOKEN");
         IERC20(tokenAddress).safeTransfer(owner, tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 
-    function setRewardsDuration(uint256 _rewardsDuration) external onlyOwner {
-        require(
-            block.timestamp > periodFinish,
-            "Previous rewards period must be complete before changing the duration for the new period"
-        );
+    function setRewardsDuration(uint256 _rewardsDuration) external {
+        _onlyOwner();
+        require(block.timestamp > periodFinish, "REWARDS:PERIOD_NOT_FINISHED");
         rewardsDuration = _rewardsDuration;
         emit RewardsDurationUpdated(rewardsDuration);
     }
@@ -152,7 +180,8 @@ contract StakingRewards is ReentrancyGuard /*, Pausable */ {
      * @notice Change the paused state of the contract
      * @dev Only the contract owner may call this.
      */
-    function setPaused(bool _paused) external onlyOwner {
+    function setPaused(bool _paused) external {
+        _onlyOwner();
         // Ensure we're actually changing the state before we do anything
         if (_paused == paused) return;
 
@@ -165,36 +194,4 @@ contract StakingRewards is ReentrancyGuard /*, Pausable */ {
         // Let everyone know that our pause state has changed.
         emit PauseChanged(paused);
     }
-
-    /* ========== MODIFIERS ========== */
-
-    modifier updateReward(address account) {
-        rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
-        if (account != address(0)) {
-            rewards[account] = earned(account);
-            userRewardPerTokenPaid[account] = rewardPerTokenStored;
-        }
-        _;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "MSG_SENDER_NOT_OWNER");
-        _;
-    }
-
-    modifier notPaused {
-        require(!paused, "This action cannot be performed while the contract is paused");
-        _;
-    }
-
-    /* ========== EVENTS ========== */
-
-    event RewardAdded(uint256 reward);
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
-    event RewardPaid(address indexed user, uint256 reward);
-    event RewardsDurationUpdated(uint256 newDuration);
-    event Recovered(address token, uint256 amount);
-    event PauseChanged(bool isPaused);
 }
