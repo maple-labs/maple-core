@@ -4,12 +4,17 @@ pragma experimental ABIEncoderV2;
 
 import "../test/TestUtil.sol";
 
-import "../mocks/value.sol";
-import "../mocks/token.sol";
+import "../test/user/Borrower.sol";
+import "../test/user/Governor.sol";
+import "../test/user/LP.sol";
+import "../test/user/PoolDelegate.sol";
 
+import "../interfaces/IBFactory.sol";
 import "../interfaces/IBPool.sol";
+import "../interfaces/IERC20Details.sol";
 import "../interfaces/IPool.sol";
 import "../interfaces/IPoolFactory.sol";
+import "../interfaces/IStakeLocker.sol";
 
 import "../BulletRepaymentCalc.sol";
 import "../LateFeeCalc.sol";
@@ -34,180 +39,101 @@ interface IBPoolFactory {
     function newBPool() external returns (address);
 }
 
-contract PoolDelegate {
-    function try_fundLoan(address pool1, address loan, address dlFactory1, uint256 amt) external returns (bool ok) {
-        string memory sig = "fundLoan(address,address,uint256)";
-        (ok,) = address(pool1).call(abi.encodeWithSignature(sig, loan, dlFactory1, amt));
-    }
-
-    function createPool(
-        address poolFactory, 
-        address liquidityAsset,
-        address stakeAsset,
-        address slFactory, 
-        address llFactory,
-        uint256 stakingFee,
-        uint256 delegateFee,
-        uint256 liquidityCap
-    ) 
-        external returns (address liquidityPool) 
-    {
-        liquidityPool = IPoolFactory(poolFactory).createPool(
-            liquidityAsset,
-            stakeAsset,
-            slFactory,
-            llFactory,
-            stakingFee,
-            delegateFee,
-            liquidityCap
-        );
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function stake(address stakeLocker, uint256 amt) external {
-        IStakeLocker(stakeLocker).stake(amt);
-    }
-
-    function claim(address pool, address loan, address dlFactory) external returns(uint256[7] memory) {
-        return IPool(pool).claim(loan, dlFactory);  
-    }
-}
-
-contract LP {
-    function try_deposit(address pool1, uint256 amt)  external returns (bool ok) {
-        string memory sig = "deposit(uint256)";
-        (ok,) = address(pool1).call(abi.encodeWithSignature(sig, amt));
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function withdraw(address pool, uint256 amt) external {
-        Pool(pool).withdraw(amt);
-    }
-}
-
-contract Borrower {
-
-    function makePayment(address loan) external {
-        Loan(loan).makePayment();
-    }
-
-    function makeFullPayment(address loan) external {
-        Loan(loan).makeFullPayment();
-    }
-
-    function drawdown(address loan, uint256 _drawdownAmount) external {
-        Loan(loan).drawdown(_drawdownAmount);
-    }
-
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
-    }
-
-    function createLoan(
-        LoanFactory loanFactory,
-        address loanAsset, 
-        address collateralAsset, 
-        address flFactory,
-        address clFactory,
-        uint256[6] memory specs,
-        address[3] memory calcs
-    ) 
-        external returns (Loan loanVault) 
-    {
-        loanVault = Loan(
-            loanFactory.createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
-    }
-}
-
 contract Treasury { }
 
 contract BulletRepaymentCalcTest is TestUtil {
 
     using SafeMath for uint256;
 
-    ERC20                           fundsToken;
-    MapleToken                             mpl;
-    MapleGlobals                       globals;
-    FundingLockerFactory             flFactory;
-    CollateralLockerFactory          clFactory;
-    LoanFactory                    loanFactory;
-    Loan                                  loan;
-    Loan                                 loan2;
-    PoolFactory                 poolFactory;
-    StakeLockerFactory               slFactory;
-    LiquidityLockerFactory         llFactory; 
-    DebtLockerFactory               dlFactory1; 
-    DebtLockerFactory               dlFactory2; 
-    Pool                                 pool1; 
-    Pool                                 pool2; 
-    DSValue                          ethOracle;
-    DSValue                         usdcOracle;
-    BulletRepaymentCalc             bulletCalc;
-    LateFeeCalc                    lateFeeCalc;
-    PremiumCalc                    premiumCalc;
-    IBPool                               bPool;
-    PoolDelegate                           sid;
-    PoolDelegate                           joe;
+    Borrower                               eli;
+    Borrower                               fay;
+    Borrower                               hal;
+    Governor                               gov;
     LP                                     bob;
     LP                                     che;
     LP                                     dan;
-    Borrower                               eli;
-    Borrower                               fay;
-    Treasury                               trs;
+    LP                                     kim;
+    PoolDelegate                           sid;
+    PoolDelegate                           joe;
 
+    BulletRepaymentCalc             bulletCalc;
+    CollateralLockerFactory          clFactory;
+    DebtLockerFactory               dlFactory1;
+    DebtLockerFactory               dlFactory2;
+    FundingLockerFactory             flFactory;
+    LateFeeCalc                    lateFeeCalc;
+    LiquidityLockerFactory           llFactory;
+    Loan                                  loan;
+    Loan                                 loan2;
+    Loan                                 loan3;
+    LoanFactory                    loanFactory;
+    MapleGlobals                       globals;
+    MapleToken                             mpl;
+    PoolFactory                    poolFactory;
+    Pool                                 pool1;
+    Pool                                 pool2;
+    PremiumCalc                    premiumCalc;
+    StakeLockerFactory               slFactory;
+    Treasury                               trs;
+    
+    ERC20                           fundsToken;
+    IBPool                               bPool;
+
+    uint256 constant public MAX_UINT = uint(-1);
 
     function setUp() public {
 
+        eli            = new Borrower();                                                // Actor: Borrower of the Loan.
+        fay            = new Borrower();                                                // Actor: Borrower of the Loan.
+        hal            = new Borrower();                                                // Actor: Borrower of the Loan.
+        gov            = new Governor();                                                // Actor: Governor of Maple.
+        bob            = new LP();                                                      // Actor: Liquidity provider.
+        che            = new LP();                                                      // Actor: Liquidity provider.
+        dan            = new LP();                                                      // Actor: Liquidity provider.
+        kim            = new LP();                                                      // Actor: Liquidity provider.
+        sid            = new PoolDelegate();                                            // Actor: Manager of the Pool.
+        joe            = new PoolDelegate();                                            // Actor: Manager of the Pool.
+
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = new MapleGlobals(address(this), address(mpl), BPOOL_FACTORY);
-        flFactory      = new FundingLockerFactory();
-        clFactory      = new CollateralLockerFactory();
-        loanFactory    = new LoanFactory(address(globals));
-        slFactory      = new StakeLockerFactory();
-        llFactory      = new LiquidityLockerFactory();
-        poolFactory    = new PoolFactory(address(globals));
-        dlFactory1     = new DebtLockerFactory();
-        dlFactory2     = new DebtLockerFactory();
-        ethOracle      = new DSValue();
-        usdcOracle     = new DSValue();
-        sid            = new PoolDelegate();
-        joe            = new PoolDelegate();
-        bob            = new LP();
-        che            = new LP();
-        dan            = new LP();
-        eli            = new Borrower();
-        fay            = new Borrower();
-        trs            = new Treasury();
+        globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan factory functionality.
+        clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan factory functionality.
+        loanFactory    = new LoanFactory(address(globals));                             // Create Loan factory.
+        slFactory      = new StakeLockerFactory();                                      // Setup the SL factory to facilitate Pool factory functionality.
+        llFactory      = new LiquidityLockerFactory();                                  // Setup the SL factory to facilitate Pool factory functionality.
+        poolFactory    = new PoolFactory(address(globals));                             // Create pool factory.
+        dlFactory1     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
+        dlFactory2     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
+        bulletCalc     = new BulletRepaymentCalc();                                     // Repayment model.
+        lateFeeCalc    = new LateFeeCalc(0);                                            // Flat 0% fee
+        premiumCalc    = new PremiumCalc(500);                                          // Flat 5% premium
+        trs            = new Treasury();                                                // Treasury.
 
-        globals.setValidLoanFactory(address(loanFactory), true);
-        globals.setValidLoanFactory(address(poolFactory), true);
+        gov.setValidPoolFactory(address(poolFactory), true);
+        gov.setValidLoanFactory(address(loanFactory), true);
 
-        globals.setValidSubFactory(address(loanFactory), address(flFactory), true);
-        globals.setValidSubFactory(address(loanFactory), address(clFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
 
-        globals.setValidSubFactory(address(poolFactory), address(llFactory), true);
-        globals.setValidSubFactory(address(poolFactory), address(slFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(llFactory),  true);
+        gov.setValidSubFactory(address(poolFactory), address(slFactory),  true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory1), true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
 
-        ethOracle.poke(500 ether);  // Set ETH price to $500
-        usdcOracle.poke(1 ether);   // Set USDC price to $1
+        gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
+        gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
+        gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
 
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);
 
         // Initialize MPL/USDC Balancer pool (without finalizing)
-        bPool = IBPool(IBPoolFactory(BPOOL_FACTORY).newBPool());
+        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
 
-        IERC20(USDC).approve(address(bPool), uint(-1));
-        mpl.approve(address(bPool), uint(-1));
+        IERC20(USDC).approve(address(bPool), MAX_UINT);
+        mpl.approve(address(bPool), MAX_UINT);
 
-        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 ether);   // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(USDC, 50_000_000 * USD, 5 ether);       // Bind 50m USDC with 5 denormalization weight
         bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
 
         assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * USD);
@@ -215,9 +141,9 @@ contract BulletRepaymentCalcTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
-        globals.setPoolDelegateWhitelist(address(sid), true);
-        globals.setPoolDelegateWhitelist(address(joe), true);
-        globals.setMapleTreasury(address(trs));
+        gov.setPoolDelegateWhitelist(address(sid), true);
+        gov.setPoolDelegateWhitelist(address(joe), true);
+        gov.setMapleTreasury(address(trs));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
@@ -227,14 +153,12 @@ contract BulletRepaymentCalcTest is TestUtil {
         bPool.transfer(address(joe), bPool.balanceOf(address(this)));
 
         // Set Globals
-        globals.setCalc(address(bulletCalc),  true);
-        globals.setCalc(address(lateFeeCalc), true);
-        globals.setCalc(address(premiumCalc), true);
-        globals.setCollateralAsset(WETH, true);
-        globals.setLoanAsset(USDC, true);
-        globals.assignPriceFeed(WETH, address(ethOracle));
-        globals.assignPriceFeed(USDC, address(usdcOracle));
-        globals.setSwapOutRequired(100);
+        gov.setCalc(address(bulletCalc),  true);
+        gov.setCalc(address(lateFeeCalc), true);
+        gov.setCalc(address(premiumCalc), true);
+        gov.setCollateralAsset(WETH, true);
+        gov.setLoanAsset(USDC, true);
+        gov.setSwapOutRequired(1_000_000);
 
         // Create and finalize Liquidity Pool
         pool1 = Pool(sid.createPool(
@@ -250,7 +174,7 @@ contract BulletRepaymentCalcTest is TestUtil {
         sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
         sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
-        pool1.finalize(); 
+        sid.finalize(address(pool1)); 
     }
 
     function setUpRepayments(uint256 loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee, uint256 premiumFee) public {
@@ -259,9 +183,9 @@ contract BulletRepaymentCalcTest is TestUtil {
             lateFeeCalc = new LateFeeCalc(lateFee);    // Flat late fee
             premiumCalc = new PremiumCalc(premiumFee); // Flat premium
 
-            globals.setCalc(address(bulletCalc),  true);
-            globals.setCalc(address(lateFeeCalc), true);
-            globals.setCalc(address(premiumCalc), true);
+            gov.setCalc(address(bulletCalc),  true);
+            gov.setCalc(address(lateFeeCalc), true);
+            gov.setCalc(address(premiumCalc), true);
         }
 
         uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
@@ -278,7 +202,7 @@ contract BulletRepaymentCalcTest is TestUtil {
             // Create loan, fund loan, draw down on loan
             address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
             uint256[6] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000, 7];
-            loan = eli.createLoan(loanFactory, USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
+            loan = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
         }
 
         assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), loanAmt));
@@ -301,7 +225,6 @@ contract BulletRepaymentCalcTest is TestUtil {
         // Calculate theoretical values and sum up actual values
         uint256 totalPaid;
         uint256 sumTotal;
-        uint256 sumInterest;
         {
             uint256 paymentIntervalDays = loan.paymentIntervalSeconds().div(1 days);
             uint256 totalInterest       = loanAmt * apr / 10_000 * paymentIntervalDays / 365 * loan.paymentsRemaining();
@@ -324,18 +247,15 @@ contract BulletRepaymentCalcTest is TestUtil {
             assertEq(principal, principal_bullet);
             assertEq(interest,   interest_bullet);
 
-            sumTotal  += total;
-            sumInterest += interest;
+            sumTotal += total;
 
-            // paymentsRemaining = 1
-
-            eli.makePayment(address(loan)); // paymentsRemaining--
+            eli.makePayment(address(loan)); 
 
             if (loan.paymentsRemaining() > 0) {
-                assertEq(lastTotal,        total);
+                assertEq(total,        lastTotal);
+                assertEq(interest,  lastInterest);
                 assertEq(total,         interest);
                 assertEq(principal,            0);
-                assertEq(interest,  lastInterest);
             } else {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
@@ -362,11 +282,11 @@ contract BulletRepaymentCalcTest is TestUtil {
         {
             uint256 paymentIntervalDays = loan.paymentIntervalSeconds().div(1 days);
             uint256 totalInterest       = loanAmt * apr / 10_000 * paymentIntervalDays / 365 * loan.paymentsRemaining();
-                    totalPaid           = loanAmt + totalInterest + (loanAmt + totalInterest) * lateFeeCalc.feeBips() / 10_000;
+                    totalPaid           = loanAmt + totalInterest + totalInterest * lateFeeCalc.feeBips() / 10_000;
         }
 
         hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
-        (,, uint256 lastInterest,) =  loan.getNextPayment();
+        (uint256 lastTotal,,,) =  loan.getNextPayment();
 
         mint("USDC",      address(eli),  loanAmt * 1000); // Mint enough to pay interest
         eli.approve(USDC, address(loan), loanAmt * 1000);
@@ -376,24 +296,26 @@ contract BulletRepaymentCalcTest is TestUtil {
         while (loan.paymentsRemaining() > 0) {
             hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
 
-            (uint256 total,        uint256 principal,        uint256 interest,)       =  loan.getNextPayment();                    // USDC required for payment on loan
-            (uint256 total_bullet, uint256 principal_bullet, uint256 interest_bullet) =  bulletCalc.getNextPayment(address(loan)); // USDC required for payment on loan
-            (uint256 total_late,   uint256 principal_late,   uint256 interest_late)   =  lateFeeCalc.getLateFee(address(loan));    // USDC required for payment on loan
-
-            eli.makePayment(address(loan));
+            (uint256 total,        uint256 principal,        uint256 interest,)       = loan.getNextPayment();                    // USDC required for payment on loan
+            (uint256 total_bullet, uint256 principal_bullet, uint256 interest_bullet) = bulletCalc.getNextPayment(address(loan)); // USDC required for payment on loan
+            (uint256 total_late,   uint256 principal_late,   uint256 interest_late)   = lateFeeCalc.getLateFee(address(loan));    // USDC required for payment on loan
 
             assertEq(total,         total_bullet +     total_late);
             assertEq(principal, principal_bullet + principal_late);
             assertEq(interest,   interest_bullet +  interest_late);
 
-            assertEq(interest_late, total_bullet * lateFeeCalc.feeBips() / 10_000);
-            assertEq(interest_late, total_late);
-            assertEq(principal_late, 0);
-
             sumTotal += total;
+            
+            eli.makePayment(address(loan));
 
             if (loan.paymentsRemaining() > 0) {
-                assertEq(interest,  lastInterest);
+                assertEq(total,        lastTotal);
+                assertEq(total,         interest);
+                assertEq(principal,            0);
+
+                assertEq(interest_late, total_bullet * lateFeeCalc.feeBips() / 10_000);
+                assertEq(interest_late, total_late);
+                assertEq(principal_late, 0);
             } else {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
@@ -401,7 +323,7 @@ contract BulletRepaymentCalcTest is TestUtil {
                 assertEq(beforeBal - IERC20(USDC).balanceOf(address(eli)), sumTotal); // Pays back all principal, plus interest
             }
             
-            lastInterest = interest;
+            lastTotal = total;
         }
     }
 

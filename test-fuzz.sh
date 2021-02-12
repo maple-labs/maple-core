@@ -3,9 +3,11 @@ set -e
 
 [[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive"  ]] || { echo "Please set a mainnet ETH_RPC_URL"; exit 1;  }
 
-DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 1" dapp --use solc:0.6.11 build
-
 export DAPP_TEST_TIMESTAMP=$(seth block latest timestamp)
 export DAPP_TEST_NUMBER=$(seth block latest number)
+export DAPP_SOLC_VERSION=0.6.11
+export DAPP_SRC="contracts"
+export SOLC_FLAGS="--optimize --optimize-runs 200"
+export DAPP_LINK_TEST_LIBRARIES=1
 
-LANG=C.UTF-8 DAPP_SRC="contracts" hevm dapp-test --match "contracts/fuzz/" --rpc="$ETH_RPC_URL" --fuzz-runs 10 --json-file=out/dapp.sol.json --dapp-root=. --verbose 1
+LANG=C.UTF-8 dapp test --match "contracts/fuzz" --rpc-url "$ETH_RPC_URL" --verbose --fuzz-runs 5

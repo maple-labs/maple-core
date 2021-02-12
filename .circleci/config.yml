@@ -38,7 +38,7 @@ jobs:
   dapp_test:
     docker:
       - image: bakii0499/dapptools:0.1.0
-    parallelism: 16
+    parallelism: 20
     steps:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
@@ -49,7 +49,7 @@ jobs:
           name: Run unit tests
           command: |
             cd ~/project
-            TEST=$(circleci tests glob contracts/test/*.sol | circleci tests split --split-by=name)
+            TEST=$(circleci tests glob contracts/**/*.t.sol | circleci tests split --split-by=name)
             ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY ./test-ci.sh $TEST
           no_output_timeout: 60m
   
