@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Build contracts
           command: |
-            dapp update
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" dapp update && git submodule update --init --recursive cache/dapp-cache
             export DAPP_LINK_TEST_LIBRARIES=1
             DAPP_SRC="contracts" SOLC_FLAGS="--optimize --optimize-runs 200" dapp --use solc:0.6.11 build
       - persist_to_workspace:
@@ -49,10 +49,8 @@ jobs:
           name: Run unit tests
           command: |
             cd ~/project
-            echo 'export ETH_RPC_URL=$ETH_RPC_URL' >> $BASH_ENV
-            source $BASH_ENV
             TEST=$(circleci tests glob contracts/test/*.sol | circleci tests split --split-by=name)
-            ./test-ci.sh $TEST
+            ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY ./test-ci.sh $TEST
           no_output_timeout: 60m
   
   dependencies:
