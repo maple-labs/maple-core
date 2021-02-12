@@ -3,8 +3,9 @@ pragma solidity >=0.6.11;
 
 import "./IChainlinkAggregatorV3.sol";
 import "../interfaces/IGlobals.sol";
+import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract ChainLinkOracle {
+contract ChainLinkOracle is Ownable {
 
     IChainlinkAggregatorV3 internal priceFeed;
     IGlobals public globals;
@@ -21,13 +22,13 @@ contract ChainLinkOracle {
         @dev Creates a new Chainlink based oracle
         @param _aggregator Address of Chainlink aggregator.
         @param _assetAddress Address of currency (0x0 for ETH).
-        @param _globals Address of the `MapleGlobal` contract.
+        @param _owner Address of the owner of the contract.
       */
-    constructor(address _aggregator, address _assetAddress, address _globals) public {
+    constructor(address _aggregator, address _assetAddress, address _owner) public {
         require(_aggregator != address(0), "ChainLinkOracle:INVALID_AGGREGATOR_ADDRESS");
         priceFeed       = IChainlinkAggregatorV3(_aggregator);
         assetAddress    = _assetAddress;
-        globals         = IGlobals(_globals);
+        transferOwnership(_owner);
     }
 
     /**
@@ -51,8 +52,7 @@ contract ChainLinkOracle {
         @dev Updates aggregator address.
         @param aggregator Address of chainlink aggregator.
     */
-    function changeAggregator(address aggregator) external {
-        _isValidGovernor();
+    function changeAggregator(address aggregator) external onlyOwner {
         require(aggregator != address(0), "ChainLinkOracle:INVALID_AGGREGATOR_ADDRESS");
         emit ChangeAggregatorFeed(aggregator, address(priceFeed));
         priceFeed = IChainlinkAggregatorV3(aggregator);
@@ -77,8 +77,7 @@ contract ChainLinkOracle {
         @dev Set a manual price. NA - this will only be used if manualOverride == true
         @param _price Price to set
     */
-    function setManualPrice(int256 _price) external {
-        _isValidGovernor();
+    function setManualPrice(int256 _price) public onlyOwner {
         emit SetManualPrice(manualPrice, _price);
         manualPrice = _price;
     }
@@ -87,14 +86,9 @@ contract ChainLinkOracle {
         @dev Determine whether manual price is used or not
         @param _override Whether to use the manual override price or not
     */
-    function setManualOverride(bool _override) external {
-        _isValidGovernor();
+    function setManualOverride(bool _override) public onlyOwner {
         manualOverride = _override;
         emit SetManualOverride(_override);
-    }
-
-    function _isValidGovernor() internal view {
-        require(globals.governor() == msg.sender, "ChainLink:NOT_AUTHORIZED");
     }
 
 }
