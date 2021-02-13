@@ -186,13 +186,16 @@ contract GulpTest is TestUtil {
         Governor fakeGov = new Governor();
         fakeGov.setGovGlobals(globals);  // Point to globals created by gov
 
+        gov.setGovTreasury(treasury);
+        fakeGov.setGovTreasury(treasury);
+
         // Drawdown on loan will transfer fee to MPL token contract.
         setUpLoanAndDrawdown();
 
         // Treasury processes fees, sends to MPL token holders.
-        // treasury.passThroughFundsToken();
-        assertTrue(!fakeGov.try_passThroughFundsToken(address(treasury)));
-        assertTrue(     gov.try_passThroughFundsToken(address(treasury)));
+        // treasury.distributeToHolders();
+        assertTrue(!fakeGov.try_distributeToHolders());
+        assertTrue(     gov.try_distributeToHolders());
 
         uint256 totalFundsToken = IERC20(USDC).balanceOf(address(mpl));
         uint256 mplBal          = mpl.balanceOf(address(bPool));
