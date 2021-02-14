@@ -84,8 +84,11 @@ contract MapleTreasury {
         emit PassThrough(passThroughAmount);
     }
 
+    event Debug(string, uint);
+    event Debug(string, address);
+
     /**
-        @dev Convert an ERC-20 asset through Uniswap via bilateral transaction (two asset path).
+        @dev Convert an ERC-20 asset through Uniswap to fundsToken
         @param asset The ERC-20 asset to convert.
     */
     function convertERC20(address asset) isGovernor public {
@@ -93,28 +96,40 @@ contract MapleTreasury {
         
         IGlobals _globals = IGlobals(globals);
 
-        uint assetBalance = IERC20(asset).balanceOf(address(this));
-        uint minAmount    = Util.calcMinAmount(_globals, asset, fundsToken, assetBalance);
+        uint256 assetBalance = IERC20(asset).balanceOf(address(this));
+        uint256 minAmount    = Util.calcMinAmount(_globals, asset, fundsToken, assetBalance);
 
         IERC20(asset).approve(uniswapRouter, assetBalance);
+
+
+        emit Debug("asset", asset);
+        emit Debug("fundsToken", fundsToken);
         
         // Generate path.
         address[] storage path;
+        emit Debug("path item 1", path[0]);
+        emit Debug("path length 1", path.length);
         path.push(asset);
+        emit Debug("path length 2", path.length);
         address uniswapAssetForPath = _globals.defaultUniswapPath(asset, fundsToken);
-        if (uniswapAssetForPath != asset) { path.push(uniswapAssetForPath); }
-        path.push(asset);
+        emit Debug("uniswapAssetForPath", uniswapAssetForPath);
+        if (uniswapAssetForPath != fundsToken && uniswapAssetForPath != address(0)) { 
+            path.push(uniswapAssetForPath); 
+            emit Debug("path length 3", path.length);
+        }
+        path.push(fundsToken);
+        emit Debug("path length 4", path.length);
 
-        uint[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
-            assetBalance,
-            minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
-            path,
-            mpl,                   // Transfer tokens to MPL (MapleToken contract)
-            block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
-        );
+        // for(uint i = 0; i < path.length; i++) emit Debug(i, path[i]);
 
-        IMapleToken(mpl).updateFundsReceived();
+        // uint256[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
+        //     assetBalance,
+        //     minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
+        //     path,
+        //     address(this),         // Transfer tokens to this contract
+        //     block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
+        // );
 
-        emit ERC20Conversion(asset, returnAmounts[0], returnAmounts[path.length - 1]);
+        // emit ERC20Conversion(asset, returnAmounts[0], returnAmounts[path.length - 1]);
     }
 }
