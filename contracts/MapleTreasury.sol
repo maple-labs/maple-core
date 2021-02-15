@@ -101,35 +101,25 @@ contract MapleTreasury {
 
         IERC20(asset).approve(uniswapRouter, assetBalance);
 
-
-        emit Debug("asset", asset);
-        emit Debug("fundsToken", fundsToken);
-        
-        // Generate path.
-        address[] storage path;
-        emit Debug("path item 1", path[0]);
-        emit Debug("path length 1", path.length);
-        path.push(asset);
-        emit Debug("path length 2", path.length);
         address uniswapAssetForPath = _globals.defaultUniswapPath(asset, fundsToken);
-        emit Debug("uniswapAssetForPath", uniswapAssetForPath);
-        if (uniswapAssetForPath != fundsToken && uniswapAssetForPath != address(0)) { 
-            path.push(uniswapAssetForPath); 
-            emit Debug("path length 3", path.length);
-        }
-        path.push(fundsToken);
-        emit Debug("path length 4", path.length);
+        bool middleAsset = uniswapAssetForPath != fundsToken && uniswapAssetForPath != address(0);
 
-        // for(uint i = 0; i < path.length; i++) emit Debug(i, path[i]);
+        address[] memory path = new address[](middleAsset ? 3 : 2);
 
-        // uint256[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
-        //     assetBalance,
-        //     minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
-        //     path,
-        //     address(this),         // Transfer tokens to this contract
-        //     block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
-        // );
+        path[0] = asset;
+        path[1] = middleAsset ? uniswapAssetForPath : fundsToken;
 
-        // emit ERC20Conversion(asset, returnAmounts[0], returnAmounts[path.length - 1]);
+        if(middleAsset) path[2] = fundsToken;
+
+        uint256[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
+            assetBalance,
+            0,
+            // minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
+            path,
+            address(this),         // Transfer tokens to this contract
+            block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
+        );
+
+        emit ERC20Conversion(asset, returnAmounts[0], returnAmounts[path.length - 1]);
     }
 }

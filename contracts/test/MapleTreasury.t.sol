@@ -40,9 +40,11 @@ contract MapleTreasuryTest is TestUtil {
         gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
         gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);  // Both set to one dollar
         gov.setPriceOracle(DAI,  0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);  // Both set to one dollar
+        gov.setDefaultUniswapPath(WBTC, USDC, WETH);
 
+        mint("WBTC", address(this),  10 * BTC);
         mint("WETH", address(this),  10 ether);
-        mint("DAI", address(this),  100 ether);
+        mint("DAI",  address(this), 100 ether);
         mint("USDC", address(this), 100 * USD);
     }
 
@@ -114,33 +116,50 @@ contract MapleTreasuryTest is TestUtil {
         
         IGlobals _globals = IGlobals(address(globals));
 
+        assertEq(IERC20(WBTC).balanceOf(address(treasury)), 0);
         assertEq(IERC20(WETH).balanceOf(address(treasury)), 0);
+        assertEq(IERC20(DAI).balanceOf(address(treasury)),  0);
 
+        IERC20(WBTC).transfer(address(treasury), 10 * BTC);
         IERC20(WETH).transfer(address(treasury), 10 ether);
         IERC20(DAI).transfer(address(treasury), 100 ether);
 
+        assertEq(IERC20(WBTC).balanceOf(address(treasury)),  10 * BTC);
         assertEq(IERC20(WETH).balanceOf(address(treasury)),  10 ether);
         assertEq(IERC20(DAI).balanceOf(address(treasury)),  100 ether);
         assertEq(IERC20(USDC).balanceOf(address(treasury)),         0);
 
+        uint256 expectedAmtFromWBTC = Util.calcMinAmount(_globals, WBTC, USDC,  10 * BTC);
         uint256 expectedAmtFromWETH = Util.calcMinAmount(_globals, WETH, USDC,  10 ether);
         uint256 expectedAmtFromDAI  = Util.calcMinAmount(_globals, DAI,  USDC, 100 ether);
 
-        assertTrue(!fakeGov.try_convertERC20(WETH));  // Non-governor can't convert
-        assertTrue(     gov.try_convertERC20(WETH));  // Governor can convert
-        assertTrue(false);
+        /*** Convert WBTC ***/
+        assertTrue(!fakeGov.try_convertERC20(WBTC));  // Non-governor can't convert
+        assertTrue(     gov.try_convertERC20(WBTC));  // Governor can convert
+
+        assertEq(IERC20(WBTC).balanceOf(address(treasury)),         0);
+        assertEq(IERC20(DAI).balanceOf(address(treasury)),  100 ether);
+
+        assertEq(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWBTC);
+
+        // /*** Convert WETH ***/
+        // assertTrue(!fakeGov.try_convertERC20(WETH));  // Non-governor can't convert
+        // assertTrue(     gov.try_convertERC20(WETH));  // Governor can convert
 
         // assertEq(IERC20(WETH).balanceOf(address(treasury)),         0);
         // assertEq(IERC20(DAI).balanceOf(address(treasury)),  100 ether);
 
-        // assertEq(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWETH);
+        // withinPrecision(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWETH, 2);
 
+        // assertTrue(false);
+
+        // /*** Convert DAI ***/
         // assertTrue(!fakeGov.try_convertERC20(DAI));  // Non-governor can't convert
         // assertTrue(     gov.try_convertERC20(DAI));  // Governor can convert
 
         // assertEq(IERC20(WETH).balanceOf(address(treasury)), 0);
         // assertEq(IERC20(DAI).balanceOf(address(treasury)),  0);
 
-        // assertEq(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromDAI + expectedAmtFromWETH);
+        // withinPrecision(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromDAI + expectedAmtFromWETH, 2);
     }
 }

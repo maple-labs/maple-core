@@ -265,9 +265,6 @@ contract Loan is FDT {
         return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(loanAsset), liquidationAmt);
     }
 
-    event Debug(string, uint);
-    event Debug(string, address);
-
     /**
         @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
     */
@@ -285,18 +282,15 @@ contract Loan is FDT {
         uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), address(loanAsset), liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
 
         // Generate path.
-        address[] storage path;
-        emit Debug("path length 1", path.length);
-        path.push(address(collateralAsset));
-        emit Debug("path length 2", path.length);
         address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
-        emit Debug("uniswapAssetForPath", uniswapAssetForPath);
-        if (uniswapAssetForPath != address(loanAsset) && uniswapAssetForPath != address(0)) {
-            path.push(uniswapAssetForPath); 
-            emit Debug("path length 3", path.length);
-        }
-        path.push(address(loanAsset));
-        emit Debug("path length 4", path.length);
+        bool middleAsset = uniswapAssetForPath != address(loanAsset) && uniswapAssetForPath != address(0);
+
+        address[] memory path = new address[](middleAsset ? 3 : 2);
+
+        path[0] = address(collateralAsset);
+        path[1] = middleAsset ? uniswapAssetForPath : address(loanAsset);
+
+        if(middleAsset) path[2] = address(loanAsset);
 
         uint[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
             collateralAsset.balanceOf(address(this)),

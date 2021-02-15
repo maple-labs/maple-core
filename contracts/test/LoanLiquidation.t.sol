@@ -76,7 +76,7 @@ contract LoanLiquidationTest is TestUtil {
         gov.setMapleTreasury(address(trs));
 
         mint("WETH", address(ali),   10 ether);
-        mint("WBTC", address(ali),   10 ether);
+        mint("WBTC", address(ali),   10 * BTC);
         mint("USDC", address(bob), 5000 * USD);
         mint("USDC", address(ali),  500 * USD);
     }
@@ -94,10 +94,7 @@ contract LoanLiquidationTest is TestUtil {
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
     }
 
-    function test_basic_liquidation() public {
-
-        Loan loan = createAndFundLoan(address(bulletCalc), WETH);
-        
+    function performLiquidationAssertions(Loan loan) internal {
         // Fetch pre-state variables.
         address collateralLocker  = loan.collateralLocker();
         address collateralAsset   = address(loan.collateralAsset());
@@ -154,5 +151,15 @@ contract LoanLiquidationTest is TestUtil {
                 assertEq(amountRecovered,   loanAssetLoan_post - loanAssetLoan_pre);
             }
         }
+    }
+
+    function test_basic_liquidation() public {
+        // Triangular uniswap path
+        Loan wbtcLoan = createAndFundLoan(address(bulletCalc), WBTC);
+        performLiquidationAssertions(wbtcLoan);
+
+        // // Bilateral uniswap path
+        // Loan wethLoan = createAndFundLoan(address(bulletCalc), WETH);
+        // performLiquidationAssertions(wethLoan);
     }
 }
