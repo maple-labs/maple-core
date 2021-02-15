@@ -53,27 +53,43 @@ jobs:
             ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY ./test-ci.sh $TEST
           no_output_timeout: 60m
   
-  dependencies:
+  integration_test_dependencies:
     <<: *defaults
     steps:
       - run:
-          name: Checkout maple-beta-scaffold
-          command: GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-beta-scaffold.git .
+          name: Checkout maple-core
+          command: |
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-core.git
+            cd ~/project/maple-core
+            git checkout $CIRCLE_BRANCH
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git submodule update --init --recursive
+      - run:
+          name: Checkout maple-deploy
+          command: |
+            cd ~/project
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-deploy.git
       - restore_cache:
-          key: v1-npm-deps-{{ checksum "~/project/yarn.lock" }}
+          key: v1-npm-deps-{{ checksum "~/project/maple-deploy/package.json" }}
       - run:
-          name: Checkout mbs dependencies
-          command: GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" yarn setup
-      - run:
-          name: Checkout current maple-core branch
-          command: cd ~/project/packages/maple-core && git checkout $CIRCLE_BRANCH
-      - run:
-          name: Install maple-core deps
-          command: yarn
+          name: Install maple-deploy deps
+          command: cd ~/project/maple-deploy && yarn
       - save_cache:
+          key: v1-npm-deps-{{ checksum "~/project/maple-deploy/package.json" }}
           paths:
-            - ~/usr/local/lib/node_modules # location depends on npm version
-          key: v1-npm-deps-{{ checksum "~/project/yarn.lock" }}
+            - ~/project/maple-deploy/node_modules
+      - run:
+          name: Setup maple-deploy .env
+          command: |
+            cd ~/project/maple-deploy
+            echo "HARDHAT_MNEMONIC=$HARDHAT_MNEMONIC" >> .env
+            echo "HARDHAT_FORK_RPC_URL=$HARDHAT_FORK_RPC_URL" >> .env
+            echo "HARDHAT_FORK_BLOCK_HEIGHT=11780000" >> .env
+            echo "NETWORK=localhost" >> .env
+      - run:
+          name: Setup maple-deploy symlinks
+          command: |
+            ln -s ../../../maple-core/contracts ~/project/maple-deploy/hardhat/contracts/core
+            ln -s ../../maple-core/lib ~/project/maple-deploy/hardhat/lib
       - persist_to_workspace:
           root: ~/project
           paths:
@@ -83,29 +99,10 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-          # Must be absolute path or relative path from working_directory
           at: ~/project
       - run:
-          name: Run mbs chain
-          command: cd ~/project && yarn chain >> /dev/null
-          background: true
-      - run:
-          name: Wait for chain to start
-          command: sleep 3
-      - run:
-          name: Set Env Variables
-          command: |
-            echo 'export NETWORK="localhost"' >> $BASH_ENV
-            source $BASH_ENV
-      - run:
-          name: Deploy Core and Dependency Contracts to Hardhat Chain
-          command: cd ~/project && yarn deploy
-      - run:
-          name: Run Integration on Localhost Network
-          command: cd ~/project && yarn test
-      - run:
-          name: Stop Hardhat chain
-          command: pkill node
+          name: Start testchain and run hardhat waffle tests
+          command: cd ~/project/maple-deploy && ./test-ci.sh
 
   deploy_kaleido:
     <<: *defaults
@@ -160,10 +157,12 @@ workflows:
   version: 2
   test_all:
     jobs:
-      # - dependencies
-      # - integration_test:
-      #     requires:
-      #       - dependencies
+      - integration_test_dependencies:
+          context: hardhat
+      - integration_test:
+          context: hardhat
+          requires:
+            - integration_test_dependencies
 
       - dapp_build:
           context: seth
