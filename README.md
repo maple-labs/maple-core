@@ -4,7 +4,7 @@ The Maple Core protocol.
 
 ### Toolset
 
-- <a href="https://hardhat.org/">Hardhat</a>
+- <a href="https://github.com/dapphub/dapptools">Dapp tools</a>
 - <a href="https://docs.soliditylang.org/en/v0.6.11/">Solidity 0.6.11</a>
 - <a href="https://github.com/OpenZeppelin/solidity-docgen">Solidity-Docgen</a>
 - Node v14
@@ -15,17 +15,9 @@ The Maple Core protocol.
 
 ### Dev Setup
 
-```
-npm i -g solc@0.6.11
-git clone git@github.com/maple-labs/maple-core
+```sh
+git clone git@github.com:maple-labs/maple-core.git
 cd maple-core
-
-yarn
-yarn compile
-yarn publish
-yarn deploy
-yarn docs
-
 dapp update
 ```
 
