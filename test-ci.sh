@@ -12,5 +12,3 @@ export SOLC_FLAGS="--optimize --optimize-runs 200"
 export DAPP_LINK_TEST_LIBRARIES=1
 
 LANG=C.UTF-8 dapp test --match ${1} --rpc-url "$ETH_RPC_URL" --verbose --cache "cache/dapp-cache" --fuzz-runs 5
-
-# --match "contracts/test/MapleGlobals.t.sol" 
