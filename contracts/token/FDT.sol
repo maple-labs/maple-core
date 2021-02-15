@@ -24,6 +24,9 @@ abstract contract FDT is IFDT, ERC20 {
     mapping(address => int256)  internal pointsCorrection;
     mapping(address => uint256) internal withdrawnFunds; // 3
 
+    event PointsPerShareUpdated(uint256 pointsPerShare);
+    event PointsCorrectionUpdated(address account, int256 pointsCorrection);
+
     constructor(string memory name, string memory symbol, address _fundsToken) ERC20(name, symbol) public {
         fundsToken = IERC20(_fundsToken);
     }

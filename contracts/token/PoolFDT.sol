@@ -31,6 +31,11 @@ abstract contract PoolFDT is IFDT, ERC20 {
     mapping(address => uint256) internal withdrawnFunds;
     mapping(address => uint256) internal recognizedLosses;
 
+    event   PointsPerShareUpdated(uint256 pointsPerShare);
+    event   LossesPerShareUpdated(uint256 lossesPerShare);
+    event PointsCorrectionUpdated(address account, int256 pointsCorrection);
+    event LossesCorrectionUpdated(address account, int256 lossesCorrection);
+
     /**
      * @dev This event emits when new losses are distributed
      * @param by the address of the sender who distributed losses
@@ -41,9 +46,10 @@ abstract contract PoolFDT is IFDT, ERC20 {
     /**
      * @dev This event emits when distributed losses are recognized by a token holder.
      * @param by the address of the receiver of losses
-     * @param lossesRecognized the amount of losses that were recognized
+     * @param lossesRecognized      the amount of losses that were recognized
+     * @param totalLossesRecognized the total amount of losses that were recognized
      */
-    event LossesRecognized(address indexed by, uint256 lossesRecognized);
+    event LossesRecognized(address indexed by, uint256 lossesRecognized, uint256 totalLossesRecognized);
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) public { }
 
