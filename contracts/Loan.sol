@@ -321,10 +321,10 @@ contract Loan is FDT {
 
         // Emit liquidation event.
         emit Liquidation(
-            amountLiquidated,  // collateralSwapped
-            amountRecovered,  // loanAssetReturned
-            liquidationExcess,
-            defaultSuffered
+            amountLiquidated,  // Amount of collateralAsset swapped
+            amountRecovered,   // Amount of loanAsset recovered from swap
+            liquidationExcess, // Amount of loanAsset returned to borrower
+            defaultSuffered    // Remaining losses after liquidation
         );
 
     }

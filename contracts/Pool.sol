@@ -344,7 +344,13 @@ contract Pool is PoolFDT {
 
         principalOut = principalOut.sub(defaultSuffered);
 
-        emit DefaultSuffered(loan, defaultSuffered, bptsBurned, bptsReturned, liquidityAssetRecoveredFromBurn);
+        emit DefaultSuffered(
+            loan,                            // Which loan this defaultSuffered is from
+            defaultSuffered,                 // Total default suffered from loan by pool after liquidation
+            bptsBurned,                      // Amount of BPTs burned from stakeLocker
+            bptsReturned,                    // Remaining BPTs in stakeLocker post-burn                      
+            liquidityAssetRecoveredFromBurn  // Amount of liquidityAsset recovered from burning BPTs
+        );
     }
 
     /**

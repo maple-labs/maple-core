@@ -66,6 +66,7 @@ abstract contract PoolFDT is IFDT, ERC20 {
         if (value > 0) {
             pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier) / totalSupply());
             emit FundsDistributed(msg.sender, value);
+            emit PointsPerShareUpdated(pointsPerShare);
         }
     }
 
@@ -88,6 +89,7 @@ abstract contract PoolFDT is IFDT, ERC20 {
         if (value > 0) {
             lossesPerShare = lossesPerShare.add(value.mul(pointsMultiplier) / totalSupply());
             emit LossesDistributed(msg.sender, value);
+            emit LossesPerShareUpdated(lossesPerShare);
         }
     }
 
@@ -101,7 +103,7 @@ abstract contract PoolFDT is IFDT, ERC20 {
 
         withdrawnFunds[msg.sender] = withdrawnFunds[msg.sender].add(_withdrawableDividend);
 
-        emit FundsWithdrawn(msg.sender, _withdrawableDividend);
+        emit FundsWithdrawn(msg.sender, _withdrawableDividend, withdrawnFunds[msg.sender]);
 
         return _withdrawableDividend;
     }
@@ -116,7 +118,7 @@ abstract contract PoolFDT is IFDT, ERC20 {
 
         recognizedLosses[msg.sender] = recognizedLosses[msg.sender].add(_recognizeableDividend);
 
-        emit LossesRecognized(msg.sender, _recognizeableDividend);
+        emit LossesRecognized(msg.sender, _recognizeableDividend, recognizedLosses[msg.sender]);
 
         return _recognizeableDividend;
     }
@@ -210,6 +212,12 @@ abstract contract PoolFDT is IFDT, ERC20 {
         int256 _lossesCorrection = lossesPerShare.mul(value).toInt256Safe();
         lossesCorrection[from]   = lossesCorrection[from].add(_lossesCorrection);
         lossesCorrection[to]     = lossesCorrection[to].sub(_lossesCorrection);
+
+        emit PointsCorrectionUpdated(from, pointsCorrection[from]);
+        emit PointsCorrectionUpdated(to,   pointsCorrection[to]);
+
+        emit LossesCorrectionUpdated(from, lossesCorrection[from]);
+        emit LossesCorrectionUpdated(to,   lossesCorrection[to]);
     }
 
     /**
@@ -228,6 +236,9 @@ abstract contract PoolFDT is IFDT, ERC20 {
         lossesCorrection[account] = lossesCorrection[account].sub(
             (lossesPerShare.mul(value)).toInt256Safe()
         );
+
+        emit PointsCorrectionUpdated(account, pointsCorrection[account]);
+        emit LossesCorrectionUpdated(account, lossesCorrection[account]);
     }
 
     /**
@@ -246,6 +257,9 @@ abstract contract PoolFDT is IFDT, ERC20 {
         lossesCorrection[account] = lossesCorrection[account].add(
             (lossesPerShare.mul(value)).toInt256Safe()
         );
+
+        emit PointsCorrectionUpdated(account, pointsCorrection[account]);
+        emit LossesCorrectionUpdated(account, lossesCorrection[account]);
     }
 
     /**
