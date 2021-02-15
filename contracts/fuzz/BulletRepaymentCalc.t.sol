@@ -35,6 +35,8 @@ import "../LoanFactory.sol";
 import "../Loan.sol";
 import "../Pool.sol";
 
+import "../oracles/ChainLinkOracle.sol";
+
 interface IBPoolFactory {
     function newBPool() external returns (address);
 }
@@ -75,6 +77,9 @@ contract BulletRepaymentCalcTest is TestUtil {
     PremiumCalc                    premiumCalc;
     StakeLockerFactory               slFactory;
     Treasury                               trs;
+    ChainLinkOracle                 wETHOracle;
+    ChainLinkOracle                 wBTCOracle;
+    ChainLinkOracle                  uSDOracle;
     
     ERC20                           fundsToken;
     IBPool                               bPool;
@@ -120,9 +125,13 @@ contract BulletRepaymentCalcTest is TestUtil {
         gov.setValidSubFactory(address(poolFactory), address(dlFactory1), true);
         gov.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
 
-        gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-        gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
-        gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
+        wETHOracle = new ChainLinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, WETH, address(this));
+        wBTCOracle = new ChainLinkOracle(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c, WBTC, address(this));
+        uSDOracle  = new ChainLinkOracle(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, USDC, address(this));
+        
+        gov.setPriceOracle(WETH, address(wETHOracle));
+        gov.setPriceOracle(WBTC, address(wBTCOracle));
+        gov.setPriceOracle(USDC, address(uSDOracle));
 
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);
