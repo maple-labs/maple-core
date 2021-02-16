@@ -4,10 +4,9 @@ import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/openzeppelin-contracts/contracts/math/Math.sol";
 import "../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import "../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
-contract StakingRewards is ReentrancyGuard, Ownable {
+contract StakingRewards is Ownable {
     using SafeMath for uint256;
 
     IERC20  public immutable rewardsToken;
@@ -93,7 +92,7 @@ contract StakingRewards is ReentrancyGuard, Ownable {
         emit Staked(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount) public nonReentrant {
+    function withdraw(uint256 amount) public {
         _updateReward(msg.sender);
         require(amount > 0, "REWARDS:WITHDRAW_EQ_ZERO");
         _totalSupply = _totalSupply.sub(amount);
@@ -102,7 +101,7 @@ contract StakingRewards is ReentrancyGuard, Ownable {
         emit Withdrawn(msg.sender, amount);
     }
 
-    function getReward() public nonReentrant {
+    function getReward() public {
         _updateReward(msg.sender);
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
