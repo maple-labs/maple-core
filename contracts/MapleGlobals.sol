@@ -2,6 +2,8 @@
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
+import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+
 import "./interfaces/IERC20Details.sol";
 import "./interfaces/IPriceFeed.sol";
 import "./interfaces/ISubFactory.sol";
@@ -278,6 +280,7 @@ contract MapleGlobals {
         @param _newGovernor The address of new governor.
     */
     function setGovernor(address _newGovernor) public isGovernor {
+        require(_newGovernor != address(0), "MapleGlobals:ZERO_ADDRESS_GOVERNOR");
         governor = _newGovernor;
     }
 
