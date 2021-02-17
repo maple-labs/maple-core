@@ -84,9 +84,6 @@ contract MapleTreasury {
         emit PassThrough(passThroughAmount);
     }
 
-    event Debug(string, uint);
-    event Debug(string, address);
-
     /**
         @dev Convert an ERC-20 asset through Uniswap to fundsToken
         @param asset The ERC-20 asset to convert.
@@ -113,8 +110,7 @@ contract MapleTreasury {
 
         uint256[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
             assetBalance,
-            0,
-            // minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
+            minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
             path,
             address(this),         // Transfer tokens to this contract
             block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
