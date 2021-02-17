@@ -352,7 +352,7 @@ contract StakingRewardsTest is TestUtil {
         hevm.warp(start + 1 days);  // Warp to time = (1 days) (dTime = 1 days)
 
         // Reward per token (RPT) that was used before bob entered the pool (accrued over dTime = 1 days)
-        uint256 dTime1_rpt = rewardRate * 1 days * WAD / 10 * WAD;  
+        uint256 dTime1_rpt = rewardRate * 1 days * WAD / (10 * WAD);  
 
         /*** Ali time = (1 days) pre-claim ***/
         assertRewardsAccounting({
@@ -394,7 +394,7 @@ contract StakingRewardsTest is TestUtil {
         hevm.warp(start + 2 days);  // Warp to time = (2 days) (dTime = 1 days)
 
         // Reward per token (RPT) that was used after Bob entered the pool (accrued over dTime = 1 days, on second day), smaller since supply increased
-        uint256 dTime2_rpt = rewardRate * 1 days * WAD / 20 * WAD;  
+        uint256 dTime2_rpt = rewardRate * 1 days * WAD / (20 * WAD);  
 
         /*** Ali time = (2 days) pre-claim ***/
         assertRewardsAccounting({
@@ -433,7 +433,7 @@ contract StakingRewardsTest is TestUtil {
 
         hevm.warp(start + 2 days + 1 hours);  // Warp to time = (2 days + 1 hours) (dTime = 1 hours)
 
-        uint256 dTime3_rpt = rewardRate * 1 hours * WAD / 40 * WAD;  // Reward per token (RPT) that was used after Bob staked more into the pool (accrued over dTime = 1 hours)
+        uint256 dTime3_rpt = rewardRate * 1 hours * WAD / (40 * WAD);  // Reward per token (RPT) that was used after Bob staked more into the pool (accrued over dTime = 1 hours)
 
         /*** Ali time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
@@ -498,7 +498,7 @@ contract StakingRewardsTest is TestUtil {
 
         hevm.warp(start + 3 days + 1 hours);  // Warp to time = (3 days + 1 hours) (dTime = 1 days)
 
-        uint256 dTime4_rpt = rewardRate * 1 days * WAD / 35 * WAD;  // Reward per token (RPT) that was used after Ali withdrew from the pool (accrued over dTime = 1 days)
+        uint256 dTime4_rpt = rewardRate * 1 days * WAD / (35 * WAD);  // Reward per token (RPT) that was used after Ali withdrew from the pool (accrued over dTime = 1 days)
 
         /*** Ali time = (3 days + 1 hours) pre-exit ***/
         assertRewardsAccounting({
@@ -533,7 +533,7 @@ contract StakingRewardsTest is TestUtil {
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                                // Used so Ali can't do multiple claims
             earned:                 0,                                                                                // Time-based calculation and userRewardPerTokenPaid cancel out
             rewards:                0,                                                                                // Updated on updateReward to earned(), then set to zero on getReward
-            rewardTokenBal:         ((dTime1_rpt + dTime2_rpt + dTime3_rpt) * 10 * WAD + dTime4_rpt * 5 * WAD) / WAD  // Total earnings from pool
+            rewardTokenBal:         ((dTime1_rpt + dTime2_rpt + dTime3_rpt) * 10 ether + dTime4_rpt * 5 ether) / WAD  // Total earnings from pool (using ether to avoid stack too deep)
         });
 
         /*** Bob time = (2 days + 1 hours) post-exit ***/
@@ -544,7 +544,7 @@ contract StakingRewardsTest is TestUtil {
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                    // Used so Bob can't do multiple claims
             earned:                 0,                                                                    // Time-based calculation and userRewardPerTokenPaid cancel out
             rewards:                0,                                                                    // Updated on updateReward to earned(), then set to zero on getReward
-            rewardTokenBal:         (dTime2_rpt * 10 * WAD + (dTime3_rpt + dTime4_rpt) * 30 * WAD) / WAD  // Total earnings from pool
+            rewardTokenBal:         (dTime2_rpt * 10 ether + (dTime3_rpt + dTime4_rpt) * 30 ether) / WAD  // Total earnings from pool (using ether to avoid stack too deep)
         });
     }
 
@@ -579,7 +579,7 @@ contract StakingRewardsTest is TestUtil {
         /*** EPOCH 1 ENDS ***/
         /********************/
 
-        uint256 dTime1_rpt = rewardRate * 30 days * WAD / 40 * WAD;  // Reward per token (RPT) for all of epoch 1
+        uint256 dTime1_rpt = rewardRate * 30 days * WAD / (40 * WAD);  // Reward per token (RPT) for all of epoch 1
 
         /*** Ali time = (30 days) pre-claim ***/
         assertRewardsAccounting({
@@ -666,7 +666,7 @@ contract StakingRewardsTest is TestUtil {
 
         hevm.warp(block.timestamp + 1 days);  // Warp to 1 day into the second epoch
 
-        uint256 dTime2_rpt = rewardRate2 * 1 days * WAD / 40 * WAD;  // Reward per token (RPT) for one day of epoch 2 (uses the new rewardRate)
+        uint256 dTime2_rpt = rewardRate2 * 1 days * WAD / (40 * WAD);  // Reward per token (RPT) for one day of epoch 2 (uses the new rewardRate)
 
         /*** Ali time = (1 days into epoch 2) pre-exit ***/
         assertRewardsAccounting({
