@@ -5,7 +5,7 @@ import "./IChainlinkAggregatorV3.sol";
 import "../interfaces/IGlobals.sol";
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract ChainLinkOracle is Ownable {
+contract ChainlinkOracle is Ownable {
 
     IChainlinkAggregatorV3 public priceFeed;
     IGlobals public globals;
@@ -25,7 +25,7 @@ contract ChainLinkOracle is Ownable {
         @param _owner Address of the owner of the contract.
       */
     constructor(address _aggregator, address _assetAddress, address _owner) public {
-        require(_aggregator != address(0), "ChainLinkOracle:INVALID_AGGREGATOR_ADDRESS");
+        require(_aggregator != address(0), "ChainlinkOracle:INVALID_AGGREGATOR_ADDRESS");
         priceFeed       = IChainlinkAggregatorV3(_aggregator);
         assetAddress    = _assetAddress;
         transferOwnership(_owner);
@@ -39,11 +39,11 @@ contract ChainLinkOracle is Ownable {
         (
             uint80 roundID, 
             int256 price,
-            uint startedAt,
-            uint timeStamp,
+            uint256 startedAt,
+            uint256 timeStamp,
             uint80 answeredInRound
         ) = priceFeed.latestRoundData();
-        require(price != int256(0), "ChainLinkOracle:ZERO_PRICE");
+        require(price != int256(0), "ChainlinkOracle:ZERO_PRICE");
         return price;
     }
 
@@ -53,7 +53,7 @@ contract ChainLinkOracle is Ownable {
         @param aggregator Address of chainlink aggregator.
     */
     function changeAggregator(address aggregator) external onlyOwner {
-        require(aggregator != address(0), "ChainLinkOracle:INVALID_AGGREGATOR_ADDRESS");
+        require(aggregator != address(0), "ChainlinkOracle:INVALID_AGGREGATOR_ADDRESS");
         emit ChangeAggregatorFeed(aggregator, address(priceFeed));
         priceFeed = IChainlinkAggregatorV3(aggregator);
     }

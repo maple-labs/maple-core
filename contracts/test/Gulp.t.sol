@@ -33,7 +33,7 @@ import "../interfaces/IStakeLocker.sol";
 import "../interfaces/IPool.sol";
 import "../interfaces/IPoolFactory.sol";
 
-import "../oracles/ChainLinkOracle.sol";
+import "../oracles/ChainlinkOracle.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -63,9 +63,9 @@ contract GulpTest is TestUtil {
     PoolFactory                    poolFactory;
     PremiumCalc                    premiumCalc;
     StakeLockerFactory               slFactory;
-    ChainLinkOracle                 wETHOracle;
-    ChainLinkOracle                 wBTCOracle;
-    ChainLinkOracle                  uSDOracle;
+    ChainlinkOracle                 wethOracle;
+    ChainlinkOracle                 wbtcOracle;
+    ChainlinkOracle                  usdOracle;
 
     IBPool                               bPool;
     IStakeLocker                   stakeLocker;
@@ -141,13 +141,13 @@ contract GulpTest is TestUtil {
         gov.setLoanAsset(USDC, true);
         gov.setSwapOutRequired(1_000_000);
         
-        wETHOracle = new ChainLinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, WETH, address(this));
-        wBTCOracle = new ChainLinkOracle(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c, WBTC, address(this));
-        uSDOracle  = new ChainLinkOracle(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, USDC, address(this));
+        wethOracle = new ChainlinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, WETH, address(this));
+        wbtcOracle = new ChainlinkOracle(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c, WBTC, address(this));
+        usdOracle  = new ChainlinkOracle(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, USDC, address(this));
         
-        gov.setPriceOracle(WETH, address(wETHOracle));
-        gov.setPriceOracle(WBTC, address(wBTCOracle));
-        gov.setPriceOracle(USDC, address(uSDOracle));
+        gov.setPriceOracle(WETH, address(wethOracle));
+        gov.setPriceOracle(WBTC, address(wbtcOracle));
+        gov.setPriceOracle(USDC, address(usdOracle));
 
         
         // Create Liquidity Pool

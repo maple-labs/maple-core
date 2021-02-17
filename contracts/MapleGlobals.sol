@@ -40,7 +40,7 @@ contract MapleGlobals {
 
     
     mapping(address => address) public assetPriceFeed;          // Mapping of asset, to the associated oracle price feed.
-    mapping(address => address) public oracleFor;               // ChainLink oracle for a given asset.
+    mapping(address => address) public oracleFor;               // Chainlink oracle for a given asset.
 
     mapping(address => bool)                     public isValidPoolFactory;  // Mapping of valid pool factories.
     mapping(address => bool)                     public isValidLoanFactory;  // Mapping of valid loan factories.
@@ -281,7 +281,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Fetch price for asset from ChainLink oracles.
+        @dev Fetch price for asset from Chainlink oracles.
         @param asset The asset to fetch price.
         @return The price of asset.
     */

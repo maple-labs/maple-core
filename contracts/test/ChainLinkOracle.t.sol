@@ -5,38 +5,21 @@ pragma experimental ABIEncoderV2;
 import "./TestUtil.sol";
 
 import "./user/Governor.sol";
+import "./user/SecurityAdmin.sol";
 
 import "../MapleGlobals.sol";
 import "../MapleToken.sol";
-import "../oracles/ChainLinkOracle.sol";
-
-contract FakeUser {
-    function try_set_manual_price(address oracle, int256 priceFeed) external returns (bool ok) {
-        string memory sig = "setManualPrice(int256)";
-        (ok,) = oracle.call(abi.encodeWithSignature(sig, priceFeed));
-    }
-
-    function try_set_manual_override(address oracle, bool _override) external returns (bool ok) {
-        string memory sig = "setManualOverride(bool)";
-        (ok,) = oracle.call(abi.encodeWithSignature(sig, _override));
-    }
-
-    function try_change_aggregator(address oracle, address aggregator) external returns (bool ok) {
-        string memory sig = "changeAggregator(address)";
-        (ok,) = oracle.call(abi.encodeWithSignature(sig, aggregator));
-    }
-}
+import "../oracles/ChainlinkOracle.sol";
 
 
-contract ChainLinkOracleTest is TestUtil {
+contract ChainlinkOracleTest is TestUtil {
 
     Governor                        gov;
-
-   
     MapleToken                      mpl;
     MapleGlobals                globals;
-    ChainLinkOracle              oracle;
-    FakeUser                         fu;
+    ChainlinkOracle              oracle;
+    SecurityAdmin                 admin;
+    SecurityAdmin             fakeAdmin;
 
     uint256 constant MULTIPLIER = 10 ** 6;
 
@@ -45,8 +28,9 @@ contract ChainLinkOracleTest is TestUtil {
         gov       = new Governor();                                           // Actor: Governor of Maple.
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);               // Setup Maple token.
         globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);           // Setup Maple Globals.
-        oracle    = new ChainLinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, address(0), address(this));
-        fu        = new FakeUser();
+        admin     = new SecurityAdmin();
+        oracle    = new ChainlinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, address(0), address(admin));
+        fakeAdmin = new SecurityAdmin();
 
         assertEq(address(oracle.priceFeed()), 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
     }
@@ -58,19 +42,19 @@ contract ChainLinkOracleTest is TestUtil {
         assertEq(oracle.manualPrice(), int256(0));
         
         // Set manual price
-        assertTrue(!fu.try_set_manual_override(address(oracle), true));
-        assertTrue(!fu.try_set_manual_price(address(oracle), int256(45000)));
+        assertTrue(!fakeAdmin.try_setManualOverride(address(oracle), true));
+        assertTrue(!fakeAdmin.try_setManualPrice(address(oracle), int256(45000)));
         // Use authorized owner.
-        oracle.setManualOverride(true);
-        oracle.setManualPrice(int256(45000));
+        admin.setManualOverride(address(oracle), true);
+        admin.setManualPrice(address(oracle), int256(45000));
         assertTrue(oracle.manualOverride());
 
         assertEq(oracle.manualPrice(),    int256(45000));
         assertEq(oracle.getLatestPrice(), int256(45000));
 
         // Change aggregator.
-        assertTrue(!fu.try_change_aggregator(address(oracle), 0xb022E2970b3501d8d83eD07912330d178543C1eB));
-        oracle.changeAggregator(0xb022E2970b3501d8d83eD07912330d178543C1eB);
+        assertTrue(!fakeAdmin.try_changeAggregator(address(oracle), 0xb022E2970b3501d8d83eD07912330d178543C1eB));
+        admin.changeAggregator(address(oracle), 0xb022E2970b3501d8d83eD07912330d178543C1eB);
         assertEq(address(oracle.priceFeed()), 0xb022E2970b3501d8d83eD07912330d178543C1eB);
 
         assertTrue(oracle.getLatestPrice() != currentPrice);

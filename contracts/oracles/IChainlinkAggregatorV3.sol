@@ -20,6 +20,7 @@ interface IChainlinkAggregatorV3 {
         uint256 updatedAt,
         uint80 answeredInRound
     );
+
   function latestRoundData()
     external
     view

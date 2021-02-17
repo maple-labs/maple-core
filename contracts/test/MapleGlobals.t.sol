@@ -7,6 +7,8 @@ import "./TestUtil.sol";
 import "./user/Governor.sol";
 import "./user/PoolDelegate.sol";
 
+import "../oracles/ChainlinkOracle.sol";
+
 import "../BulletRepaymentCalc.sol";
 import "../CollateralLockerFactory.sol";
 import "../DebtLockerFactory.sol";
@@ -19,8 +21,6 @@ import "../MapleTreasury.sol";
 import "../PoolFactory.sol";
 import "../PremiumCalc.sol";
 import "../StakeLockerFactory.sol";
-import "../oracles/MockPriceFeedWBTC.sol";
-import "../oracles/MockPriceFeedWETH.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -44,8 +44,9 @@ contract MapleGlobalsTest is TestUtil {
     PoolFactory              poolFactory;
     PremiumCalc                    pCalc;
     StakeLockerFactory         slFactory;
-    MockPriceFeedWETH         wETHOracle;
-    MockPriceFeedWBTC         wBTCOracle;
+    ChainlinkOracle           wethOracle;
+    ChainlinkOracle           wbtcOracle;
+    ChainlinkOracle            usdOracle;
 
     ERC20                     fundsToken;
 
@@ -78,8 +79,13 @@ contract MapleGlobalsTest is TestUtil {
         pCalc       = new PremiumCalc(200);
         brCalc      = new BulletRepaymentCalc();
         trs         = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
-        wETHOracle  = new MockPriceFeedWETH(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, address(this), int256(0), WETH);
-        wBTCOracle  = new MockPriceFeedWBTC(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c, address(this), int256(0), WBTC);
+        wethOracle  = new ChainlinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, WETH, address(this));
+        wbtcOracle  = new ChainlinkOracle(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c, WBTC, address(this));
+        usdOracle   = new ChainlinkOracle(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, USDC, address(this));
+        
+        gov.setPriceOracle(WETH, address(wethOracle));
+        gov.setPriceOracle(WBTC, address(wbtcOracle));
+        gov.setPriceOracle(USDC, address(usdOracle));
 
         // The following code was adopted from maple-core/scripts/setup.js
         gov.setMapleTreasury(address(trs));
@@ -91,7 +97,7 @@ contract MapleGlobalsTest is TestUtil {
         gov.setCollateralAsset(WETH, true);
         gov.setCollateralAsset(WBTC, true);
 
-        // TODO: Assign price feeds from official ChainLink oracles.
+        // TODO: Assign price feeds from official Chainlink oracles.
 
         gov.setCalc(address(lfCalc), true);
         gov.setCalc(address(pCalc), true);
@@ -192,7 +198,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setPoolDelegateWhitelist(address(joe), false));
         assertTrue(!globals.isValidPoolDelegate(address(joe)));
 
-        // TODO: Assign price feeds from official ChainLink oracles.
+        // TODO: Assign price feeds from official Chainlink oracles.
         // TODO: Test the assignPriceFeed() and getPrice() functions.
 
         assertTrue(!fakeGov.try_setDefaultUniswapPath(WETH, USDC, USDC));  // Non-governor cant set
@@ -279,13 +285,13 @@ contract MapleGlobalsTest is TestUtil {
         
 
         assertTrue(!fakeGov.try_setPriceOracle(WETH, address(1)));
-        assertTrue(     gov.try_setPriceOracle(WETH, address(wETHOracle)));
-        assertTrue(     gov.try_setPriceOracle(WBTC, address(wBTCOracle)));
-        assertEq(globals.oracleFor(WETH),            address(wETHOracle));
-        assertEq(globals.oracleFor(WBTC),            address(wBTCOracle));
+        assertTrue(     gov.try_setPriceOracle(WETH, address(wethOracle)));
+        assertTrue(     gov.try_setPriceOracle(WBTC, address(wbtcOracle)));
+        assertEq(globals.oracleFor(WETH),            address(wethOracle));
+        assertEq(globals.oracleFor(WBTC),            address(wbtcOracle));
 
-        assertTrue(globals.getLatestPrice(WETH) != 0); // Shows real WETH value from ChainLink
-        assertTrue(globals.getLatestPrice(WBTC) != 0); // Shows real WBTC value from ChainLink
+        assertTrue(globals.getLatestPrice(WETH) != 0); // Shows real WETH value from Chainlink
+        assertTrue(globals.getLatestPrice(WBTC) != 0); // Shows real WBTC value from Chainlink
 
         assertTrue(!fakeGov.try_setMaxSwapSlippage(12));  // 0.12 %
         assertTrue(     gov.try_setMaxSwapSlippage(12));
