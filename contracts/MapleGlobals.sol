@@ -2,8 +2,6 @@
 pragma solidity >=0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-
 import "./interfaces/IERC20Details.sol";
 import "./interfaces/IPriceFeed.sol";
 import "./interfaces/ISubFactory.sol";
