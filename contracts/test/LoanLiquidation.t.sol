@@ -75,10 +75,10 @@ contract LoanLiquidationTest is TestUtil {
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
         gov.setMapleTreasury(address(trs));
 
-        mint("WETH", address(ali),   10 ether);
-        mint("WBTC", address(ali),   10 * BTC);
-        mint("USDC", address(bob), 5000 * USD);
-        mint("USDC", address(ali),  500 * USD);
+        mint("WETH", address(ali),   100 ether);
+        mint("WBTC", address(ali),    10 * BTC);
+        mint("USDC", address(bob), 10000 * USD);
+        mint("USDC", address(ali),   500 * USD);
     }
 
     function createAndFundLoan(address _interestStructure, address _collateral) internal returns (Loan loan) {
@@ -158,8 +158,8 @@ contract LoanLiquidationTest is TestUtil {
         Loan wbtcLoan = createAndFundLoan(address(bulletCalc), WBTC);
         performLiquidationAssertions(wbtcLoan);
 
-        // // Bilateral uniswap path
-        // Loan wethLoan = createAndFundLoan(address(bulletCalc), WETH);
-        // performLiquidationAssertions(wethLoan);
+        // Bilateral uniswap path
+        Loan wethLoan = createAndFundLoan(address(bulletCalc), WETH);
+        performLiquidationAssertions(wethLoan);
     }
 }

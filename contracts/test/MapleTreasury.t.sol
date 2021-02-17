@@ -140,26 +140,28 @@ contract MapleTreasuryTest is TestUtil {
         assertEq(IERC20(WBTC).balanceOf(address(treasury)),         0);
         assertEq(IERC20(DAI).balanceOf(address(treasury)),  100 ether);
 
-        assertEq(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWBTC);
+        withinPrecision(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWBTC, 2);
 
-        // /*** Convert WETH ***/
-        // assertTrue(!fakeGov.try_convertERC20(WETH));  // Non-governor can't convert
-        // assertTrue(     gov.try_convertERC20(WETH));  // Governor can convert
+        gov.distributeToHolders();  // Empty treasury balance of USDC
 
-        // assertEq(IERC20(WETH).balanceOf(address(treasury)),         0);
-        // assertEq(IERC20(DAI).balanceOf(address(treasury)),  100 ether);
+        /*** Convert WETH ***/
+        assertTrue(!fakeGov.try_convertERC20(WETH));  // Non-governor can't convert
+        assertTrue(     gov.try_convertERC20(WETH));  // Governor can convert
 
-        // withinPrecision(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWETH, 2);
+        assertEq(IERC20(WETH).balanceOf(address(treasury)),         0);
+        assertEq(IERC20(DAI).balanceOf(address(treasury)),  100 ether);
 
-        // assertTrue(false);
+        withinPrecision(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWETH, 2);
 
-        // /*** Convert DAI ***/
-        // assertTrue(!fakeGov.try_convertERC20(DAI));  // Non-governor can't convert
-        // assertTrue(     gov.try_convertERC20(DAI));  // Governor can convert
+        gov.distributeToHolders();  // Empty treasury balance of USDC
 
-        // assertEq(IERC20(WETH).balanceOf(address(treasury)), 0);
-        // assertEq(IERC20(DAI).balanceOf(address(treasury)),  0);
+        /*** Convert DAI ***/
+        assertTrue(!fakeGov.try_convertERC20(DAI));  // Non-governor can't convert
+        assertTrue(     gov.try_convertERC20(DAI));  // Governor can convert
 
-        // withinPrecision(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromDAI + expectedAmtFromWETH, 2);
+        assertEq(IERC20(WETH).balanceOf(address(treasury)), 0);
+        assertEq(IERC20(DAI).balanceOf(address(treasury)),  0);
+
+        withinPrecision(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromDAI, 2);
     }
 }

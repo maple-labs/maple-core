@@ -249,8 +249,6 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(vals_a[6], loan.defaultSuffered() * (1_000_000 * WAD) / (4_000_000 * WAD));
         assertEq(vals_b[6], loan.defaultSuffered() * (3_000_000 * WAD) / (4_000_000 * WAD));
         withinPrecision(vals_a[6] + vals_b[6], loan.defaultSuffered(), 2);
-
-        assertTrue(false);
     }
 
     function test_claim_default_burn_BPT_full_recover() public {
