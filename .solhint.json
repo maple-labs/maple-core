@@ -1,6 +1,0 @@
-{
-  "extends": "solhint:recommended",
-  "rules": {
-    "compiler-version": "warn"
-  }
-}
