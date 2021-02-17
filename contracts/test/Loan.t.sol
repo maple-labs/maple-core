@@ -19,9 +19,6 @@ import "../PremiumCalc.sol";
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/ILoan.sol";
 
-import "../mocks/token.sol";
-import "../mocks/value.sol";
-
 contract Treasury { }
 
 contract Commoner {

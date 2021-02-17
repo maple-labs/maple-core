@@ -33,9 +33,6 @@ import "../interfaces/IStakeLocker.sol";
 import "../interfaces/IPool.sol";
 import "../interfaces/IPoolFactory.sol";
 
-import "../mocks/token.sol";
-import "../mocks/value.sol";
-
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract GulpTest is TestUtil {
