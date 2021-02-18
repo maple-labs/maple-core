@@ -36,13 +36,7 @@ contract ChainlinkOracle is Ownable {
      */
     function getLatestPrice() public view returns (int256) {
         if (manualOverride) return manualPrice;
-        (
-            uint80 roundID, 
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = priceFeed.latestRoundData();
+        (, int256 price,,,) = priceFeed.latestRoundData();
         require(price != int256(0), "ChainlinkOracle:ZERO_PRICE");
         return price;
     }

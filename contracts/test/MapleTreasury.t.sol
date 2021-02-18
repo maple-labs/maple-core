@@ -14,14 +14,20 @@ import "../interfaces/IGlobals.sol";
 
 import "../library/Util.sol";
 
+import "../oracles/ChainlinkOracle.sol";
+
 contract MapleTreasuryTest is TestUtil {
 
-    Governor           gov;
-    Governor       fakeGov;
+    Governor                gov;
+    Governor            fakeGov;
 
-    MapleGlobals   globals;
-    MapleToken         mpl;
-    MapleTreasury treasury;
+    MapleGlobals        globals;
+    MapleToken              mpl;
+    MapleTreasury      treasury;
+    ChainlinkOracle  wethOracle;
+    ChainlinkOracle  wbtcOracle;
+    ChainlinkOracle   usdOracle;
+    ChainlinkOracle   daiOracle;
 
     function setUp() public {
         gov     = new Governor();   // Actor: Governor of Maple.
@@ -35,11 +41,17 @@ contract MapleTreasuryTest is TestUtil {
         gov.setGovTreasury(treasury);
         fakeGov.setGovTreasury(treasury);
 
+        wethOracle = new ChainlinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, WETH, address(this));
+        wbtcOracle = new ChainlinkOracle(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c, WBTC, address(this));
+        usdOracle  = new ChainlinkOracle(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, USDC, address(this));
+        daiOracle  = new ChainlinkOracle(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, USDC, address(this));
+        
         gov.setMapleTreasury(address(treasury));
-        gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-        gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
-        gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);  // Both set to one dollar
-        gov.setPriceOracle(DAI,  0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);  // Both set to one dollar
+        gov.setPriceOracle(WETH, address(wethOracle));
+        gov.setPriceOracle(WBTC, address(wbtcOracle));
+        gov.setPriceOracle(USDC, address(usdOracle));
+        gov.setPriceOracle(DAI,  address(daiOracle));
+    
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
 
         mint("WBTC", address(this),  10 * BTC);
