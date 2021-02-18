@@ -141,7 +141,7 @@ Governor can specify a new unstake delay value.
         @param _unstakeDelay The new unstake delay.
 
 ### `getLatestPrice(address asset)`
-Fetch price for asset from ChainLink oracles.
+Fetch price for asset from Chainlink oracles.
         @param asset The asset to fetch price.
         @return The price of asset.
 

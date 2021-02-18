@@ -4,20 +4,10 @@ pragma experimental ABIEncoderV2;
 
 import "./interfaces/IERC20Details.sol";
 import "./interfaces/IPriceFeed.sol";
+import "./interfaces/IOracle.sol";
 import "./interfaces/ISubFactory.sol";
 
 interface ICalc { function calcType() external returns (uint8); }
-
-interface AggregatorV3Interface {
-  function latestRoundData() external view
-    returns (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    );
-}
 
 contract MapleGlobals {
 
@@ -50,7 +40,7 @@ contract MapleGlobals {
 
     
     mapping(address => address) public assetPriceFeed;          // Mapping of asset, to the associated oracle price feed.
-    mapping(address => address) public oracleFor;               // ChainLink oracle for a given asset.
+    mapping(address => address) public oracleFor;               // Chainlink oracle for a given asset.
 
     mapping(address => bool)                     public isValidPoolFactory;  // Mapping of valid pool factories.
     mapping(address => bool)                     public isValidLoanFactory;  // Mapping of valid loan factories.
@@ -291,14 +281,12 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Fetch price for asset from ChainLink oracles.
+        @dev Fetch price for asset from Chainlink oracles.
         @param asset The asset to fetch price.
         @return The price of asset.
     */
     function getLatestPrice(address asset) public view returns (uint256) {
-        address oracle = oracleFor[asset];
-        (,int price,,,) = AggregatorV3Interface(oracle).latestRoundData();
-        return uint256(price);
+        return uint256(IOracle(oracleFor[asset]).getLatestPrice());
     }
 
     /**
