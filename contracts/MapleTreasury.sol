@@ -47,14 +47,6 @@ contract MapleTreasury {
         require(msg.sender == IGlobals(globals).governor(), "MapleTreasury:MSG_SENDER_NOT_GOVERNOR");
         _;
     }
-    /**
-        @dev Adjust the token to convert assets to (and then send to MapleToken).
-        @param newFundsToken The new FundsToken with respect to MapleToken ERC-2222.
-    */
-    // TODO: Consider why this would be changed? Seems this would lead to critical erros.
-    function setFundsToken(address newFundsToken) isGovernor public {
-        fundsToken = newFundsToken;
-    }
 
     /**
         @dev Update the maple globals contract
@@ -68,6 +60,7 @@ contract MapleTreasury {
         @dev Withdraws treasury funds to the MapleDAO address
         @param amount The new FundsToken with respect to MapleToken ERC-2222.
     */
+    // TODO: Pass asset as param
     function withdrawFunds(uint256 amount) isGovernor public {
         require(IERC20(fundsToken).transfer(msg.sender, amount), "MapleTreasury:FUNDS_RECEIVE_TRANSFER");
         emit FundsWithdrawn(amount);

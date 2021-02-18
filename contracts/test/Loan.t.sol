@@ -503,7 +503,7 @@ contract LoanTest is TestUtil {
         assertEq((expectedAmount * USD) / WAD, loan.getExpectedAmountRecovered());
     }
 
-    function test_makeFullPaymentBullet() public {
+    function test_makeFullPayment() public {
 
         Loan loan = createAndFundLoan(address(repaymentCalc));
 

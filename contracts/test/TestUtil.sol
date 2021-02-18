@@ -24,6 +24,11 @@ contract TestUtil is DSTest {
         address orcl; // Chainlink oracle address
     }
 
+    struct TestObj {
+        uint256 pre;
+        uint256 post;
+    }
+
     mapping (bytes32 => Token) tokens;
 
     address constant DAI   = 0x6B175474E89094C44Da98b954EedeAC495271d0F;

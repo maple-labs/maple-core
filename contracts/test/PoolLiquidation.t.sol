@@ -79,11 +79,6 @@ contract PoolLiquidationTest is TestUtil {
 
     uint256 constant public MAX_UINT = uint(-1);
 
-    struct TestObj {
-        uint256 pre;
-        uint256 post;
-    }
-
     function setUp() public {
 
         che            = new Borrower();                     // Actor: Borrower of the Loan.

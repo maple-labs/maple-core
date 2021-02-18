@@ -186,22 +186,22 @@ contract StakeLockerTest is TestUtil {
         che.approve(address(bPool), address(stakeLocker), uint256(-1));
         dan.approve(address(bPool), address(stakeLocker), uint256(-1));
 
-        assert_for_stake(address(che), 25 * WAD, 50 * WAD, 50 * WAD, 0, 0);
-        assert_for_stake(address(dan), 25 * WAD, 50 * WAD, 50 * WAD, 0, 0);
+        assertStake(address(che), 25 * WAD, 50 * WAD, 50 * WAD, 0, 0);
+        assertStake(address(dan), 25 * WAD, 50 * WAD, 50 * WAD, 0, 0);
 
         assertTrue(che.try_stake(address(stakeLocker), 5 * WAD)); 
-        assert_for_stake(address(che), 20 * WAD, 55 * WAD, 55 * WAD, 5 * WAD, currentDate);
+        assertStake(address(che), 20 * WAD, 55 * WAD, 55 * WAD, 5 * WAD, currentDate);
         assertEq(stakeLocker.getUnstakeableBalance(address(che)), 0);
 
         currentDate = currentDate + 1 days;
         hevm.warp(currentDate);
 
         assertTrue(dan.try_stake(address(stakeLocker), 4 * WAD));
-        assert_for_stake(address(dan), 21 * WAD, 59 * WAD, 59 * WAD, 4 * WAD, currentDate);
+        assertStake(address(dan), 21 * WAD, 59 * WAD, 59 * WAD, 4 * WAD, currentDate);
         assertEq(stakeLocker.getUnstakeableBalance(address(dan)), 0);
 
         uint256 oldStakeDate = stakeLocker.stakeDate(address(che));
-        uint256 newStakeDate = get_new_stake_date(address(che), 5 * WAD);
+        uint256 newStakeDate = getNewStakeDate(address(che), 5 * WAD);
 
         uint256 che_unstakeableBal_before = stakeLocker.getUnstakeableBalance(address(che));
         assertEq(che_unstakeableBal_before, 55555555555555555);
@@ -209,28 +209,28 @@ contract StakeLockerTest is TestUtil {
         assertTrue(che.try_stake(address(stakeLocker), 5 * WAD)); 
 
         uint256 che_unstakeableBal_after = stakeLocker.getUnstakeableBalance(address(che));
-        assertEq(che_unstakeableBal_after, 55555555555555550);
+        assertEq(che_unstakeableBal_after, che_unstakeableBal_before);
 
-        assert_for_stake(address(che), 15 * WAD, 64 * WAD, 64 * WAD, 10 * WAD, newStakeDate);
+        assertStake(address(che), 15 * WAD, 64 * WAD, 64 * WAD, 10 * WAD, newStakeDate);
         assertEq(newStakeDate - oldStakeDate, 12 hours);  // coef will be 0.5 days.
 
         currentDate = currentDate + 5 days;
         hevm.warp(currentDate);
 
         oldStakeDate = stakeLocker.stakeDate(address(dan));
-        newStakeDate = get_new_stake_date(address(dan), 16 * WAD);
+        newStakeDate = getNewStakeDate(address(dan), 16 * WAD);
         assertTrue(dan.try_stake(address(stakeLocker), 16 * WAD));
-        assert_for_stake(address(dan), 5 * WAD, 80 * WAD, 80 * WAD, 20 * WAD, newStakeDate);
+        assertStake(address(dan), 5 * WAD, 80 * WAD, 80 * WAD, 20 * WAD, newStakeDate);
         assertEq(newStakeDate - oldStakeDate, 96 hours);  // coef will be 0.8 days. 4 days
     }
 
-    function get_new_stake_date(address who, uint256 amt) public returns(uint256 newStakeDate) {
+    function getNewStakeDate(address who, uint256 amt) public returns(uint256 newStakeDate) {
         uint256 stkDate = stakeLocker.stakeDate(who);
         uint256 coef = (WAD * amt) / (stakeLocker.balanceOf(who) + amt);
         newStakeDate = stkDate + (((now - stkDate) * coef) / WAD);
     }
 
-    function assert_for_stake(address staker, uint256 staker_bPoolBal, uint256 sl_bPoolBal, uint256 sl_totalSupply, uint256 staker_slBal, uint256 staker_slStakeDate) public {
+    function assertStake(address staker, uint256 staker_bPoolBal, uint256 sl_bPoolBal, uint256 sl_totalSupply, uint256 staker_slBal, uint256 staker_slStakeDate) public {
         assertEq(bPool.balanceOf(staker),                staker_bPoolBal,     "Incorrect balance of staker");
         assertEq(bPool.balanceOf(address(stakeLocker)),  sl_bPoolBal,         "Incorrect balance of stake locker");
         assertEq(stakeLocker.totalSupply(),              sl_totalSupply,      "Incorrect total supply of stake locker");
@@ -312,7 +312,7 @@ contract StakeLockerTest is TestUtil {
     }
 
     function test_unstake_past_unstakeDelay() public {
-        uint256 stakeDate    = block.timestamp;
+        uint256 stakeDate = block.timestamp;
 
         sid.setWhitelistStakeLocker(address(pool), address(che), true);
         che.approve(address(bPool), address(stakeLocker), 25 * WAD);
@@ -326,13 +326,15 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.stakeDate(address(che)),   stakeDate);
 
         setUpLoanAndRepay();
+        hevm.warp(stakeDate + globals.unstakeDelay() - 1);
+        assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake 100% of BPTs until unstakeDelay has passed
         hevm.warp(stakeDate + globals.unstakeDelay());
 
         uint256 totalStakerEarnings    = IERC20(USDC).balanceOf(address(stakeLocker));
         uint256 cheStakerEarnings_FDT  = stakeLocker.withdrawableFundsOf(address(che));
         uint256 cheStakerEarnings_calc = totalStakerEarnings * (25 * WAD) / (75 * WAD);  // Che's portion of staker earnings
 
-        che.unstake(address(stakeLocker), 25 * WAD);  // Staker unstakes all BPTs
+        assertTrue(che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker unstakes all BPTs
 
         withinPrecision(cheStakerEarnings_FDT, cheStakerEarnings_calc, 9);
 
@@ -344,5 +346,52 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.totalSupply(),              50 * WAD);  // Total supply of stake tokens has decreased
         assertEq(stakeLocker.balanceOf(address(che)),           0);  // Che has no stake tokens after unstake
         assertEq(stakeLocker.stakeDate(address(che)),   stakeDate);  // StakeDate remains unchanged (doesn't matter since balanceOf == 0 on next stake)
+    }
+
+    function test_unstakeableBalance(uint256 stakeAmount, uint256 dTime, uint256 stakeAmount2, uint256 dTime2) public {
+        TestObj memory unstakeableBal;
+
+        uint256 unstakeDelay = globals.unstakeDelay();
+
+        stakeAmount  %= bPool.balanceOf(address(che)) / 2;  // 12.5 WAD max stake amount
+        stakeAmount2 %= bPool.balanceOf(address(che)) / 2;  // 12.5 WAD max stake amount (total can't be greater than 25)
+        dTime        %= unstakeDelay / 2;                   // Max dtime is half unstakeDelay
+        dTime2       %= unstakeDelay / 2;                   // Max dtime is half unstakeDelay (total less than unstakeDelay for test)
+
+        uint256 start = block.timestamp;
+        sid.setWhitelistStakeLocker(address(pool), address(che), true);
+        che.approve(address(bPool), address(stakeLocker), MAX_UINT);
+
+        che.stake(address(stakeLocker), stakeAmount);  
+
+        assertEq(stakeLocker.balanceOf(address(che)),             stakeAmount);
+        assertEq(stakeLocker.stakeDate(address(che)),                   start);
+        assertEq(stakeLocker.getUnstakeableBalance(address(che)),           0);  // No time has passed
+
+        hevm.warp(start + dTime);
+
+        unstakeableBal.pre = stakeLocker.getUnstakeableBalance(address(che));
+
+        assertEq(stakeLocker.balanceOf(address(che)),       stakeAmount);
+        assertEq(stakeLocker.stakeDate(address(che)),             start);
+        assertEq(unstakeableBal.pre, dTime * stakeAmount / unstakeDelay);  // Withdrawable balance is a linear function of dTime
+
+        uint256 newStakeDate = getNewStakeDate(address(che), stakeAmount2);  // Calculate stake date
+
+        che.stake(address(stakeLocker), stakeAmount2);
+
+        unstakeableBal.post = stakeLocker.getUnstakeableBalance(address(che));
+
+        assertEq(stakeLocker.balanceOf(address(che)), stakeAmount + stakeAmount2);
+        assertEq(stakeLocker.stakeDate(address(che)),               newStakeDate);
+
+        withinPrecision(unstakeableBal.pre, unstakeableBal.post, 4);  // Withdrawable balance should not change after stakeDate is recalculated
+
+        hevm.warp(start + dTime + dTime2);
+
+        assertEq(stakeLocker.balanceOf(address(che)), stakeAmount + stakeAmount2);
+        assertEq(stakeLocker.stakeDate(address(che)),               newStakeDate);
+
+        assertEq(stakeLocker.getUnstakeableBalance(address(che)), (block.timestamp - newStakeDate) * (stakeAmount + stakeAmount2) / unstakeDelay);  // Function uses total staked and stakeDate
     }
 } 

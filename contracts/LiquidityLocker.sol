@@ -36,8 +36,6 @@ contract LiquidityLocker {
         @param  debtLocker The locker that will escrow debt tokens.
         @param  amt        Amount of liquidityAsset to fund the loan for.
     */
-    // TODO: Consider checking if loan is valid via LoanFactory.
-    //       Lucas -> Pass in loan factory, cross-check with globals, then confirm if legit.
     function fundLoan(address loan, address debtLocker, uint256 amt) external isOwner {
         liquidityAsset.approve(loan, amt);
         ILoan(loan).fundLoan(debtLocker, amt);
