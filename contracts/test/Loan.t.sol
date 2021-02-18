@@ -15,6 +15,7 @@ import "../MapleToken.sol";
 import "../LateFeeCalc.sol";
 import "../LoanFactory.sol";
 import "../PremiumCalc.sol";
+import "../oracles/ChainlinkOracle.sol";
 
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/ILoan.sol";
@@ -44,6 +45,9 @@ contract LoanTest is TestUtil {
     MapleGlobals                 globals;
     PremiumCalc              premiumCalc;
     Treasury                         trs;
+    ChainlinkOracle           wethOracle;
+    ChainlinkOracle           wbtcOracle;
+    ChainlinkOracle            usdOracle;
 
     ERC20                     fundsToken;
 
@@ -69,10 +73,14 @@ contract LoanTest is TestUtil {
         gov.setCalc(address(premiumCalc),        true);
         gov.setCollateralAsset(WETH,             true);
         gov.setLoanAsset(USDC,                   true);
+
+        wethOracle = new ChainlinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, WETH, address(this));
+        wbtcOracle = new ChainlinkOracle(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c, WBTC, address(this));
+        usdOracle  = new ChainlinkOracle(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, USDC, address(this));
         
-        gov.setPriceOracle(WETH, 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-        gov.setPriceOracle(WBTC, 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c);
-        gov.setPriceOracle(USDC, 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
+        gov.setPriceOracle(WETH, address(wethOracle));
+        gov.setPriceOracle(WBTC, address(wbtcOracle));
+        gov.setPriceOracle(USDC, address(usdOracle));
 
         gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
         gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
