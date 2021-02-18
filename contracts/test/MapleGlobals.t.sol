@@ -203,8 +203,8 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setLoanAsset(WETH,       true));
         assertTrue(!fakeGov.try_setCollateralAsset(CDAI, true));  // Non-governor cant set
         assertTrue(     gov.try_setCollateralAsset(CDAI, true));
-        assertTrue( globals.isValidLoanAsset(WETH));
-        assertTrue (globals.isValidCollateralAsset(CDAI));
+        assertTrue(globals.isValidLoanAsset(WETH));
+        assertTrue(globals.isValidCollateralAsset(CDAI));
         assertTrue(!fakeGov.try_setLoanAsset(WETH,       false));  // Non-governor cant set
         assertTrue(     gov.try_setLoanAsset(WETH,       false));
         assertTrue(!fakeGov.try_setCollateralAsset(CDAI, false));  // Non-governor cant set
