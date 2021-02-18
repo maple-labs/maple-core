@@ -98,7 +98,8 @@ contract Pool is PoolFDT {
         require(_globals(msg.sender).isValidLoanAsset(_liquidityAsset), "Pool:INVALID_LIQ_ASSET");
         require(_liquidityCap   != uint256(0),                          "Pool:INVALID_CAP");
 
-        address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();  // SECURITY: Security prone call as it is spitting boundless array and we are interating it below. Find a way to limit it.
+        // NOTE: Max length of this array would be 8, as thats the limit of assets in a balancer pool
+        address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
 
         uint256  i = 0;
         bool valid = false;
