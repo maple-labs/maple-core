@@ -278,6 +278,7 @@ contract MapleGlobals {
         @param _newGovernor The address of new governor.
     */
     function setGovernor(address _newGovernor) public isGovernor {
+        require(_newGovernor != address(0), "MapleGlobals:ZERO_ADDRESS_GOVERNOR");
         governor = _newGovernor;
     }
 
