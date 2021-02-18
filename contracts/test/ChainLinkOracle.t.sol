@@ -29,10 +29,10 @@ contract ChainlinkOracleTest is TestUtil {
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);               // Setup Maple token.
         globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);           // Setup Maple Globals.
         admin     = new SecurityAdmin();
-        oracle    = new ChainlinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, address(0), address(admin));
+        oracle    = new ChainlinkOracle(tokens["WETH"].orcl, address(0), address(admin));
         fakeAdmin = new SecurityAdmin();
 
-        assertEq(address(oracle.priceFeed()), 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
+        assertEq(address(oracle.priceFeed()), tokens["WETH"].orcl);
     }
 
     function test_getLatestPrice() public {
@@ -55,7 +55,7 @@ contract ChainlinkOracleTest is TestUtil {
         // Change aggregator.
         assertTrue(!fakeAdmin.try_changeAggregator(address(oracle), 0xb022E2970b3501d8d83eD07912330d178543C1eB));
         assertTrue(     admin.try_changeAggregator(address(oracle), 0xb022E2970b3501d8d83eD07912330d178543C1eB));
-        assertEq(address(oracle.priceFeed()), 0xb022E2970b3501d8d83eD07912330d178543C1eB);
+        assertEq(address(oracle.priceFeed()),                       0xb022E2970b3501d8d83eD07912330d178543C1eB);
 
         assertTrue(oracle.getLatestPrice() != currentPrice);
     }

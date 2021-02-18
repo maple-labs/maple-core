@@ -41,10 +41,10 @@ contract MapleTreasuryTest is TestUtil {
         gov.setGovTreasury(treasury);
         fakeGov.setGovTreasury(treasury);
 
-        wethOracle = new ChainlinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, WETH, address(this));
-        wbtcOracle = new ChainlinkOracle(0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c, WBTC, address(this));
-        usdOracle  = new ChainlinkOracle(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, USDC, address(this));
-        daiOracle  = new ChainlinkOracle(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9, USDC, address(this));
+        wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
+        wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
+        usdOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
+        daiOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
         
         gov.setMapleTreasury(address(treasury));
         gov.setPriceOracle(WETH, address(wethOracle));
