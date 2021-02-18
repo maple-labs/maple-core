@@ -98,7 +98,7 @@ contract Pool is PoolFDT {
         require(_globals(msg.sender).isValidLoanAsset(_liquidityAsset), "Pool:INVALID_LIQ_ASSET");
         require(_liquidityCap   != uint256(0),                          "Pool:INVALID_CAP");
 
-        address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
+        address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();  // SECURITY: Security prone call as it is spitting boundless array and we are interating it below. Find a way to limit it.
 
         uint256  i = 0;
         bool valid = false;
@@ -163,25 +163,7 @@ contract Pool is PoolFDT {
                 [4] = Current staked BPTs
     */
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
-
-        IGlobals globals = _globals(superFactory);
-
-        address balancerPool = stakeAsset;
-        address swapOutAsset = address(liquidityAsset);
-        uint256 swapOutAmountRequired = globals.swapOutRequired() * (10 ** liquidityAssetDecimals);
-
-        (
-            uint256 poolAmountInRequired, 
-            uint256 poolAmountPresent
-        ) = CalcBPool.getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
-
-        return (
-            swapOutAmountRequired,
-            CalcBPool.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
-            poolAmountPresent >= poolAmountInRequired,
-            poolAmountInRequired,
-            poolAmountPresent
-        );
+        return CalcBPool.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
     }
 
     /**
@@ -234,7 +216,7 @@ contract Pool is PoolFDT {
 
         updateDepositDate(wad, msg.sender);
         _mint(msg.sender, wad);
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+        _emitBalanceUpdatedEvent();
     }
 
     /**
@@ -433,8 +415,6 @@ contract Pool is PoolFDT {
             uint256 unlocked = dTime.mul(WAD).div(penaltyDelay).mul(amt).div(WAD);
 
             penalty = unlocked > amt ? 0 : amt - unlocked;
-        } else {
-            penalty = uint256(0);
         }
     }
 

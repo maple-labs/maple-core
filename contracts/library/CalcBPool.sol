@@ -5,6 +5,7 @@ import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IGlobals.sol";
+import "../interfaces/IERC20Details.sol";
 
 library CalcBPool {
 
@@ -169,6 +170,31 @@ library CalcBPool {
         uint256 stakerBalance = IERC20(stakeLocker).balanceOf(staker);
 
         return (poolAmountInRequired, stakerBalance);
+    }
+
+    /**
+        @dev Returns information on the stake requirements.
+        @return swapOutAmountRequired      Min amount of liquidityAsset coverage from staking required.
+        @return amountRecoveredFromStaking Present amount of liquidityAsset coverage from staking.
+        @return enoughStakeForFinalization If enough stake is present from Pool Delegate for finalization.
+        @return poolAmountInRequired       BPTs required for minimum liquidityAsset coverage.
+        @return poolAmountPresent          Current staked BPTs.
+    */
+    function getInitialStakeRequirements(IGlobals globals, address balancerPool, address swapOutAsset, address poolDelegate, address stakeLocker) public view returns (
+        uint256 swapOutAmountRequired,
+        uint256 amountRecoveredFromStaking,
+        bool enoughStakeForFinalization,
+        uint256 poolAmountInRequired,
+        uint256 poolAmountPresent
+    ) {
+        swapOutAmountRequired = globals.swapOutRequired() * (10 ** IERC20Details(swapOutAsset).decimals());
+        (
+            poolAmountInRequired,
+            poolAmountPresent
+        ) = getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
+
+        amountRecoveredFromStaking = getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker);
+        enoughStakeForFinalization = poolAmountPresent >= poolAmountInRequired;
     }
     
 }
