@@ -282,13 +282,15 @@ contract Loan is FDT {
         uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), address(loanAsset), liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
 
         // Generate path.
-        address[] storage path;
-        path.push(address(collateralAsset));
         address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
-        if (uniswapAssetForPath != address(loanAsset) && uniswapAssetForPath != address(0)) {
-            path.push(uniswapAssetForPath); 
-        }
-        path.push(address(loanAsset));
+        bool middleAsset = uniswapAssetForPath != address(loanAsset) && uniswapAssetForPath != address(0);
+
+        address[] memory path = new address[](middleAsset ? 3 : 2);
+
+        path[0] = address(collateralAsset);
+        path[1] = middleAsset ? uniswapAssetForPath : address(loanAsset);
+
+        if(middleAsset) path[2] = address(loanAsset);
 
         uint[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
             collateralAsset.balanceOf(address(this)),

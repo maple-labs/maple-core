@@ -36,6 +36,7 @@ contract TestUtil is DSTest {
     address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router
 
     uint256 constant USD = 10 ** 6;  // USDC precision decimals
+    uint256 constant BTC = 10 ** 8;  // WBTC precision decimals
     uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
 
