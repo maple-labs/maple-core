@@ -40,7 +40,7 @@
 [`try_setUnstakeDelay(uint256 delay)`](#Governor-try_setUnstakeDelay-uint256-)
 [`try_setGovernor(address gov)`](#Governor-try_setGovernor-address-)
 [`try_setPriceOracle(address asset, address oracle)`](#Governor-try_setPriceOracle-address-address-)
-[`try_passThroughFundsToken(address trs)`](#Governor-try_passThroughFundsToken-address-)
+[`try_distributeToHolders(address trs)`](#Governor-try_distributeToHolders-address-)
 
 
 ## <u>Functions</u>
@@ -162,7 +162,7 @@ No description
 ### `try_setPriceOracle(address asset, address oracle)`
 No description
 
-### `try_passThroughFundsToken(address trs)`
+### `try_distributeToHolders(address trs)`
 No description
 
 ## <u>Events</u>

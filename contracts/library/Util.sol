@@ -22,5 +22,4 @@ library Util {
         // Convert to proper precision, return value.
         return abstractMinOut.mul(10 ** IERC20Details(toAsset).decimals()).div(10 ** IERC20Details(fromAsset).decimals());
     }
-
 }
