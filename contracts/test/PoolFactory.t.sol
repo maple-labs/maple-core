@@ -17,9 +17,6 @@ import "../interfaces/IBFactory.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IStakeLocker.sol";
 
-import "../mocks/token.sol";
-import "../mocks/value.sol";
-
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract PoolFactoryTest is TestUtil {
