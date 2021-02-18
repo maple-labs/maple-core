@@ -112,8 +112,8 @@ contract MapleTreasury {
             assetBalance,
             minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
             path,
-            address(this),         // Transfer tokens to this contract
-            block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
+            address(this),
+            block.timestamp
         );
 
         emit ERC20Conversion(asset, returnAmounts[0], returnAmounts[path.length - 1]);

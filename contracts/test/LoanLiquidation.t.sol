@@ -45,6 +45,8 @@ contract LoanLiquidationTest is TestUtil {
 
     ERC20                     fundsToken;
 
+    uint256 constant public MAX_UINT = uint256(-1);
+
     function setUp() public {
 
         ali         = new Borrower();   // Actor: Borrower of the Loan.
@@ -67,6 +69,7 @@ contract LoanLiquidationTest is TestUtil {
         gov.setCalc(address(premiumCalc), true);
         gov.setCollateralAsset(WETH,      true);
         gov.setCollateralAsset(WBTC,      true);
+        gov.setCollateralAsset(USDC,      true);
         gov.setLoanAsset(USDC,            true);
         
         wethOracle = new ChainlinkOracle(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, WETH, address(this));
@@ -84,10 +87,10 @@ contract LoanLiquidationTest is TestUtil {
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
         gov.setMapleTreasury(address(trs));
 
-        mint("WETH", address(ali),   100 ether);
-        mint("WBTC", address(ali),    10 * BTC);
-        mint("USDC", address(bob), 10000 * USD);
-        mint("USDC", address(ali),   500 * USD);
+        mint("WETH", address(ali),    100 ether);
+        mint("WBTC", address(ali),     10 * BTC);
+        mint("USDC", address(bob), 100000 * USD);
+        mint("USDC", address(ali), 100000 * USD);
     }
 
     function createAndFundLoan(address _interestStructure, address _collateral) internal returns (Loan loan) {
@@ -99,7 +102,7 @@ contract LoanLiquidationTest is TestUtil {
         bob.approve(USDC, address(loan), 5000 * USD);
 
         bob.fundLoan(address(loan), 5000 * USD, address(ali));
-        ali.approve(_collateral, address(loan), 0.4 ether);
+        ali.approve(_collateral, address(loan), MAX_UINT);
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
     }
 
@@ -113,15 +116,8 @@ contract LoanLiquidationTest is TestUtil {
         uint256 loanAssetLoan_pre  = IERC20(USDC).balanceOf(address(loan));
         uint256 loanAssetBorr_pre  = IERC20(USDC).balanceOf(address(ali));
 
-        {
-            // Fetch time variables.
-            uint256 start          = block.timestamp;
-            uint256 nextPaymentDue = loan.nextPaymentDue();
-            uint256 gracePeriod    = globals.gracePeriod();
-
-            // Warp to late payment.
-            hevm.warp(start + nextPaymentDue + gracePeriod + 1);
-        }
+        // Warp to late payment.
+        hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.gracePeriod() + 1);
 
         // Pre-state triggerDefault() checks.
         assertEq(uint256(loan.loanState()),                                                     1);
@@ -170,5 +166,9 @@ contract LoanLiquidationTest is TestUtil {
         // Bilateral uniswap path
         Loan wethLoan = createAndFundLoan(address(bulletCalc), WETH);
         performLiquidationAssertions(wethLoan);
+
+        // collateralAsset == loanAsset 
+        Loan usdcLoan = createAndFundLoan(address(bulletCalc), USDC);
+        performLiquidationAssertions(usdcLoan);
     }
 }

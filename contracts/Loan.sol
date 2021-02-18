@@ -274,34 +274,39 @@ contract Loan is FDT {
         uint256 liquidationAmt = _getCollateralLockerBalance();
         require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");
 
-        // Swap collateralAsset for loanAsset.
-        collateralAsset.approve(UNISWAP_ROUTER, liquidationAmt);
+        if(address(collateralAsset) != address(loanAsset)) {
+            // Swap collateralAsset for loanAsset.
+            collateralAsset.approve(UNISWAP_ROUTER, liquidationAmt);
 
-        IGlobals globals = _globals(superFactory);
+            IGlobals globals = _globals(superFactory);
 
-        uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), address(loanAsset), liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
+            uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), address(loanAsset), liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
 
-        // Generate path.
-        address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
-        bool middleAsset = uniswapAssetForPath != address(loanAsset) && uniswapAssetForPath != address(0);
+            // Generate path.
+            address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
+            bool middleAsset = uniswapAssetForPath != address(loanAsset) && uniswapAssetForPath != address(0);
 
-        address[] memory path = new address[](middleAsset ? 3 : 2);
+            address[] memory path = new address[](middleAsset ? 3 : 2);
 
-        path[0] = address(collateralAsset);
-        path[1] = middleAsset ? uniswapAssetForPath : address(loanAsset);
+            path[0] = address(collateralAsset);
+            path[1] = middleAsset ? uniswapAssetForPath : address(loanAsset);
 
-        if(middleAsset) path[2] = address(loanAsset);
+            if(middleAsset) path[2] = address(loanAsset);
 
-        uint[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
-            collateralAsset.balanceOf(address(this)),
-            minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10000)),
-            path,
-            address(this),
-            block.timestamp + 3600 // 1 hour padding. Unix timestamp after which the transaction will revert.
-        );
+            uint256[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
+                liquidationAmt,
+                minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10000)),
+                path,
+                address(this),
+                block.timestamp
+            );
 
-        amountLiquidated = returnAmounts[0];
-        amountRecovered  = returnAmounts[path.length - 1];
+            amountLiquidated = returnAmounts[0];
+            amountRecovered  = returnAmounts[path.length - 1];
+        } else {
+            amountLiquidated = liquidationAmt;
+            amountRecovered  = liquidationAmt;
+        }
 
         // Reduce principal owed by amount received (as much as is required for principal owed == 0).
         if (amountRecovered > principalOwed) {
