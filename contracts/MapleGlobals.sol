@@ -179,14 +179,6 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Get a price feed.
-        @param  asset  The asset to fetch price for.
-    */
-    function getPrice(address asset) external view returns(uint) {
-        return IPriceFeed(assetPriceFeed[asset]).price();
-    }
-
-    /**
         @dev Set the validity of an asset for collateral.
         @param asset The asset to assign validity to.
         @param valid The new validity of asset as collateral.

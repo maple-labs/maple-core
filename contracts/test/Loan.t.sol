@@ -15,10 +15,12 @@ import "../MapleToken.sol";
 import "../LateFeeCalc.sol";
 import "../LoanFactory.sol";
 import "../PremiumCalc.sol";
-import "../oracles/ChainlinkOracle.sol";
 
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/ILoan.sol";
+
+import "../oracles/ChainlinkOracle.sol";
+import "../oracles/UsdOracle.sol";
 
 contract Treasury { }
 
@@ -47,7 +49,7 @@ contract LoanTest is TestUtil {
     Treasury                         trs;
     ChainlinkOracle           wethOracle;
     ChainlinkOracle           wbtcOracle;
-    ChainlinkOracle            usdOracle;
+    UsdOracle                  usdOracle;
 
     ERC20                     fundsToken;
 
@@ -76,7 +78,7 @@ contract LoanTest is TestUtil {
 
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
+        usdOracle  = new UsdOracle();
         
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));
@@ -151,13 +153,12 @@ contract LoanTest is TestUtil {
         bob.fundLoan(address(loan), 5000 * USD, address(bob));
     }
 
-    // function test_collateralRequiredForDrawdown() public {
-    //     Loan loan = createAndFundLoan(address(bulletCalc));
+    function test_collateralRequiredForDrawdown() public {
+        Loan loan = createAndFundLoan(address(bulletCalc));
 
-    //     uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
-    //     // assertEq(reqCollateral, 0.4 ether);
-    //     // TODO: Come up with better test for live price feeds.
-    // }
+        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
+        withinDiff(reqCollateral * globals.getLatestPrice(address(WETH)) * USD / WAD / 10 ** 8, 200 * USD, 1);  // 20% of $1000, 1 wei diff
+    }
 
     function test_drawdown() public {
         Loan loan = createAndFundLoan(address(bulletCalc));

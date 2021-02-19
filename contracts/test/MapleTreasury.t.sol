@@ -15,6 +15,7 @@ import "../interfaces/IGlobals.sol";
 import "../library/Util.sol";
 
 import "../oracles/ChainlinkOracle.sol";
+import "../oracles/UsdOracle.sol";
 
 contract MapleTreasuryTest is TestUtil {
 
@@ -26,7 +27,7 @@ contract MapleTreasuryTest is TestUtil {
     MapleTreasury      treasury;
     ChainlinkOracle  wethOracle;
     ChainlinkOracle  wbtcOracle;
-    ChainlinkOracle   usdOracle;
+    UsdOracle         usdOracle;
     ChainlinkOracle   daiOracle;
 
     function setUp() public {
@@ -43,8 +44,8 @@ contract MapleTreasuryTest is TestUtil {
 
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
         daiOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
+        usdOracle  = new UsdOracle();
         
         gov.setMapleTreasury(address(treasury));
         gov.setPriceOracle(WETH, address(wethOracle));

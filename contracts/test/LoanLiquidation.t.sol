@@ -17,10 +17,11 @@ import "../MapleGlobals.sol";
 import "../MapleToken.sol";
 import "../PremiumCalc.sol";
 
-import "../oracles/ChainlinkOracle.sol";
-
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/ILoan.sol";
+
+import "../oracles/ChainlinkOracle.sol";
+import "../oracles/UsdOracle.sol";
 
 contract Treasury { }
 
@@ -41,7 +42,7 @@ contract LoanLiquidationTest is TestUtil {
     Treasury                         trs;
     ChainlinkOracle           wethOracle;
     ChainlinkOracle           wbtcOracle;
-    ChainlinkOracle            usdOracle;
+    UsdOracle                  usdOracle;
 
     ERC20                     fundsToken;
 
@@ -74,7 +75,7 @@ contract LoanLiquidationTest is TestUtil {
         
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
+        usdOracle  = new UsdOracle();
         
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));
