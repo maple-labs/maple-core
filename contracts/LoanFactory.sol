@@ -12,7 +12,7 @@ contract LoanFactory {
 
     uint8 public constant COLLATERAL_LOCKER_FACTORY  = 0;   // Factory type of `CollateralLockerFactory`.
     uint8 public constant FUNDING_LOCKER_FACTORY     = 2;   // Factory type of `FundingLockerFactory`.
-    uint8 public constant INTEREST_CALC_TYPE         = 10;  // Calc type of `InterestOnlyRepaymentCalc`.
+    uint8 public constant INTEREST_CALC_TYPE         = 10;  // Calc type of `RepaymentCalc`.
     uint8 public constant LATEFEE_CALC_TYPE          = 11;  // Calc type of `LateFeeCalc`.
     uint8 public constant PREMIUM_CALC_TYPE          = 12;  // Calc type of `PremiumCalc`.
 
