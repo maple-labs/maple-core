@@ -98,6 +98,7 @@ contract Pool is PoolFDT {
         require(_globals(msg.sender).isValidLoanAsset(_liquidityAsset), "Pool:INVALID_LIQ_ASSET");
         require(_liquidityCap   != uint256(0),                          "Pool:INVALID_CAP");
 
+        // NOTE: Max length of this array would be 8, as thats the limit of assets in a balancer pool
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
 
         uint256  i = 0;
@@ -163,25 +164,7 @@ contract Pool is PoolFDT {
                 [4] = Current staked BPTs
     */
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
-
-        IGlobals globals = _globals(superFactory);
-
-        address balancerPool = stakeAsset;
-        address swapOutAsset = address(liquidityAsset);
-        uint256 swapOutAmountRequired = globals.swapOutRequired() * (10 ** liquidityAssetDecimals);
-
-        (
-            uint256 poolAmountInRequired, 
-            uint256 poolAmountPresent
-        ) = CalcBPool.getPoolSharesRequired(balancerPool, swapOutAsset, poolDelegate, stakeLocker, swapOutAmountRequired);
-
-        return (
-            swapOutAmountRequired,
-            CalcBPool.getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker),
-            poolAmountPresent >= poolAmountInRequired,
-            poolAmountInRequired,
-            poolAmountPresent
-        );
+        return CalcBPool.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
     }
 
     /**
@@ -234,7 +217,7 @@ contract Pool is PoolFDT {
 
         updateDepositDate(wad, msg.sender);
         _mint(msg.sender, wad);
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+        _emitBalanceUpdatedEvent();
     }
 
     /**
@@ -344,7 +327,13 @@ contract Pool is PoolFDT {
 
         principalOut = principalOut.sub(defaultSuffered);
 
-        emit DefaultSuffered(loan, defaultSuffered, bptsBurned, bptsReturned, liquidityAssetRecoveredFromBurn);
+        emit DefaultSuffered(
+            loan,                            // Which loan this defaultSuffered is from
+            defaultSuffered,                 // Total default suffered from loan by pool after liquidation
+            bptsBurned,                      // Amount of BPTs burned from stakeLocker
+            bptsReturned,                    // Remaining BPTs in stakeLocker post-burn                      
+            liquidityAssetRecoveredFromBurn  // Amount of liquidityAsset recovered from burning BPTs
+        );
     }
 
     /**
@@ -427,8 +416,6 @@ contract Pool is PoolFDT {
             uint256 unlocked = dTime.mul(WAD).div(penaltyDelay).mul(amt).div(WAD);
 
             penalty = unlocked > amt ? 0 : amt - unlocked;
-        } else {
-            penalty = uint256(0);
         }
     }
 
