@@ -8,7 +8,7 @@ import "./user/Borrower.sol";
 import "./user/Governor.sol";
 import "./user/Lender.sol";
 
-import "../BulletRepaymentCalc.sol";
+import "../RepaymentCalc.sol";
 import "../CollateralLockerFactory.sol";
 import "../FundingLockerFactory.sol";
 import "../LateFeeCalc.sol";
@@ -27,51 +27,50 @@ contract Treasury { }
 
 contract LoanLiquidationTest is TestUtil {
 
-    Borrower                         ali;
-    Governor                         gov;
-    Lender                           bob;
+    Borrower                          ali;
+    Governor                          gov;
+    Lender                            bob;
 
-    BulletRepaymentCalc       bulletCalc;
-    CollateralLockerFactory    clFactory;
-    FundingLockerFactory       flFactory;
-    LateFeeCalc              lateFeeCalc;
-    LoanFactory              loanFactory;
-    MapleToken                       mpl;
-    MapleGlobals                 globals;
-    PremiumCalc              premiumCalc;
-    Treasury                         trs;
-    ChainlinkOracle           wethOracle;
-    ChainlinkOracle           wbtcOracle;
-    UsdOracle                  usdOracle;
+    RepaymentCalc           repaymentCalc;
+    CollateralLockerFactory     clFactory;
+    FundingLockerFactory        flFactory;
+    LateFeeCalc               lateFeeCalc;
+    LoanFactory               loanFactory;
+    MapleToken                        mpl;
+    MapleGlobals                  globals;
+    PremiumCalc               premiumCalc;
+    Treasury                          trs;
+    ChainlinkOracle            wethOracle;
+    ChainlinkOracle            wbtcOracle;
+    UsdOracle                   usdOracle;
 
-    ERC20                     fundsToken;
+    ERC20                      fundsToken;
 
     uint256 constant public MAX_UINT = uint256(-1);
 
     function setUp() public {
 
-        ali         = new Borrower();   // Actor: Borrower of the Loan.
-        gov         = new Governor();   // Actor: Governor of Maple.
-        bob         = new Lender();     // Actor: Individual lender.
+        ali = new Borrower();   // Actor: Borrower of the Loan.
+        gov = new Governor();   // Actor: Governor of Maple.
+        bob = new Lender();     // Actor: Individual lender.
 
-        mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
-        flFactory   = new FundingLockerFactory();
-        clFactory   = new CollateralLockerFactory();
-        bulletCalc  = new BulletRepaymentCalc();
-        lateFeeCalc = new LateFeeCalc(0);   // Flat 0% fee
-        premiumCalc = new PremiumCalc(500); // Flat 5% premium
-        loanFactory = new LoanFactory(address(globals));
-        trs         = new Treasury();
+        mpl           = new MapleToken("MapleToken", "MAPL", USDC);
+        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
+        flFactory     = new FundingLockerFactory();
+        clFactory     = new CollateralLockerFactory();
+        repaymentCalc = new RepaymentCalc();
+        lateFeeCalc   = new LateFeeCalc(0);   // Flat 0% fee
+        premiumCalc   = new PremiumCalc(500); // Flat 5% premium
+        loanFactory   = new LoanFactory(address(globals));
+        trs           = new Treasury();
 
-
-        gov.setCalc(address(bulletCalc),  true);
-        gov.setCalc(address(lateFeeCalc), true);
-        gov.setCalc(address(premiumCalc), true);
-        gov.setCollateralAsset(WETH,      true);
-        gov.setCollateralAsset(WBTC,      true);
-        gov.setCollateralAsset(USDC,      true);
-        gov.setLoanAsset(USDC,            true);
+        gov.setCalc(address(repaymentCalc), true);
+        gov.setCalc(address(lateFeeCalc),   true);
+        gov.setCalc(address(premiumCalc),   true);
+        gov.setCollateralAsset(WETH,        true);
+        gov.setCollateralAsset(WBTC,        true);
+        gov.setCollateralAsset(USDC,        true);
+        gov.setLoanAsset(USDC,              true);
         
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
@@ -161,15 +160,15 @@ contract LoanLiquidationTest is TestUtil {
 
     function test_basic_liquidation() public {
         // Triangular uniswap path
-        Loan wbtcLoan = createAndFundLoan(address(bulletCalc), WBTC);
+        Loan wbtcLoan = createAndFundLoan(address(repaymentCalc), WBTC);
         performLiquidationAssertions(wbtcLoan);
 
         // Bilateral uniswap path
-        Loan wethLoan = createAndFundLoan(address(bulletCalc), WETH);
+        Loan wethLoan = createAndFundLoan(address(repaymentCalc), WETH);
         performLiquidationAssertions(wethLoan);
 
         // collateralAsset == loanAsset 
-        Loan usdcLoan = createAndFundLoan(address(bulletCalc), USDC);
+        Loan usdcLoan = createAndFundLoan(address(repaymentCalc), USDC);
         performLiquidationAssertions(usdcLoan);
     }
 }
