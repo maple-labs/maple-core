@@ -25,6 +25,7 @@ interface IFDT {
      * @dev This event emits when distributed funds are withdrawn by a token holder.
      * @param by the address of the receiver of funds
      * @param fundsWithdrawn the amount of funds that were withdrawn
+     * @param totalWithdrawn the total amount of funds that were withdrawn
      */
-    event FundsWithdrawn(address indexed by, uint256 fundsWithdrawn);
+    event FundsWithdrawn(address indexed by, uint256 fundsWithdrawn, uint256 totalWithdrawn);
 }

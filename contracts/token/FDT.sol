@@ -24,6 +24,9 @@ abstract contract FDT is IFDT, ERC20 {
     mapping(address => int256)  internal pointsCorrection;
     mapping(address => uint256) internal withdrawnFunds; // 3
 
+    event PointsPerShareUpdated(uint256 pointsPerShare);
+    event PointsCorrectionUpdated(address account, int256 pointsCorrection);
+
     constructor(string memory name, string memory symbol, address _fundsToken) ERC20(name, symbol) public {
         fundsToken = IERC20(_fundsToken);
     }
@@ -47,6 +50,7 @@ abstract contract FDT is IFDT, ERC20 {
         if (value > 0) {
             pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier) / totalSupply());
             emit FundsDistributed(msg.sender, value);
+            emit PointsPerShareUpdated(pointsPerShare);
         }
     }
 
@@ -60,7 +64,7 @@ abstract contract FDT is IFDT, ERC20 {
 
         withdrawnFunds[msg.sender] = withdrawnFunds[msg.sender].add(_withdrawableDividend);
 
-        emit FundsWithdrawn(msg.sender, _withdrawableDividend);
+        emit FundsWithdrawn(msg.sender, _withdrawableDividend, withdrawnFunds[msg.sender]);
 
         return _withdrawableDividend;
     }
@@ -75,7 +79,7 @@ abstract contract FDT is IFDT, ERC20 {
 
         withdrawnFunds[user] = withdrawnFunds[user].add(_withdrawableDividend);
 
-        emit FundsWithdrawn(user, _withdrawableDividend);
+        emit FundsWithdrawn(user, _withdrawableDividend, withdrawnFunds[user]);
 
         return _withdrawableDividend;
     }
@@ -131,6 +135,9 @@ abstract contract FDT is IFDT, ERC20 {
         int256 _magCorrection = pointsPerShare.mul(value).toInt256Safe();
         pointsCorrection[from] = pointsCorrection[from].add(_magCorrection);
         pointsCorrection[to] = pointsCorrection[to].sub(_magCorrection);
+
+        emit PointsCorrectionUpdated(from, pointsCorrection[from]);
+        emit PointsCorrectionUpdated(to,   pointsCorrection[to]);
     }
 
     /**
@@ -145,6 +152,8 @@ abstract contract FDT is IFDT, ERC20 {
         pointsCorrection[account] = pointsCorrection[account].sub(
             (pointsPerShare.mul(value)).toInt256Safe()
         );
+        
+        emit PointsCorrectionUpdated(account, pointsCorrection[account]);
     }
 
     /**
@@ -159,6 +168,7 @@ abstract contract FDT is IFDT, ERC20 {
         pointsCorrection[account] = pointsCorrection[account].add(
             (pointsPerShare.mul(value)).toInt256Safe()
         );
+        emit PointsCorrectionUpdated(account, pointsCorrection[account]);
     }
 
     /**
