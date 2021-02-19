@@ -9,7 +9,7 @@ library TokenUUID {
         @param  serial randomizes the output.
         @return UUID
     */
-    function generateUUID(uint256 serial) internal view returns (string memory) {
+    function generateUUID(uint256 serial) public view returns (string memory) {
 
         bytes32 inBytes       =  keccak256(abi.encodePacked(block.timestamp, serial));
         bytes memory outBytes = new bytes(8);
