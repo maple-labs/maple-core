@@ -501,4 +501,58 @@ contract LoanTest is TestUtil {
 
         assertEq((expectedAmount * USD) / WAD, loan.getExpectedAmountRecovered());
     }
+
+    function test_makeFullPaymentBullet() public {
+
+        Loan loan = createAndFundLoan(address(bulletCalc));
+
+        assertEq(uint256(loan.loanState()), 0);  // Loan state: Live
+
+        assertTrue(!ali.try_makeFullPayment(address(loan)));  // Can't makePayment when State != Active
+
+        // Approve collateral and drawdown loan.
+        ali.approve(WETH, address(loan), 0.4 ether);
+        assertTrue(ali.try_drawdown(address(loan), 1000 * USD));  // Borrow draws down 1000 USDC
+
+        address collateralLocker = loan.collateralLocker();
+
+        // Warp to *300 seconds* before next payment is due
+        assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());
+        hevm.warp(loan.nextPaymentDue() - 300);
+        assertEq(block.timestamp, loan.nextPaymentDue() - 300);
+
+        assertTrue(!ali.try_makeFullPayment(address(loan)));  // Can't makePayment with lack of approval
+
+        // Approve full payment.
+        (uint _amt, uint _pri, uint _int) = loan.getFullPayment();
+        ali.approve(USDC, address(loan), _amt);
+        assertEq(IERC20(USDC).allowance(address(ali), address(loan)), _amt);
+
+        // Before state
+        assertEq(uint256(loan.loanState()),          1);  // Loan state is Active, accepting payments
+        assertEq(loan.principalOwed(),      1000 * USD);  // Initial drawdown amount.
+        assertEq(loan.principalPaid(),               0);
+        assertEq(loan.interestPaid(),                0);
+        assertEq(loan.paymentsRemaining(),           3);
+
+        uint256 reqCollateral         = loan.collateralRequiredForDrawdown(1000 * USD);
+        IERC20Details collateralAsset = loan.collateralAsset();
+        uint256 _delta                = collateralAsset.balanceOf(address(ali));
+        uint256 _usdcDelta            = IERC20(USDC).balanceOf(address(loan));
+
+        // Make payment.
+        assertTrue(ali.try_makeFullPayment(address(loan)));
+
+        // After state
+        assertEq(IERC20(USDC).balanceOf(address(loan)),  _usdcDelta + _amt);
+        assertEq(uint256(loan.loanState()),                              2);  // Loan state is Matured
+        assertEq(loan.principalOwed(),                                   0);  // Initial drawdown amount.
+        assertEq(loan.principalPaid(),                                 _pri);
+        assertEq(loan.interestPaid(),                                  _int);
+        assertEq(loan.paymentsRemaining(),                                0);
+
+        // Collateral locker after state.
+        assertEq(collateralAsset.balanceOf(collateralLocker),                      0);
+        assertEq(collateralAsset.balanceOf(address(ali)),     _delta + reqCollateral);
+    }
 }

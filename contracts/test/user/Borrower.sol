@@ -84,6 +84,11 @@ contract Borrower {
         (ok,) = address(loan).call(abi.encodeWithSignature(sig));
     }
 
+    function try_makeFullPayment(address loan) external returns (bool ok) {
+        string memory sig = "makeFullPayment()";
+        (ok,) = address(loan).call(abi.encodeWithSignature(sig));
+    }
+
     function try_unwind(address loan) external returns (bool ok) {
         string memory sig = "unwind()";
         (ok,) = address(loan).call(abi.encodeWithSignature(sig));
