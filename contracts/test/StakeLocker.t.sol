@@ -226,7 +226,7 @@ contract StakeLockerTest is TestUtil {
 
     function getNewStakeDate(address who, uint256 amt) public returns(uint256 newStakeDate) {
         uint256 stkDate = stakeLocker.stakeDate(who);
-        uint256 coef = (WAD * amt) / (stakeLocker.balanceOf(who) + amt);
+        uint256 coef = stakeLocker.balanceOf(who) + amt == 0 ? 0 : (WAD * amt) / (stakeLocker.balanceOf(who) + amt);
         newStakeDate = stkDate + (((now - stkDate) * coef) / WAD);
     }
 
@@ -352,11 +352,12 @@ contract StakeLockerTest is TestUtil {
         TestObj memory unstakeableBal;
 
         uint256 unstakeDelay = globals.unstakeDelay();
+        uint256 bptMin = WAD / 10_000_000;
 
-        stakeAmount  = constrictToRange(stakeAmount,  WAD, bPool.balanceOf(address(che)) / 2);  // 12.5 WAD max, 1 WAD min, or zero
-        stakeAmount2 = constrictToRange(stakeAmount2, WAD, bPool.balanceOf(address(che)) / 2);  // 12.5 WAD max, 1 WAD min, or zero (total can't be greater than 25 WAD)
-        dTime        = constrictToRange(dTime,  15, unstakeDelay / 2); // Max dtime is half unstakeDelay
-        dTime2       = constrictToRange(dTime2, 15, unstakeDelay / 2); // Max dtime is half unstakeDelay (total less than unstakeDelay for test)
+        stakeAmount  = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(che)) / 2);  // 12.5 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents)
+        stakeAmount2 = constrictToRange(stakeAmount2, bptMin, bPool.balanceOf(address(che)) / 2);  // 12.5 WAD max, 1/10m WAD min, or zero (total can't be greater than 25 WAD)
+        dTime        = constrictToRange(dTime,  15, unstakeDelay / 2);                            // Max dtime is half unstakeDelay
+        dTime2       = constrictToRange(dTime2, 15, unstakeDelay / 2);                            // Max dtime is half unstakeDelay (total less than unstakeDelay for test)
 
         uint256 start = block.timestamp;
         sid.setWhitelistStakeLocker(address(pool), address(che), true);
@@ -385,7 +386,8 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.balanceOf(address(che)), stakeAmount + stakeAmount2);
         assertEq(stakeLocker.stakeDate(address(che)),               newStakeDate);
 
-        withinPrecision(unstakeableBal.pre, unstakeableBal.post, 2);  // Withdrawable balance should not change after stakeDate is recalculated
+        // Withdrawable balance should not change after stakeDate is recalculated (bptMin rounding error accounted for, test_stake_to_measure_effect_on_stake_date proves strict equality)
+        withinDiff(unstakeableBal.pre, unstakeableBal.post, bptMin * 100);  
 
         hevm.warp(start + dTime + dTime2);
 

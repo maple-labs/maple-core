@@ -48,6 +48,9 @@ contract TestUtil is DSTest {
 
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
+    event Debug(string, uint256);
+    event Debug(string, address);
+
     constructor() public {
         hevm = Hevm(address(CHEAT_CODE));
 

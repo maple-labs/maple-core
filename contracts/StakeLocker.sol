@@ -144,8 +144,8 @@ contract StakeLocker is FDT {
         if (stkDate == 0) {
             stakeDate[who] = block.timestamp;
         } else {
-            uint256 coef    = WAD.mul(amt).div(balanceOf(who) + amt); 
-            stakeDate[who]  = stkDate.add(((block.timestamp.sub(stkDate)).mul(coef)).div(WAD));  // date + (now - stkDate) * coef
+            uint256 coef   = WAD.mul(amt).div(balanceOf(who) + amt); 
+            stakeDate[who] = stkDate.add(((block.timestamp.sub(stkDate)).mul(coef)).div(WAD));  // date + (now - stkDate) * coef
         }
     }
 
