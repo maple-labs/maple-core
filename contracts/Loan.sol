@@ -172,8 +172,7 @@ contract Loan is FDT {
         @param  amt    Amount to fund the loan.
         @param  mintTo Address that debt tokens are minted to.
     */
-    // TODO: Update this function signature to use (address, uint)
-    function fundLoan(uint256 amt, address mintTo) external {
+    function fundLoan(address mintTo, uint256 amt) external {
         _isValidState(State.Live);
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, fundingLocker, amt));
 

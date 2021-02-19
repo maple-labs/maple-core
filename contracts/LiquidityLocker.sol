@@ -40,6 +40,6 @@ contract LiquidityLocker {
     //       Lucas -> Pass in loan factory, cross-check with globals, then confirm if legit.
     function fundLoan(address loan, address debtLocker, uint256 amt) external isOwner {
         liquidityAsset.approve(loan, amt);
-        ILoan(loan).fundLoan(amt, debtLocker);
+        ILoan(loan).fundLoan(debtLocker, amt);
     }
 }
