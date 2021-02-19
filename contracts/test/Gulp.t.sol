@@ -34,6 +34,7 @@ import "../interfaces/IPool.sol";
 import "../interfaces/IPoolFactory.sol";
 
 import "../oracles/ChainlinkOracle.sol";
+import "../oracles/UsdOracle.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -65,7 +66,7 @@ contract GulpTest is TestUtil {
     StakeLockerFactory               slFactory;
     ChainlinkOracle                 wethOracle;
     ChainlinkOracle                 wbtcOracle;
-    ChainlinkOracle                  usdOracle;
+    UsdOracle                        usdOracle;
 
     IBPool                               bPool;
     IStakeLocker                   stakeLocker;
@@ -143,7 +144,7 @@ contract GulpTest is TestUtil {
         
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
+        usdOracle  = new UsdOracle();
         
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));

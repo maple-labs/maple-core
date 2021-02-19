@@ -33,6 +33,7 @@ import "../PremiumCalc.sol";
 import "../StakeLockerFactory.sol";
 
 import "../oracles/ChainlinkOracle.sol";
+import "../oracles/UsdOracle.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -74,7 +75,7 @@ contract PoolTest is TestUtil {
     Treasury                               trs;
     ChainlinkOracle                 wethOracle;
     ChainlinkOracle                 wbtcOracle;
-    ChainlinkOracle                  usdOracle;
+    UsdOracle                        usdOracle;
     
     ERC20                           fundsToken;
     IBPool                               bPool;
@@ -119,7 +120,7 @@ contract PoolTest is TestUtil {
 
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
+        usdOracle  = new UsdOracle();
         
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));

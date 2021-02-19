@@ -14,6 +14,7 @@ import "../PoolFactory.sol";
 import "../StakeLockerFactory.sol";
 
 import "../oracles/ChainlinkOracle.sol";
+import "../oracles/UsdOracle.sol";
 
 import "../interfaces/IBFactory.sol";
 import "../interfaces/IBPool.sol";
@@ -34,7 +35,7 @@ contract PoolFactoryTest is TestUtil {
     IBPool                       bPool;
     ChainlinkOracle         wethOracle;
     ChainlinkOracle         wbtcOracle;
-    ChainlinkOracle          usdOracle;
+    UsdOracle                usdOracle;
 
     uint256 public constant MAX_UINT = uint256(-1);
 
@@ -56,7 +57,7 @@ contract PoolFactoryTest is TestUtil {
         
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
+        usdOracle  = new UsdOracle();
         
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));
