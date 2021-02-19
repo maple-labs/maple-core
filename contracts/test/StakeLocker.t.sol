@@ -353,10 +353,10 @@ contract StakeLockerTest is TestUtil {
 
         uint256 unstakeDelay = globals.unstakeDelay();
 
-        stakeAmount  %= bPool.balanceOf(address(che)) / 2;  // 12.5 WAD max stake amount
-        stakeAmount2 %= bPool.balanceOf(address(che)) / 2;  // 12.5 WAD max stake amount (total can't be greater than 25)
-        dTime        %= unstakeDelay / 2;                   // Max dtime is half unstakeDelay
-        dTime2       %= unstakeDelay / 2;                   // Max dtime is half unstakeDelay (total less than unstakeDelay for test)
+        stakeAmount  = constrictToRange(stakeAmount,  WAD, bPool.balanceOf(address(che)) / 2);  // 12.5 WAD max, 1 WAD min, or zero
+        stakeAmount2 = constrictToRange(stakeAmount2, WAD, bPool.balanceOf(address(che)) / 2);  // 12.5 WAD max, 1 WAD min, or zero (total can't be greater than 25 WAD)
+        dTime        = constrictToRange(dTime,  15, unstakeDelay / 2); // Max dtime is half unstakeDelay
+        dTime2       = constrictToRange(dTime2, 15, unstakeDelay / 2); // Max dtime is half unstakeDelay (total less than unstakeDelay for test)
 
         uint256 start = block.timestamp;
         sid.setWhitelistStakeLocker(address(pool), address(che), true);
@@ -385,13 +385,14 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.balanceOf(address(che)), stakeAmount + stakeAmount2);
         assertEq(stakeLocker.stakeDate(address(che)),               newStakeDate);
 
-        withinPrecision(unstakeableBal.pre, unstakeableBal.post, 4);  // Withdrawable balance should not change after stakeDate is recalculated
+        withinPrecision(unstakeableBal.pre, unstakeableBal.post, 2);  // Withdrawable balance should not change after stakeDate is recalculated
 
         hevm.warp(start + dTime + dTime2);
 
         assertEq(stakeLocker.balanceOf(address(che)), stakeAmount + stakeAmount2);
         assertEq(stakeLocker.stakeDate(address(che)),               newStakeDate);
 
+    
         assertEq(stakeLocker.getUnstakeableBalance(address(che)), (block.timestamp - newStakeDate) * (stakeAmount + stakeAmount2) / unstakeDelay);  // Function uses total staked and stakeDate
     }
 } 

@@ -89,8 +89,11 @@ contract TestUtil is DSTest {
 
     // Verify equality within accuracy decimals
     function withinPrecision(uint256 val0, uint256 val1, uint256 accuracy) public {
-        uint diff  = val0 > val1 ? val0 - val1 : val1 - val0;
-        bool check = ((diff * RAY) / val0) < (RAY / 10 ** accuracy);   
+        uint256 diff  = val0 > val1 ? val0 - val1 : val1 - val0;
+        if(diff == 0) return;
+
+        uint256 denominator = val0 == 0 ? val1 : val0;
+        bool check = ((diff * RAY) / denominator) < (RAY / 10 ** accuracy);   
 
         if (!check){
             emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", accuracy);
@@ -111,6 +114,10 @@ contract TestUtil is DSTest {
             emit log_named_uint("    Actual", val1);
             fail();
         }
+    }
+
+    function constrictToRange(uint256 val, uint256 min, uint256 max) public returns(uint256) {
+        return val == 0 ? 0 : val % (max - min) + min;
     }
 
     // function test_cheat_code_for_slot() public {
