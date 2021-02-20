@@ -457,6 +457,10 @@ contract Loan is FDT {
             false
         );
         _emitBalanceUpdateEventForLoan();
+
+        // Transferring all collaterised funds back to the borrower.
+        require(ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance()), "Loan:COLLATERAL_PULL");
+        _emitBalanceUpdateEventForCollateralLocker();
     }
 
     /**
