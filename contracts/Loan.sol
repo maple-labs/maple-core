@@ -438,7 +438,6 @@ contract Loan is FDT {
         loanState = State.Matured;
 
         // Update internal accounting variables.
-        // TODO: Return collateral
         principalOwed     = 0;
         paymentsRemaining = 0;
         principalPaid     = principalPaid.add(principal);
