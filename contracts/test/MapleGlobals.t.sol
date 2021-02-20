@@ -7,7 +7,7 @@ import "./TestUtil.sol";
 import "./user/Governor.sol";
 import "./user/PoolDelegate.sol";
 
-import "../BulletRepaymentCalc.sol";
+import "../RepaymentCalc.sol";
 import "../CollateralLockerFactory.sol";
 import "../DebtLockerFactory.sol";
 import "../FundingLockerFactory.sol";
@@ -32,7 +32,7 @@ contract MapleGlobalsTest is TestUtil {
     PoolDelegate                     sid;
     PoolDelegate                     joe;
 
-    BulletRepaymentCalc           brCalc;
+    RepaymentCalc          repaymentCalc;
     CollateralLockerFactory    clFactory;
     DebtLockerFactory          dlFactory;
     FundingLockerFactory       flFactory;
@@ -57,7 +57,7 @@ contract MapleGlobalsTest is TestUtil {
     uint8 public constant LL_FACTORY = 3;           // Factory type of `LiquidityLockerFactory`.
     uint8 public constant SL_FACTORY = 4;           // Factory type of `StakeLockerFactory`.
 
-    uint8 public constant INTEREST_CALC_TYPE = 10;  // Calc type of `BulletRepaymentCalc`.
+    uint8 public constant INTEREST_CALC_TYPE = 10;  // Calc type of `RepaymentCalc`.
     uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`.
     uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`.
 
@@ -67,22 +67,22 @@ contract MapleGlobalsTest is TestUtil {
         sid         = new PoolDelegate();   // Actor: Manager of the Pool.
         joe         = new PoolDelegate();   // Actor: Manager of the Pool.
 
-        mpl         = new MapleToken("MapleToken", "MAPLE", USDC);
-        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
-        poolFactory = new PoolFactory(address(globals));
-        loanFactory = new LoanFactory(address(globals));
-        dlFactory   = new DebtLockerFactory();
-        slFactory   = new StakeLockerFactory();
-        llFactory   = new LiquidityLockerFactory();
-        flFactory   = new FundingLockerFactory();
-        clFactory   = new CollateralLockerFactory();
-        lfCalc      = new LateFeeCalc(0);
-        pCalc       = new PremiumCalc(200);
-        brCalc      = new BulletRepaymentCalc();
-        trs         = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
-        wethOracle  = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
-        wbtcOracle  = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle   = new UsdOracle();
+        mpl           = new MapleToken("MapleToken", "MAPLE", USDC);
+        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        poolFactory   = new PoolFactory(address(globals));
+        loanFactory   = new LoanFactory(address(globals));
+        dlFactory     = new DebtLockerFactory();
+        slFactory     = new StakeLockerFactory();
+        llFactory     = new LiquidityLockerFactory();
+        flFactory     = new FundingLockerFactory();
+        clFactory     = new CollateralLockerFactory();
+        lfCalc        = new LateFeeCalc(0);
+        pCalc         = new PremiumCalc(200);
+        repaymentCalc = new RepaymentCalc();
+        trs           = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
+        wethOracle    = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
+        wbtcOracle    = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
+        usdOracle     = new UsdOracle();
         
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));
@@ -91,16 +91,17 @@ contract MapleGlobalsTest is TestUtil {
         // The following code was adopted from maple-core/scripts/setup.js
         gov.setMapleTreasury(address(trs));
         gov.setPoolDelegateWhitelist(address(sid), true);
-        gov.setLoanAsset(DAI, true);
-        gov.setLoanAsset(USDC, true);
-        gov.setCollateralAsset(DAI, true);
+
+        gov.setLoanAsset(DAI,        true);
+        gov.setLoanAsset(USDC,       true);
+        gov.setCollateralAsset(DAI,  true);
         gov.setCollateralAsset(USDC, true);
         gov.setCollateralAsset(WETH, true);
         gov.setCollateralAsset(WBTC, true);
 
-        gov.setCalc(address(lfCalc), true);
-        gov.setCalc(address(pCalc), true);
-        gov.setCalc(address(brCalc), true);
+        gov.setCalc(address(lfCalc),        true);
+        gov.setCalc(address(pCalc),         true);
+        gov.setCalc(address(repaymentCalc), true);
 
         gov.setValidPoolFactory(address(poolFactory), true);
         gov.setValidLoanFactory(address(loanFactory), true);
@@ -139,11 +140,11 @@ contract MapleGlobalsTest is TestUtil {
 
         assertTrue(globals.validCalcs(address(lfCalc)));
         assertTrue(globals.validCalcs(address(pCalc)));
-        assertTrue(globals.validCalcs(address(brCalc)));
+        assertTrue(globals.validCalcs(address(repaymentCalc)));
 
-        assertTrue(globals.isValidCalc(address(lfCalc),  LATEFEE_CALC_TYPE));
-        assertTrue(globals.isValidCalc(address(pCalc),   PREMIUM_CALC_TYPE));
-        assertTrue(globals.isValidCalc(address(brCalc), INTEREST_CALC_TYPE));
+        assertTrue(globals.isValidCalc(address(lfCalc),         LATEFEE_CALC_TYPE));
+        assertTrue(globals.isValidCalc(address(pCalc),          PREMIUM_CALC_TYPE));
+        assertTrue(globals.isValidCalc(address(repaymentCalc), INTEREST_CALC_TYPE));
 
         assertTrue(globals.isValidPoolFactory(address(poolFactory)));
         assertTrue(globals.isValidLoanFactory(address(loanFactory)));
@@ -220,10 +221,10 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!globals.isValidLoanAsset(WETH));
         assertTrue(!globals.isValidCollateralAsset(CDAI));
 
-        assertTrue( globals.validCalcs(address(brCalc)));
-        assertTrue(!fakeGov.try_setCalc(address(brCalc), false));  // Non-governor cant set
-        assertTrue(     gov.try_setCalc(address(brCalc), false));
-        assertTrue(!globals.validCalcs(address(brCalc)));
+        assertTrue( globals.validCalcs(address(repaymentCalc)));
+        assertTrue(!fakeGov.try_setCalc(address(repaymentCalc), false));  // Non-governor cant set
+        assertTrue(     gov.try_setCalc(address(repaymentCalc), false));
+        assertTrue(!globals.validCalcs(address(repaymentCalc)));
 
         assertEq(globals.governor(),         address(gov));
         assertEq(globals.mpl(),              address(mpl));

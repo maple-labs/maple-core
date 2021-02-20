@@ -18,7 +18,7 @@ import "../interfaces/IStakeLocker.sol";
 
 import "../LateFeeCalc.sol";
 
-import "../BulletRepaymentCalc.sol";
+import "../RepaymentCalc.sol";
 import "../CollateralLockerFactory.sol";
 import "../DebtLocker.sol";
 import "../DebtLockerFactory.sol";
@@ -54,7 +54,7 @@ contract PoolTest is TestUtil {
     PoolDelegate                           sid;
     PoolDelegate                           joe;
 
-    BulletRepaymentCalc             bulletCalc;
+    RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
     DebtLockerFactory               dlFactory1;
     DebtLockerFactory               dlFactory2;
@@ -105,7 +105,7 @@ contract PoolTest is TestUtil {
         poolFactory    = new PoolFactory(address(globals));                             // Create pool factory.
         dlFactory1     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
         dlFactory2     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        bulletCalc     = new BulletRepaymentCalc();                                     // Repayment model.
+        repaymentCalc  = new RepaymentCalc();                                           // Repayment model.
         lateFeeCalc    = new LateFeeCalc(0);                                            // Flat 0% fee
         premiumCalc    = new PremiumCalc(500);                                          // Flat 5% premium
         trs            = new Treasury();                                                // Treasury.
@@ -155,11 +155,11 @@ contract PoolTest is TestUtil {
         bPool.transfer(address(joe), bPool.balanceOf(address(this)));
 
         // Set Globals
-        gov.setCalc(address(bulletCalc),  true);
-        gov.setCalc(address(lateFeeCalc), true);
-        gov.setCalc(address(premiumCalc), true);
-        gov.setCollateralAsset(WETH, true);
-        gov.setLoanAsset(USDC, true);
+        gov.setCalc(address(repaymentCalc),  true);
+        gov.setCalc(address(lateFeeCalc),    true);
+        gov.setCalc(address(premiumCalc),    true);
+        gov.setCollateralAsset(WETH,         true);
+        gov.setLoanAsset(USDC,               true);
         gov.setSwapOutRequired(1_000_000);
 
         // Create Liquidity Pool
@@ -188,7 +188,7 @@ contract PoolTest is TestUtil {
 
         // loan Specifications
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
-        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
+        address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan  = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan2 = fay.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
@@ -585,7 +585,7 @@ contract PoolTest is TestUtil {
         gov.setCalc(address(premiumCalc), true);
 
         uint256[6] memory specs = [0, 180, 30, uint256(1000 * USD), 2000, 7];
-        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
+        address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan  = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan2 = fay.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
