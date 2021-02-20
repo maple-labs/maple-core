@@ -8,17 +8,19 @@ import "./user/Borrower.sol";
 import "./user/Governor.sol";
 import "./user/Lender.sol";
 
-import "../BulletRepaymentCalc.sol";
+import "../RepaymentCalc.sol";
 import "../CollateralLockerFactory.sol";
 import "../FundingLockerFactory.sol";
 import "../MapleToken.sol";
 import "../LateFeeCalc.sol";
 import "../LoanFactory.sol";
 import "../PremiumCalc.sol";
-import "../oracles/ChainlinkOracle.sol";
 
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/ILoan.sol";
+
+import "../oracles/ChainlinkOracle.sol";
+import "../oracles/UsdOracle.sol";
 
 contract Treasury { }
 
@@ -36,7 +38,7 @@ contract LoanTest is TestUtil {
     Lender                           bob;
     Commoner                         com;
 
-    BulletRepaymentCalc       bulletCalc;
+    RepaymentCalc          repaymentCalc;
     CollateralLockerFactory    clFactory;
     FundingLockerFactory       flFactory;
     LateFeeCalc              lateFeeCalc;
@@ -47,7 +49,7 @@ contract LoanTest is TestUtil {
     Treasury                         trs;
     ChainlinkOracle           wethOracle;
     ChainlinkOracle           wbtcOracle;
-    ChainlinkOracle            usdOracle;
+    UsdOracle                  usdOracle;
 
     ERC20                     fundsToken;
 
@@ -58,17 +60,17 @@ contract LoanTest is TestUtil {
         bob         = new Lender();         // Actor: Individual lender.
         com         = new Commoner();       // Actor: Any user or an incentive seeker.
 
-        mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
-        flFactory   = new FundingLockerFactory();
-        clFactory   = new CollateralLockerFactory();
-        bulletCalc  = new BulletRepaymentCalc();
-        lateFeeCalc = new LateFeeCalc(0);   // Flat 0% fee
-        premiumCalc = new PremiumCalc(500); // Flat 5% premium
-        loanFactory = new LoanFactory(address(globals));
-        trs         = new Treasury();
+        mpl           = new MapleToken("MapleToken", "MAPL", USDC);
+        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        flFactory     = new FundingLockerFactory();
+        clFactory     = new CollateralLockerFactory();
+        repaymentCalc = new RepaymentCalc();
+        lateFeeCalc   = new LateFeeCalc(0);   // Flat 0% fee
+        premiumCalc   = new PremiumCalc(500); // Flat 5% premium
+        loanFactory   = new LoanFactory(address(globals));
+        trs           = new Treasury();
 
-        gov.setCalc(address(bulletCalc),         true);
+        gov.setCalc(address(repaymentCalc),         true);
         gov.setCalc(address(lateFeeCalc),        true);
         gov.setCalc(address(premiumCalc),        true);
         gov.setCollateralAsset(WETH,             true);
@@ -76,7 +78,7 @@ contract LoanTest is TestUtil {
 
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
+        usdOracle  = new UsdOracle();
         
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));
@@ -94,7 +96,7 @@ contract LoanTest is TestUtil {
 
     function test_createLoan() public {
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
-        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
+        address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         // Can't create a loan with DAI since stakingAsset uses USDC.
         assertTrue(!ali.try_createLoan(address(loanFactory), DAI, WETH, address(flFactory), address(clFactory), specs, calcs));
@@ -114,7 +116,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.requestAmount(),             specs[3]);
         assertEq(loan.collateralRatio(),           specs[4]);
         assertEq(loan.fundingPeriodSeconds(),      specs[5] * 1 days);
-        assertEq(loan.repaymentCalc(),             address(bulletCalc));
+        assertEq(loan.repaymentCalc(),             address(repaymentCalc));
         assertEq(loan.lateFeeCalc(),               address(lateFeeCalc));
         assertEq(loan.premiumCalc(),               address(premiumCalc));
         assertEq(loan.nextPaymentDue(),            block.timestamp + loan.paymentIntervalSeconds());
@@ -122,7 +124,7 @@ contract LoanTest is TestUtil {
 
     function test_fundLoan() public {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
-        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
+        address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         Loan loan = ali.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         address fundingLocker = loan.fundingLocker();
@@ -151,16 +153,15 @@ contract LoanTest is TestUtil {
         bob.fundLoan(address(loan), 5000 * USD, address(bob));
     }
 
-    // function test_collateralRequiredForDrawdown() public {
-    //     Loan loan = createAndFundLoan(address(bulletCalc));
+    function test_collateralRequiredForDrawdown() public {
+        Loan loan = createAndFundLoan(address(repaymentCalc));
 
-    //     uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
-    //     // assertEq(reqCollateral, 0.4 ether);
-    //     // TODO: Come up with better test for live price feeds.
-    // }
+        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
+        withinDiff(reqCollateral * globals.getLatestPrice(address(WETH)) * USD / WAD / 10 ** 8, 200 * USD, 1);  // 20% of $1000, 1 wei diff
+    }
 
     function test_drawdown() public {
-        Loan loan = createAndFundLoan(address(bulletCalc));
+        Loan loan = createAndFundLoan(address(repaymentCalc));
 
         assertTrue(!bob.try_drawdown(address(loan), 1000 * USD));  // Non-borrower can't drawdown
         assertTrue(!ali.try_drawdown(address(loan), 1000 * USD));  // Can't drawdown without approving collateral
@@ -208,9 +209,9 @@ contract LoanTest is TestUtil {
 
     }
 
-    function test_makePaymentBullet() public {
+    function test_makePayment() public {
 
-        Loan loan = createAndFundLoan(address(bulletCalc));
+        Loan loan = createAndFundLoan(address(repaymentCalc));
 
         assertEq(uint256(loan.loanState()), 0);  // Loan state: Live
 
@@ -288,7 +289,7 @@ contract LoanTest is TestUtil {
         
         // After state, state variables.
         assertEq(uint256(loan.loanState()),               2);  // Loan state is Matured (final payment)
-        assertEq(loan.principalOwed(),                    0);  // Final payment, all principal paid for Bullet
+        assertEq(loan.principalOwed(),                    0);  // Final payment, all principal paid for InterestOnly loan
         assertEq(loan.principalPaid(),                 _pri);
         assertEq(loan.interestPaid(),              _int * 3);
         assertEq(loan.paymentsRemaining(),                0);
@@ -300,8 +301,8 @@ contract LoanTest is TestUtil {
 
     }
     
-    function test_makePaymentLateBullet() public {
-        Loan loan = createAndFundLoan(address(bulletCalc));
+    function test_makePayment_late() public {
+        Loan loan = createAndFundLoan(address(repaymentCalc));
 
         assertEq(uint256(loan.loanState()), 0);  // Loan state: Live
 
@@ -391,7 +392,7 @@ contract LoanTest is TestUtil {
         
         // After state, state variables.
         assertEq(uint256(loan.loanState()),               2);  // Loan state is Matured (final payment)
-        assertEq(loan.principalOwed(),                    0);  // Final payment, all principal paid for Bullet
+        assertEq(loan.principalOwed(),                    0);  // Final payment, all principal paid for InterestOnly loan
         assertEq(loan.principalPaid(),                 _pri);
         assertEq(loan.interestPaid(),              _int * 3);
         assertEq(loan.paymentsRemaining(),                0);
@@ -404,7 +405,7 @@ contract LoanTest is TestUtil {
 
     function test_unwind_loan() public {
 
-        Loan loan = createAndFundLoan(address(bulletCalc));
+        Loan loan = createAndFundLoan(address(repaymentCalc));
 
         // Warp to the drawdownGracePeriod ... can't call unwind() yet
         hevm.warp(loan.createdAt() + globals.drawdownGracePeriod());
@@ -438,7 +439,7 @@ contract LoanTest is TestUtil {
     }
 
     function test_trigger_default() public {
-        ILoan loan = ILoan(address(createAndFundLoan(address(bulletCalc))));
+        ILoan loan = ILoan(address(createAndFundLoan(address(repaymentCalc))));
 
         uint256 reqCollateral = loan.collateralRequiredForDrawdown(5000 * USD);
         ali.approve(WETH, address(loan), reqCollateral);
@@ -471,7 +472,7 @@ contract LoanTest is TestUtil {
     }
 
     function test_trigger_default_by_commoner() external  {
-        ILoan loan = ILoan(address(createAndFundLoan(address(bulletCalc))));
+        ILoan loan = ILoan(address(createAndFundLoan(address(repaymentCalc))));
 
         uint256 reqCollateral = loan.collateralRequiredForDrawdown(5000 * USD);
         ali.approve(WETH, address(loan), reqCollateral);
@@ -490,7 +491,7 @@ contract LoanTest is TestUtil {
     }
 
     function test_calc_min_amount() external {
-        Loan loan = createAndFundLoan(address(bulletCalc));
+        Loan loan = createAndFundLoan(address(repaymentCalc));
 
         uint256 reqCollateral = loan.collateralRequiredForDrawdown(5000 * USD);
         ali.approve(WETH, address(loan), reqCollateral);

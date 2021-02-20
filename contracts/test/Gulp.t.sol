@@ -10,7 +10,7 @@ import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
 import "./user/Staker.sol";
 
-import "../BulletRepaymentCalc.sol";
+import "../RepaymentCalc.sol";
 import "../CollateralLockerFactory.sol";
 import "../DebtLocker.sol";
 import "../DebtLockerFactory.sol";
@@ -34,6 +34,7 @@ import "../interfaces/IPool.sol";
 import "../interfaces/IPoolFactory.sol";
 
 import "../oracles/ChainlinkOracle.sol";
+import "../oracles/UsdOracle.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -48,7 +49,7 @@ contract GulpTest is TestUtil {
     Staker                                 che;
     Staker                                 dan;
     
-    BulletRepaymentCalc             bulletCalc;
+    RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
     DebtLockerFactory                dlFactory;
     FundingLockerFactory             flFactory;
@@ -65,7 +66,7 @@ contract GulpTest is TestUtil {
     StakeLockerFactory               slFactory;
     ChainlinkOracle                 wethOracle;
     ChainlinkOracle                 wbtcOracle;
-    ChainlinkOracle                  usdOracle;
+    UsdOracle                        usdOracle;
 
     IBPool                               bPool;
     IStakeLocker                   stakeLocker;
@@ -92,7 +93,7 @@ contract GulpTest is TestUtil {
         llFactory      = new LiquidityLockerFactory();        // Setup the SL factory to facilitate Pool factory functionality.
         poolFactory    = new PoolFactory(address(globals));   // Create pool factory.
         dlFactory      = new DebtLockerFactory();             // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        bulletCalc     = new BulletRepaymentCalc();           // Repayment model.
+        repaymentCalc  = new RepaymentCalc();                 // Repayment model.
         lateFeeCalc    = new LateFeeCalc(0);                  // Flat 0% fee
         premiumCalc    = new PremiumCalc(500);                // Flat 5% premium
 
@@ -134,16 +135,16 @@ contract GulpTest is TestUtil {
         bPool.transfer(address(dan), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
 
         // Set Globals
-        gov.setCalc(address(bulletCalc),  true);
-        gov.setCalc(address(lateFeeCalc), true);
-        gov.setCalc(address(premiumCalc), true);
-        gov.setCollateralAsset(WETH, true);
-        gov.setLoanAsset(USDC, true);
+        gov.setCalc(address(repaymentCalc), true);
+        gov.setCalc(address(lateFeeCalc),   true);
+        gov.setCalc(address(premiumCalc),   true);
+        gov.setCollateralAsset(WETH,        true);
+        gov.setLoanAsset(USDC,              true);
         gov.setSwapOutRequired(1_000_000);
         
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
+        usdOracle  = new UsdOracle();
         
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));
@@ -166,7 +167,7 @@ contract GulpTest is TestUtil {
 
         // loan Specifications
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
-        address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
+        address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 

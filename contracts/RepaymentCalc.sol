@@ -5,12 +5,12 @@ import "./interfaces/ILoan.sol";
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
-contract BulletRepaymentCalc {
+contract RepaymentCalc {
 
 	using SafeMath for uint256;
 
     uint8   public constant calcType = 10;  // INTEREST type
-    bytes32 public constant name     = "BULLET";
+    bytes32 public constant name     = "INTEREST_ONLY";
 
     /**
         @dev    Calculates the next payment for a _loan.

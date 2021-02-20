@@ -52,7 +52,6 @@ contract TestUtil is DSTest {
 
         tokens["USDC"].addr = USDC;
         tokens["USDC"].slot = 9;
-        tokens["USDC"].orcl  = 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9;  // NOTE: This is the DAI/USD oracle - NOT TO BE USED IN PRODUCTION FOR USDC
 
         tokens["WETH"].addr = WETH;
         tokens["WETH"].slot = 3;

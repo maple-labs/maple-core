@@ -16,7 +16,7 @@ import "../interfaces/IPool.sol";
 import "../interfaces/IPoolFactory.sol";
 import "../interfaces/IStakeLocker.sol";
 
-import "../BulletRepaymentCalc.sol";
+import "../RepaymentCalc.sol";
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
 
@@ -36,6 +36,7 @@ import "../Loan.sol";
 import "../Pool.sol";
 
 import "../oracles/ChainlinkOracle.sol";
+import "../oracles/UsdOracle.sol";
 
 interface IBPoolFactory {
     function newBPool() external returns (address);
@@ -43,7 +44,7 @@ interface IBPoolFactory {
 
 contract Treasury { }
 
-contract BulletRepaymentCalcTest is TestUtil {
+contract RepaymentCalcTest is TestUtil {
 
     using SafeMath for uint256;
 
@@ -58,7 +59,7 @@ contract BulletRepaymentCalcTest is TestUtil {
     PoolDelegate                           sid;
     PoolDelegate                           joe;
 
-    BulletRepaymentCalc             bulletCalc;
+    RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
     DebtLockerFactory               dlFactory1;
     DebtLockerFactory               dlFactory2;
@@ -79,7 +80,7 @@ contract BulletRepaymentCalcTest is TestUtil {
     Treasury                               trs;
     ChainlinkOracle                 wethOracle;
     ChainlinkOracle                 wbtcOracle;
-    ChainlinkOracle                  usdOracle;
+    UsdOracle                        usdOracle;
     
     ERC20                           fundsToken;
     IBPool                               bPool;
@@ -109,7 +110,7 @@ contract BulletRepaymentCalcTest is TestUtil {
         poolFactory    = new PoolFactory(address(globals));                             // Create pool factory.
         dlFactory1     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
         dlFactory2     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        bulletCalc     = new BulletRepaymentCalc();                                     // Repayment model.
+        repaymentCalc  = new RepaymentCalc();                                           // Repayment model.
         lateFeeCalc    = new LateFeeCalc(0);                                            // Flat 0% fee
         premiumCalc    = new PremiumCalc(500);                                          // Flat 5% premium
         trs            = new Treasury();                                                // Treasury.
@@ -127,7 +128,7 @@ contract BulletRepaymentCalcTest is TestUtil {
 
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
+        usdOracle  = new UsdOracle();
         
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));
@@ -162,7 +163,7 @@ contract BulletRepaymentCalcTest is TestUtil {
         bPool.transfer(address(joe), bPool.balanceOf(address(this)));
 
         // Set Globals
-        gov.setCalc(address(bulletCalc),  true);
+        gov.setCalc(address(repaymentCalc),  true);
         gov.setCalc(address(lateFeeCalc), true);
         gov.setCalc(address(premiumCalc), true);
         gov.setCollateralAsset(WETH, true);
@@ -188,11 +189,11 @@ contract BulletRepaymentCalcTest is TestUtil {
 
     function setUpRepayments(uint256 loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee, uint256 premiumFee) public {
         {
-            bulletCalc  = new BulletRepaymentCalc();   // Repayment
-            lateFeeCalc = new LateFeeCalc(lateFee);    // Flat late fee
-            premiumCalc = new PremiumCalc(premiumFee); // Flat premium
+            repaymentCalc = new RepaymentCalc();         // Repayment
+            lateFeeCalc   = new LateFeeCalc(lateFee);    // Flat late fee
+            premiumCalc   = new PremiumCalc(premiumFee); // Flat premium
 
-            gov.setCalc(address(bulletCalc),  true);
+            gov.setCalc(address(repaymentCalc),  true);
             gov.setCalc(address(lateFeeCalc), true);
             gov.setCalc(address(premiumCalc), true);
         }
@@ -209,7 +210,7 @@ contract BulletRepaymentCalcTest is TestUtil {
             pool1.deposit(loanAmt);
 
             // Create loan, fund loan, draw down on loan
-            address[3] memory calcs = [address(bulletCalc), address(lateFeeCalc), address(premiumCalc)];
+            address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
             uint256[6] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000, 7];
             loan = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
         }
@@ -224,7 +225,7 @@ contract BulletRepaymentCalcTest is TestUtil {
         }
     }
 
-    function test_bullet(uint56 _loanAmt, uint16 apr, uint16 index, uint16 numPayments) public {
+    function test_repayments(uint56 _loanAmt, uint16 apr, uint16 index, uint16 numPayments) public {
         uint256 loanAmt = uint256(_loanAmt) + 10 ** 6;  // uint56(-1) = ~72b * 10 ** 6 (add 10 ** 6 so its always at least $1)
 
         apr = apr % 10_000;
@@ -249,12 +250,12 @@ contract BulletRepaymentCalcTest is TestUtil {
 
         while (loan.paymentsRemaining() > 0) {
 
-            (uint256 total,        uint256 principal,        uint256 interest,)       =  loan.getNextPayment();                    // USDC required for payment on loan
-            (uint256 total_bullet, uint256 principal_bullet, uint256 interest_bullet) =  bulletCalc.getNextPayment(address(loan)); // USDC required for payment on loan
+            (uint256 total,      uint256 principal,      uint256 interest,)     = loan.getNextPayment();                       // USDC required for payment on loan
+            (uint256 total_calc, uint256 principal_calc, uint256 interest_calc) = repaymentCalc.getNextPayment(address(loan)); // USDC required for payment on loan
 
-            assertEq(total,         total_bullet);
-            assertEq(principal, principal_bullet);
-            assertEq(interest,   interest_bullet);
+            assertEq(total,         total_calc);
+            assertEq(principal, principal_calc);
+            assertEq(interest,   interest_calc);
 
             sumTotal += total;
 
@@ -305,13 +306,13 @@ contract BulletRepaymentCalcTest is TestUtil {
         while (loan.paymentsRemaining() > 0) {
             hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
 
-            (uint256 total,        uint256 principal,        uint256 interest,)       = loan.getNextPayment();                    // USDC required for payment on loan
-            (uint256 total_bullet, uint256 principal_bullet, uint256 interest_bullet) = bulletCalc.getNextPayment(address(loan)); // USDC required for payment on loan
-            (uint256 total_late,   uint256 principal_late,   uint256 interest_late)   = lateFeeCalc.getLateFee(address(loan));    // USDC required for payment on loan
+            (uint256 total,      uint256 principal,      uint256 interest,)     = loan.getNextPayment();                       // USDC required for payment on loan
+            (uint256 total_calc, uint256 principal_calc, uint256 interest_calc) = repaymentCalc.getNextPayment(address(loan)); // USDC required for payment on loan
+            (uint256 total_late, uint256 principal_late, uint256 interest_late) = lateFeeCalc.getLateFee(address(loan));       // USDC required for payment on loan
 
-            assertEq(total,         total_bullet +     total_late);
-            assertEq(principal, principal_bullet + principal_late);
-            assertEq(interest,   interest_bullet +  interest_late);
+            assertEq(total,         total_calc +     total_late);
+            assertEq(principal, principal_calc + principal_late);
+            assertEq(interest,   interest_calc +  interest_late);
 
             sumTotal += total;
             
@@ -322,7 +323,7 @@ contract BulletRepaymentCalcTest is TestUtil {
                 assertEq(total,         interest);
                 assertEq(principal,            0);
 
-                assertEq(interest_late, total_bullet * lateFeeCalc.feeBips() / 10_000);
+                assertEq(interest_late, total_calc * lateFeeCalc.feeBips() / 10_000);
                 assertEq(interest_late, total_late);
                 assertEq(principal_late, 0);
             } else {
