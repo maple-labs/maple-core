@@ -505,7 +505,7 @@ contract LoanTest is TestUtil {
 
     function test_makeFullPaymentBullet() public {
 
-        Loan loan = createAndFundLoan(address(bulletCalc));
+        Loan loan = createAndFundLoan(address(repaymentCalc));
 
         assertEq(uint256(loan.loanState()), 0);  // Loan state: Live
 
