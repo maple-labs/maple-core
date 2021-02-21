@@ -382,7 +382,6 @@ contract Loan is FDT {
         );
 
         // Handle final payment.
-        // TODO: Identify any other variables worth resetting on final payment.
         if (paymentsRemaining == 0) {
             loanState = State.Matured;
             nextPaymentDue = 0;
@@ -439,7 +438,6 @@ contract Loan is FDT {
         loanState = State.Matured;
 
         // Update internal accounting variables.
-        // TODO: Identify any other variables worth resetting on full payment.
         principalOwed     = 0;
         paymentsRemaining = 0;
         principalPaid     = principalPaid.add(principal);

@@ -24,6 +24,11 @@ contract TestUtil is DSTest {
         address orcl; // Chainlink oracle address
     }
 
+    struct TestObj {
+        uint256 pre;
+        uint256 post;
+    }
+
     mapping (bytes32 => Token) tokens;
 
     address constant DAI   = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
@@ -42,6 +47,9 @@ contract TestUtil is DSTest {
     uint256 constant RAY = 10 ** 27;
 
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
+
+    event Debug(string, uint256);
+    event Debug(string, address);
 
     constructor() public {
         hevm = Hevm(address(CHEAT_CODE));
@@ -84,8 +92,11 @@ contract TestUtil is DSTest {
 
     // Verify equality within accuracy decimals
     function withinPrecision(uint256 val0, uint256 val1, uint256 accuracy) public {
-        uint diff  = val0 > val1 ? val0 - val1 : val1 - val0;
-        bool check = ((diff * RAY) / val0) < (RAY / 10 ** accuracy);   
+        uint256 diff  = val0 > val1 ? val0 - val1 : val1 - val0;
+        if(diff == 0) return;
+
+        uint256 denominator = val0 == 0 ? val1 : val0;
+        bool check = ((diff * RAY) / denominator) < (RAY / 10 ** accuracy);   
 
         if (!check){
             emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", accuracy);
@@ -106,6 +117,10 @@ contract TestUtil is DSTest {
             emit log_named_uint("    Actual", val1);
             fail();
         }
+    }
+
+    function constrictToRange(uint256 val, uint256 min, uint256 max) public returns(uint256) {
+        return val == 0 ? 0 : val % (max - min) + min;
     }
 
     // function test_cheat_code_for_slot() public {

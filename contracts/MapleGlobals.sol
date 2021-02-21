@@ -66,7 +66,7 @@ contract MapleGlobals {
         governor             = _governor;
         mpl                  = _mpl;
         gracePeriod          = 5 days;
-        extendedGracePeriod  = 5 days; // TODO how much?
+        extendedGracePeriod  = 5 days;
         swapOutRequired      = 100;
         unstakeDelay         = 90 days;
         drawdownGracePeriod  = 1 days;

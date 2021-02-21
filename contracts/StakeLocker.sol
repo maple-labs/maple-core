@@ -144,8 +144,8 @@ contract StakeLocker is FDT {
         if (stkDate == 0) {
             stakeDate[who] = block.timestamp;
         } else {
-            uint256 coef    = WAD.mul(amt).div(balanceOf(who) + amt); 
-            stakeDate[who]  = stkDate.add(((block.timestamp.sub(stkDate)).mul(coef)).div(WAD));  // date + (now - stkDate) * coef
+            uint256 coef   = WAD.mul(amt).div(balanceOf(who) + amt); 
+            stakeDate[who] = stkDate.add(((block.timestamp.sub(stkDate)).mul(coef)).div(WAD));  // date + (now - stkDate) * coef
         }
     }
 
@@ -158,7 +158,7 @@ contract StakeLocker is FDT {
         uint256 bal          = balanceOf(staker);
         uint256 passedTime   = block.timestamp - stakeDate[staker];
         uint256 unstakeDelay = _globals().unstakeDelay();
-        uint256 out          = unstakeDelay != uint256(0) ? (passedTime.mul(WAD).div(unstakeDelay)).mul(bal).div(WAD) : bal;
+        uint256 out          = unstakeDelay != uint256(0) ? passedTime.mul(bal).div(unstakeDelay) : bal;
         balance = out > bal ? bal : out;
     }
 
