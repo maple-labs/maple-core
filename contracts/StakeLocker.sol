@@ -97,6 +97,7 @@ contract StakeLocker is FDT {
         @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
         @param amt Amount of stakeAsset (BPTs) to deposit.
     */
+    // TODO: Add admin function same as pool to pause this function
     function stake(uint256 amt) external {
         _isWhitelisted(msg.sender);
         require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
@@ -124,15 +125,6 @@ contract StakeLocker is FDT {
         emit Unstake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
-
-    /** 
-        @dev Withdraw ETH directly from this locker.
-        @param dst Address to send ETH to.
-    */
-    function withdrawETH(address payable dst) external isGovernor {
-        dst.transfer(address(this).balance);
-    }
-
 
     /** 
         @dev Updates information used to calculate unstake delay.

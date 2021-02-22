@@ -67,6 +67,7 @@ contract PoolFactory {
     ) public returns (address) {
 
         {
+            // TODO: Add requirement to check if paused
             IGlobals _globals = globals;
             // TODO: Do we need to validate isValidPoolFactory here? Its not being used anywhere currently
             require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");

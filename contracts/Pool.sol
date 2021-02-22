@@ -397,7 +397,7 @@ contract Pool is PoolFDT {
     function deactivate(uint confirmation) external {
         _isValidState(State.Finalized);
         _isValidDelegate();
-        require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
+        require(confirmation == 86, "Pool:INVALID_CONFIRMATION");  // TODO: Remove this
         require(principalOut <= 100 * 10 ** liquidityAssetDecimals);
         poolState = State.Deactivated;
     }
@@ -579,4 +579,7 @@ contract Pool is PoolFDT {
 
         _updateFundsTokenBalance();
     }
+
+    // TODO: Add _isValidAdmin function that checks if msg.sender is poolDelegate || msg.sender is elected admin 
+    // TODO: Make function to set selected admin
 }
