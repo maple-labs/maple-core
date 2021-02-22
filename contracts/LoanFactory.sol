@@ -80,6 +80,8 @@ contract LoanFactory {
 
         IGlobals _globals = globals;
 
+        // TODO: Add require to check if paused in factory
+
         require(_globals.isValidSubFactory(address(this), flFactory, FUNDING_LOCKER_FACTORY),    "LF:INVALID_FL_FACTORY");
         require(_globals.isValidSubFactory(address(this), clFactory, COLLATERAL_LOCKER_FACTORY), "LF:INVALID_CL_FACTORY");
 

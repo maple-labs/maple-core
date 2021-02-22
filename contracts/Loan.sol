@@ -172,6 +172,7 @@ contract Loan is FDT {
         @param  amt    Amount to fund the loan.
         @param  mintTo Address that debt tokens are minted to.
     */
+    // TODO: Add delegate function same as pool, to prevent this function
     function fundLoan(address mintTo, uint256 amt) external {
         _isValidState(State.Live);
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, fundingLocker, amt));
@@ -184,7 +185,7 @@ contract Loan is FDT {
     }
 
     /**
-        @dev If the borrower has not drawndown loan past grace period, return capital to lenders.
+        @dev If the borrower has not drawn down loan past grace period, return capital to lenders.
     */
     function unwind() external {
         _isValidState(State.Live);
@@ -338,6 +339,7 @@ contract Loan is FDT {
     /**
         @dev Trigger a default. Does nothing if block.timestamp <= nextPaymentDue + gracePeriod.
     */
+    // TODO: Talk with auditors about having a switch for this function
     function triggerDefault() external {
         _isValidState(State.Active);
 
