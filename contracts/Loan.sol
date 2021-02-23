@@ -178,6 +178,7 @@ contract Loan is FDT, Pausable {
     */
     // TODO: Add delegate function same as pool, to prevent this function
     function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
+        _whenProtocolNotPaused();
         _isValidState(State.Live);
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, fundingLocker, amt));
 
@@ -192,6 +193,7 @@ contract Loan is FDT, Pausable {
         @dev If the borrower has not drawn down loan past grace period, return capital to lenders.
     */
     function unwind() external {
+        _whenProtocolNotPaused();
         _isValidState(State.Live);
         IGlobals globals = _globals(superFactory);
 
@@ -213,7 +215,7 @@ contract Loan is FDT, Pausable {
         @param  amt Amount of loanAsset borrower draws down, remainder is returned to Loan.
     */
     function drawdown(uint256 amt) external {
-
+        _whenProtocolNotPaused();
         _isValidBorrower();
         _isValidState(State.Live);
         IGlobals globals = _globals(superFactory);
@@ -346,6 +348,7 @@ contract Loan is FDT, Pausable {
     */
     // TODO: Talk with auditors about having a switch for this function
     function triggerDefault() external {
+        _whenProtocolNotPaused();
         _isValidState(State.Active);
 
         uint256 gracePeriodEnd         = nextPaymentDue.add(_globals(superFactory).gracePeriod());
@@ -364,7 +367,7 @@ contract Loan is FDT, Pausable {
         @dev Make the next payment for this loan.
     */
     function makePayment() external {
-
+        _whenProtocolNotPaused();
         _isValidState(State.Active);
 
         (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
@@ -436,6 +439,7 @@ contract Loan is FDT, Pausable {
         @dev Make the full payment for this loan, a.k.a. "calling" the loan.
     */
     function makeFullPayment() public {
+        _whenProtocolNotPaused();
         _isValidState(State.Active);
 
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
@@ -526,6 +530,10 @@ contract Loan is FDT, Pausable {
     function setAdmin(address newAdmin) external {
         _isValidBorrower();
         admin = newAdmin;
+    }
+
+    function _whenProtocolNotPaused() internal {
+        require(!_globals(superFactory).protocolPaused(), "Loan:PROTOCOL_PAUSED");
     }
 
     function _isValidBorrowerOrAdmin() internal {

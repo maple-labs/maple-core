@@ -4,6 +4,8 @@ pragma solidity >=0.6.11;
 interface IGlobals {
     function governor() external view returns (address);
 
+    function admin() external view returns (address);
+
     function mpl() external view returns (address);
 
     function mapleTreasury() external view returns (address);
@@ -55,4 +57,6 @@ interface IGlobals {
     function extendedGracePeriod() external view returns (uint256);
     
     function maxSwapSlippage() external view returns (uint256);
+
+    function protocolPaused() external view returns (bool);
 }

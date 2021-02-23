@@ -16,8 +16,8 @@ contract Governor {
     StakingRewards stakingRewards;
     MapleTreasury  treasury;
 
-    function createGlobals(address mpl, address bPoolFactory) external returns (MapleGlobals) {
-        globals = new MapleGlobals(address(this), mpl, bPoolFactory);
+    function createGlobals(address mpl, address bPoolFactory, address admin) external returns (MapleGlobals) {
+        globals = new MapleGlobals(address(this), mpl, bPoolFactory, admin);
         return globals;
     }
 
@@ -62,10 +62,10 @@ contract Governor {
     function setDefaultUniswapPath(address from, address to, address mid) external { globals.setDefaultUniswapPath(from, to, mid); }
 
     /*** MapleTreasury Functions ***/
-    function setGlobals(address newGlobals) external { treasury.setGlobals(newGlobals); }
-    function withdrawFunds(uint256 amount)  external { treasury.withdrawFunds(amount); }
-    function distributeToHolders()        external { treasury.distributeToHolders(); }
-    function convertERC20(address asset)    external { treasury.convertERC20(asset); }
+    function setGlobals(address newGlobals)                external { treasury.setGlobals(newGlobals); }
+    function withdrawFunds(address asset, uint256 amount)  external { treasury.withdrawFunds(asset, amount); }
+    function distributeToHolders()                         external { treasury.distributeToHolders(); }
+    function convertERC20(address asset)                   external { treasury.convertERC20(asset); }
 
     /*** StakingRewards Setters ***/ 
     function transferOwnership(address newOwner)      external { stakingRewards.transferOwnership(newOwner); }
@@ -189,9 +189,9 @@ contract Governor {
         string memory sig = "setGlobals(address)"; 
         (ok,) = address(treasury).call(abi.encodeWithSignature(sig, newGlobals));    
     }
-    function try_withdrawFunds(uint256 amount) external returns (bool ok) { 
-        string memory sig = "withdrawFunds(uint256)"; 
-        (ok,) = address(treasury).call(abi.encodeWithSignature(sig, amount));    
+    function try_withdrawFunds(address asset, uint256 amount) external returns (bool ok) { 
+        string memory sig = "withdrawFunds(address,uint256)"; 
+        (ok,) = address(treasury).call(abi.encodeWithSignature(sig, asset, amount));    
     }
     function try_distributeToHolders() external returns (bool ok) { 
         string memory sig = "distributeToHolders()";

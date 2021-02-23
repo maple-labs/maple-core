@@ -67,7 +67,7 @@ contract PoolFactory is Pausable {
         uint256 delegateFee,
         uint256 liquidityCap
     ) public whenNotPaused returns (address) {
-
+        _whenProtocolNotPaused();
         {
             IGlobals _globals = globals;
             // TODO: Do we need to validate isValidPoolFactory here? Its not being used anywhere currently
@@ -136,5 +136,9 @@ contract PoolFactory is Pausable {
 
     function _isValidGovernor() internal view {
         require(msg.sender == globals.governor(), "PF:INVALID_GOVERNOR");
+    }
+
+    function _whenProtocolNotPaused() internal {
+        require(!globals.protocolPaused(), "PF:PROTOCOL_PAUSED");
     }
 }

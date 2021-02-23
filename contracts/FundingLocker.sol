@@ -34,5 +34,4 @@ contract FundingLocker {
         uint256 amt = loanAsset.balanceOf(address(this));
         return loanAsset.transfer(loan, amt);
     }
-    
 }

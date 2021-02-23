@@ -79,7 +79,7 @@ contract LoanFactory is Pausable {
         uint256[6] memory specs,
         address[3] memory calcs
     ) external whenNotPaused returns (address) {
-
+        _whenProtocolNotPaused();
         IGlobals _globals = globals;
 
         require(_globals.isValidSubFactory(address(this), flFactory, FUNDING_LOCKER_FACTORY),    "LF:INVALID_FL_FACTORY");
@@ -147,6 +147,10 @@ contract LoanFactory is Pausable {
 
     function _isValidGovernor() internal view {
         require(msg.sender == globals.governor(), "LF:INVALID_GOVERNOR");
+    }
+
+    function _whenProtocolNotPaused() internal {
+        require(!globals.protocolPaused(), "LF:PROTOCOL_PAUSED");
     }
     
 }

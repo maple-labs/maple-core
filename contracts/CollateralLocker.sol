@@ -27,5 +27,4 @@ contract CollateralLocker {
     function pull(address dst, uint256 amt) isLoan public returns(bool) {
         return collateralAsset.transfer(dst, amt);
     }
-    
 }
