@@ -7,7 +7,9 @@ import "./interfaces/IBFactory.sol";
 
 import "./library/TokenUUID.sol";
 
-contract PoolFactory {
+import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+
+contract PoolFactory is Pausable {
 
     uint8 public constant LL_FACTORY = 3;   // Factory type of `LiquidityLockerFactory`.
     uint8 public constant SL_FACTORY = 4;   // Factory type of `StakeLockerFactory`.
@@ -42,7 +44,7 @@ contract PoolFactory {
         @param  newGlobals Address of new maple globals contract
     */
     function setGlobals(address newGlobals) external {
-        require(msg.sender == globals.governor(), "Loan:INVALID_GOVERNOR");
+        _isValidGovernor();
         globals = IGlobals(newGlobals);
     }
 
@@ -64,10 +66,9 @@ contract PoolFactory {
         uint256 stakingFee, 
         uint256 delegateFee,
         uint256 liquidityCap
-    ) public returns (address) {
+    ) public whenNotPaused returns (address) {
 
         {
-            // TODO: Add requirement to check if paused
             IGlobals _globals = globals;
             // TODO: Do we need to validate isValidPoolFactory here? Its not being used anywhere currently
             require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");
@@ -113,5 +114,27 @@ contract PoolFactory {
             symbol
         );
         return address(pool);
-    }  
+    }
+
+    /**
+        @dev Triggers stopped state.
+             The contract must not be paused.
+    */
+    function pause() external { 
+        _isValidGovernor();
+        super._pause();
+    }
+
+    /**
+        @dev Returns to normal state.
+             The contract must be paused.
+    */
+    function unpause() external {
+        _isValidGovernor();
+        super._unpause();
+    }
+
+    function _isValidGovernor() internal view {
+        require(msg.sender == globals.governor(), "PF:INVALID_GOVERNOR");
+    }
 }

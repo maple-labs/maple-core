@@ -5,8 +5,10 @@ import "./Loan.sol";
 
 import "./library/TokenUUID.sol";
 
+import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+
 /// @title LoanFactory instantiates Loan contracts.
-contract LoanFactory {
+contract LoanFactory is Pausable {
 
     using SafeMath for uint256;
 
@@ -46,7 +48,7 @@ contract LoanFactory {
         @param  newGlobals Address of new maple globals contract
     */
     function setGlobals(address newGlobals) external {
-        require(msg.sender == globals.governor(), "LF:INVALID_GOVERNOR");
+        _isValidGovernor();
         globals = IGlobals(newGlobals);
     }
 
@@ -76,11 +78,9 @@ contract LoanFactory {
         address clFactory,
         uint256[6] memory specs,
         address[3] memory calcs
-    ) external returns (address) {
+    ) external whenNotPaused returns (address) {
 
         IGlobals _globals = globals;
-
-        // TODO: Add require to check if paused in factory
 
         require(_globals.isValidSubFactory(address(this), flFactory, FUNDING_LOCKER_FACTORY),    "LF:INVALID_FL_FACTORY");
         require(_globals.isValidSubFactory(address(this), clFactory, COLLATERAL_LOCKER_FACTORY), "LF:INVALID_CL_FACTORY");
@@ -125,6 +125,28 @@ contract LoanFactory {
         // Increment loanVaultCreated (IDs), return loan address.
         loansCreated++;
         return address(loan);
+    }
+
+    /**
+        @dev Triggers stopped state.
+             The contract must not be paused.
+    */
+    function pause() external { 
+        _isValidGovernor();
+        super._pause();
+    }
+
+    /**
+        @dev Returns to normal state.
+             The contract must be paused.
+    */
+    function unpause() external {
+        _isValidGovernor();
+        super._unpause();
+    }
+
+    function _isValidGovernor() internal view {
+        require(msg.sender == globals.governor(), "LF:INVALID_GOVERNOR");
     }
     
 }

@@ -37,6 +37,8 @@ contract Pool is PoolFDT {
     address public immutable slFactory;        // Address of the StakeLocker factory.
     address public immutable superFactory;     // The factory that deployed this Loan.
 
+    address public admin;  // Admin address who have permission to do certain operations in case of disaster mgt.
+
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset.
 
     // Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + bptShortfall
@@ -199,11 +201,11 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Set `liquidityCap`, Only allowed by the pool delegate.
+        @dev Set `liquidityCap`, Only allowed by the pool delegate or the admin.
         @param newLiquidityCap New liquidity cap value. 
     */
     function setLiquidityCap(uint256 newLiquidityCap) external {
-        _isValidDelegate();
+        _isValidDelegateOrAdmin();
         liquidityCap = newLiquidityCap;
         emit LiquidityCapSet(newLiquidityCap);
     }
@@ -584,6 +586,16 @@ contract Pool is PoolFDT {
         _updateFundsTokenBalance();
     }
 
-    // TODO: Add _isValidAdmin function that checks if msg.sender is poolDelegate || msg.sender is elected admin 
-    // TODO: Make function to set selected admin
+    /**
+      @dev Set admin
+      @param newAdmin new admin address
+     */
+    function setAdmin(address newAdmin) external {
+        _isValidDelegate();
+        admin = newAdmin;
+    }
+
+    function _isValidDelegateOrAdmin() internal {
+        require(msg.sender == poolDelegate || msg.sender == admin, "Pool:UNAUTHORISED");
+    }
 }

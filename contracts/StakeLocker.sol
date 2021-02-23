@@ -8,9 +8,10 @@ import "./interfaces/IPoolFactory.sol";
 import "./token/FDT.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
-contract StakeLocker is FDT {
+contract StakeLocker is FDT, Pausable {
 
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
@@ -97,8 +98,7 @@ contract StakeLocker is FDT {
         @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
         @param amt Amount of stakeAsset (BPTs) to deposit.
     */
-    // TODO: Add admin function same as pool to pause this function
-    function stake(uint256 amt) external {
+    function stake(uint256 amt) whenNotPaused external {
         _isWhitelisted(msg.sender);
         require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
 
@@ -163,4 +163,27 @@ contract StakeLocker is FDT {
         super._transfer(from, to, amt);
         _updateStakeDate(to, amt);
     }
+
+    /**
+        @dev Triggers stopped state.
+             The contract must not be paused.
+    */
+    function pause() external {
+        _isValidAdmin();
+        super._pause();
+    }
+
+    /**
+        @dev Returns to normal state.
+             The contract must be paused.
+    */
+    function unpause() external {
+        _isValidAdmin();
+        super._unpause();
+    }
+
+    function _isValidAdmin() internal view {
+        require(msg.sender == IPool(owner).admin(), "PF:INVALID_GOVERNOR");
+    }
+    
 }
