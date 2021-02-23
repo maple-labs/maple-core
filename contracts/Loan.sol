@@ -16,7 +16,7 @@ import "./library/Util.sol";
 
 import "./token/FDT.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title Loan is the core loan vault contract.
 contract Loan is FDT, Pausable {
