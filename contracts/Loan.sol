@@ -16,8 +16,10 @@ import "./library/Util.sol";
 
 import "./token/FDT.sol";
 
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
 /// @title Loan is the core loan vault contract.
-contract Loan is FDT {
+contract Loan is FDT, Pausable {
     
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
@@ -46,6 +48,8 @@ contract Loan is FDT {
     address public immutable lateFeeCalc;       // The late fee calculator for this loan.
     address public immutable premiumCalc;       // The premium calculator for this loan.
     address public immutable superFactory;      // The factory that deployed this Loan.
+
+    address public admin;  // Admin address who have permission to do certain operations in case of disaster mgt.
 
     address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
@@ -173,7 +177,7 @@ contract Loan is FDT {
         @param  mintTo Address that debt tokens are minted to.
     */
     // TODO: Add delegate function same as pool, to prevent this function
-    function fundLoan(address mintTo, uint256 amt) external {
+    function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
         _isValidState(State.Live);
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, fundingLocker, amt));
 
@@ -495,6 +499,37 @@ contract Loan is FDT {
         uint256 collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - collateralAsset.decimals()));
 
         return collateralRequiredFIN;
+    }
+
+    /**
+        @dev Triggers stopped state.
+             The contract must not be paused.
+    */
+    function pause() external { 
+        _isValidBorrowerOrAdmin();
+        super._pause();
+    }
+
+    /**
+        @dev Returns to normal state.
+             The contract must be paused.
+    */
+    function unpause() external {
+        _isValidBorrowerOrAdmin();
+        super._unpause();
+    }
+
+    /**
+      @dev Set admin
+      @param newAdmin new admin address
+     */
+    function setAdmin(address newAdmin) external {
+        _isValidBorrower();
+        admin = newAdmin;
+    }
+
+    function _isValidBorrowerOrAdmin() internal {
+        require(msg.sender == borrower || msg.sender == admin, "Pool:UNAUTHORISED");
     }
 
     function _toWad(uint256 amt) internal view returns(uint256) {
