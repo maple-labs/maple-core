@@ -103,7 +103,10 @@ contract StakeLocker is FDT, Pausable {
         @param amt Amount of stakeAsset (BPTs) to deposit.
     */
     function stake(uint256 amt) whenNotPaused external {
+<<<<<<< HEAD
         _whenProtocolNotPaused();
+=======
+>>>>>>> initial switches
         _isWhitelisted(msg.sender);
         require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
 

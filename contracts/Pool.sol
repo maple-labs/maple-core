@@ -37,6 +37,8 @@ contract Pool is PoolFDT {
     address public immutable slFactory;        // Address of the StakeLocker factory.
     address public immutable superFactory;     // The factory that deployed this Loan.
 
+    address public admin;  // Admin address who have permission to do certain operations in case of disaster mgt.
+
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset.
 
     // Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + bptShortfall
