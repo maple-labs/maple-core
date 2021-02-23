@@ -617,4 +617,8 @@ contract Pool is PoolFDT {
     function _whenProtocolNotPaused() internal {
         require(!_globals(superFactory).protocolPaused(), "Pool:PROTOCOL_PAUSED");
     }
+
+    function _whenProtocolNotPaused() internal {
+        require(!_globals(superFactory).protocolPaused(), "Pool:PROTOCOL_PAUSED");
+    }
 }

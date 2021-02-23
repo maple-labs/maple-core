@@ -149,11 +149,17 @@ contract LoanFactory is Pausable {
         require(msg.sender == globals.governor(), "LF:INVALID_GOVERNOR");
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> add global switch
 
     function _whenProtocolNotPaused() internal {
         require(!globals.protocolPaused(), "LF:PROTOCOL_PAUSED");
     }
+<<<<<<< HEAD
 =======
 >>>>>>> initial switches
+=======
+>>>>>>> add global switch
     
 }

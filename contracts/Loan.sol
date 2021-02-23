@@ -544,6 +544,10 @@ contract Loan is FDT, Pausable {
         require(!_globals(superFactory).protocolPaused(), "Loan:PROTOCOL_PAUSED");
     }
 
+    function _whenProtocolNotPaused() internal {
+        require(!_globals(superFactory).protocolPaused(), "Loan:PROTOCOL_PAUSED");
+    }
+
     function _isValidBorrowerOrAdmin() internal {
         require(msg.sender == borrower || admins[msg.sender], "Pool:UNAUTHORIZED");
     }
