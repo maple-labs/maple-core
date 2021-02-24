@@ -49,10 +49,9 @@ contract MapleGlobals {
     
     event   CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event         LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
-    event    PriceFeedAssigned(address asset, address oracle);
-    event      GlobalsParamSet(bytes32 which, uint256 value);
-    event    GlobalsAddressSet(bytes32 which, address addr);
     event            OracleSet(address asset, address oracle);
+    event      GlobalsParamSet(bytes32 indexed which, uint256 value);
+    event    GlobalsAddressSet(bytes32 indexed which, address addr);
 
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals:MSG_SENDER_NOT_GOVERNOR");
@@ -171,18 +170,6 @@ contract MapleGlobals {
     function setPoolDelegateWhitelist(address delegate, bool valid) external isGovernor {
         isValidPoolDelegate[delegate] = valid;
     }
-
-    /**
-        @dev Update a price feed's oracle.
-        @param  asset  The asset to update price for.
-        @param  oracle The new oracle to use.
-    */
-    function assignPriceFeed(address asset, address oracle) external isGovernor {
-        require(isValidLoanAsset[asset] || isValidCollateralAsset[asset], "MapleGlobals:PRICE_FEED_ASSET_NOT_WHITELISTED");
-        assetPriceFeed[asset] = oracle;
-        emit PriceFeedAssigned(asset, oracle);
-    }
-
     /**
         @dev Set the validity of an asset for collateral.
         @param asset The asset to assign validity to.
@@ -295,9 +282,9 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Governor can specify a new unstake delay value.
-        @param asset The new unstake delay.
-        @param oracle The new unstake delay.
+        @dev Update a price feed's oracle.
+        @param  asset  The asset to update price for.
+        @param  oracle The new oracle to use.
     */
     function setPriceOracle(address asset, address oracle) public isGovernor {
         oracleFor[asset] = oracle;
