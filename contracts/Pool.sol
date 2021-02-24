@@ -57,8 +57,8 @@ contract Pool is PoolFDT {
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
 
     event      LoanFunded(address loan, address debtLocker, uint256 amountFunded);
-    event  BalanceUpdated(address who, address token, uint256 balance);
     event           Claim(address loan, uint256 interest, uint256 principal, uint256 fee);
+    event  BalanceUpdated(address who,  address token, uint256 balance);
     event LiquidityCapSet(uint256 newLiquidityCap);
     event DefaultSuffered(
         address loan, 
