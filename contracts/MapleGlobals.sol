@@ -38,18 +38,17 @@ contract MapleGlobals {
     // asset is swapped. If defaultUniswapPath[WETH][USDC] == WBTC ... then swap WETH for WBTC, then WBTC for USDC.
     mapping(address => mapping(address => address)) public defaultUniswapPath; 
 
-    
-    mapping(address => address) public assetPriceFeed;          // Mapping of asset, to the associated oracle price feed.
-    mapping(address => address) public oracleFor;               // Chainlink oracle for a given asset.
+    mapping(address => address) public oracleFor;  // Chainlink oracle for a given asset.
 
     mapping(address => bool)                     public isValidPoolFactory;  // Mapping of valid pool factories.
     mapping(address => bool)                     public isValidLoanFactory;  // Mapping of valid loan factories.
     mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories.
-
     
-    event CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
-    event       LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
-    event  PriceFeedAssigned(address asset, address oracle);
+    event   CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
+    event         LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
+    event            OracleSet(address asset, address oracle);
+    event      GlobalsParamSet(bytes32 indexed which, uint256 value);
+    event    GlobalsAddressSet(bytes32 indexed which, address addr);
 
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals:MSG_SENDER_NOT_GOVERNOR");
@@ -83,6 +82,7 @@ contract MapleGlobals {
      */
     function setMaxSwapSlippage(uint256 newSlippage) external isGovernor {
         maxSwapSlippage = newSlippage;
+        emit GlobalsParamSet("MAX_SWAP_SLIPPAGE", newSlippage);
     }
 
     /**
@@ -91,6 +91,7 @@ contract MapleGlobals {
      */
     function setExtendedGracePeriod(uint256 newExtendedGracePeriod) external isGovernor {
         extendedGracePeriod = newExtendedGracePeriod;
+        emit GlobalsParamSet("EXTENDED_GRACE_PERIOD", newExtendedGracePeriod);
     }
     
     /**
@@ -166,18 +167,6 @@ contract MapleGlobals {
     function setPoolDelegateWhitelist(address delegate, bool valid) external isGovernor {
         isValidPoolDelegate[delegate] = valid;
     }
-
-    /**
-        @dev Update a price feed's oracle.
-        @param  asset  The asset to update price for.
-        @param  oracle The new oracle to use.
-    */
-    function assignPriceFeed(address asset, address oracle) external isGovernor {
-        require(isValidLoanAsset[asset] || isValidCollateralAsset[asset], "MapleGlobals:PRICE_FEED_ASSET_NOT_WHITELISTED");
-        assetPriceFeed[asset] = oracle;
-        emit PriceFeedAssigned(asset, oracle);
-    }
-
     /**
         @dev Set the validity of an asset for collateral.
         @param asset The asset to assign validity to.
@@ -213,6 +202,7 @@ contract MapleGlobals {
     */
     function setInvestorFee(uint256 _fee) public isGovernor {
         investorFee = _fee;
+        emit GlobalsParamSet("INVESTOR_FEE", _fee);
     }
 
     /**
@@ -221,6 +211,7 @@ contract MapleGlobals {
     */
     function setTreasuryFee(uint256 _fee) public isGovernor {
         treasuryFee = _fee;
+        emit GlobalsParamSet("TREASURY_FEE", _fee);
     }
 
     /**
@@ -229,6 +220,7 @@ contract MapleGlobals {
     */
     function setMapleTreasury(address _mapleTreasury) public isGovernor {
         mapleTreasury = _mapleTreasury;
+        emit GlobalsAddressSet("MAPLE_TREASURY", _mapleTreasury);
     }
 
     /**
@@ -237,6 +229,7 @@ contract MapleGlobals {
     */
     function setGracePeriod(uint256 _gracePeriod) public isGovernor {
         gracePeriod = _gracePeriod;
+        emit GlobalsParamSet("GRACE_PERIOD", _gracePeriod);
     }
 
     /**
@@ -245,6 +238,7 @@ contract MapleGlobals {
     */
     function setDrawdownGracePeriod(uint256 _drawdownGracePeriod) public isGovernor {
         drawdownGracePeriod = _drawdownGracePeriod;
+        emit GlobalsParamSet("DRAWDOWN_GRACE_PERIOD", _drawdownGracePeriod);
     }
 
     /**
@@ -253,6 +247,7 @@ contract MapleGlobals {
     */
     function setSwapOutRequired(uint256 amt) public isGovernor {
         swapOutRequired = amt;
+        emit GlobalsParamSet("SWAP_OUT_REQUIRED", amt);
     }
 
     /**
@@ -262,6 +257,7 @@ contract MapleGlobals {
     function setGovernor(address _newGovernor) public isGovernor {
         require(_newGovernor != address(0), "MapleGlobals:ZERO_ADDRESS_GOVERNOR");
         governor = _newGovernor;
+        emit GlobalsAddressSet("GOVERNOR", _newGovernor);
     }
 
     /**
@@ -270,6 +266,7 @@ contract MapleGlobals {
     */
     function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
         unstakeDelay = _unstakeDelay;
+        emit GlobalsParamSet("UNSTAKE_DELAY", _unstakeDelay);
     }
 
     /**
@@ -282,11 +279,12 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Governor can specify a new unstake delay value.
-        @param asset The new unstake delay.
-        @param oracle The new unstake delay.
+        @dev Update a price feed's oracle.
+        @param  asset  The asset to update price for.
+        @param  oracle The new oracle to use.
     */
     function setPriceOracle(address asset, address oracle) public isGovernor {
         oracleFor[asset] = oracle;
+        emit OracleSet(asset, oracle);
     }
 }

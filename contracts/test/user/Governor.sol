@@ -45,7 +45,6 @@ contract Governor {
     function setCalc(address calc, bool valid)                            external { globals.setCalc(calc, valid); }
     function setCollateralAsset(address asset, bool valid)                external { globals.setCollateralAsset(asset, valid); }
     function setLoanAsset(address asset, bool valid)                      external { globals.setLoanAsset(asset, valid); }
-    function assignPriceFeed(address asset, address oracle)               external { globals.assignPriceFeed(asset, oracle); }
     function setValidLoanFactory(address factory, bool valid)             external { globals.setValidLoanFactory(factory, valid); }
     function setValidPoolFactory(address factory, bool valid)             external { globals.setValidPoolFactory(factory, valid); }
     function setValidSubFactory(address fac, address sub, bool valid)     external { globals.setValidSubFactory(fac, sub, valid); }
@@ -101,10 +100,6 @@ contract Governor {
     function try_setLoanAsset(address asset, bool valid) external returns (bool ok) { 
         string memory sig = "setLoanAsset(address,bool)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, asset, valid)); 
-    }
-    function try_assignPriceFeed(address asset, address oracle) external returns (bool ok) { 
-        string memory sig = "assignPriceFeed(address,address)";
-        (ok,) = address(globals).call(abi.encodeWithSignature(sig, asset, oracle)); 
     }
     function try_setValidLoanFactory(address factory, bool valid) external returns (bool ok) { 
         string memory sig = "setValidLoanFactory(address,bool)";
