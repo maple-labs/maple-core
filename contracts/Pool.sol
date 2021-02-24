@@ -60,7 +60,7 @@ contract Pool is PoolFDT {
     event            Claim(address loan, uint256 interest, uint256 principal, uint256 fee);
     event   BalanceUpdated(address who,  address token, uint256 balance);
     event  LiquidityCapSet(uint256 newLiquidityCap);
-    event PoolStateChanged(bytes32 indexed state);
+    event PoolStateChanged(State state);
     event  DefaultSuffered(
         address loan, 
         uint256 defaultSuffered, 
@@ -130,7 +130,7 @@ contract Pool is PoolFDT {
         penaltyDelay     = 30 days;
         lockupPeriod     = 90 days;
 
-        emit PoolStateChanged("INITIALIZED");
+        emit PoolStateChanged(poolState);
     }
 
     /**
@@ -154,7 +154,7 @@ contract Pool is PoolFDT {
         (,, bool stakePresent,,) = getInitialStakeRequirements();
         require(stakePresent, "Pool:INSUFFICIENT_STAKE");
         poolState = State.Finalized;
-        emit PoolStateChanged("FINALIZED");
+        emit PoolStateChanged(poolState);
     }
 
     /**
@@ -403,7 +403,7 @@ contract Pool is PoolFDT {
         require(confirmation == 86, "Pool:INVALID_CONFIRMATION");  // TODO: Remove this
         require(principalOut <= 100 * 10 ** liquidityAssetDecimals);
         poolState = State.Deactivated;
-        emit PoolStateChanged("DEACTIVATED");
+        emit PoolStateChanged(poolState);
     }
 
     /** 
