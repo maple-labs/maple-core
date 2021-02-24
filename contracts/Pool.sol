@@ -56,9 +56,9 @@ contract Pool is PoolFDT {
     mapping(address => uint256)                     public depositDate;  // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
 
-    event       LoanFunded(address loan, address debtLocker, uint256 amountFunded);
-    event            Claim(address loan, uint256 interest, uint256 principal, uint256 fee);
-    event   BalanceUpdated(address who,  address token, uint256 balance);
+    event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
+    event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
+    event   BalanceUpdated(address indexed who,  address token, uint256 balance);
     event  LiquidityCapSet(uint256 newLiquidityCap);
     event PoolStateChanged(State state);
     event  DefaultSuffered(
