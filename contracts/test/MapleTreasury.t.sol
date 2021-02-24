@@ -36,7 +36,7 @@ contract MapleTreasuryTest is TestUtil {
         fakeGov = new Governor();
 
         mpl      = new MapleToken("MapleToken", "MAPLE", USDC);
-        globals  = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        globals  = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));
         treasury = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
 
         // Set test util governor storage var
@@ -63,7 +63,7 @@ contract MapleTreasuryTest is TestUtil {
     }
 
     function test_setGlobals() public {
-        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY);  // Create upgraded MapleGlobals
+        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));  // Create upgraded MapleGlobals
 
         assertEq(address(treasury.globals()), address(globals));
 
