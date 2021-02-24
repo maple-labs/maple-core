@@ -36,7 +36,7 @@ contract MapleTreasuryTest is TestUtil {
         fakeGov = new Governor();
 
         mpl      = new MapleToken("MapleToken", "MAPLE", USDC);
-        globals  = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        globals  = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));
         treasury = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
 
         // Set test util governor storage var
@@ -63,13 +63,13 @@ contract MapleTreasuryTest is TestUtil {
     }
 
     function test_setGlobals() public {
-        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY);  // Create upgraded MapleGlobals
+        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));  // Create upgraded MapleGlobals
 
         assertEq(address(treasury.globals()), address(globals));
 
         assertTrue(!fakeGov.try_setGlobals(address(treasury), address(globals2)));  // Non-governor cannot set new globals
 
-        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY);             // Create upgraded MapleGlobals
+        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));      // Create upgraded MapleGlobals
 
         assertTrue(gov.try_setGlobals(address(treasury), address(globals2)));       // Governor can set new globals
         assertEq(address(treasury.globals()), address(globals2));                   // Globals is updated
@@ -83,8 +83,8 @@ contract MapleTreasuryTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(treasury)), 100 * USD);
         assertEq(IERC20(USDC).balanceOf(address(gov)),         0);
 
-        assertTrue(!fakeGov.try_withdrawFunds(40 * USD));  // Non-governor can't withdraw
-        assertTrue(     gov.try_withdrawFunds(40 * USD));
+        assertTrue(!fakeGov.try_withdrawFunds(USDC, 40 * USD));  // Non-governor can't withdraw
+        assertTrue(     gov.try_withdrawFunds(USDC, 40 * USD));
 
         assertEq(IERC20(USDC).balanceOf(address(treasury)), 60 * USD);  // Can be distributed to MPL holders
         assertEq(IERC20(USDC).balanceOf(address(gov)), 40 * USD);  // Withdrawn to MapleDAO address for funding

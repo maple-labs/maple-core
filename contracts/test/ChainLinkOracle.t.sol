@@ -26,9 +26,9 @@ contract ChainlinkOracleTest is TestUtil {
 
     function setUp() public {
 
-        gov       = new Governor();                                           // Actor: Governor of Maple.
-        mpl       = new MapleToken("MapleToken", "MAPL", USDC);               // Setup Maple token.
-        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);           // Setup Maple Globals.
+        gov       = new Governor();                                              // Actor: Governor of Maple.
+        mpl       = new MapleToken("MapleToken", "MAPL", USDC);                  // Setup Maple token.
+        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));  // Setup Maple Globals.
         admin     = new SecurityAdmin();
         oracle    = new ChainlinkOracle(tokens["WETH"].orcl, address(0), address(admin));
         fakeAdmin = new SecurityAdmin();

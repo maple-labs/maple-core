@@ -85,7 +85,7 @@ contract StakeLockerTest is TestUtil {
         dan            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));
         flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan factory functionality.
         clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan factory functionality.
         loanFactory    = new LoanFactory(address(globals));                             // Create Loan factory.
