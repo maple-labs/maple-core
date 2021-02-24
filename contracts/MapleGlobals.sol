@@ -38,14 +38,11 @@ contract MapleGlobals {
     // asset is swapped. If defaultUniswapPath[WETH][USDC] == WBTC ... then swap WETH for WBTC, then WBTC for USDC.
     mapping(address => mapping(address => address)) public defaultUniswapPath; 
 
-    
-    mapping(address => address) public assetPriceFeed;          // Mapping of asset, to the associated oracle price feed.
-    mapping(address => address) public oracleFor;               // Chainlink oracle for a given asset.
+    mapping(address => address) public oracleFor;  // Chainlink oracle for a given asset.
 
     mapping(address => bool)                     public isValidPoolFactory;  // Mapping of valid pool factories.
     mapping(address => bool)                     public isValidLoanFactory;  // Mapping of valid loan factories.
     mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories.
-
     
     event   CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event         LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
