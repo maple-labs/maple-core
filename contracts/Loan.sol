@@ -49,7 +49,7 @@ contract Loan is FDT, Pausable {
     address public immutable premiumCalc;       // The premium calculator for this loan.
     address public immutable superFactory;      // The factory that deployed this Loan.
 
-    address public admin;  // Admin address that has permission to do certain operations in case of disaster mgt.
+    mapping(address => bool) public admins;  // Admin addresses that has permission to do certain operations in case of disaster mgt.
 
     address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
@@ -525,11 +525,12 @@ contract Loan is FDT, Pausable {
 
     /**
       @dev Set admin
-      @param newAdmin new admin address
+      @param newAdmin new admin address.
+      @param allowed Status of an admin.
      */
-    function setAdmin(address newAdmin) external {
+    function setAdmin(address newAdmin, bool allowed) external {
         _isValidBorrower();
-        admin = newAdmin;
+        admins[newAdmin] = allowed;
     }
 
     function _whenProtocolNotPaused() internal {
@@ -537,7 +538,7 @@ contract Loan is FDT, Pausable {
     }
 
     function _isValidBorrowerOrAdmin() internal {
-        require(msg.sender == borrower || msg.sender == admin, "Pool:UNAUTHORISED");
+        require(msg.sender == borrower || admins[msg.sender], "Pool:UNAUTHORISED");
     }
 
     function _toWad(uint256 amt) internal view returns(uint256) {

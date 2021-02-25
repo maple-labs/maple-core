@@ -37,8 +37,6 @@ contract Pool is PoolFDT {
     address public immutable slFactory;        // Address of the StakeLocker factory.
     address public immutable superFactory;     // The factory that deployed this Loan.
 
-    address public admin;  // Admin address who have permission to do certain operations in case of disaster mgt.
-
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset.
 
     // Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + bptShortfall
@@ -57,6 +55,7 @@ contract Pool is PoolFDT {
 
     mapping(address => uint256)                     public depositDate;  // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
+    mapping(address => bool)                        public admins;       // Admin addresses who have permission to do certain operations in case of disaster mgt.
 
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
@@ -599,15 +598,16 @@ contract Pool is PoolFDT {
 
     /**
       @dev Set admin
-      @param newAdmin new admin address
+      @param newAdmin new admin address.
+      @param allowed Status of an admin.
      */
-    function setAdmin(address newAdmin) external {
+    function setAdmin(address newAdmin, bool allowed) external {
         _isValidDelegate();
-        admin = newAdmin;
+        admins[newAdmin] = allowed;
     }
 
     function _isValidDelegateOrAdmin() internal {
-        require(msg.sender == poolDelegate || msg.sender == admin, "Pool:UNAUTHORISED");
+        require(msg.sender == poolDelegate || admins[msg.sender], "Pool:UNAUTHORISED");
     }
 
     function _whenProtocolNotPaused() internal {

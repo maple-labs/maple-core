@@ -190,7 +190,7 @@ contract StakeLocker is FDT, Pausable {
     }
 
     function _isValidAdmin() internal view {
-        require(msg.sender == IPool(owner).admin(), "PF:INVALID_GOVERNOR");
+        require(IPool(owner).admins(msg.sender), "PF:INVALID_GOVERNOR");
     }
     
 }
