@@ -49,7 +49,7 @@ contract Loan is FDT, Pausable {
     address public immutable premiumCalc;       // The premium calculator for this loan.
     address public immutable superFactory;      // The factory that deployed this Loan.
 
-    address public admin;  // Admin address who have permission to do certain operations in case of disaster mgt.
+    address public admin;  // Admin address that has permission to do certain operations in case of disaster mgt.
 
     address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 

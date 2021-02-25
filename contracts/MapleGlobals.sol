@@ -16,7 +16,7 @@ contract MapleGlobals {
     address public governor;                // Governor is responsible for management of global Maple variables
     address public mpl;                     // Maple Token is the ERC-2222 token for the Maple protocol
     address public mapleTreasury;           // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution.
-    address public admin;                   // Admin of the whole network, It as the power to switch off/on the functionality of entire protocol.
+    address public admin;                   // Admin of the whole network, it as the power to switch off/on the functionality of entire protocol.
 
     uint256 public gracePeriod;             // Represents the amount of time a borrower has to make a missed payment before a default can be triggered.
     uint256 public swapOutRequired;         // Represents the swap out amount required from staked assets for a Pool's liquidity asset, for default purposes.
@@ -27,7 +27,7 @@ contract MapleGlobals {
     uint256 public extendedGracePeriod;     // Extended time period provided to the borrowers to clear the dues and during this period pool delegate are free to liquidate the loan.
     uint256 public maxSwapSlippage;         // Maximum amount of slippage if the no. of tokens is less than the slippage percentage then tx should revert.
 
-    bool public protocolPaused;  // Switch to pasued the functinality of the protocol.
+    bool public protocolPaused;  // Switch to paused the functinality of the protocol.
 
     mapping(address => bool) public isValidLoanAsset;        // Mapping of valid loan assets
     mapping(address => bool) public isValidCollateralAsset;  // Mapping of valid collateral assets
@@ -64,7 +64,7 @@ contract MapleGlobals {
         @param  _governor The administrator's address.
         @param  _mpl      The address of the ERC-2222 token for the Maple protocol.
         @param  _bFactory The official Balancer pool factory.
-        @param  _admin    Address that taker care of protocol security switch. 
+        @param  _admin    Address that takes care of protocol security switch. 
     */
     constructor(address _governor, address _mpl, address _bFactory, address _admin) public {
         governor             = _governor;
@@ -95,7 +95,8 @@ contract MapleGlobals {
       @dev Set admin
       @param newAdmin new admin address
      */
-    function setAdmin(address newAdmin) isGovernor external {
+    function setAdmin(address newAdmin) external {
+        require(msg.sender == governor && admin != address(0));
         admin = newAdmin;
     }
 
@@ -103,7 +104,7 @@ contract MapleGlobals {
       @dev Pause / unpause the protocol.
       @param pause Boolean flag to switch on/off the protocol.
      */
-    function pauseProtocol(bool pause) external {
+    function setProtocolpause(bool pause) external {
         require(msg.sender == admin, "MapleGlobals:UNAUTHORISED");
         protocolPaused = pause;
         emit ProtocolPaused(pause);
