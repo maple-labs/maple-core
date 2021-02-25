@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "./token/PoolFDT.sol";
-
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "./library/CalcBPool.sol";
 import "./interfaces/IBPool.sol";
 import "./interfaces/IDebtLocker.sol";
 import "./interfaces/IDebtLockerFactory.sol";
@@ -14,13 +14,20 @@ import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IStakeLocker.sol";
 import "./interfaces/IStakeLockerFactory.sol";
+import "./interfaces/IERC20Details.sol";
 
-import "./library/CalcBPool.sol";
+import "./token/PoolFDT.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+/// @title PoolProxy reserves the first 2 storage slots of the Pool contract.
+contract PoolProxy {
+    // The pool contract implementation used by the proxy
+    address public implementation;
+    // The owner of the proxy
+    address public proxyOwner;
+}
 
 /// @title Pool is the core contract for liquidity pools.
-contract Pool is PoolFDT {
+contract Pool is PoolProxy, PoolFDT {
 
     using SafeMath  for uint256;
 
@@ -28,16 +35,16 @@ contract Pool is PoolFDT {
 
     uint8 public constant DL_FACTORY = 1;   // Factory type of `DebtLockerFactory`.
 
-    IERC20  public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
+    IERC20  public liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding loans.
 
-    address public immutable poolDelegate;     // The pool delegate, who maintains full authority over this Pool.
-    address public immutable liquidityLocker;  // The LiquidityLocker owned by this contract.
-    address public immutable stakeAsset;       // The asset deposited by stakers into the StakeLocker, for liquidation during default events.
-    address public immutable stakeLocker;      // Address of the StakeLocker, escrowing the staked asset.
-    address public immutable slFactory;        // Address of the StakeLocker factory.
-    address public immutable superFactory;     // The factory that deployed this Loan.
+    address public poolDelegate;     // The pool delegate, who maintains full authority over this Pool.
+    address public liquidityLocker;  // The LiquidityLocker owned by this contract.
+    address public stakeAsset;       // The asset deposited by stakers into the StakeLocker, for liquidation during default events.
+    address public stakeLocker;      // Address of the StakeLocker, escrowing the staked asset.
+    address public slFactory;        // Address of the StakeLocker factory.
+    address public superFactory;     // The factory that deployed this Loan.
 
-    uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset.
+    uint256 private liquidityAssetDecimals;  // decimals() precision for the liquidityAsset.
 
     // Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + bptShortfall
     //        liquidityLockerBal + principalOut = fdtTotalSupply + interestSum - bptShortfall
@@ -70,7 +77,8 @@ contract Pool is PoolFDT {
     );
 
     /**
-        @dev Constructor for a Pool.
+        @dev Initialiser for a Pool. This can only be called once.
+        @param  _owner          The owner.
         @param  _poolDelegate   The address that has manager privlidges for the Pool.
         @param  _liquidityAsset The asset escrowed in LiquidityLocker.
         @param  _stakeAsset     The asset escrowed in StakeLocker.
@@ -82,7 +90,8 @@ contract Pool is PoolFDT {
         @param  name            Name of pool token.
         @param  symbol          Symbol of pool token.
     */
-    constructor(
+    function init(
+        address _owner,
         address _poolDelegate,
         address _liquidityAsset,
         address _stakeAsset,
@@ -93,7 +102,12 @@ contract Pool is PoolFDT {
         uint256 _liquidityCap,
         string memory name,
         string memory symbol
-    ) PoolFDT(name, symbol) public {
+    ) external {
+        require(proxyOwner == address(0), "Pool:ALREADY_INITIALISED");
+        proxyOwner = _owner;
+
+        init(name, symbol);
+
         require(_globals(msg.sender).isValidLoanAsset(_liquidityAsset), "Pool:INVALID_LIQ_ASSET");
         require(_liquidityCap   != uint256(0),                          "Pool:INVALID_CAP");
 
@@ -110,7 +124,7 @@ contract Pool is PoolFDT {
 
         // Assign variables relating to the LiquidityAsset.
         liquidityAsset         = IERC20(_liquidityAsset);
-        liquidityAssetDecimals = ERC20(_liquidityAsset).decimals();
+        liquidityAssetDecimals = IERC20Details(_liquidityAsset).decimals();
 
         // Assign misc. state variables.
         stakeAsset   = _stakeAsset;

@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
-import "./IFDT.sol";
 import "../math/SafeMathUint.sol";
 import "../math/SafeMathInt.sol";
+import "./IFDT.sol";
 
-abstract contract PoolFDT is IFDT, ERC20 {
+import "./ProxyERC20.sol";
+
+abstract contract PoolFDT is IFDT, ProxyERC20 {
+
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
@@ -50,8 +52,6 @@ abstract contract PoolFDT is IFDT, ERC20 {
      * @param totalLossesRecognized the total amount of losses that were recognized
      */
     event LossesRecognized(address indexed by, uint256 lossesRecognized, uint256 totalLossesRecognized);
-
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) public { }
 
     /**
      * prev. distributeDividends
@@ -103,7 +103,6 @@ abstract contract PoolFDT is IFDT, ERC20 {
      * @dev Prepares funds withdrawal
      * @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
      */
-    
     function _prepareWithdraw() internal returns (uint256) {
         uint256 _withdrawableDividend = withdrawableFundsOf(msg.sender);
 
@@ -118,7 +117,6 @@ abstract contract PoolFDT is IFDT, ERC20 {
      * @dev Prepares losses withdrawal
      * @dev It emits a `LossesWithdrawn` event if the amount of withdrawn losses is greater than 0.
      */
-    
     function _prepareLossesWithdraw() internal returns (uint256) {
         uint256 _recognizeableDividend = recognizeableLossesOf(msg.sender);
 

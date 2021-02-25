@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
+import "./library/Util.sol";
 import "./interfaces/ICollateralLocker.sol";
 import "./interfaces/ICollateralLockerFactory.sol";
 import "./interfaces/IERC20Details.sol";
@@ -12,13 +13,20 @@ import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IPremiumCalc.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/IUniswapRouter.sol";
-import "./library/Util.sol";
 
-import "./token/FDT.sol";
+import "./token/LoanFDT.sol";
+
+/// @title LoanProxy reserves the first 2 storage slots of the Loan contract.
+contract LoanProxy {
+    // The loan contract implementation used by the proxy
+    address public implementation;
+    // The owner of the proxy
+    address public proxyOwner;
+}
 
 /// @title Loan is the core loan vault contract.
-contract Loan is FDT {
-    
+contract Loan is LoanProxy, LoanFDT {
+
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
     using SafeMath        for uint256;
@@ -34,18 +42,18 @@ contract Loan is FDT {
 
     State public loanState;  // The current state of this loan, as defined in the State enum below.
 
-    IERC20Details public immutable loanAsset;        // Asset deposited by lenders into the FundingLocker, when funding this loan.
-    IERC20Details public immutable collateralAsset;  // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
+    IERC20Details public loanAsset;        // Asset deposited by lenders into the FundingLocker, when funding this loan.
+    IERC20Details public collateralAsset;  // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan.
 
-    address public immutable fundingLocker;     // Funding locker - holds custody of loan funds before drawdown    
-    address public immutable flFactory;         // Funding locker factory
-    address public immutable collateralLocker;  // Collateral locker - holds custody of loan collateral
-    address public immutable clFactory;         // Collateral locker factory
-    address public immutable borrower;          // Borrower of this loan, responsible for repayments.
-    address public immutable repaymentCalc;     // The repayment calculator for this loan.
-    address public immutable lateFeeCalc;       // The late fee calculator for this loan.
-    address public immutable premiumCalc;       // The premium calculator for this loan.
-    address public immutable superFactory;      // The factory that deployed this Loan.
+    address public fundingLocker;     // Funding locker - holds custody of loan funds before drawdown
+    address public flFactory;         // Funding locker factory
+    address public collateralLocker;  // Collateral locker - holds custody of loan collateral
+    address public clFactory;         // Collateral locker factory
+    address public borrower;          // Borrower of this loan, responsible for repayments.
+    address public repaymentCalc;     // The repayment calculator for this loan.
+    address public lateFeeCalc;       // The late fee calculator for this loan.
+    address public premiumCalc;       // The premium calculator for this loan.
+    address public superFactory;      // The factory that deployed this Loan.
 
     address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
@@ -95,7 +103,8 @@ contract Loan is FDT {
     );
 
     /**
-        @dev Constructor for a Loan.
+        @dev Initialiser for a Loan. This can only be called once.
+        @param  _owner           The owner.
         @param  _borrower        Will receive the funding when calling drawdown(), is also responsible for repayments.
         @param  _loanAsset       The asset _borrower is requesting funding in.
         @param  _collateralAsset The asset provided as collateral by _borrower.
@@ -113,7 +122,8 @@ contract Loan is FDT {
                 calcs[1] = lateFeeCalc
                 calcs[2] = premiumCalc
     */
-    constructor(
+    function init(
+        address _owner,
         address _borrower,
         address _loanAsset,
         address _collateralAsset,
@@ -122,14 +132,16 @@ contract Loan is FDT {
         uint256[6] memory specs,
         address[3] memory calcs,
         string memory tUUID
-    )
-        FDT(
+    ) external {
+        require(proxyOwner == address(0), "Loan:ALREADY_INITIALISED");
+        proxyOwner = _owner;
+
+        init(
             string(abi.encodePacked("Maple Loan Vault Token ", tUUID)),
             string(abi.encodePacked("ML", tUUID)),
             _loanAsset
-        )
-        public
-    {
+        );
+
         borrower        = _borrower;
         loanAsset       = IERC20Details(_loanAsset);
         collateralAsset = IERC20Details(_collateralAsset);

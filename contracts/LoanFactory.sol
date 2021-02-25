@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "./Loan.sol";
-
 import "./library/TokenUUID.sol";
+import "./library/Util.sol";
+import "./interfaces/ILoan.sol";
+
+import "./Proxy.sol";
 
 /// @title LoanFactory instantiates Loan contracts.
 contract LoanFactory {
@@ -15,6 +17,8 @@ contract LoanFactory {
     uint8 public constant INTEREST_CALC_TYPE         = 10;  // Calc type of `RepaymentCalc`.
     uint8 public constant LATEFEE_CALC_TYPE          = 11;  // Calc type of `LateFeeCalc`.
     uint8 public constant PREMIUM_CALC_TYPE          = 12;  // Calc type of `PremiumCalc`.
+
+    address public loanImplementation;  // Address of the Loan contract implementation
 
     IGlobals public globals;  // The MapleGlobals.sol contract.
 
@@ -37,7 +41,8 @@ contract LoanFactory {
         string symbol
     );
     
-    constructor(address _globals) public {
+    constructor(address _loanImplementation, address _globals) public {
+        loanImplementation = _loanImplementation;
         globals = IGlobals(_globals);
     }
 
@@ -92,8 +97,10 @@ contract LoanFactory {
         // Deploy loan vault contract.
 	    string memory tUUID = TokenUUID.generateUUID(loansCreated + 1);
 
-        Loan loan = new Loan(
-            msg.sender,
+        ILoan loan = ILoan(address(new Proxy(loanImplementation)));
+        loan.init(
+            msg.sender, // owner
+            msg.sender, // borrower
             loanAsset,
             collateralAsset,
             flFactory,

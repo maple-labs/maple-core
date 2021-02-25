@@ -2,6 +2,25 @@
 pragma solidity >=0.6.11;
 
 interface IPool {
+
+    function init(
+        address _owner,
+        address _poolDelegate,
+        address _liquidityAsset,
+        address _stakeAsset,
+        address _slFactory,
+        address _llFactory,
+        uint256 _stakingFee,
+        uint256 _delegateFee,
+        uint256 _liquidityCap,
+        string memory name,
+        string memory symbol
+    ) external;
+
+    function liquidityLocker() external view returns (address);
+
+    function stakeLocker() external view returns (address);
+
     function poolDelegate() external view returns (address);
 
     function deposit(uint256) external;

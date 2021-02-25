@@ -1,10 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "./IERC20Details.sol";
 
-interface ILoan is IERC20 {
+interface ILoan is IERC20Details {
     
+    function init(
+        address _owner,
+        address _borrower,
+        address _loanAsset,
+        address _collateralAsset,
+        address _flFactory,
+        address _clFactory,
+        uint256[6] memory specs,
+        address[3] memory calcs,
+        string memory tUUID
+    ) external;
+
     // State Variables
     function fundsTokenBalance() external view returns (uint256);
     function loanAsset() external view returns (address);

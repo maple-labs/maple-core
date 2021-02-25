@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "./Pool.sol";
-
+import "./library/TokenUUID.sol";
+import "./interfaces/IGlobals.sol";
+import "./interfaces/IPool.sol";
 import "./interfaces/IBFactory.sol";
 
-import "./library/TokenUUID.sol";
+import "./Proxy.sol";
 
 contract PoolFactory {
 
     uint8 public constant LL_FACTORY = 3;   // Factory type of `LiquidityLockerFactory`.
     uint8 public constant SL_FACTORY = 4;   // Factory type of `StakeLockerFactory`.
+
+    address public poolImplementation;  // Address of the Pool contract implementation
 
     uint256  public poolsCreated;  // Incrementor for number of LPs created.
     IGlobals public globals;       // MapleGlobals contract.
@@ -33,7 +36,8 @@ contract PoolFactory {
         string  symbol
     );
 
-    constructor(address _globals) public {
+    constructor(address _poolImplementation, address _globals) public {
+        poolImplementation = _poolImplementation;
         globals = IGlobals(_globals);
     }
 
@@ -80,19 +84,20 @@ contract PoolFactory {
         string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
         string memory symbol = string(abi.encodePacked("LP", tUUID));
 
-        Pool pool =
-            new Pool(
-                msg.sender,
-                liquidityAsset,
-                stakeAsset,
-                slFactory,
-                llFactory,
-                stakingFee,
-                delegateFee,
-                liquidityCap,
-                name,
-                symbol
-            );
+        IPool pool = IPool(address(new Proxy(poolImplementation)));
+        pool.init(
+            msg.sender,
+            msg.sender,
+            liquidityAsset,
+            stakeAsset,
+            slFactory,
+            llFactory,
+            stakingFee,
+            delegateFee,
+            liquidityCap,
+            name,
+            symbol
+        );
 
         pools[poolsCreated]   = address(pool);
         isPool[address(pool)] = true;

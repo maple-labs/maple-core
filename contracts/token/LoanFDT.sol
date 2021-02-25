@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
-import "./IFDT.sol";
 import "../math/SafeMathUint.sol";
 import "../math/SafeMathInt.sol";
+import "./IFDT.sol";
 
-abstract contract FDT is IFDT, ERC20 {
+import "./ProxyERC20.sol";
+
+abstract contract LoanFDT is IFDT, ProxyERC20 {
+
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
@@ -27,7 +29,8 @@ abstract contract FDT is IFDT, ERC20 {
     event PointsPerShareUpdated(uint256 pointsPerShare);
     event PointsCorrectionUpdated(address account, int256 pointsCorrection);
 
-    constructor(string memory name, string memory symbol, address _fundsToken) ERC20(name, symbol) public {
+    function init(string memory name, string memory symbol, address _fundsToken) internal {
+        init(name, symbol);
         fundsToken = IERC20(_fundsToken);
     }
 
@@ -150,7 +153,7 @@ abstract contract FDT is IFDT, ERC20 {
         pointsCorrection[account] = pointsCorrection[account].sub(
             (pointsPerShare.mul(value)).toInt256Safe()
         );
-        
+
         emit PointsCorrectionUpdated(account, pointsCorrection[account]);
     }
 
