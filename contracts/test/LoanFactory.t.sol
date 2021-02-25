@@ -46,7 +46,7 @@ contract LoanFactoryTest is TestUtil {
         gov       = new Governor();                                  // Actor: Governor of Maple.
 
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
-        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));  // Setup Maple Globals.
+        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
         flFactory = new FundingLockerFactory();                      // Setup Funding Locker Factory to support Loan Factory creation.
         clFactory = new CollateralLockerFactory();                   // Setup Collateral Locker Factory to support Loan Factory creation.
         lFactory  = new LoanFactory(address(globals));               // Setup Loan Factory to support Loan creation.
@@ -73,13 +73,13 @@ contract LoanFactoryTest is TestUtil {
     function test_setGlobals() public {
         Governor fakeGov = new Governor();
 
-        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));  // Create upgraded MapleGlobals
+        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY);  // Create upgraded MapleGlobals
 
         assertEq(address(lFactory.globals()), address(globals));
 
         assertTrue(!fakeGov.try_setGlobals(address(lFactory), address(globals2)));  // Non-governor cannot set new globals
 
-        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));      // Create upgraded MapleGlobals
+        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY);      // Create upgraded MapleGlobals
 
         assertTrue(gov.try_setGlobals(address(lFactory), address(globals2)));       // Governor can set new globals
         assertEq(address(lFactory.globals()), address(globals2));                   // Globals is updated

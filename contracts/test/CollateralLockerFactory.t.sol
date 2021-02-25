@@ -20,10 +20,10 @@ contract CollateralLockerFactoryTest is TestUtil {
 
     function setUp() public {
 
-        gov         = new Governor();                                              // Actor: Governor of Maple.
+        gov         = new Governor();                                  // Actor: Governor of Maple.
 
-        mpl         = new MapleToken("MapleToken", "MAPL", USDC);                  // Setup Maple token.
-        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));  // Setup Maple Globals.
+        mpl         = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
+        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
         clFactory   = new CollateralLockerFactory();                               // Setup Collateral Locker Factory to support Loan Factory creation.
         assertEq(clFactory.factoryType(), uint(0), "Incorrect factory type");
     }

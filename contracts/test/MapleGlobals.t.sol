@@ -69,7 +69,7 @@ contract MapleGlobalsTest is TestUtil {
         joe         = new PoolDelegate();   // Actor: Manager of the Pool.
 
         mpl           = new MapleToken("MapleToken", "MAPLE", USDC);
-        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));
+        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         poolFactory   = new PoolFactory(address(globals));
         loanFactory   = new LoanFactory(address(globals));
         dlFactory     = new DebtLockerFactory();

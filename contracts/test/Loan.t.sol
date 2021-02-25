@@ -62,7 +62,7 @@ contract LoanTest is TestUtil {
         com         = new Commoner();       // Actor: Any user or an incentive seeker.
 
         mpl           = new MapleToken("MapleToken", "MAPL", USDC);
-        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));
+        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         flFactory     = new FundingLockerFactory();
         clFactory     = new CollateralLockerFactory();
         repaymentCalc = new RepaymentCalc();

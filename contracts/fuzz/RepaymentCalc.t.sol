@@ -102,7 +102,7 @@ contract RepaymentCalcTest is TestUtil {
         joe            = new PoolDelegate();                                            // Actor: Manager of the Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));
+        globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan factory functionality.
         clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan factory functionality.
         loanFactory    = new LoanFactory(address(globals));                             // Create Loan factory.

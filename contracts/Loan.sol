@@ -49,7 +49,7 @@ contract Loan is FDT, Pausable {
     address public immutable premiumCalc;       // The premium calculator for this loan.
     address public immutable superFactory;      // The factory that deployed this Loan.
 
-    mapping(address => bool) public admins;  // Admin addresses that has permission to do certain operations in case of disaster mgt.
+    mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt.
 
     address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
@@ -176,7 +176,6 @@ contract Loan is FDT, Pausable {
         @param  amt    Amount to fund the loan.
         @param  mintTo Address that debt tokens are minted to.
     */
-    // TODO: Add delegate function same as pool, to prevent this function
     function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
         _whenProtocolNotPaused();
         _isValidState(State.Live);

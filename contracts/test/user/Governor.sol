@@ -16,8 +16,8 @@ contract Governor {
     StakingRewards stakingRewards;
     MapleTreasury  treasury;
 
-    function createGlobals(address mpl, address bPoolFactory, address admin) external returns (MapleGlobals) {
-        globals = new MapleGlobals(address(this), mpl, bPoolFactory, admin);
+    function createGlobals(address mpl, address bPoolFactory) external returns (MapleGlobals) {
+        globals = new MapleGlobals(address(this), mpl, bPoolFactory, address(1));
         return globals;
     }
 
