@@ -84,7 +84,7 @@ contract GulpTest is TestUtil {
         dan            = new Staker();                        // Actor: Staker BPTs in Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));
+        globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         treasury       = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals));
 
         flFactory      = new FundingLockerFactory();          // Setup the FL factory to facilitate Loan factory functionality.

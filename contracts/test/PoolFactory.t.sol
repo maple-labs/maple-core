@@ -46,7 +46,7 @@ contract PoolFactoryTest is TestUtil {
         ali         = new PoolDelegate();   // Actor: Manager of the Pool.
 
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));
+        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         slFactory   = new StakeLockerFactory();
         llFactory   = new LiquidityLockerFactory();
         poolFactory = new PoolFactory(address(globals));
@@ -84,13 +84,13 @@ contract PoolFactoryTest is TestUtil {
     function test_setGlobals() public {
         Governor fakeGov = new Governor();
 
-        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));  // Create upgraded MapleGlobals
+        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl), BPOOL_FACTORY);  // Create upgraded MapleGlobals
 
         assertEq(address(poolFactory.globals()), address(globals));
 
         assertTrue(!fakeGov.try_setGlobals(address(poolFactory), address(globals2)));  // Non-governor cannot set new globals
 
-        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));         // Create upgraded MapleGlobals
+        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY);                     // Create upgraded MapleGlobals
 
         assertTrue(gov.try_setGlobals(address(poolFactory), address(globals2)));       // Governor can set new globals
         assertEq(address(poolFactory.globals()), address(globals2));                   // Globals is updated

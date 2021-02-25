@@ -48,7 +48,7 @@ contract StakingRewardsTest is TestUtil {
         sid     = new PoolDelegate();                // Actor: Manager of the Pool.
 
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));
+        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         slFactory   = new StakeLockerFactory();                        // Setup the SL factory to facilitate Pool factory functionality.
         llFactory   = new LiquidityLockerFactory();                    // Setup the SL factory to facilitate Pool factory functionality.
         poolFactory = new PoolFactory(address(globals));               // Create pool factory.

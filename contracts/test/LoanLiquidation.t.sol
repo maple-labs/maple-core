@@ -56,7 +56,7 @@ contract LoanLiquidationTest is TestUtil {
         bob = new Lender();     // Actor: Individual lender.
 
         mpl           = new MapleToken("MapleToken", "MAPL", USDC);
-        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY, address(0));  // Setup Maple Globals.
+        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
         flFactory     = new FundingLockerFactory();
         clFactory     = new CollateralLockerFactory();
         repaymentCalc = new RepaymentCalc();
