@@ -57,12 +57,14 @@ contract PoolExcessTest is TestUtil {
     FundingLockerFactory             flFactory;
     LateFeeCalc                    lateFeeCalc;
     Loan                                  loan;
+    Loan                              loanImpl;
     LoanFactory                    loanFactory;
     LiquidityLockerFactory           llFactory;
     MapleToken                             mpl;
     MapleGlobals                       globals;
     Pool                                pool_a;
     Pool                                pool_b;
+    Pool                              poolImpl;
     PoolFactory                    poolFactory;
     PremiumCalc                    premiumCalc;
     StakeLockerFactory               slFactory;
@@ -79,27 +81,29 @@ contract PoolExcessTest is TestUtil {
 
     function setUp() public {
 
-        bob            = new Borrower();                     // Actor: Borrower of the Loan.
-        gov            = new Governor();                     // Actor: Governor of Maple.
-        ali            = new LP();                           // Actor: Liquidity provider.
-        sid            = new PoolDelegate();                 // Actor: Manager of pool_a.
-        joe            = new PoolDelegate();                 // Actor: Manager of pool_b.
-        che            = new Staker();                       // Actor: Stakes BPTs in Pool.
-        dan            = new Staker();                       // Actor: Stakes BPTs in Pool.
+        bob            = new Borrower();                                       // Actor: Borrower of the Loan.
+        gov            = new Governor();                                       // Actor: Governor of Maple.
+        ali            = new LP();                                             // Actor: Liquidity provider.
+        sid            = new PoolDelegate();                                   // Actor: Manager of pool_a.
+        joe            = new PoolDelegate();                                   // Actor: Manager of pool_b.
+        che            = new Staker();                                         // Actor: Stakes BPTs in Pool.
+        dan            = new Staker();                                         // Actor: Stakes BPTs in Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
-        flFactory      = new FundingLockerFactory();         // Setup the FL factory to facilitate Loan factory functionality.
-        clFactory      = new CollateralLockerFactory();      // Setup the CL factory to facilitate Loan factory functionality.
-        loanFactory    = new LoanFactory(address(globals));  // Create Loan factory.
-        slFactory      = new StakeLockerFactory();           // Setup the SL factory to facilitate Pool factory functionality.
-        llFactory      = new LiquidityLockerFactory();       // Setup the SL factory to facilitate Pool factory functionality.
-        poolFactory    = new PoolFactory(address(globals));  // Create pool factory.
-        dlFactory      = new DebtLockerFactory();            // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        repaymentCalc  = new RepaymentCalc();                // Repayment model.
-        lateFeeCalc    = new LateFeeCalc(0);                 // Flat 0% fee
-        premiumCalc    = new PremiumCalc(500);               // Flat 5% premium
-        trs            = new Treasury();                     // Treasury.
+        flFactory      = new FundingLockerFactory();                           // Setup the FL factory to facilitate Loan factory functionality.
+        clFactory      = new CollateralLockerFactory();                        // Setup the CL factory to facilitate Loan factory functionality.
+        loanImpl       = new Loan();                                           // Create loan logic / implementation contract.
+        loanFactory    = new LoanFactory(address(loanImpl), address(globals)); // Create loan factory.
+        slFactory      = new StakeLockerFactory();                             // Setup the SL factory to facilitate Pool factory functionality.
+        llFactory      = new LiquidityLockerFactory();                         // Setup the SL factory to facilitate Pool factory functionality.
+        poolImpl       = new Pool();                                           // Create pool logic / implementation contract.
+        poolFactory    = new PoolFactory(address(poolImpl), address(globals)); // Create pool factory.
+        dlFactory      = new DebtLockerFactory();                              // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
+        repaymentCalc  = new RepaymentCalc();                                  // Repayment model.
+        lateFeeCalc    = new LateFeeCalc(0);                                   // Flat 0% fee
+        premiumCalc    = new PremiumCalc(500);                                 // Flat 5% premium
+        trs            = new Treasury();                                       // Treasury.
 
         gov.setValidLoanFactory(address(loanFactory), true);
 

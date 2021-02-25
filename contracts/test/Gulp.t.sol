@@ -55,12 +55,14 @@ contract GulpTest is TestUtil {
     FundingLockerFactory             flFactory;
     LateFeeCalc                    lateFeeCalc;
     LiquidityLockerFactory           llFactory;
+    Loan                              loanImpl;
     LoanFactory                    loanFactory;
     Loan                                  loan;
     MapleGlobals                       globals;
     MapleToken                             mpl;
     MapleTreasury                     treasury;
     Pool                                  pool; 
+    Pool                              poolImpl;
     PoolFactory                    poolFactory;
     PremiumCalc                    premiumCalc;
     StakeLockerFactory               slFactory;
@@ -75,27 +77,29 @@ contract GulpTest is TestUtil {
 
     function setUp() public {
 
-        bob            = new Borrower();                      // Actor: Borrower of the Loan.
-        gov            = new Governor();                      // Actor: Governor of Maple.
-        ali            = new LP();                            // Actor: Liquidity provider.
-        sid            = new PoolDelegate();                  // Actor: Manager of the Pool.
-        che            = new Staker();                        // Actor: Stakes BPTs in Pool.
-        dan            = new Staker();                        // Actor: Staker BPTs in Pool.
+        bob            = new Borrower();                                       // Actor: Borrower of the Loan.
+        gov            = new Governor();                                       // Actor: Governor of Maple.
+        ali            = new LP();                                             // Actor: Liquidity provider.
+        sid            = new PoolDelegate();                                   // Actor: Manager of the Pool.
+        che            = new Staker();                                         // Actor: Stakes BPTs in Pool.
+        dan            = new Staker();                                         // Actor: Staker BPTs in Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         treasury       = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals));
 
-        flFactory      = new FundingLockerFactory();          // Setup the FL factory to facilitate Loan factory functionality.
-        clFactory      = new CollateralLockerFactory();       // Setup the CL factory to facilitate Loan factory functionality.
-        loanFactory    = new LoanFactory(address(globals));   // Create Loan factory.
-        slFactory      = new StakeLockerFactory();            // Setup the SL factory to facilitate Pool factory functionality.
-        llFactory      = new LiquidityLockerFactory();        // Setup the SL factory to facilitate Pool factory functionality.
-        poolFactory    = new PoolFactory(address(globals));   // Create pool factory.
-        dlFactory      = new DebtLockerFactory();             // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        repaymentCalc  = new RepaymentCalc();                 // Repayment model.
-        lateFeeCalc    = new LateFeeCalc(0);                  // Flat 0% fee
-        premiumCalc    = new PremiumCalc(500);                // Flat 5% premium
+        flFactory      = new FundingLockerFactory();                           // Setup the FL factory to facilitate Loan factory functionality.
+        clFactory      = new CollateralLockerFactory();                        // Setup the CL factory to facilitate Loan factory functionality.
+        loanImpl       = new Loan();                                           // Create loan logic / implementation contract.
+        loanFactory    = new LoanFactory(address(loanImpl), address(globals)); // Create loan factory.
+        slFactory      = new StakeLockerFactory();                             // Setup the SL factory to facilitate Pool factory functionality.
+        llFactory      = new LiquidityLockerFactory();                         // Setup the SL factory to facilitate Pool factory functionality.
+        poolImpl       = new Pool();                                           // Create pool logic / implementation contract.
+        poolFactory    = new PoolFactory(address(poolImpl), address(globals)); // Create pool factory.
+        dlFactory      = new DebtLockerFactory();                              // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
+        repaymentCalc  = new RepaymentCalc();                                  // Repayment model.
+        lateFeeCalc    = new LateFeeCalc(0);                                   // Flat 0% fee
+        premiumCalc    = new PremiumCalc(500);                                 // Flat 5% premium
 
         gov.setValidLoanFactory(address(loanFactory), true);
 

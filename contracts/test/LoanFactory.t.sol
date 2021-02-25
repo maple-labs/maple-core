@@ -33,6 +33,7 @@ contract LoanFactoryTest is TestUtil {
 
     CollateralLockerFactory   clFactory;
     FundingLockerFactory      flFactory;
+    Loan                       loanImpl;
     LoanFactory                lFactory;
     MapleToken                      mpl;
     MapleGlobals                globals;
@@ -41,14 +42,15 @@ contract LoanFactoryTest is TestUtil {
 
     function setUp() public {
 
-        borrower  = new Borrower();                                  // Actor: Borrower of the Loan.
-        gov       = new Governor();                                  // Actor: Governor of Maple.
+        borrower  = new Borrower();                                       // Actor: Borrower of the Loan.
+        gov       = new Governor();                                       // Actor: Governor of Maple.
 
-        mpl       = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
-        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
-        flFactory = new FundingLockerFactory();                      // Setup Funding Locker Factory to support Loan Factory creation.
-        clFactory = new CollateralLockerFactory();                   // Setup Collateral Locker Factory to support Loan Factory creation.
-        lFactory  = new LoanFactory(address(globals));               // Setup Loan Factory to support Loan creation.
+        mpl       = new MapleToken("MapleToken", "MAPL", USDC);           // Setup Maple token.
+        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);       // Setup Maple Globals.
+        flFactory = new FundingLockerFactory();                           // Setup Funding Locker Factory to support Loan Factory creation.
+        clFactory = new CollateralLockerFactory();                        // Setup Collateral Locker Factory to support Loan Factory creation.
+        loanImpl  = new Loan();                                           // Create loan logic / implementation contract.
+        lFactory  = new LoanFactory(address(loanImpl), address(globals)); // Setup Loan Factory to support Loan creation.
     }
 
     function set_calcs() public returns (address[3] memory calcs) {

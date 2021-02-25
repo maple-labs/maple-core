@@ -26,6 +26,7 @@ contract StakingRewardsTest is TestUtil {
     LiquidityLockerFactory      llFactory;
     MapleGlobals                  globals;
     MapleToken                        mpl;
+    Pool                         poolImpl;
     PoolFactory               poolFactory;
     Pool                             pool;
     StakeLockerFactory          slFactory;
@@ -38,18 +39,19 @@ contract StakingRewardsTest is TestUtil {
 
     function setUp() public {
 
-        ali     = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
-        bob     = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
-        che     = new Farmer(stakingRewards, pool);  // Actor: Yield farmer
-        gov     = new Governor();                    // Actor: Governor of Maple.
-        fakeGov = new Governor();                    // Actor: Fake Governor of Maple.
-        sid     = new PoolDelegate();                // Actor: Manager of the Pool.
+        ali     = new Farmer(stakingRewards, pool);                         // Actor: Yield farmer
+        bob     = new Farmer(stakingRewards, pool);                         // Actor: Yield farmer
+        che     = new Farmer(stakingRewards, pool);                         // Actor: Yield farmer
+        gov     = new Governor();                                           // Actor: Governor of Maple.
+        fakeGov = new Governor();                                           // Actor: Fake Governor of Maple.
+        sid     = new PoolDelegate();                                       // Actor: Manager of the Pool.
 
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
-        slFactory   = new StakeLockerFactory();                        // Setup the SL factory to facilitate Pool factory functionality.
-        llFactory   = new LiquidityLockerFactory();                    // Setup the SL factory to facilitate Pool factory functionality.
-        poolFactory = new PoolFactory(address(globals));               // Create pool factory.
+        slFactory   = new StakeLockerFactory();                             // Setup the SL factory to facilitate Pool factory functionality.
+        llFactory   = new LiquidityLockerFactory();                         // Setup the SL factory to facilitate Pool factory functionality.
+        poolImpl    = new Pool();
+        poolFactory = new PoolFactory(address(poolImpl), address(globals)); // Create pool factory.
         dlFactory   = new DebtLockerFactory();   
 
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);

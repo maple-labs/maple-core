@@ -69,9 +69,11 @@ contract RepaymentCalcTest is TestUtil {
     Loan                                  loan;
     Loan                                 loan2;
     Loan                                 loan3;
+    Loan                              loanImpl;
     LoanFactory                    loanFactory;
     MapleGlobals                       globals;
     MapleToken                             mpl;
+    Pool                              poolImpl;
     PoolFactory                    poolFactory;
     Pool                                 pool1;
     Pool                                 pool2;
@@ -104,10 +106,12 @@ contract RepaymentCalcTest is TestUtil {
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan factory functionality.
         clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan factory functionality.
-        loanFactory    = new LoanFactory(address(globals));                             // Create Loan factory.
+        loanImpl       = new Loan();                                                    // Create loan logic / implementation contract.
+        loanFactory    = new LoanFactory(address(loanImpl), address(globals));          // Create loan factory.
         slFactory      = new StakeLockerFactory();                                      // Setup the SL factory to facilitate Pool factory functionality.
         llFactory      = new LiquidityLockerFactory();                                  // Setup the SL factory to facilitate Pool factory functionality.
-        poolFactory    = new PoolFactory(address(globals));                             // Create pool factory.
+        poolImpl       = new Pool();                                                    // Create pool logic / implementation contract.
+        poolFactory    = new PoolFactory(address(poolImpl), address(globals));          // Create pool factory.
         dlFactory1     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
         dlFactory2     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
         repaymentCalc  = new RepaymentCalc();                                           // Repayment model.

@@ -57,11 +57,13 @@ contract StakeLockerTest is TestUtil {
     LateFeeCalc                    lateFeeCalc;
     LiquidityLockerFactory           llFactory;
     Loan                                  loan;
+    Loan                              loanImpl;
     LoanFactory                    loanFactory;
     MapleGlobals                       globals;
     MapleToken                             mpl;
     Pool                                  pool;
     PremiumCalc                    premiumCalc;
+    Pool                              poolImpl;
     PoolFactory                    poolFactory;
     StakeLockerFactory               slFactory;
     Treasury                               trs;
@@ -87,10 +89,12 @@ contract StakeLockerTest is TestUtil {
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan factory functionality.
         clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan factory functionality.
-        loanFactory    = new LoanFactory(address(globals));                             // Create Loan factory.
+        loanImpl       = new Loan();                                                    // Create loan logic / implementation contract.
+        loanFactory    = new LoanFactory(address(loanImpl), address(globals));          // Create loan factory.
         slFactory      = new StakeLockerFactory();                                      // Setup the SL factory to facilitate Pool factory functionality.
         llFactory      = new LiquidityLockerFactory();                                  // Setup the SL factory to facilitate Pool factory functionality.
-        poolFactory    = new PoolFactory(address(globals));                             // Create pool factory.
+        poolImpl       = new Pool();                                                    // Create pool logic / implementation contract.
+        poolFactory    = new PoolFactory(address(poolImpl), address(globals));          // Create pool factory.
         dlFactory      = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
         repaymentCalc  = new RepaymentCalc();                                           // Repayment model.
         lateFeeCalc    = new LateFeeCalc(0);                                            // Flat 0% fee

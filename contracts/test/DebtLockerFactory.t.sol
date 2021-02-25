@@ -11,6 +11,7 @@ import "../DebtLocker.sol";
 import "../DebtLockerFactory.sol";
 import "../FundingLockerFactory.sol";
 import "../LateFeeCalc.sol";
+import "../Loan.sol";
 import "../LoanFactory.sol";
 import "../MapleGlobals.sol";
 import "../MapleToken.sol";
@@ -31,6 +32,7 @@ contract DebtLockerFactoryTest is TestUtil {
     CollateralLockerFactory   clFactory;
     DebtLockerFactory         dlFactory;
     FundingLockerFactory      flFactory;
+    Loan                       loanImpl;
     LoanFactory                lFactory;
     MapleToken                      mpl;
     MapleGlobals                globals;
@@ -47,7 +49,8 @@ contract DebtLockerFactoryTest is TestUtil {
         globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);           // Setup Maple Globals.
         flFactory = new FundingLockerFactory();                               // Setup Funding Locker Factory to support Loan Factory creation.
         clFactory = new CollateralLockerFactory();                            // Setup Collateral Locker Factory to support Loan Factory creation.
-        lFactory  = new LoanFactory(address(globals));                        // Setup Loan Factory to support Loan creation.
+        loanImpl  = new Loan();                                               // Create loan logic / implementation contract.
+        lFactory  = new LoanFactory(address(loanImpl), address(globals));     // Setup Loan Factory to support Loan creation.
 
         gov.setValidLoanFactory(address(lFactory), true);                     // Set LF in the valid list of LF factories.
         gov.setValidSubFactory(address(lFactory), address(flFactory), true);  // Set valid factory i.e FLF under the LF.

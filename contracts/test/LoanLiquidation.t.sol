@@ -35,6 +35,7 @@ contract LoanLiquidationTest is TestUtil {
     CollateralLockerFactory     clFactory;
     FundingLockerFactory        flFactory;
     LateFeeCalc               lateFeeCalc;
+    Loan                         loanImpl;
     LoanFactory               loanFactory;
     MapleToken                        mpl;
     MapleGlobals                  globals;
@@ -61,7 +62,8 @@ contract LoanLiquidationTest is TestUtil {
         repaymentCalc = new RepaymentCalc();
         lateFeeCalc   = new LateFeeCalc(0);   // Flat 0% fee
         premiumCalc   = new PremiumCalc(500); // Flat 5% premium
-        loanFactory   = new LoanFactory(address(globals));
+        loanImpl      = new Loan();
+        loanFactory   = new LoanFactory(address(loanImpl), address(globals));
         trs           = new Treasury();
 
         gov.setCalc(address(repaymentCalc), true);

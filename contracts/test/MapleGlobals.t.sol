@@ -13,9 +13,11 @@ import "../DebtLockerFactory.sol";
 import "../FundingLockerFactory.sol";
 import "../LateFeeCalc.sol";
 import "../LiquidityLockerFactory.sol";
+import "../Loan.sol";
 import "../LoanFactory.sol";
 import "../MapleToken.sol";
 import "../MapleTreasury.sol";
+import "../Pool.sol";
 import "../PoolFactory.sol";
 import "../PremiumCalc.sol";
 import "../StakeLockerFactory.sol";
@@ -38,10 +40,12 @@ contract MapleGlobalsTest is TestUtil {
     FundingLockerFactory       flFactory;
     LateFeeCalc                   lfCalc;
     LiquidityLockerFactory     llFactory;
+    Loan                        loanImpl;
     LoanFactory              loanFactory;
     MapleGlobals                 globals;
     MapleToken                       mpl;
     MapleTreasury                    trs;
+    Pool                        poolImpl;
     PoolFactory              poolFactory;
     PremiumCalc                    pCalc;
     StakeLockerFactory         slFactory;
@@ -69,8 +73,10 @@ contract MapleGlobalsTest is TestUtil {
 
         mpl           = new MapleToken("MapleToken", "MAPLE", USDC);
         globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY);
-        poolFactory   = new PoolFactory(address(globals));
-        loanFactory   = new LoanFactory(address(globals));
+        poolImpl       = new Pool();
+        poolFactory    = new PoolFactory(address(poolImpl), address(globals));
+        loanImpl      = new Loan();
+        loanFactory   = new LoanFactory(address(loanImpl), address(globals));
         dlFactory     = new DebtLockerFactory();
         slFactory     = new StakeLockerFactory();
         llFactory     = new LiquidityLockerFactory();

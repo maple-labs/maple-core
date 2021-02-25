@@ -29,6 +29,7 @@ contract PoolFactoryTest is TestUtil {
 
     MapleToken                     mpl;
     MapleGlobals               globals;
+    Pool                      poolImpl;
     PoolFactory            poolFactory;
     StakeLockerFactory       slFactory;
     LiquidityLockerFactory   llFactory;
@@ -48,7 +49,8 @@ contract PoolFactoryTest is TestUtil {
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
         slFactory   = new StakeLockerFactory();
         llFactory   = new LiquidityLockerFactory();
-        poolFactory = new PoolFactory(address(globals));
+        poolImpl       = new Pool();
+        poolFactory    = new PoolFactory(address(poolImpl), address(globals));
 
         gov.setValidPoolFactory(address(poolFactory), true);
         
