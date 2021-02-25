@@ -94,6 +94,7 @@ contract StakingRewards is Ownable {
     }
 
     function withdraw(uint256 amount) public {
+        _notPaused();
         _updateReward(msg.sender);
         require(amount > 0, "REWARDS:WITHDRAW_EQ_ZERO");
         _totalSupply = _totalSupply.sub(amount);
@@ -103,6 +104,7 @@ contract StakingRewards is Ownable {
     }
 
     function getReward() public {
+        _notPaused();
         _updateReward(msg.sender);
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
