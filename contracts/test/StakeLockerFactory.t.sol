@@ -6,9 +6,10 @@ import "./TestUtil.sol";
 
 import "./user/Governor.sol";
 
-import "../MapleToken.sol";
 import "../StakeLocker.sol";
 import "../StakeLockerFactory.sol";
+
+import "module/maple-token/contracts/MapleToken.sol";
 
 contract StakeLockerFactoryTest is TestUtil {
 

@@ -8,10 +8,11 @@ import "./user/PoolDelegate.sol";
 
 import "../DebtLockerFactory.sol";
 import "../LiquidityLockerFactory.sol";
-import "../MapleToken.sol";
 import "../Pool.sol";
 import "../PoolFactory.sol";
 import "../StakeLockerFactory.sol";
+
+import "module/maple-token/contracts/MapleToken.sol";
 
 contract StakingRewardsTest is TestUtil {
 

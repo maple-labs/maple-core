@@ -11,10 +11,11 @@ import "../CollateralLockerFactory.sol";
 import "../FundingLockerFactory.sol";
 import "../LoanFactory.sol";
 import "../LateFeeCalc.sol";
-import "../MapleToken.sol";
 import "../PremiumCalc.sol";
 
 import "../interfaces/ILoan.sol";
+
+import "module/maple-token/contracts/MapleToken.sol";
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 

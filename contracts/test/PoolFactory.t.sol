@@ -8,7 +8,6 @@ import "./user/Governor.sol";
 import "./user/PoolDelegate.sol";
 
 import "../LiquidityLockerFactory.sol";
-import "../MapleToken.sol";
 import "../Pool.sol";
 import "../PoolFactory.sol";
 import "../StakeLockerFactory.sol";
@@ -19,6 +18,8 @@ import "../oracles/UsdOracle.sol";
 import "../interfaces/IBFactory.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IStakeLocker.sol";
+
+import "module/maple-token/contracts/MapleToken.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 

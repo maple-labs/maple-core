@@ -22,7 +22,6 @@ import "../PremiumCalc.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "../MapleToken.sol";
 import "../MapleGlobals.sol";
 import "../StakeLockerFactory.sol";
 import "../PoolFactory.sol";
@@ -37,6 +36,8 @@ import "../Pool.sol";
 
 import "../oracles/ChainlinkOracle.sol";
 import "../oracles/UsdOracle.sol";
+
+import "module/maple-token/contracts/MapleToken.sol";
 
 interface IBPoolFactory {
     function newBPool() external returns (address);

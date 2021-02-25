@@ -13,8 +13,9 @@ import "../FundingLockerFactory.sol";
 import "../LateFeeCalc.sol";
 import "../LoanFactory.sol";
 import "../MapleGlobals.sol";
-import "../MapleToken.sol";
 import "../PremiumCalc.sol";
+
+import "module/maple-token/contracts/MapleToken.sol";
 
 import "../interfaces/ILoan.sol";
 

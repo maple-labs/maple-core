@@ -8,7 +8,7 @@ import "./user/Governor.sol";
 import "./user/SecurityAdmin.sol";
 
 import "../MapleGlobals.sol";
-import "../MapleToken.sol";
+import "module/maple-token/contracts/MapleToken.sol";
 
 import "../oracles/ChainlinkOracle.sol";
 

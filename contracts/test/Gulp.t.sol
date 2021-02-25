@@ -19,7 +19,6 @@ import "../LateFeeCalc.sol";
 import "../LiquidityLockerFactory.sol";
 import "../Loan.sol";
 import "../LoanFactory.sol";
-import "../MapleToken.sol";
 import "../MapleTreasury.sol";
 import "../Pool.sol";
 import "../PoolFactory.sol";
@@ -35,6 +34,8 @@ import "../interfaces/IPoolFactory.sol";
 
 import "../oracles/ChainlinkOracle.sol";
 import "../oracles/UsdOracle.sol";
+
+import "module/maple-token/contracts/MapleToken.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
