@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "./FundingLocker.sol";
-
 import "./interfaces/ILoanFactory.sol";
+
+import "./FundingLocker.sol";
 
 contract FundingLockerFactory {
 

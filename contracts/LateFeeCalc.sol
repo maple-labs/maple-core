@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "./interfaces/ILoan.sol";
 import "./interfaces/IRepaymentCalc.sol";
-
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 /// @title LateFeeCalc applies a flat fee on the amount owed for next payment.
 contract LateFeeCalc {

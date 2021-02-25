@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./library/Util.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/IMapleToken.sol";
 import "./interfaces/IERC20Details.sol";
 import "./interfaces/IUniswapRouter.sol";
-
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract MapleTreasury {
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
-import "./CollateralLocker.sol";
-
 import "./interfaces/ILoanFactory.sol";
+
+import "./CollateralLocker.sol";
 
 contract CollateralLockerFactory {
 
