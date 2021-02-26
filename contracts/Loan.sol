@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.11;
+pragma solidity 0.6.11;
 
 import "./interfaces/ICollateralLocker.sol";
 import "./interfaces/ICollateralLockerFactory.sol";
@@ -13,6 +13,7 @@ import "./interfaces/IPremiumCalc.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/IUniswapRouter.sol";
 import "./library/Util.sol";
+import "./library/LoanLib.sol";
 
 import "./token/FDT.sol";
 
@@ -50,8 +51,6 @@ contract Loan is FDT, Pausable {
     address public immutable superFactory;      // The factory that deployed this Loan.
 
     mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt.
-
-    address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
     uint256 public principalOwed;   // The principal owed (initially the drawdown amount).
     uint256 public drawdownAmount;  // The amount the borrower drew down, historical reference for calculators.
@@ -194,16 +193,9 @@ contract Loan is FDT, Pausable {
     function unwind() external {
         _whenProtocolNotPaused();
         _isValidState(State.Live);
-        IGlobals globals = _globals(superFactory);
-
-        // Only callable if time has passed drawdown grace period, set in MapleGlobals.
-        require(block.timestamp > createdAt.add(globals.drawdownGracePeriod()));
-
-        // Drain funding from FundingLocker, transfers all loanAsset to this Loan.
-        IFundingLocker(fundingLocker).drain();
 
         // Update accounting for claim()
-        excessReturned += loanAsset.balanceOf(address(this));
+        excessReturned += LoanLib.unwind(loanAsset, superFactory, fundingLocker, createdAt);
 
         // Transition state to Expired.
         loanState = State.Expired;
@@ -276,43 +268,7 @@ contract Loan is FDT, Pausable {
     */
     function _triggerDefault() internal {
 
-        // Pull collateralAsset from collateralLocker.
-        uint256 liquidationAmt = _getCollateralLockerBalance();
-        require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");
-
-        if(address(collateralAsset) != address(loanAsset)) {
-            // Swap collateralAsset for loanAsset.
-            collateralAsset.approve(UNISWAP_ROUTER, liquidationAmt);
-
-            IGlobals globals = _globals(superFactory);
-
-            uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), address(loanAsset), liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
-
-            // Generate path.
-            address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), address(loanAsset));
-            bool middleAsset = uniswapAssetForPath != address(loanAsset) && uniswapAssetForPath != address(0);
-
-            address[] memory path = new address[](middleAsset ? 3 : 2);
-
-            path[0] = address(collateralAsset);
-            path[1] = middleAsset ? uniswapAssetForPath : address(loanAsset);
-
-            if(middleAsset) path[2] = address(loanAsset);
-
-            uint256[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
-                liquidationAmt,
-                minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10000)),
-                path,
-                address(this),
-                block.timestamp
-            );
-
-            amountLiquidated = returnAmounts[0];
-            amountRecovered  = returnAmounts[path.length - 1];
-        } else {
-            amountLiquidated = liquidationAmt;
-            amountRecovered  = liquidationAmt;
-        }
+        (amountLiquidated, amountRecovered) = LoanLib.triggerDefault(collateralAsset, _getCollateralLockerBalance(), address(loanAsset), superFactory, collateralLocker);
 
         // Reduce principal owed by amount received (as much as is required for principal owed == 0).
         if (amountRecovered > principalOwed) {
@@ -349,57 +305,8 @@ contract Loan is FDT, Pausable {
     function triggerDefault() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-
-        uint256 gracePeriodEnd         = nextPaymentDue.add(_globals(superFactory).gracePeriod());
-        bool pastGracePeriod           = block.timestamp > gracePeriodEnd;
-        bool withinExtendedGracePeriod = pastGracePeriod && block.timestamp <= gracePeriodEnd.add(_globals(superFactory).extendedGracePeriod());
-
-        // It checks following conditions - 
-        // 1. If `current time - nextPaymentDue` is within the (gracePeriod, gracePeriod + extendedGracePeriod] & `msg.sender` is
-        //    a pool delegate (Assumption: Only pool delegate will have non zero balance) then liquidate the loan.
-        // 2. If `current time - nextPaymentDue` is greater than gracePeriod + extendedGracePeriod then any msg.sender can liquidate the loan.
-        require((withinExtendedGracePeriod && balanceOf(msg.sender) > 0) || (pastGracePeriod && !withinExtendedGracePeriod), "Loan:FAILED_TO_LIQUIDATE");
+        require(LoanLib.hasDefaultTriggered(nextPaymentDue, superFactory, balanceOf(msg.sender)), "Loan:FAILED_TO_LIQUIDATE");
         _triggerDefault();
-    }
-
-    /**
-        @dev Make the next payment for this loan.
-    */
-    function makePayment() external {
-        _whenProtocolNotPaused();
-        _isValidState(State.Active);
-
-        (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
-
-        _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
-
-        // Update internal accounting variables.
-        principalOwed  = principalOwed.sub(principal);
-        principalPaid  = principalPaid.add(principal);
-        interestPaid   = interestPaid.add(interest);
-        nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
-        paymentsRemaining--;
-
-        emit PaymentMade(
-            total, 
-            principal, 
-            interest, 
-            paymentsRemaining, 
-            principalOwed, 
-            paymentsRemaining > 0 ? nextPaymentDue : 0, 
-            false
-        );
-
-        // Handle final payment.
-        if (paymentsRemaining == 0) {
-            loanState = State.Matured;
-            nextPaymentDue = 0;
-            require(ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance()), "Loan:COLLATERAL_PULL");
-            _emitBalanceUpdateEventForCollateralLocker();
-        }
-
-        updateFundsReceived();
-        _emitBalanceUpdateEventForLoan();
     }
 
     /**
@@ -410,28 +317,19 @@ contract Loan is FDT, Pausable {
                 [3] = Payment Due Date
     */
     function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
+        return LoanLib.getNextPayment(superFactory, repaymentCalc, nextPaymentDue, lateFeeCalc);
+    }
 
-        IGlobals globals = _globals(superFactory);
+    /**
+        @dev Make the next payment for this loan.
+    */
+    function makePayment() external {
+        _whenProtocolNotPaused();
+        _isValidState(State.Active);
 
-        (
-            uint256 total, 
-            uint256 principal, 
-            uint256 interest
-        ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
-
-        if (block.timestamp > nextPaymentDue && block.timestamp <= nextPaymentDue.add(globals.gracePeriod())) {
-            (
-                uint256 totalExtra, 
-                uint256 principalExtra, 
-                uint256 interestExtra
-            ) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
-
-            total     = total.add(totalExtra);
-            interest  = interest.add(interestExtra);
-            principal = principal.add(principalExtra);
-        }
-        
-        return (total, principal, interest, nextPaymentDue);
+        (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
+        paymentsRemaining = paymentsRemaining--;
+        _makePayment(total, principal, interest);
     }
 
     /**
@@ -440,35 +338,51 @@ contract Loan is FDT, Pausable {
     function makeFullPayment() public {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
+        paymentsRemaining = uint256(0);
+        _makePayment(total, principal, interest);
+    }
+
+    /**
+        @dev Internal function to update the payment details.
+     */
+    function _makePayment(uint256 total, uint256 principal, uint256 interest) internal {
 
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
 
-        loanState = State.Matured;
-
-        // Update internal accounting variables.
-        principalOwed     = 0;
-        paymentsRemaining = 0;
-        principalPaid     = principalPaid.add(principal);
-        interestPaid      = interestPaid.add(interest);
+        // Caching it to reduce the `SLOADS`.
+        uint256 _paymentRemaining = paymentsRemaining;
+         // Update internal accounting variables.
+        if (_paymentRemaining == uint256(0)) {
+            principalOwed  = 0;
+        } else {
+            principalOwed  = principalOwed.sub(principal);
+            nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
+        }
+        principalPaid  = principalPaid.add(principal);
+        interestPaid   = interestPaid.add(interest);
 
         updateFundsReceived();
 
         emit PaymentMade(
-            total,
-            principal,
-            interest,
-            paymentsRemaining,
-            principalOwed,
-            0,
+            total, 
+            principal, 
+            interest, 
+            _paymentRemaining, 
+            principalOwed, 
+            _paymentRemaining > 0 ? nextPaymentDue : 0, 
             false
         );
-        _emitBalanceUpdateEventForLoan();
 
-        // Transferring all collaterised funds back to the borrower.
-        require(ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance()), "Loan:COLLATERAL_PULL");
-        _emitBalanceUpdateEventForCollateralLocker();
+        // Handle final payment.
+        if (_paymentRemaining == 0) {
+            loanState = State.Matured;
+            nextPaymentDue = 0;
+            // Transferring all collaterised funds back to the borrower.
+            require(ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance()), "Loan:COLLATERAL_PULL");
+            _emitBalanceUpdateEventForCollateralLocker();
+        }
+        _emitBalanceUpdateEventForLoan();
     }
 
     /**
@@ -487,21 +401,7 @@ contract Loan is FDT, Pausable {
         @return The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
     */
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
-
-        IGlobals globals = _globals(superFactory);
-
-        uint256 wad = _toWad(amt);  // Convert to WAD precision.
-
-        // Fetch value of collateral and funding asset.
-        uint256 loanAssetPrice  = globals.getLatestPrice(address(loanAsset));
-        uint256 collateralPrice = globals.getLatestPrice(address(collateralAsset));
-
-        // Calculate collateral required.
-        uint256 collateralRequiredUSD = loanAssetPrice.mul(wad).mul(collateralRatio).div(10000);
-        uint256 collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
-        uint256 collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - collateralAsset.decimals()));
-
-        return collateralRequiredFIN;
+        return LoanLib.collateralRequiredForDrawdown(collateralAsset, loanAsset, collateralRatio, superFactory, amt);
     }
 
     /**
