@@ -16,8 +16,10 @@ import "./library/Util.sol";
 
 import "./token/FDT.sol";
 
+import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+
 /// @title Loan is the core loan vault contract.
-contract Loan is FDT {
+contract Loan is FDT, Pausable {
     
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
@@ -46,6 +48,8 @@ contract Loan is FDT {
     address public immutable lateFeeCalc;       // The late fee calculator for this loan.
     address public immutable premiumCalc;       // The premium calculator for this loan.
     address public immutable superFactory;      // The factory that deployed this Loan.
+
+    mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt.
 
     address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
@@ -172,8 +176,8 @@ contract Loan is FDT {
         @param  amt    Amount to fund the loan.
         @param  mintTo Address that debt tokens are minted to.
     */
-    // TODO: Add delegate function same as pool, to prevent this function
-    function fundLoan(address mintTo, uint256 amt) external {
+    function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
+        _whenProtocolNotPaused();
         _isValidState(State.Live);
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, fundingLocker, amt));
 
@@ -188,6 +192,7 @@ contract Loan is FDT {
         @dev If the borrower has not drawn down loan past grace period, return capital to lenders.
     */
     function unwind() external {
+        _whenProtocolNotPaused();
         _isValidState(State.Live);
         IGlobals globals = _globals(superFactory);
 
@@ -209,7 +214,7 @@ contract Loan is FDT {
         @param  amt Amount of loanAsset borrower draws down, remainder is returned to Loan.
     */
     function drawdown(uint256 amt) external {
-
+        _whenProtocolNotPaused();
         _isValidBorrower();
         _isValidState(State.Live);
         IGlobals globals = _globals(superFactory);
@@ -342,6 +347,7 @@ contract Loan is FDT {
     */
     // TODO: Talk with auditors about having a switch for this function
     function triggerDefault() external {
+        _whenProtocolNotPaused();
         _isValidState(State.Active);
 
         uint256 gracePeriodEnd         = nextPaymentDue.add(_globals(superFactory).gracePeriod());
@@ -360,7 +366,7 @@ contract Loan is FDT {
         @dev Make the next payment for this loan.
     */
     function makePayment() external {
-
+        _whenProtocolNotPaused();
         _isValidState(State.Active);
 
         (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
@@ -432,6 +438,7 @@ contract Loan is FDT {
         @dev Make the full payment for this loan, a.k.a. "calling" the loan.
     */
     function makeFullPayment() public {
+        _whenProtocolNotPaused();
         _isValidState(State.Active);
 
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
@@ -495,6 +502,50 @@ contract Loan is FDT {
         uint256 collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - collateralAsset.decimals()));
 
         return collateralRequiredFIN;
+    }
+
+    /**
+     * @dev Withdraws all available funds for a token holder
+     */
+    function withdrawFunds() public override {
+        _whenProtocolNotPaused();
+        super.withdrawFunds();
+    }
+
+    /**
+        @dev Triggers stopped state.
+             The contract must not be paused.
+    */
+    function pause() external { 
+        _isValidBorrowerOrAdmin();
+        super._pause();
+    }
+
+    /**
+        @dev Returns to normal state.
+             The contract must be paused.
+    */
+    function unpause() external {
+        _isValidBorrowerOrAdmin();
+        super._unpause();
+    }
+
+    /**
+      @dev Set admin
+      @param newAdmin new admin address.
+      @param allowed Status of an admin.
+     */
+    function setAdmin(address newAdmin, bool allowed) external {
+        _isValidBorrower();
+        admins[newAdmin] = allowed;
+    }
+
+    function _whenProtocolNotPaused() internal {
+        require(!_globals(superFactory).protocolPaused(), "Loan:PROTOCOL_PAUSED");
+    }
+
+    function _isValidBorrowerOrAdmin() internal {
+        require(msg.sender == borrower || admins[msg.sender], "Pool:UNAUTHORIZED");
     }
 
     function _toWad(uint256 amt) internal view returns(uint256) {

@@ -23,5 +23,4 @@ contract CollateralLockerFactory {
         isLocker[collateralLocker] = true;
         return collateralLocker;
     }
-    
 }

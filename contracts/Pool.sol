@@ -55,6 +55,7 @@ contract Pool is PoolFDT {
 
     mapping(address => uint256)                     public depositDate;  // Used for interest penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
+    mapping(address => bool)                        public admins;       // Admin addresses who have permission to do certain operations in case of disaster mgt.
 
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
@@ -149,6 +150,7 @@ contract Pool is PoolFDT {
         @dev Finalize the pool, enabling deposits. Checks poolDelegate amount deposited to StakeLocker.
     */
     function finalize() external {
+        _whenProtocolNotPaused();
         _isValidState(State.Initialized);
         _isValidDelegate();
         (,, bool stakePresent,,) = getInitialStakeRequirements();
@@ -199,11 +201,12 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Set `liquidityCap`, Only allowed by the pool delegate.
+        @dev Set `liquidityCap`, Only allowed by the pool delegate or the admin.
         @param newLiquidityCap New liquidity cap value. 
     */
     function setLiquidityCap(uint256 newLiquidityCap) external {
-        _isValidDelegate();
+        _whenProtocolNotPaused();
+        _isValidDelegateOrAdmin();
         liquidityCap = newLiquidityCap;
         emit LiquidityCapSet(newLiquidityCap);
     }
@@ -213,6 +216,7 @@ contract Pool is PoolFDT {
         @param amt The amount of LiquidityAsset to deposit, in wei.
     */
     function deposit(uint256 amt) external {
+        _whenProtocolNotPaused();
         _isValidState(State.Finalized);
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
@@ -228,6 +232,7 @@ contract Pool is PoolFDT {
         @param amt The amount of LiquidityAsset to withdraw.
     */
     function withdraw(uint256 amt) external {
+        _whenProtocolNotPaused();
         uint256 wad    = _toWad(amt);
         uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
@@ -262,6 +267,7 @@ contract Pool is PoolFDT {
         @param  amt       Amount to fund the loan.
     */
     function fundLoan(address loan, address dlFactory, uint256 amt) external {
+        _whenProtocolNotPaused();
         _isValidState(State.Finalized);
         _isValidDelegate();
         IGlobals globals = _globals(superFactory);
@@ -352,7 +358,7 @@ contract Pool is PoolFDT {
                 [6] = Default suffered
     */
     function claim(address loan, address dlFactory) external returns(uint256[7] memory) { 
-        
+        _whenProtocolNotPaused();
         uint256[7] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
         uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
@@ -398,6 +404,7 @@ contract Pool is PoolFDT {
         @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
     */
     function deactivate(uint confirmation) external {
+        _whenProtocolNotPaused();
         _isValidState(State.Finalized);
         _isValidDelegate();
         require(confirmation == 86, "Pool:INVALID_CONFIRMATION");  // TODO: Remove this
@@ -445,6 +452,7 @@ contract Pool is PoolFDT {
         @param _penaltyDelay Effective time needed in pool for user to be able to claim 100% of funds
     */
     function setPenaltyDelay(uint256 _penaltyDelay) external {
+        _whenProtocolNotPaused();
         _isValidDelegate();
         penaltyDelay = _penaltyDelay;
     }
@@ -454,6 +462,7 @@ contract Pool is PoolFDT {
         @param _newPrincipalPenalty New principal penalty percentage (in bips) that corresponds to withdrawal amount.
     */
     function setPrincipalPenalty(uint256 _newPrincipalPenalty) external {
+        _whenProtocolNotPaused();
         _isValidDelegate();
         principalPenalty = _newPrincipalPenalty;
     }
@@ -463,6 +472,7 @@ contract Pool is PoolFDT {
         @param _newLockupPeriod New lockup period used to restrict the withdrawals.
      */
     function setLockupPeriod(uint256 _newLockupPeriod) external {
+        _whenProtocolNotPaused();
         _isValidDelegate();
         lockupPeriod = _newLockupPeriod;
     }
@@ -473,6 +483,7 @@ contract Pool is PoolFDT {
         @param status The status of user on whitelist.
     */
     function setWhitelistStakeLocker(address user, bool status) external {
+        _whenProtocolNotPaused();
         _isValidDelegate();
         IStakeLocker(stakeLocker).setWhitelist(user, status);
     }
@@ -515,6 +526,7 @@ contract Pool is PoolFDT {
         @param dlFactory Address of the debt locker factory that is used to generate the corresponding debt locker.
      */
     function triggerDefault(address loan, address dlFactory) external {
+        _whenProtocolNotPaused();
         _isValidDelegate();
         IDebtLocker(debtLockers[loan][dlFactory]).triggerDefault();
     }
@@ -572,6 +584,7 @@ contract Pool is PoolFDT {
         @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
     */
     function withdrawFunds() public override {
+        _whenProtocolNotPaused();
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(
@@ -584,6 +597,22 @@ contract Pool is PoolFDT {
         _updateFundsTokenBalance();
     }
 
-    // TODO: Add _isValidAdmin function that checks if msg.sender is poolDelegate || msg.sender is elected admin 
-    // TODO: Make function to set selected admin
+    /**
+      @dev Set admin
+      @param newAdmin new admin address.
+      @param allowed Status of an admin.
+     */
+    function setAdmin(address newAdmin, bool allowed) external {
+        _whenProtocolNotPaused();
+        _isValidDelegate();
+        admins[newAdmin] = allowed;
+    }
+
+    function _isValidDelegateOrAdmin() internal {
+        require(msg.sender == poolDelegate || admins[msg.sender], "Pool:UNAUTHORIZED");
+    }
+
+    function _whenProtocolNotPaused() internal {
+        require(!_globals(superFactory).protocolPaused(), "Pool:PROTOCOL_PAUSED");
+    }
 }

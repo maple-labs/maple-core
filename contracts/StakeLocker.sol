@@ -8,9 +8,10 @@ import "./interfaces/IPoolFactory.sol";
 import "./token/FDT.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
-contract StakeLocker is FDT {
+contract StakeLocker is FDT, Pausable {
 
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
@@ -75,6 +76,10 @@ contract StakeLocker is FDT {
         return IGlobals(IPoolFactory(IPool(owner).superFactory()).globals());
     }
 
+    function _whenProtocolNotPaused() internal {
+        require(!_globals().protocolPaused(), "StakeLocker:PROTOCOL_PAUSED");
+    }
+
     /**
         @dev Update user status on the whitelist. Only Pool owner can call this.
         @param user   The address to set status for.
@@ -97,8 +102,8 @@ contract StakeLocker is FDT {
         @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
         @param amt Amount of stakeAsset (BPTs) to deposit.
     */
-    // TODO: Add admin function same as pool to pause this function
-    function stake(uint256 amt) external {
+    function stake(uint256 amt) whenNotPaused external {
+        _whenProtocolNotPaused();
         _isWhitelisted(msg.sender);
         require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
 
@@ -114,6 +119,7 @@ contract StakeLocker is FDT {
         @param amt Amount of stakeAsset (BPTs) to withdraw.
     */
     function unstake(uint256 amt) external canUnstake {
+        _whenProtocolNotPaused();
         require(amt <= getUnstakeableBalance(msg.sender), "Stakelocker:AMT_GT_UNSTAKEABLE_BALANCE");
 
         updateFundsReceived();
@@ -154,13 +160,45 @@ contract StakeLocker is FDT {
         balance = out > bal ? bal : out;
     }
 
+    /**
+     * @dev Withdraws all available funds for a token holder
+     */
+    function withdrawFunds() public override {
+        _whenProtocolNotPaused();
+        super.withdrawFunds();
+    }
+
     // TODO: Make this handle transfer of time lock more properly, parameterize _updateStakeDate
     //      to these ends to save code.
     //      can improve this so the updated age of tokens reflects their age in the senders wallets
     //      right now it simply is equivalent to the age update if the receiver was making a new stake.
     function _transfer(address from, address to, uint256 amt) internal override canUnstake {
+        _whenProtocolNotPaused();
         _isWhitelisted(to);
         super._transfer(from, to, amt);
         _updateStakeDate(to, amt);
     }
+
+    /**
+        @dev Triggers stopped state.
+             The contract must not be paused.
+    */
+    function pause() external {
+        _isValidAdminOrPoolDelegate();
+        super._pause();
+    }
+
+    /**
+        @dev Returns to normal state.
+             The contract must be paused.
+    */
+    function unpause() external {
+        _isValidAdminOrPoolDelegate();
+        super._unpause();
+    }
+
+    function _isValidAdminOrPoolDelegate() internal view {
+        require(msg.sender == IPool(owner).poolDelegate() || IPool(owner).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
+    }
+    
 }

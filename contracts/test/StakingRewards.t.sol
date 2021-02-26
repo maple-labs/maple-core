@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.6.11;
 
 import "./TestUtil.sol";
@@ -235,15 +236,16 @@ contract StakingRewardsTest is TestUtil {
         bob.approve(address(stakingRewards), 100 * WAD);
         assertTrue(!bob.try_stake(100 * WAD));
 
-        // Ali can withdraw
+        // Ali can't withdraw
         ali.approve(address(stakingRewards), 100 * WAD);
-        assertTrue(ali.try_withdraw(100 * WAD));
+        assertTrue(!ali.try_withdraw(100 * WAD));
 
         // Set to unpaused
         assertTrue(!fakeGov.try_setPaused(false));
         assertTrue(     gov.try_setPaused(false));
 
         assertTrue(!stakingRewards.paused());
+        assertTrue(ali.try_withdraw(100 * WAD));
 
         // Bob can stake
         bob.approve(address(stakingRewards), 100 * WAD);

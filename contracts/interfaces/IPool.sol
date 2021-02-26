@@ -4,6 +4,8 @@ pragma solidity >=0.6.11;
 interface IPool {
     function poolDelegate() external view returns (address);
 
+    function admins(address) external view returns (bool);
+
     function deposit(uint256) external;
 
     function poolState() external view returns(uint256);

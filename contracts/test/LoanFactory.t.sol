@@ -79,7 +79,7 @@ contract LoanFactoryTest is TestUtil {
 
         assertTrue(!fakeGov.try_setGlobals(address(lFactory), address(globals2)));  // Non-governor cannot set new globals
 
-        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY);                  // Create upgraded MapleGlobals
+        globals2 = gov.createGlobals(address(mpl), BPOOL_FACTORY);      // Create upgraded MapleGlobals
 
         assertTrue(gov.try_setGlobals(address(lFactory), address(globals2)));       // Governor can set new globals
         assertEq(address(lFactory.globals()), address(globals2));                   // Globals is updated
