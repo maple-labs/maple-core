@@ -160,6 +160,14 @@ contract StakeLocker is FDT, Pausable {
         balance = out > bal ? bal : out;
     }
 
+    /**
+     * @dev Withdraws all available funds for a token holder
+     */
+    function withdrawFunds() public override {
+        _whenProtocolNotPaused();
+        super.withdrawFunds();
+    }
+
     // TODO: Make this handle transfer of time lock more properly, parameterize _updateStakeDate
     //      to these ends to save code.
     //      can improve this so the updated age of tokens reflects their age in the senders wallets
@@ -190,7 +198,7 @@ contract StakeLocker is FDT, Pausable {
     }
 
     function _isValidAdminOrPoolDelegate() internal view {
-        require(msg.sender == IPool(owner).poolDelegate || IPool(owner).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
+        require(msg.sender == IPool(owner).poolDelegate() || IPool(owner).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
     }
     
 }

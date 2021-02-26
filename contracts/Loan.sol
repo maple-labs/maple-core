@@ -505,6 +505,14 @@ contract Loan is FDT, Pausable {
     }
 
     /**
+     * @dev Withdraws all available funds for a token holder
+     */
+    function withdrawFunds() public override {
+        _whenProtocolNotPaused();
+        super.withdrawFunds();
+    }
+
+    /**
         @dev Triggers stopped state.
              The contract must not be paused.
     */
