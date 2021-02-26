@@ -7,7 +7,6 @@ import "./TestUtil.sol";
 import "./user/Governor.sol";
 import "./user/Holder.sol";
 
-import "../MapleToken.sol";
 import "../MapleTreasury.sol";
 
 import "../interfaces/IGlobals.sol";
@@ -16,6 +15,8 @@ import "../library/Util.sol";
 
 import "../oracles/ChainlinkOracle.sol";
 import "../oracles/UsdOracle.sol";
+
+import "module/maple-token/contracts/MapleToken.sol";
 
 contract MapleTreasuryTest is TestUtil {
 

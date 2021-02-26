@@ -8,7 +8,7 @@ import "./user/Governor.sol";
 
 import "../CollateralLocker.sol";
 import "../CollateralLockerFactory.sol";
-import "../MapleToken.sol";
+import "module/maple-token/contracts/MapleToken.sol";
 
 contract CollateralLockerFactoryTest is TestUtil {
 

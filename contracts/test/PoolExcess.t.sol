@@ -22,7 +22,6 @@ import "../CollateralLockerFactory.sol";
 import "../DebtLockerFactory.sol";
 import "../DebtLocker.sol";
 import "../FundingLockerFactory.sol";
-import "../MapleToken.sol";
 import "../LateFeeCalc.sol";
 import "../Loan.sol";
 import "../LoanFactory.sol";
@@ -34,6 +33,8 @@ import "../StakeLockerFactory.sol";
 
 import "../oracles/ChainlinkOracle.sol";
 import "../oracles/UsdOracle.sol";
+
+import "module/maple-token/contracts/MapleToken.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 

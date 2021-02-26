@@ -6,7 +6,7 @@ import "./TestUtil.sol";
 
 import "./user/Governor.sol";
 
-import "../MapleToken.sol";
+import "module/maple-token/contracts/MapleToken.sol";
 import "../FundingLocker.sol";
 import "../FundingLockerFactory.sol";
 

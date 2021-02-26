@@ -14,7 +14,6 @@ import "../FundingLockerFactory.sol";
 import "../LateFeeCalc.sol";
 import "../LoanFactory.sol";
 import "../MapleGlobals.sol";
-import "../MapleToken.sol";
 import "../PremiumCalc.sol";
 
 import "../interfaces/IERC20Details.sol";
@@ -22,6 +21,8 @@ import "../interfaces/ILoan.sol";
 
 import "../oracles/ChainlinkOracle.sol";
 import "../oracles/UsdOracle.sol";
+
+import "module/maple-token/contracts/MapleToken.sol";
 
 contract Treasury { }
 
