@@ -205,6 +205,7 @@ contract Pool is PoolFDT {
         @param newLiquidityCap New liquidity cap value. 
     */
     function setLiquidityCap(uint256 newLiquidityCap) external {
+        _whenProtocolNotPaused();
         _isValidDelegateOrAdmin();
         liquidityCap = newLiquidityCap;
         emit LiquidityCapSet(newLiquidityCap);
@@ -602,12 +603,13 @@ contract Pool is PoolFDT {
       @param allowed Status of an admin.
      */
     function setAdmin(address newAdmin, bool allowed) external {
+        _whenProtocolNotPaused();
         _isValidDelegate();
         admins[newAdmin] = allowed;
     }
 
     function _isValidDelegateOrAdmin() internal {
-        require(msg.sender == poolDelegate || admins[msg.sender], "Pool:UNAUTHORISED");
+        require(msg.sender == poolDelegate || admins[msg.sender], "Pool:UNAUTHORIZED");
     }
 
     function _whenProtocolNotPaused() internal {

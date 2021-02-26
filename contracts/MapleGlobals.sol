@@ -105,7 +105,7 @@ contract MapleGlobals {
       @param pause Boolean flag to switch on/off the protocol.
      */
     function setProtocolPause(bool pause) external {
-        require(msg.sender == admin, "MapleGlobals:UNAUTHORISED");
+        require(msg.sender == admin, "MapleGlobals:UNAUTHORIZED");
         protocolPaused = pause;
         emit ProtocolPaused(pause);
     }

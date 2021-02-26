@@ -537,7 +537,7 @@ contract Loan is FDT, Pausable {
     }
 
     function _isValidBorrowerOrAdmin() internal {
-        require(msg.sender == borrower || admins[msg.sender], "Pool:UNAUTHORISED");
+        require(msg.sender == borrower || admins[msg.sender], "Pool:UNAUTHORIZED");
     }
 
     function _toWad(uint256 amt) internal view returns(uint256) {

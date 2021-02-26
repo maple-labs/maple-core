@@ -176,7 +176,7 @@ contract StakeLocker is FDT, Pausable {
              The contract must not be paused.
     */
     function pause() external {
-        _isValidAdmin();
+        _isValidAdminOrPoolDelegate();
         super._pause();
     }
 
@@ -185,12 +185,12 @@ contract StakeLocker is FDT, Pausable {
              The contract must be paused.
     */
     function unpause() external {
-        _isValidAdmin();
+        _isValidAdminOrPoolDelegate();
         super._unpause();
     }
 
-    function _isValidAdmin() internal view {
-        require(IPool(owner).admins(msg.sender), "PF:INVALID_GOVERNOR");
+    function _isValidAdminOrPoolDelegate() internal view {
+        require(msg.sender == IPool(owner).poolDelegate || IPool(owner).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
     }
     
 }
