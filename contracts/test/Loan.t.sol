@@ -218,7 +218,7 @@ contract LoanTest is TestUtil {
 
         assertTrue(!ali.try_makePayment(address(loan)));  // Can't makePayment when State != Active
 
-        // Approve collatearl and drawdown loan.
+        // Approve collateral and drawdown loan.
         ali.approve(WETH, address(loan), 0.4 ether);
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));  // Borrow draws down 1000 USDC
 

@@ -12,7 +12,7 @@ import "../interfaces/ILoanFactory.sol";
 import "../interfaces/IStakeLocker.sol";
 import "../interfaces/IDebtLockerFactory.sol";
 
-library CalcBPool {
+library PoolLib {
 
     using SafeMath for uint256;
 

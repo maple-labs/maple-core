@@ -326,9 +326,8 @@ contract Loan is FDT, Pausable {
     function makePayment() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-
         (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
-        paymentsRemaining = paymentsRemaining--;
+        paymentsRemaining--;
         _makePayment(total, principal, interest);
     }
 

@@ -14,7 +14,7 @@ import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IStakeLocker.sol";
 import "./interfaces/IStakeLockerFactory.sol";
 
-import "./library/CalcBPool.sol";
+import "./library/PoolLib.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -167,7 +167,7 @@ contract Pool is PoolFDT {
                 [4] = Current staked BPTs
     */
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
-        return CalcBPool.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
+        return PoolLib.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
     }
 
     /**
@@ -187,7 +187,7 @@ contract Pool is PoolFDT {
         address _stakeLocker,
         uint256 pairAmountRequired
     ) external view returns (uint256, uint256) {
-        return CalcBPool.getPoolSharesRequired(bpool, pair, staker, _stakeLocker, pairAmountRequired);
+        return PoolLib.getPoolSharesRequired(bpool, pair, staker, _stakeLocker, pairAmountRequired);
     }
 
     /**
@@ -221,7 +221,7 @@ contract Pool is PoolFDT {
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
         uint256 wad = _toWad(amt);
 
-        CalcBPool.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
+        PoolLib.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
         _mint(msg.sender, wad);
         _emitBalanceUpdatedEvent();
     }
@@ -269,7 +269,7 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
         _isValidDelegate();
-        CalcBPool.fundLoan(debtLockers, superFactory, liquidityLocker, loan, dlFactory, amt);
+        PoolLib.fundLoan(debtLockers, superFactory, liquidityLocker, loan, dlFactory, amt);
         principalOut = principalOut.add(amt);
         _emitBalanceUpdatedEvent();
     }
@@ -277,7 +277,7 @@ contract Pool is PoolFDT {
     // Helper function for claim() if a default has occurred.
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
-        (uint256 bptsBurned, uint256 bptsReturned, uint256 liquidityAssetRecoveredFromBurn) = CalcBPool.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
+        (uint256 bptsBurned, uint256 bptsReturned, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
 
         // Handle shortfall in StakeLocker, liquidity providers suffer a loss
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
@@ -315,7 +315,7 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         uint256[7] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
-        (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = CalcBPool.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
+        (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
 
         // Subtract outstanding principal by principal claimed plus excess returned
         principalOut = principalOut.sub(principalClaim);
@@ -372,7 +372,7 @@ contract Pool is PoolFDT {
         @return penalty Total penalty
     */
     function calcWithdrawPenalty(uint256 amt, address who) public view returns (uint256 penalty) {
-        return CalcBPool.calcWithdrawPenalty(lockupPeriod, penaltyDelay, amt, depositDate[who]);
+        return PoolLib.calcWithdrawPenalty(lockupPeriod, penaltyDelay, amt, depositDate[who]);
     }
 
     /**
