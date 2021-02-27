@@ -1,11 +1,11 @@
 
 
 ## Functions:
-[`bdiv(uint256 a, uint256 b)`](#CalcBPool-bdiv-uint256-uint256-)
-[`BPTVal(address _pool, address _pair, address _staker, address _stakeLocker)`](#CalcBPool-BPTVal-address-address-address-address-)
-[`getSwapOutValue(address pool, address pair, address staker, address stakeLocker)`](#CalcBPool-getSwapOutValue-address-address-address-address-)
-[`getSwapOutValueLocker(address pool, address pair, address stakeLocker)`](#CalcBPool-getSwapOutValueLocker-address-address-address-)
-[`getPoolSharesRequired(address bpool, address pair, address staker, address stakeLocker, uint256 pairAmountRequired)`](#CalcBPool-getPoolSharesRequired-address-address-address-address-uint256-)
+[`bdiv(uint256 a, uint256 b)`](#PoolLib-bdiv-uint256-uint256-)
+[`BPTVal(address _pool, address _pair, address _staker, address _stakeLocker)`](#PoolLib-BPTVal-address-address-address-address-)
+[`getSwapOutValue(address pool, address pair, address staker, address stakeLocker)`](#PoolLib-getSwapOutValue-address-address-address-address-)
+[`getSwapOutValueLocker(address pool, address pair, address stakeLocker)`](#PoolLib-getSwapOutValueLocker-address-address-address-)
+[`getPoolSharesRequired(address bpool, address pair, address staker, address stakeLocker, uint256 pairAmountRequired)`](#PoolLib-getPoolSharesRequired-address-address-address-address-uint256-)
 
 
 ## <u>Functions</u>

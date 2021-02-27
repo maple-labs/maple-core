@@ -1,17 +1,26 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.11;
+pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../interfaces/ILoan.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IGlobals.sol";
+import "../interfaces/ILiquidityLocker.sol";
 import "../interfaces/IERC20Details.sol";
+import "../interfaces/ILoanFactory.sol";
+import "../interfaces/IStakeLocker.sol";
+import "../interfaces/IDebtLockerFactory.sol";
 
-library CalcBPool {
+library PoolLib {
 
     using SafeMath for uint256;
 
-    uint256 constant WAD = 10 ** 18;
+    uint256 public constant MAX_UINT256 = uint256(-1);
+    uint256 public constant WAD         = 10 ** 18;
+    uint8   public constant DL_FACTORY  = 1;         // Factory type of `DebtLockerFactory`.
+
+    event LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
 
     /// @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision.
     function bdiv(uint256 a, uint256 b) public pure returns (uint256) {
@@ -195,6 +204,151 @@ library CalcBPool {
 
         amountRecoveredFromStaking = getSwapOutValue(balancerPool, swapOutAsset, poolDelegate, stakeLocker);
         enoughStakeForFinalization = poolAmountPresent >= poolAmountInRequired;
+    }
+
+    /**
+        @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
+        @param  loan      Address of the loan to fund.
+        @param  dlFactory The debt locker factory to utilize.
+        @param  amt       Amount to fund the loan.
+    */
+    function fundLoan(
+        mapping(address => mapping(address => address)) storage debtLockers,
+        address superFactory,
+        address liquidityLocker,
+        address loan,
+        address dlFactory,
+        uint256 amt
+    ) external {
+        IGlobals globals = _globals(superFactory);
+        // Auth checks.
+        require(globals.isValidLoanFactory(ILoan(loan).superFactory()),         "Pool:INVALID_LOAN_FACTORY");
+        require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),          "Pool:INVALID_LOAN");
+        require(globals.isValidSubFactory(superFactory, dlFactory, DL_FACTORY), "Pool:INVALID_DL_FACTORY");
+
+        address _debtLocker = debtLockers[loan][dlFactory];
+
+        // Instantiate locker if it doesn't exist with this factory type.
+        if (_debtLocker == address(0)) {
+            address debtLocker = IDebtLockerFactory(dlFactory).newLocker(loan);
+            debtLockers[loan][dlFactory] = debtLocker;
+            _debtLocker = debtLocker;
+        }
+    
+        // Fund loan.
+        ILiquidityLocker(liquidityLocker).fundLoan(loan, _debtLocker, amt);
+        
+        emit LoanFunded(loan, _debtLocker, amt);
+    }
+
+    /**
+        @dev Helper function for claim() if a default has occurred.
+     */
+    function handleDefault(
+        IERC20 liquidityAsset,
+        address stakeLocker,
+        address stakeAsset,
+        address loan,
+        uint256 defaultSuffered
+    ) 
+        external
+        returns (
+            uint256 bptsBurned,
+            uint256 bptsReturned,
+            uint256 liquidityAssetRecoveredFromBurn
+        ) 
+    {
+
+        // Check liquidityAsset swapOut value of StakeLocker coverage
+        uint256 availableSwapOut = getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
+        uint256 maxSwapOut       = liquidityAsset.balanceOf(stakeAsset).mul(IBPool(stakeAsset).MAX_OUT_RATIO()).div(WAD);  // Max amount that can be swapped 
+
+        availableSwapOut = availableSwapOut > maxSwapOut ? maxSwapOut : availableSwapOut;
+
+        // Pull BPTs from StakeLocker.
+        require(
+            IStakeLocker(stakeLocker).pull(address(this), IBPool(stakeAsset).balanceOf(stakeLocker)),
+            "Pool:STAKE_PULL"
+        );
+
+        // To maintain accounting, account for accidental transfers into Pool
+        uint256 preBurnBalance = liquidityAsset.balanceOf(address(this));
+
+        // Burn enough BPTs for liquidityAsset to cover defaultSuffered.
+        bptsBurned = IBPool(stakeAsset).exitswapExternAmountOut(
+                        address(liquidityAsset), 
+                        availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
+                        MAX_UINT256
+                    );
+
+        // Return remaining BPTs to stakeLocker.
+        bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
+        IBPool(stakeAsset).transfer(stakeLocker, bptsReturned);
+        liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this)).sub(preBurnBalance);
+    }
+
+    /**
+        @dev Helper function to calculate the fee and claim portion.
+    */
+    function calculateClaimAndPortions(
+        uint256[7] calldata claimInfo,
+        uint256 delegateFee,
+        uint256 stakingFee
+    ) 
+        external
+        returns (
+            uint256 poolDelegatePortion,
+            uint256 stakeLockerPortion,
+            uint256 principalClaim,
+            uint256 interestClaim
+        ) 
+    { 
+        poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
+        stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest
+
+        principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);                                    // Principal + excess + amountRecovered
+        interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10000)).sub(stakeLockerPortion);  // Leftover interest
+    }
+
+    /** 
+        @dev Calculate the amount of funds to deduct from total claimable amount based on how
+             the effective length of time a user has been in a pool. This is a linear decrease
+             until block.timestamp - depositDate[who] >= penaltyDelay, after which it returns 0.
+        @param  lockupPeriod Timeperiod till funds get locked.
+        @param  penaltyDelay After this timestamp there is no penalty.
+        @param  amt          Total claimable amount 
+        @param  depositDate  Weighted timestamp at which `who` deposit funds.
+        @return penalty Total penalty
+    */
+    function calcWithdrawPenalty(uint256 lockupPeriod, uint256 penaltyDelay, uint256 amt, uint256 depositDate) external view returns (uint256 penalty) {
+        if (lockupPeriod < penaltyDelay) {
+            uint256 dTime    = block.timestamp.sub(depositDate);
+            uint256 unlocked = dTime.mul(amt).div(penaltyDelay);
+
+            penalty = unlocked > amt ? 0 : amt - unlocked;
+        }
+    }
+
+    /**
+        @dev Update the effective deposit date based on how much new capital has been added.
+             If more capital is added, the depositDate moves closer to the current timestamp.
+        @param  depositDate Weighted timestamp at which `who` deposit funds.
+        @param  balance     Balance of PoolFDT tokens for given `who`.
+        @param  amt         Total deposit amount.
+        @param  who         Address of user depositing.
+    */
+    function updateDepositDate(mapping(address => uint256) storage depositDate, uint256 balance, uint256 amt, address who) internal {
+        if (depositDate[who] == 0) {
+            depositDate[who] = block.timestamp;
+        } else {
+            uint256 depDate  = depositDate[who];
+            uint256 coef     = (WAD.mul(amt)).div(balance + amt);
+            depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // depDate + (now - depDate) * coef
+        }
+    }
+
+    function _globals(address poolFactory) internal view returns (IGlobals) {
+        return IGlobals(ILoanFactory(poolFactory).globals());
     }
     
 }

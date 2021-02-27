@@ -5,7 +5,6 @@ import "./token/PoolFDT.sol";
 
 import "./interfaces/IBPool.sol";
 import "./interfaces/IDebtLocker.sol";
-import "./interfaces/IDebtLockerFactory.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/ILiquidityLocker.sol";
 import "./interfaces/ILiquidityLockerFactory.sol";
@@ -15,7 +14,7 @@ import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IStakeLocker.sol";
 import "./interfaces/IStakeLockerFactory.sol";
 
-import "./library/CalcBPool.sol";
+import "./library/PoolLib.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
@@ -168,7 +167,7 @@ contract Pool is PoolFDT {
                 [4] = Current staked BPTs
     */
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
-        return CalcBPool.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
+        return PoolLib.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
     }
 
     /**
@@ -188,7 +187,7 @@ contract Pool is PoolFDT {
         address _stakeLocker,
         uint256 pairAmountRequired
     ) external view returns (uint256, uint256) {
-        return CalcBPool.getPoolSharesRequired(bpool, pair, staker, _stakeLocker, pairAmountRequired);
+        return PoolLib.getPoolSharesRequired(bpool, pair, staker, _stakeLocker, pairAmountRequired);
     }
 
     /**
@@ -222,7 +221,7 @@ contract Pool is PoolFDT {
         require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
         uint256 wad = _toWad(amt);
 
-        updateDepositDate(wad, msg.sender);
+        PoolLib.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
         _mint(msg.sender, wad);
         _emitBalanceUpdatedEvent();
     }
@@ -270,60 +269,15 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
         _isValidDelegate();
-        IGlobals globals = _globals(superFactory);
-
-        // Auth checks.
-        require(globals.isValidLoanFactory(ILoan(loan).superFactory()),         "Pool:INVALID_LOAN_FACTORY");
-        require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),          "Pool:INVALID_LOAN");
-        require(globals.isValidSubFactory(superFactory, dlFactory, DL_FACTORY), "Pool:INVALID_DL_FACTORY");
-
-        address _debtLocker = debtLockers[loan][dlFactory];
-
-        // Instantiate locker if it doesn't exist with this factory type.
-        if (_debtLocker == address(0)) {
-            address debtLocker = IDebtLockerFactory(dlFactory).newLocker(loan);
-            debtLockers[loan][dlFactory] = debtLocker;
-            _debtLocker = debtLocker;
-        }
-        
+        PoolLib.fundLoan(debtLockers, superFactory, liquidityLocker, loan, dlFactory, amt);
         principalOut = principalOut.add(amt);
-        // Fund loan.
-        ILiquidityLocker(liquidityLocker).fundLoan(loan, _debtLocker, amt);
-        
-        emit LoanFunded(loan, _debtLocker, amt);
         _emitBalanceUpdatedEvent();
     }
 
     // Helper function for claim() if a default has occurred.
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
-        // Check liquidityAsset swapOut value of StakeLocker coverage
-        uint256 availableSwapOut = CalcBPool.getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
-        uint256 maxSwapOut       = liquidityAsset.balanceOf(stakeAsset).mul(IBPool(stakeAsset).MAX_OUT_RATIO()).div(WAD);  // Max amount that can be swapped 
-
-        availableSwapOut = availableSwapOut > maxSwapOut ? maxSwapOut : availableSwapOut;
-
-        // Pull BPTs from StakeLocker.
-        require(
-            IStakeLocker(stakeLocker).pull(address(this), IBPool(stakeAsset).balanceOf(stakeLocker)),
-            "Pool:STAKE_PULL"
-        );
-
-        // To maintain accounting, account for accidental transfers into Pool
-        uint256 preBurnBalance = liquidityAsset.balanceOf(address(this));
-
-        // Burn enough BPTs for liquidityAsset to cover defaultSuffered.
-        uint256 bptsBurned = IBPool(stakeAsset).exitswapExternAmountOut(
-                                address(liquidityAsset), 
-                                availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
-                                uint256(-1)
-                            );
-
-        // Return remaining BPTs to stakeLocker.
-        uint256 bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
-        IBPool(stakeAsset).transfer(stakeLocker, bptsReturned);
-
-        uint256 liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this)).sub(preBurnBalance);
+        (uint256 bptsBurned, uint256 bptsReturned, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
 
         // Handle shortfall in StakeLocker, liquidity providers suffer a loss
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
@@ -361,11 +315,7 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         uint256[7] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
-        uint256 poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
-        uint256 stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest
-
-        uint256 principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);                                    // Principal + excess + amountRecovered
-        uint256 interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10000)).sub(stakeLockerPortion);  // Leftover interest
+        (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
 
         // Subtract outstanding principal by principal claimed plus excess returned
         principalOut = principalOut.sub(principalClaim);
@@ -422,28 +372,7 @@ contract Pool is PoolFDT {
         @return penalty Total penalty
     */
     function calcWithdrawPenalty(uint256 amt, address who) public view returns (uint256 penalty) {
-        if (lockupPeriod < penaltyDelay) {
-            uint256 dTime    = block.timestamp.sub(depositDate[who]);
-            uint256 unlocked = dTime.mul(amt).div(penaltyDelay);
-
-            penalty = unlocked > amt ? 0 : amt - unlocked;
-        }
-    }
-
-    /**
-        @dev Update the effective deposit date based on how much new capital has been added.
-             If more capital is added, the depositDate moves closer to the current timestamp.
-        @param  amt Total deposit amount
-        @param  who Address of user depositing
-    */
-    function updateDepositDate(uint256 amt, address who) internal {
-        if (depositDate[who] == 0) {
-            depositDate[who] = block.timestamp;
-        } else {
-            uint256 depDate  = depositDate[who];
-            uint256 coef     = (WAD.mul(amt)).div(balanceOf(who) + amt);
-            depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // depDate + (now - depDate) * coef
-        }
+        return PoolLib.calcWithdrawPenalty(lockupPeriod, penaltyDelay, amt, depositDate[who]);
     }
 
     /**
@@ -532,55 +461,6 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Convert liquidityAsset to WAD precision (10 ** 18)
-        @param amt Effective time needed in pool for user to be able to claim 100% of funds
-    */
-    function _toWad(uint256 amt) internal view returns(uint256) {
-        return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
-    }
-
-    /**
-        @dev Convert liquidityAsset to WAD precision (10 ** 18)
-        @param amt Effective time needed in pool for user to be able to claim 100% of funds
-    */
-    function _fromWad(uint256 amt) internal view returns(uint256) {
-        return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
-    }
-
-    /**
-        @dev Fetch the balance of this Pool's liquidity locker.
-        @return Balance of liquidity locker.
-    */
-    function _balanceOfLiquidityLocker() internal view returns(uint256) {
-        return liquidityAsset.balanceOf(liquidityLocker);
-    }
-
-    /**
-        @dev Transfers liquidity asset from address(this) to given `to` address.
-        @param to Whom liquidity asset needs to transferred.
-        @param value Amount of liquidity asset that gets transferred.
-    */
-    function _transferLiquidityAsset(address to, uint256 value) internal {
-        require(liquidityAsset.transfer(to, value), "Pool:CLAIM_TRANSFER");
-    } 
-
-    function _isValidState(State _state) internal view {
-        require(poolState == _state, "Pool:STATE_CHECK");
-    }
-
-    function _isValidDelegate() internal view {
-        require(msg.sender == poolDelegate, "Pool:INVALID_DELEGATE");
-    }
-
-    function _globals(address poolFactory) internal view returns (IGlobals) {
-        return IGlobals(ILoanFactory(poolFactory).globals());
-    }
-
-    function _emitBalanceUpdatedEvent() internal {
-        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
-    }
-
-    /**
         @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
     */
     function withdrawFunds() public override {
@@ -606,6 +486,55 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         _isValidDelegate();
         admins[newAdmin] = allowed;
+    }
+
+    /**
+        @dev Convert liquidityAsset to WAD precision (10 ** 18)
+        @param amt Effective time needed in pool for user to be able to claim 100% of funds
+    */
+    function _toWad(uint256 amt) internal view returns(uint256) {
+        return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
+    }
+
+    /**
+        @dev Convert liquidityAsset to WAD precision (10 ** 18)
+        @param amt Effective time needed in pool for user to be able to claim 100% of funds
+    */
+    function _fromWad(uint256 amt) internal view returns(uint256) {
+        return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
+    }
+
+    /**
+        @dev Fetch the balance of this Pool's liquidity locker.
+        @return Balance of liquidity locker.
+    */
+    function _balanceOfLiquidityLocker() internal view returns(uint256) {
+        return liquidityAsset.balanceOf(liquidityLocker);
+    } 
+
+    function _isValidState(State _state) internal view {
+        require(poolState == _state, "Pool:STATE_CHECK");
+    }
+
+    function _isValidDelegate() internal view {
+        require(msg.sender == poolDelegate, "Pool:INVALID_DELEGATE");
+    }
+
+    function _globals(address poolFactory) internal view returns (IGlobals) {
+        return IGlobals(ILoanFactory(poolFactory).globals());
+    }
+
+    function _emitBalanceUpdatedEvent() internal {
+        emit BalanceUpdated(liquidityLocker, address(liquidityAsset), _balanceOfLiquidityLocker());
+    }
+
+    /**
+        @dev Transfers liquidity asset from address(this) to given `to` address.
+        @param to Whom liquidity asset needs to transferred.
+        @param value Amount of liquidity asset that gets transferred.
+    */
+    function _transferLiquidityAsset(address to, uint256 value) internal {
+        require(liquidityAsset.transfer(to, value), "Pool:CLAIM_TRANSFER");
     }
 
     function _isValidDelegateOrAdmin() internal {
