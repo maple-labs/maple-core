@@ -357,7 +357,7 @@ contract PoolLiquidationTest is TestUtil {
         TestObj memory bptShortfall;
         TestObj memory bob_usdcBal;
         TestObj memory bob_poolBal;
-        TestObj memory bob_recognizeableLosses;
+        TestObj memory bob_recognizableLosses;
 
         address liquidityLocker = pool_a.liquidityLocker();
         address stakeLocker     = pool_a.stakeLocker();
@@ -405,20 +405,20 @@ contract PoolLiquidationTest is TestUtil {
         /*** Liquidity Provider Minimum Withdrawal Accounting ***/
         /********************************************************/
 
-        bob_recognizeableLosses.pre = pool_a.recognizeableLossesOf(address(bob));  // Unrealized losses of bob from shortfall
+        bob_recognizableLosses.pre = pool_a.recognizableLossesOf(address(bob));  // Unrealized losses of bob from shortfall
 
-        assertTrue(!bob.try_withdraw(address(pool_a), bob_recognizeableLosses.pre - 1));  // Cannot withdraw less than recognizeableLosses
+        assertTrue(!bob.try_withdraw(address(pool_a), bob_recognizableLosses.pre - 1));  // Cannot withdraw less than recognizableLosses
 
         bob_usdcBal.pre = IERC20(USDC).balanceOf(address(bob));  // Bob USDC bal
         bob_poolBal.pre = pool_a.balanceOf(address(bob));        // Bob FDT  bal
 
-        // Withdraw lowest possible amount (amt == recognizeableLosses)
+        // Withdraw lowest possible amount (amt == recognizableLosses)
         // NOTE: LPs can withdraw more than this amount, it will just go towards their USDC
-        assertTrue(bob.try_withdraw(address(pool_a), bob_recognizeableLosses.pre));
+        assertTrue(bob.try_withdraw(address(pool_a), bob_recognizableLosses.pre));
 
         assertPoolAccounting(pool_a);
 
-        bob_recognizeableLosses.post = pool_a.recognizeableLossesOf(address(bob));  // Unrealized losses of bob after withdrawal
+        bob_recognizableLosses.post = pool_a.recognizableLossesOf(address(bob));  // Unrealized losses of bob after withdrawal
 
         bob_usdcBal.post = IERC20(USDC).balanceOf(address(bob));  // Bob USDC bal
         bob_poolBal.post = pool_a.balanceOf(address(bob));        // Bob FDT  bal
@@ -432,15 +432,15 @@ contract PoolLiquidationTest is TestUtil {
         bptShortfall.pre  = bptShortfall.post;      // Update pre/post variables for withdrawal checks
         bptShortfall.post = pool_a.bptShortfall();  // Update pre/post variables for withdrawal checks
 
-        assertEq(bob_recognizeableLosses.post, 0);  // After withdrawal, bob has zero unrecognized losses
+        assertEq(bob_recognizableLosses.post, 0);  // After withdrawal, bob has zero unrecognized losses
 
         assertEq(bob_usdcBal.pre,  0);  // Deposited entire balance into pool
         assertEq(bob_usdcBal.post, 0);  // Withdrew enough just to realize losses, no USDC was transferred out of LL
 
         assertEq(bob_usdcBal.post - bob_usdcBal.pre,   0);                                        // Bob's USDC value withdrawn did not increase
-        assertEq(bob_poolBal.pre  - bob_poolBal.post,  bob_recognizeableLosses.pre * WAD / 1E6);  // Bob's FDTs have been burned (doing assertion in WAD precision)
-        assertEq(fdtSupply.pre    - fdtSupply.post,    bob_recognizeableLosses.pre * WAD / 1E6);  // Bob's FDTs have been burned (doing assertion in WAD precision)
-        assertEq(bptShortfall.pre - bptShortfall.post, bob_recognizeableLosses.pre);              // BPT shortfall accounting has been decremented by Bob's recognized losses 
+        assertEq(bob_poolBal.pre  - bob_poolBal.post,  bob_recognizableLosses.pre * WAD / 1E6);  // Bob's FDTs have been burned (doing assertion in WAD precision)
+        assertEq(fdtSupply.pre    - fdtSupply.post,    bob_recognizableLosses.pre * WAD / 1E6);  // Bob's FDTs have been burned (doing assertion in WAD precision)
+        assertEq(bptShortfall.pre - bptShortfall.post, bob_recognizableLosses.pre);              // BPT shortfall accounting has been decremented by Bob's recognized losses 
 
         assertEq(liquidityLockerBal.pre - liquidityLockerBal.post, 0);  // No USDC was transferred out of LL
 

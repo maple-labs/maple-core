@@ -120,13 +120,13 @@ abstract contract PoolFDT is IFDT, ERC20 {
      */
     
     function _prepareLossesWithdraw() internal returns (uint256) {
-        uint256 _recognizeableDividend = recognizeableLossesOf(msg.sender);
+        uint256 _recognizableDividend = recognizableLossesOf(msg.sender);
 
-        recognizedLosses[msg.sender] = recognizedLosses[msg.sender].add(_recognizeableDividend);
+        recognizedLosses[msg.sender] = recognizedLosses[msg.sender].add(_recognizableDividend);
 
-        emit LossesRecognized(msg.sender, _recognizeableDividend, recognizedLosses[msg.sender]);
+        emit LossesRecognized(msg.sender, _recognizableDividend, recognizedLosses[msg.sender]);
 
-        return _recognizeableDividend;
+        return _recognizableDividend;
     }
 
     /**
@@ -143,7 +143,7 @@ abstract contract PoolFDT is IFDT, ERC20 {
      * @param _owner The address of a token holder.
      * @return The amount losses that `_owner` can withdraw.
      */
-    function recognizeableLossesOf(address _owner) public view returns (uint256) {
+    function recognizableLossesOf(address _owner) public view returns (uint256) {
         return accumulativeLossesOf(_owner).sub(recognizedLosses[_owner]);
     }
 

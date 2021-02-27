@@ -238,7 +238,7 @@ contract Pool is PoolFDT {
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
 
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // Calculated interest.
-        uint256 recognizedLosses  = recognizeableLossesOf(msg.sender);                                   // Calculated losses
+        uint256 recognizedLosses  = recognizableLossesOf(msg.sender);                                   // Calculated losses
         uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty.
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Get total penalty, however it may be calculated.
 
