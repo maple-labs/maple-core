@@ -5,13 +5,13 @@ import "./interfaces/IGlobals.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IPoolFactory.sol";
 
-import "./token/FDT.sol";
+import "./token/StakeLockerFDT.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
-contract StakeLocker is FDT, Pausable {
+contract StakeLocker is StakeLockerFDT, Pausable {
 
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
@@ -123,6 +123,7 @@ contract StakeLocker is FDT, Pausable {
         require(amt <= getUnstakeableBalance(msg.sender), "Stakelocker:AMT_GT_UNSTAKEABLE_BALANCE");
 
         updateFundsReceived();
+        updateFundsLosses();
         withdrawFunds();
         _burn(msg.sender, amt);
 
