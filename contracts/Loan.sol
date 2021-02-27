@@ -305,7 +305,7 @@ contract Loan is FDT, Pausable {
     function triggerDefault() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-        require(LoanLib.hasDefaultTriggered(nextPaymentDue, superFactory, balanceOf(msg.sender)), "Loan:FAILED_TO_LIQUIDATE");
+        require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender)), "Loan:FAILED_TO_LIQUIDATE");
         _triggerDefault();
     }
 
@@ -350,10 +350,12 @@ contract Loan is FDT, Pausable {
         _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
 
         // Caching it to reduce the `SLOADS`.
-        uint256 _paymentRemaining = paymentsRemaining;
+        uint256 _paymentsRemaining = paymentsRemaining;
          // Update internal accounting variables.
-        if (_paymentRemaining == uint256(0)) {
-            principalOwed  = 0;
+        if (_paymentsRemaining == uint256(0)) {
+            principalOwed  = uint256(0);
+            loanState      = State.Matured;
+            nextPaymentDue = uint256(0);
         } else {
             principalOwed  = principalOwed.sub(principal);
             nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
@@ -367,16 +369,14 @@ contract Loan is FDT, Pausable {
             total, 
             principal, 
             interest, 
-            _paymentRemaining, 
+            _paymentsRemaining, 
             principalOwed, 
-            _paymentRemaining > 0 ? nextPaymentDue : 0, 
+            _paymentsRemaining > 0 ? nextPaymentDue : 0, 
             false
         );
 
         // Handle final payment.
-        if (_paymentRemaining == 0) {
-            loanState = State.Matured;
-            nextPaymentDue = 0;
+        if (_paymentsRemaining == 0) {
             // Transferring all collaterised funds back to the borrower.
             require(ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance()), "Loan:COLLATERAL_PULL");
             _emitBalanceUpdateEventForCollateralLocker();

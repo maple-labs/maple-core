@@ -52,8 +52,7 @@ library LoanLib {
         address collateralLocker
     ) 
         external
-        returns
-        (
+        returns (
             uint256 amountLiquidated,
             uint256 amountRecovered
         ) 
@@ -100,7 +99,7 @@ library LoanLib {
     /**
         @dev Trigger a default. Does nothing if block.timestamp <= nextPaymentDue + gracePeriod.
     */
-    function hasDefaultTriggered(uint256 nextPaymentDue, address superFactory, uint256 balance) external returns(bool) {
+    function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance) external returns(bool) {
 
         uint256 gracePeriodEnd         = nextPaymentDue.add(_globals(superFactory).gracePeriod());
         bool pastGracePeriod           = block.timestamp > gracePeriodEnd;
@@ -128,8 +127,7 @@ library LoanLib {
     ) 
         public
         view
-        returns
-        (
+        returns (
             uint256 total,
             uint256 principal,
             uint256 interest,
@@ -164,8 +162,17 @@ library LoanLib {
         @dev Helper for calculating collateral required to drawdown amt.
         @return collateralRequiredFIN The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
     */
-    function collateralRequiredForDrawdown(IERC20Details collateralAsset, IERC20Details loanAsset, uint256 collateralRatio, address superFactory, uint256 amt) external view returns(uint256 collateralRequiredFIN) {
-
+    function collateralRequiredForDrawdown(
+        IERC20Details collateralAsset,
+        IERC20Details loanAsset,
+        uint256 collateralRatio,
+        address superFactory,
+        uint256 amt
+    ) 
+        external
+        view
+        returns (uint256 collateralRequiredFIN) 
+    {
         IGlobals globals = _globals(superFactory);
 
         uint256 wad = _toWad(amt, loanAsset);  // Convert to WAD precision.

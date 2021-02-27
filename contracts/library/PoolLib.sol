@@ -252,8 +252,7 @@ library PoolLib {
         uint256 defaultSuffered
     ) 
         external
-        returns
-        (
+        returns (
             uint256 bptsBurned,
             uint256 bptsReturned,
             uint256 liquidityAssetRecoveredFromBurn
@@ -297,8 +296,7 @@ library PoolLib {
         uint256 stakingFee
     ) 
         external
-        returns
-        (
+        returns (
             uint256 poolDelegatePortion,
             uint256 stakeLockerPortion,
             uint256 principalClaim,

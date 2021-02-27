@@ -1074,6 +1074,7 @@ contract PoolTest is TestUtil {
             bob.approve(USDC, address(this),  uint(-1));
             bob.deposit(address(pool1), 100_000_000 * USD);
             sid.fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD);
+            assertTrue(pool1.debtLockers(address(loan), address(dlFactory1)) != address(0));
             assertEq(pool1.principalOut(), 100_000_000 * USD);
         }
 
