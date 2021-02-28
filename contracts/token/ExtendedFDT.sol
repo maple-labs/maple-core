@@ -45,7 +45,7 @@ abstract contract ExtendedFDT is BasicFDT {
      *   With a well-chosen `pointsMultiplier`, the amount losses that are not getting distributed
      *     in a distribution can be less than 1 (base unit).
      *   We can actually keep track of the undistributed losses in a distribution
-     *     and try to distribute it in the next distribution ....... todo implement
+     *     and try to distribute it in the next distribution
      */
     function _distributeLosses(uint256 value) internal {
         require(totalSupply() > 0, "FDT:SUPPLY_EQ_ZERO");
