@@ -448,6 +448,16 @@ contract Pool is PoolFDT {
         }
     }
 
+    /// @dev Calculates the value of BPT in units of _liquidityAssetContract in 'wei' (decimals) for this token.
+    function BPTVal(
+        address _pool,
+        address _pair,
+        address _staker,
+        address _stakeLocker
+    ) public view returns (uint256) {
+        return PoolLib.BPTVal(_pool, _pair, _staker, _stakeLocker);
+    }
+
     /**
         @dev Liquidate the loan. Pool delegate could liquidate a loan only when
              loan completes its grace period.

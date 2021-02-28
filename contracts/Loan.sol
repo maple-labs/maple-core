@@ -235,10 +235,9 @@ contract Loan is FDT, Pausable {
         feePaid             = amt.mul(investorFee).div(10000);
         uint256 treasuryAmt = amt.mul(treasuryFee).div(10000);  // Calculate amt to send to MapleTreasury
 
-        // TODO: Change name from transferFee 
-        _transferFee(_fundingLocker, treasury,      treasuryAmt);                        // Send treasuryFee directly to MapleTreasury.
-        _transferFee(_fundingLocker, address(this), feePaid);                            // Transfer `feePaid` to the this i.e loan contract.
-        _transferFee(_fundingLocker, borrower,      amt.sub(treasuryAmt).sub(feePaid));  // Transfer drawdown amount to Borrower.
+        _transferFunds(_fundingLocker, treasury,      treasuryAmt);                        // Send treasuryFee directly to MapleTreasury.
+        _transferFunds(_fundingLocker, address(this), feePaid);                            // Transfer `feePaid` to the this i.e loan contract.
+        _transferFunds(_fundingLocker, borrower,      amt.sub(treasuryAmt).sub(feePaid));  // Transfer drawdown amount to Borrower.
 
         // Update excessReturned locally.
         excessReturned = _getFundingLockerBalance();
@@ -475,7 +474,7 @@ contract Loan is FDT, Pausable {
         require(msg.sender == borrower, "Loan:INVALID_BORROWER");	
     }
 
-    function _transferFee(IFundingLocker from, address to, uint256 value) internal {
+    function _transferFunds(IFundingLocker from, address to, uint256 value) internal {
         require(from.pull(to, value), "Loan:FAILED_TO_TRANSFER_FEE");
     }
 

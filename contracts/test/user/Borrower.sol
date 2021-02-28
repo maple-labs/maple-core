@@ -94,4 +94,9 @@ contract Borrower {
         (ok,) = address(loan).call(abi.encodeWithSignature(sig));
     }
 
+    function try_pull(address locker, address dst, uint256 amt) external returns (bool ok) {
+        string memory sig = "pull(address,uint256)";
+        (ok,) = address(locker).call(abi.encodeWithSignature(sig, dst, amt));
+    }
+
 }

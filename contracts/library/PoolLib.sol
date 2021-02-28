@@ -34,7 +34,6 @@ library PoolLib {
     }
 
     /// @dev Calculates the value of BPT in units of _liquidityAssetContract in 'wei' (decimals) for this token.
-    // TODO: Create wrapper function in Pool
     function BPTVal(
         address _pool,
         address _pair,
