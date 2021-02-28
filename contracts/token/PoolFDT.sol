@@ -18,7 +18,7 @@ abstract contract PoolFDT is ExtendedFDT {
     constructor(string memory name, string memory symbol) ExtendedFDT(name, symbol) public { }
 
     /**
-        @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
+        @dev Realizes losses incurred to LPs
     */
     function recognizeLosses() internal override returns (uint256 losses) {
         losses = _prepareLossesWithdraw();

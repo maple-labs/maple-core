@@ -273,16 +273,18 @@ library PoolLib {
 
         // To maintain accounting, account for accidental transfers into Pool
         uint256 preBurnBalance = liquidityAsset.balanceOf(address(this));
+        uint256 preBptBalance  = IBPool(stakeAsset).balanceOf(address(this));
 
         // Burn enough BPTs for liquidityAsset to cover defaultSuffered.
-        bptsBurned = IBPool(stakeAsset).exitswapExternAmountOut(
-                        address(liquidityAsset), 
-                        availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
-                        MAX_UINT256
-                    );
+        IBPool(stakeAsset).exitswapExternAmountOut(
+            address(liquidityAsset), 
+            availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
+            MAX_UINT256
+        );
 
         // Return remaining BPTs to stakeLocker.
         bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
+        bptsBurned   = preBptBalance.sub(bptsReturned);
         IBPool(stakeAsset).transfer(stakeLocker, bptsReturned);
         liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this)).sub(preBurnBalance);
     }

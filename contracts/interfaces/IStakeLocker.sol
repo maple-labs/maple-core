@@ -14,4 +14,7 @@ interface IStakeLocker is IERC20 {
     function pull(address, uint256) external returns (bool);
     function setWhitelist(address, bool) external;
     function getUnstakeableBalance(address staker) external view returns (uint256 balance);
+    function updateLosses(uint256) external;
+    function bptLosses() external view returns(uint256);
+    function recognizableLossesOf(address) external view returns(uint256);
 }

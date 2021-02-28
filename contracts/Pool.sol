@@ -279,6 +279,7 @@ contract Pool is PoolFDT {
 
         (uint256 bptsBurned, uint256 bptsReturned, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
 
+        IStakeLocker(stakeLocker).updateLosses(bptsBurned);
         // Handle shortfall in StakeLocker, liquidity providers suffer a loss
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
             bptShortfall = bptShortfall.add(defaultSuffered - liquidityAssetRecoveredFromBurn);

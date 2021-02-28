@@ -261,43 +261,65 @@ contract PoolLiquidationTest is TestUtil {
 
         setUpLoanAndDefault();
 
+        TestObj memory liquidityLocker_a_bal;
+        TestObj memory liquidityLocker_b_bal;
+        TestObj memory stakeLocker_a_bal;
+        TestObj memory stakeLocker_b_bal;
+        TestObj memory principalOut_a;
+        TestObj memory principalOut_b;
+
         address liquidityLocker_a = pool_a.liquidityLocker();
         address liquidityLocker_b = pool_b.liquidityLocker();
 
         // Pre-state liquidityLocker checks.
-        uint256 liquidityLockerBal_pre_a = IERC20(USDC).balanceOf(liquidityLocker_a);
-        uint256 liquidityLockerBal_pre_b = IERC20(USDC).balanceOf(liquidityLocker_b);
+        liquidityLocker_a_bal.pre = IERC20(USDC).balanceOf(liquidityLocker_a);
+        liquidityLocker_b_bal.pre = IERC20(USDC).balanceOf(liquidityLocker_b);
 
-        uint256 principalOut_pre_a = pool_a.principalOut();
-        uint256 principalOut_pre_b = pool_b.principalOut();
+        stakeLocker_a_bal.pre = bPool.balanceOf(address(stakeLocker_a));
+        stakeLocker_b_bal.pre = bPool.balanceOf(address(stakeLocker_b));
+
+        principalOut_a.pre = pool_a.principalOut();
+        principalOut_b.pre = pool_b.principalOut();
+
+        assertEq(principalOut_a.pre, 1_000_000 * USD);
+        assertEq(principalOut_b.pre, 3_000_000 * USD);
+
+        assertEq(stakeLocker_a_bal.pre, 10 * WAD);
+        assertEq(stakeLocker_b_bal.pre, 25 * WAD);
+
+        assertEq(liquidityLocker_a_bal.pre, 9_000_000 * USD);
+        assertEq(liquidityLocker_b_bal.pre, 7_000_000 * USD);
 
         sid.claim(address(pool_a), address(loan),  address(dlFactory));
         joe.claim(address(pool_b), address(loan),  address(dlFactory));
 
         // Post-state liquidityLocker checks.
-        uint256 liquidityLockerBal_post_a = IERC20(USDC).balanceOf(liquidityLocker_a);
-        uint256 liquidityLockerBal_post_b = IERC20(USDC).balanceOf(liquidityLocker_b);
+        liquidityLocker_a_bal.post = IERC20(USDC).balanceOf(liquidityLocker_a);
+        liquidityLocker_b_bal.post = IERC20(USDC).balanceOf(liquidityLocker_b);
 
-        uint256 principalOut_post_a = pool_a.principalOut();
-        uint256 principalOut_post_b = pool_b.principalOut();
+        stakeLocker_a_bal.post = bPool.balanceOf(address(stakeLocker_a));
+        stakeLocker_b_bal.post = bPool.balanceOf(address(stakeLocker_b));
 
-        assertEq(principalOut_pre_a, 1_000_000 * USD);
-        assertEq(principalOut_pre_b, 3_000_000 * USD);
-
-        assertEq(liquidityLockerBal_pre_a, 9_000_000 * USD);
-        assertEq(liquidityLockerBal_pre_b, 7_000_000 * USD);
+        principalOut_a.post = pool_a.principalOut();
+        principalOut_b.post = pool_b.principalOut();
         
-        withinDiff(liquidityLockerBal_post_a - liquidityLockerBal_pre_a, 1_000_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
-        withinDiff(liquidityLockerBal_post_b - liquidityLockerBal_pre_b, 3_000_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
+        withinDiff(liquidityLocker_a_bal.post - liquidityLocker_a_bal.pre, 1_000_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
+        withinDiff(liquidityLocker_b_bal.post - liquidityLocker_b_bal.pre, 3_000_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
 
-        withinDiff(principalOut_post_a, 0, 1);  // Principal out is set to zero (with dust)
-        withinDiff(principalOut_post_b, 0, 1);  // Principal out is set to zero (with dust)
+        withinDiff(principalOut_a.post, 0, 1);  // Principal out is set to zero (with dust)
+        withinDiff(principalOut_b.post, 0, 1);  // Principal out is set to zero (with dust)
 
-        assertEq(liquidityLockerBal_pre_a  + principalOut_pre_a,  10_000_000 * USD);  // Total pool value = 9m + 1m = 10m
-        assertEq(liquidityLockerBal_post_a + principalOut_post_a, 10_000_000 * USD);  // Total pool value = 10m + 0 = 10m (successful full coverage from liquidation + staker burn)
+        assertEq(liquidityLocker_a_bal.pre  + principalOut_a.pre,  10_000_000 * USD);  // Total pool value = 9m + 1m = 10m
+        assertEq(liquidityLocker_a_bal.post + principalOut_a.post, 10_000_000 * USD);  // Total pool value = 10m + 0 = 10m (successful full coverage from liquidation + staker burn)
 
-        assertEq(liquidityLockerBal_pre_b  + principalOut_pre_b,  10_000_000 * USD);  // Total pool value = 7m + 3m = 10m
-        assertEq(liquidityLockerBal_post_b + principalOut_post_b, 10_000_000 * USD);  // Total pool value = 1m + 0 = 10m (successful full coverage from liquidation + staker burn)
+        assertEq(liquidityLocker_b_bal.pre  + principalOut_b.pre,  10_000_000 * USD);  // Total pool value = 7m + 3m = 10m
+        assertEq(liquidityLocker_b_bal.post + principalOut_b.post, 10_000_000 * USD);  // Total pool value = 1m + 0 = 10m (successful full coverage from liquidation + staker burn)
+
+        assertTrue(stakeLocker_a_bal.pre - stakeLocker_a_bal.post > 0);  // Assert BPTs were burned
+        assertTrue(stakeLocker_b_bal.pre - stakeLocker_b_bal.post > 0);  // Assert BPTs were burned
+
+        assertEq(stakeLocker_a_bal.pre - stakeLocker_a_bal.post, stakeLocker_a.bptLosses());  // Assert FDT loss accounting
+        assertEq(stakeLocker_a_bal.pre - stakeLocker_a_bal.post, stakeLocker_a.bptLosses());  // Assert FDT loss accounting
     }
 
     function assertPoolAccounting(Pool pool) internal {
@@ -389,6 +411,8 @@ contract PoolLiquidationTest is TestUtil {
 
         assertEq(slBPTBal.pre,  10 * WAD);  // Assert pre-burn BPT balance
         assertLt(slBPTBal.post,     1E10);  // Dusty stakeLocker BPT return bal (less than 1e-8 WAD), meaning essentially all BPTs were burned
+
+        assertEq(slBPTBal.pre - slBPTBal.post, IStakeLocker(stakeLocker).bptLosses());  // Assert FDT loss accounting
 
         assertEq(bptShortfall.pre,                 0);  // No bptShortfall before bpt burning occurs
         assertGt(bptShortfall.post, 40_000_000 * USD);  // Over $40m in shortfall after liquidation and BPT burn
