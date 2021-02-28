@@ -434,11 +434,11 @@ contract StakeLockerTest is TestUtil {
     function test_staker_fdt_accounting(uint256 stakeAmount) public {
         TestObj memory stakeLockerBal;        // StakeLocker total balance of BPTs
         TestObj memory fdtTotalSupply;        // Total Supply of FDTs
-        TestObj memory stakerFDTBal;          // Che FDT balance
+        TestObj memory stakerFDTBal;          // Staker FDT balance
         TestObj memory fundsTokenBal;         // FDT accounting of interst earned
-        TestObj memory withdrawableFundsOf;   // Interest earned by Che
+        TestObj memory withdrawableFundsOf;   // Interest earned by Staker
         TestObj memory bptLosses;             // FDT accounting of losses from burning
-        TestObj memory recognizableLossesOf;  // Recognizable losses of Che
+        TestObj memory recognizableLossesOf;  // Recognizable losses of Staker
 
         uint256 bptMin = WAD / 10_000_000;
 

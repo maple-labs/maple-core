@@ -20,7 +20,8 @@ abstract contract StakeLockerFDT is ExtendedFDT {
     }
 
     /**
-        @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
+        @dev Updates loss accounting for msg.sender, recognizing losses
+        @return losses - amount to be subtracted from given withdraw amount
     */
     function recognizeLosses() internal override returns (uint256 losses) {
         losses = _prepareLossesWithdraw();
