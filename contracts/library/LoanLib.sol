@@ -17,6 +17,7 @@ import "../library/Util.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
+/// @title LoanLib is a library of utility functions used by Loan.
 library LoanLib {
 
     using SafeMath for uint256;
@@ -27,22 +28,36 @@ library LoanLib {
 
     /**
         @dev If the borrower has not drawn down loan past grace period, return capital to lenders.
+        @param loanAsset       IERC20 of the loanAsset
+        @param superFactory    Factory that instantiated Loan
+        @param fundingLocker   Address of FundingLocker
+        @param createdAt       Timestamp of Loan instantiation
+        @return excessReturned Amount of loanAsset that was returned to the Loan from the FundingLocker
     */
     function unwind(IERC20 loanAsset, address superFactory, address fundingLocker, uint256 createdAt) external returns(uint256 excessReturned) {
         IGlobals globals = _globals(superFactory);
 
-        // Only callable if time has passed drawdown grace period, set in MapleGlobals.
+        // Only callable if time has passed drawdown grace period, set in MapleGlobals
         require(block.timestamp > createdAt.add(globals.drawdownGracePeriod()));
 
-        // Drain funding from FundingLocker, transfers all loanAsset to this Loan.
+        uint256 preBal = loanAsset.balanceOf(address(this));  // Account for existing balance in Loan
+
+        // Drain funding from FundingLocker, transfers all loanAsset to this Loan
         IFundingLocker(fundingLocker).drain();
 
-        // Update accounting for claim()
-        return loanAsset.balanceOf(address(this));
+        // Update excessReturned accounting for claim()
+        return loanAsset.balanceOf(address(this)).sub(preBal);
     }
 
     /**
         @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
+        @param collateralAsset   IERC20 of the collateralAsset
+        @param liquidationAmt    Amount of collateralAsset to liquidate (balance of CollateralLocker)
+        @param loanAsset         Address of loanAsset
+        @param superFactory      Factory that instantiated Loan
+        @param collateralLocker  Address of CollateralLocker
+        @return amountLiquidated Amount of collateralAsset that was liquidated
+        @return amountRecovered  Amount of loanAsset that was returned to the Loan from the liquidation
     */
     function triggerDefault(
         IERC20Details collateralAsset,
@@ -58,18 +73,17 @@ library LoanLib {
         ) 
     {
 
-        // Pull collateralAsset from collateralLocker.
+        // Pull collateralAsset from collateralLocker
         require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");
 
         if (address(collateralAsset) != loanAsset) {
-            // Swap collateralAsset for loanAsset.
             collateralAsset.approve(UNISWAP_ROUTER, liquidationAmt);
 
             IGlobals globals = _globals(superFactory);
 
-            uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), loanAsset, liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset.
+            uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), loanAsset, liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset
 
-            // Generate path.
+            // Generate path
             address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), loanAsset);
             bool middleAsset = uniswapAssetForPath != loanAsset && uniswapAssetForPath != address(0);
 
@@ -80,6 +94,7 @@ library LoanLib {
 
             if(middleAsset) path[2] = loanAsset;
 
+            // Swap collateralAsset for loanAsset
             uint256[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
                 liquidationAmt,
                 minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10000)),
@@ -97,7 +112,11 @@ library LoanLib {
     }
 
     /**
-        @dev Trigger a default. Does nothing if block.timestamp <= nextPaymentDue + gracePeriod.
+        @dev Determines if a default can be triggered.
+        @param nextPaymentDue Timestamp of when payment is due
+        @param superFactory   Factory that instantiated Loan
+        @param balance        LoanFDT balance of msg.sender
+        @return boolean indicating if default can be triggered
     */
     function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance) external returns(bool) {
 
@@ -107,17 +126,21 @@ library LoanLib {
 
         // It checks following conditions - 
         // 1. If `current time - nextPaymentDue` is within the (gracePeriod, gracePeriod + extendedGracePeriod] & `msg.sender` is
-        //    a pool delegate (Assumption: Only pool delegate will have non zero balance) then liquidate the loan.
+        //    a lender (Assumption: Only lenders will have non zero balance) then liquidate the loan.
         // 2. If `current time - nextPaymentDue` is greater than gracePeriod + extendedGracePeriod then any msg.sender can liquidate the loan.
         return ((withinExtendedGracePeriod && balance > 0) || (pastGracePeriod && !withinExtendedGracePeriod));
     }
 
     /**
         @dev Returns information on next payment amount.
-        @return total           Principal + Interest
-        @return principal       Principal 
-        @return interest        Interest
-        @return nextPaymentDue  Payment Due Date
+        @param superFactory    Factory that instantiated Loan
+        @param repaymentCalc   Address of RepaymentCalc
+        @param nextPaymentDue  Timestamp of when payment is due
+        @param lateFeeCalc     Address of LateFeeCalc
+        @return total          Principal + Interest
+        @return principal      Principal 
+        @return interest       Interest
+        @return nextPaymentDue Payment Due Date
     */
     function getNextPayment(
         address superFactory,
@@ -143,6 +166,8 @@ library LoanLib {
             interest
         ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
 
+        // TODO: Change this to just block.timestamp > nextPaymentDue
+        // Borrowers can get out of late fees by waiting until the exact second this condition is no longer met
         if (block.timestamp > nextPaymentDue && block.timestamp <= nextPaymentDue.add(globals.gracePeriod())) {
             (
                 uint256 totalExtra, 
@@ -160,7 +185,12 @@ library LoanLib {
 
     /**
         @dev Helper for calculating collateral required to drawdown amt.
-        @return collateralRequiredFIN The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
+        @param collateralAsset IERC20 of the collateralAsset
+        @param loanAsset       IERC20 of the loanAsset
+        @param collateralRatio Percentage of drawdown value that must be posted as collateral
+        @param superFactory    Factory that instantiated Loan
+        @param amt             Drawdown amount
+        @return collateralRequiredFIN The amount of collateralAsset required to post in CollateralLocker for given drawdown amt
     */
     function collateralRequiredForDrawdown(
         IERC20Details collateralAsset,
@@ -175,13 +205,13 @@ library LoanLib {
     {
         IGlobals globals = _globals(superFactory);
 
-        uint256 wad = _toWad(amt, loanAsset);  // Convert to WAD precision.
+        uint256 wad = _toWad(amt, loanAsset);  // Convert to WAD precision
 
-        // Fetch value of collateral and funding asset.
+        // Fetch value of collateral and funding asset
         uint256 loanAssetPrice  = globals.getLatestPrice(address(loanAsset));
         uint256 collateralPrice = globals.getLatestPrice(address(collateralAsset));
 
-        // Calculate collateral required.
+        // Calculate collateral required
         uint256 collateralRequiredUSD = loanAssetPrice.mul(wad).mul(collateralRatio).div(10000);
         uint256 collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
         collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - collateralAsset.decimals()));
@@ -194,5 +224,4 @@ library LoanLib {
     function _toWad(uint256 amt, IERC20Details loanAsset) internal view returns(uint256) {
         return amt.mul(10 ** 18).div(10 ** loanAsset.decimals());
     }
-    
 }

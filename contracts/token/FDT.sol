@@ -3,6 +3,7 @@ pragma solidity 0.6.11;
 
 import "./BasicFDT.sol";
 
+/// @title FDT inherits BasicFDT and uses the original ERC-2222 logic. 
 abstract contract FDT is BasicFDT {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
@@ -18,10 +19,9 @@ abstract contract FDT is BasicFDT {
     }
 
     /**
-     * @dev Prepares funds withdrawal on behalf of a user
-     * @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
-     */
-    
+        @dev Prepares funds withdrawal on behalf of a user
+        @dev It emits a `FundsWithdrawn` event if the amount of withdrawn funds is greater than 0.
+    */
     function _prepareWithdrawOnBehalf(address user) internal returns (uint256) {
         uint256 _withdrawableDividend = withdrawableFundsOf(user);
 
@@ -33,8 +33,8 @@ abstract contract FDT is BasicFDT {
     }
 
     /**
-     * @dev Withdraws all available funds for a token holder
-     */
+        @dev Withdraws all available funds for a token holder
+    */
     function withdrawFunds() public virtual override {
         uint256 withdrawableFunds = _prepareWithdraw();
 
@@ -44,8 +44,8 @@ abstract contract FDT is BasicFDT {
     }
 
     /**
-     * @dev Withdraws all available funds for a token holder, on behalf of token holder
-     */
+        @dev Withdraws all available funds for a token holder, on behalf of token holder
+    */
     function withdrawFundsOnBehalf(address user) public virtual {
         uint256 withdrawableFunds = _prepareWithdrawOnBehalf(user);
 
@@ -55,10 +55,10 @@ abstract contract FDT is BasicFDT {
     }
 
     /**
-     * @dev Updates the current funds token balance
-     * and returns the difference of new and previous funds token balances
-     * @return A int256 representing the difference of the new and previous funds token balance
-     */
+        @dev Updates the current funds token balance
+        and returns the difference of new and previous funds token balances
+        @return A int256 representing the difference of the new and previous funds token balance
+    */
     function _updateFundsTokenBalance() internal virtual override returns (int256) {
         uint256 _prevFundsTokenBalance = fundsTokenBalance;
 

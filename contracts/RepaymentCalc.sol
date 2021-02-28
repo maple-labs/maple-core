@@ -5,16 +5,17 @@ import "./interfaces/ILoan.sol";
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
+/// @title RepaymentCalc calculates payment amounts on Loans.
 contract RepaymentCalc {
 
 	using SafeMath for uint256;
 
-    uint8   public constant calcType = 10;  // INTEREST type
+    uint8   public constant calcType = 10;               // INTEREST type
     bytes32 public constant name     = "INTEREST_ONLY";
 
     /**
-        @dev    Calculates the next payment for a _loan.
-        @param  _loan is the Loan to calculate a payment for.
+        @dev    Calculates the next payment for a Loan.
+        @param  _loan Loan to calculate a payment for
         @return [0] = Principal + Interest
                 [1] = Principal
                 [2] = Interest

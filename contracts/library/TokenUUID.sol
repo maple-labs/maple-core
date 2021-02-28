@@ -11,7 +11,7 @@ library TokenUUID {
     */
     function generateUUID(uint256 serial) public view returns (string memory) {
 
-        bytes32 inBytes       =  keccak256(abi.encodePacked(block.timestamp, serial));
+        bytes32 inBytes       = keccak256(abi.encodePacked(block.timestamp, serial));
         bytes memory outBytes = new bytes(8);
 
         for (uint8 i = 0; i < 7; i++) {

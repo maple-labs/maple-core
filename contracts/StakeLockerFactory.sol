@@ -3,12 +3,13 @@ pragma solidity 0.6.11;
 
 import "./StakeLocker.sol";
 
+/// @title StakeLockerFactory instantiates StakeLockers.
 contract StakeLockerFactory {
 
     mapping(address => address) public owner;     // owner[locker] = Owner of the stake locker.
     mapping(address => bool)    public isLocker;  // True if stake locker was created by this factory, otherwise false.
 
-    uint8 public constant factoryType = 4;        // i.e FactoryType::STAKE_LOCKER_FACTORY.
+    uint8 public constant factoryType = 4;  // i.e FactoryType::STAKE_LOCKER_FACTORY.
 
     event StakeLockerCreated(
         address owner,
@@ -21,9 +22,9 @@ contract StakeLockerFactory {
 
     /**
         @dev Instantiate a StakeLocker contract.
-        @return Address of the instantiated stake locker.
-        @param stakeAsset     Address of the stakeAsset (generally a balancer pool).
-        @param liquidityAsset Address of the liquidityAsset (as defined in the pool).
+        @param stakeAsset     Address of the stakeAsset (generally a balancer pool)
+        @param liquidityAsset Address of the liquidityAsset (as defined in the pool)
+        @return Address of the instantiated StakeLocker
     */
     function newLocker(
         address stakeAsset,
@@ -32,6 +33,7 @@ contract StakeLockerFactory {
         address stakeLocker   = address(new StakeLocker(stakeAsset, liquidityAsset, msg.sender));
         owner[stakeLocker]    = msg.sender;
         isLocker[stakeLocker] = true;
+
         emit StakeLockerCreated(
             msg.sender, 
             stakeLocker,
@@ -42,5 +44,4 @@ contract StakeLockerFactory {
         );
         return stakeLocker;
     }
-    
 }

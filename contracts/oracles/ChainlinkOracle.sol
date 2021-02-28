@@ -5,6 +5,7 @@ import "./IChainlinkAggregatorV3.sol";
 import "../interfaces/IGlobals.sol";
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
+/// @title ChainlinkOracle is a wrapper contract for Chainlink oracle price feeds that allows for manual price feed overrides.
 contract ChainlinkOracle is Ownable {
 
     IChainlinkAggregatorV3 public priceFeed;
@@ -19,10 +20,10 @@ contract ChainlinkOracle is Ownable {
     event SetManualOverride(bool _override);
 
     /**
-        @dev Creates a new Chainlink based oracle
-        @param _aggregator Address of Chainlink aggregator.
-        @param _assetAddress Address of currency (0x0 for ETH).
-        @param _owner Address of the owner of the contract.
+        @dev Creates a new Chainlink based oracle.
+        @param _aggregator   Address of Chainlink aggregator
+        @param _assetAddress Address of currency (0x0 for ETH)
+        @param _owner        Address of the owner of the contract
       */
     constructor(address _aggregator, address _assetAddress, address _owner) public {
         require(_aggregator != address(0), "ChainlinkOracle:INVALID_AGGREGATOR_ADDRESS");
@@ -44,7 +45,7 @@ contract ChainlinkOracle is Ownable {
 
     /**
         @dev Updates aggregator address.
-        @param aggregator Address of chainlink aggregator.
+        @param aggregator Address of chainlink aggregator
     */
     function changeAggregator(address aggregator) external onlyOwner {
         require(aggregator != address(0), "ChainlinkOracle:INVALID_AGGREGATOR_ADDRESS");
@@ -68,7 +69,7 @@ contract ChainlinkOracle is Ownable {
     }
 
     /**
-        @dev Set a manual price. NA - this will only be used if manualOverride == true
+        @dev Set a manual price. NOTE: this can only be used if manualOverride == true
         @param _price Price to set
     */
     function setManualPrice(int256 _price) public onlyOwner {
@@ -77,7 +78,7 @@ contract ChainlinkOracle is Ownable {
     }
 
     /**
-        @dev Determine whether manual price is used or not
+        @dev Set manual override, allowing for manual price setting.
         @param _override Whether to use the manual override price or not
     */
     function setManualOverride(bool _override) public onlyOwner {

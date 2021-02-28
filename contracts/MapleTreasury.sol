@@ -10,21 +10,22 @@ import "./interfaces/IUniswapRouter.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
+/// @title MapleTreasury earns revenue from Loans and distributes it to token holders and the Maple development team.
 contract MapleTreasury {
 
 	using SafeMath for uint256;
 
-    address public mpl;            // MapleToken.sol contract.
-    address public fundsToken;     // fundsToken value in the MapleToken.sol contract.
-    address public uniswapRouter;  // Official UniswapV2 router contract.
-    address public globals;        // MapleGlobals.sol contract.
+    address public mpl;            // MapleToken contract
+    address public fundsToken;     // fundsToken value in the MapleToken contract
+    address public uniswapRouter;  // Official UniswapV2 router contract
+    address public globals;        // MapleGlobals contract
 
     /**
         @dev Instantiates the MapleTreasury contract.
-        @param  _mpl is the MapleToken contract.
-        @param  _fundsToken is the fundsToken of MapleToken contract.
-        @param  _uniswapRouter is the official UniswapV2 router contract.
-        @param  _globals is the MapleGlobals.sol contract.
+        @param  _mpl           MapleToken contract
+        @param  _fundsToken    fundsToken of MapleToken contract
+        @param  _uniswapRouter Official UniswapV2 router contract
+        @param  _globals       MapleGlobals contract
     */
     constructor(
         address _mpl, 
@@ -49,17 +50,17 @@ contract MapleTreasury {
     }
 
     /**
-        @dev Update the maple globals contract
-        @param newGlobals Address of new maple globals contract
+        @dev Update the MapleGlobals contract. Only Governor can set
+        @param newGlobals Address of new MapleGlobals contract
     */
     function setGlobals(address newGlobals) external isGovernor {
         globals = newGlobals;
     }
 
     /**
-        @dev Withdraws treasury funds to the MapleDAO address
-        @param asset  Address of the token that need to be reclaimed from the treasury contract.
-        @param amount The new FundsToken with respect to MapleToken ERC-2222.
+        @dev Withdraws treasury funds to the MapleDAO address. Only Governor can call.
+        @param asset  Address of the token that need to be reclaimed from the treasury contract
+        @param amount Amount to withdraw
     */
     function withdrawFunds(address asset, uint256 amount) isGovernor public {
         require(IERC20(asset).transfer(msg.sender, amount), "MapleTreasury:FUNDS_RECEIVE_TRANSFER");
@@ -67,7 +68,7 @@ contract MapleTreasury {
     }
 
     /**
-        @dev Passes through the current fundsToken to MapleToken, where they can be claimed by MPL holders.
+        @dev Passes through the current fundsToken balance of the treasury to MapleToken, where it can be claimed by MPL holders.
     */
     function distributeToHolders() isGovernor public {
         IERC20 _fundsToken = IERC20(fundsToken);
@@ -78,8 +79,8 @@ contract MapleTreasury {
     }
 
     /**
-        @dev Convert an ERC-20 asset through Uniswap to fundsToken
-        @param asset The ERC-20 asset to convert.
+        @dev Convert an ERC-20 asset through Uniswap to fundsToken.
+        @param asset The ERC-20 asset to convert to fundsToken
     */
     function convertERC20(address asset) isGovernor public {
         require(asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
