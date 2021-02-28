@@ -125,7 +125,7 @@ contract PoolLiquidationTest is TestUtil {
         gov.setDefaultUniswapPath(WETH, USDC, USDC);
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
 
-        gov.setMaxSwapSlippage(2000);  // Set to 20% for the sake of the BPT shortfall test, TODO: address this when using launch params
+        gov.setMaxSwapSlippage(2000);  // Set to 20% for the sake of the BPT shortfall test
 
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);
@@ -150,7 +150,7 @@ contract PoolLiquidationTest is TestUtil {
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
-        assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted TODO: Find a way to mint more than 100 BPTs
+        assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
 
         bPool.transfer(address(sid), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
         bPool.transfer(address(joe), 25 * WAD);  // Give PD a balance of BPTs to finalize pool

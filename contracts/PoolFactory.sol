@@ -70,7 +70,6 @@ contract PoolFactory is Pausable {
         _whenProtocolNotPaused();
         {
             IGlobals _globals = globals;
-            // TODO: Do we need to validate isValidPoolFactory here? Its not being used anywhere currently
             require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");
             require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PoolFactory:INVALID_SL_FACTORY");
             require(_globals.isValidPoolDelegate(msg.sender),                         "PoolFactory:INVALID_DELEGATE");

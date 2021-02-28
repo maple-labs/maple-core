@@ -53,7 +53,7 @@ interface ILoan is IERC20 {
     function triggerDefault() external;
     function unwind() external;
 
-    // TODO: Create IFDT.sol (IFDT, inherit here and other places)
+    // FDT
     function updateFundsReceived() external;
     function withdrawFunds() external;
 }

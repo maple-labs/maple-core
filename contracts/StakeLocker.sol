@@ -184,10 +184,6 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         updateLossesReceived();
     }
 
-    // TODO: Make this handle transfer of time lock more properly, parameterize _updateStakeDate
-    //      to these ends to save code.
-    //      can improve this so the updated age of tokens reflects their age in the senders wallets
-    //      right now it simply is equivalent to the age update if the receiver was making a new stake.
     function _transfer(address from, address to, uint256 amt) internal override canUnstake {
         _whenProtocolNotPaused();
         _isWhitelisted(to);
