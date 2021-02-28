@@ -11,7 +11,7 @@
 [`setValidPoolFactory(address factory, bool valid)`](#Governor-setValidPoolFactory-address-bool-)
 [`setValidSubFactory(address fac, address sub, bool valid)`](#Governor-setValidSubFactory-address-address-bool-)
 [`setMapleTreasury(address treasury)`](#Governor-setMapleTreasury-address-)
-[`setPoolDelegateWhitelist(address pd, bool valid)`](#Governor-setPoolDelegateWhitelist-address-bool-)
+[`setPoolDelegateAllowlist(address pd, bool valid)`](#Governor-setPoolDelegateAllowlist-address-bool-)
 [`setInvestorFee(uint256 fee)`](#Governor-setInvestorFee-uint256-)
 [`setTreasuryFee(uint256 fee)`](#Governor-setTreasuryFee-uint256-)
 [`setGracePeriod(uint256 gracePeriod)`](#Governor-setGracePeriod-uint256-)
@@ -31,7 +31,7 @@
 [`try_setValidPoolFactory(address factory, bool valid)`](#Governor-try_setValidPoolFactory-address-bool-)
 [`try_setValidSubFactory(address fac, address sub, bool valid)`](#Governor-try_setValidSubFactory-address-address-bool-)
 [`try_setMapleTreasury(address treasury)`](#Governor-try_setMapleTreasury-address-)
-[`try_setPoolDelegateWhitelist(address pd, bool valid)`](#Governor-try_setPoolDelegateWhitelist-address-bool-)
+[`try_setPoolDelegateAllowlist(address pd, bool valid)`](#Governor-try_setPoolDelegateAllowlist-address-bool-)
 [`try_setInvestorFee(uint256 fee)`](#Governor-try_setInvestorFee-uint256-)
 [`try_setTreasuryFee(uint256 fee)`](#Governor-try_setTreasuryFee-uint256-)
 [`try_setGracePeriod(uint256 gracePeriod)`](#Governor-try_setGracePeriod-uint256-)
@@ -75,7 +75,7 @@ No description
 ### `setMapleTreasury(address treasury)`
 No description
 
-### `setPoolDelegateWhitelist(address pd, bool valid)`
+### `setPoolDelegateAllowlist(address pd, bool valid)`
 No description
 
 ### `setInvestorFee(uint256 fee)`
@@ -135,7 +135,7 @@ No description
 ### `try_setMapleTreasury(address treasury)`
 No description
 
-### `try_setPoolDelegateWhitelist(address pd, bool valid)`
+### `try_setPoolDelegateAllowlist(address pd, bool valid)`
 No description
 
 ### `try_setInvestorFee(uint256 fee)`

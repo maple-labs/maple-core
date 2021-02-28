@@ -109,16 +109,16 @@ contract PoolFactoryTest is TestUtil {
         );
     }
 
-    function setUpWhitelisting() internal {
+    function setUpAllowlisting() internal {
         gov.setValidPoolFactory(address(poolFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        gov.setPoolDelegateWhitelist(address(ali), true);
+        gov.setPoolDelegateAllowlist(address(ali), true);
         gov.setLoanAsset(USDC, true);
     }
 
     function test_createPool_globals_validations() public {
-        setUpWhitelisting();
+        setUpAllowlisting();
         bPool.finalize();
 
         gov.setValidPoolFactory(address(poolFactory), true);
@@ -133,19 +133,19 @@ contract PoolFactoryTest is TestUtil {
         assertTrue(createPoolFails()); 
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
 
-        // PoolFactory:MSG_SENDER_NOT_WHITELISTED
-        gov.setPoolDelegateWhitelist(address(ali), false);
+        // PoolFactory:MSG_SENDER_NOT_ALLOWED
+        gov.setPoolDelegateAllowlist(address(ali), false);
         assertTrue(createPoolFails()); 
-        gov.setPoolDelegateWhitelist(address(ali), true);
+        gov.setPoolDelegateAllowlist(address(ali), true);
 
-        // PoolFactory:LIQ_ASSET_NOT_WHITELISTED
+        // PoolFactory:LIQ_ASSET_NOT_ALLOWED
         gov.setLoanAsset(USDC, false);
         assertTrue(createPoolFails());   
         gov.setLoanAsset(USDC, true);
     }
 
     function test_createPool_bad_stakeAsset() public {
-        setUpWhitelisting();
+        setUpAllowlisting();
         bPool.finalize();
         
         // PoolFactory:STAKE_ASSET_NOT_BPOOL
@@ -162,7 +162,7 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_wrong_staking_pair_asset() public {
-        setUpWhitelisting();
+        setUpAllowlisting();
         bPool.finalize();
 
         gov.setLoanAsset(DAI, true);
@@ -213,7 +213,7 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_invalid_liquidity_cap() public {
-        gov.setPoolDelegateWhitelist(address(ali), true);
+        gov.setPoolDelegateAllowlist(address(ali), true);
         bPool.finalize();
         
         assertTrue(!ali.try_createPool(
@@ -230,7 +230,7 @@ contract PoolFactoryTest is TestUtil {
 
     // Tests failure mode in createStakeLocker
     function test_createPool_createStakeLocker_bPool_not_finalized() public {
-        setUpWhitelisting();
+        setUpAllowlisting();
         
         // Pool:INVALID_BALANCER_POOL
         assertTrue(!ali.try_createPool(
@@ -247,11 +247,11 @@ contract PoolFactoryTest is TestUtil {
 
     function test_createPool() public {
 
-        setUpWhitelisting();
+        setUpAllowlisting();
 
         gov.setLoanAsset(USDC, true);
 
-        gov.setPoolDelegateWhitelist(address(ali), true);
+        gov.setPoolDelegateAllowlist(address(ali), true);
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);

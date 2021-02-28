@@ -124,7 +124,7 @@ contract GulpTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
-        gov.setPoolDelegateWhitelist(address(sid), true);
+        gov.setPoolDelegateAllowlist(address(sid), true);
         gov.setMapleTreasury(address(treasury));
         bPool.finalize();
 

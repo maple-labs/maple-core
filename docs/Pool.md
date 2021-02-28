@@ -16,7 +16,7 @@
 [`setPenaltyDelay(uint256 _penaltyDelay)`](#Pool-setPenaltyDelay-uint256-)
 [`setPrincipalPenalty(uint256 _newPrincipalPenalty)`](#Pool-setPrincipalPenalty-uint256-)
 [`setLockupPeriod(uint256 _newLockupPeriod)`](#Pool-setLockupPeriod-uint256-)
-[`setWhitelistStakeLocker(address user, bool status)`](#Pool-setWhitelistStakeLocker-address-bool-)
+[`setAllowlistStakeLocker(address user, bool status)`](#Pool-setAllowlistStakeLocker-address-bool-)
 [`claimableFunds(address lp)`](#Pool-claimableFunds-address-)
 [`withdrawFunds()`](#Pool-withdrawFunds--)
 
@@ -120,10 +120,10 @@ Allowing delegate/pool manager to set the principal penalty.
 Allowing delegate/pool manager to set the lockup period.
         @param _newLockupPeriod New lockup period used to restrict the withdrawals.
 
-### `setWhitelistStakeLocker(address user, bool status)`
-Update user status on StakeLocker whitelist.
+### `setAllowlistStakeLocker(address user, bool status)`
+Update user status on StakeLocker allowlist.
         @param user   The address to set status for.
-        @param status The status of user on whitelist.
+        @param status The status of user on allowlist.
 
 ### `claimableFunds(address lp)`
 View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).

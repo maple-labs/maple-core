@@ -49,7 +49,7 @@ contract Governor {
     function setValidPoolFactory(address factory, bool valid)             external { globals.setValidPoolFactory(factory, valid); }
     function setValidSubFactory(address fac, address sub, bool valid)     external { globals.setValidSubFactory(fac, sub, valid); }
     function setMapleTreasury(address _treasury)                          external { globals.setMapleTreasury(_treasury); }
-    function setPoolDelegateWhitelist(address pd, bool valid)             external { globals.setPoolDelegateWhitelist(pd, valid); }
+    function setPoolDelegateAllowlist(address pd, bool valid)             external { globals.setPoolDelegateAllowlist(pd, valid); }
     function setInvestorFee(uint256 fee)                                  external { globals.setInvestorFee(fee); }
     function setTreasuryFee(uint256 fee)                                  external { globals.setTreasuryFee(fee); }
     function setGracePeriod(uint256 gracePeriod)                          external { globals.setGracePeriod(gracePeriod); }
@@ -117,8 +117,8 @@ contract Governor {
         string memory sig = "setMapleTreasury(address)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, _treasury));
     }
-    function try_setPoolDelegateWhitelist(address pd, bool valid) external returns (bool ok) { 
-        string memory sig = "setPoolDelegateWhitelist(address,bool)";
+    function try_setPoolDelegateAllowlist(address pd, bool valid) external returns (bool ok) { 
+        string memory sig = "setPoolDelegateAllowlist(address,bool)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, pd, valid));
     }
     function try_setInvestorFee(uint256 fee) external returns (bool ok) { 

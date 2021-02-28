@@ -57,7 +57,7 @@ contract StakingRewardsTest is TestUtil {
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
-        gov.setPoolDelegateWhitelist(address(sid),                       true);
+        gov.setPoolDelegateAllowlist(address(sid),                       true);
 
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);

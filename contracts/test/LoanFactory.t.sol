@@ -141,7 +141,7 @@ contract LoanFactoryTest is TestUtil {
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
-        gov.setLoanAsset(USDC, true);  // Whitelist loan asset
+        gov.setLoanAsset(USDC, true);  // Allow loan asset
         // Still fails as collateral asset is not a valid collateral asset
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.

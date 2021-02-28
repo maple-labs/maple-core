@@ -2,7 +2,7 @@
 
 ## Functions:
 [`constructor(address _stakeAsset, address _liquidityAsset, address _owner)`](#StakeLocker-constructor-address-address-address-)
-[`setWhitelist(address user, bool status)`](#StakeLocker-setWhitelist-address-bool-)
+[`setAllowlist(address user, bool status)`](#StakeLocker-setAllowlist-address-bool-)
 [`pull(address dst, uint256 amt)`](#StakeLocker-pull-address-uint256-)
 [`stake(uint256 amt)`](#StakeLocker-stake-uint256-)
 [`unstake(uint256 amt)`](#StakeLocker-unstake-uint256-)
@@ -19,10 +19,10 @@
 ### `constructor(address _stakeAsset, address _liquidityAsset, address _owner)`
 No description
 
-### `setWhitelist(address user, bool status)`
-Update user status on the whitelist. Only Pool owner can call this.
+### `setAllowlist(address user, bool status)`
+Update user status on the allowlist. Only Pool owner can call this.
         @param user   The address to set status for.
-        @param status The status of user on whitelist.
+        @param status The status of user on allowlist.
 
 ### `pull(address dst, uint256 amt)`
 Transfers amt of stakeAsset to dst.

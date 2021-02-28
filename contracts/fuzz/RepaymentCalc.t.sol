@@ -152,8 +152,8 @@ contract RepaymentCalcTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
-        gov.setPoolDelegateWhitelist(address(sid), true);
-        gov.setPoolDelegateWhitelist(address(joe), true);
+        gov.setPoolDelegateAllowlist(address(sid), true);
+        gov.setPoolDelegateAllowlist(address(joe), true);
         gov.setMapleTreasury(address(trs));
         bPool.finalize();
 

@@ -11,7 +11,7 @@
 [`deactivate(address pool, uint256 confirmation)`](#PoolDelegate-deactivate-address-uint256-)
 [`setPrincipalPenalty(address pool, uint256 penalty)`](#PoolDelegate-setPrincipalPenalty-address-uint256-)
 [`setPenaltyDelay(address pool, uint256 delay)`](#PoolDelegate-setPenaltyDelay-address-uint256-)
-[`setWhitelistStakeLocker(address pool, address user, bool status)`](#PoolDelegate-setWhitelistStakeLocker-address-address-bool-)
+[`setAllowlistStakeLocker(address pool, address user, bool status)`](#PoolDelegate-setAllowlistStakeLocker-address-address-bool-)
 [`try_createPool(address poolFactory, address liquidityAsset, address stakeAsset, address slFactory, address llFactory, uint256 stakingFee, uint256 delegateFee, uint256 liquidityCap)`](#PoolDelegate-try_createPool-address-address-address-address-address-uint256-uint256-uint256-)
 [`try_setExtendedGracePeriod(address globals, uint256 newEGP)`](#PoolDelegate-try_setExtendedGracePeriod-address-uint256-)
 [`try_fundLoan(address pool, address loan, address dlFactory, uint256 amt)`](#PoolDelegate-try_fundLoan-address-address-address-uint256-)
@@ -55,7 +55,7 @@ No description
 ### `setPenaltyDelay(address pool, uint256 delay)`
 No description
 
-### `setWhitelistStakeLocker(address pool, address user, bool status)`
+### `setAllowlistStakeLocker(address pool, address user, bool status)`
 No description
 
 ### `try_createPool(address poolFactory, address liquidityAsset, address stakeAsset, address slFactory, address llFactory, uint256 stakingFee, uint256 delegateFee, uint256 liquidityCap)`

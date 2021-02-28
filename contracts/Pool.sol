@@ -408,14 +408,14 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Update user status on StakeLocker whitelist.
+        @dev Update user status on StakeLocker allowlist.
         @param user   The address to set status for.
-        @param status The status of user on whitelist.
+        @param status The status of user on allowlist.
     */
-    function setWhitelistStakeLocker(address user, bool status) external {
+    function setAllowlistStakeLocker(address user, bool status) external {
         _whenProtocolNotPaused();
         _isValidDelegate();
-        IStakeLocker(stakeLocker).setWhitelist(user, status);
+        IStakeLocker(stakeLocker).setAllowlist(user, status);
     }
 
     /**
