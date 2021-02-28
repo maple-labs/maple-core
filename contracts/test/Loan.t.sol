@@ -167,7 +167,8 @@ contract LoanTest is TestUtil {
         assertTrue(!bob.try_drawdown(address(loan), 1000 * USD));  // Non-borrower can't drawdown
         assertTrue(!ali.try_drawdown(address(loan), 1000 * USD));  // Can't drawdown without approving collateral
 
-        ali.approve(WETH, address(loan), 0.4 ether);
+        uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
+        ali.approve(WETH, address(loan), reqCollateral);
 
         assertTrue(!ali.try_drawdown(address(loan), 1000 * USD - 1));  // Can't drawdown less than requestAmount
         assertTrue(!ali.try_drawdown(address(loan), 5000 * USD + 1));  // Can't drawdown more than fundingLocker balance
@@ -190,9 +191,8 @@ contract LoanTest is TestUtil {
 
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
 
-        // TODO: Come up with better test for live price feeds.
-        // assertEq(IERC20(WETH).balanceOf(address(ali)),            9.6 ether);  // Borrower collateral balance
-        // assertEq(IERC20(WETH).balanceOf(collateralLocker),        0.4 ether);  // Collateral locker collateral balance
+        assertEq(IERC20(WETH).balanceOf(address(ali)),                     10 ether - reqCollateral);  // Borrower collateral balance
+        assertEq(IERC20(WETH).balanceOf(address(loan.collateralLocker())),            reqCollateral);  // Collateral locker collateral balance
 
         assertEq(IERC20(loan).balanceOf(address(bob)),           5000 ether);  // Lender loan token balance
         assertEq(IERC20(USDC).balanceOf(fundingLocker),                   0);  // Funding locker reqAssset balance

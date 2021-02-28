@@ -23,7 +23,7 @@ contract CollateralLocker {
         @param  dst Desintation to transfer collateralAsset to.
         @param  amt Amount of collateralAsset to transfer.
     */
-    // TODO: Add test to assert only loan can pull
+    // TODO: Add test to assert only loan can pull (in CollateralLockerFactory test)
     function pull(address dst, uint256 amt) isLoan public returns(bool) {
         return collateralAsset.transfer(dst, amt);
     }

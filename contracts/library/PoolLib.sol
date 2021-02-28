@@ -34,7 +34,7 @@ library PoolLib {
     }
 
     /// @dev Calculates the value of BPT in units of _liquidityAssetContract in 'wei' (decimals) for this token.
-    // TODO: Identify use and add NatSpec later.
+    // TODO: Create wrapper function in Pool
     function BPTVal(
         address _pool,
         address _pair,
@@ -42,7 +42,7 @@ library PoolLib {
         address _stakeLocker
     ) public view returns (uint256) {
 
-        //calculates the value of BPT in unites of _liquidityAssetContract, in 'wei' (decimals) for this token
+        // Calculates the value of BPT in unites of _liquidityAssetContract, in 'wei' (decimals) for this token
 
         // Create interfaces for the balancerPool as a Pool and as an ERC-20 token.
         IBPool bPool = IBPool(_pool);
@@ -56,10 +56,10 @@ library PoolLib {
         uint256 liquidityAssetWeight = bPool.getNormalizedWeight(_pair);
         uint256 _val = bdiv(amountStakedBPT, totalSupplyBPT).mul(bdiv(liquidityAssetBalance, liquidityAssetWeight)).div(WAD);
         
-        //we have to divide out the extra WAD with normal safemath
-        //the two divisions must be separate, as coins that are lower decimals(like usdc) will underflow and give 0
-        //due to the fact that the _liquidityAssetWeight is a synthetic float from bpool, IE  x*10^18 where 0<x<1
-        //the result here is
+        // We have to divide out the extra WAD with normal safemath
+        // the two divisions must be separate, as coins that are lower decimals(like usdc) will underflow and give 0
+        // due to the fact that the _liquidityAssetWeight is a synthetic float from bpool, IE  x*10^18 where 0<x<1
+        // the result here is
         return _val;
     }
 

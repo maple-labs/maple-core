@@ -354,11 +354,12 @@ contract Pool is PoolFDT {
         @dev Pool Delegate triggers deactivation, permanently shutting down the pool.
         @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
     */
+    // TODO: Ask auditors about standard for confirmations
     function deactivate(uint confirmation) external {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
         _isValidDelegate();
-        require(confirmation == 86, "Pool:INVALID_CONFIRMATION");  // TODO: Remove this
+        require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
         require(principalOut <= 100 * 10 ** liquidityAssetDecimals);
         poolState = State.Deactivated;
         emit PoolStateChanged(poolState);
