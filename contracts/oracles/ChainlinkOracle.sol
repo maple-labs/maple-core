@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.11;
+pragma solidity 0.6.11;
 
 import "./IChainlinkAggregatorV3.sol";
 import "../interfaces/IGlobals.sol";

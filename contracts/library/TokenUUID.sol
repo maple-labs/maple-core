@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.11;
+pragma solidity 0.6.11;
 
 /// @title Generates a UUID, used for Pool and Loan (debt) tokens in respective factories.
 library TokenUUID {

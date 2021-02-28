@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.11;
+pragma solidity 0.6.11;
 
 import "./interfaces/IGlobals.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IPoolFactory.sol";
 
-import "./token/FDT.sol";
+import "./token/StakeLockerFDT.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
-contract StakeLocker is FDT, Pausable {
+contract StakeLocker is StakeLockerFDT, Pausable {
 
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
@@ -32,7 +32,7 @@ contract StakeLocker is FDT, Pausable {
         address _stakeAsset,
         address _liquidityAsset,
         address _owner
-    ) FDT("Maple Stake Locker", "MPLSTAKE", _liquidityAsset) public {
+    ) StakeLockerFDT("Maple Stake Locker", "MPLSTAKE", _liquidityAsset) public {
         liquidityAsset = _liquidityAsset;
         stakeAsset     = IERC20(_stakeAsset);
         owner          = _owner;
@@ -122,11 +122,17 @@ contract StakeLocker is FDT, Pausable {
         _whenProtocolNotPaused();
         require(amt <= getUnstakeableBalance(msg.sender), "Stakelocker:AMT_GT_UNSTAKEABLE_BALANCE");
 
-        updateFundsReceived();
-        withdrawFunds();
-        _burn(msg.sender, amt);
+        amt = totalSupply() == amt && amt > 0 ? amt - 1 : amt;  // If last withdraw, subtract 1 wei to maintain FDT accounting
 
-        require(stakeAsset.transfer(msg.sender, amt), "StakeLocker:UNSTAKE_TRANSFER");
+        updateFundsReceived();  // Account for any funds transferred into contract since last call
+
+        uint256 recognizedLosses = recognizableLossesOf(msg.sender);  // Get all losses of user
+
+        _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
+        recognizeLosses();       // Update loss accounting for Staker, decrement `bptLosses`
+        withdrawFunds();         // Transfer full entitled interest
+
+        require(stakeAsset.transfer(msg.sender, amt.sub(recognizedLosses)), "StakeLocker:UNSTAKE_TRANSFER");  // Unstake amt minus losses
 
         emit Unstake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
@@ -165,7 +171,17 @@ contract StakeLocker is FDT, Pausable {
      */
     function withdrawFunds() public override {
         _whenProtocolNotPaused();
-        super.withdrawFunds();
+        
+        uint256 withdrawableFunds = _prepareWithdraw();
+
+        require(fundsToken.transfer(msg.sender, withdrawableFunds), "FDT:TRANSFER_FAILED");
+
+        _updateFundsTokenBalance();
+    }
+
+    function updateLosses(uint256 bptsBurned) isPool external {
+        bptLosses = bptLosses.add(bptsBurned);
+        updateLossesReceived();
     }
 
     // TODO: Make this handle transfer of time lock more properly, parameterize _updateStakeDate
