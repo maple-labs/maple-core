@@ -9,7 +9,7 @@
 [`updateFundsReceived()`](#IStakeLocker-updateFundsReceived--)
 [`withdrawableFundsOf(address)`](#IStakeLocker-withdrawableFundsOf-address-)
 [`pull(address, uint256)`](#IStakeLocker-pull-address-uint256-)
-[`setWhitelist(address, bool)`](#IStakeLocker-setWhitelist-address-bool-)
+[`setAllowlist(address, bool)`](#IStakeLocker-setAllowlist-address-bool-)
 [`getUnstakeableBalance(address staker)`](#IStakeLocker-getUnstakeableBalance-address-)
 
 
@@ -39,7 +39,7 @@ No description
 ### `pull(address, uint256)`
 No description
 
-### `setWhitelist(address, bool)`
+### `setAllowlist(address, bool)`
 No description
 
 ### `getUnstakeableBalance(address staker)`

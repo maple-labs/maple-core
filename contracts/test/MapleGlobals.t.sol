@@ -91,7 +91,7 @@ contract MapleGlobalsTest is TestUtil {
 
         // The following code was adopted from maple-core/scripts/setup.js
         gov.setMapleTreasury(address(trs));
-        gov.setPoolDelegateWhitelist(address(sid), true);
+        gov.setPoolDelegateAllowlist(address(sid), true);
 
         gov.setLoanAsset(DAI,        true);
         gov.setLoanAsset(USDC,       true);
@@ -193,10 +193,10 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue( globals.validSubFactories(address(poolFactory), address(dlFactory)));
         
         assertTrue(!globals.isValidPoolDelegate(address(joe)));
-        assertTrue(!fakeGov.try_setPoolDelegateWhitelist(address(joe), true));  // Non-governor cant set
-        assertTrue(     gov.try_setPoolDelegateWhitelist(address(joe), true));
+        assertTrue(!fakeGov.try_setPoolDelegateAllowlist(address(joe), true));  // Non-governor cant set
+        assertTrue(     gov.try_setPoolDelegateAllowlist(address(joe), true));
         assertTrue( globals.isValidPoolDelegate(address(joe)));
-        assertTrue(     gov.try_setPoolDelegateWhitelist(address(joe), false));
+        assertTrue(     gov.try_setPoolDelegateAllowlist(address(joe), false));
         assertTrue(!globals.isValidPoolDelegate(address(joe)));
 
         assertTrue(!fakeGov.try_setDefaultUniswapPath(WETH, USDC, USDC));  // Non-governor cant set

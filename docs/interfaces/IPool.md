@@ -14,7 +14,7 @@
 [`fundLoan(address, address, uint256)`](#IPool-fundLoan-address-address-uint256-)
 [`withdraw(uint256)`](#IPool-withdraw-uint256-)
 [`superFactory()`](#IPool-superFactory--)
-[`setWhitelistStakeLocker(address, bool)`](#IPool-setWhitelistStakeLocker-address-bool-)
+[`setAllowlistStakeLocker(address, bool)`](#IPool-setAllowlistStakeLocker-address-bool-)
 [`claimableFunds(address)`](#IPool-claimableFunds-address-)
 
 
@@ -59,7 +59,7 @@ No description
 ### `superFactory()`
 No description
 
-### `setWhitelistStakeLocker(address, bool)`
+### `setAllowlistStakeLocker(address, bool)`
 No description
 
 ### `claimableFunds(address)`

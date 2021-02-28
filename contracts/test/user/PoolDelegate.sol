@@ -73,8 +73,8 @@ contract PoolDelegate {
         IPool(pool).setPenaltyDelay(delay);
     }
 
-    function setWhitelistStakeLocker(address pool, address user, bool status) external {
-        IPool(pool).setWhitelistStakeLocker(user, status);
+    function setAllowlistStakeLocker(address pool, address user, bool status) external {
+        IPool(pool).setAllowlistStakeLocker(user, status);
     }
 
 

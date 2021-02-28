@@ -134,7 +134,7 @@ contract StakeLockerTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
-        gov.setPoolDelegateWhitelist(address(sid), true);
+        gov.setPoolDelegateAllowlist(address(sid), true);
         gov.setMapleTreasury(address(trs));
         bPool.finalize();
 
@@ -184,8 +184,8 @@ contract StakeLockerTest is TestUtil {
     function test_stake_to_measure_effect_on_stake_date() external {
         uint256 currentDate = block.timestamp;
 
-        sid.setWhitelistStakeLocker(address(pool), address(che), true);
-        sid.setWhitelistStakeLocker(address(pool), address(dan), true);
+        sid.setAllowlistStakeLocker(address(pool), address(che), true);
+        sid.setAllowlistStakeLocker(address(pool), address(dan), true);
         che.approve(address(bPool), address(stakeLocker), uint256(-1));
         dan.approve(address(bPool), address(stakeLocker), uint256(-1));
 
@@ -247,10 +247,10 @@ contract StakeLockerTest is TestUtil {
         assertTrue(!che.try_stake(address(stakeLocker),   25 * WAD));  // Hasn't approved BPTs
         che.approve(address(bPool), address(stakeLocker), 25 * WAD);
 
-        assertTrue(!che.try_stake(address(stakeLocker),   25 * WAD));  // Isn't yet whitelisted
+        assertTrue(!che.try_stake(address(stakeLocker),   25 * WAD));  // Isn't yet allowlisted
         che.approve(address(bPool), address(stakeLocker), 25 * WAD);
 
-        sid.setWhitelistStakeLocker(address(pool), address(che), true);
+        sid.setAllowlistStakeLocker(address(pool), address(che), true);
 
         assertEq(bPool.balanceOf(address(che)),         25 * WAD);
         assertEq(bPool.balanceOf(address(stakeLocker)), 50 * WAD);  // PD stake
@@ -269,28 +269,28 @@ contract StakeLockerTest is TestUtil {
 
     function test_stake_transfer_restrictions() public {
 
-        sid.setWhitelistStakeLocker(address(pool), address(che), true); // Add Staker to whitelist
+        sid.setAllowlistStakeLocker(address(pool), address(che), true); // Add Staker to allowlist
 
         // transfer() checks
 
         che.approve(address(bPool), address(stakeLocker), 25 * WAD); // Stake tokens
         assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));
 
-        assertTrue(!che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // No transfer to non-whitelisted user
+        assertTrue(!che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // No transfer to non-allowlisted user
 
-        sid.setWhitelistStakeLocker(address(pool), address(ali), true); // Add ali to whitelist
+        sid.setAllowlistStakeLocker(address(pool), address(ali), true); // Add ali to allowlist
 
-        assertTrue(che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // Yes transfer to whitelisted user
+        assertTrue(che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // Yes transfer to allowlisted user
 
         assertTrue(che.try_transfer(address(stakeLocker), address(sid), 1 * WAD)); // Yes transfer to pool delegate
 
         // transferFrom() checks
         che.approve(address(stakeLocker), address(dan), 5 * WAD);
-        sid.setWhitelistStakeLocker(address(pool), address(ali), false); // Remove ali to whitelist
-        sid.setWhitelistStakeLocker(address(pool), address(dan), true); // Add dan to whitelist
+        sid.setAllowlistStakeLocker(address(pool), address(ali), false); // Remove ali to allowlist
+        sid.setAllowlistStakeLocker(address(pool), address(dan), true); // Add dan to allowlist
 
-        assertTrue(!dan.try_transferFrom(address(stakeLocker), address(che), address(ali), 1 * WAD)); // No transferFrom to non-whitelisted user
-        assertTrue(dan.try_transferFrom(address(stakeLocker), address(che), address(dan), 1 * WAD)); // Yes transferFrom to whitelisted user
+        assertTrue(!dan.try_transferFrom(address(stakeLocker), address(che), address(ali), 1 * WAD)); // No transferFrom to non-allowlisted user
+        assertTrue(dan.try_transferFrom(address(stakeLocker), address(che), address(dan), 1 * WAD)); // Yes transferFrom to allowlisted user
         assertTrue(dan.try_transferFrom(address(stakeLocker), address(che), address(sid), 1 * WAD)); // Yes transferFrom to pool delegate
 
     }
@@ -317,7 +317,7 @@ contract StakeLockerTest is TestUtil {
     function test_unstake_past_unstakeDelay() public {
         uint256 stakeDate = block.timestamp;
 
-        sid.setWhitelistStakeLocker(address(pool), address(che), true);
+        sid.setAllowlistStakeLocker(address(pool), address(che), true);
         che.approve(address(bPool), address(stakeLocker), 25 * WAD);
         che.stake(address(stakeLocker), 25 * WAD);  
 
@@ -363,7 +363,7 @@ contract StakeLockerTest is TestUtil {
         dTime2       = constrictToRange(dTime2, 15, unstakeDelay / 2);                            // Max dtime is half unstakeDelay (total less than unstakeDelay for test)
 
         uint256 start = block.timestamp;
-        sid.setWhitelistStakeLocker(address(pool), address(che), true);
+        sid.setAllowlistStakeLocker(address(pool), address(che), true);
         che.approve(address(bPool), address(stakeLocker), MAX_UINT);
 
         che.stake(address(stakeLocker), stakeAmount);  
@@ -444,9 +444,9 @@ contract StakeLockerTest is TestUtil {
 
         stakeAmount = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(che)));  // 25 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents)
 
-        sid.setWhitelistStakeLocker(address(pool), address(che), true);
-        sid.setWhitelistStakeLocker(address(pool), address(dan), true);
-        sid.setWhitelistStakeLocker(address(pool), address(eli), true);
+        sid.setAllowlistStakeLocker(address(pool), address(che), true);
+        sid.setAllowlistStakeLocker(address(pool), address(dan), true);
+        sid.setAllowlistStakeLocker(address(pool), address(eli), true);
 
         che.approve(address(bPool), address(stakeLocker), MAX_UINT);
         dan.approve(address(bPool), address(stakeLocker), MAX_UINT);

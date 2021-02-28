@@ -9,7 +9,7 @@
 [`setDefaultUniswapPath(address from, address to, address mid)`](#MapleGlobals-setDefaultUniswapPath-address-address-address-)
 [`isValidSubFactory(address superFactory, address subFactory, uint8 factoryType)`](#MapleGlobals-isValidSubFactory-address-address-uint8-)
 [`isValidCalc(address calc, uint8 calcType)`](#MapleGlobals-isValidCalc-address-uint8-)
-[`setPoolDelegateWhitelist(address delegate, bool valid)`](#MapleGlobals-setPoolDelegateWhitelist-address-bool-)
+[`setPoolDelegateAllowlist(address delegate, bool valid)`](#MapleGlobals-setPoolDelegateAllowlist-address-bool-)
 [`assignPriceFeed(address asset, address oracle)`](#MapleGlobals-assignPriceFeed-address-address-)
 [`getPrice(address asset)`](#MapleGlobals-getPrice-address-)
 [`setCollateralAsset(address asset, bool valid)`](#MapleGlobals-setCollateralAsset-address-bool-)
@@ -79,7 +79,7 @@ Set to == mid to enable a bilateral swap (single path swap).
         @param  calc The calculator address
         @param  calcType  The calculator type
 
-### `setPoolDelegateWhitelist(address delegate, bool valid)`
+### `setPoolDelegateAllowlist(address delegate, bool valid)`
 Update validity of pool delegate (those able to create pools).
         @param  delegate The address to manage permissions for.
         @param  valid    The new permissions of delegate.

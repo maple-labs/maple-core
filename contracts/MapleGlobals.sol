@@ -189,7 +189,7 @@ contract MapleGlobals {
         @param  delegate The address to manage permissions for.
         @param  valid    The new permissions of delegate.
     */
-    function setPoolDelegateWhitelist(address delegate, bool valid) external isGovernor {
+    function setPoolDelegateAllowlist(address delegate, bool valid) external isGovernor {
         isValidPoolDelegate[delegate] = valid;
     }
     /**
