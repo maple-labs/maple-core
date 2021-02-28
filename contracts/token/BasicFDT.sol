@@ -36,7 +36,7 @@ abstract contract BasicFDT is IFDT, ERC20 {
      *   With a well-chosen `pointsMultiplier`, the amount funds that are not getting distributed
      *     in a distribution can be less than 1 (base unit).
      *   We can actually keep track of the undistributed ether in a distribution
-     *     and try to distribute it in the next distribution ....... todo implement
+     *     and try to distribute it in the next distribution
      */
     function _distributeFunds(uint256 value) internal {
         require(totalSupply() > 0, "FDT:SUPPLY_EQ_ZERO");

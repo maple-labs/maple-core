@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 import "./TestUtil.sol";
 
 import "./user/Governor.sol";
+import "./user/Borrower.sol";
 
 import "../CollateralLocker.sol";
 import "../CollateralLockerFactory.sol";
@@ -17,6 +18,7 @@ contract CollateralLockerFactoryTest is TestUtil {
     CollateralLockerFactory   clFactory;
     MapleToken                      mpl;
     MapleGlobals                globals;
+    Borrower                        ali;
 
     function setUp() public {
 
@@ -25,6 +27,7 @@ contract CollateralLockerFactoryTest is TestUtil {
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
         clFactory   = new CollateralLockerFactory();                   // Setup Collateral Locker Factory to support Loan Factory creation.
+        ali         = new Borrower();
         assertEq(clFactory.factoryType(), uint(0), "Incorrect factory type");
     }
 
@@ -37,5 +40,8 @@ contract CollateralLockerFactoryTest is TestUtil {
         // Validate the storage of cl.
         assertEq(cl.loan(), address(this), "Incorrect loan address");
         assertEq(address(cl.collateralAsset()), USDC, "Incorrect address of collateral asset");
+
+        mint("USDC", address(cl),  500 * USD);
+        assertTrue(!ali.try_pull(address(cl), address(ali), 10));
     }
 }
