@@ -442,17 +442,18 @@ contract StakeLockerTest is TestUtil {
 
         uint256 bptMin = WAD / 10_000_000;
 
-        stakeAmount = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(che)));  // 12.5 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents)
+        stakeAmount = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(che)));  // 25 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents)
 
         sid.setWhitelistStakeLocker(address(pool), address(che), true);
         sid.setWhitelistStakeLocker(address(pool), address(dan), true);
         sid.setWhitelistStakeLocker(address(pool), address(eli), true);
+
         che.approve(address(bPool), address(stakeLocker), MAX_UINT);
         dan.approve(address(bPool), address(stakeLocker), MAX_UINT);
         eli.approve(address(bPool), address(stakeLocker), MAX_UINT);
 
-        che.stake(address(stakeLocker), stakeAmount);  // Che stakes before default, withdraws min amount
-        dan.stake(address(stakeLocker), 25 * WAD);     // Dan stakes before default, withdraws full amount
+        che.stake(address(stakeLocker), stakeAmount);  // Che stakes before default, unstakes min amount
+        dan.stake(address(stakeLocker), 25 * WAD);     // Dan stakes before default, unstakes full amount
 
         uint256 interestPaid = setUpLoanMakeOnePaymentAndDefault();  // This does not affect any Pool accounting
         
@@ -493,7 +494,7 @@ contract StakeLockerTest is TestUtil {
         assertTrue(stakeLockerBal.post < stakeLockerBal.pre);  // BPTs were burned to cover losses
 
         assertEq(fdtTotalSupply.post,                                   stakeAmount + 75 * WAD);  // FDT Supply == total amount staked
-        assertEq(stakerFDTBal.post,                                                stakeAmount);  // Che FDT balance ==  amount staked
+        assertEq(stakerFDTBal.post,                                                stakeAmount);  // Che FDT balance == amount staked
         assertEq(fundsTokenBal.post,                                            stakingRevenue);  // Interest claimed
         assertEq(withdrawableFundsOf.post,  stakingRevenue * stakeAmount / fdtTotalSupply.post);  // Che claim on interest
         assertEq(bptLosses.post,                      stakeLockerBal.pre - stakeLockerBal.post);  // Losses registered in StakeLocker
@@ -515,6 +516,9 @@ contract StakeLockerTest is TestUtil {
         assertEq(bPool.balanceOf(address(che)),        25 * WAD - stakeAmount);  // Starting balance minus staked amount
         assertEq(IERC20(USDC).balanceOf(address(che)),                      0);  // USDC balance
 
+        assertEq(withdrawableFundsOf.pre,  fundsTokenBal.pre * stakeAmount / fdtTotalSupply.pre);  // Assert FDT interest accounting
+        assertEq(recognizableLossesOf.pre,     bptLosses.pre * stakeAmount / fdtTotalSupply.pre);  // Assert FDT loss     accounting
+
         assertTrue(!che.try_unstake(address(stakeLocker), recognizableLossesOf.pre - 1));  // Cannot withdraw less than the losses incurred
         assertTrue( che.try_unstake(address(stakeLocker), recognizableLossesOf.pre));      // Withdraw lowest possible amount (amt == recognizableLosses), FDTs burned to cover losses, no BPTs left to withdraw
 
@@ -534,12 +538,15 @@ contract StakeLockerTest is TestUtil {
         assertEq(bptLosses.post,                     bptLosses.pre - recognizableLossesOf.pre);  // Losses accounting has been updated
         assertEq(recognizableLossesOf.post,                                                 0);  // Losses have been recognized
 
-        assertEq(bPool.balanceOf(address(che)),         25 * WAD - stakeAmount);  // Starting balance minus staked amount
+        assertEq(bPool.balanceOf(address(che)),         25 * WAD - stakeAmount);  // Starting balance minus staked amount (same as before unstake, meaning no BPTs were returned to Che)
         assertEq(IERC20(USDC).balanceOf(address(che)), withdrawableFundsOf.pre);  // USDC balance
 
         /******************************************************/
         /*** Staker Post-Loss Unstake Accounting (Dan Only) ***/
         /******************************************************/
+
+        uint256 initialFundsTokenBal = fundsTokenBal.pre;  // Need this for asserting pre-unstake FDT
+        uint256 initialLosses        = bptLosses.pre;      // Need this for asserting pre-unstake FDT
 
         // Pre-unstake FDT and StakeLocker checks (update variables)
         stakeLockerBal.pre       = stakeLockerBal.post;
@@ -553,6 +560,9 @@ contract StakeLockerTest is TestUtil {
         assertEq(bPool.balanceOf(address(dan)),        0);  // Staked entire balance
         assertEq(IERC20(USDC).balanceOf(address(dan)), 0);  // USDC balance
 
+        assertEq(withdrawableFundsOf.pre,  initialFundsTokenBal * 25 * WAD / (75 * WAD + stakeAmount));  // Assert FDT interest accounting (have to use manual totalSupply because of Che unstake)
+        assertEq(recognizableLossesOf.pre,        initialLosses * 25 * WAD / (75 * WAD + stakeAmount));  // Assert FDT loss     accounting (have to use manual totalSupply because of Che unstake)
+
         assertTrue(!dan.try_unstake(address(stakeLocker), stakerFDTBal.pre + 1));  // Cannot withdraw more than current FDT bal
         assertTrue( dan.try_unstake(address(stakeLocker), stakerFDTBal.pre));      // Withdraw remaining BPTs
 
@@ -565,8 +575,8 @@ contract StakeLockerTest is TestUtil {
         recognizableLossesOf.post = stakeLocker.recognizableLossesOf(address(dan));
 
         assertEq(stakeLockerBal.post,      stakeLockerBal.pre - (25 * WAD - recognizableLossesOf.pre));  // Dan's unstake amount minus his losses
-        assertEq(fdtTotalSupply.post,                                   fdtTotalSupply.pre - 25 * WAD);  // FDT Supply = stakeAmount + 75 - recognizableLosses
-        assertEq(stakerFDTBal.post,                                                                 0);  // Che FDT balance burned on withdraw
+        assertEq(fdtTotalSupply.post,                                   fdtTotalSupply.pre - 25 * WAD);  // FDT Supply = previous FDT total supply - unstake amount
+        assertEq(stakerFDTBal.post,                                                                 0);  // Dan's entire FDT balance burned on withdraw
         assertEq(fundsTokenBal.post,                      fundsTokenBal.pre - withdrawableFundsOf.pre);  // Interest has been claimed 
         assertEq(withdrawableFundsOf.post,                                                          0);  // Interest cannot be claimed twice
         assertEq(bptLosses.post,                             bptLosses.pre - recognizableLossesOf.pre);  // Losses accounting has been updated
@@ -595,6 +605,9 @@ contract StakeLockerTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(eli)),        0);  // Staked entire balance
         assertEq(IERC20(USDC).balanceOf(address(eli)), 0);  // USDC balance
+
+        assertEq(withdrawableFundsOf.pre,  0);  // Assert FDT interest accounting
+        assertEq(recognizableLossesOf.pre, 0);  // Assert FDT loss     accounting
 
         hevm.warp(block.timestamp + globals.unstakeDelay());
         eli.unstake(address(stakeLocker), eliStakeAmount);  // Unstake entire balance
