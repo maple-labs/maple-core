@@ -95,7 +95,7 @@ contract Pool is PoolFDT {
         string memory symbol
     ) PoolFDT(name, symbol) public {
         require(_globals(msg.sender).isValidLoanAsset(_liquidityAsset), "Pool:INVALID_LIQ_ASSET");
-        require(_liquidityCap   != uint256(0),                          "Pool:INVALID_CAP");
+        require(_liquidityCap != uint256(0),                            "Pool:INVALID_CAP");
 
         // NOTE: Max length of this array would be 8, as thats the limit of assets in a balancer pool
         address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
@@ -250,11 +250,11 @@ contract Pool is PoolFDT {
         recognizeLosses();          // Update loss accounting for LP,   decrement `bptShortfall`
         withdrawFunds();            // Transfer full entitled interest, decrement `interestSum`
 
+        interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount
+        updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`
+
         // Transfer amt - totPenalty - recognizedLosses
         require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");
-
-        interestSum  = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount.
-        updateFundsReceived();                       // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`.
 
         _emitBalanceUpdatedEvent();
     }
@@ -269,8 +269,8 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
         _isValidDelegate();
-        PoolLib.fundLoan(debtLockers, superFactory, liquidityLocker, loan, dlFactory, amt);
         principalOut = principalOut.add(amt);
+        PoolLib.fundLoan(debtLockers, superFactory, liquidityLocker, loan, dlFactory, amt);
         _emitBalanceUpdatedEvent();
     }
 
