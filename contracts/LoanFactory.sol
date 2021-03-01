@@ -25,6 +25,8 @@ contract LoanFactory is Pausable {
     mapping(uint256 => address) public loans;   // Loans address mapping
     mapping(address => bool)    public isLoan;  // Used to check if a Loan was instantiated from this contract
 
+    mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
+
     event LoanCreated(
         string  indexed tUUID,
         address loan,
@@ -127,33 +129,49 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Triggers paused state. Halts functionality for certain functions.
+        @dev Set admin.
+        @param newAdmin New admin address
+        @param allowed  Status of an admin
+    */
+    function setAdmin(address newAdmin, bool allowed) external {
+        _isValidGovernor();
+        admins[newAdmin] = allowed;
+    }
+
+    /**
+        @dev Triggers paused state. Halts functionality for certain functions. Only Governor can call this function.
     */
     function pause() external { 
-        _isValidGovernor();
+        _isValidGovernorOrAdmin();
         super._pause();
     }
 
     /**
-        @dev Triggers unpaused state. Returns functionality for certain functions.
+        @dev Triggers unpaused state. Returns functionality for certain functions. Only Governor can call this function.
     */
     function unpause() external {
-        _isValidGovernor();
+        _isValidGovernorOrAdmin();
         super._unpause();
     }
 
     /**
-        @dev Utility to return in msg.sender is the Governor.
+        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
     */
     function _isValidGovernor() internal view {
-        require(msg.sender == globals.governor(), "LF:INVALID_GOVERNOR");
+        require(msg.sender == globals.governor(), "PoolFactory:INVALID_GOVERNOR");
     }
 
     /**
-        @dev Function to block functionality of functions when Loan is in a paused state.
+        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+    */
+    function _isValidGovernorOrAdmin() internal {
+        require(msg.sender == globals.governor() || admins[msg.sender], "PoolFactory:UNAUTHORIZED");
+    }
+
+    /**
+        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
     */
     function _whenProtocolNotPaused() internal {
-        require(!globals.protocolPaused(), "LF:PROTOCOL_PAUSED");
+        require(!globals.protocolPaused(), "PoolFactory:PROTOCOL_PAUSED");
     }
-    
 }
