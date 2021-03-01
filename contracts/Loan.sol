@@ -74,9 +74,9 @@ contract Loan is FDT, Pausable {
     
     // Liquidation variables
     uint256 public amountLiquidated;   // Amount of collateral that has been liquidated after default
-    uint256 public amountRecovered;    // Amount of loanAsset that  has been recovered  after default
-    uint256 public defaultSuffered;    // Difference between amountRecovered and principalOwed after liquidation
-    uint256 public liquidationExcess;  // If amountRecovered > principalOwed, amount of loanAsset that is to be returned to borrower
+    uint256 public amountRecovered;    // Amount of loanAsset  that has been recovered  after default
+    uint256 public defaultSuffered;    // Difference between `amountRecovered` and `principalOwed` after liquidation
+    uint256 public liquidationExcess;  // If `amountRecovered > principalOwed`, amount of loanAsset that is to be returned to borrower
 
     event LoanFunded(uint256 amtFunded, address indexed _fundedBy);
     event BalanceUpdated(address who, address token, uint256 balance);

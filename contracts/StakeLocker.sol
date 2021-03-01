@@ -72,7 +72,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /** 
-        @dev Modifier to check if msg.sender is allowed to stake.
+        @dev Internal function to check whether `msg.sender` is allowed to stake.
     */
     function _isAllowed(address user) internal view {
         require(
