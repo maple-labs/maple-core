@@ -51,6 +51,8 @@ contract PoolFactoryTest is TestUtil {
         llFactory   = new LiquidityLockerFactory();
         poolFactory = new PoolFactory(address(globals));
 
+        emit Debug("PoolFactorySize", getExtcodesize(address(poolFactory)));
+
         gov.setValidPoolFactory(address(poolFactory), true);
         
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
@@ -94,6 +96,7 @@ contract PoolFactoryTest is TestUtil {
 
         assertTrue(gov.try_setGlobals(address(poolFactory), address(globals2)));       // Governor can set new globals
         assertEq(address(poolFactory.globals()), address(globals2));                   // Globals is updated
+        assertTrue(false);
     }
         
     function createPoolFails() internal returns(bool) {
