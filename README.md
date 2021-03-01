@@ -4,7 +4,7 @@
 
 ***
 
-### Background
+## Background
 Maple is a decentralized corporate credit market. Maple provides capital to institutional borrowers through globally accessible fixed-income yield opportunities.
 
 For Borrowers, Maple offers **transparent and efficient financing done entirely on-chain.**
@@ -23,12 +23,12 @@ For Pool Delegates, Maple is a **vehicle to attract funding and earn performance
 * Maple is a new platform providing decentralised asset management infrastructure
 * Globally accessible pools enable increased AUM from varied liquidity sources to be provided to networks of premium, credit worthy borrowers
 
-### Toolset
+## Toolset
 
 - <a href="https://github.com/dapphub/dapptools">DappTools</a>
 - <a href="https://docs.soliditylang.org/en/v0.6.11/">Solidity 0.6.11</a>
 
-### Dev Setup
+## Development Setup
 
 ```sh
 git clone git@github.com:maple-labs/maple-core.git
@@ -36,7 +36,7 @@ cd maple-core
 dapp update
 ```
 
-### Testing
+## Testing
 
 - To run unit tests: `make unit-test`
 - To run fuzz tests: `make fuzz-test` (runs `test-fuzz.sh`)
@@ -46,6 +46,6 @@ To alter number of fuzz runs, change the `--fuzz-runs` flag in `./test-ci.sh` or
 
 Note: Number of `--fuzz-runs` in `./test-ci.sh` should remain constant on push. Only change for local testing if needed.
 
-### Join us on Discord
+## Join us on Discord
 
 <a href="https://discord.gg/tuNYQse">Maple Discord</a>
