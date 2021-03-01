@@ -10,20 +10,20 @@ import "./token/StakeLockerFDT.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
-/// @title StakeLocker is responsbile for escrowing staked assets and distributing a portion of interest payments.
+/// @title StakeLocker holds custody of stakeAsset tokens for a given Pool and earns revenue from interest.
 contract StakeLocker is StakeLockerFDT, Pausable {
 
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
 
-    uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division.
+    uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division
 
     IERC20  public immutable stakeAsset;  // The asset deposited by stakers into this contract, for liquidation during defaults.
     
-    address public immutable liquidityAsset;  // The LiquidityAsset for the Pool as well as the dividend token for this contract.
+    address public immutable liquidityAsset;  // The liquidityAsset for the Pool as well as the dividend token for FDT interest.
     address public immutable owner;           // The parent liquidity pool.
 
-    mapping(address => uint256) public stakeDate; // Map address to effective deposit date value
+    mapping(address => uint256) public stakeDate; // Map address to effective stake date value
     mapping(address => bool)    public allowed;   // Map address to allowed status
 
     event BalanceUpdated(address who, address token, uint256 balance);
@@ -42,9 +42,9 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     event Unstake(uint256 _amount, address _staker);
 
     /** 
-        canUnstake enables unstaking in the following conditions:
-            1. User is not Pool Delegate and the Pool is in Finalized state.
-            2. User is Pool Delegate and the Pool is in Initialized or Deactivated state.
+        @dev canUnstake enables unstaking in the following conditions:
+        1. User is not Pool Delegate and the Pool is in Finalized state.
+        2. User is Pool Delegate and the Pool is in Initialized or Deactivated state.
     */
     modifier canUnstake() {
         require(
@@ -55,16 +55,25 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _;
     }
     
+    /** 
+        @dev Modifier to check if msg.sender is Governor.
+    */
     modifier isGovernor() {
         require(msg.sender == _globals().governor(), "StakeLocker:MSG_SENDER_NOT_GOVERNOR");
         _;
     }
 
+    /** 
+        @dev Modifier to check if msg.sender is Pool.
+    */
     modifier isPool() {
         require(msg.sender == owner, "StakeLocker:MSG_SENDER_NOT_POOL");
         _;
     }
 
+    /** 
+        @dev Internal function to check whether `msg.sender` is allowed to stake.
+    */
     function _isAllowed(address user) internal view {
         require(
             allowed[user] || user == IPool(owner).poolDelegate(), 
@@ -72,18 +81,24 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         );
     }
 
+    /** 
+        @dev Helper function to return interface of MapleGlobals.
+    */
     function _globals() internal view returns(IGlobals) {
         return IGlobals(IPoolFactory(IPool(owner).superFactory()).globals());
     }
 
+    /**
+        @dev Function to block functionality of functions when protocol is in a paused state.
+    */
     function _whenProtocolNotPaused() internal {
         require(!_globals().protocolPaused(), "StakeLocker:PROTOCOL_PAUSED");
     }
 
     /**
-        @dev Update user status on the allowlist. Only Pool owner can call this.
-        @param user   The address to set status for.
-        @param status The status of user on allowlist.
+        @dev Update user status on the allowlist. Only Pool can call this.
+        @param user   The address to set status for
+        @param status The status of user on allowlist
     */
     function setAllowlist(address user, bool status) isPool public {
         allowed[user] = status;
@@ -91,8 +106,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Transfers amt of stakeAsset to dst.
-        @param  dst Desintation to transfer stakeAsset to.
-        @param  amt Amount of stakeAsset to transfer.
+        @param dst Desintation to transfer stakeAsset to
+        @param amt Amount of stakeAsset to transfer
     */
     function pull(address dst, uint256 amt) isPool public returns(bool) {
         return stakeAsset.transfer(dst, amt);
@@ -100,7 +115,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
-        @param amt Amount of stakeAsset (BPTs) to deposit.
+        @param amt Amount of stakeAsset (BPTs) to deposit
     */
     function stake(uint256 amt) whenNotPaused external {
         _whenProtocolNotPaused();
@@ -115,8 +130,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Withdraw amt of stakeAsset, burn FDTs for msg.sender.
-        @param amt Amount of stakeAsset (BPTs) to withdraw.
+        @dev Withdraw amt of stakeAsset minus any losses, claim interest, burn FDTs for msg.sender.
+        @param amt Amount of stakeAsset (BPTs) to withdraw
     */
     function unstake(uint256 amt) external canUnstake {
         _whenProtocolNotPaused();
@@ -140,8 +155,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /** 
         @dev Updates information used to calculate unstake delay.
-        @param who The staker who deposited BPTs.
-        @param amt Amount of BPTs staker has deposited.
+        @param who Staker who deposited BPTs
+        @param amt Amount of BPTs staker has deposited
     */
     function _updateStakeDate(address who, uint256 amt) internal {
         uint256 stkDate = stakeDate[who];
@@ -155,8 +170,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Returns information for staker's unstakeable balance.
-        @param staker The address to view information for.
-        @return balance Amount of BPTs staker can unstake.
+        @param staker The address to view information for
+        @return balance Amount of BPTs staker can unstake
     */
     function getUnstakeableBalance(address staker) public view returns (uint256 balance) {
         uint256 bal          = balanceOf(staker);
@@ -167,8 +182,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-     * @dev Withdraws all available funds for a token holder
-     */
+        @dev Withdraws all available FDT interest earned for a token holder.
+    */
     function withdrawFunds() public override {
         _whenProtocolNotPaused();
         
@@ -179,11 +194,21 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _updateFundsTokenBalance();
     }
 
+    /**
+        @dev Updates loss accounting for FDTs after BPTs have been burned. Only Pool can call this function.
+        @param bptsBurned Amount of BPTs that have been burned
+    */
     function updateLosses(uint256 bptsBurned) isPool external {
         bptLosses = bptLosses.add(bptsBurned);
         updateLossesReceived();
     }
 
+    /**
+        @dev Transfer StakerLockerFDTs.
+        @param from Address sending   StakeLockerFDTs
+        @param to   Address receiving StakeLockerFDTs
+        @param amt  Amount of FDTs to transfer
+    */
     function _transfer(address from, address to, uint256 amt) internal override canUnstake {
         _whenProtocolNotPaused();
         _isAllowed(to);
@@ -192,8 +217,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Triggers stopped state.
-             The contract must not be paused.
+        @dev Triggers paused state. Halts functionality for certain functions.
     */
     function pause() external {
         _isValidAdminOrPoolDelegate();
@@ -201,14 +225,16 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Returns to normal state.
-             The contract must be paused.
+        @dev Triggers unpaused state. Returns functionality for certain functions.
     */
     function unpause() external {
         _isValidAdminOrPoolDelegate();
         super._unpause();
     }
 
+    /**
+        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+    */
     function _isValidAdminOrPoolDelegate() internal view {
         require(msg.sender == IPool(owner).poolDelegate() || IPool(owner).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
     }

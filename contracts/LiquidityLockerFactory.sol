@@ -3,17 +3,18 @@ pragma solidity 0.6.11;
 
 import "./LiquidityLocker.sol";
 
+/// @title LiquidityLockerFactory instantiates LiquidityLockers.
 contract LiquidityLockerFactory {
 
-    mapping(address => address) public owner;     // owner[locker] = Owner of the liquidity locker.
-    mapping(address => bool)    public isLocker;  // True if liquidity locker was created by this factory, otherwise false.
+    mapping(address => address) public owner;     // owner[locker] = Owner of the liquidity locker
+    mapping(address => bool)    public isLocker;  // True if liquidity locker was created by this factory, otherwise false
 
-    uint8 public constant factoryType = 3;        // i.e LockerFactoryTypes::LIQUIDITY_LOCKER_FACTORY.
+    uint8 public constant factoryType = 3;        // i.e LockerFactoryTypes::LIQUIDITY_LOCKER_FACTORY
 
     /**
         @dev Instantiate a LiquidityLocker contract.
-        @param  liquidityAsset The asset this liquidity locker will escrow.
-        @return Address of the instantiated liquidity locker.
+        @param  liquidityAsset The asset this liquidity locker will escrow
+        @return Address of the instantiated liquidity locker
     */
     function newLocker(address liquidityAsset) external returns (address) {
         address liquidityLocker   = address(new LiquidityLocker(liquidityAsset, msg.sender));
@@ -21,5 +22,4 @@ contract LiquidityLockerFactory {
         isLocker[liquidityLocker] = true;
         return liquidityLocker;
     }
-    
 }

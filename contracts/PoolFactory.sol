@@ -9,16 +9,19 @@ import "./library/TokenUUID.sol";
 
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
+/// @title PoolFactory instantiates Pools.
 contract PoolFactory is Pausable {
 
-    uint8 public constant LL_FACTORY = 3;   // Factory type of `LiquidityLockerFactory`.
-    uint8 public constant SL_FACTORY = 4;   // Factory type of `StakeLockerFactory`.
+    uint8 public constant LL_FACTORY = 3;  // Factory type of `LiquidityLockerFactory`
+    uint8 public constant SL_FACTORY = 4;  // Factory type of `StakeLockerFactory`
 
-    uint256  public poolsCreated;  // Incrementor for number of LPs created.
-    IGlobals public globals;       // MapleGlobals contract.
+    uint256  public poolsCreated;  // Incrementor for number of Pools created
+    IGlobals public globals;       // MapleGlobals contract
 
-    mapping(uint256 => address) public pools;  // Mappings for liquidity pool contracts, and their validation.
-    mapping(address => bool)    public isPool;
+    mapping(uint256 => address) public pools;   // Pools address mapping
+    mapping(address => bool)    public isPool;  // Used to check if a Pool was instantiated from this contract
+
+    mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
 
     event PoolCreated(
         string  indexed tUUID,
@@ -40,8 +43,8 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Update the maple globals contract
-        @param  newGlobals Address of new maple globals contract
+        @dev Update the MapleGlobals contract
+        @param newGlobals Address of new MapleGlobals contract
     */
     function setGlobals(address newGlobals) external {
         _isValidGovernor();
@@ -50,13 +53,13 @@ contract PoolFactory is Pausable {
 
     /**
         @dev Instantiates a Pool contract.
-        @param  liquidityAsset The asset escrowed in LiquidityLocker.
-        @param  stakeAsset     The asset escrowed in StakeLocker.
-        @param  slFactory      The factory to instantiate a Stake Locker from.
-        @param  llFactory      The factory to instantiate a Liquidity Locker from.
-        @param  stakingFee     Fee that stakers earn on interest, in bips.
-        @param  delegateFee    Fee that pool delegate earns on interest, in bips.
-        @param  liquidityCap   Amount of liquidity tokens accepted by the pool.
+        @param  liquidityAsset The asset escrowed in LiquidityLocker
+        @param  stakeAsset     The asset escrowed in StakeLocker
+        @param  slFactory      The factory to instantiate a StakeLocker from
+        @param  llFactory      The factory to instantiate a LiquidityLocker from
+        @param  stakingFee     Fee that stakers earn on interest, in basis points
+        @param  delegateFee    Fee that pool delegate earns on interest, in basis points
+        @param  liquidityCap   Amount of liquidityAsset accepted by the pool
     */
     function createPool(
         address liquidityAsset, 
@@ -116,28 +119,49 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Triggers stopped state.
-             The contract must not be paused.
+        @dev Set admin.
+        @param newAdmin New admin address
+        @param allowed  Status of an admin
+    */
+    function setAdmin(address newAdmin, bool allowed) external {
+        _isValidGovernor();
+        admins[newAdmin] = allowed;
+    }
+
+    /**
+        @dev Triggers paused state. Halts functionality for certain functions. Only Governor can call this function.
     */
     function pause() external { 
-        _isValidGovernor();
+        _isValidGovernorOrAdmin();
         super._pause();
     }
 
     /**
-        @dev Returns to normal state.
-             The contract must be paused.
+        @dev Triggers unpaused state. Returns functionality for certain functions. Only Governor can call this function.
     */
     function unpause() external {
-        _isValidGovernor();
+        _isValidGovernorOrAdmin();
         super._unpause();
     }
 
+    /**
+        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+    */
     function _isValidGovernor() internal view {
-        require(msg.sender == globals.governor(), "PF:INVALID_GOVERNOR");
+        require(msg.sender == globals.governor(), "PoolFactory:INVALID_GOVERNOR");
     }
 
+    /**
+        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+    */
+    function _isValidGovernorOrAdmin() internal {
+        require(msg.sender == globals.governor() || admins[msg.sender], "PoolFactory:UNAUTHORIZED");
+    }
+
+    /**
+        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+    */
     function _whenProtocolNotPaused() internal {
-        require(!globals.protocolPaused(), "PF:PROTOCOL_PAUSED");
+        require(!globals.protocolPaused(), "PoolFactory:PROTOCOL_PAUSED");
     }
 }

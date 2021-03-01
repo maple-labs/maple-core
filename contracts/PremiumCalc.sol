@@ -5,23 +5,23 @@ import "./interfaces/ILoan.sol";
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
-/// @title PremiumCalc applies a flat fee on the princpal owed when paying off the loan in full.
+/// @title PremiumCalc calculates premium fees on Loans.
 contract PremiumCalc {
 
     using SafeMath for uint256;
 
-    uint8   public constant calcType = 12; // PREMIUM type
+    uint8   public constant calcType = 12;      // PREMIUM type
     bytes32 public constant name     = "FLAT";
     
-    uint256 public premiumBips;  // The amount of principal to charge extra as a premium for calling the loan.
+    uint256 public premiumBips;  // Flat percentage fee (in basis points) of principal to charge as a premium when calling a Loan
 
     constructor(uint256 _premiumBips) public {
         premiumBips = _premiumBips;
     }
 
     /**
-        @dev    Calculates the premium payment for a _loan, when making a full payment.
-        @param  _loan is the Loan to calculate a premium payment for.
+        @dev    Calculates the premium payment for a Loan, when making a full payment.
+        @param  _loan Loan to calculate a premium payment for
         @return [0] = Principal + Interest
                 [1] = Principal
                 [2] = Interest

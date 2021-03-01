@@ -6,15 +6,16 @@ import "./interfaces/ILoan.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
+/// @title DebtLocker holds custody of LoanFDT tokens.
 contract DebtLocker {
 
     using SafeMath for uint256;
 
     uint256 constant WAD = 10 ** 18;
 
-    ILoan   public immutable loan;       // The Loan that this locker is holding tokens for.
-    IERC20  public immutable loanAsset;  // The loanAsset that this locker will claim.
-    address public immutable owner;      // The owner of this Locker (a liquidity pool).
+    ILoan   public immutable loan;       // The Loan that this locker is holding tokens for
+    IERC20  public immutable loanAsset;  // The loanAsset that this locker will claim
+    address public immutable owner;      // The owner of this Locker (the Pool)
 
     uint256 public principalPaid;    // Loan total principal   paid at time of claim()
     uint256 public interestPaid;     // Loan total interest    paid at time of claim()
@@ -39,44 +40,44 @@ contract DebtLocker {
     }
 
     /**
-        @dev    Claim funds distribution for loan via FDT.
+        @dev    Claim funds distribution for Loan via FDT.
         @return [0] = Total Claimed
                 [1] = Interest Claimed
                 [2] = Principal Claimed
                 [3] = Fee Claimed
                 [4] = Excess Returned Claimed
-                [5] = Default Suffered
-                [6] = Amount Recovered (from Liquidation)
+                [5] = Amount Recovered (from Liquidation)
+                [6] = Default Suffered
     */
     function claim() external isOwner returns(uint256[7] memory) {
 
-        // Tick FDT via FDT.
+        // Account for any transfers into Loan that have occured since last call
         loan.updateFundsReceived();
 
-        // Calculate deltas.
+        // Calculate deltas
         uint256 newInterest        = loan.interestPaid() - interestPaid;
         uint256 newPrincipal       = loan.principalPaid() - principalPaid;
         uint256 newFee             = loan.feePaid() - feePaid;
         uint256 newExcess          = loan.excessReturned() - excessReturned;
         uint256 newAmountRecovered = loan.amountRecovered() - amountRecovered;
 
-        // Update accounting.
+        // Update accounting
         interestPaid     = loan.interestPaid();
         principalPaid    = loan.principalPaid();
         feePaid          = loan.feePaid();
         excessReturned   = loan.excessReturned();
         amountRecovered  = loan.amountRecovered();
 
-        // Update defaultSuffered value based on ratio of total supply of DebtTokens owned by this DebtLocker.
+        // Update defaultSuffered value based on ratio of total supply of DebtTokens owned by this DebtLocker
         defaultSuffered = loan.defaultSuffered().mul(loan.balanceOf(address(this))).div(loan.totalSupply());
 
-        // Withdraw funds via FDT.
+        // Withdraw funds via FDT
         uint256 beforeBal = loanAsset.balanceOf(address(this));  // Current balance of locker (accounts for direct inflows)
         loan.withdrawFunds();                                    // Transfer funds from loan to debtLocker
         
         uint256 claimBal = loanAsset.balanceOf(address(this)).sub(beforeBal);  // Amount claimed from loan using FDT
         
-        // Calculate distributed amounts, transfer the asset, and return metadata.
+        // Calculate distributed amounts, transfer the asset, and return metadata
         uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess).add(newAmountRecovered);
         uint256 interest  = calcAllotment(newInterest,        sum, claimBal);
         uint256 principal = calcAllotment(newPrincipal,       sum, claimBal);
@@ -90,8 +91,8 @@ contract DebtLocker {
     }
 
     /**
-        @dev Liquidate a loan that is hold by this contract. Only called by the pool contract.
-     */
+        @dev Liquidate a loan that is held by this contract. Only called by the pool contract.
+    */
     function triggerDefault() external isOwner {
         loan.triggerDefault();
     }

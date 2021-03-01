@@ -3,6 +3,7 @@ pragma solidity 0.6.11;
 
 import "./ExtendedFDT.sol";
 
+/// @title PoolFDT inherits ExtendedFDT and accounts for gains/losses for Liquidity Providers.
 abstract contract PoolFDT is ExtendedFDT {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
@@ -29,8 +30,8 @@ abstract contract PoolFDT is ExtendedFDT {
     }
 
     /**
-        @dev Updates the current funds token balance and returns the difference of new and previous funds token balances.
-        @return A int256 representing the difference of the new and previous funds token balance.
+        @dev Updates the current losses balance and returns the difference of new and previous losses balances.
+        @return A int256 representing the difference of the new and previous losses balance.
     */
     function _updateLossesBalance() internal override returns (int256) {
         uint256 _prevLossesTokenBalance = lossesBalance;
@@ -41,8 +42,8 @@ abstract contract PoolFDT is ExtendedFDT {
     }
 
     /**
-        @dev Updates the current funds token balance and returns the difference of new and previous funds token balances.
-        @return A int256 representing the difference of the new and previous funds token balance.
+        @dev Updates the current interest balance and returns the difference of new and previous interest balances.
+        @return A int256 representing the difference of the new and previous interest balance.
     */
     function _updateFundsTokenBalance() internal override returns (int256) {
         uint256 _prevFundsTokenBalance = interestBalance;
@@ -51,5 +52,4 @@ abstract contract PoolFDT is ExtendedFDT {
 
         return int256(interestBalance).sub(int256(_prevFundsTokenBalance));
     }
-
 }

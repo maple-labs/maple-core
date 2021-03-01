@@ -7,6 +7,7 @@ import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
+/// @title StakingRewards Synthetix farming contract fork for liquidity mining.
 contract StakingRewards is Ownable {
     using SafeMath for uint256;
 
@@ -161,9 +162,8 @@ contract StakingRewards is Ownable {
     }
 
     /**
-     * @notice Change the paused state of the contract
-     * @dev Only the contract owner may call this.
-     */
+        @dev Change the paused state of the contract. Only the contract owner may call this.
+    */
     function setPaused(bool _paused) external onlyOwner {
         // Ensure we're actually changing the state before we do anything
         if (_paused == paused) return;

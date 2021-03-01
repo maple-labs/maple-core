@@ -6,7 +6,7 @@ import "./interfaces/IRepaymentCalc.sol";
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
-/// @title LateFeeCalc applies a flat fee on the amount owed for next payment.
+/// @title LateFeeCalc calculates late fees on Loans.
 contract LateFeeCalc {
 
     using SafeMath for uint256;
@@ -22,7 +22,7 @@ contract LateFeeCalc {
 
     /**
         @dev    Calculates the late fee payment for a _loan.
-        @param  loan is the Loan to calculate late fee for.
+        @param  loan Address of the Loan to calculate late fee for
         @return [0] = Principal + Interest (Total)
                 [1] = Principal
                 [2] = Interest
