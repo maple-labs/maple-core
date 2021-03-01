@@ -2,8 +2,9 @@
   <img src="https://www.maple.finance/static/logo-52b94a65fa2c9a7c9ede3cb978b2408f.png" />
 </p>
 
-<h1 align=center><code>maple-core</code></h1>
+***
 
+### Background
 Maple is a decentralized corporate credit market. Maple provides capital to institutional borrowers through globally accessible fixed-income yield opportunities.
 
 For Borrowers, Maple offers **transparent and efficient financing done entirely on-chain.**
