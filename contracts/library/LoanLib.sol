@@ -166,9 +166,7 @@ library LoanLib {
             interest
         ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
 
-        // TODO: Change this to just block.timestamp > nextPaymentDue
-        // Borrowers can get out of late fees by waiting until the exact second this condition is no longer met
-        if (block.timestamp > nextPaymentDue && block.timestamp <= nextPaymentDue.add(globals.gracePeriod())) {
+        if (block.timestamp > nextPaymentDue) {
             (
                 uint256 totalExtra, 
                 uint256 principalExtra, 
