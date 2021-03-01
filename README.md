@@ -21,6 +21,10 @@ For Pool Delegates, Maple is a **vehicle to attract funding and earn performance
 * Maple is a new platform providing decentralised asset management infrastructure
 * Globally accessible pools enable increased AUM from varied liquidity sources to be provided to networks of premium, credit worthy borrowers
 
+## Technical Documentation
+
+For all technical documentation related to the Maple protocol, please refer to the GitHub [wiki](https://github.com/maple-labs/maple-core/wiki).
+
 ## Toolset
 
 - <a href="https://github.com/dapphub/dapptools">DappTools</a>
