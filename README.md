@@ -1,17 +1,31 @@
-# Maple Finance Core
+<p align="center">
+  <img src="https://www.maple.finance/static/logo-52b94a65fa2c9a7c9ede3cb978b2408f.png" />
+</p>
 
-The Maple Core protocol.
+<h1 align=center><code>maple-core</code></h1>
+
+Maple is a decentralized corporate credit market. Maple provides capital to institutional borrowers through globally accessible fixed-income yield opportunities.
+
+For Borrowers, Maple offers **transparent and efficient financing done entirely on-chain.**
+
+* Funds can leverage their reputation to borrow undercollateralized without constant fear of liquidation and margin calls
+* Borrowers access pools of capital governed by smart contracts and liaise with Pool Delegates to confidentially complete loan assessments
+
+For Liquidity Providers, Maple offers a **sustainable yield source through professionally managed lending pools.**
+
+* Diversified exposure across premium borrowers with staked MPL tokens providing reserve capital against loan defaults
+* Set and forget solution with diligence outsourced to Pool Delegates
+* Interest is accrued and reinvested to enable capital to compound over time
+
+For Pool Delegates, Maple is a **vehicle to attract funding and earn performance fees.**
+
+* Maple is a new platform providing decentralised asset management infrastructure
+* Globally accessible pools enable increased AUM from varied liquidity sources to be provided to networks of premium, credit worthy borrowers
 
 ### Toolset
 
-- <a href="https://github.com/dapphub/dapptools">Dapp tools</a>
+- <a href="https://github.com/dapphub/dapptools">DappTools</a>
 - <a href="https://docs.soliditylang.org/en/v0.6.11/">Solidity 0.6.11</a>
-- <a href="https://github.com/OpenZeppelin/solidity-docgen">Solidity-Docgen</a>
-- Node v14
-- Yarn
-- VSCode
-  - Juan Blanco's Solidity plugin for VsCode
-  - Prettier Plugin
 
 ### Dev Setup
 
