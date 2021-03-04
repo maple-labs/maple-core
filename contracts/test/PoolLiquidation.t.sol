@@ -235,7 +235,7 @@ contract PoolLiquidationTest is TestUtil {
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
         // Trigger default
-        loan.triggerDefault();
+        sid.triggerDefault(address(pool_a), address(loan), address(dlFactory));
     }
 
     function test_claim_default_info() public {
@@ -369,7 +369,7 @@ contract PoolLiquidationTest is TestUtil {
         hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.gracePeriod() + 1);
 
         // Trigger default
-        loan.triggerDefault();
+        sid.triggerDefault(address(pool_a), address(loan), address(dlFactory));
 
         // Instantiate all test variables
         TestObj memory liquidityLockerBal;

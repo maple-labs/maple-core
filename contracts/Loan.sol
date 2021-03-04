@@ -306,7 +306,7 @@ contract Loan is FDT, Pausable {
     function triggerDefault() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-        require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender)), "Loan:FAILED_TO_LIQUIDATE");
+        require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
         _triggerDefault();
     }
 
