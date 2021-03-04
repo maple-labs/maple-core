@@ -428,7 +428,7 @@ contract StakeLockerTest is TestUtil {
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
         // Trigger default
-        loan.triggerDefault();
+        sid.triggerDefault(address(pool), address(loan), address(dlFactory));
     }
 
     function test_staker_fdt_accounting(uint256 stakeAmount) public {
