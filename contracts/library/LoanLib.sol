@@ -26,8 +26,6 @@ library LoanLib {
 
     address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
-    uint256 constant WAD = 10 ** 18;
-
     /**
         @dev If the borrower has not drawn down loan past grace period, return capital to lenders.
         @param loanAsset       IERC20 of the loanAsset
