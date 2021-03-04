@@ -124,8 +124,6 @@ contract LoanLiquidationTest is TestUtil {
         assertEq(uint256(loan.loanState()),                                                     1);
         assertEq(IERC20(collateralAsset).balanceOf(address(collateralLocker)),  collateralBalance);
 
-        Debug("loan bal", loan.balanceOf(address(bob)));
-
         bob.triggerDefault(address(loan));
 
         {

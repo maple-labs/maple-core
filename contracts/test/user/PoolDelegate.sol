@@ -140,7 +140,7 @@ contract PoolDelegate {
     }
 
     function try_triggerDefault(address pool, address loan, address dlFactory) external returns(bool ok) {
-        string memory sig = "triggerDefault(address)";
+        string memory sig = "triggerDefault(address,address)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
     }
 

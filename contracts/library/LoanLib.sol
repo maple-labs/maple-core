@@ -113,8 +113,6 @@ library LoanLib {
         }
     }
 
-    event Debug (string, uint);
-
     /**
         @dev Determines if a default can be triggered.
         @param nextPaymentDue Timestamp of when payment is due
@@ -126,9 +124,6 @@ library LoanLib {
     function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance, uint256 totalSupply) external returns(bool) {
 
         bool pastGracePeriod = block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod());
-
-        emit Debug("equity", balance);
-        emit Debug("cond",   totalSupply * _globals(superFactory).minLoanEquity() / 10_000);
 
         // Check if the loan is past the gracePeriod and that msg.sender has a percentage of total LoanFDTs that is greater
         // the minimum equity needed (specified in globals)

@@ -7,6 +7,7 @@ import "./TestUtil.sol";
 
 import "./user/Borrower.sol";
 import "./user/Governor.sol";
+import "./user/Lender.sol";
 import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
 import "./user/Staker.sol";
@@ -51,6 +52,7 @@ contract PoolLiquidationTest is TestUtil {
     LP                                     bob;
     Staker                                 dan;
     Staker                                 eli;
+    Lender                                 fay;
     PoolDelegate                           sid;
     PoolDelegate                           joe;
 
@@ -90,6 +92,7 @@ contract PoolLiquidationTest is TestUtil {
         bob            = new LP();                           // Actor: Liquidity provider.
         dan            = new Staker();                       // Actor: Stakes BPTs in Pool.
         eli            = new Staker();                       // Actor: Stakes BPTs in Pool.
+        fay            = new Lender();                       // Actor: Funds loan directly (test liquidation)
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -208,6 +211,40 @@ contract PoolLiquidationTest is TestUtil {
 
         assertEq(uint256(pool_a.poolState()), 1);  // Finalize
         assertEq(uint256(pool_b.poolState()), 1);  // Finalize
+    }
+
+    function test_triggerDefault_pool_delegate() public {
+        // Individual lender funds loan for 60% + 1 wei
+        mint("USDC", address(fay),  60_000_000 * USD + 1);
+        fay.approve(USDC, address(loan), MAX_UINT);
+        fay.fundLoan(address(loan), 60_000_000 * USD + 1, address(fay));
+
+        // Fund the pool
+        mint("USDC", address(ali), 40_000_000 * USD);
+        ali.approve(USDC, address(pool_a), MAX_UINT);
+        ali.approve(USDC, address(pool_b), MAX_UINT);
+        ali.deposit(address(pool_a), 20_000_000 * USD);
+        ali.deposit(address(pool_b), 20_000_000 * USD);
+
+        // Fund the loan
+        sid.fundLoan(address(pool_a), address(loan), address(dlFactory),     20_000_000 * USD);  // Exactly 20% equity
+        joe.fundLoan(address(pool_b), address(loan), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1 wei equity 
+        uint cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
+
+        // Drawdown loan
+        mint("WETH", address(che), cReq);
+        che.approve(WETH, address(loan), MAX_UINT);
+        che.drawdown(address(loan), 4_000_000 * USD);  // Draw down less than total amount
+        
+        // Warp to late payment
+        uint256 start = block.timestamp;
+        uint256 nextPaymentDue = loan.nextPaymentDue();
+        uint256 gracePeriod = globals.gracePeriod();
+        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+
+        // Trigger default
+        assertTrue(!joe.try_triggerDefault(address(pool_b), address(loan), address(dlFactory)));
+        assertTrue( sid.try_triggerDefault(address(pool_a), address(loan), address(dlFactory)));
     }
 
     function setUpLoanAndDefault() public {
