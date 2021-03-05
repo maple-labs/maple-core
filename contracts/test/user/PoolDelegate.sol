@@ -80,6 +80,10 @@ contract PoolDelegate {
     function triggerDefault(address pool, address loan, address dlFactory) external {
         IPool(pool).triggerDefault(loan, dlFactory);
     }
+    
+    function setAdmin(address pool, address newAdmin, bool status) external {
+        IPool(pool).setAdmin(newAdmin, status);
+    }
 
 
     /*********************/

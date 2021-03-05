@@ -8,6 +8,7 @@ import "./user/Borrower.sol";
 import "./user/Governor.sol";
 import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
+import "./user/PoolAdmin.sol";
 
 import "../interfaces/IBFactory.sol";
 import "../interfaces/IBPool.sol";
@@ -54,6 +55,7 @@ contract PoolTest is TestUtil {
     LP                                     kim;
     PoolDelegate                           sid;
     PoolDelegate                           joe;
+    PoolAdmin                              pop;
 
     RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
@@ -95,6 +97,7 @@ contract PoolTest is TestUtil {
         kim            = new LP();                                                      // Actor: Liquidity provider.
         sid            = new PoolDelegate();                                            // Actor: Manager of the Pool.
         joe            = new PoolDelegate();                                            // Actor: Manager of the Pool.
+        pop            = new PoolAdmin();                                               // Actor: Admin of the Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -194,6 +197,52 @@ contract PoolTest is TestUtil {
         loan  = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan2 = fay.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan3 = hal.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+    }
+
+    function test_claim_for_admin() public {
+        // Mint 10000 USDC into this LP account
+        mint("USDC", address(dan), 10000 * USD);
+        mint("USDC", address(kim), 10000 * USD);
+
+        dan.approve(USDC, address(pool1), uint(-1));
+        kim.approve(USDC, address(pool1), uint(-1));
+
+        // Set valid loan factory
+        gov.setValidLoanFactory(address(loanFactory), true);
+
+        // Finalizing the Pool
+        sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
+        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+
+        sid.finalize(address(pool1));
+
+        // Fund liquidity into the pool.
+        assertTrue(dan.try_deposit(address(pool1), 10000 * USD));
+        assertTrue(kim.try_deposit(address(pool1), 10000 * USD));
+
+        // Fund the loan by pool delegate.
+        assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 15000 * USD));
+        
+        assertEq(pool1.principalOut(), 15000 * USD);
+        assertEq(IERC20(USDC).balanceOf(pool1.liquidityLocker()), 5000 * USD);
+        
+        // Drawdown of the loan
+        uint cReq =  loan.collateralRequiredForDrawdown(15000 * USD); // wETH required for 15000 USDC drawdown on loan
+        mint("WETH", address(eli), cReq);
+        eli.approve(WETH, address(loan),  cReq);
+        eli.drawdown(address(loan),  15000 * USD);
+
+        // Time warp
+        hevm.warp(block.timestamp + loan.nextPaymentDue() + 1);
+        (uint amt,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
+        mint("USDC", address(eli), amt);
+        eli.approve(USDC, address(loan),  amt);
+        eli.makePayment(address(loan));
+
+        // Claim funds by the Admin.
+        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Not have permission to call `claim()` fuunction.
+        sid.setAdmin(address(pool1), address(pop), true);                                // Add admin to allow to call the `claim()` function.
+        assertTrue(pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function.
     }
 
     function test_getInitialStakeRequirements() public {
