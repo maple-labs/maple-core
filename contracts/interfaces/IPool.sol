@@ -33,4 +33,6 @@ interface IPool {
     function setAllowlistStakeLocker(address, bool) external;
 
     function claimableFunds(address) external view returns(uint256, uint256, uint256);
+
+    function triggerDefault(address, address) external;
 }

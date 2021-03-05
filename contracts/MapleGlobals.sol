@@ -20,13 +20,13 @@ contract MapleGlobals {
     address public admin;                // Admin of the whole network, has the power to switch off/on the functionality of entire protocol
 
     uint256 public gracePeriod;          // Represents the amount of time a borrower has to make a missed payment before a default can be triggered
-    uint256 public extendedGracePeriod;  // Extended time period provided to the borrowers to make their due payment. During this period LoanFDT holders are free to liquidate the Loan.
     uint256 public swapOutRequired;      // Represents minimum amount of Pool cover that a Pool Delegate has to provide before they can finalize a Pool
     uint256 public unstakeDelay;         // Parameter for unstake delay with relation to StakeLocker withdrawals
     uint256 public drawdownGracePeriod;  // Amount of time to allow borrower to drawdown on their loan after funding period ends
     uint256 public investorFee;          // Portion of drawdown that goes to Pool Delegates/individual lenders
     uint256 public treasuryFee;          // Portion of drawdown that goes to MapleTreasury
     uint256 public maxSwapSlippage;      // Maximum amount of slippage for Uniswap transactions
+    uint256 public minLoanEquity;        // Minimum amount of LoanFDTs required to trigger liquidations (basis points percentage of totalSupply)
 
     bool public protocolPaused;  // Switch to pausedthe functionality of the entire protocol
 
@@ -71,14 +71,14 @@ contract MapleGlobals {
         governor             = _governor;
         mpl                  = _mpl;
         gracePeriod          = 5 days;
-        extendedGracePeriod  = 5 days;
         swapOutRequired      = 100;
         unstakeDelay         = 90 days;
         drawdownGracePeriod  = 1 days;
         investorFee          = 50;
         treasuryFee          = 50;
         BFactory             = _bFactory;
-        maxSwapSlippage      = 1000; // 10 %
+        maxSwapSlippage      = 1000;       // 10 %
+        minLoanEquity        = 2000;       // 20 %
         admin                = _admin;
     }
 
@@ -108,15 +108,6 @@ contract MapleGlobals {
         require(msg.sender == admin, "MapleGlobals:UNAUTHORIZED");
         protocolPaused = pause;
         emit ProtocolPaused(pause);
-    }
-
-    /**
-        @dev Update the `extendedGracePeriod` variable. Only Governor can call.
-        @param newExtendedGracePeriod New value of extendedGracePeriod
-     */
-    function setExtendedGracePeriod(uint256 newExtendedGracePeriod) external isGovernor {
-        extendedGracePeriod = newExtendedGracePeriod;
-        emit GlobalsParamSet("EXTENDED_GRACE_PERIOD", newExtendedGracePeriod);
     }
     
     /**
@@ -255,6 +246,15 @@ contract MapleGlobals {
     function setGracePeriod(uint256 _gracePeriod) public isGovernor {
         gracePeriod = _gracePeriod;
         emit GlobalsParamSet("GRACE_PERIOD", _gracePeriod);
+    }
+
+    /**
+        @dev Adjust minLoanEquity. Only Governor can call.
+        @param _minLoanEquity Min percentage of Loan equity an address must have to trigger liquidations.
+    */
+    function setMinLoanEquity(uint256 _minLoanEquity) public isGovernor {
+        minLoanEquity = _minLoanEquity;
+        emit GlobalsParamSet("MIN_LOAN_EQUITY", _minLoanEquity);
     }
 
     /**

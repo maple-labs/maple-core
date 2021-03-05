@@ -20,6 +20,14 @@ contract Lender {
         IERC20(token).approve(who, amt);
     }
 
+    function transfer(address token, address who, uint256 amt) external {
+        IERC20(token).transfer(who, amt);
+    }
+
+    function triggerDefault(address loan) public {
+        ILoan(loan).triggerDefault();
+    }
+
 
     /*********************/
     /*** TRY FUNCTIONS ***/

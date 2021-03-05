@@ -71,7 +71,7 @@ contract LoanTest is TestUtil {
         loanFactory   = new LoanFactory(address(globals));
         trs           = new Treasury();
 
-        gov.setCalc(address(repaymentCalc),         true);
+        gov.setCalc(address(repaymentCalc),      true);
         gov.setCalc(address(lateFeeCalc),        true);
         gov.setCalc(address(premiumCalc),        true);
         gov.setCollateralAsset(WETH,             true);
@@ -132,13 +132,13 @@ contract LoanTest is TestUtil {
 
         bob.approve(USDC, address(loan), 5000 * USD);
     
-        assertEq(IERC20(loan).balanceOf(address(ali)),                    0);
+        assertEq(IERC20(loan).balanceOf(address(bob)),                    0);
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),          0);
         assertEq(IERC20(USDC).balanceOf(address(bob)),           5000 * USD);
 
-        bob.fundLoan(address(loan), 5000 * USD, address(ali));
+        bob.fundLoan(address(loan), 5000 * USD, address(bob));
 
-        assertEq(IERC20(loan).balanceOf(address(ali)),           5000 ether);
+        assertEq(IERC20(loan).balanceOf(address(bob)),           5000 ether);
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 5000 * USD);
         assertEq(IERC20(USDC).balanceOf(address(bob)),                    0);
     }
@@ -449,7 +449,7 @@ contract LoanTest is TestUtil {
 
         assertTrue(!bob.try_trigger_default(address(loan)), "Should fail to trigger default by lender");   // Should fail to trigger default because current time is still less than the `nextPaymentDue`.
         assertEq(loan.loanState(), 1,                       "Loan State should remain `Active`");
-        assertTrue(!com.try_trigger_default(address(loan)), "Should fail to trigger default by commoner"); // Failed because commoner in not allowed to default the loan till the extendedGracePeriod passed.
+        assertTrue(!com.try_trigger_default(address(loan)), "Should fail to trigger default by commoner"); // Failed because commoner in not allowed to default the loan because they do not own any LoanFDTs.
         assertEq(loan.loanState(), 1,                       "Loan State should remain `Active`");
 
         hevm.warp(loan.nextPaymentDue() + 1);
@@ -468,27 +468,23 @@ contract LoanTest is TestUtil {
 
         hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + 1);
 
-        assertTrue(bob.try_trigger_default(address(loan)),  "Should not fail to default the loan");
+        assertTrue(!com.try_trigger_default(address(loan)),  "Still fails to default the loan by commoner"); // Failed because still commoner is not allowed to default the loan.
+        assertEq(loan.loanState(), 1,                        "Loan State should remain `Active`");
+
+        // Bob currently has 100% of LoanFDTs, so he can trigger the loan.
+        // For this test, minLoanEquity is transferred to the commoner to test the minimum loan equity condition.
+        assertEq(loan.totalSupply(),      5000 * WAD); 
+        assertEq(globals.minLoanEquity(),       2000);  // 20%
+    
+        bob.transfer(address(loan), address(com), 1000 * WAD - 1);  // Just under 20% equity requirement to trigger liquidation
+
+        assertTrue(!com.try_trigger_default(address(loan)),  "Still fails to default the loan by commoner"); // Failed because still commoner is not allowed to default the loan.
+        assertEq(loan.loanState(), 1,                        "Loan State should remain `Active`");
+
+        bob.transfer(address(loan), address(com), 1);  // Transfer 1 wei to meet 20% minimum equity requirement
+
+        assertTrue(com.try_trigger_default(address(loan)),  "Should not fail to default the loan");
         assertEq(loan.loanState(), 4,                       "Loan State should change to `Liquidated`");
-    }
-
-    function test_trigger_default_by_commoner() external  {
-        ILoan loan = ILoan(address(createAndFundLoan(address(repaymentCalc))));
-
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(5000 * USD);
-        ali.approve(WETH, address(loan), reqCollateral);
-
-        assertTrue(ali.try_drawdown(address(loan), 5000 * USD));  // Draw down the loan.
-
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + globals.extendedGracePeriod());
-
-        assertTrue(!com.try_trigger_default(address(loan)), "Should fail to trigger default by commoner"); // Failed because commoner in not allowed to default the loan till the extendedGracePeriod passed.
-        assertEq(loan.loanState(), 1,                       "Loan State should remain `Active`");
-
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + globals.extendedGracePeriod() + 1);
-
-        assertTrue(com.try_trigger_default(address(loan)), "Should not fail to default the loan");
-        assertEq(loan.loanState(), 4,                      "Loan State should change to `Liquidated`");
     }
 
     function test_calc_min_amount() external {

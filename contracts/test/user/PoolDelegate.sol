@@ -77,6 +77,10 @@ contract PoolDelegate {
         IPool(pool).setAllowlistStakeLocker(user, status);
     }
 
+    function triggerDefault(address pool, address loan, address dlFactory) external {
+        IPool(pool).triggerDefault(loan, dlFactory);
+    }
+
 
     /*********************/
     /*** TRY FUNCTIONS ***/
@@ -98,11 +102,6 @@ contract PoolDelegate {
         (ok,) = address(poolFactory).call(
             abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, slFactory, llFactory, stakingFee, delegateFee, liquidityCap)
         );
-    }
-
-    function try_setExtendedGracePeriod(address globals, uint256 newEGP) external returns(bool ok) {
-        string memory sig = "setExtendedGracePeriod(uint256)";
-        (ok,) = globals.call(abi.encodeWithSignature(sig, newEGP));
     }
     
     function try_fundLoan(address pool, address loan, address dlFactory, uint256 amt) external returns (bool ok) {
@@ -138,6 +137,11 @@ contract PoolDelegate {
     function try_setLockupPeriod(address pool, uint256 newPeriod) external returns(bool ok) {
         string memory sig = "setLockupPeriod(uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, newPeriod));
+    }
+
+    function try_triggerDefault(address pool, address loan, address dlFactory) external returns(bool ok) {
+        string memory sig = "triggerDefault(address,address)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
     }
 
 }

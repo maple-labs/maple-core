@@ -116,19 +116,16 @@ library LoanLib {
         @param nextPaymentDue Timestamp of when payment is due
         @param superFactory   Factory that instantiated Loan
         @param balance        LoanFDT balance of msg.sender
+        @param totalSupply    LoanFDT totalSupply
         @return boolean indicating if default can be triggered
     */
-    function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance) external returns(bool) {
+    function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance, uint256 totalSupply) external returns(bool) {
 
-        uint256 gracePeriodEnd         = nextPaymentDue.add(_globals(superFactory).gracePeriod());
-        bool pastGracePeriod           = block.timestamp > gracePeriodEnd;
-        bool withinExtendedGracePeriod = pastGracePeriod && block.timestamp <= gracePeriodEnd.add(_globals(superFactory).extendedGracePeriod());
+        bool pastGracePeriod = block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod());
 
-        // It checks following conditions - 
-        // 1. If `current time - nextPaymentDue` is within the (gracePeriod, gracePeriod + extendedGracePeriod] & `msg.sender` is
-        //    a lender (Assumption: Only lenders will have non zero balance) then liquidate the loan.
-        // 2. If `current time - nextPaymentDue` is greater than gracePeriod + extendedGracePeriod then any msg.sender can liquidate the loan.
-        return ((withinExtendedGracePeriod && balance > 0) || (pastGracePeriod && !withinExtendedGracePeriod));
+        // Check if the loan is past the gracePeriod and that msg.sender has a percentage of total LoanFDTs that is greater
+        // the minimum equity needed (specified in globals)
+        return pastGracePeriod && balance >= totalSupply * _globals(superFactory).minLoanEquity() / 10_000;
     }
 
     /**

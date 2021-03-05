@@ -276,11 +276,9 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setMapleTreasury(address(this)));
         assertEq(   globals.mapleTreasury(), address(this));
 
-        assertEq(   globals.extendedGracePeriod(),  5 days);
         assertTrue(!fakeGov.try_setUnstakeDelay(20 days));
         assertTrue(     gov.try_setUnstakeDelay(20 days));
-        assertEq(globals.unstakeDelay(),        20 days);
-        
+        assertEq(globals.unstakeDelay(),        20 days);      
 
         assertTrue(!fakeGov.try_setPriceOracle(WETH, address(1)));
         assertTrue(     gov.try_setPriceOracle(WETH, address(wethOracle)));
