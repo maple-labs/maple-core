@@ -163,7 +163,6 @@ contract Loan is FDT, Pausable {
         repaymentCalc          = calcs[0];
         lateFeeCalc            = calcs[1];
         premiumCalc            = calcs[2];
-        nextPaymentDue         = block.timestamp.add(paymentIntervalSeconds);
         superFactory           = msg.sender;
 
         // Deploy lockers
@@ -218,9 +217,10 @@ contract Loan is FDT, Pausable {
         require(amt >= requestAmount,               "Loan:AMT_LT_MIN_RAISE");
         require(amt <= _getFundingLockerBalance(),  "Loan:AMT_GT_FUNDED_AMT");
 
-        // Update the principal owed and drawdown amount for this loan.
+        // Update accounting variables for Loan
         principalOwed  = amt;
         drawdownAmount = amt;
+        nextPaymentDue = block.timestamp.add(paymentIntervalSeconds);
 
         loanState = State.Active;
 
