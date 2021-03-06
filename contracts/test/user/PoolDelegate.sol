@@ -113,6 +113,11 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory, amt));
     }
 
+    function try_claim(address pool, address loan, address dlFactory) external returns (bool ok) {
+        string memory sig = "claim(address,address)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
+    }
+
     function try_finalize(address pool) external returns (bool ok) {
         string memory sig = "finalize()";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig));
@@ -147,5 +152,4 @@ contract PoolDelegate {
         string memory sig = "triggerDefault(address,address)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
     }
-
 }

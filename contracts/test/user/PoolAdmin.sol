@@ -10,5 +10,5 @@ contract PoolAdmin {
         (ok,) = pool.call(abi.encodeWithSignature(sig, loan, dlFactory));
     }
 
-    function claim(address target, address loan, address dlFactory) external { IPool(target).claim(loan, dlFactory);}
+    function claim(address pool, address loan, address dlFactory) external { IPool(pool).claim(loan, dlFactory); }
 }
