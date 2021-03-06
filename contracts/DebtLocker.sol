@@ -77,18 +77,22 @@ contract DebtLocker {
         loan.withdrawFunds();                                    // Transfer funds from loan to debtLocker
         
         uint256 claimBal = loanAsset.balanceOf(address(this)).sub(beforeBal);  // Amount claimed from loan using FDT
-        
-        // Calculate distributed amounts, transfer the asset, and return metadata
-        uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess).add(newAmountRecovered);
-        uint256 interest  = calcAllotment(newInterest,        sum, claimBal);
-        uint256 principal = calcAllotment(newPrincipal,       sum, claimBal);
-        uint256 fee       = calcAllotment(newFee,             sum, claimBal);
-        uint256 excess    = calcAllotment(newExcess,          sum, claimBal);
-        uint256 recovered = calcAllotment(newAmountRecovered, sum, claimBal);
 
-        loanAsset.safeTransfer(owner, claimBal);
+        if(claimBal > 0) {
+            // Calculate distributed amounts, transfer the asset, and return metadata
+            uint256 sum       = newInterest.add(newPrincipal).add(newFee).add(newExcess).add(newAmountRecovered);
+            uint256 interest  = calcAllotment(newInterest,        sum, claimBal);
+            uint256 principal = calcAllotment(newPrincipal,       sum, claimBal);
+            uint256 fee       = calcAllotment(newFee,             sum, claimBal);
+            uint256 excess    = calcAllotment(newExcess,          sum, claimBal);
+            uint256 recovered = calcAllotment(newAmountRecovered, sum, claimBal);
 
-        return([claimBal, interest, principal, fee, excess, recovered, defaultSuffered]);
+            loanAsset.safeTransfer(owner, claimBal);
+
+            return([claimBal, interest, principal, fee, excess, recovered, defaultSuffered]);
+        }
+
+        return([0, 0, 0, 0, 0, 0, defaultSuffered]);
     }
 
     /**
@@ -97,5 +101,4 @@ contract DebtLocker {
     function triggerDefault() external isOwner {
         loan.triggerDefault();
     }
-
 }
