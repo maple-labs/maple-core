@@ -7,7 +7,7 @@ import "./interfaces/IPriceFeed.sol";
 import "./interfaces/IOracle.sol";
 import "./interfaces/ISubFactory.sol";
 
-interface ICalc { function calcType() external returns (uint8); }
+interface ICalc { function calcType() external view returns (uint8); }
 
 /// @title MapleGlobals maintains a central source of parameters and allowlists for the Maple protocol.
 contract MapleGlobals {
@@ -171,7 +171,7 @@ contract MapleGlobals {
         @param calc     Calculator address
         @param calcType Calculator type
     */
-    function isValidCalc(address calc, uint8 calcType) external returns(bool) {
+    function isValidCalc(address calc, uint8 calcType) external view returns(bool) {
         return validCalcs[calc] && ICalc(calc).calcType() == calcType;
     }
 
