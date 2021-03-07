@@ -271,7 +271,7 @@ contract Loan is FDT, Pausable {
     */
     function _triggerDefault() internal {
 
-        (amountLiquidated, amountRecovered) = LoanLib.triggerDefault(collateralAsset, _getCollateralLockerBalance(), address(loanAsset), superFactory, collateralLocker);
+        (amountLiquidated, amountRecovered) = LoanLib.triggerDefault(collateralAsset, address(loanAsset), superFactory, collateralLocker);
 
         // Set principalOwed to zero and return excess value from liquidation back to borrower
         if (amountRecovered > principalOwed) {
