@@ -120,7 +120,6 @@ contract LoanTest is TestUtil {
         assertEq(loan.repaymentCalc(),             address(repaymentCalc));
         assertEq(loan.lateFeeCalc(),               address(lateFeeCalc));
         assertEq(loan.premiumCalc(),               address(premiumCalc));
-        assertEq(loan.nextPaymentDue(),            block.timestamp + loan.paymentIntervalSeconds());
     }
 
     function test_fundLoan() public {
@@ -202,7 +201,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.principalOwed(),                           1000 * USD);  // Principal owed
         assertEq(uint256(loan.loanState()),                               1);  // Loan state: Active
 
-        
+        assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());  // Next payment due timestamp calculated from time of drawdown
+
         // Fee related variables post-check.
         assertEq(loan.feePaid(),                          5 * USD);  // Drawdown amount
         assertEq(loan.excessReturned(),                4000 * USD);  // Principal owed
