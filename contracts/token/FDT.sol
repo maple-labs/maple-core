@@ -19,37 +19,12 @@ abstract contract FDT is BasicFDT {
     }
 
     /**
-        @dev Prepares funds withdrawal on behalf of a user
-        @dev It emits a `FundsWithdrawn` event if the amount of withdrawn funds is greater than 0.
-    */
-    function _prepareWithdrawOnBehalf(address user) internal returns (uint256) {
-        uint256 _withdrawableDividend = withdrawableFundsOf(user);
-
-        withdrawnFunds[user] = withdrawnFunds[user].add(_withdrawableDividend);
-
-        emit FundsWithdrawn(user, _withdrawableDividend, withdrawnFunds[user]);
-
-        return _withdrawableDividend;
-    }
-
-    /**
         @dev Withdraws all available funds for a token holder
     */
     function withdrawFunds() public virtual override {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         require(fundsToken.transfer(msg.sender, withdrawableFunds), "FDT:TRANSFER_FAILED");
-
-        _updateFundsTokenBalance();
-    }
-
-    /**
-        @dev Withdraws all available funds for a token holder, on behalf of token holder
-    */
-    function withdrawFundsOnBehalf(address user) public virtual {
-        uint256 withdrawableFunds = _prepareWithdrawOnBehalf(user);
-
-        require(fundsToken.transfer(user, withdrawableFunds), "FDT:TRANSFER_FAILED");
 
         _updateFundsTokenBalance();
     }
