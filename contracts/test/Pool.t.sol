@@ -540,7 +540,7 @@ contract PoolTest is TestUtil {
 
                 // Category portion of claim * LTL asset balance 
                 // Eg. (interestClaimed / totalClaimed) * balance = Portion of total claim balance that is interest
-                uint256 loanShare = (loanData[i] - debtLockerData[i]) * 1 ether / sumNetNew * claim[0] / 1 ether;
+                uint256 loanShare = (loanData[i] - debtLockerData[i]) * claim[0] / sumNetNew;
                 assertEq(loanShare, claim[i + 1]);
 
                 sumTransfer += balances[i + 6] - balances[i + 1]; // Sum up all transfers that occured from claim
@@ -715,9 +715,9 @@ contract PoolTest is TestUtil {
             fay.makeFullPayment(address(loan2));
         }
         
-        /****************/
-        /*** LP Claim ***/
-        /****************/
+        /******************/
+        /*** Pool Claim ***/
+        /******************/
         {      
             assertConstClaim(pool1, address(loan),  address(dlFactory1), IERC20(USDC), CONST_POOL_VALUE);
             assertConstClaim(pool1, address(loan),  address(dlFactory2), IERC20(USDC), CONST_POOL_VALUE);
@@ -809,9 +809,9 @@ contract PoolTest is TestUtil {
             fay.makePayment(address(loan2));
         }
         
-        /****************/
-        /*** LP Claim ***/
-        /****************/
+        /******************/
+        /*** Pool Claim ***/
+        /******************/
         {      
             checkClaim(debtLocker1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
             checkClaim(debtLocker2, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
@@ -842,9 +842,9 @@ contract PoolTest is TestUtil {
             fay.makePayment(address(loan2));
         }
         
-        /****************/
-        /*** LP Claim ***/
-        /****************/
+        /******************/
+        /*** Pool Claim ***/
+        /******************/
         {      
             checkClaim(debtLocker1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
             checkClaim(debtLocker2, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
@@ -866,9 +866,9 @@ contract PoolTest is TestUtil {
             fay.makeFullPayment(address(loan2));
         }
         
-        /****************/
-        /*** LP Claim ***/
-        /****************/
+        /******************/
+        /*** Pool Claim ***/
+        /******************/
         {      
             checkClaim(debtLocker1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
             checkClaim(debtLocker2, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
@@ -1011,9 +1011,9 @@ contract PoolTest is TestUtil {
             fay.makePayment(address(loan2));
         }
         
-        /*****************/
-        /***  LP Claim ***/
-        /*****************/
+        /*******************/
+        /***  Pool Claim ***/
+        /*******************/
         {
             checkClaim(debtLocker1_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
             checkClaim(debtLocker2_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
@@ -1049,9 +1049,9 @@ contract PoolTest is TestUtil {
             fay.makePayment(address(loan2));
         }
 
-        /*****************/
-        /***  LP Claim ***/
-        /*****************/
+        /*******************/
+        /***  Pool Claim ***/
+        /*******************/
         {
             checkClaim(debtLocker1_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
             checkClaim(debtLocker2_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
@@ -1078,9 +1078,9 @@ contract PoolTest is TestUtil {
             fay.makeFullPayment(address(loan2));
         }
         
-        /*****************/
-        /***  LP Claim ***/
-        /*****************/
+        /*******************/
+        /***  Pool Claim ***/
+        /*******************/
         {
             checkClaim(debtLocker1_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
             checkClaim(debtLocker2_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
@@ -1280,9 +1280,9 @@ contract PoolTest is TestUtil {
             fay.makePayment(address(loan2));
         }
         
-        /****************/
-        /*** LP Claim ***/
-        /****************/
+        /******************/
+        /*** Pool Claim ***/
+        /******************/
         {   
             sid.claim(address(pool1), address(loan),  address(dlFactory1));
             sid.claim(address(pool1), address(loan),  address(dlFactory2));
@@ -1313,9 +1313,9 @@ contract PoolTest is TestUtil {
             fay.makePayment(address(loan2));
         }
         
-        /****************/
-        /*** LP Claim ***/
-        /****************/
+        /******************/
+        /*** Pool Claim ***/
+        /******************/
         {      
             sid.claim(address(pool1), address(loan),  address(dlFactory1));
             sid.claim(address(pool1), address(loan),  address(dlFactory2));
@@ -1337,9 +1337,9 @@ contract PoolTest is TestUtil {
             fay.makeFullPayment(address(loan2));
         }
         
-        /****************/
-        /*** LP Claim ***/
-        /****************/
+        /******************/
+        /*** Pool Claim ***/
+        /******************/
         {   
             sid.claim(address(pool1), address(loan),  address(dlFactory1));
             sid.claim(address(pool1), address(loan),  address(dlFactory2));
