@@ -212,8 +212,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function _transfer(address from, address to, uint256 amt) internal override canUnstake {
         _whenProtocolNotPaused();
         _isAllowed(to);
-        super._transfer(from, to, amt);
         _updateStakeDate(to, amt);
+        super._transfer(from, to, amt);
     }
 
     /**
