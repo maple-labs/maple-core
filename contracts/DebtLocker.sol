@@ -22,6 +22,7 @@ contract DebtLocker {
     uint256 public interestPaid;     // Loan total interest    paid at time of claim()
     uint256 public feePaid;          // Loan total fees        paid at time of claim()
     uint256 public excessReturned;   // Loan total excess  returned at time of claim()
+    uint256 public defaultSuffered;  // Loan total default suffered at time of claim()
     uint256 public amountRecovered;  // Liquidity asset (a.k.a. loan asset) recovered from liquidation of Loan collateral
     
     modifier isOwner() {
@@ -38,6 +39,8 @@ contract DebtLocker {
     function calcAllotment(uint256 newAmt, uint256 totalNewAmt, uint256 totalClaim) internal pure returns (uint256) {
         return newAmt.mul(totalClaim).div(totalNewAmt);
     }
+
+    event Debug(string, uint);
 
     /**
         @dev    Claim funds distribution for Loan via FDT.
