@@ -54,21 +54,15 @@ contract DebtLocker {
     */
     function claim() external isOwner returns(uint256[7] memory) {
 
-        // Update defaultSuffered value based on ratio of total supply of DebtTokens owned by this DebtLocker
+        // Initialize newDefaultSuffered as zero
         uint256 newDefaultSuffered;
-        emit Debug("newDefaultSuffered1", newDefaultSuffered);
-        emit Debug("defaultSuffered1", defaultSuffered);
 
-        {
-            // Avoid stack too deep
-            uint256 loan_defaultSuffered = loan.defaultSuffered();
-        
-            // If a default has occured, update storage variable and update memory variable from zero for return
-            if (defaultSuffered == uint256(0) && loan_defaultSuffered > 0) {
-                newDefaultSuffered = defaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan.totalSupply(), loan_defaultSuffered);
-                emit Debug("newDefaultSuffered2", newDefaultSuffered);
-                emit Debug("defaultSuffered2", defaultSuffered);
-            }
+        // Avoid stack too deep
+        uint256 loan_defaultSuffered = loan.defaultSuffered();
+    
+        // If a default has occured, update storage variable and update memory variable from zero for return
+        if (defaultSuffered == uint256(0) && loan_defaultSuffered > 0) {
+            newDefaultSuffered = defaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan.totalSupply(), loan_defaultSuffered);
         }
         
         // Account for any transfers into Loan that have occured since last call
@@ -76,16 +70,18 @@ contract DebtLocker {
 
         if(loan.withdrawableFundsOf(address(this)) > uint256(0)) {
 
-            // Calculate deltas
-            uint256 newInterest        = loan.interestPaid() - interestPaid;
-            uint256 newPrincipal       = loan.principalPaid() - principalPaid;
-            uint256 newFee             = feePaid > uint256(0)         ? uint256(0) : loan.feePaid() - feePaid;
-            uint256 newExcess          = excessReturned > uint256(0)  ? uint256(0) : loan.excessReturned() - excessReturned;
-            uint256 newAmountRecovered = amountRecovered > uint256(0) ? uint256(0) : loan.amountRecovered() - amountRecovered;
+            // Calculate payment deltas
+            uint256 newInterest  = loan.interestPaid() - interestPaid;
+            uint256 newPrincipal = loan.principalPaid() - principalPaid;
 
             // Update payments accounting
             interestPaid  = loan.interestPaid();
             principalPaid = loan.principalPaid();
+
+            // Calculate one-time deltas
+            uint256 newFee             = feePaid         > uint256(0) ? uint256(0) : loan.feePaid();
+            uint256 newExcess          = excessReturned  > uint256(0) ? uint256(0) : loan.excessReturned();
+            uint256 newAmountRecovered = amountRecovered > uint256(0) ? uint256(0) : loan.amountRecovered();
 
             // Update one-time accounting
             if(newFee > 0)             feePaid         = loan.feePaid();
@@ -101,16 +97,17 @@ contract DebtLocker {
             // Calculate distributed amounts, transfer the asset, and return metadata
             uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess).add(newAmountRecovered);
 
-            uint256 interest  = calcAllotment(newInterest,  sum, claimBal);
-            uint256 principal = calcAllotment(newPrincipal, sum, claimBal);
+            // Calculate portions based on FDT claim
+            newInterest  = calcAllotment(newInterest,  sum, claimBal);
+            newPrincipal = calcAllotment(newPrincipal, sum, claimBal);
 
-            uint256 fee       = newFee             == uint256(0) ? uint256(0) : calcAllotment(newFee,             sum, claimBal);
-            uint256 excess    = newExcess          == uint256(0) ? uint256(0) : calcAllotment(newExcess,          sum, claimBal);
-            uint256 recovered = newAmountRecovered == uint256(0) ? uint256(0) : calcAllotment(newAmountRecovered, sum, claimBal);
+            newFee             = newFee             == uint256(0) ? uint256(0) : calcAllotment(newFee,             sum, claimBal);
+            newExcess          = newExcess          == uint256(0) ? uint256(0) : calcAllotment(newExcess,          sum, claimBal);
+            newAmountRecovered = newAmountRecovered == uint256(0) ? uint256(0) : calcAllotment(newAmountRecovered, sum, claimBal);
 
             loanAsset.safeTransfer(owner, claimBal);
 
-            return([claimBal, interest, principal, fee, excess, recovered, newDefaultSuffered]);
+            return([claimBal, newInterest, newPrincipal, newFee, newExcess, newAmountRecovered, newDefaultSuffered]);
         }
 
         return([0, 0, 0, 0, 0, 0, newDefaultSuffered]);
