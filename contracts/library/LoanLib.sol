@@ -14,13 +14,14 @@ import "../interfaces/IRepaymentCalc.sol";
 import "../interfaces/IUniswapRouter.sol";
 import "../library/Util.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 /// @title LoanLib is a library of utility functions used by Loan.
 library LoanLib {
 
-    using SafeMath for uint256;
+    using SafeMath  for uint256;
+    using SafeERC20 for IERC20;
 
     enum State { Live, Active, Matured, Expired, Liquidated }
 
@@ -60,7 +61,7 @@ library LoanLib {
         @return amountRecovered  Amount of loanAsset that was returned to the Loan from the liquidation
     */
     function triggerDefault(
-        IERC20Details collateralAsset,
+        IERC20 collateralAsset,
         uint256 liquidationAmt,
         address loanAsset,
         address superFactory,
@@ -74,10 +75,10 @@ library LoanLib {
     {
 
         // Pull collateralAsset from collateralLocker
-        require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");
+        ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt);
 
         if (address(collateralAsset) != loanAsset) {
-            collateralAsset.approve(UNISWAP_ROUTER, liquidationAmt);
+            collateralAsset.safeIncreaseAllowance(UNISWAP_ROUTER, liquidationAmt);
 
             IGlobals globals = _globals(superFactory);
 

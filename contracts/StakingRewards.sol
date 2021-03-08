@@ -4,12 +4,14 @@ pragma solidity 0.6.11;
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/math/Math.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
 /// @title StakingRewards Synthetix farming contract fork for liquidity mining.
 contract StakingRewards is Ownable {
-    using SafeMath for uint256;
+    
+    using SafeMath  for uint256;
+    using SafeERC20 for IERC20;
 
     IERC20  public immutable rewardsToken;
     IERC20  public immutable stakingToken;
@@ -88,7 +90,7 @@ contract StakingRewards is Ownable {
         _notPaused();
         _updateReward(msg.sender);
         require(amount > 0, "REWARDS:STAKE_EQ_ZERO");
-        stakingToken.transferFrom(msg.sender, address(this), amount);
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         emit Staked(msg.sender, amount);
@@ -100,7 +102,7 @@ contract StakingRewards is Ownable {
         require(amount > 0, "REWARDS:WITHDRAW_EQ_ZERO");
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        stakingToken.transfer(msg.sender, amount);
+        stakingToken.safeTransfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     }
 
@@ -110,7 +112,7 @@ contract StakingRewards is Ownable {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
-            rewardsToken.transfer(msg.sender, reward);
+            rewardsToken.safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
     }
@@ -151,7 +153,7 @@ contract StakingRewards is Ownable {
     // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
         require(tokenAddress != address(stakingToken), "REWARDS:CANNOT_RECOVER_STAKE_TOKEN");
-        IERC20(tokenAddress).transfer(owner(), tokenAmount);
+        IERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 

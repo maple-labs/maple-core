@@ -6,7 +6,7 @@ interface IFundingLocker {
 
     function loanVault() external view returns (address);
 
-    function pull(address, uint256) external returns (bool);
+    function pull(address, uint256) external;
 
-    function drain() external returns (bool);
+    function drain() external;
 }

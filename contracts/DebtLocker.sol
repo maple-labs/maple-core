@@ -4,12 +4,13 @@ pragma solidity 0.6.11;
 import "./interfaces/ILoan.sol";
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 /// @title DebtLocker holds custody of LoanFDT tokens.
 contract DebtLocker {
 
-    using SafeMath for uint256;
+    using SafeMath  for uint256;
+    using SafeERC20 for IERC20;
 
     uint256 constant WAD = 10 ** 18;
 
@@ -85,7 +86,7 @@ contract DebtLocker {
         uint256 excess    = calcAllotment(newExcess,          sum, claimBal);
         uint256 recovered = calcAllotment(newAmountRecovered, sum, claimBal);
 
-        require(loanAsset.transfer(owner, claimBal), "DebtLocker:CLAIM_TRANSFER");
+        loanAsset.safeTransfer(owner, claimBal);
 
         return([claimBal, interest, principal, fee, excess, recovered, defaultSuffered]);
     }

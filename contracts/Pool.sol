@@ -16,12 +16,13 @@ import "./interfaces/IStakeLockerFactory.sol";
 
 import "./library/PoolLib.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 /// @title Pool maintains all accounting and functionality related to Pools.
 contract Pool is PoolFDT {
 
     using SafeMath  for uint256;
+    using SafeERC20 for IERC20;
 
     uint256 constant WAD = 10 ** 18;
 
@@ -254,7 +255,7 @@ contract Pool is PoolFDT {
         updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`
 
         // Transfer amt - totPenalty - recognizedLosses
-        require(ILiquidityLocker(liquidityLocker).transfer(msg.sender, due), "Pool::WITHDRAW_TRANSFER");
+        ILiquidityLocker(liquidityLocker).transfer(msg.sender, due);
 
         _emitBalanceUpdatedEvent();
     }
@@ -292,7 +293,7 @@ contract Pool is PoolFDT {
         }
 
         // Transfer USDC to liquidityLocker
-        liquidityAsset.transfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
+        liquidityAsset.safeTransfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
 
         principalOut = principalOut.sub(defaultSuffered);  // Subtract rest of Loan's principal from principalOut
 
@@ -487,10 +488,7 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        require(
-            ILiquidityLocker(liquidityLocker).transfer(msg.sender, withdrawableFunds),
-            "FDT_ERC20:TRANSFER_FAILED"
-        );
+        ILiquidityLocker(liquidityLocker).transfer(msg.sender, withdrawableFunds);
 
         interestSum = interestSum.sub(withdrawableFunds);
 
@@ -567,7 +565,7 @@ contract Pool is PoolFDT {
         @param value Amount of liquidity asset that gets transferred
     */
     function _transferLiquidityAsset(address to, uint256 value) internal {
-        require(liquidityAsset.transfer(to, value), "Pool:CLAIM_TRANSFER");
+        liquidityAsset.safeTransfer(to, value);
     }
 
     /**

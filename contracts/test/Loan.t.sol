@@ -279,7 +279,7 @@ contract LoanTest is TestUtil {
         
         // Check collateral locker balance.
         uint256 reqCollateral   = loan.collateralRequiredForDrawdown(1000 * USD);
-        IERC20Details collateralAsset = loan.collateralAsset();
+        IERC20Details collateralAsset = IERC20Details(address(loan.collateralAsset()));
         uint _delta = collateralAsset.balanceOf(address(ali));
         assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
         
@@ -378,7 +378,7 @@ contract LoanTest is TestUtil {
         
         // Check collateral locker balance.
         uint256 reqCollateral   = loan.collateralRequiredForDrawdown(1000 * USD);
-        IERC20Details collateralAsset = loan.collateralAsset();
+        IERC20Details collateralAsset = IERC20Details(address(loan.collateralAsset()));
         uint _delta = collateralAsset.balanceOf(address(ali));
         assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
 
@@ -534,7 +534,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.interestPaid(),                0);
         assertEq(loan.paymentsRemaining(),           3);
 
-        IERC20Details collateralAsset = loan.collateralAsset();
+        IERC20Details collateralAsset = IERC20Details(address(loan.collateralAsset()));
         uint256 _delta                = collateralAsset.balanceOf(address(ali));
         uint256 _usdcDelta            = IERC20(USDC).balanceOf(address(loan));
 
