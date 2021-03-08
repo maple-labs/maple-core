@@ -295,6 +295,35 @@ contract StakeLockerTest is TestUtil {
 
     }
 
+    function test_stake_transfer_stakeDate() public {
+
+        uint256 start = block.timestamp;
+
+        sid.setAllowlistStakeLocker(address(pool), address(che), true); // Add Staker to allowlist
+
+        che.approve(address(bPool), address(stakeLocker), 25 * WAD); // Stake tokens
+        che.stake(address(stakeLocker), 25 * WAD);
+
+        sid.setAllowlistStakeLocker(address(pool), address(ali), true); // Add ali to allowlist
+
+        assertEq(stakeLocker.stakeDate(address(che)), start);  // Che just staked
+        assertEq(stakeLocker.stakeDate(address(ali)),     0);  // Ali has not staked
+
+        hevm.warp(start + 1 days);
+
+        che.transfer(address(stakeLocker), address(ali), 1 * WAD); // Transfer to Ali
+
+        assertEq(stakeLocker.stakeDate(address(che)),          start);  // Che's date does not change
+        assertEq(stakeLocker.stakeDate(address(ali)), start + 1 days);  // Ali just got sent FDTs which is effectively "staking"
+
+        hevm.warp(start + 3 days);
+
+        che.transfer(address(stakeLocker), address(ali), 1 * WAD); // Transfer to Ali
+
+        assertEq(stakeLocker.stakeDate(address(che)),          start);  // Che's date does not change
+        assertEq(stakeLocker.stakeDate(address(ali)), start + 2 days);  // Ali stake date = 1/(1+1) * (3 days - 1 days) + 1 days = 1/2 * 2 + 1 = 2 days past start
+    }
+
     function setUpLoanAndRepay() public {
         mint("USDC", address(ali), 10_000_000 * USD);  // Mint USDC to LP
         ali.approve(USDC, address(pool), MAX_UINT);    // LP approves USDC
