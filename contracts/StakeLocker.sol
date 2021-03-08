@@ -49,7 +49,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     modifier canUnstake() {
         require(
             (msg.sender != IPool(owner).poolDelegate() && IPool(owner).isPoolFinalized()) || 
-            IPool(owner).isPoolInitialized() || IPool(owner).isPoolDeactivated(), 
+            !IPool(owner).isPoolFinalized(), 
             "StakeLocker:ERR_STAKE_LOCKED"
         );
         _;
