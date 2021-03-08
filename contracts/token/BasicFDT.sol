@@ -163,7 +163,7 @@ abstract contract BasicFDT is IFDT, ERC20 {
 
     /**
         @dev Register a payment of funds in tokens. May be called directly after a deposit is made.
-        @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the previous and the new
+        @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the new and the previous
         funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
     */
     function updateFundsReceived() public virtual {
