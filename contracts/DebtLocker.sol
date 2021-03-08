@@ -97,5 +97,4 @@ contract DebtLocker {
     function triggerDefault() external isOwner {
         loan.triggerDefault();
     }
-
 }

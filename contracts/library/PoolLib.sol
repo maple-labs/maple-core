@@ -202,7 +202,7 @@ library PoolLib {
         uint256 poolAmountInRequired,
         uint256 poolAmountPresent
     ) {
-        swapOutAmountRequired = globals.swapOutRequired() * (10 ** IERC20Details(liquidityAsset).decimals());  // TODO: Allow this to use any liquidityAsset, not just USDC (need oracles)
+        swapOutAmountRequired = convertFromUsd(globals, liquidityAsset, globals.swapOutRequired());
         (
             poolAmountInRequired,
             poolAmountPresent
@@ -383,5 +383,19 @@ library PoolLib {
     */
     function _globals(address poolFactory) internal view returns (IGlobals) {
         return IGlobals(ILoanFactory(poolFactory).globals());
+    }
+
+    /** 
+        @dev Function to return liquidityAsset in liquidityAsset units when given integer USD (E.g., $100 = 100).
+        @param  globals        Globals contract interface
+        @param  liquidityAsset Liquidity Asset of the pool 
+        @param  usdAmount      USD amount to convert, in integer units (e.g., $100 = 100)
+        @return usdAmount worth of liquidityAsset, in liquidityAsset units
+    */
+    function convertFromUsd(IGlobals globals, address liquidityAsset, uint256 usdAmount) public view returns (uint256) {
+        return usdAmount
+            .mul(10 ** 8)                                         // Cancel out 10 ** 8 decimals from oracle
+            .mul(10 ** IERC20Details(liquidityAsset).decimals())  // Convert to liquidityAsset precision
+            .div(globals.getLatestPrice(liquidityAsset));         // Convert to liquidityAsset value
     }
 }
