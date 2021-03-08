@@ -53,7 +53,7 @@ contract DebtLocker {
     function claim() external isOwner returns(uint256[7] memory) {
 
         // Initialize newDefaultSuffered as zero
-        uint256 newDefaultSuffered;
+        uint256 newDefaultSuffered = uint256(0);
 
         // Avoid stack too deep
         uint256 loan_defaultSuffered = loan.defaultSuffered();
