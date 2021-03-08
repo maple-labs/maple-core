@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.11;
 
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+
 import "./BasicFDT.sol";
 
 /// @title FDT inherits BasicFDT and uses the original ERC-2222 logic. 
@@ -9,8 +11,9 @@ abstract contract FDT is BasicFDT {
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
     using SafeMathInt    for  int256;
+    using SafeERC20      for  IERC20;
 
-    IERC20 public fundsToken;  // The fundsToken (dividends)
+    IERC20 public immutable fundsToken;  // The fundsToken (dividends)
 
     uint256 public fundsTokenBalance;  // The amount of fundsToken (loanAsset) currently present and accounted for in this contract.
 
@@ -24,7 +27,7 @@ abstract contract FDT is BasicFDT {
     function withdrawFunds() public virtual override {
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        require(fundsToken.transfer(msg.sender, withdrawableFunds), "FDT:TRANSFER_FAILED");
+        fundsToken.safeTransfer(msg.sender, withdrawableFunds);
 
         _updateFundsTokenBalance();
     }
