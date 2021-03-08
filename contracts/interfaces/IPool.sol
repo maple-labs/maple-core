@@ -35,4 +35,10 @@ interface IPool {
     function claimableFunds(address) external view returns(uint256, uint256, uint256);
 
     function triggerDefault(address, address) external;
+
+    function isPoolInitialized() external view returns(bool);
+
+    function isPoolFinalized() external view returns(bool);
+
+    function isPoolDeactivated() external view returns(bool);
 }
