@@ -6,5 +6,5 @@ interface ICollateralLocker {
 
     function loanVault() external view returns (address);
 
-    function pull(address, uint256) external returns (bool);
+    function pull(address, uint256) external;
 }
