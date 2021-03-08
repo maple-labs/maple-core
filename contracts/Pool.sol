@@ -507,6 +507,14 @@ contract Pool is PoolFDT {
     }
 
     /**
+      @dev Checks whether pool state is `Finalized`?
+      @return bool Boolean value to know the status of state.
+     */
+    function isPoolFinalized() external view returns(bool) {
+        return poolState == State.Finalized;
+    }
+
+    /**
         @dev Utility to convert to WAD precision.
         @param amt Amount to convert
     */
