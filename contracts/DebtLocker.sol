@@ -40,8 +40,6 @@ contract DebtLocker {
         return newAmt.mul(totalClaim).div(totalNewAmt);
     }
 
-    event Debug(string, uint);
-
     /**
         @dev    Claim funds distribution for Loan via FDT.
         @return [0] = Total Claimed
