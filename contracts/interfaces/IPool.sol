@@ -36,9 +36,5 @@ interface IPool {
 
     function triggerDefault(address, address) external;
 
-    function isPoolInitialized() external view returns(bool);
-
     function isPoolFinalized() external view returns(bool);
-
-    function isPoolDeactivated() external view returns(bool);
 }

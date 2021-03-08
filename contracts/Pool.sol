@@ -507,27 +507,11 @@ contract Pool is PoolFDT {
     }
 
     /**
-      @dev Checks whether pool state is `Initialized`?
-      @return bool Boolean value to know the status of state.
-     */
-    function isPoolInitialized() external view returns(bool) {
-        return poolState == State.Initialized;
-    }
-
-    /**
       @dev Checks whether pool state is `Finalized`?
       @return bool Boolean value to know the status of state.
      */
     function isPoolFinalized() external view returns(bool) {
         return poolState == State.Finalized;
-    }
-
-    /**
-      @dev Checks whether pool state is `Deactivated`?
-      @return bool Boolean value to know the status of state.
-     */
-    function isPoolDeactivated() external view returns(bool) {
-        return poolState == State.Deactivated;
     }
 
     /**
