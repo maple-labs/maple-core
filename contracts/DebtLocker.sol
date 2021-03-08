@@ -22,6 +22,7 @@ contract DebtLocker {
     uint256 public interestPaid;     // Loan total interest    paid at time of claim()
     uint256 public feePaid;          // Loan total fees        paid at time of claim()
     uint256 public excessReturned;   // Loan total excess  returned at time of claim()
+    uint256 public defaultSuffered;  // Loan total default suffered at time of claim()
     uint256 public amountRecovered;  // Liquidity asset (a.k.a. loan asset) recovered from liquidation of Loan collateral
     
     modifier isOwner() {
@@ -39,6 +40,8 @@ contract DebtLocker {
         return newAmt.mul(totalClaim).div(totalNewAmt);
     }
 
+    event Debug(string, uint);
+
     /**
         @dev    Claim funds distribution for Loan via FDT.
         @return [0] = Total Claimed
@@ -52,12 +55,22 @@ contract DebtLocker {
     function claim() external isOwner returns(uint256[7] memory) {
 
         // Update defaultSuffered value based on ratio of total supply of DebtTokens owned by this DebtLocker
-        uint256 defaultSuffered = loan.defaultSuffered();
+        uint256 newDefaultSuffered;
+        emit Debug("newDefaultSuffered1", newDefaultSuffered);
+        emit Debug("defaultSuffered1", defaultSuffered);
 
-        if (defaultSuffered > uint256(0)) {
-            defaultSuffered = calcAllotment(defaultSuffered, loan.totalSupply(), loan.balanceOf(address(this)));
+        {
+            // Avoid stack too deep
+            uint256 loan_defaultSuffered = loan.defaultSuffered();
+        
+            // If a default has occured, update storage variable and update memory variable from zero for return
+            if (defaultSuffered == uint256(0) && loan_defaultSuffered > 0) {
+                newDefaultSuffered = defaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan.totalSupply(), loan_defaultSuffered);
+                emit Debug("newDefaultSuffered2", newDefaultSuffered);
+                emit Debug("defaultSuffered2", defaultSuffered);
+            }
         }
-
+        
         // Account for any transfers into Loan that have occured since last call
         loan.updateFundsReceived();
 
@@ -97,10 +110,10 @@ contract DebtLocker {
 
             loanAsset.safeTransfer(owner, claimBal);
 
-            return([claimBal, interest, principal, fee, excess, recovered, defaultSuffered]);
+            return([claimBal, interest, principal, fee, excess, recovered, newDefaultSuffered]);
         }
 
-        return([0, 0, 0, 0, 0, 0, defaultSuffered]);
+        return([0, 0, 0, 0, 0, 0, newDefaultSuffered]);
     }
 
     /**

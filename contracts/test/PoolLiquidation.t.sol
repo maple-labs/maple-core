@@ -292,6 +292,12 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(vals_a[6], loan.defaultSuffered() * (1_000_000 * WAD) / (4_000_000 * WAD));
         assertEq(vals_b[6], loan.defaultSuffered() * (3_000_000 * WAD) / (4_000_000 * WAD));
         withinPrecision(vals_a[6] + vals_b[6], loan.defaultSuffered(), 2);
+
+        // Call claim again to make sure that default isn't double accounted
+        vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
+        vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
+        assertEq(vals_a[6], 0);
+        assertEq(vals_b[6], 0);
     }
 
     function test_claim_default_burn_BPT_full_recover() public {
