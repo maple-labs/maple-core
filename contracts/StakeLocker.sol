@@ -7,7 +7,7 @@ import "./interfaces/IPoolFactory.sol";
 
 import "./token/StakeLockerFDT.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title StakeLocker holds custody of stakeAsset tokens for a given Pool and earns revenue from interest.
@@ -15,6 +15,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
+    using SafeERC20      for IERC20;
 
     uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division
 
@@ -40,6 +41,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     event   Stake(uint256 _amount, address _staker);
     event Unstake(uint256 _amount, address _staker);
+    event AllowListUpdated(address _user, bool _status);
 
     /** 
         @dev canUnstake enables unstaking in the following conditions:
@@ -102,6 +104,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function setAllowlist(address user, bool status) isPool public {
         allowed[user] = status;
+        emit AllowListUpdated(user, status);
     }
 
     /**
@@ -139,15 +142,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
         amt = totalSupply() == amt && amt > 0 ? amt - 1 : amt;  // If last withdraw, subtract 1 wei to maintain FDT accounting
 
-        updateFundsReceived();  // Account for any funds transferred into contract since last call
-
-        uint256 recognizedLosses = recognizableLossesOf(msg.sender);  // Get all losses of user
-
+        updateFundsReceived();   // Account for any funds transferred into contract since last call
         _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
-        recognizeLosses();       // Update loss accounting for Staker, decrement `bptLosses`
         withdrawFunds();         // Transfer full entitled interest
 
-        require(stakeAsset.transfer(msg.sender, amt.sub(recognizedLosses)), "StakeLocker:UNSTAKE_TRANSFER");  // Unstake amt minus losses
+        require(stakeAsset.transfer(msg.sender, amt.sub(recognizeLosses())), "StakeLocker:UNSTAKE_TRANSFER");  // Unstake amt minus losses
 
         emit Unstake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
@@ -160,7 +159,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _updateStakeDate(address who, uint256 amt) internal {
         uint256 stkDate = stakeDate[who];
-        if (stkDate == 0) {
+        if (stkDate == uint256(0)) {
             stakeDate[who] = block.timestamp;
         } else {
             uint256 coef   = WAD.mul(amt).div(balanceOf(who) + amt); 
@@ -189,7 +188,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        require(fundsToken.transfer(msg.sender, withdrawableFunds), "FDT:TRANSFER_FAILED");
+        fundsToken.safeTransfer(msg.sender, withdrawableFunds);
 
         _updateFundsTokenBalance();
     }

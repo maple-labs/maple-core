@@ -219,7 +219,7 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
-        require(liquidityAsset.transferFrom(msg.sender, liquidityLocker, amt), "Pool:DEPOSIT_TRANSFER_FROM");
+        liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
         uint256 wad = _toWad(amt);
 
         PoolLib.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
@@ -239,20 +239,19 @@ contract Pool is PoolFDT {
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
 
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // FDT accounting interest
-        uint256 recognizedLosses  = recognizableLossesOf(msg.sender);                                    // FDT accounting losses
         uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Calculate total penalty
 
-        // Amount that is due after penalties and realized losses are accounted for. 
-        // Total penalty is distributed to other LPs as interest, recognizedLosses are absorbed by the LP.
-        uint256 due = amt.sub(totPenalty).sub(recognizedLosses);
-
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance
-        recognizeLosses();          // Update loss accounting for LP,   decrement `bptShortfall`
         withdrawFunds();            // Transfer full entitled interest, decrement `interestSum`
 
         interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount
         updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`
+
+        // Amount that is due after penalties and realized losses are accounted for. 
+        // Total penalty is distributed to other LPs as interest, recognizedLosses are absorbed by the LP.
+        uint256 due = amt.sub(totPenalty).sub(recognizeLosses());
+
 
         // Transfer amt - totPenalty - recognizedLosses
         ILiquidityLocker(liquidityLocker).transfer(msg.sender, due);

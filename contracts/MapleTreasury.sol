@@ -8,12 +8,13 @@ import "./interfaces/IERC20Details.sol";
 import "./interfaces/IUniswapRouter.sol";
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 /// @title MapleTreasury earns revenue from Loans and distributes it to token holders and the Maple development team.
 contract MapleTreasury {
 
-	using SafeMath for uint256;
+    using SafeMath  for uint256;
+    using SafeERC20 for IERC20;
 
     address public mpl;            // MapleToken contract
     address public fundsToken;     // fundsToken value in the MapleToken contract
@@ -63,7 +64,7 @@ contract MapleTreasury {
         @param amount Amount to withdraw
     */
     function withdrawFunds(address asset, uint256 amount) isGovernor public {
-        require(IERC20(asset).transfer(msg.sender, amount), "MapleTreasury:FUNDS_RECEIVE_TRANSFER");
+        IERC20(asset).safeTransfer(msg.sender, amount);
         emit FundsWithdrawn(amount);
     }
 
@@ -73,7 +74,7 @@ contract MapleTreasury {
     function distributeToHolders() isGovernor public {
         IERC20 _fundsToken = IERC20(fundsToken);
         uint256 passThroughAmount = _fundsToken.balanceOf(address(this));
-        require(_fundsToken.transfer(mpl, passThroughAmount), "MapleTreasury:FUNDS_RECEIVE_TRANSFER");
+        _fundsToken.safeTransfer(mpl, passThroughAmount);
         IMapleToken(mpl).updateFundsReceived();
         emit PassThrough(passThroughAmount);
     }
@@ -90,7 +91,7 @@ contract MapleTreasury {
         uint256 assetBalance = IERC20(asset).balanceOf(address(this));
         uint256 minAmount    = Util.calcMinAmount(_globals, asset, fundsToken, assetBalance);
 
-        IERC20(asset).approve(uniswapRouter, assetBalance);
+        IERC20(asset).safeIncreaseAllowance(uniswapRouter, assetBalance);
 
         address uniswapAssetForPath = _globals.defaultUniswapPath(asset, fundsToken);
         bool middleAsset = uniswapAssetForPath != fundsToken && uniswapAssetForPath != address(0);
