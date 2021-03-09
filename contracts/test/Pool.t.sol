@@ -227,6 +227,10 @@ contract PoolTest is TestUtil {
         // Admin can claim once added
         sid.setAdmin(address(pool1), address(pop), true);                                // Add admin to allow to call the `claim()` function.
         assertTrue(pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function.
+
+        // Admin can't claim after removed
+        sid.setAdmin(address(pool1), address(pop), false);                                // Add admin to allow to call the `claim()` function.
+        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function.
     }
 
     function test_getInitialStakeRequirements() public {
