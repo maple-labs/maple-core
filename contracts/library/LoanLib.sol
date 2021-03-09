@@ -53,7 +53,6 @@ library LoanLib {
     /**
         @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
         @param collateralAsset   IERC20 of the collateralAsset
-        @param liquidationAmt    Amount of collateralAsset to liquidate (balance of CollateralLocker)
         @param loanAsset         Address of loanAsset
         @param superFactory      Factory that instantiated Loan
         @param collateralLocker  Address of CollateralLocker
@@ -62,7 +61,6 @@ library LoanLib {
     */
     function triggerDefault(
         IERC20 collateralAsset,
-        uint256 liquidationAmt,
         address loanAsset,
         address superFactory,
         address collateralLocker
@@ -74,10 +72,13 @@ library LoanLib {
         ) 
     {
 
+        // Get liquidation amount from CollateralLocker
+        uint256 liquidationAmt = collateralAsset.balanceOf(address(collateralLocker));
+        
         // Pull collateralAsset from collateralLocker
         ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt);
 
-        if (address(collateralAsset) != loanAsset) {
+        if (address(collateralAsset) != loanAsset && liquidationAmt > 0) {
             collateralAsset.safeIncreaseAllowance(UNISWAP_ROUTER, liquidationAmt);
 
             IGlobals globals = _globals(superFactory);

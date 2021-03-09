@@ -97,5 +97,6 @@ interface ILoan is IERC20 {
     function updateFundsReceived() external;
     
     function withdrawFunds() external;
-    
+
+    function withdrawableFundsOf(address) external view returns(uint256);
 }
