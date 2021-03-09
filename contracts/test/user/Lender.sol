@@ -43,5 +43,4 @@ contract Lender {
         string memory sig = "triggerDefault()";
         (ok,) = loan.call(abi.encodeWithSignature(sig));
     }
-
 }

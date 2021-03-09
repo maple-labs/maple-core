@@ -24,6 +24,7 @@ contract LP {
         IPool(pool).deposit(amt);
     }
 
+    function claim(address pool, address loan, address dlFactory) external { IPool(pool).claim(loan, dlFactory); }
 
     /*********************/
     /*** TRY FUNCTIONS ***/
@@ -38,5 +39,9 @@ contract LP {
         string memory sig = "withdraw(uint256)";
         (ok,) = pool.call(abi.encodeWithSignature(sig, amt));
     }
-    
+
+    function try_claim(address pool, address loan, address dlFactory) external returns (bool ok) {
+        string memory sig = "claim(address,address)";
+        (ok,) = pool.call(abi.encodeWithSignature(sig, loan, dlFactory));
+    }
 }

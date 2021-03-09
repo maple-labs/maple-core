@@ -320,6 +320,7 @@ contract Pool is PoolFDT {
     */
     function claim(address loan, address dlFactory) external returns(uint256[7] memory) { 
         _whenProtocolNotPaused();
+        _isValidDelegateOrAdmin();
         uint256[7] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
         (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);

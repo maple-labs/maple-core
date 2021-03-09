@@ -80,6 +80,10 @@ contract PoolDelegate {
     function triggerDefault(address pool, address loan, address dlFactory) external {
         IPool(pool).triggerDefault(loan, dlFactory);
     }
+    
+    function setAdmin(address pool, address newAdmin, bool status) external {
+        IPool(pool).setAdmin(newAdmin, status);
+    }
 
 
     /*********************/
@@ -107,6 +111,11 @@ contract PoolDelegate {
     function try_fundLoan(address pool, address loan, address dlFactory, uint256 amt) external returns (bool ok) {
         string memory sig = "fundLoan(address,address,uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory, amt));
+    }
+
+    function try_claim(address pool, address loan, address dlFactory) external returns (bool ok) {
+        string memory sig = "claim(address,address)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
     }
 
     function try_finalize(address pool) external returns (bool ok) {
@@ -143,5 +152,4 @@ contract PoolDelegate {
         string memory sig = "triggerDefault(address,address)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
     }
-
 }
