@@ -218,19 +218,19 @@ contract PoolTest is TestUtil {
         assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 10_000 * USD));
         
         // Assert that LPs and non-admins cannot claim
-        assertTrue(!dan.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` function.
-        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` function.
+        assertTrue(!dan.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` function
+        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` function
 
         // Pool delegate can claim
-        assertTrue(sid.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function.
+        assertTrue(sid.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function
         
         // Admin can claim once added
-        sid.setAdmin(address(pool1), address(pop), true);                                // Add admin to allow to call the `claim()` function.
-        assertTrue(pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function.
+        sid.setAdmin(address(pool1), address(pop), true);                                // Add admin to allow to call the `claim()` function
+        assertTrue(pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function
 
         // Admin can't claim after removed
-        sid.setAdmin(address(pool1), address(pop), false);                                // Add admin to allow to call the `claim()` function.
-        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function.
+        sid.setAdmin(address(pool1), address(pop), false);                                // Add admin to allow to call the `claim()` function
+        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Does not have permission to call `claim()` function
     }
 
     function test_getInitialStakeRequirements() public {
