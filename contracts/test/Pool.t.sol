@@ -216,11 +216,10 @@ contract PoolTest is TestUtil {
 
         // Fund Loan (so that debtLocker is instantiated and given LoanFDTs)
         assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 10_000 * USD));
-
         
         // Assert that LPs and non-admins cannot claim
-        assertTrue(!dan.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` fuunction.
-        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` fuunction.
+        assertTrue(!dan.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` function.
+        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` function.
 
         // Pool delegate can claim
         assertTrue(sid.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function.
