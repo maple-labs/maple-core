@@ -13,7 +13,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 /// @title MapleTreasury earns revenue from Loans and distributes it to token holders and the Maple development team.
 contract MapleTreasury {
 
-	using SafeMath  for uint256;
+    using SafeMath  for uint256;
     using SafeERC20 for IERC20;
 
     address public mpl;            // MapleToken contract
