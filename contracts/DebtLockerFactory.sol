@@ -22,5 +22,4 @@ contract DebtLockerFactory {
         isLocker[debtLocker] = true;
         return debtLocker;
     }
-    
 }

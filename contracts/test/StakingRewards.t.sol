@@ -7,6 +7,8 @@ import "./user/Farmer.sol";
 import "./user/Governor.sol";
 import "./user/PoolDelegate.sol";
 
+import "../oracles/UsdOracle.sol";
+
 import "../DebtLockerFactory.sol";
 import "../LiquidityLockerFactory.sol";
 import "../Pool.sol";
@@ -31,6 +33,7 @@ contract StakingRewardsTest is TestUtil {
     PoolFactory               poolFactory;
     Pool                             pool;
     StakeLockerFactory          slFactory;
+    UsdOracle                   usdOracle;
     
     IBPool                          bPool;
 
@@ -58,6 +61,9 @@ contract StakingRewardsTest is TestUtil {
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
         gov.setPoolDelegateAllowlist(address(sid),                       true);
+
+        usdOracle = new UsdOracle();
+        gov.setPriceOracle(USDC, address(usdOracle));
 
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);

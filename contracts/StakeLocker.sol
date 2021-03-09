@@ -238,5 +238,4 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function _isValidAdminOrPoolDelegate() internal view {
         require(msg.sender == IPool(owner).poolDelegate() || IPool(owner).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
     }
-    
 }

@@ -366,7 +366,7 @@ contract Pool is PoolFDT {
         _isValidState(State.Finalized);
         _isValidDelegate();
         require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
-        require(principalOut <= 100 * 10 ** liquidityAssetDecimals);  // TODO: Discuss with auditors what best option is here (100 WBTC is non-negligible, USDC is)
+        require(principalOut <= PoolLib.convertFromUsd(_globals(superFactory), address(liquidityAsset), 100), "Pool:PRINCIPAL_OUTSTANDING");
         poolState = State.Deactivated;
         emit PoolStateChanged(poolState);
     }
