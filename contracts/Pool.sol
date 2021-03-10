@@ -129,7 +129,7 @@ contract Pool is PoolFDT {
         // Withdrawal penalty default settings
         principalPenalty = 500;
         penaltyDelay     = 30 days;
-        lockupPeriod     = 90 days;
+        lockupPeriod     = 180 days;
 
         emit PoolStateChanged(poolState);
     }
@@ -411,6 +411,7 @@ contract Pool is PoolFDT {
     function setLockupPeriod(uint256 _newLockupPeriod) external {
         _whenProtocolNotPaused();
         _isValidDelegate();
+        require(_newLockupPeriod <= lockupPeriod, "Pool:LOCKUP_PERIOD_INCREASE");
         lockupPeriod = _newLockupPeriod;
     }
 
