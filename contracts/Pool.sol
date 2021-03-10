@@ -488,11 +488,13 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        ILiquidityLocker(liquidityLocker).transfer(msg.sender, withdrawableFunds);
+        if (withdrawableFunds > uint256(0)) { 
+            ILiquidityLocker(liquidityLocker).transfer(msg.sender, withdrawableFunds);
 
-        interestSum = interestSum.sub(withdrawableFunds);
+            interestSum = interestSum.sub(withdrawableFunds);
 
-        _updateFundsTokenBalance();
+            _updateFundsTokenBalance();
+        }
     }
 
     /**
