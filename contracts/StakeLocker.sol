@@ -188,9 +188,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        fundsToken.safeTransfer(msg.sender, withdrawableFunds);
+        if (withdrawableFunds > uint256(0)) {
+            fundsToken.safeTransfer(msg.sender, withdrawableFunds);
 
-        _updateFundsTokenBalance();
+            _updateFundsTokenBalance();
+        }
     }
 
     /**
