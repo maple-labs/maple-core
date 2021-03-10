@@ -19,13 +19,11 @@ library Util {
         @return Expected amount of toAsset to receive from swap based on current oracle prices
     */
     function calcMinAmount(IGlobals globals, address fromAsset, address toAsset, uint256 swapAmt) public view returns(uint256) {
-        uint256 fromAssetPrice = globals.getLatestPrice(fromAsset);
-        uint256 toAssetPrice   = globals.getLatestPrice(toAsset);
-
-        // Calculate amount out expected (abstract precision).
-        uint abstractMinOut = swapAmt.mul(fromAssetPrice).div(toAssetPrice);
-
-        // Convert to proper precision, return value.
-        return abstractMinOut.mul(10 ** IERC20Details(toAsset).decimals()).div(10 ** IERC20Details(fromAsset).decimals());
+        return 
+            swapAmt
+                .mul(globals.getLatestPrice(fromAsset))           // Convert from "from" asset value
+                .mul(10 ** IERC20Details(toAsset).decimals())     // Convert to "to" asset decimal precision
+                .div(globals.getLatestPrice(toAsset))             // Convert to "to" asset value
+                .div(10 ** IERC20Details(fromAsset).decimals());  // Convert from "from" asset decimal precision
     }
 }
