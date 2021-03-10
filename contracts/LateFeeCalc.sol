@@ -14,7 +14,7 @@ contract LateFeeCalc {
     uint8   public constant calcType = 11;  // "LATEFEE type"
     bytes32 public constant name     = 'FLAT';
     
-    uint256 public feeBips;  // The fee in bips, charged on the payment amount.
+    uint256 public immutable feeBips;  // The fee in bips, charged on the payment amount.
 
     constructor(uint256 _feeBips) public {
         feeBips = _feeBips;

@@ -12,11 +12,11 @@ interface ICalc { function calcType() external view returns (uint8); }
 /// @title MapleGlobals maintains a central source of parameters and allowlists for the Maple protocol.
 contract MapleGlobals {
 
-    address immutable public BFactory;   // Official Balancer pool factory
+    address public immutable BFactory;   // Official Balancer pool factory
+    address public immutable mpl;        // Maple Token is the ERC-2222 token for the Maple protocol
 
     address public pendingGovernor;      // Governor that is declared for transfer, must be accepted for transfer to take effect
     address public governor;             // Governor is responsible for management of global Maple variables
-    address public mpl;                  // Maple Token is the ERC-2222 token for the Maple protocol
     address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
     address public admin;                // Admin of the whole network, has the power to switch off/on the functionality of entire protocol
 
