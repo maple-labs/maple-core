@@ -236,18 +236,21 @@ contract MapleGlobalsTest is TestUtil {
         // setInvestorFee()
         assertEq(   globals.investorFee(), 50);
         assertTrue(!fakeGov.try_setInvestorFee(30));  // Non-governor cant set
+        assertTrue(    !gov.try_setInvestorFee(10001));
         assertTrue(     gov.try_setInvestorFee(30));
         assertEq(   globals.investorFee(), 30);
 
         // setTreasuryFee
         assertEq(   globals.treasuryFee(), 50);
         assertTrue(!fakeGov.try_setTreasuryFee(30));  // Non-governor cant set
+        assertTrue(    !gov.try_setInvestorFee(10001));
         assertTrue(     gov.try_setTreasuryFee(30));
         assertEq(   globals.treasuryFee(), 30);
 
         // setDrawdownGracePeriod
         assertEq(   globals.drawdownGracePeriod(), 1 days);
         assertTrue(!fakeGov.try_setDrawdownGracePeriod(3 days));
+        assertTrue(    !gov.try_setDrawdownGracePeriod(86399));
         assertTrue(     gov.try_setDrawdownGracePeriod(3 days));
         assertEq(   globals.drawdownGracePeriod(), 3 days);
         assertTrue(!fakeGov.try_setDrawdownGracePeriod(1 days));
@@ -257,6 +260,7 @@ contract MapleGlobalsTest is TestUtil {
         // setGracePeriod
         assertEq(   globals.gracePeriod(), 5 days);
         assertTrue(!fakeGov.try_setGracePeriod(3 days));
+        assertTrue(    !gov.try_setGracePeriod(86399)); // 1 sec less than 1 day.
         assertTrue(     gov.try_setGracePeriod(3 days));
         assertEq(   globals.gracePeriod(), 3 days);
         assertTrue(!fakeGov.try_setGracePeriod(7 days));
@@ -266,6 +270,7 @@ contract MapleGlobalsTest is TestUtil {
         // setSwapOutRequired()
         assertEq(   globals.swapOutRequired(), 100);
         assertTrue(!fakeGov.try_setSwapOutRequired(100000));
+        assertTrue(    !gov.try_setSwapOutRequired(99));
         assertTrue(     gov.try_setSwapOutRequired(100000));
         assertEq(   globals.swapOutRequired(), 100000);
 
@@ -278,6 +283,7 @@ contract MapleGlobalsTest is TestUtil {
          // setMapleTreasury()
         assertEq(   globals.mapleTreasury(), address(trs));
         assertTrue(!fakeGov.try_setMapleTreasury(address(this)));
+        assertTrue(    !gov.try_setMapleTreasury(address(0)));
         assertTrue(     gov.try_setMapleTreasury(address(this)));
         assertEq(   globals.mapleTreasury(), address(this)); 
 

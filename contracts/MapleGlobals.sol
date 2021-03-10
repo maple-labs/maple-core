@@ -232,6 +232,7 @@ contract MapleGlobals {
         @param _fee The fee, e.g., 50 = 0.50%
     */
     function setInvestorFee(uint256 _fee) public isGovernor {
+        _checkFeeRange(_fee);
         investorFee = _fee;
         emit GlobalsParamSet("INVESTOR_FEE", _fee);
     }
@@ -241,6 +242,7 @@ contract MapleGlobals {
         @param _fee The fee, e.g., 50 = 0.50%
     */
     function setTreasuryFee(uint256 _fee) public isGovernor {
+        _checkFeeRange(_fee);
         treasuryFee = _fee;
         emit GlobalsParamSet("TREASURY_FEE", _fee);
     }
@@ -250,6 +252,7 @@ contract MapleGlobals {
         @param _mapleTreasury New MapleTreasury address
     */
     function setMapleTreasury(address _mapleTreasury) public isGovernor {
+        require(_mapleTreasury != address(0), "MapleGlobals: ZERO_ADDRESS");
         mapleTreasury = _mapleTreasury;
         emit GlobalsAddressSet("MAPLE_TREASURY", _mapleTreasury);
     }
@@ -259,6 +262,7 @@ contract MapleGlobals {
         @param _gracePeriod Number of seconds to set the grace period to
     */
     function setGracePeriod(uint256 _gracePeriod) public isGovernor {
+        _checkValidGracePeriodValue(_gracePeriod);
         gracePeriod = _gracePeriod;
         emit GlobalsParamSet("GRACE_PERIOD", _gracePeriod);
     }
@@ -277,6 +281,7 @@ contract MapleGlobals {
         @param _drawdownGracePeriod Number of seconds to set the drawdown grace period to
     */
     function setDrawdownGracePeriod(uint256 _drawdownGracePeriod) public isGovernor {
+        _checkValidGracePeriodValue(_drawdownGracePeriod);
         drawdownGracePeriod = _drawdownGracePeriod;
         emit GlobalsParamSet("DRAWDOWN_GRACE_PERIOD", _drawdownGracePeriod);
     }
@@ -286,6 +291,7 @@ contract MapleGlobals {
         @param amt The new minimum swap out required
     */
     function setSwapOutRequired(uint256 amt) public isGovernor {
+        require(amt > uint256(100), "MapleGlobals: SHOULD_GT_HUNDERED_USD");
         swapOutRequired = amt;
         emit GlobalsParamSet("SWAP_OUT_REQUIRED", amt);
     }
@@ -336,5 +342,13 @@ contract MapleGlobals {
     function setPriceOracle(address asset, address oracle) public isGovernor {
         oracleFor[asset] = oracle;
         emit OracleSet(asset, oracle);
+    }
+
+    function _checkFeeRange(uint256 _fee) internal {
+        require(_fee > uint256(0) && _fee <= uint256(10000), "MapleGlobals: BOUND_CHECK_FAIL");
+    }
+
+    function _checkValidGracePeriodValue(uint256 _gracePeriod) internal  {
+        require(_gracePeriod >= 1 days, "MapleGlobals: SHOULD_GTE_ONE");
     }
 }
