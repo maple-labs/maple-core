@@ -371,8 +371,8 @@ library PoolLib {
             depositDate[who] = block.timestamp;
         } else {
             uint256 depDate  = depositDate[who];
-            uint256 coef     = (WAD.mul(amt)).div(balance + amt);
-            depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // depDate + (now - depDate) * coef
+            uint256 dTime    = block.timestamp.sub(depDate);
+            depositDate[who] = depDate.add(dTime.mul(amt).div(balance + amt));  // depDate + (now - depDate) * (amt / (balance + amt))
         }
     }
 

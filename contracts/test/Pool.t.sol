@@ -441,9 +441,8 @@ contract PoolTest is TestUtil {
 
         hevm.warp(startDate + 30 days);
         bob.deposit(address(pool1), newAmt);
-        uint256 coef = newAmt * WAD / (newAmt + initialAmt);
 
-        uint256 newDepDate = startDate + coef * (block.timestamp - startDate) / WAD;
+        uint256 newDepDate = startDate + (block.timestamp - startDate) * newAmt / (newAmt + initialAmt);
         assertEq(pool1.depositDate(address(bob)), newDepDate);  // Gets updated
 
         assertTrue(sid.try_setLockupPeriod(address(pool1), uint256(0)));  // Sets 0 as lockup period to allow withdraw. 
