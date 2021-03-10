@@ -90,9 +90,9 @@ contract StakingRewards is Ownable {
         _notPaused();
         _updateReward(msg.sender);
         require(amount > 0, "REWARDS:STAKE_EQ_ZERO");
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
     }
 
