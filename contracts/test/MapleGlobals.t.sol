@@ -165,8 +165,10 @@ contract MapleGlobalsTest is TestUtil {
 
     function test_setters() public {
 
-        Governor fakeGov = new Governor();
-        fakeGov.setGovGlobals(globals);  // Point to globals created by gov
+        Governor fakeGov  = new Governor();
+        Governor fakeGov2 = new Governor();
+        fakeGov.setGovGlobals(globals);  // Point to globals created by gov.
+        fakeGov2.setGovGlobals(globals);
 
         // setValidPoolFactory()
         assertTrue(!globals.isValidPoolFactory(address(sid)));             // Use dummy address since poolFactory is already valid
@@ -293,11 +295,15 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setMaxSwapSlippage(12));
         assertEq(   globals.maxSwapSlippage(), 12);
 
-        assertTrue(!fakeGov.try_setGovernor(address(fakeGov)));
-        assertTrue(    !gov.try_setGovernor(address(0)));       // Cannot set governor to zero
-        assertTrue(     gov.try_setGovernor(address(fakeGov)));
-        assertEq(   globals.governor(), address(fakeGov));
-        assertTrue( fakeGov.try_setGovernor(address(gov)));  // Assert new governor has permissions
-        assertEq(   globals.governor(), address(gov));
+        assertTrue( !fakeGov.try_setPendingGovernor(address(fakeGov)));
+        assertTrue(     !gov.try_setPendingGovernor(address(0)));       // Cannot set governor to zero
+        assertTrue(      gov.try_setPendingGovernor(address(fakeGov2)));
+        assertTrue(      gov.try_setPendingGovernor(address(fakeGov)));
+        assertEq(    globals.pendingGovernor(), address(fakeGov));
+        assertEq(    globals.governor(), address(gov));
+        assertTrue( !fakeGov.try_setPendingGovernor(address(fakeGov2)));  // Trying to assign the permission to someone else.
+        assertTrue(!fakeGov2.try_acceptGovernor());
+        assertTrue(  fakeGov.try_acceptGovernor());
+        assertEq(    globals.governor(), address(fakeGov));
     }
 }

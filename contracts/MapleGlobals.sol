@@ -14,6 +14,7 @@ contract MapleGlobals {
 
     address immutable public BFactory;   // Official Balancer pool factory
 
+    address public pendingGovernor;      // Governor that is declared for transfer, must be accepted for transfer to take effect
     address public governor;             // Governor is responsible for management of global Maple variables
     address public mpl;                  // Maple Token is the ERC-2222 token for the Maple protocol
     address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
@@ -51,6 +52,8 @@ contract MapleGlobals {
     event CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event       LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event          OracleSet(address asset, address oracle);
+    event PendingGovernorSet(address pendingGovernor);
+    event   GovernorAccepted(address governor);
     event    GlobalsParamSet(bytes32 indexed which, uint256 value);
     event  GlobalsAddressSet(bytes32 indexed which, address addr);
     event     ProtocolPaused(bool pause);
@@ -276,13 +279,23 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Set a new Governor. Only Governor can call.
-        @param _newGovernor Address of new Governor
+        @dev Set a new pending Governor. This address can become governor if they accept. Only Governor can call.
+        @param _pendingGovernor Address of new Governor
     */
-    function setGovernor(address _newGovernor) public isGovernor {
-        require(_newGovernor != address(0), "MapleGlobals:ZERO_ADDRESS_GOVERNOR");
-        governor = _newGovernor;
-        emit GlobalsAddressSet("GOVERNOR", _newGovernor);
+    function setPendingGovernor(address _pendingGovernor) public isGovernor {
+        require(_pendingGovernor != address(0), "MapleGlobals:ZERO_ADDRESS_GOVERNOR");
+        pendingGovernor = _pendingGovernor;
+        emit PendingGovernorSet(_pendingGovernor);
+    }
+
+    /**
+        @dev Accept the Governor position. Only PendingGovernor can call.
+    */
+    function acceptGovernor() public {
+        require(msg.sender == pendingGovernor, "MapleGlobals:NOT_PENDING_GOVERNOR");
+        governor = pendingGovernor;
+        pendingGovernor = address(0);
+        emit GovernorAccepted(governor);
     }
 
     /**
