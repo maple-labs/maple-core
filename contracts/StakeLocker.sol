@@ -163,7 +163,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
             stakeDate[who] = block.timestamp;
         } else {
             uint256 dTime  = block.timestamp.sub(stkDate); 
-            stakeDate[who] = stkDate.add(dTime.mul(amt).div(balanceOf(who) + amt));  // depDate + (now - depDate) * (amt / (balance + amt))
+            stakeDate[who] = stkDate.add(dTime.mul(amt).div(balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
         }
     }
 
