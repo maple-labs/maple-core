@@ -57,14 +57,14 @@ contract Loan is FDT, Pausable {
     uint256 public nextPaymentDue;  // The unix timestamp due date of next payment
 
     // Loan specifications
-    uint256 public apr;                     // APR in basis points        
-    uint256 public paymentsRemaining;       // Number of payments remaining on the Loan
-    uint256 public termDays;                // Total length of the Loan term in days
-    uint256 public paymentIntervalSeconds;  // Time between Loan payments in seconds
-    uint256 public requestAmount;           // Total requested amount for Loan
-    uint256 public collateralRatio;         // Percentage of value of drawdown amount to post as collateral in basis points
-    uint256 public fundingPeriodSeconds;    // Time for a Loan to be funded in seconds
-    uint256 public createdAt;               // Timestamp of when Loan was instantiated
+    uint256 public immutable apr;                     // APR in basis points        
+    uint256 public           paymentsRemaining;       // Number of payments remaining on the Loan
+    uint256 public immutable termDays;                // Total length of the Loan term in days
+    uint256 public immutable paymentIntervalSeconds;  // Time between Loan payments in seconds
+    uint256 public immutable requestAmount;           // Total requested amount for Loan
+    uint256 public immutable collateralRatio;         // Percentage of value of drawdown amount to post as collateral in basis points
+    uint256 public immutable fundingPeriodSeconds;    // Time for a Loan to be funded in seconds
+    uint256 public immutable createdAt;               // Timestamp of when Loan was instantiated
 
     // Accounting variables
     uint256 public principalOwed;   // The principal owed (initially the drawdown amount)

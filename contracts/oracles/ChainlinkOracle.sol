@@ -11,9 +11,10 @@ contract ChainlinkOracle is Ownable {
     IChainlinkAggregatorV3 public priceFeed;
     IGlobals public globals;
 
-    bool    public manualOverride;
-    address public assetAddress;
-    int256  public manualPrice;
+    address public immutable assetAddress;
+
+    bool   public manualOverride;
+    int256 public manualPrice;
 
     event ChangeAggregatorFeed(address _newMedianizer, address _oldMedianizer);
     event SetManualPrice(int256 _oldPrice, int256 _newPrice);

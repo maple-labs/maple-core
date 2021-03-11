@@ -16,10 +16,10 @@ contract MapleTreasury {
     using SafeMath  for uint256;
     using SafeERC20 for IERC20;
 
-    address public mpl;            // MapleToken contract
-    address public fundsToken;     // fundsToken value in the MapleToken contract
-    address public uniswapRouter;  // Official UniswapV2 router contract
-    address public globals;        // MapleGlobals contract
+    address public immutable mpl;            // MapleToken contract
+    address public immutable fundsToken;     // fundsToken value in the MapleToken contract
+    address public immutable uniswapRouter;  // Official UniswapV2 router contract
+    address public           globals;        // MapleGlobals contract
 
     /**
         @dev Instantiates the MapleTreasury contract.

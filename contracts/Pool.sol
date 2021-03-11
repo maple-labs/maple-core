@@ -174,9 +174,9 @@ contract Pool is PoolFDT {
     /**
         @dev Calculates BPTs required if burning BPTs for liquidityAsset, given supplied tokenAmountOutRequired.
         @param  _bPool                        Balancer pool that issues the BPTs
-        @param  _liquidityAsset              Swap out asset (e.g. USDC) to receive when burning BPTs
+        @param  _liquidityAsset               Swap out asset (e.g. USDC) to receive when burning BPTs
         @param  _staker                       Address that deposited BPTs to stakeLocker
-        @param  _stakeLocker                 Escrows BPTs deposited by staker
+        @param  _stakeLocker                  Escrows BPTs deposited by staker
         @param  _liquidityAssetAmountRequired Amount of liquidityAsset required to recover
         @return [0] = poolAmountIn required
                 [1] = poolAmountIn currently staked
