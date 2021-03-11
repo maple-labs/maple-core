@@ -226,10 +226,12 @@ library PoolLib {
         address dlFactory,
         uint256 amt
     ) external {
-        IGlobals globals = _globals(superFactory);
+        IGlobals globals    = _globals(superFactory);
+        address loanFactory = ILoan(loan).superFactory();
+
         // Auth checks
-        require(globals.isValidLoanFactory(ILoan(loan).superFactory()),         "Pool:INVALID_LOAN_FACTORY");
-        require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),          "Pool:INVALID_LOAN");
+        require(globals.isValidLoanFactory(loanFactory),                        "Pool:INVALID_LOAN_FACTORY");
+        require(ILoanFactory(loanFactory).isLoan(loan),                         "Pool:INVALID_LOAN");
         require(globals.isValidSubFactory(superFactory, dlFactory, DL_FACTORY), "Pool:INVALID_DL_FACTORY");
 
         address _debtLocker = debtLockers[loan][dlFactory];
