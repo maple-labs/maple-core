@@ -51,12 +51,15 @@ contract Pool is PoolFDT {
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the Pool
     uint256 public lockupPeriod;      // Unix timestamp during which withdrawal is not allowed
 
+    bool public openToPublic;
+
     enum State { Initialized, Finalized, Deactivated }
     State public poolState;  // The current state of this pool
 
     mapping(address => uint256)                     public depositDate;  // Used for withdraw penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
     mapping(address => bool)                        public admins;       // Admin addresses who have permission to do certain operations in case of disaster mgt.
+    mapping(address => bool)                        public allowed;      // Map address to allowed status
 
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
@@ -407,6 +410,26 @@ contract Pool is PoolFDT {
         _isValidDelegate();
         require(_newLockupPeriod <= lockupPeriod, "Pool:LOCKUP_PERIOD_INCREASE");
         lockupPeriod = _newLockupPeriod;
+    }
+
+    /**
+        @dev Open Pool to public (TODO: Should we be able to set this to false, or just a one-time set to true?)
+    */
+    function openPoolToPublic() external {
+        _whenProtocolNotPaused();
+        _isValidDelegate();
+        openToPublic = true;
+    }
+
+    /**
+        @dev Update user status on Pool allowlist. Only Pool Delegate can call this function.
+        @param user   The address to set status for.
+        @param status The status of user on allowlist.
+    */
+    function setAllowlist(address user, bool status) external {
+        _whenProtocolNotPaused();
+        _isValidDelegate();
+        allowed[user] = status;
     }
 
     /**
