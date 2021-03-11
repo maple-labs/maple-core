@@ -60,6 +60,7 @@ contract Pool is PoolFDT {
     mapping(address => mapping(address => address)) public debtLockers;                // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
     mapping(address => bool)                        public admins;                     // Admin addresses who have permission to do certain operations in case of disaster mgt.
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
+    mapping(address => uint256)                     public depositCooldown;            // Timestamp of when LP called cooldown()
 
     // TODO: Check if offchain team needs a `PoolOpened` event
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
@@ -232,6 +233,7 @@ contract Pool is PoolFDT {
     */
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
+        _cooldownFinished();
         uint256 wad    = _toWad(amt);
         uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
@@ -240,6 +242,8 @@ contract Pool is PoolFDT {
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // FDT accounting interest
         uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Calculate total penalty
+
+        depositCooldown[msg.sender] = 0;  // Reset cooldown time no matter what transfer amount is
 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance
         withdrawFunds();            // Transfer full entitled interest, decrement `interestSum`
@@ -256,6 +260,15 @@ contract Pool is PoolFDT {
         _transferLiquidityLockerFunds(msg.sender, due);
 
         _emitBalanceUpdatedEvent();
+    }
+
+    /**
+        @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
+    */
+    function cooldown() external override {
+        require(balanceOf(msg.sender) != 0, "Pool:INVALID_BALANCE_ON_COOLDOWN");
+        depositCooldown[msg.sender] = block.timestamp;
+        emit Cooldown(msg.sender);
     }
 
     /**
@@ -595,6 +608,13 @@ contract Pool is PoolFDT {
     */
     function _transferLiquidityAsset(address to, uint256 value) internal {
         liquidityAsset.safeTransfer(to, value);
+    }
+
+    /**
+        @dev View function to indicate if cooldown period has passed for msg.sender
+    */
+    function _cooldownFinished() internal view {
+        require(depositCooldown[msg.sender] >= block.timestamp + _globals().cooldownPeriod(), "Pool:COOLDOWN_NOT_FINISHED");
     }
 
     /**
