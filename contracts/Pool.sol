@@ -95,11 +95,16 @@ contract Pool is PoolFDT {
         string memory name,
         string memory symbol
     ) PoolFDT(name, symbol) public {
-        require(_globals(msg.sender).isValidLoanAsset(_liquidityAsset), "Pool:INVALID_LIQ_ASSET");
-        require(_liquidityCap != uint256(0),                            "Pool:INVALID_CAP");
+
+        IGlobals globals = _globals(msg.sender);
+
+        // Sanity checks
+        require(globals.isValidLoanAsset(_liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
+        require(IBPool(_stakeAsset).isBound(globals.mpl()), "Pool:INVALID_BALANCER_POOL");
+        require(_liquidityCap != uint256(0),                "Pool:INVALID_CAP");
 
         // NOTE: Max length of this array would be 8, as thats the limit of assets in a balancer pool
-        address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();
+        address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();  // Also ensures that BPool is finalized
 
         uint256  i = 0;
         bool valid = false;
@@ -123,7 +128,7 @@ contract Pool is PoolFDT {
         liquidityCap = _liquidityCap;
 
         // Initialize the LiquidityLocker and StakeLocker
-        stakeLocker     = createStakeLocker(_stakeAsset, _slFactory, _liquidityAsset, _globals(msg.sender));
+        stakeLocker     = address(IStakeLockerFactory(_slFactory).newLocker(_stakeAsset, _liquidityAsset));
         liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
 
         // Withdrawal penalty default settings
@@ -132,18 +137,6 @@ contract Pool is PoolFDT {
         lockupPeriod     = 180 days;
 
         emit PoolStateChanged(poolState);
-    }
-
-    /**
-        @dev Deploys and assigns a StakeLocker for this Pool (only used once in constructor).
-        @param _stakeAsset     Address of the asset used for staking
-        @param _slFactory      Address of the StakeLocker factory used for instantiation
-        @param _liquidityAsset Address of the liquidity asset, required when burning _stakeAsset
-        @param globals         IGlobals for Maple Globals contract
-    */
-    function createStakeLocker(address _stakeAsset, address _slFactory, address _liquidityAsset, IGlobals globals) private returns (address) {
-        require(IBPool(_stakeAsset).isBound(globals.mpl()) && IBPool(_stakeAsset).isFinalized(), "Pool:INVALID_BALANCER_POOL");
-        return IStakeLockerFactory(_slFactory).newLocker(_stakeAsset, _liquidityAsset);
     }
 
     /**
