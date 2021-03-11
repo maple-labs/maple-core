@@ -10,6 +10,8 @@ interface IGlobals {
 
     function mapleTreasury() external view returns (address);
 
+    function stakingRewards() external view returns (address);
+
     function treasuryFee() external view returns (uint256);
 
     function investorFee() external view returns (uint256);

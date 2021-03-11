@@ -18,6 +18,7 @@ contract MapleGlobals {
     address public pendingGovernor;      // Governor that is declared for transfer, must be accepted for transfer to take effect
     address public governor;             // Governor is responsible for management of global Maple variables
     address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
+    address public stakingRewards;       // StakingRewards contract used for the MPL liquidity mining program
     address public admin;                // Admin of the whole network, has the power to switch off/on the functionality of entire protocol
 
     uint256 public gracePeriod;          // Represents the amount of time a borrower has to make a missed payment before a default can be triggered
@@ -99,8 +100,16 @@ contract MapleGlobals {
       @param newAdmin New admin address
      */
     function setAdmin(address newAdmin) external {
-        require(msg.sender == governor && admin != address(0));
+        require(msg.sender == governor && admin != address(0), "MapleGlobals:UNAUTHORIZED");
         admin = newAdmin;
+    }
+
+    /**
+      @dev Set StakingRewards contract.
+      @param _stakingRewards New stakingRewards contract address
+     */
+    function setStakingRewards(address _stakingRewards) external isGovernor {
+        stakingRewards = _stakingRewards;
     }
 
     /**

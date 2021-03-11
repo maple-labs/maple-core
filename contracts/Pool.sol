@@ -254,6 +254,22 @@ contract Pool is PoolFDT {
     }
 
     /**
+        @dev Transfer StakerLockerFDTs.
+        @param from Address sending   StakeLockerFDTs
+        @param to   Address receiving StakeLockerFDTs
+        @param wad  Amount of FDTs to transfer
+    */
+    function _transfer(address from, address to, uint256 wad) internal override {
+        _whenProtocolNotPaused();
+        address stakingRewards = _globals(superFactory).stakingRewards();
+        // If transferring in and out of yield farming contract, do not update depositDate
+        if(from != stakingRewards && to != stakingRewards) {
+            PoolLib.updateDepositDate(depositDate, balanceOf(to), wad, to);
+        }
+        super._transfer(from, to, wad);
+    }
+
+    /**
         @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
         @param  loan      Address of the loan to fund
         @param  dlFactory The DebtLockerFactory to utilize
@@ -554,7 +570,7 @@ contract Pool is PoolFDT {
         @dev Utility to return MapleGlobals interface.
     */
     function _globals(address poolFactory) internal view returns (IGlobals) {
-        return IGlobals(ILoanFactory(poolFactory).globals());
+        return IGlobals(IPoolFactory(poolFactory).globals());
     }
 
     /**

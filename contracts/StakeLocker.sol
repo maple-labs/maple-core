@@ -208,13 +208,13 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Transfer StakerLockerFDTs.
         @param from Address sending   StakeLockerFDTs
         @param to   Address receiving StakeLockerFDTs
-        @param amt  Amount of FDTs to transfer
+        @param wad  Amount of FDTs to transfer
     */
-    function _transfer(address from, address to, uint256 amt) internal override canUnstake {
+    function _transfer(address from, address to, uint256 wad) internal override canUnstake {
         _whenProtocolNotPaused();
         _isAllowed(to);
-        _updateStakeDate(to, amt);
-        super._transfer(from, to, amt);
+        _updateStakeDate(to, wad);
+        super._transfer(from, to, wad);
     }
 
     /**

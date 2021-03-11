@@ -194,6 +194,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setValidSubFactory(address(poolFactory), address(dlFactory), true));
         assertTrue( globals.validSubFactories(address(poolFactory), address(dlFactory)));
         
+        // setPoolDelegateAllowlist()
         assertTrue(!globals.isValidPoolDelegate(address(joe)));
         assertTrue(!fakeGov.try_setPoolDelegateAllowlist(address(joe), true));  // Non-governor cant set
         assertTrue(     gov.try_setPoolDelegateAllowlist(address(joe), true));
@@ -201,6 +202,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setPoolDelegateAllowlist(address(joe), false));
         assertTrue(!globals.isValidPoolDelegate(address(joe)));
 
+        // setDefaultUniswapPath()
         assertTrue(!fakeGov.try_setDefaultUniswapPath(WETH, USDC, USDC));  // Non-governor cant set
         assertEq(   globals.defaultUniswapPath(WETH, USDC), address(0));
         assertEq(   globals.defaultUniswapPath(WBTC, USDC), address(0));
@@ -209,6 +211,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(   globals.defaultUniswapPath(WETH, USDC), USDC);
         assertEq(   globals.defaultUniswapPath(WBTC, USDC), WETH);
 
+        // setLoanAsset() setCollateralAsset()
         assertTrue(!globals.isValidLoanAsset(WETH));
         assertTrue(!globals.isValidCollateralAsset(CDAI));
         assertTrue(!fakeGov.try_setLoanAsset(WETH,       true));  // Non-governor cant set
@@ -224,29 +227,25 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!globals.isValidLoanAsset(WETH));
         assertTrue(!globals.isValidCollateralAsset(CDAI));
 
+        // setCalc()
         assertTrue( globals.validCalcs(address(repaymentCalc)));
         assertTrue(!fakeGov.try_setCalc(address(repaymentCalc), false));  // Non-governor cant set
         assertTrue(     gov.try_setCalc(address(repaymentCalc), false));
         assertTrue(!globals.validCalcs(address(repaymentCalc)));
 
-        assertEq(globals.governor(),         address(gov));
-        assertEq(globals.mpl(),              address(mpl));
-        assertEq(globals.gracePeriod(),            5 days);
-        assertEq(globals.swapOutRequired(),           100);
-        assertEq(globals.unstakeDelay(),          90 days);
-        assertEq(globals.drawdownGracePeriod(),    1 days);
-        assertEq(globals.BFactory(),        BPOOL_FACTORY);
-
+        // setInvestorFee()
         assertEq(   globals.investorFee(), 50);
         assertTrue(!fakeGov.try_setInvestorFee(30));  // Non-governor cant set
         assertTrue(     gov.try_setInvestorFee(30));
         assertEq(   globals.investorFee(), 30);
 
+        // setTreasuryFee
         assertEq(   globals.treasuryFee(), 50);
         assertTrue(!fakeGov.try_setTreasuryFee(30));  // Non-governor cant set
         assertTrue(     gov.try_setTreasuryFee(30));
         assertEq(   globals.treasuryFee(), 30);
 
+        // setDrawdownGracePeriod
         assertEq(   globals.drawdownGracePeriod(), 1 days);
         assertTrue(!fakeGov.try_setDrawdownGracePeriod(3 days));
         assertTrue(     gov.try_setDrawdownGracePeriod(3 days));
@@ -255,6 +254,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setDrawdownGracePeriod(1 days));
         assertEq(  globals.drawdownGracePeriod(), 1 days);
 
+        // setGracePeriod
         assertEq(   globals.gracePeriod(), 5 days);
         assertTrue(!fakeGov.try_setGracePeriod(3 days));
         assertTrue(     gov.try_setGracePeriod(3 days));
@@ -263,25 +263,25 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setGracePeriod(7 days));
         assertEq(   globals.gracePeriod(), 7 days);
 
+        // setSwapOutRequired()
         assertEq(   globals.swapOutRequired(), 100);
         assertTrue(!fakeGov.try_setSwapOutRequired(100000));
         assertTrue(     gov.try_setSwapOutRequired(100000));
         assertEq(   globals.swapOutRequired(), 100000);
 
+        // setUnstakeDelay()
         assertEq(   globals.unstakeDelay(), 90 days);
         assertTrue(!fakeGov.try_setUnstakeDelay(30 days));
         assertTrue(     gov.try_setUnstakeDelay(30 days));
         assertEq(   globals.unstakeDelay(), 30 days);
 
+         // setMapleTreasury()
         assertEq(   globals.mapleTreasury(), address(trs));
         assertTrue(!fakeGov.try_setMapleTreasury(address(this)));
         assertTrue(     gov.try_setMapleTreasury(address(this)));
-        assertEq(   globals.mapleTreasury(), address(this));
+        assertEq(   globals.mapleTreasury(), address(this)); 
 
-        assertTrue(!fakeGov.try_setUnstakeDelay(20 days));
-        assertTrue(     gov.try_setUnstakeDelay(20 days));
-        assertEq(globals.unstakeDelay(),        20 days);      
-
+        // setPriceOracle()
         assertTrue(!fakeGov.try_setPriceOracle(WETH, address(1)));
         assertTrue(     gov.try_setPriceOracle(WETH, address(wethOracle)));
         assertTrue(     gov.try_setPriceOracle(WBTC, address(wbtcOracle)));
@@ -291,10 +291,25 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(globals.getLatestPrice(WETH) != 0); // Shows real WETH value from Chainlink
         assertTrue(globals.getLatestPrice(WBTC) != 0); // Shows real WBTC value from Chainlink
 
+        // setMaxSwapSlippage()
         assertTrue(!fakeGov.try_setMaxSwapSlippage(12));  // 0.12 %
         assertTrue(     gov.try_setMaxSwapSlippage(12));
         assertEq(   globals.maxSwapSlippage(), 12);
 
+        // setStakingRewards()
+        assertEq(   globals.stakingRewards(), address(0));
+        assertTrue(!fakeGov.try_setStakingRewards(address(1)));
+        assertTrue(     gov.try_setStakingRewards(address(1)));
+        assertEq(   globals.stakingRewards(), address(1)); 
+    }
+
+    function test_transfer_governor() public {
+        Governor fakeGov  = new Governor();
+        Governor fakeGov2 = new Governor();
+        fakeGov.setGovGlobals(globals);  // Point to globals created by gov.
+        fakeGov2.setGovGlobals(globals);
+        
+        // Transfer Governor
         assertTrue( !fakeGov.try_setPendingGovernor(address(fakeGov)));
         assertTrue(     !gov.try_setPendingGovernor(address(0)));       // Cannot set governor to zero
         assertTrue(      gov.try_setPendingGovernor(address(fakeGov2)));

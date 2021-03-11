@@ -461,6 +461,48 @@ contract PoolTest is TestUtil {
         assertEq(pool1.depositDate(address(bob)), newDepDate);  // Doesn't change
     }
 
+    function test_transfer_depositDate() public {
+        address stakeLocker = pool1.stakeLocker();
+
+        sid.approve(address(bPool), stakeLocker, MAX_UINT);
+        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        sid.finalize(address(pool1));
+        
+        // Mint 200 USDC into this LP account
+        mint("USDC", address(bob), 200 * USD);
+        mint("USDC", address(che), 200 * USD);
+        bob.approve(USDC, address(pool1), MAX_UINT);
+        che.approve(USDC, address(pool1), MAX_UINT);
+        
+        // Deposit 100 USDC on first day
+        uint256 startDate = block.timestamp;
+
+        uint256 initialAmt = 100 * WAD;  // Amount of FDT minted on first deposit
+
+        bob.deposit(address(pool1), 100 * USD);
+        che.deposit(address(pool1), 100 * USD);
+        
+        assertEq(pool1.depositDate(address(bob)), startDate);
+        assertEq(pool1.depositDate(address(che)), startDate);
+
+        uint256 newAmt = 20 * WAD;  // Amount of FDT transferred
+
+        hevm.warp(startDate + 30 days);
+
+        assertEq(pool1.balanceOf(address(bob)), 100 * WAD);
+        assertEq(pool1.balanceOf(address(che)), 100 * WAD);
+
+        che.transferFDT(address(pool1), address(bob), newAmt);  // Pool.transfer()
+
+        assertEq(pool1.balanceOf(address(bob)), 120 * WAD);
+        assertEq(pool1.balanceOf(address(che)),  80 * WAD);
+
+        uint256 newDepDate = startDate + (block.timestamp - startDate) * newAmt / (newAmt + initialAmt);
+
+        assertEq(pool1.depositDate(address(bob)), newDepDate);  // Gets updated
+        assertEq(pool1.depositDate(address(che)),  startDate);  // Stays the same
+    }
+
     function test_fundLoan() public {
         address stakeLocker   = pool1.stakeLocker();
         address liqLocker     = pool1.liquidityLocker();

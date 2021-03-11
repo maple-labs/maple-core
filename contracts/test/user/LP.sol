@@ -24,6 +24,10 @@ contract LP {
         IPool(pool).deposit(amt);
     }
 
+    function transferFDT(address pool, address who, uint256 amt) external {
+        IPool(pool).transfer(who, amt);
+    }
+
     function claim(address pool, address loan, address dlFactory) external { IPool(pool).claim(loan, dlFactory); }
 
     /*********************/
