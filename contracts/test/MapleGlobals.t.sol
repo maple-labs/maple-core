@@ -297,10 +297,10 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(   globals.maxSwapSlippage(), 12);
 
         // setStakingRewards()
-        assertEq(   globals.stakingRewards(), address(0));
-        assertTrue(!fakeGov.try_setStakingRewards(address(1)));
-        assertTrue(     gov.try_setStakingRewards(address(1)));
-        assertEq(   globals.stakingRewards(), address(1)); 
+        assertTrue(!globals.isStakingRewards(address(1)));
+        assertTrue(!fakeGov.try_setStakingRewards(address(1), true));
+        assertTrue(     gov.try_setStakingRewards(address(1), true));
+        assertTrue( globals.isStakingRewards(address(1))); 
     }
 
     function test_transfer_governor() public {

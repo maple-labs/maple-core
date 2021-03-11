@@ -18,7 +18,6 @@ contract MapleGlobals {
     address public pendingGovernor;      // Governor that is declared for transfer, must be accepted for transfer to take effect
     address public governor;             // Governor is responsible for management of global Maple variables
     address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
-    address public stakingRewards;       // StakingRewards contract used for the MPL liquidity mining program
     address public admin;                // Admin of the whole network, has the power to switch off/on the functionality of entire protocol
 
     uint256 public gracePeriod;          // Represents the amount of time a borrower has to make a missed payment before a default can be triggered
@@ -36,6 +35,7 @@ contract MapleGlobals {
     mapping(address => bool) public isValidCollateralAsset;  // Mapping of valid collateralAssets
     mapping(address => bool) public validCalcs;              // Mapping of valid calculator contracts
     mapping(address => bool) public isValidPoolDelegate;     // Validation data structure for Pool Delegates (prevent invalid addresses from creating pools)
+    mapping(address => bool) public isStakingRewards;        // Validation of if address is StakingRewards contract used for MPL liquidity mining programs
     
     // Determines the liquidation path of various assets in Loans and Treasury.
     // The value provided will determine whether or not to perform a bilateral or triangular swap on Uniswap.
@@ -105,13 +105,14 @@ contract MapleGlobals {
     }
 
     /**
-      @dev Set StakingRewards contract.
-      @param _stakingRewards New stakingRewards contract address
-     */
-    function setStakingRewards(address _stakingRewards) external isGovernor {
-        stakingRewards = _stakingRewards;
+        @dev Update the valid StakingRewards mapping. Only Governor can call.
+        @param stakingRewards Address of StakingRewards
+        @param valid          The new bool value for validating loanFactory.
+    */
+    function setStakingRewards(address stakingRewards, bool valid) external isGovernor {
+        isStakingRewards[stakingRewards] = valid;
     }
-
+    
     /**
       @dev Pause/unpause the protocol. Only admin user can call.
       @param pause Boolean flag to switch externally facing functionality in the protocol on/off

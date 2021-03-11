@@ -61,7 +61,7 @@ contract Governor {
     function setPriceOracle(address asset, address oracle)                external { globals.setPriceOracle(asset, oracle); }
     function setMaxSwapSlippage(uint256 newSlippage)                      external { globals.setMaxSwapSlippage(newSlippage); }
     function setDefaultUniswapPath(address from, address to, address mid) external { globals.setDefaultUniswapPath(from, to, mid); }
-    function setStakingRewards(address _stakingRewards)                   external { globals.setStakingRewards(_stakingRewards); }
+    function setStakingRewards(address _stakingRewards, bool valid)       external { globals.setStakingRewards(_stakingRewards, valid); }
 
     /*** MapleTreasury Functions ***/
     function setGlobals(address newGlobals)                external { treasury.setGlobals(newGlobals); }
@@ -163,9 +163,9 @@ contract Governor {
         string memory sig = "setMaxSwapSlippage(uint256)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, newSlippage)); 
     }
-    function try_setStakingRewards(address _stakingRewards) external returns (bool ok) { 
-        string memory sig = "setStakingRewards(address)";
-        (ok,) = address(globals).call(abi.encodeWithSignature(sig, _stakingRewards)); 
+    function try_setStakingRewards(address _stakingRewards, bool valid) external returns (bool ok) { 
+        string memory sig = "setStakingRewards(address,bool)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, _stakingRewards, valid)); 
     }
     
     /*** StakingRewards Setters ***/ 

@@ -261,9 +261,9 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
-        address stakingRewards = _globals(superFactory).stakingRewards();
+        IGlobals globals = _globals(superFactory);
         // If transferring in and out of yield farming contract, do not update depositDate
-        if(from != stakingRewards && to != stakingRewards) {
+        if(!globals.isStakingRewards(from) && !globals.isStakingRewards(to)) {
             PoolLib.updateDepositDate(depositDate, balanceOf(to), wad, to);
         }
         super._transfer(from, to, wad);
