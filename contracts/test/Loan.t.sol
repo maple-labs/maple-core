@@ -435,6 +435,13 @@ contract LoanTest is TestUtil {
 
         assertEq(loan.excessReturned(), loanBalance_post);
 
+        assertEq(IERC20(USDC).balanceOf(address(bob)), 0);
+
+        bob.withdrawFunds(address(loan));
+
+        withinDiff(IERC20(USDC).balanceOf(address(bob)),              5000 * USD, 1);
+        withinDiff(IERC20(loan.loanAsset()).balanceOf(address(loan)),          0, 1);
+
         // Can't unwind() loan after it has already been called.
         assertTrue(!ali.try_unwind(address(loan)));
     }

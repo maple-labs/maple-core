@@ -200,6 +200,8 @@ contract Loan is FDT, Pausable {
         // Update accounting for claim(), transfer funds from FundingLocker to Loan
         excessReturned += LoanLib.unwind(loanAsset, superFactory, fundingLocker, createdAt);
 
+        updateFundsReceived();
+
         // Transition state to Expired
         loanState = State.Expired;
     }
