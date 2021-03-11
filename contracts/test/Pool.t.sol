@@ -376,6 +376,16 @@ contract PoolTest is TestUtil {
         assertEq(pool1.balanceOf(address(bob)),        100 * WAD);
     }
 
+    function test_setLockupPeriod() public {
+        assertEq(pool1.lockupPeriod(), 180 days);
+        assertTrue(!joe.try_setLockupPeriod(address(pool1), 15 days));       // Cannot set lockup periodif not pool delegate
+        assertTrue(!sid.try_setLockupPeriod(address(pool1), 180 days + 1));  // Cannot increase lockup period
+        assertTrue( sid.try_setLockupPeriod(address(pool1), 180 days));      // Can set the same lockup period
+        assertTrue( sid.try_setLockupPeriod(address(pool1), 180 days - 1));  // Can decrease lockup period
+        assertEq(pool1.lockupPeriod(), 180 days - 1);
+        assertTrue(!sid.try_setLockupPeriod(address(pool1), 180 days));      // Cannot increase lockup period
+    }
+
     function test_deposit_with_liquidity_cap() public {
     
         address stakeLocker = pool1.stakeLocker();
@@ -1397,7 +1407,7 @@ contract PoolTest is TestUtil {
 
         assertEq(pool1.calcWithdrawPenalty(1 * USD, address(bob)), uint256(0));  // Returns 0 when lockupPeriod > penaltyDelay.
         assertTrue(!joe.try_setLockupPeriod(address(pool1), 15 days));
-        assertEq(pool1.lockupPeriod(), 90 days);
+        assertEq(pool1.lockupPeriod(), 180 days);
         assertTrue(sid.try_setLockupPeriod(address(pool1), 15 days));
         assertEq(pool1.lockupPeriod(), 15 days);
 
