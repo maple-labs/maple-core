@@ -28,6 +28,10 @@ contract Lender {
         ILoan(loan).triggerDefault();
     }
 
+    function withdrawFunds(address loan) public {
+        ILoan(loan).withdrawFunds();
+    }
+
 
     /*********************/
     /*** TRY FUNCTIONS ***/
