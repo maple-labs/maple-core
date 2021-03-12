@@ -39,4 +39,8 @@ interface IPool {
     function triggerDefault(address, address) external;
 
     function isPoolFinalized() external view returns(bool);
+
+    function openPoolToPublic() external;
+
+    function setAllowListMulti(address[] calldata user, bool[] calldata status) external;
 }

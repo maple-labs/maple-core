@@ -56,14 +56,15 @@ contract Pool is PoolFDT {
     enum State { Initialized, Finalized, Deactivated }
     State public poolState;  // The current state of this pool
 
-    mapping(address => uint256)                     public depositDate;  // Used for withdraw penalty calculation
-    mapping(address => mapping(address => address)) public debtLockers;  // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
-    mapping(address => bool)                        public admins;       // Admin addresses who have permission to do certain operations in case of disaster mgt.
-    mapping(address => bool)                        public allowed;      // Map address to allowed status
+    mapping(address => uint256)                     public depositDate;                // Used for withdraw penalty calculation
+    mapping(address => mapping(address => address)) public debtLockers;                // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
+    mapping(address => bool)                        public admins;                     // Admin addresses who have permission to do certain operations in case of disaster mgt.
+    mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
 
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
     event   BalanceUpdated(address indexed who,  address token, uint256 balance);
+    event  LPStatusChanged(address indexed user, bool status);
     event  LiquidityCapSet(uint256 newLiquidityCap);
     event PoolStateChanged(State state);
     event  DefaultSuffered(
@@ -215,6 +216,7 @@ contract Pool is PoolFDT {
     function deposit(uint256 amt) external {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
+        require(openToPublic || allowedLiquidityProviders[msg.sender], "Pool: MSG_SENDER_NOT_ALLOWED");
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
         liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
         uint256 wad = _toWad(amt);
@@ -413,7 +415,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Open Pool to public (TODO: Should we be able to set this to false, or just a one-time set to true?)
+        @dev Open Pool to public. Once it is set to `true` then no way to revert it.
     */
     function openPoolToPublic() external {
         _whenProtocolNotPaused();
@@ -423,13 +425,17 @@ contract Pool is PoolFDT {
 
     /**
         @dev Update user status on Pool allowlist. Only Pool Delegate can call this function.
-        @param user   The address to set status for.
-        @param status The status of user on allowlist.
+        @param users   Array of the address to set status for.
+        @param status Array of the status of user on allowlist.
     */
-    function setAllowlist(address user, bool status) external {
+    function setAllowListMulti(address[] calldata users, bool[] calldata status) external {
         _whenProtocolNotPaused();
         _isValidDelegate();
-        allowed[user] = status;
+        require(users.length == status.length, "Pool: INVALID_PARAMS");
+        for (uint256 i = 0; i < users.length; i++) {
+            allowedLiquidityProviders[users[i]] = status[i];
+            emit LPStatusChanged(users[i], status[i]);
+        }
     }
 
     /**

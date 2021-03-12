@@ -85,6 +85,14 @@ contract PoolDelegate {
         IPool(pool).setAdmin(newAdmin, status);
     }
 
+    function openPoolToPublic(address pool) external {
+        IPool(pool).openPoolToPublic();
+    }
+
+    function setAllowListMulti(address pool, address[] calldata users, bool[] calldata status) external {
+        IPool(pool).setAllowListMulti(users, status);
+    }
+
 
     /*********************/
     /*** TRY FUNCTIONS ***/
@@ -151,5 +159,15 @@ contract PoolDelegate {
     function try_triggerDefault(address pool, address loan, address dlFactory) external returns(bool ok) {
         string memory sig = "triggerDefault(address,address)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
+    }
+
+    function try_openPoolToPublic(address pool) external returns(bool ok) {
+        string memory sig = "openPoolToPublic()";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig));
+    }
+
+    function try_setAllowListMulti(address pool, address[] calldata users, bool[] calldata status) external returns(bool ok) {
+        string memory sig = "setAllowListMulti(address[],bool[])";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, users, status));
     }
 }

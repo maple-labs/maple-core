@@ -212,6 +212,7 @@ contract PoolTest is TestUtil {
         // Add liquidity into the pool (Dan is an LP, but still won't be able to claim)
         mint("USDC", address(dan), 10_000 * USD);
         dan.approve(USDC, address(pool1), 10_000 * USD);
+        sid.openPoolToPublic(address(pool1));
         assertTrue(dan.try_deposit(address(pool1), 10_000 * USD));
 
         // Fund Loan (so that debtLocker is instantiated and given LoanFDTs)
@@ -361,7 +362,13 @@ contract PoolTest is TestUtil {
 
         sid.finalize(address(pool1));
 
-        assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not approved
+        assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not in the LP allow list neither the pool is open to public.
+
+        assertTrue(!joe.try_setAllowListMulti(address(pool1), [address(bob)], [true])); // It will fail as `joe` is not the right PD.
+        assertTrue(!sid.try_setAllowListMulti(address(pool1), [address(bob), address(dan)], [true])); // It will fail because of Invalid params.
+        assertTrue( sid.try_setAllowListMulti(address(pool1), [address(bob)], [true]));
+        
+        assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not Approved
 
         bob.approve(USDC, address(pool1), MAX_UINT);
 
@@ -374,6 +381,29 @@ contract PoolTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(bob)),         0);
         assertEq(IERC20(USDC).balanceOf(liqLocker),    100 * USD);
         assertEq(pool1.balanceOf(address(bob)),        100 * WAD);
+
+        // Remove bob from the allowed list
+        assertTrue(sid.try_setAllowListMulti(address(pool1), [address(bob)], [false]));
+        mint("USDC", address(bob), 100 * USD);
+        assertTrue(!bob.try_deposit(address(pool1),    100 * USD));
+
+        dan.approve(USDC, address(pool1), MAX_UINT);
+
+        assertEq(IERC20(USDC).balanceOf(address(dan)), 100 * USD);
+        assertEq(IERC20(USDC).balanceOf(liqLocker),    100 * USD);
+        assertEq(pool1.balanceOf(address(dan)),                0);
+
+        assertTrue(!dan.try_deposit(address(pool1),    100 * USD)); // Fail to invest as dan is not in the allowed list.
+
+        // open pool to the public.
+        assertTrue(!joe.try_openPoolToPublic(address(pool1)));  // Incorrect PD.
+        assertTrue( sid.try_openPoolToPublic(address(pool1)));
+
+        assertTrue(dan.try_deposit(address(pool1),    100 * USD));
+
+        assertEq(IERC20(USDC).balanceOf(address(dan)),         0);
+        assertEq(IERC20(USDC).balanceOf(liqLocker),    200 * USD);
+        assertEq(pool1.balanceOf(address(dan)),        100 * WAD);
     }
 
     function test_setLockupPeriod() public {
@@ -398,6 +428,7 @@ contract PoolTest is TestUtil {
 
         sid.finalize(address(pool1));
         sid.setPrincipalPenalty(address(pool1), 0);
+        sid.openPoolToPublic(address(pool1));
 
         bob.approve(USDC, address(pool1), MAX_UINT);
 
@@ -433,6 +464,7 @@ contract PoolTest is TestUtil {
 
         sid.approve(address(bPool), stakeLocker, MAX_UINT);
         sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        sid.openPoolToPublic(address(pool1));
         
         // Mint 100 USDC into this LP account
         mint("USDC", address(bob), 200 * USD);
@@ -473,6 +505,7 @@ contract PoolTest is TestUtil {
         mint("USDC", address(bob), 100 * USD);
 
         sid.finalize(address(pool1));
+        sid.openPoolToPublic(address(pool1));
 
         bob.approve(USDC, address(pool1), MAX_UINT);
 
@@ -636,6 +669,7 @@ contract PoolTest is TestUtil {
         sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
         sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
         sid.finalize(address(pool1));
+        sid.openPoolToPublic(address(pool1));
 
         // Add liquidity
         assertTrue(dan.try_deposit(address(pool1), 10_000 * USD));
@@ -694,6 +728,7 @@ contract PoolTest is TestUtil {
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
             sid.finalize(address(pool1));
+            sid.openPoolToPublic(address(pool1));
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
@@ -784,6 +819,7 @@ contract PoolTest is TestUtil {
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
             sid.finalize(address(pool1));
+            sid.openPoolToPublic(address(pool1));
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
@@ -942,7 +978,9 @@ contract PoolTest is TestUtil {
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
             joe.stake(pool2.stakeLocker(), bPool.balanceOf(address(joe)) / 2);
             sid.finalize(address(pool1));
+            sid.openPoolToPublic(address(pool1));
             joe.finalize(address(pool2));
+            joe.openPoolToPublic(address(pool2));
         }
        
         address liqLocker1 = pool1.liquidityLocker();
@@ -1156,7 +1194,7 @@ contract PoolTest is TestUtil {
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
             sid.finalize(address(pool1));
-
+            sid.openPoolToPublic(address(pool1));
             gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
 
@@ -1261,7 +1299,7 @@ contract PoolTest is TestUtil {
         {
             sid.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-
+            sid.openPoolToPublic(address(pool1));
             sid.finalize(address(pool1));
         }
         /**************************************************/
@@ -1702,7 +1740,7 @@ contract PoolTest is TestUtil {
         {
             sid.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
             sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-
+            sid.openPoolToPublic(address(pool1));
             sid.finalize(address(pool1));
         }
         /**************************************************/
