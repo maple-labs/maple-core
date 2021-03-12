@@ -43,4 +43,10 @@ interface IPool {
     function openPoolToPublic() external;
 
     function setAllowListMulti(address[] calldata user, bool[] calldata status) external;
+
+    function setAllowList(address user, bool status) external;
+
+    function allowedLiquidityProviders(address user) external view returns(bool);
+
+    function openToPublic() external view returns(bool);
 }

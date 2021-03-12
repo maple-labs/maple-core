@@ -93,6 +93,10 @@ contract PoolDelegate {
         IPool(pool).setAllowListMulti(users, status);
     }
 
+    function setAllowList(address pool, address user, bool status) external {
+        IPool(pool).setAllowList(user, status);
+    }
+
 
     /*********************/
     /*** TRY FUNCTIONS ***/
@@ -168,6 +172,11 @@ contract PoolDelegate {
 
     function try_setAllowListMulti(address pool, address[] calldata users, bool[] calldata status) external returns(bool ok) {
         string memory sig = "setAllowListMulti(address[],bool[])";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, users, status));
+    }
+
+    function try_setAllowList(address pool, address users, bool status) external returns(bool ok) {
+        string memory sig = "setAllowList(address,bool)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, users, status));
     }
 }

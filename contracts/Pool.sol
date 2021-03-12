@@ -425,6 +425,17 @@ contract Pool is PoolFDT {
 
     /**
         @dev Update user status on Pool allowlist. Only Pool Delegate can call this function.
+        @param user   The address to set status for.
+        @param status The status of user on allowlist.
+    */
+    function setAllowList(address user, bool status) external {
+        _whenProtocolNotPaused();
+        _isValidDelegate();
+        _setAllowList(user, status);
+    }
+
+    /**
+        @dev Update user status on Pool allowlist. Only Pool Delegate can call this function.
         @param users   Array of the address to set status for.
         @param status Array of the status of user on allowlist.
     */
@@ -433,8 +444,7 @@ contract Pool is PoolFDT {
         _isValidDelegate();
         require(users.length == status.length, "Pool: INVALID_PARAMS");
         for (uint256 i = 0; i < users.length; i++) {
-            allowedLiquidityProviders[users[i]] = status[i];
-            emit LPStatusChanged(users[i], status[i]);
+            _setAllowList(users[i], status[i]);
         }
     }
 
@@ -614,5 +624,13 @@ contract Pool is PoolFDT {
     */
     function _whenProtocolNotPaused() internal {
         require(!_globals(superFactory).protocolPaused(), "Pool:PROTOCOL_PAUSED");
+    }
+    
+    /**
+        @dev Set the storage of the mapping `allowedLiquidityProviders`.
+     */
+    function _setAllowList(address user, bool status) internal {
+        allowedLiquidityProviders[user] = status;
+        emit LPStatusChanged(user, status);
     }
 }

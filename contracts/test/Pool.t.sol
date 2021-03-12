@@ -362,11 +362,13 @@ contract PoolTest is TestUtil {
 
         sid.finalize(address(pool1));
 
-        assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not in the LP allow list neither the pool is open to public.
+        assertTrue(!pool1.openToPublic());
+        assertTrue(!pool1.allowedLiquidityProviders(address(bob)));
+        assertTrue(  !bob.try_deposit(address(pool1), 100 * USD)); // Not in the LP allow list neither the pool is open to public.
 
-        assertTrue(!joe.try_setAllowListMulti(address(pool1), [address(bob)], [true])); // It will fail as `joe` is not the right PD.
-        assertTrue(!sid.try_setAllowListMulti(address(pool1), [address(bob), address(dan)], [true])); // It will fail because of Invalid params.
-        assertTrue( sid.try_setAllowListMulti(address(pool1), [address(bob)], [true]));
+        assertTrue( !joe.try_setAllowList(address(pool1), address(bob), true)); // It will fail as `joe` is not the right PD.
+        assertTrue(  sid.try_setAllowList(address(pool1), address(bob), true));
+        assertTrue(pool1.allowedLiquidityProviders(address(bob)));
         
         assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not Approved
 
@@ -383,10 +385,11 @@ contract PoolTest is TestUtil {
         assertEq(pool1.balanceOf(address(bob)),        100 * WAD);
 
         // Remove bob from the allowed list
-        assertTrue(sid.try_setAllowListMulti(address(pool1), [address(bob)], [false]));
+        assertTrue(sid.try_setAllowList(address(pool1), address(bob), false));
         mint("USDC", address(bob), 100 * USD);
         assertTrue(!bob.try_deposit(address(pool1),    100 * USD));
 
+        mint("USDC", address(dan), 100 * USD);
         dan.approve(USDC, address(pool1), MAX_UINT);
 
         assertEq(IERC20(USDC).balanceOf(address(dan)), 100 * USD);
