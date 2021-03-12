@@ -424,19 +424,6 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Update user status on Pool allowlist. Only Pool Delegate can call this function.
-        @param users   Array of the address to set status for.
-        @param status Array of the status of user on allowlist.
-    */
-    function setAllowListMulti(address[] calldata users, bool[] calldata status) external {
-        _isValidDelegateAndWhenProtocolNotPaused();
-        require(users.length == status.length);
-        for (uint256 i = 0; i < users.length; i++) {
-            _setAllowList(users[i], status[i]);
-        }
-    }
-
-    /**
         @dev Update user status on StakeLocker allowlist. Only Pool Delegate can call this function.
         @param user   The address to set status for.
         @param status The status of user on allowlist.
