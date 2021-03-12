@@ -400,4 +400,16 @@ library PoolLib {
             .mul(10 ** IERC20Details(liquidityAsset).decimals())  // Convert to liquidityAsset precision
             .div(globals.getLatestPrice(liquidityAsset));         // Convert to liquidityAsset value
     }
+
+    /**
+        @dev Check whether the deactivation is allowed or not.
+        @param  globals        Globals contract interface
+        @param  confirmation   Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
+        @param  principalOut   Amount of funds that is already funded to loans.
+        @param  liquidityAsset Liquidity Asset of the pool 
+     */
+    function validateDeactivation(IGlobals globals, uint256 confirmation, uint256 principalOut, address liquidityAsset) public view {
+        require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
+        require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "Pool:PRINCIPAL_OUTSTANDING");
+    }
 }

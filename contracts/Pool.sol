@@ -148,9 +148,8 @@ contract Pool is PoolFDT {
         @dev Finalize the Pool, enabling deposits. Checks Pool Delegate amount deposited to StakeLocker.
     */
     function finalize() external {
-        _whenProtocolNotPaused();
+        _isValidDelegateAndWhenProtocolNotPaused();
         _isValidState(State.Initialized);
-        _isValidDelegate();
         (,, bool stakePresent,,) = getInitialStakeRequirements();
         require(stakePresent, "Pool:INSUFFICIENT_STAKE");
         poolState = State.Finalized;
@@ -185,7 +184,7 @@ contract Pool is PoolFDT {
         address _staker,
         address _stakeLocker,
         uint256 _liquidityAssetAmountRequired
-    ) public view returns (uint256, uint256) {
+    ) external view returns (uint256, uint256) {
         return PoolLib.getPoolSharesRequired(_bPool, _liquidityAsset, _staker, _stakeLocker, _liquidityAssetAmountRequired);
     }
 
@@ -216,7 +215,7 @@ contract Pool is PoolFDT {
     function deposit(uint256 amt) external {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
-        require(openToPublic || allowedLiquidityProviders[msg.sender], "Pool: MSG_SENDER_NOT_ALLOWED");
+        require(openToPublic || allowedLiquidityProviders[msg.sender], "Pool: INVALID_SENDER");
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
         liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
         uint256 wad = _toWad(amt);
@@ -253,7 +252,7 @@ contract Pool is PoolFDT {
 
 
         // Transfer amt - totPenalty - recognizedLosses
-        ILiquidityLocker(liquidityLocker).transfer(msg.sender, due);
+        _transferLiquidityLockerFunds(msg.sender, due);
 
         _emitBalanceUpdatedEvent();
     }
@@ -265,9 +264,8 @@ contract Pool is PoolFDT {
         @param  amt       Amount to fund the loan
     */
     function fundLoan(address loan, address dlFactory, uint256 amt) external {
-        _whenProtocolNotPaused();
+        _isValidDelegateAndWhenProtocolNotPaused();
         _isValidState(State.Finalized);
-        _isValidDelegate();
         principalOut = principalOut.add(amt);
         PoolLib.fundLoan(debtLockers, superFactory, liquidityLocker, loan, dlFactory, amt);
         _emitBalanceUpdatedEvent();
@@ -281,8 +279,6 @@ contract Pool is PoolFDT {
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
         (uint256 bptsBurned, uint256 bptsReturned, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
-
-        IStakeLocker(stakeLocker).updateLosses(bptsBurned);  // Update StakeLocker FDT loss accounting for BPTs
 
         // Handle shortfall in StakeLocker, updated LiquidityLocker FDT loss accounting for liquidityAsset
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
@@ -361,11 +357,9 @@ contract Pool is PoolFDT {
     */
     // TODO: Ask auditors about standard for confirmations
     function deactivate(uint confirmation) external {
-        _whenProtocolNotPaused();
+        _isValidDelegateAndWhenProtocolNotPaused();
         _isValidState(State.Finalized);
-        _isValidDelegate();
-        require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
-        require(principalOut <= PoolLib.convertFromUsd(_globals(superFactory), address(liquidityAsset), 100), "Pool:PRINCIPAL_OUTSTANDING");
+        PoolLib.validateDeactivation(_globals(superFactory), confirmation, principalOut, address(liquidityAsset));
         poolState = State.Deactivated;
         emit PoolStateChanged(poolState);
     }
@@ -388,8 +382,7 @@ contract Pool is PoolFDT {
         @param _penaltyDelay Effective time needed in pool for user to be able to claim 100% of funds
     */
     function setPenaltyDelay(uint256 _penaltyDelay) external {
-        _whenProtocolNotPaused();
-        _isValidDelegate();
+        _isValidDelegateAndWhenProtocolNotPaused();
         penaltyDelay = _penaltyDelay;
     }
 
@@ -398,8 +391,7 @@ contract Pool is PoolFDT {
         @param _newPrincipalPenalty New principal penalty percentage (in basis points) that corresponds to withdrawal amount
     */
     function setPrincipalPenalty(uint256 _newPrincipalPenalty) external {
-        _whenProtocolNotPaused();
-        _isValidDelegate();
+        _isValidDelegateAndWhenProtocolNotPaused();
         principalPenalty = _newPrincipalPenalty;
     }
 
@@ -408,9 +400,8 @@ contract Pool is PoolFDT {
         @param _newLockupPeriod New lockup period used to restrict the withdrawals.
      */
     function setLockupPeriod(uint256 _newLockupPeriod) external {
-        _whenProtocolNotPaused();
-        _isValidDelegate();
-        require(_newLockupPeriod <= lockupPeriod, "Pool:LOCKUP_PERIOD_INCREASE");
+        _isValidDelegateAndWhenProtocolNotPaused();
+        require(_newLockupPeriod <= lockupPeriod, "Pool:INVALID_VALUE");
         lockupPeriod = _newLockupPeriod;
     }
 
@@ -418,8 +409,7 @@ contract Pool is PoolFDT {
         @dev Open Pool to public. Once it is set to `true` then no way to revert it.
     */
     function openPoolToPublic() external {
-        _whenProtocolNotPaused();
-        _isValidDelegate();
+        _isValidDelegateAndWhenProtocolNotPaused();
         openToPublic = true;
     }
 
@@ -429,8 +419,7 @@ contract Pool is PoolFDT {
         @param status The status of user on allowlist.
     */
     function setAllowList(address user, bool status) external {
-        _whenProtocolNotPaused();
-        _isValidDelegate();
+        _isValidDelegateAndWhenProtocolNotPaused();
         _setAllowList(user, status);
     }
 
@@ -440,9 +429,8 @@ contract Pool is PoolFDT {
         @param status Array of the status of user on allowlist.
     */
     function setAllowListMulti(address[] calldata users, bool[] calldata status) external {
-        _whenProtocolNotPaused();
-        _isValidDelegate();
-        require(users.length == status.length, "Pool: INVALID_PARAMS");
+        _isValidDelegateAndWhenProtocolNotPaused();
+        require(users.length == status.length);
         for (uint256 i = 0; i < users.length; i++) {
             _setAllowList(users[i], status[i]);
         }
@@ -454,35 +442,29 @@ contract Pool is PoolFDT {
         @param status The status of user on allowlist.
     */
     function setAllowlistStakeLocker(address user, bool status) external {
-        _whenProtocolNotPaused();
-        _isValidDelegate();
+        _isValidDelegateAndWhenProtocolNotPaused();
         IStakeLocker(stakeLocker).setAllowlist(user, status);
     }
 
     /**
         @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
         @param lp Liquidity Provider to check claimableFunds for 
-        @return [0] = Total     amount claimable
-                [1] = Principal amount claimable
-                [2] = Interest  amount claimable
+        @return totalClaimableAmount     Total     amount claimable
+        @return principalClaimableAmount Principal amount claimable
+        @return interestEarned           Interest  amount claimable
     */
-    function claimableFunds(address lp) public view returns(uint256, uint256, uint256) {
-
+    function claimableFunds(address lp) public view returns(uint256 totalClaimableAmount, uint256 principalClaimableAmount, uint256 interestEarned) {
+        interestEarned = withdrawableFundsOf(lp);
         // Deposit is still within lockupPeriod, user has 0 claimableFunds under this condition.
         if (depositDate[lp].add(lockupPeriod) > block.timestamp) {
-            return (withdrawableFundsOf(lp), 0, withdrawableFundsOf(lp)); 
+            totalClaimableAmount = interestEarned; 
         }
         else {
-            uint256 userBalance    = _fromWad(balanceOf(lp));
-            uint256 interestEarned = withdrawableFundsOf(lp);                                    // Calculate interest earned
-            uint256 firstPenalty   = principalPenalty.mul(userBalance).div(10000);               // Calculate flat principal penalty
-            uint256 totalPenalty   = calcWithdrawPenalty(interestEarned.add(firstPenalty), lp);  // Calculate total penalty
-
-            return (
-                userBalance.sub(totalPenalty).add(interestEarned), 
-                userBalance.sub(totalPenalty), 
-                interestEarned
-            );
+            uint256 userBalance      = _fromWad(balanceOf(lp));
+            uint256 firstPenalty     = principalPenalty.mul(userBalance).div(10000);               // Calculate flat principal penalty
+            uint256 totalPenalty     = calcWithdrawPenalty(interestEarned.add(firstPenalty), lp);  // Calculate total penalty
+            principalClaimableAmount = userBalance.sub(totalPenalty);
+            totalClaimableAmount     = principalClaimableAmount.add(interestEarned);
         }
     }
 
@@ -510,8 +492,7 @@ contract Pool is PoolFDT {
         @param dlFactory Address of the debt locker factory that is used to pull corresponding debt locker
      */
     function triggerDefault(address loan, address dlFactory) external {
-        _whenProtocolNotPaused();
-        _isValidDelegate();
+        _isValidDelegateAndWhenProtocolNotPaused();
         IDebtLocker(debtLockers[loan][dlFactory]).triggerDefault();
     }
 
@@ -523,7 +504,7 @@ contract Pool is PoolFDT {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         if (withdrawableFunds > uint256(0)) { 
-            ILiquidityLocker(liquidityLocker).transfer(msg.sender, withdrawableFunds);
+            _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
 
             interestSum = interestSum.sub(withdrawableFunds);
 
@@ -537,8 +518,7 @@ contract Pool is PoolFDT {
       @param allowed Status of an admin.
      */
     function setAdmin(address newAdmin, bool allowed) external {
-        _whenProtocolNotPaused();
-        _isValidDelegate();
+        _isValidDelegateAndWhenProtocolNotPaused();
         admins[newAdmin] = allowed;
     }
 
@@ -632,5 +612,14 @@ contract Pool is PoolFDT {
     function _setAllowList(address user, bool status) internal {
         allowedLiquidityProviders[user] = status;
         emit LPStatusChanged(user, status);
+    }
+
+    function _isValidDelegateAndWhenProtocolNotPaused() internal {
+        _whenProtocolNotPaused();
+        _isValidDelegate();
+    }
+
+    function _transferLiquidityLockerFunds(address to, uint256 value) internal {
+        ILiquidityLocker(liquidityLocker).transfer(to, value);
     }
 }
