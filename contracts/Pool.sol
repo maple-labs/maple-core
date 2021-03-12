@@ -69,6 +69,7 @@ contract Pool is PoolFDT {
     event  LPStatusChanged(address indexed user, bool status);
     event  LiquidityCapSet(uint256 newLiquidityCap);
     event PoolStateChanged(State state);
+    event         Cooldown(address staker);
     event  DefaultSuffered(
         address loan, 
         uint256 defaultSuffered, 
@@ -233,7 +234,7 @@ contract Pool is PoolFDT {
     */
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
-        _cooldownFinished();
+        _isCooldownFinished();
         uint256 wad    = _toWad(amt);
         uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
@@ -243,7 +244,7 @@ contract Pool is PoolFDT {
         uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Calculate total penalty
 
-        depositCooldown[msg.sender] = 0;  // Reset cooldown time no matter what transfer amount is
+        depositCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what transfer amount is
 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance
         withdrawFunds();            // Transfer full entitled interest, decrement `interestSum`
@@ -264,9 +265,9 @@ contract Pool is PoolFDT {
 
     /**
         @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
-    */
-    function cooldown() external override {
-        require(balanceOf(msg.sender) != 0, "Pool:INVALID_BALANCE_ON_COOLDOWN");
+    **/
+    function intendToWithdraw() external {
+        require(balanceOf(msg.sender) != uint256(0), "Pool:INVALID_SENDER");
         depositCooldown[msg.sender] = block.timestamp;
         emit Cooldown(msg.sender);
     }
@@ -613,8 +614,8 @@ contract Pool is PoolFDT {
     /**
         @dev View function to indicate if cooldown period has passed for msg.sender
     */
-    function _cooldownFinished() internal view {
-        require(depositCooldown[msg.sender] >= block.timestamp + _globals().cooldownPeriod(), "Pool:COOLDOWN_NOT_FINISHED");
+    function _isCooldownFinished() internal view {
+        require(block.timestamp > depositCooldown[msg.sender] + _globals(superFactory).cooldownPeriod(), "Pool:COOLDOWN_NOT_FINISHED");
     }
 
     /**

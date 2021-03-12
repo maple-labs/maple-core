@@ -29,6 +29,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     mapping(address => bool)    public allowed;        // Map address to allowed status
 
     event BalanceUpdated(address who, address token, uint256 balance);
+    event       Cooldown(address staker);
 
     constructor(
         address _stakeAsset,
@@ -139,7 +140,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function unstake(uint256 amt) external canUnstake {
         _whenProtocolNotPaused();
-        _cooldownFinished();
+        _isCooldownFinished();
         require(amt <= getUnstakeableBalance(msg.sender), "StakeLocker:AMT_GT_UNSTAKEABLE_BALANCE");
 
         amt = totalSupply() == amt && amt > 0 ? amt - 1 : amt;  // If last withdraw, subtract 1 wei to maintain FDT accounting
@@ -159,8 +160,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**
         @dev Activates the cooldown period to unstake. It can't be called if the user is not staking.
     **/
-    function cooldown() external override {
-        require(balanceOf(msg.sender) != 0, "StakeLocker:INVALID_BALANCE_ON_COOLDOWN");
+    function intendToUnstake() external {
+        require(balanceOf(msg.sender) != uint256(0), "StakeLocker:INVALID_BALANCE_ON_COOLDOWN");
         stakeCooldown[msg.sender] = block.timestamp;
         emit Cooldown(msg.sender);
     }
@@ -226,7 +227,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function _transfer(address from, address to, uint256 wad) internal override canUnstake {
         _whenProtocolNotPaused();
         _isAllowed(to);
-        _cooldownFinished();
+        _isCooldownFinished();
         _updateStakeDate(to, wad);
         stakeCooldown[msg.sender] = 0;  // Reset cooldown time no matter what transfer amount is
         super._transfer(from, to, wad);
@@ -251,8 +252,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**
         @dev View function to indicate if cooldown period has passed for msg.sender
     */
-    function _cooldownFinished() internal view {
-        require(stakeCooldown[msg.sender] >= block.timestamp + _globals().cooldownPeriod(), "StakeLocker:COOLDOWN_NOT_FINISHED");
+    function _isCooldownFinished() internal view {
+        require(block.timestamp > stakeCooldown[msg.sender] + _globals().cooldownPeriod(), "StakeLocker:COOLDOWN_NOT_FINISHED");
     }
 
     /**
