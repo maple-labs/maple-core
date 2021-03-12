@@ -41,10 +41,11 @@ contract Pool is PoolFDT {
 
     // Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + bptShortfall
     //        liquidityLockerBal + principalOut = fdtTotalSupply + interestSum - bptShortfall
+    
+    uint256 public immutable stakingFee;   // Fee for stakers   (in basis points)
+    uint256 public immutable delegateFee;  // Fee for delegates (in basis points)
 
     uint256 public principalOut;      // Sum of all outstanding principal on Loans
-    uint256 public stakingFee;        // Fee for stakers   (in basis points)
-    uint256 public delegateFee;       // Fee for delegates (in basis points)
     uint256 public principalPenalty;  // Max penalty on principal in basis points on early withdrawal
     uint256 public penaltyDelay;      // Time until total interest and principal is available after a deposit, in seconds
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the Pool
