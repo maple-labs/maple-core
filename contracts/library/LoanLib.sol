@@ -134,7 +134,7 @@ library LoanLib {
         @dev Returns information on next payment amount.
         @param superFactory    Factory that instantiated Loan
         @param repaymentCalc   Address of RepaymentCalc
-        @param nextPaymentDue  Timestamp of when payment is due
+        @param _nextPaymentDue Timestamp of when payment is due
         @param lateFeeCalc     Address of LateFeeCalc
         @return total          Principal + Interest
         @return principal      Principal 
@@ -144,7 +144,7 @@ library LoanLib {
     function getNextPayment(
         address superFactory,
         address repaymentCalc,
-        uint256 nextPaymentDue,
+        uint256 _nextPaymentDue,
         address lateFeeCalc
     ) 
         public
@@ -153,31 +153,26 @@ library LoanLib {
             uint256 total,
             uint256 principal,
             uint256 interest,
-            uint256
+            uint256 nextPaymentDue,
+            bool    paymentLate
         ) 
     {
-
         IGlobals globals = _globals(superFactory);
+        nextPaymentDue   = _nextPaymentDue;
 
-        (
-            total, 
-            principal, 
-            interest
-        ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
+        // Get next payment amounts from repayment calc
+        (total, principal, interest) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
 
-        if (block.timestamp > nextPaymentDue) {
-            (
-                uint256 totalExtra, 
-                uint256 principalExtra, 
-                uint256 interestExtra
-            ) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
+        paymentLate = block.timestamp > nextPaymentDue;
+
+        // If payment is late, add late fees
+        if (paymentLate) {
+            (uint256 totalExtra, uint256 principalExtra, uint256 interestExtra) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
 
             total     = total.add(totalExtra);
             interest  = interest.add(interestExtra);
             principal = principal.add(principalExtra);
         }
-        
-        return (total, principal, interest, nextPaymentDue);
     }
 
     /**

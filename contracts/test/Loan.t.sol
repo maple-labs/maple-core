@@ -232,7 +232,7 @@ contract LoanTest is TestUtil {
         assertTrue(!ali.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
 
         // Approve 1st of 3 payments.
-        (uint _amt, uint _pri, uint _int, uint _due) = loan.getNextPayment();
+        (uint _amt, uint _pri, uint _int, uint _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
 
         // Before state
@@ -257,7 +257,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Approve 2nd of 3 payments.
-        (_amt, _pri, _int, _due) = loan.getNextPayment();
+        (_amt, _pri, _int, _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
         
         // Make payment.
@@ -274,7 +274,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Approve 3nd of 3 payments.
-        (_amt, _pri, _int, _due) = loan.getNextPayment();
+        (_amt, _pri, _int, _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
         
         // Check collateral locker balance.
@@ -323,7 +323,7 @@ contract LoanTest is TestUtil {
         assertTrue(!ali.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
 
         // Approve 1st of 3 payments.
-        (uint _amt, uint _pri, uint _int, uint _due) = loan.getNextPayment();
+        (uint _amt, uint _pri, uint _int, uint _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
 
         // Before state
@@ -352,7 +352,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Approve 2nd of 3 payments.
-        (_amt, _pri, _int, _due) = loan.getNextPayment();
+        (_amt, _pri, _int, _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
 
         // Warp to *300 seconds* after next payment is due
@@ -373,7 +373,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Approve 3nd of 3 payments.
-        (_amt, _pri, _int, _due) = loan.getNextPayment();
+        (_amt, _pri, _int, _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
         
         // Check collateral locker balance.
