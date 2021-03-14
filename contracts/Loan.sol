@@ -445,6 +445,7 @@ contract Loan is FDT, Pausable {
         @param allowed  Status of an admin
     */
     function setAdmin(address newAdmin, bool allowed) external {
+        _whenProtocolNotPaused();
         _isValidBorrower();
         admins[newAdmin] = allowed;
     }
