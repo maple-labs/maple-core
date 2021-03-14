@@ -250,6 +250,9 @@ contract Loan is FDT, Pausable {
         // Drain remaining funds from FundingLocker (amount equal to excessReturned)
         _fundingLocker.drain();
 
+        // Call updateFundsReceived() update FDT accounting with funds recieved from fees and excess returned
+        updateFundsReceived();
+
         _emitBalanceUpdateEventForCollateralLocker();
         _emitBalanceUpdateEventForFundingLocker();
         _emitBalanceUpdateEventForLoan();
