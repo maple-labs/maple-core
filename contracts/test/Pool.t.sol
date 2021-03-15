@@ -503,6 +503,7 @@ contract PoolTest is TestUtil {
         sid.approve(address(bPool), stakeLocker, MAX_UINT);
         sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
         sid.finalize(address(pool1));
+        sid.openPoolToPublic(address(pool1));
         
         // Mint 200 USDC into this LP account
         mint("USDC", address(bob), 200 * USD);
