@@ -242,7 +242,7 @@ contract RepaymentCalcTest is TestUtil {
                     totalPaid           = loanAmt + totalInterest;
         }
 
-        (uint256 lastTotal,, uint256 lastInterest,) =  loan.getNextPayment();
+        (uint256 lastTotal,, uint256 lastInterest,,) = loan.getNextPayment();
 
         mint("USDC",      address(eli),  loanAmt * 1000); // Mint enough to pay interest
         eli.approve(USDC, address(loan), loanAmt * 1000);
@@ -251,7 +251,7 @@ contract RepaymentCalcTest is TestUtil {
 
         while (loan.paymentsRemaining() > 0) {
 
-            (uint256 total,      uint256 principal,      uint256 interest,)     = loan.getNextPayment();                       // USDC required for payment on loan
+            (uint256 total,      uint256 principal,      uint256 interest,,)    = loan.getNextPayment();                       // USDC required for payment on loan
             (uint256 total_calc, uint256 principal_calc, uint256 interest_calc) = repaymentCalc.getNextPayment(address(loan)); // USDC required for payment on loan
 
             assertEq(total,         total_calc);
@@ -297,7 +297,7 @@ contract RepaymentCalcTest is TestUtil {
         }
 
         hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
-        (uint256 lastTotal,,,) =  loan.getNextPayment();
+        (uint256 lastTotal,,,,) =  loan.getNextPayment();
 
         mint("USDC",      address(eli),  loanAmt * 1000); // Mint enough to pay interest
         eli.approve(USDC, address(loan), loanAmt * 1000);
@@ -307,7 +307,7 @@ contract RepaymentCalcTest is TestUtil {
         while (loan.paymentsRemaining() > 0) {
             hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
 
-            (uint256 total,      uint256 principal,      uint256 interest,)     = loan.getNextPayment();                       // USDC required for payment on loan
+            (uint256 total,      uint256 principal,      uint256 interest,,)    = loan.getNextPayment();                       // USDC required for payment on loan
             (uint256 total_calc, uint256 principal_calc, uint256 interest_calc) = repaymentCalc.getNextPayment(address(loan)); // USDC required for payment on loan
             (uint256 total_late, uint256 principal_late, uint256 interest_late) = lateFeeCalc.getLateFee(address(loan));       // USDC required for payment on loan
 

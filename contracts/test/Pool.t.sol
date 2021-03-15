@@ -845,8 +845,8 @@ contract PoolTest is TestUtil {
         /*** Make 1 Payment (1/6) ***/
         /****************************/
         {
-            (uint amt1_1,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
-            (uint amt1_2,,,) = loan2.getNextPayment(); // USDC required for 1st payment on loan2
+            (uint amt1_1,,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
+            (uint amt1_2,,,,) = loan2.getNextPayment(); // USDC required for 1st payment on loan2
             mint("USDC", address(eli), amt1_1);
             mint("USDC", address(fay), amt1_2);
             eli.approve(USDC, address(loan),  amt1_1);
@@ -869,8 +869,8 @@ contract PoolTest is TestUtil {
         /*** Make 2 Payments (3/6)  ***/
         /******************************/
         {
-            (uint amt2_1,,,) =  loan.getNextPayment(); // USDC required for 2nd payment on loan
-            (uint amt2_2,,,) = loan2.getNextPayment(); // USDC required for 2nd payment on loan2
+            (uint amt2_1,,,,) =  loan.getNextPayment(); // USDC required for 2nd payment on loan
+            (uint amt2_2,,,,) = loan2.getNextPayment(); // USDC required for 2nd payment on loan2
             mint("USDC", address(eli), amt2_1);
             mint("USDC", address(fay), amt2_2);
             eli.approve(USDC, address(loan),  amt2_1);
@@ -878,8 +878,8 @@ contract PoolTest is TestUtil {
             eli.makePayment(address(loan));
             fay.makePayment(address(loan2));
 
-            (uint amt3_1,,,) =  loan.getNextPayment(); // USDC required for 3rd payment on loan
-            (uint amt3_2,,,) = loan2.getNextPayment(); // USDC required for 3rd payment on loan2
+            (uint amt3_1,,,,) =  loan.getNextPayment(); // USDC required for 3rd payment on loan
+            (uint amt3_2,,,,) = loan2.getNextPayment(); // USDC required for 3rd payment on loan2
             mint("USDC", address(eli), amt3_1);
             mint("USDC", address(fay), amt3_2);
             eli.approve(USDC, address(loan),  amt3_1);
@@ -1047,8 +1047,8 @@ contract PoolTest is TestUtil {
         /*** Make 1 Payment (1/6) ***/
         /****************************/
         {
-            (uint amt1_1,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
-            (uint amt1_2,,,) = loan2.getNextPayment(); // USDC required for 1st payment on loan2
+            (uint amt1_1,,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
+            (uint amt1_2,,,,) = loan2.getNextPayment(); // USDC required for 1st payment on loan2
             mint("USDC", address(eli), amt1_1);
             mint("USDC", address(fay), amt1_2);
             eli.approve(USDC, address(loan),  amt1_1);
@@ -1076,8 +1076,8 @@ contract PoolTest is TestUtil {
         /*** Make 2 Payments (3/6)  ***/
         /******************************/
         {
-            (uint amt2_1,,,) =  loan.getNextPayment(); // USDC required for 2nd payment on loan
-            (uint amt2_2,,,) = loan2.getNextPayment(); // USDC required for 2nd payment on loan2
+            (uint amt2_1,,,,) =  loan.getNextPayment(); // USDC required for 2nd payment on loan
+            (uint amt2_2,,,,) = loan2.getNextPayment(); // USDC required for 2nd payment on loan2
             mint("USDC", address(eli), amt2_1);
             mint("USDC", address(fay), amt2_2);
             eli.approve(USDC, address(loan),  amt2_1);
@@ -1085,8 +1085,8 @@ contract PoolTest is TestUtil {
             eli.makePayment(address(loan));
             fay.makePayment(address(loan2));
 
-            (uint amt3_1,,,) =  loan.getNextPayment(); // USDC required for 3rd payment on loan
-            (uint amt3_2,,,) = loan2.getNextPayment(); // USDC required for 3rd payment on loan2
+            (uint amt3_1,,,,) =  loan.getNextPayment(); // USDC required for 3rd payment on loan
+            (uint amt3_2,,,,) = loan2.getNextPayment(); // USDC required for 3rd payment on loan2
             mint("USDC", address(eli), amt3_1);
             mint("USDC", address(fay), amt3_2);
             eli.approve(USDC, address(loan),  amt3_1);
@@ -1187,7 +1187,7 @@ contract PoolTest is TestUtil {
         /*** Make Interest Payment ***/
         /*****************************/
         {
-            (uint amt,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
+            (uint amt,,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
             mint("USDC", address(eli), amt);
             eli.approve(USDC, address(loan),  amt);
             eli.makePayment(address(loan));
@@ -1316,8 +1316,8 @@ contract PoolTest is TestUtil {
         /*** Make 1 Payment (1/6) ***/
         /****************************/
         {
-            (uint amt1_1,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
-            (uint amt1_2,,,) = loan2.getNextPayment(); // USDC required for 1st payment on loan2
+            (uint amt1_1,,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
+            (uint amt1_2,,,,) = loan2.getNextPayment(); // USDC required for 1st payment on loan2
             mint("USDC", address(eli), amt1_1);
             mint("USDC", address(fay), amt1_2);
             eli.approve(USDC, address(loan),  amt1_1);
@@ -1340,8 +1340,8 @@ contract PoolTest is TestUtil {
         /*** Make 2 Payments (3/6)  ***/
         /******************************/
         {
-            (uint amt2_1,,,) =  loan.getNextPayment(); // USDC required for 2nd payment on loan
-            (uint amt2_2,,,) = loan2.getNextPayment(); // USDC required for 2nd payment on loan2
+            (uint amt2_1,,,,) =  loan.getNextPayment(); // USDC required for 2nd payment on loan
+            (uint amt2_2,,,,) = loan2.getNextPayment(); // USDC required for 2nd payment on loan2
             mint("USDC", address(eli), amt2_1);
             mint("USDC", address(fay), amt2_2);
             eli.approve(USDC, address(loan),  amt2_1);
@@ -1349,8 +1349,8 @@ contract PoolTest is TestUtil {
             eli.makePayment(address(loan));
             fay.makePayment(address(loan2));
 
-            (uint amt3_1,,,) =  loan.getNextPayment(); // USDC required for 3rd payment on loan
-            (uint amt3_2,,,) = loan2.getNextPayment(); // USDC required for 3rd payment on loan2
+            (uint amt3_1,,,,) =  loan.getNextPayment(); // USDC required for 3rd payment on loan
+            (uint amt3_2,,,,) = loan2.getNextPayment(); // USDC required for 3rd payment on loan2
             mint("USDC", address(eli), amt3_1);
             mint("USDC", address(fay), amt3_2);
             eli.approve(USDC, address(loan),  amt3_1);
@@ -1647,7 +1647,7 @@ contract PoolTest is TestUtil {
     }
 
     function _makeLoanPayment(Loan _loan, Borrower by) internal {
-        (uint amt,,,) =  _loan.getNextPayment();
+        (uint amt,,,,) = _loan.getNextPayment();
         mint("USDC", address(by), amt);
         by.approve(USDC, address(_loan),  amt);
         by.makePayment(address(_loan));
@@ -1787,6 +1787,5 @@ contract PoolTest is TestUtil {
         uint256 kim_bal_post = IERC20(pool1.liquidityAsset()).balanceOf(address(kim));
 
         assertEq(kim_bal_post - kim_bal_pre, principal_kim + interest_kim);
-
     }
 }

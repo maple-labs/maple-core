@@ -320,8 +320,9 @@ contract Loan is FDT, Pausable {
                 [1] = Principal 
                 [2] = Interest
                 [3] = Payment Due Date
+                [4] = Is Payment Late
     */
-    function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
+    function getNextPayment() public view returns(uint256, uint256, uint256, uint256, bool) {
         return LoanLib.getNextPayment(superFactory, repaymentCalc, nextPaymentDue, lateFeeCalc);
     }
 
@@ -331,9 +332,9 @@ contract Loan is FDT, Pausable {
     function makePayment() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-        (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
+        (uint256 total, uint256 principal, uint256 interest,, bool paymentLate) = getNextPayment();
         paymentsRemaining--;
-        _makePayment(total, principal, interest);
+        _makePayment(total, principal, interest, paymentLate);
     }
 
     /**
@@ -344,13 +345,13 @@ contract Loan is FDT, Pausable {
         _isValidState(State.Active);
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
         paymentsRemaining = uint256(0);
-        _makePayment(total, principal, interest);
+        _makePayment(total, principal, interest, false);
     }
 
     /**
         @dev Internal function to update the payment variables and transfer funds from the borrower into the Loan.
     */
-    function _makePayment(uint256 total, uint256 principal, uint256 interest) internal {
+    function _makePayment(uint256 total, uint256 principal, uint256 interest, bool paymentLate) internal {
 
         loanAsset.safeTransferFrom(msg.sender, address(this), total);
 
@@ -378,7 +379,7 @@ contract Loan is FDT, Pausable {
             _paymentsRemaining, 
             principalOwed, 
             _paymentsRemaining > 0 ? nextPaymentDue : 0, 
-            false
+            paymentLate
         );
 
         // Handle final payment.
