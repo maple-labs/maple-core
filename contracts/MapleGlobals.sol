@@ -76,7 +76,7 @@ contract MapleGlobals {
         governor             = _governor;
         mpl                  = _mpl;
         gracePeriod          = 5 days;
-        swapOutRequired      = 100;
+        swapOutRequired      = 100;  // TODO: Need to fix the minimum value.
         unstakeDelay         = 90 days;
         drawdownGracePeriod  = 1 days;
         investorFee          = 50;
@@ -92,6 +92,7 @@ contract MapleGlobals {
         @param newSlippage New slippage percentage (in basis points)
      */
     function setMaxSwapSlippage(uint256 newSlippage) external isGovernor {
+        require(newSlippage <= uint256(2000), "MapleGlobals:INVALID_NEW_SLIPPAGE");
         maxSwapSlippage = newSlippage;
         emit GlobalsParamSet("MAX_SWAP_SLIPPAGE", newSlippage);
     }
@@ -272,6 +273,7 @@ contract MapleGlobals {
         @param _minLoanEquity Min percentage of Loan equity an address must have to trigger liquidations.
     */
     function setMinLoanEquity(uint256 _minLoanEquity) public isGovernor {
+        require(_minLoanEquity <= 10000, "MapleGlobals:INVALID_MIN_LOAN_EQUITY");
         minLoanEquity = _minLoanEquity;
         emit GlobalsParamSet("MIN_LOAN_EQUITY", _minLoanEquity);
     }
@@ -290,8 +292,9 @@ contract MapleGlobals {
         @dev Adjust the minimum Pool cover required to finalize a Pool. Only Governor can call.
         @param amt The new minimum swap out required
     */
+    // TODO: Need to fix the minimum value.
     function setSwapOutRequired(uint256 amt) public isGovernor {
-        require(amt > uint256(100), "MapleGlobals: SHOULD_GT_HUNDERED_USD");
+        require(amt >= uint256(100000), "MapleGlobals: SHOULD_GT_HUNDERED_USD");
         swapOutRequired = amt;
         emit GlobalsParamSet("SWAP_OUT_REQUIRED", amt);
     }
