@@ -386,10 +386,10 @@ contract StakeLockerTest is TestUtil {
         uint256 unstakeDelay = globals.unstakeDelay();
         uint256 bptMin = WAD / 10_000_000;
 
-        stakeAmount  = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(che)) / 2);  // 12.5 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents)
-        stakeAmount2 = constrictToRange(stakeAmount2, bptMin, bPool.balanceOf(address(che)) / 2);  // 12.5 WAD max, 1/10m WAD min, or zero (total can't be greater than 25 WAD)
-        dTime        = constrictToRange(dTime,  15, unstakeDelay / 2);                            // Max dtime is half unstakeDelay
-        dTime2       = constrictToRange(dTime2, 15, unstakeDelay / 2);                            // Max dtime is half unstakeDelay (total less than unstakeDelay for test)
+        stakeAmount  = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(che)) / 2, true);  // 12.5 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents)   (non-zero to avoid division by zero in stakeDate)
+        stakeAmount2 = constrictToRange(stakeAmount2, bptMin, bPool.balanceOf(address(che)) / 2, true);  // 12.5 WAD max, 1/10m WAD min, or zero (total can't be greater than 25 WAD) (non-zero to avoid division by zero in stakeDate)
+        dTime        = constrictToRange(dTime,  15, unstakeDelay / 2);                                   // Max dtime is half unstakeDelay
+        dTime2       = constrictToRange(dTime2, 15, unstakeDelay / 2);                                   // Max dtime is half unstakeDelay (total less than unstakeDelay for test)
 
         uint256 start = block.timestamp;
         sid.setAllowlistStakeLocker(address(pool), address(che), true);
