@@ -254,7 +254,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Transfer StakerLockerFDTs.
+        @dev Transfer StakeLockerFDTs.
         @param from Address sending   StakeLockerFDTs
         @param to   Address receiving StakeLockerFDTs
         @param wad  Amount of FDTs to transfer

@@ -489,13 +489,13 @@ contract PoolTest is TestUtil {
 
         hevm.warp(startDate + 30 days);
 
-        assertEq(pool1.balanceOf(address(bob)), 100 * WAD);
-        assertEq(pool1.balanceOf(address(che)), 100 * WAD);
+        assertEq(pool1.balanceOf(address(bob)), initialAmt);
+        assertEq(pool1.balanceOf(address(che)), initialAmt);
 
         che.transferFDT(address(pool1), address(bob), newAmt);  // Pool.transfer()
 
-        assertEq(pool1.balanceOf(address(bob)), 120 * WAD);
-        assertEq(pool1.balanceOf(address(che)),  80 * WAD);
+        assertEq(pool1.balanceOf(address(bob)), initialAmt + newAmt);
+        assertEq(pool1.balanceOf(address(che)), initialAmt - newAmt);
 
         uint256 newDepDate = startDate + (block.timestamp - startDate) * newAmt / (newAmt + initialAmt);
 
