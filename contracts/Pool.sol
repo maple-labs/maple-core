@@ -61,6 +61,7 @@ contract Pool is PoolFDT {
     mapping(address => bool)                        public admins;                     // Admin addresses who have permission to do certain operations in case of disaster mgt.
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
 
+    // TODO: Check if offchain team needs a `PoolOpened` event
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
     event   BalanceUpdated(address indexed who,  address token, uint256 balance);
@@ -215,7 +216,7 @@ contract Pool is PoolFDT {
     function deposit(uint256 amt) external {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
-        require(openToPublic || allowedLiquidityProviders[msg.sender], "Pool: INVALID_SENDER");
+        require(openToPublic || allowedLiquidityProviders[msg.sender], "Pool:INVALID_LP");
         require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
         liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
         uint256 wad = _toWad(amt);
