@@ -148,7 +148,7 @@ contract Pool is PoolFDT {
         @dev Finalize the Pool, enabling deposits. Checks Pool Delegate amount deposited to StakeLocker.
     */
     function finalize() external {
-        _isValidDelegateAndWhenProtocolNotPaused();
+        _isValidDelegateAndProtocolNotPaused();
         _isValidState(State.Initialized);
         (,, bool stakePresent,,) = getInitialStakeRequirements();
         require(stakePresent, "Pool:INSUFFICIENT_STAKE");
@@ -264,7 +264,7 @@ contract Pool is PoolFDT {
         @param  amt       Amount to fund the loan
     */
     function fundLoan(address loan, address dlFactory, uint256 amt) external {
-        _isValidDelegateAndWhenProtocolNotPaused();
+        _isValidDelegateAndProtocolNotPaused();
         _isValidState(State.Finalized);
         principalOut = principalOut.add(amt);
         PoolLib.fundLoan(debtLockers, superFactory, liquidityLocker, loan, dlFactory, amt);
@@ -357,7 +357,7 @@ contract Pool is PoolFDT {
     */
     // TODO: Ask auditors about standard for confirmations
     function deactivate(uint confirmation) external {
-        _isValidDelegateAndWhenProtocolNotPaused();
+        _isValidDelegateAndProtocolNotPaused();
         _isValidState(State.Finalized);
         PoolLib.validateDeactivation(_globals(superFactory), confirmation, principalOut, address(liquidityAsset));
         poolState = State.Deactivated;
@@ -382,7 +382,7 @@ contract Pool is PoolFDT {
         @param _penaltyDelay Effective time needed in pool for user to be able to claim 100% of funds
     */
     function setPenaltyDelay(uint256 _penaltyDelay) external {
-        _isValidDelegateAndWhenProtocolNotPaused();
+        _isValidDelegateAndProtocolNotPaused();
         penaltyDelay = _penaltyDelay;
     }
 
@@ -391,7 +391,7 @@ contract Pool is PoolFDT {
         @param _newPrincipalPenalty New principal penalty percentage (in basis points) that corresponds to withdrawal amount
     */
     function setPrincipalPenalty(uint256 _newPrincipalPenalty) external {
-        _isValidDelegateAndWhenProtocolNotPaused();
+        _isValidDelegateAndProtocolNotPaused();
         principalPenalty = _newPrincipalPenalty;
     }
 
@@ -400,7 +400,7 @@ contract Pool is PoolFDT {
         @param _newLockupPeriod New lockup period used to restrict the withdrawals.
      */
     function setLockupPeriod(uint256 _newLockupPeriod) external {
-        _isValidDelegateAndWhenProtocolNotPaused();
+        _isValidDelegateAndProtocolNotPaused();
         require(_newLockupPeriod <= lockupPeriod, "Pool:INVALID_VALUE");
         lockupPeriod = _newLockupPeriod;
     }
@@ -409,7 +409,7 @@ contract Pool is PoolFDT {
         @dev Open Pool to public. Once it is set to `true` then no way to revert it.
     */
     function openPoolToPublic() external {
-        _isValidDelegateAndWhenProtocolNotPaused();
+        _isValidDelegateAndProtocolNotPaused();
         openToPublic = true;
     }
 
@@ -419,8 +419,9 @@ contract Pool is PoolFDT {
         @param status The status of user on allowlist.
     */
     function setAllowList(address user, bool status) external {
-        _isValidDelegateAndWhenProtocolNotPaused();
-        _setAllowList(user, status);
+        _isValidDelegateAndProtocolNotPaused();
+        allowedLiquidityProviders[user] = status;
+        emit LPStatusChanged(user, status);
     }
 
     /**
@@ -429,7 +430,7 @@ contract Pool is PoolFDT {
         @param status The status of user on allowlist.
     */
     function setAllowlistStakeLocker(address user, bool status) external {
-        _isValidDelegateAndWhenProtocolNotPaused();
+        _isValidDelegateAndProtocolNotPaused();
         IStakeLocker(stakeLocker).setAllowlist(user, status);
     }
 
@@ -479,7 +480,7 @@ contract Pool is PoolFDT {
         @param dlFactory Address of the debt locker factory that is used to pull corresponding debt locker
      */
     function triggerDefault(address loan, address dlFactory) external {
-        _isValidDelegateAndWhenProtocolNotPaused();
+        _isValidDelegateAndProtocolNotPaused();
         IDebtLocker(debtLockers[loan][dlFactory]).triggerDefault();
     }
 
@@ -505,7 +506,7 @@ contract Pool is PoolFDT {
       @param allowed Status of an admin.
      */
     function setAdmin(address newAdmin, bool allowed) external {
-        _isValidDelegateAndWhenProtocolNotPaused();
+        _isValidDelegateAndProtocolNotPaused();
         admins[newAdmin] = allowed;
     }
 
@@ -592,16 +593,8 @@ contract Pool is PoolFDT {
     function _whenProtocolNotPaused() internal {
         require(!_globals(superFactory).protocolPaused(), "Pool:PROTOCOL_PAUSED");
     }
-    
-    /**
-        @dev Set the storage of the mapping `allowedLiquidityProviders`.
-     */
-    function _setAllowList(address user, bool status) internal {
-        allowedLiquidityProviders[user] = status;
-        emit LPStatusChanged(user, status);
-    }
 
-    function _isValidDelegateAndWhenProtocolNotPaused() internal {
+    function _isValidDelegateAndProtocolNotPaused() internal {
         _whenProtocolNotPaused();
         _isValidDelegate();
     }

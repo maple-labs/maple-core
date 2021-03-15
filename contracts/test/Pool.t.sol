@@ -391,12 +391,13 @@ contract PoolTest is TestUtil {
 
         mint("USDC", address(dan), 100 * USD);
         dan.approve(USDC, address(pool1), MAX_UINT);
-
+        
         assertEq(IERC20(USDC).balanceOf(address(dan)), 100 * USD);
         assertEq(IERC20(USDC).balanceOf(liqLocker),    100 * USD);
         assertEq(pool1.balanceOf(address(dan)),                0);
 
-        assertTrue(!dan.try_deposit(address(pool1),    100 * USD)); // Fail to invest as dan is not in the allowed list.
+        assertTrue(!pool1.allowedLiquidityProviders(address(dan)));
+        assertTrue(  !dan.try_deposit(address(pool1),    100 * USD)); // Fail to invest as dan is not in the allowed list.
 
         // open pool to the public.
         assertTrue(!joe.try_openPoolToPublic(address(pool1)));  // Incorrect PD.

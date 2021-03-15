@@ -303,6 +303,7 @@ library PoolLib {
         bptsBurned   = preBptBalance.sub(bptsReturned);
         IBPool(stakeAsset).transfer(stakeLocker, bptsReturned);
         liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this)).sub(preBurnBalance);
+        IStakeLocker(stakeLocker).updateLosses(bptsBurned);  // Update StakeLocker FDT loss accounting for BPTs
     }
 
     /**
