@@ -208,7 +208,9 @@ contract PoolLiquidationTest is TestUtil {
         joe.stake(address(stakeLocker_b), 25 * WAD);
         sid.finalize(address(pool_a));
         joe.finalize(address(pool_b));
-
+        sid.openPoolToPublic(address(pool_a));
+        joe.openPoolToPublic(address(pool_b));
+        
         assertEq(uint256(pool_a.poolState()), 1);  // Finalize
         assertEq(uint256(pool_b.poolState()), 1);  // Finalize
     }

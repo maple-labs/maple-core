@@ -98,6 +98,7 @@ contract StakingRewardsTest is TestUtil {
         sid.approve(address(bPool), stakeLocker, MAX_UINT);
         sid.stake(stakeLocker, bPool.balanceOf(address(sid))); // Stake all BPTs against pool through stakeLocker
         sid.finalize(address(pool));
+        sid.openPoolToPublic(address(pool));
 
         // Create new staking rewards contract with MPL rewards and Pool FDTs as the stake token
         stakingRewards = gov.createStakingRewards(address(mpl), address(pool)); 

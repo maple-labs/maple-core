@@ -41,4 +41,12 @@ interface IPool {
     function triggerDefault(address, address) external;
 
     function isPoolFinalized() external view returns(bool);
+
+    function openPoolToPublic() external;
+
+    function setAllowList(address user, bool status) external;
+
+    function allowedLiquidityProviders(address user) external view returns(bool);
+
+    function openToPublic() external view returns(bool);
 }

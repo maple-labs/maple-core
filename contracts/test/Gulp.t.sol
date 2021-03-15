@@ -176,7 +176,7 @@ contract GulpTest is TestUtil {
         sid.approve(address(bPool), address(stakeLocker), 50 * WAD);
         sid.stake(address(stakeLocker), 50 * WAD);
         sid.finalize(address(pool));  // PD that staked can finalize
-
+        sid.openPoolToPublic(address(pool));
         assertEq(uint256(pool.poolState()), 1);  // Finalize
     }
 

@@ -119,8 +119,12 @@ contract TestUtil is DSTest {
         }
     }
 
-    function constrictToRange(uint256 val, uint256 min, uint256 max) public returns(uint256) {
-        return val == 0 ? 0 : val % (max - min) + min;
+    function constrictToRange(uint256 val, uint256 min, uint256 max) public pure returns(uint256) {
+        return constrictToRange(val, min, max, false);
+    }
+
+    function constrictToRange(uint256 val, uint256 min, uint256 max, bool nonZero) public pure returns(uint256) {
+        return val == 0 && !nonZero ? 0 : val % (max - min) + min;
     }
 
     // Get bytecode size of contract
