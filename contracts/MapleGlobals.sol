@@ -53,6 +53,7 @@ contract MapleGlobals {
     event CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event       LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event          OracleSet(address asset, address oracle);
+    event  StakingRewardsSet(address stakingRewards, bool valid);
     event PendingGovernorSet(address pendingGovernor);
     event   GovernorAccepted(address governor);
     event    GlobalsParamSet(bytes32 indexed which, uint256 value);
@@ -111,6 +112,7 @@ contract MapleGlobals {
     */
     function setStakingRewards(address stakingRewards, bool valid) external isGovernor {
         isStakingRewards[stakingRewards] = valid;
+        emit StakingRewardsSet(stakingRewards, valid);
     }
     
     /**
