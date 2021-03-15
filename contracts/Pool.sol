@@ -407,7 +407,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Open Pool to public. Once it is set to `true` then no way to revert it.
+        @dev Open Pool to public. Once it is set to `true` it cannot be set back to `false`.
     */
     function openPoolToPublic() external {
         _isValidDelegateAndProtocolNotPaused();
