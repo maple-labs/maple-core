@@ -102,6 +102,8 @@ contract StakingRewardsTest is TestUtil {
         // Create new staking rewards contract with MPL rewards and Pool FDTs as the stake token
         stakingRewards = gov.createStakingRewards(address(mpl), address(pool)); 
 
+        gov.setStakingRewards(address(stakingRewards), true); // Set in globals so that depDate is not affected on stake/unstake
+
         fakeGov.setGovStakingRewards(stakingRewards); // Used to assert failures 
 
         ali = new Farmer(stakingRewards, pool);
@@ -262,9 +264,15 @@ contract StakingRewardsTest is TestUtil {
     /*** LP functions testing ***/
     /****************************/
     function test_stake() public {
+        uint256 start = block.timestamp;
+
         assertEq(pool.balanceOf(address(ali)),           1000 * WAD);
+        assertEq(pool.depositDate(address(ali)),              start);
+        assertEq(pool.depositDate(address(stakingRewards)),       0);  // StakingRewards depDate should always be zero so that it can avoid lockup logic
         assertEq(stakingRewards.balanceOf(address(ali)),          0);
         assertEq(stakingRewards.totalSupply(),                    0);
+
+        hevm.warp(start + 1 days); // Warp to ensure no effect on depositDates
 
         assertTrue(!ali.try_stake(100 * WAD));  // Can't stake before approval
 
@@ -274,15 +282,23 @@ contract StakingRewardsTest is TestUtil {
         assertTrue( ali.try_stake(100 * WAD));  // Can stake after approval
 
         assertEq(pool.balanceOf(address(ali)),           900 * WAD);
+        assertEq(pool.depositDate(address(ali)),              start);  // Has not changed
+        assertEq(pool.depositDate(address(stakingRewards)),       0);  // Has not changed
         assertEq(stakingRewards.balanceOf(address(ali)), 100 * WAD);
         assertEq(stakingRewards.totalSupply(),           100 * WAD);
     }
 
     function test_withdraw() public {
+        uint256 start = block.timestamp;
+
         ali.approve(address(stakingRewards), 100 * WAD);
         ali.stake(100 * WAD);
 
+        hevm.warp(start + 1 days); // Warp to ensure no effect on depositDates
+
         assertEq(pool.balanceOf(address(ali)),           900 * WAD);
+        assertEq(pool.depositDate(address(ali)),              start);
+        assertEq(pool.depositDate(address(stakingRewards)),       0);  // StakingRewards depDate should always be zero so that it can avoid lockup logic
         assertEq(stakingRewards.balanceOf(address(ali)), 100 * WAD);
         assertEq(stakingRewards.totalSupply(),           100 * WAD);
 
@@ -290,6 +306,8 @@ contract StakingRewardsTest is TestUtil {
         assertTrue( ali.try_withdraw(100 * WAD));  // Can withdraw 
 
         assertEq(pool.balanceOf(address(ali)),           1000 * WAD);
+        assertEq(pool.depositDate(address(ali)),              start);  // Does not change
+        assertEq(pool.depositDate(address(stakingRewards)),       0);  // StakingRewards depDate should always be zero so that it can avoid lockup logic
         assertEq(stakingRewards.balanceOf(address(ali)),          0);
         assertEq(stakingRewards.totalSupply(),                    0);
     }
