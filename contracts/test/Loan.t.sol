@@ -208,6 +208,16 @@ contract LoanTest is TestUtil {
         assertEq(loan.excessReturned(),                4000 * USD);  // Principal owed
         assertEq(IERC20(USDC).balanceOf(address(trs)),    5 * USD);  // Treasury reqAsset balance
 
+        // Test FDT accounting
+        assertEq(IERC20(USDC).balanceOf(address(bob)), 0);
+
+        bob.withdrawFunds(address(loan));
+
+        withinDiff(IERC20(USDC).balanceOf(address(bob)),              4005 * USD, 1);
+        withinDiff(IERC20(loan.loanAsset()).balanceOf(address(loan)),          0, 1);
+
+        // Can't drawdown() loan after it has already been called.
+        assertTrue(!ali.try_drawdown(address(loan), 1000 * USD));
     }
 
     function test_makePayment() public {
