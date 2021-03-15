@@ -167,6 +167,10 @@ contract Governor {
         string memory sig = "setStakingRewards(address,bool)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, _stakingRewards, valid)); 
     }
+    function try_setMinLoanEquity(uint256 newLiquidity) external returns (bool ok) { 
+        string memory sig = "setMinLoanEquity(uint256)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, newLiquidity)); 
+    }
     
     /*** StakingRewards Setters ***/ 
     function try_transferOwnership(address newOwner) external returns (bool ok) { 

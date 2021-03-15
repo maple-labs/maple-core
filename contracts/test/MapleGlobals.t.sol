@@ -299,8 +299,9 @@ contract MapleGlobalsTest is TestUtil {
 
         // setMaxSwapSlippage()
         assertTrue(!fakeGov.try_setMaxSwapSlippage(12));  // 0.12 %
-        assertTrue(     gov.try_setMaxSwapSlippage(12));
-        assertEq(   globals.maxSwapSlippage(), 12);
+        assertTrue(    !gov.try_setMaxSwapSlippage(2001));  // 21 %
+        assertTrue(     gov.try_setMaxSwapSlippage(1999));  // 19.99 %
+        assertEq(   globals.maxSwapSlippage(), 1999);
 
         // setStakingRewards()
         assertTrue(!globals.isStakingRewards(address(1)));
@@ -326,5 +327,10 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!fakeGov2.try_acceptGovernor());
         assertTrue(  fakeGov.try_acceptGovernor());
         assertEq(    globals.governor(), address(fakeGov));
+
+        assertTrue(!fakeGov.try_setMinLoanEquity(10)); // 0.10%
+        assertTrue(    !gov.try_setMinLoanEquity(10001));  // 100.1%
+        assertTrue(     gov.try_setMinLoanEquity(9999));  // 99.99 %
+        assertEq(   globals.minLoanEquity(), 9999);
     }
 }
