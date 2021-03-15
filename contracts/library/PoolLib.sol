@@ -295,7 +295,7 @@ library PoolLib {
         IBPool(stakeAsset).exitswapExternAmountOut(
             address(liquidityAsset), 
             availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
-            MAX_UINT256
+            preBptBalance
         );
 
         // Return remaining BPTs to stakeLocker
