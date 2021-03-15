@@ -320,6 +320,7 @@ contract Loan is FDT, Pausable {
                 [1] = Principal 
                 [2] = Interest
                 [3] = Payment Due Date
+                [4] = Is Payment Late
     */
     function getNextPayment() public view returns(uint256, uint256, uint256, uint256, bool) {
         return LoanLib.getNextPayment(superFactory, repaymentCalc, nextPaymentDue, lateFeeCalc);
