@@ -267,9 +267,7 @@ contract Pool is PoolFDT {
         @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
     **/
     function intendToWithdraw() external {
-        require(balanceOf(msg.sender) != uint256(0), "Pool:ZERO_BALANCE");
-        depositCooldown[msg.sender] = block.timestamp;
-        emit Cooldown(msg.sender);
+        PoolLib.intendToWithdraw(depositCooldown, balanceOf(msg.sender));
     }
 
     /**
@@ -476,18 +474,7 @@ contract Pool is PoolFDT {
         @return interestEarned           Interest  amount claimable
     */
     function claimableFunds(address lp) public view returns(uint256 totalClaimableAmount, uint256 principalClaimableAmount, uint256 interestEarned) {
-        interestEarned = withdrawableFundsOf(lp);
-        // Deposit is still within lockupPeriod, user has 0 claimableFunds under this condition.
-        if (depositDate[lp].add(lockupPeriod) > block.timestamp) {
-            totalClaimableAmount = interestEarned; 
-        }
-        else {
-            uint256 userBalance      = _fromWad(balanceOf(lp));
-            uint256 firstPenalty     = principalPenalty.mul(userBalance).div(10000);               // Calculate flat principal penalty
-            uint256 totalPenalty     = calcWithdrawPenalty(interestEarned.add(firstPenalty), lp);  // Calculate total penalty
-            principalClaimableAmount = userBalance.sub(totalPenalty);
-            totalClaimableAmount     = principalClaimableAmount.add(interestEarned);
-        }
+        PoolLib.claimableFunds(withdrawableFundsOf(lp), depositDate[lp], lockupPeriod, penaltyDelay, balanceOf(lp), principalPenalty, liquidityAssetDecimals);
     }
 
     /** 
@@ -558,14 +545,6 @@ contract Pool is PoolFDT {
     */
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
-    }
-
-    /**
-        @dev Utility to convert from WAD precision to liquidtyAsset precision.
-        @param amt Amount to convert
-    */
-    function _fromWad(uint256 amt) internal view returns(uint256) {
-        return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 
     /**

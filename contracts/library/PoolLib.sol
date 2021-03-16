@@ -22,6 +22,7 @@ library PoolLib {
     uint8   public constant DL_FACTORY  = 1;         // Factory type of `DebtLockerFactory`
 
     event LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
+    event Cooldown(address staker);
 
     /// @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision
     function bdiv(uint256 a, uint256 b) public pure returns (uint256) {
@@ -352,7 +353,7 @@ library PoolLib {
         @param  depositDate  Weighted timestamp representing effective deposit date
         @return penalty Total penalty
     */
-    function calcWithdrawPenalty(uint256 lockupPeriod, uint256 penaltyDelay, uint256 amt, uint256 depositDate) external view returns (uint256 penalty) {
+    function calcWithdrawPenalty(uint256 lockupPeriod, uint256 penaltyDelay, uint256 amt, uint256 depositDate) public view returns (uint256 penalty) {
         if (lockupPeriod < penaltyDelay) {
             uint256 dTime    = block.timestamp.sub(depositDate);
             uint256 unlocked = dTime.mul(amt).div(penaltyDelay);
@@ -440,5 +441,60 @@ library PoolLib {
             depositCooldown[from] = uint256(0);
             updateDepositDate(depositDate, toBalance, wad, to);
         }
+    }
+
+    /**
+        @dev Signal to withdraw the funds from the pool.
+     */
+    function intendToWithdraw(mapping(address => uint256) storage depositCooldown, uint256 balance) external {
+        require(balance != uint256(0), "Pool:ZERO_BALANCE");
+        depositCooldown[msg.sender] = block.timestamp;
+        emit Cooldown(msg.sender);
+    }
+
+    /**
+        @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
+        @return totalClaimableAmount     Total     amount claimable
+        @return principalClaimableAmount Principal amount claimable
+        @return interestEarned           Interest  amount claimable
+    */
+    function claimableFunds(
+        uint256 withdrawFundsOfLp,
+        uint256 depositDateForLp,
+        uint256 lockupPeriod,
+        uint256 penaltyDelay,
+        uint256 balanceOfLp,
+        uint256 principalPenalty,
+        uint256 liquidityAssetDecimals
+    ) 
+        public
+        view
+        returns(
+            uint256 totalClaimableAmount,
+            uint256 principalClaimableAmount,
+            uint256 interestEarned
+        ) 
+    {
+        interestEarned = withdrawFundsOfLp;
+        // Deposit is still within lockupPeriod, user has 0 claimableFunds under this condition.
+        if (depositDateForLp.add(lockupPeriod) > block.timestamp) {
+            totalClaimableAmount = interestEarned; 
+        }
+        else {
+            uint256 userBalance      = fromWad(balanceOfLp, liquidityAssetDecimals);
+            uint256 firstPenalty     = principalPenalty.mul(userBalance).div(10000);               // Calculate flat principal penalty
+            uint256 totalPenalty     = calcWithdrawPenalty(lockupPeriod, penaltyDelay, interestEarned.add(firstPenalty), depositDateForLp);  // Calculate total penalty
+            principalClaimableAmount = userBalance.sub(totalPenalty);
+            totalClaimableAmount     = principalClaimableAmount.add(interestEarned);
+        }
+    }
+
+    /**
+        @dev Utility to convert from WAD precision to liquidtyAsset precision.
+        @param amt Amount to convert
+        @param liquidityAssetDecimals Liquidity asset decimal
+    */
+    function fromWad(uint256 amt, uint256 liquidityAssetDecimals) public view returns(uint256) {
+        return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 }
