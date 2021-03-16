@@ -145,7 +145,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
         amt = totalSupply() == amt && amt > 0 ? amt - 1 : amt;  // If last withdraw, subtract 1 wei to maintain FDT accounting
 
-        stakeCooldown[msg.sender] = 0;  // Reset cooldown time no matter what unstake amount is
+        stakeCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what unstake amount is
 
         updateFundsReceived();   // Account for any funds transferred into contract since last call
         _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
@@ -229,7 +229,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _isAllowed(to);
         _isCooldownFinished(stakeCooldown[from]);
         _updateStakeDate(to, wad);
-        stakeCooldown[from] = 0;  // Reset cooldown time no matter what transfer amount is
+        stakeCooldown[from] = uint256(0);  // Reset cooldown time no matter what transfer amount is
         super._transfer(from, to, wad);
     }
 
@@ -254,7 +254,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _isCooldownFinished(uint256 _stakeCooldown) internal view {
         require(_stakeCooldown != uint256(0), "StakeLocker:COOLDOWN_NOT_SET");
-        require(block.timestamp > stakeCooldown[msg.sender] + _globals().cooldownPeriod(), "StakeLocker:COOLDOWN_NOT_FINISHED");
+        require(block.timestamp > _stakeCooldown + _globals().cooldownPeriod(), "StakeLocker:COOLDOWN_NOT_FINISHED");
     }
 
     /**

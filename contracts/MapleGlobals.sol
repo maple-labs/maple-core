@@ -28,7 +28,7 @@ contract MapleGlobals {
     uint256 public treasuryFee;          // Portion of drawdown that goes to MapleTreasury
     uint256 public maxSwapSlippage;      // Maximum amount of slippage for Uniswap transactions
     uint256 public minLoanEquity;        // Minimum amount of LoanFDTs required to trigger liquidations (basis points percentage of totalSupply)
-    uint256 public cooldownPeriod;       // Period(in secs) after that stakers/LPs are allowed to unstake/withdraw there funds from the StakingRewards/Pool contract
+    uint256 public cooldownPeriod;       // Period (in secs) after that stakers/LPs are allowed to unstake/withdraw their funds from the StakingRewards/Pool contract
 
     bool public protocolPaused;  // Switch to pausedthe functionality of the entire protocol
 
@@ -91,7 +91,7 @@ contract MapleGlobals {
 
     /**
         @dev Update the `cooldownPeriod` state variable.
-        @param newCooldownPeriod New value fo the cool down period.
+        @param newCooldownPeriod New value for the cool down period.
      */
     // Note: This change will affect existing cool down period for the LPs/stakers who already applied for the withdraw/unstake.
     function setCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {

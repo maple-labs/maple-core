@@ -267,7 +267,7 @@ contract Pool is PoolFDT {
         @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
     **/
     function intendToWithdraw() external {
-        require(balanceOf(msg.sender) != uint256(0), "Pool:INVALID_SENDER");
+        require(balanceOf(msg.sender) != uint256(0), "Pool:ZERO_BALANCE");
         depositCooldown[msg.sender] = block.timestamp;
         emit Cooldown(msg.sender);
     }
@@ -284,7 +284,7 @@ contract Pool is PoolFDT {
         // If transferring in and out of yield farming contract, do not update depositDate
         if(!globals.isStakingRewards(from) && !globals.isStakingRewards(to)) {
             _isCooldownFinished(depositCooldown[from]);
-            depositCooldown[from] = 0;
+            depositCooldown[from] = uint256(0);
             PoolLib.updateDepositDate(depositDate, balanceOf(to), wad, to);
         }
         super._transfer(from, to, wad);

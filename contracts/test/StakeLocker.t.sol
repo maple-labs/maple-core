@@ -335,7 +335,7 @@ contract StakeLockerTest is TestUtil {
         che.transfer(address(stakeLocker), address(ali), 1 * WAD); // Transfer to Ali
 
         assertEq(stakeLocker.stakeDate(address(che)),          start);  // Che's date does not change
-        assertEq(stakeLocker.stakeDate(address(ali)), start + globals.cooldownPeriod() + 2 days);  // Ali stake date = 1/(1+1) * (3 days - 1 days) + 1 days = 1/2 * 2 + 1 = 2 days past start
+        assertEq(stakeLocker.stakeDate(address(ali)), start + globals.cooldownPeriod() + 2 days);  // Ali stake date = 1/(1+1) * (3 days + coolDown - 1 days - cooldown) + 1 days = 1/2 * (3 + 10 - 1 - 10) + 1 = 2 days past start
     }
 
     function setUpLoanAndRepay() public {
@@ -372,7 +372,7 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.stakeDate(address(che)),   stakeDate);
 
         setUpLoanAndRepay();
-        assertTrue(!eli.try_intendToUnstake(address(stakeLocker)));  // Unstake will not work as eli doesn't posses any balance.
+        assertTrue(!eli.try_intendToUnstake(address(stakeLocker)));  // Unstake will not work as eli doesn't possess any balance.
         assertTrue( che.try_intendToUnstake(address(stakeLocker)));
         hevm.warp(stakeDate + globals.unstakeDelay() - 1);
         assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake 100% of BPTs until unstakeDelay has passed
