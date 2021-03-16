@@ -544,7 +544,7 @@ contract PoolTest is TestUtil {
         assertEq(pool1.principalOut(),                           20 * USD);  // Outstanding principal in liqiudity pool 1
 
         /****************************************/
-        /*** Fund same loan with the same LTL ***/
+        /*** Fund same loan with the same DL ***/
         /****************************************/
         assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 25 * USD)); // Fund same loan for 25 USDC
 
@@ -557,7 +557,7 @@ contract PoolTest is TestUtil {
         assertEq(pool1.principalOut(),                           45 * USD);  // Outstanding principal in liqiudity pool 1
 
         /*******************************************/
-        /*** Fund same loan with a different LTL ***/
+        /*** Fund same loan with a different DL ***/
         /*******************************************/
         assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory2), 10 * USD)); // Fund loan for 15 USDC
 
@@ -576,13 +576,13 @@ contract PoolTest is TestUtil {
         assertEq(pool1.principalOut(),                           55 * USD);  // Outstanding principal in liqiudity pool 1
     }
 
-    function checkClaim(DebtLocker debtLocker, Loan _loan, PoolDelegate pd, IERC20 reqAsset, Pool pool, address dlFactory) internal {
+    function checkClaim(DebtLocker debtLocker, Loan _loan, PoolDelegate pd, IERC20 liquidityAsset, Pool pool, address dlFactory) internal {
         uint256[10] memory balances = [
-            reqAsset.balanceOf(address(debtLocker)),
-            reqAsset.balanceOf(address(pool)),
-            reqAsset.balanceOf(address(pd)),
-            reqAsset.balanceOf(pool.stakeLocker()),
-            reqAsset.balanceOf(pool.liquidityLocker()),
+            liquidityAsset.balanceOf(address(debtLocker)),
+            liquidityAsset.balanceOf(address(pool)),
+            liquidityAsset.balanceOf(address(pd)),
+            liquidityAsset.balanceOf(pool.stakeLocker()),
+            liquidityAsset.balanceOf(pool.liquidityLocker()),
             0,0,0,0,0
         ];
 
@@ -605,17 +605,17 @@ contract PoolTest is TestUtil {
         uint256 beforeInterestSum  = pool.interestSum();
         uint256[7] memory claim = pd.claim(address(pool), address(_loan),   address(dlFactory));
 
-        // Updated LTL state variables
+        // Updated DL state variables
         debtLockerData[4] = debtLocker.interestPaid();
         debtLockerData[5] = debtLocker.principalPaid();
         debtLockerData[6] = debtLocker.feePaid();
         debtLockerData[7] = debtLocker.excessReturned();
 
-        balances[5] = reqAsset.balanceOf(address(debtLocker));
-        balances[6] = reqAsset.balanceOf(address(pool));
-        balances[7] = reqAsset.balanceOf(address(pd));
-        balances[8] = reqAsset.balanceOf(pool.stakeLocker());
-        balances[9] = reqAsset.balanceOf(pool.liquidityLocker());
+        balances[5] = liquidityAsset.balanceOf(address(debtLocker));
+        balances[6] = liquidityAsset.balanceOf(address(pool));
+        balances[7] = liquidityAsset.balanceOf(address(pd));
+        balances[8] = liquidityAsset.balanceOf(pool.stakeLocker());
+        balances[9] = liquidityAsset.balanceOf(pool.liquidityLocker());
 
         uint256 sumTransfer;
         uint256 sumNetNew;
@@ -624,9 +624,8 @@ contract PoolTest is TestUtil {
 
         {
             for(uint i = 0; i < 4; i++) {
-                assertEq(debtLockerData[i + 4], loanData[i]);  // LTL updated to reflect loan state
-
-                // Category portion of claim * LTL asset balance 
+                assertEq(debtLockerData[i + 4], loanData[i]);  // DL updated to reflect loan state
+                // Category portion of claim * DL asset balance 
                 // Eg. (interestClaimed / totalClaimed) * balance = Portion of total claim balance that is interest
                 uint256 loanShare = (loanData[i] - debtLockerData[i]) * claim[0] / sumNetNew;
                 assertEq(loanShare, claim[i + 1]);
@@ -637,18 +636,36 @@ contract PoolTest is TestUtil {
         }
 
         {
-            assertEq(balances[5] - balances[0], 0);      // LTL locker should have transferred ALL funds claimed to LP
-            assertTrue(balances[6] - balances[1] < 10);  // LP         should have transferred ALL funds claimed to LL, SL, and PD (with rounding error)
-
+            assertEq(balances[5] - balances[0], 0);      // DL locker should have transferred ALL funds claimed to LP
+            assertTrue(balances[6] - balances[1] < 10);  // LP        should have transferred ALL funds claimed to LL, SL, and PD (with rounding error)
             assertEq(balances[7] - balances[2], claim[3] + claim[1] * pool.delegateFee() / 10_000);  // Pool delegate claim (feePaid + delegateFee portion of interest)
             assertEq(balances[8] - balances[3],            claim[1] * pool.stakingFee()  / 10_000);  // Staking Locker claim (feePaid + stakingFee portion of interest)
-
-            withinPrecision(pool.interestSum() - beforeInterestSum, claim[1] - claim[1] * (pool.delegateFee() + pool.stakingFee()) / 10_000, 11);  // interestSum incremented by remainder of interest
 
             // Liquidity Locker balance change should EXACTLY equal state variable change
             assertEq(balances[9] - balances[4], (beforePrincipalOut - pool.principalOut()) + (pool.interestSum() - beforeInterestSum));
 
-            assertTrue(beforePrincipalOut - pool.principalOut() == claim[2] + claim[4]); // principalOut incremented by claimed principal + excess
+            // Normal case, principalClaim <= principalOut
+            if(claim[2] + claim[4] <= beforePrincipalOut) {
+                // interestSum incremented by remainder of interest
+                withinPrecision(
+                    pool.interestSum() - beforeInterestSum, 
+                    claim[1] - claim[1] * (pool.delegateFee() + pool.stakingFee()) / 10_000, 
+                    11
+                );  
+                // principalOut decremented by principal paid plus excess
+                assertTrue(beforePrincipalOut - pool.principalOut() == claim[2] + claim[4]);
+            } 
+            // Edge case, attacker transfers funds into Loan to make principalClaim overflow
+            else {
+                // interestSum incremented by remainder of interest plus overflow amount
+                withinPrecision(
+                    pool.interestSum() - beforeInterestSum, 
+                    claim[1] - claim[1] * (pool.delegateFee() + pool.stakingFee()) / 10_000 + (claim[2] + claim[4] - beforePrincipalOut), 
+                    11
+                );
+                assertEq(pool.principalOut(), 0);
+            }   
+            
         }
     }
 
@@ -1235,9 +1252,9 @@ contract PoolTest is TestUtil {
             eli.makePayment(address(loan));
         }
 
-        /**********************************************/
-        /*** Transfer USDC into Pool and debtLocker ***/
-        /**********************************************/
+        /****************************************************/
+        /*** Transfer USDC into Pool, Loan and debtLocker ***/
+        /****************************************************/
         {
             DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory1)));
 
@@ -1246,6 +1263,7 @@ contract PoolTest is TestUtil {
 
             IERC20(USDC).transferFrom(address(bob), address(pool1),       1000 * USD);
             IERC20(USDC).transferFrom(address(bob), address(debtLocker1), 2000 * USD);
+            IERC20(USDC).transferFrom(address(bob), address(loan),        2000 * USD);
 
             uint256 poolBal_after       = IERC20(USDC).balanceOf(address(pool1));
             uint256 debtLockerBal_after = IERC20(USDC).balanceOf(address(debtLocker1));
@@ -1277,9 +1295,13 @@ contract PoolTest is TestUtil {
 
         /*********************************************************/
         /*** Check claim with existing balances in DL and Pool ***/
+        /*** Transfer more funds into Loan                     ***/
         /*********************************************************/
         {
             DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory1)));
+
+            // Transfer funds into Loan to make principalClaim > principalOut
+            ERC20(USDC).transferFrom(address(bob), address(loan), 200000 * USD);
 
             uint256 poolBal_before       = IERC20(USDC).balanceOf(address(pool1));
             uint256 debtLockerBal_before = IERC20(USDC).balanceOf(address(debtLocker1));

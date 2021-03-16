@@ -36,8 +36,8 @@ contract DebtLocker {
         loanAsset = IERC20(ILoan(_loan).loanAsset());
     }
 
-    function calcAllotment(uint256 newAmt, uint256 totalNewAmt, uint256 totalClaim) internal pure returns (uint256) {
-        return newAmt.mul(totalClaim).div(totalNewAmt);
+    function calcAllotment(uint256 newAmt, uint256 totalClaim, uint256 totalNewAmt) internal pure returns (uint256) {
+        return totalNewAmt > 0 ? newAmt.mul(totalClaim).div(totalNewAmt) : 0;
     }
 
     /**
@@ -60,7 +60,7 @@ contract DebtLocker {
     
         // If a default has occured, update storage variable and update memory variable from zero for return
         if (defaultSuffered == uint256(0) && loan_defaultSuffered > uint256(0)) {
-            newDefaultSuffered = defaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan.totalSupply(), loan_defaultSuffered);
+            newDefaultSuffered = defaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan_defaultSuffered, loan.totalSupply());
         }
         
         // Account for any transfers into Loan that have occured since last call
@@ -96,12 +96,12 @@ contract DebtLocker {
             uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess).add(newAmountRecovered);
 
             // Calculate portions based on FDT claim
-            newInterest  = calcAllotment(newInterest,  sum, claimBal);
-            newPrincipal = calcAllotment(newPrincipal, sum, claimBal);
+            newInterest  = calcAllotment(newInterest,  claimBal, sum);
+            newPrincipal = calcAllotment(newPrincipal, claimBal, sum);
 
-            newFee             = newFee             == uint256(0) ? uint256(0) : calcAllotment(newFee,             sum, claimBal);
-            newExcess          = newExcess          == uint256(0) ? uint256(0) : calcAllotment(newExcess,          sum, claimBal);
-            newAmountRecovered = newAmountRecovered == uint256(0) ? uint256(0) : calcAllotment(newAmountRecovered, sum, claimBal);
+            newFee             = newFee             == uint256(0) ? uint256(0) : calcAllotment(newFee,             claimBal, sum);
+            newExcess          = newExcess          == uint256(0) ? uint256(0) : calcAllotment(newExcess,          claimBal, sum);
+            newAmountRecovered = newAmountRecovered == uint256(0) ? uint256(0) : calcAllotment(newAmountRecovered, claimBal, sum);
 
             loanAsset.safeTransfer(owner, claimBal);
 
