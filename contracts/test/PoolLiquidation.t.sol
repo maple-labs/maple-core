@@ -382,33 +382,32 @@ contract PoolLiquidationTest is TestUtil {
 
     function test_claim_default_burn_BPT_shortfall() public {
 
-        {
-            // Fund the pool
-            mint("USDC", address(ali), 500_000_000 * USD);
-            mint("USDC", address(bob),  10_000_000 * USD);
+        // Fund the pool
+        mint("USDC", address(ali), 500_000_000 * USD);
+        mint("USDC", address(bob),  10_000_000 * USD);
 
-            ali.approve(USDC, address(pool_a), MAX_UINT);
-            bob.approve(USDC, address(pool_a), MAX_UINT);
-            ali.deposit(address(pool_a), 500_000_000 * USD);  // Ali symbolizes all other LPs, test focuses on Bob
-            bob.deposit(address(pool_a), 10_000_000 * USD);
+        ali.approve(USDC, address(pool_a), MAX_UINT);
+        bob.approve(USDC, address(pool_a), MAX_UINT);
+        ali.deposit(address(pool_a), 500_000_000 * USD);  // Ali symbolizes all other LPs, test focuses on Bob
+        bob.deposit(address(pool_a), 10_000_000 * USD);
+        assertTrue(bob.try_intendToWithdraw(address(pool_a)));
 
-            assertPoolAccounting(pool_a);
+        assertPoolAccounting(pool_a);
 
-            sid.setPenaltyDelay(address(pool_a), 0);  // So Bob can withdraw without penalty
+        sid.setPenaltyDelay(address(pool_a), 0);  // So Bob can withdraw without penalty
 
-            // Fund the loan
-            sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 100_000_000 * USD);
-            uint cReq = loan.collateralRequiredForDrawdown(100_000_000 * USD);
+        // Fund the loan
+        sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 100_000_000 * USD);
+        uint cReq = loan.collateralRequiredForDrawdown(100_000_000 * USD);
 
-            assertPoolAccounting(pool_a);
+        assertPoolAccounting(pool_a);
 
-            // Drawdown loan
-            mint("WETH", address(che), cReq);
-            che.approve(WETH, address(loan), MAX_UINT);
-            che.drawdown(address(loan), 100_000_000 * USD);
+        // Drawdown loan
+        mint("WETH", address(che), cReq);
+        che.approve(WETH, address(loan), MAX_UINT);
+        che.drawdown(address(loan), 100_000_000 * USD);
 
-            assertPoolAccounting(pool_a);
-        }
+        assertPoolAccounting(pool_a);
 
         // Warp to late payment
         hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.gracePeriod() + 1);
@@ -474,6 +473,8 @@ contract PoolLiquidationTest is TestUtil {
         /*** Liquidity Provider Minimum Withdrawal Accounting ***/
         /********************************************************/
 
+        make_withdrawable(bob, pool_a);
+
         bob_recognizableLosses.pre = pool_a.recognizableLossesOf(address(bob));  // Unrealized losses of bob from shortfall
 
         assertTrue(!bob.try_withdraw(address(pool_a), bob_recognizableLosses.pre - 1));  // Cannot withdraw less than recognizableLosses
@@ -522,6 +523,8 @@ contract PoolLiquidationTest is TestUtil {
 
         uint256 withdrawAmt = bob_poolBal.pre * 1E6 / WAD;
 
+        make_withdrawable(bob, pool_a);
+
         assertTrue(bob.try_withdraw(address(pool_a), withdrawAmt));  // Withdraw max amount
 
         assertPoolAccounting(pool_a);
@@ -543,5 +546,12 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(fdtSupply.pre - fdtSupply.post, bob_poolBal.pre); // Bob's FDTs have been burned
 
         assertEq(liquidityLockerBal.pre - liquidityLockerBal.post, withdrawAmt);  // All Bob's USDC was transferred out of LL
+    }
+
+    function make_withdrawable(LP investor, Pool pool) public {
+        uint256 currentTime = block.timestamp;
+        assertTrue(investor.try_intendToWithdraw(address(pool)));
+        assertEq(      pool.depositCooldown(address(investor)), currentTime, "Incorrect value set");
+        hevm.warp(currentTime + globals.cooldownPeriod() + 1);
     }
 } 

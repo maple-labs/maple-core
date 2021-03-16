@@ -453,14 +453,34 @@ contract PoolTest is TestUtil {
         assertTrue(!bob.try_deposit(address(pool1), 600 * USD), "Should not able to deposit 600 USD");
 
         // Set liquidityCap to zero and withdraw
-        assertTrue(sid.try_setLiquidityCap(address(pool1), 0),           "Failed to set liquidity cap");
-        assertTrue(sid.try_setLockupPeriod(address(pool1), 0),           "Failed to set the lockup period");
+        assertTrue(sid.try_setLiquidityCap(address(pool1), 0),  "Failed to set liquidity cap");
+        assertTrue(sid.try_setLockupPeriod(address(pool1), 0),  "Failed to set the lockup period");
         assertEq(pool1.lockupPeriod(), uint256(0),              "Failed to update the lockup period");
         
         (uint claimable,,) = pool1.claimableFunds(address(bob));
 
+        uint256 currentTime = block.timestamp;
+
         assertEq(claimable, 500 * USD);
-        assertTrue(bob.try_withdraw(address(pool1), claimable), "Failed to withdraw 500 USD");
+        assertTrue(!bob.try_withdraw(address(pool1), claimable),    "Should fail to withdraw 500 USD because user has to show the intend first");
+        assertTrue(!dan.try_intendToWithdraw(address(pool1)),       "Failed to show intend to withdraw because dan has zero pool FDTs");
+        assertTrue( bob.try_intendToWithdraw(address(pool1)),       "Failed to show intend to withdraw");
+        assertEq( pool1.depositCooldown(address(bob)), currentTime, "Incorrect value set");
+        assertTrue(!bob.try_withdraw(address(pool1), claimable),    "Should fail to withdraw as cool down period hasn't passed yet");
+
+        hevm.warp(currentTime + globals.cooldownPeriod() - 1);
+        assertTrue(!bob.try_withdraw(address(pool1), claimable), "Should fail to withdraw as cool down period hasn't passed yet");
+        hevm.warp(currentTime + globals.cooldownPeriod());
+        assertTrue(!bob.try_withdraw(address(pool1), claimable), "Should fail to withdraw as cool down period hasn't passed yet");
+        hevm.warp(currentTime + globals.cooldownPeriod() + 1);
+        assertTrue(bob.try_withdraw(address(pool1), claimable),  "Should pass to withdraw the funds from the pool");
+    }
+
+    function make_withdrawable(LP investor, Pool pool) public {
+        uint256 currentTime = block.timestamp;
+        assertTrue(investor.try_intendToWithdraw(address(pool)));
+        assertEq(      pool.depositCooldown(address(investor)), currentTime, "Incorrect value set");
+        hevm.warp(currentTime + globals.cooldownPeriod() + 1);
     }
 
     function test_deposit_depositDate() public {
@@ -492,6 +512,7 @@ contract PoolTest is TestUtil {
         assertEq(pool1.depositDate(address(bob)), newDepDate);  // Gets updated
 
         assertTrue(sid.try_setLockupPeriod(address(pool1), uint256(0)));  // Sets 0 as lockup period to allow withdraw. 
+        make_withdrawable(bob, pool1);
         bob.withdraw(address(pool1), newAmt);
 
         assertEq(pool1.depositDate(address(bob)), newDepDate);  // Doesn't change
@@ -529,6 +550,7 @@ contract PoolTest is TestUtil {
         assertEq(pool1.balanceOf(address(bob)), initialAmt);
         assertEq(pool1.balanceOf(address(che)), initialAmt);
 
+        make_withdrawable(che, pool1);
         che.transferFDT(address(pool1), address(bob), newAmt);  // Pool.transfer()
 
         assertEq(pool1.balanceOf(address(bob)), initialAmt + newAmt);
@@ -1542,6 +1564,7 @@ contract PoolTest is TestUtil {
 
         uint256 interest = pool1.withdrawableFundsOf(address(kim));  // Get kims withdrawable funds
 
+        assertTrue(kim.try_intendToWithdraw(address(pool1)));
         // Warp to exact time that kim can withdraw with weighted deposit date
         hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() - 1);
         assertTrue(!kim.try_withdraw(address(pool1), 1000 * USD), "Withdraw failure didn't trigger");
@@ -1578,6 +1601,7 @@ contract PoolTest is TestUtil {
         // Deposit more USDC into pool, increasing deposit date and locking up funds again
         assertTrue(kim.try_deposit(address(pool1), 3000 * USD));
         assertEq(pool1.depositDate(address(kim)) - start, (block.timestamp - start) * (3000 * WAD) / (4000 * WAD));  // Deposit date updating using weighting
+        assertTrue( kim.try_intendToWithdraw(address(pool1)));
         assertTrue(!kim.try_withdraw(address(pool1), 4000 * USD), "Withdraw failure didn't trigger");                // Not able to withdraw the funds as deposit date was updated
 
         uint256 interest = pool1.withdrawableFundsOf(address(kim));  // Get kims withdrawable funds
@@ -1611,6 +1635,7 @@ contract PoolTest is TestUtil {
         assertEq(interest_kim,           0);
 
         uint256 withdrawAmount = 1000 * USD;
+        make_withdrawable(kim, pool1);
         kim.withdraw(address(pool1), withdrawAmount);
 
         assertEq(IERC20(USDC).balanceOf(address(kim)), 2000 * USD);
@@ -1626,6 +1651,7 @@ contract PoolTest is TestUtil {
 
         uint256 interest = pool1.withdrawableFundsOf(address(kim));
 
+        make_withdrawable(kim, pool1);
         kim.withdraw(address(pool1), withdrawAmount);
         uint256 bal1 = IERC20(USDC).balanceOf(address(kim));
 
@@ -1645,17 +1671,18 @@ contract PoolTest is TestUtil {
         uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
         uint256 depositAmount = 1000 * USD;
         assertTrue(kim.try_deposit(address(pool1), depositAmount));  // Deposit and withdraw in same tx
-        
+        make_withdrawable(kim, pool1);
+
         (uint total_kim, uint principal_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
 
-        assertEq(total_kim,     950 * USD);
-        assertEq(principal_kim, 950 * USD);
+        withinPrecision(total_kim,     966 * USD, 3);
+        withinPrecision(principal_kim, 966 * USD, 3);
         assertEq(interest_kim,          0);
 
         kim.withdraw(address(pool1), depositAmount);
         uint256 bal1 = IERC20(USDC).balanceOf(address(kim));  // Balance after principal penalty
 
-        assertEq(bal0 - bal1, 50 * USD); // 5% principal penalty.
+        withinPrecision(bal0 - bal1, 33 * USD, 2); // 3% principal penalty.
     }
 
     function test_withdraw_principal_and_interest_penalty() public {
@@ -1679,7 +1706,8 @@ contract PoolTest is TestUtil {
         {
             uint256 beforeLLBalance = IERC20(USDC).balanceOf(pool1.liquidityLocker());
 
-            assertTrue(kim.try_deposit(address(pool1),  depositAmount));                                                           // Add another 1000 USDC.
+            assertTrue(kim.try_deposit(address(pool1),  depositAmount));  // Add another 1000 USDC.
+            assertTrue(kim.try_intendToWithdraw(address(pool1)));                                                           
             assertEq(pool1.balanceOf(address(kim)),     lpToken, "Failed to update LP balance");                                   // Verify the LP token balance.
             assertEq(pool1.totalSupply(),               beforeTotalSupply.add(lpToken), "Failed to update the TS");                // Pool total supply get increase by the lpToken.
             assertEq(_getLLBal(pool1),                  beforeLLBalance.add(depositAmount), "Failed to update the LL balance");    // Make sure liquidity locker balance get increases.
@@ -1867,6 +1895,8 @@ contract PoolTest is TestUtil {
 
         uint256 kim_bal_pre = IERC20(pool1.liquidityAsset()).balanceOf(address(kim));
         
+        make_withdrawable(kim, pool1);
+
         assertTrue(kim.try_withdraw(address(pool1), principal_kim), "Failed to withdraw claimable_kim");
         
         uint256 kim_bal_post = IERC20(pool1.liquidityAsset()).balanceOf(address(kim));
