@@ -335,7 +335,7 @@ contract StakeLockerTest is TestUtil {
         che.transfer(address(stakeLocker), address(ali), 1 * WAD); // Transfer to Ali
 
         assertEq(stakeLocker.stakeDate(address(che)),          start);  // Che's date does not change
-        assertEq(stakeLocker.stakeDate(address(ali)), start + globals.cooldownPeriod() + 2 days);  // Ali stake date = 1/(1+1) * (3 days + coolDown - 1 days - cooldown) + 1 days = 1/2 * (3 + 10 - 1 - 10) + 1 = 2 days past start
+        assertEq(stakeLocker.stakeDate(address(ali)), start + globals.cooldownPeriod() + 2 days);  // Ali stake date = 1/(1+1) * (3 days + coolDown - (1 days + cooldown)) + (1 days + cooldown) = 1/2 * (3 + 10 - (1 + 10)) + (1+10) = 12 days past start
     }
 
     function setUpLoanAndRepay() public {
