@@ -104,23 +104,8 @@ contract Pool is PoolFDT {
         string memory symbol
     ) PoolFDT(name, symbol) public {
 
-        IGlobals globals = _globals(msg.sender);
-
-        // Sanity checks
-        require(globals.isValidLoanAsset(_liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
-        require(IBPool(_stakeAsset).isBound(globals.mpl()), "Pool:INVALID_BALANCER_POOL");
-        require(_liquidityCap != uint256(0),                "Pool:INVALID_CAP");
-
-        // NOTE: Max length of this array would be 8, as thats the limit of assets in a balancer pool
-        address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();  // Also ensures that BPool is finalized
-
-        uint256  i = 0;
-        bool valid = false;
-
-        // Check that one of the assets in balancer pool is liquidityAsset
-        while(i < tokens.length && !valid) { valid = tokens[i] == _liquidityAsset; i++; }  
-
-        require(valid, "Pool:INVALID_STAKING_POOL");
+        // Conduct sanity checks on Pool params
+        PoolLib.poolSanityChecks(_globals(msg.sender), _liquidityAsset, _stakeAsset, _liquidityCap);
 
         // Assign variables relating to liquidityAsset
         liquidityAsset         = IERC20(_liquidityAsset);
@@ -234,7 +219,7 @@ contract Pool is PoolFDT {
     */
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
-        _isCooldownFinished(depositCooldown[msg.sender]);
+        PoolLib.isCooldownFinished(depositCooldown[msg.sender], _globals(superFactory));
         uint256 wad    = _toWad(amt);
         uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
@@ -256,7 +241,6 @@ contract Pool is PoolFDT {
         // Total penalty is distributed to other LPs as interest, recognizedLosses are absorbed by the LP.
         uint256 due = amt.sub(totPenalty).sub(recognizeLosses());
 
-
         // Transfer amt - totPenalty - recognizedLosses
         _transferLiquidityLockerFunds(msg.sender, due);
 
@@ -267,9 +251,7 @@ contract Pool is PoolFDT {
         @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
     **/
     function intendToWithdraw() external {
-        require(balanceOf(msg.sender) != uint256(0), "Pool:ZERO_BALANCE");
-        depositCooldown[msg.sender] = block.timestamp;
-        emit Cooldown(msg.sender);
+        PoolLib.intendToWithdraw(depositCooldown, balanceOf(msg.sender));
     }
 
     /**
@@ -280,13 +262,7 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
-        IGlobals globals = _globals(superFactory);
-        // If transferring in and out of yield farming contract, do not update depositDate
-        if(!globals.isStakingRewards(from) && !globals.isStakingRewards(to)) {
-            _isCooldownFinished(depositCooldown[from]);
-            depositCooldown[from] = uint256(0);
-            PoolLib.updateDepositDate(depositDate, balanceOf(to), wad, to);
-        }
+        PoolLib.prepareTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
         super._transfer(from, to, wad);
     }
 
@@ -477,23 +453,21 @@ contract Pool is PoolFDT {
     /**
         @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
         @param lp Liquidity Provider to check claimableFunds for 
-        @return totalClaimableAmount     Total     amount claimable
-        @return principalClaimableAmount Principal amount claimable
-        @return interestEarned           Interest  amount claimable
+        @return total     Total     amount claimable
+        @return principal Principal amount claimable
+        @return interest  Interest  amount claimable
     */
-    function claimableFunds(address lp) public view returns(uint256 totalClaimableAmount, uint256 principalClaimableAmount, uint256 interestEarned) {
-        interestEarned = withdrawableFundsOf(lp);
-        // Deposit is still within lockupPeriod, user has 0 claimableFunds under this condition.
-        if (depositDate[lp].add(lockupPeriod) > block.timestamp) {
-            totalClaimableAmount = interestEarned; 
-        }
-        else {
-            uint256 userBalance      = _fromWad(balanceOf(lp));
-            uint256 firstPenalty     = principalPenalty.mul(userBalance).div(10000);               // Calculate flat principal penalty
-            uint256 totalPenalty     = calcWithdrawPenalty(interestEarned.add(firstPenalty), lp);  // Calculate total penalty
-            principalClaimableAmount = userBalance.sub(totalPenalty);
-            totalClaimableAmount     = principalClaimableAmount.add(interestEarned);
-        }
+    function claimableFunds(address lp) public view returns(uint256 total, uint256 principal, uint256 interest) {
+        (total, principal, interest) = 
+            PoolLib.claimableFunds(
+                withdrawableFundsOf(lp), 
+                depositDate[lp], 
+                lockupPeriod, 
+                penaltyDelay, 
+                balanceOf(lp), 
+                principalPenalty, 
+                liquidityAssetDecimals
+            );
     }
 
     /** 
@@ -567,14 +541,6 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Utility to convert from WAD precision to liquidtyAsset precision.
-        @param amt Amount to convert
-    */
-    function _fromWad(uint256 amt) internal view returns(uint256) {
-        return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
-    }
-
-    /**
         @dev Fetch the balance of this Pool's LiquidityLocker.
         @return Balance of LiquidityLocker
     */
@@ -618,14 +584,6 @@ contract Pool is PoolFDT {
     */
     function _transferLiquidityAsset(address to, uint256 value) internal {
         liquidityAsset.safeTransfer(to, value);
-    }
-
-    /**
-        @dev View function to indicate if cooldown period has passed for msg.sender
-    */
-    function _isCooldownFinished(uint256 _depositCooldown) internal view {
-        require(_depositCooldown != uint256(0), "Pool:COOLDOWN_NOT_SET");
-        require(block.timestamp > _depositCooldown + _globals(superFactory).cooldownPeriod(), "Pool:COOLDOWN_NOT_FINISHED");
     }
 
     /**
