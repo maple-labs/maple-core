@@ -337,7 +337,7 @@ contract Pool is PoolFDT {
         // Subtract outstanding principal by principal claimed plus excess returned
         // Considers possible overflow if loanAsset is transferred directly into Loan
         if (principalClaim <= principalOut) {
-            principalOut = principalOut.sub(principalClaim);
+            principalOut = principalOut - principalClaim;
         } else {
             interestClaim  = interestClaim.add(principalClaim - principalOut);  // Distribute principalClaim overflow as interest to LPs
             principalClaim = principalOut;                                      // Set principalClaim to principalOut so correct amount gets transferred
