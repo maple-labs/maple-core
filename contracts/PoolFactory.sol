@@ -80,7 +80,7 @@ contract PoolFactory is Pausable {
         }
         
         string memory tUUID  = TokenUUID.generateUUID(poolsCreated + 1);
-        string memory name   = string(abi.encodePacked("Maple Liquidity Pool Token ", tUUID));
+        string memory name   = string(abi.encodePacked("Maple Pool Token ", tUUID));
         string memory symbol = string(abi.encodePacked("LP", tUUID));
 
         Pool pool =

@@ -487,7 +487,7 @@ contract StakeLockerTest is TestUtil {
 
         uint256 bptMin = WAD / 10_000_000;
 
-        stakeAmount = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(che)));  // 25 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents)
+        stakeAmount = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(che)), true);  // 25 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents) (non-zero)
 
         sid.setAllowlistStakeLocker(address(pool), address(che), true);
         sid.setAllowlistStakeLocker(address(pool), address(dan), true);

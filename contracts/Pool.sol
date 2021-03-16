@@ -256,7 +256,6 @@ contract Pool is PoolFDT {
         // Total penalty is distributed to other LPs as interest, recognizedLosses are absorbed by the LP.
         uint256 due = amt.sub(totPenalty).sub(recognizeLosses());
 
-
         // Transfer amt - totPenalty - recognizedLosses
         _transferLiquidityLockerFunds(msg.sender, due);
 
@@ -469,12 +468,21 @@ contract Pool is PoolFDT {
     /**
         @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
         @param lp Liquidity Provider to check claimableFunds for 
-        @return totalClaimableAmount     Total     amount claimable
-        @return principalClaimableAmount Principal amount claimable
-        @return interestEarned           Interest  amount claimable
+        @return total     Total     amount claimable
+        @return principal Principal amount claimable
+        @return interest  Interest  amount claimable
     */
-    function claimableFunds(address lp) public view returns(uint256 totalClaimableAmount, uint256 principalClaimableAmount, uint256 interestEarned) {
-        PoolLib.claimableFunds(withdrawableFundsOf(lp), depositDate[lp], lockupPeriod, penaltyDelay, balanceOf(lp), principalPenalty, liquidityAssetDecimals);
+    function claimableFunds(address lp) public view returns(uint256 total, uint256 principal, uint256 interest) {
+        (total, principal, interest) = 
+            PoolLib.claimableFunds(
+                withdrawableFundsOf(lp), 
+                depositDate[lp], 
+                lockupPeriod, 
+                penaltyDelay, 
+                balanceOf(lp), 
+                principalPenalty, 
+                liquidityAssetDecimals
+            );
     }
 
     /** 

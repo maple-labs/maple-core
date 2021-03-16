@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "../interfaces/ILoan.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IGlobals.sol";
@@ -16,6 +16,7 @@ import "../interfaces/IDebtLockerFactory.sol";
 library PoolLib {
 
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     uint256 public constant MAX_UINT256 = uint256(-1);
     uint256 public constant WAD         = 10 ** 18;
@@ -454,12 +455,19 @@ library PoolLib {
 
     /**
         @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
-        @return totalClaimableAmount     Total     amount claimable
-        @return principalClaimableAmount Principal amount claimable
-        @return interestEarned           Interest  amount claimable
+        @param  withdrawableFundsOfLp  FDT withdrawableFundsOf LP
+        @param  depositDateForLp       LP deposit date
+        @param  lockupPeriod           Pool lockup period
+        @param  penaltyDelay           Pool penalty delay
+        @param  balanceOfLp            LP FDT balance
+        @param  principalPenalty       Principal penalty percentage
+        @param  liquidityAssetDecimals Decimals of liquidityAsset
+        @return total     Total     amount claimable
+        @return principal Principal amount claimable
+        @return interest  Interest  amount claimable
     */
     function claimableFunds(
-        uint256 withdrawFundsOfLp,
+        uint256 withdrawableFundsOfLp,
         uint256 depositDateForLp,
         uint256 lockupPeriod,
         uint256 penaltyDelay,
@@ -470,22 +478,21 @@ library PoolLib {
         public
         view
         returns(
-            uint256 totalClaimableAmount,
-            uint256 principalClaimableAmount,
-            uint256 interestEarned
+            uint256 total,
+            uint256 principal,
+            uint256 interest
         ) 
     {
-        interestEarned = withdrawFundsOfLp;
-        // Deposit is still within lockupPeriod, user has 0 claimableFunds under this condition.
-        if (depositDateForLp.add(lockupPeriod) > block.timestamp) {
-            totalClaimableAmount = interestEarned; 
-        }
+        interest = withdrawableFundsOfLp;
+        // Deposit is still within lockupPeriod, user has 0 claimable principal under this condition.
+        if (depositDateForLp.add(lockupPeriod) > block.timestamp) total = interest; 
         else {
-            uint256 userBalance      = fromWad(balanceOfLp, liquidityAssetDecimals);
-            uint256 firstPenalty     = principalPenalty.mul(userBalance).div(10000);               // Calculate flat principal penalty
-            uint256 totalPenalty     = calcWithdrawPenalty(lockupPeriod, penaltyDelay, interestEarned.add(firstPenalty), depositDateForLp);  // Calculate total penalty
-            principalClaimableAmount = userBalance.sub(totalPenalty);
-            totalClaimableAmount     = principalClaimableAmount.add(interestEarned);
+            uint256 userBalance  = fromWad(balanceOfLp, liquidityAssetDecimals);
+            uint256 firstPenalty = principalPenalty.mul(userBalance).div(10000);                                                   // Calculate flat principal penalty
+            uint256 totalPenalty = calcWithdrawPenalty(lockupPeriod, penaltyDelay, interest.add(firstPenalty), depositDateForLp);  // Calculate total penalty
+
+            principal = userBalance.sub(totalPenalty);
+            total     = principal.add(interest);
         }
     }
 
