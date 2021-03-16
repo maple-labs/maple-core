@@ -234,7 +234,7 @@ contract Pool is PoolFDT {
     */
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
-        _isCooldownFinished(depositCooldown[msg.sender]);
+        PoolLib.isCooldownFinished(depositCooldown[msg.sender], _globals(superFactory));
         uint256 wad    = _toWad(amt);
         uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
@@ -280,13 +280,7 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
-        IGlobals globals = _globals(superFactory);
-        // If transferring in and out of yield farming contract, do not update depositDate
-        if(!globals.isStakingRewards(from) && !globals.isStakingRewards(to)) {
-            _isCooldownFinished(depositCooldown[from]);
-            depositCooldown[from] = uint256(0);
-            PoolLib.updateDepositDate(depositDate, balanceOf(to), wad, to);
-        }
+        PoolLib.beforeTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
         super._transfer(from, to, wad);
     }
 
@@ -618,14 +612,6 @@ contract Pool is PoolFDT {
     */
     function _transferLiquidityAsset(address to, uint256 value) internal {
         liquidityAsset.safeTransfer(to, value);
-    }
-
-    /**
-        @dev View function to indicate if cooldown period has passed for msg.sender
-    */
-    function _isCooldownFinished(uint256 _depositCooldown) internal view {
-        require(_depositCooldown != uint256(0), "Pool:COOLDOWN_NOT_SET");
-        require(block.timestamp > _depositCooldown + _globals(superFactory).cooldownPeriod(), "Pool:COOLDOWN_NOT_FINISHED");
     }
 
     /**

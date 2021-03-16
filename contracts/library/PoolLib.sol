@@ -413,4 +413,32 @@ library PoolLib {
         require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
         require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "Pool:PRINCIPAL_OUTSTANDING");
     }
+
+    /**
+        @dev View function to indicate if cooldown period has passed for msg.sender
+    */
+    function isCooldownFinished(uint256 _depositCooldown, IGlobals globals) public view {
+        require(_depositCooldown != uint256(0), "Pool:COOLDOWN_NOT_SET");
+        require(block.timestamp > _depositCooldown + globals.cooldownPeriod(), "Pool:COOLDOWN_NOT_FINISHED");
+    }
+
+    /**
+        @dev Performing some checks before doing actual transfers.
+    */
+    function beforeTransfer(
+        mapping(address => uint256) storage depositCooldown,
+        mapping(address => uint256) storage depositDate,
+        address from,
+        address to,
+        uint256 wad,
+        IGlobals globals,
+        uint256 toBalance
+    ) external {
+        // If transferring in and out of yield farming contract, do not update depositDate
+        if(!globals.isStakingRewards(from) && !globals.isStakingRewards(to)) {
+            isCooldownFinished(depositCooldown[from], globals);
+            depositCooldown[from] = uint256(0);
+            updateDepositDate(depositDate, toBalance, wad, to);
+        }
+    }
 }
