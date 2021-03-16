@@ -115,17 +115,21 @@ contract MapleGlobalsTest is TestUtil {
     }
 
     function test_constructor() public {
-        assertEq(globals.mapleTreasury(),    address(trs));
+
+        globals = new MapleGlobals(address(gov), address(mpl), BPOOL_FACTORY, address(1));
+
         assertEq(globals.governor(),         address(gov));
         assertEq(globals.mpl(),              address(mpl));
         assertEq(globals.gracePeriod(),            5 days);
-        assertEq(globals.swapOutRequired(),           100);
+        assertEq(globals.swapOutRequired(),        10_000);
         assertEq(globals.unstakeDelay(),          90 days);
-        assertEq(globals.drawdownGracePeriod(),    1 days);
+        assertEq(globals.drawdownGracePeriod(),   10 days);
         assertEq(globals.investorFee(),                50);
         assertEq(globals.treasuryFee(),                50);
         assertEq(globals.BFactory(),        BPOOL_FACTORY);
         assertEq(globals.maxSwapSlippage(),          1000);
+        assertEq(globals.minLoanEquity(),            2000);
+        assertEq(globals.admin(),              address(1));
     }
 
     function test_setup() public {
