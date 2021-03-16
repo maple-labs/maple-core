@@ -12,6 +12,7 @@ import "../interfaces/ILoanFactory.sol";
 import "../interfaces/IStakeLocker.sol";
 import "../interfaces/IDebtLockerFactory.sol";
 
+
 /// @title PoolLib is a library of utility functions used by Pool.
 library PoolLib {
 
@@ -24,6 +25,30 @@ library PoolLib {
 
     event LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event Cooldown(address staker);
+
+    /** 
+        @dev Conducts sanity checks for Pools in the constructor
+        @param globals        Address of MapleGlobals
+        @param liquidityAsset Asset used by Pool for liquidity to fund loans
+        @param stakeAsset     Asset escrowed in StakeLocker
+        @param  _liquidityCap Max amount of liquidityAsset accepted by the Pool
+    */
+    function poolSanityChecks(IGlobals globals, address liquidityAsset, address stakeAsset, uint256 liquidityCap) external {
+        require(globals.isValidLoanAsset(liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
+        require(IBPool(stakeAsset).isBound(globals.mpl()), "Pool:INVALID_BALANCER_POOL");
+        require(liquidityCap != uint256(0),                "Pool:INVALID_CAP");
+
+        // NOTE: Max length of this array would be 8, as thats the limit of assets in a balancer pool
+        address[] memory tokens = IBPool(stakeAsset).getFinalTokens();  // Also ensures that BPool is finalized
+
+        uint256  i = 0;
+        bool valid = false;
+
+        // Check that one of the assets in balancer pool is liquidityAsset
+        while(i < tokens.length && !valid) { valid = tokens[i] == liquidityAsset; i++; }  
+
+        require(valid, "Pool:INVALID_STAKING_POOL");
+    }
 
     /// @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision
     function bdiv(uint256 a, uint256 b) public pure returns (uint256) {
@@ -427,7 +452,7 @@ library PoolLib {
     /**
         @dev Performing some checks before doing actual transfers.
     */
-    function beforeTransfer(
+    function prepareTransfer(
         mapping(address => uint256) storage depositCooldown,
         mapping(address => uint256) storage depositDate,
         address from,

@@ -104,23 +104,8 @@ contract Pool is PoolFDT {
         string memory symbol
     ) PoolFDT(name, symbol) public {
 
-        IGlobals globals = _globals(msg.sender);
-
-        // Sanity checks
-        require(globals.isValidLoanAsset(_liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
-        require(IBPool(_stakeAsset).isBound(globals.mpl()), "Pool:INVALID_BALANCER_POOL");
-        require(_liquidityCap != uint256(0),                "Pool:INVALID_CAP");
-
-        // NOTE: Max length of this array would be 8, as thats the limit of assets in a balancer pool
-        address[] memory tokens = IBPool(_stakeAsset).getFinalTokens();  // Also ensures that BPool is finalized
-
-        uint256  i = 0;
-        bool valid = false;
-
-        // Check that one of the assets in balancer pool is liquidityAsset
-        while(i < tokens.length && !valid) { valid = tokens[i] == _liquidityAsset; i++; }  
-
-        require(valid, "Pool:INVALID_STAKING_POOL");
+        // Conduct sanity checks on Pool params
+        PoolLib.poolSanityChecks(_globals(msg.sender), _liquidityAsset, _stakeAsset, _liquidityCap);
 
         // Assign variables relating to liquidityAsset
         liquidityAsset         = IERC20(_liquidityAsset);
@@ -277,7 +262,7 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
-        PoolLib.beforeTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
+        PoolLib.prepareTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
         super._transfer(from, to, wad);
     }
 
