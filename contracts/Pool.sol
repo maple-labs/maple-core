@@ -337,13 +337,20 @@ contract Pool is PoolFDT {
         (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
 
         // Subtract outstanding principal by principal claimed plus excess returned
-        principalOut = principalOut.sub(principalClaim);
+        // Considers possible overflow if loanAsset is transferred directly into Loan
+        if (principalClaim <= principalOut) {
+            principalOut = principalOut - principalClaim;
+        } else {
+            interestClaim  = interestClaim.add(principalClaim - principalOut);  // Distribute principalClaim overflow as interest to LPs
+            principalClaim = principalOut;                                      // Set principalClaim to principalOut so correct amount gets transferred
+            principalOut   = 0;                                                 // Set principalOUt to zero to avoid subtraction overflow
+        }
 
         // Accounts for rounding error in stakeLocker/poolDelegate/liquidityLocker interest split
         interestSum = interestSum.add(interestClaim);
 
         _transferLiquidityAsset(poolDelegate, poolDelegatePortion);  // Transfer fee and portion of interest to pool delegate
-        _transferLiquidityAsset(stakeLocker, stakeLockerPortion);    // Transfer portion of interest to stakeLocker
+        _transferLiquidityAsset(stakeLocker,  stakeLockerPortion);   // Transfer portion of interest to stakeLocker
 
         // Transfer remaining claim (remaining interest + principal + excess + recovered) to liquidityLocker
         // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
@@ -363,9 +370,9 @@ contract Pool is PoolFDT {
         _emitBalanceUpdatedEvent();
         emit BalanceUpdated(stakeLocker, address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
-        emit Claim(loan, claimInfo[1], principalClaim, claimInfo[3]);
+        emit Claim(loan, interestClaim, principalClaim, claimInfo[3]);  // TODO: Discuss with offchain team about requirements for event
 
-        return claimInfo;
+        return claimInfo;  // TODO: Discuss with offchain team about requirements for return
     }
 
     /**
