@@ -308,6 +308,12 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!fakeGov.try_setStakingRewards(address(1), true));
         assertTrue(     gov.try_setStakingRewards(address(1), true));
         assertTrue( globals.isStakingRewards(address(1))); 
+
+        // setMinLoanEquity
+        assertTrue(!fakeGov.try_setMinLoanEquity(10)); // 0.10%
+        assertTrue(    !gov.try_setMinLoanEquity(10001));  // 100.1%
+        assertTrue(     gov.try_setMinLoanEquity(9999));  // 99.99 %
+        assertEq(   globals.minLoanEquity(), 9999);
     }
 
     function test_transfer_governor() public {
@@ -327,10 +333,5 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!fakeGov2.try_acceptGovernor());
         assertTrue(  fakeGov.try_acceptGovernor());
         assertEq(    globals.governor(), address(fakeGov));
-
-        assertTrue(!fakeGov.try_setMinLoanEquity(10)); // 0.10%
-        assertTrue(    !gov.try_setMinLoanEquity(10001));  // 100.1%
-        assertTrue(     gov.try_setMinLoanEquity(9999));  // 99.99 %
-        assertEq(   globals.minLoanEquity(), 9999);
     }
 }
