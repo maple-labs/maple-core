@@ -224,7 +224,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!globals.isValidCollateralAsset(CDAI));
         assertTrue(!fakeGov.try_setCollateralAsset(CDAI,   true));  // Non-governor cant set
         assertTrue(     gov.try_setCollateralAsset(CDAI,   true));
-        assertTrue(globals.isValidCollateralAsset( CDAI));
+        assertTrue( globals.isValidCollateralAsset(CDAI));
         assertTrue(!fakeGov.try_setCollateralAsset(CDAI,   false));  // Non-governor cant set
         assertTrue(     gov.try_setCollateralAsset(CDAI,   false));
         assertTrue(!globals.isValidCollateralAsset(CDAI));
