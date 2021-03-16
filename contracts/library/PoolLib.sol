@@ -12,7 +12,6 @@ import "../interfaces/ILoanFactory.sol";
 import "../interfaces/IStakeLocker.sol";
 import "../interfaces/IDebtLockerFactory.sol";
 
-
 /// @title PoolLib is a library of utility functions used by Pool.
 library PoolLib {
 
@@ -31,7 +30,7 @@ library PoolLib {
         @param globals        Address of MapleGlobals
         @param liquidityAsset Asset used by Pool for liquidity to fund loans
         @param stakeAsset     Asset escrowed in StakeLocker
-        @param  _liquidityCap Max amount of liquidityAsset accepted by the Pool
+        @param liquidityCap   Max amount of liquidityAsset accepted by the Pool
     */
     function poolSanityChecks(IGlobals globals, address liquidityAsset, address stakeAsset, uint256 liquidityCap) external {
         require(globals.isValidLoanAsset(liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
