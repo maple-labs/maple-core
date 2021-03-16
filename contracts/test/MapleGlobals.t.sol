@@ -211,20 +211,22 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(   globals.defaultUniswapPath(WETH, USDC), USDC);
         assertEq(   globals.defaultUniswapPath(WBTC, USDC), WETH);
 
-        // setLoanAsset() setCollateralAsset()
+        // setLoanAsset() 
         assertTrue(!globals.isValidLoanAsset(WETH));
-        assertTrue(!globals.isValidCollateralAsset(CDAI));
-        assertTrue(!fakeGov.try_setLoanAsset(WETH,       true));  // Non-governor cant set
-        assertTrue(     gov.try_setLoanAsset(WETH,       true));
-        assertTrue(!fakeGov.try_setCollateralAsset(CDAI, true));  // Non-governor cant set
-        assertTrue(     gov.try_setCollateralAsset(CDAI, true));
+        assertTrue(!fakeGov.try_setLoanAsset(WETH,  true));  // Non-governor cant set
+        assertTrue(     gov.try_setLoanAsset(WETH,  true));
         assertTrue(globals.isValidLoanAsset(WETH));
-        assertTrue(globals.isValidCollateralAsset(CDAI));
-        assertTrue(!fakeGov.try_setLoanAsset(WETH,       false));  // Non-governor cant set
-        assertTrue(     gov.try_setLoanAsset(WETH,       false));
-        assertTrue(!fakeGov.try_setCollateralAsset(CDAI, false));  // Non-governor cant set
-        assertTrue(     gov.try_setCollateralAsset(CDAI, false));
+        assertTrue(!fakeGov.try_setLoanAsset(WETH,  false));  // Non-governor cant set
+        assertTrue(     gov.try_setLoanAsset(WETH,  false));
         assertTrue(!globals.isValidLoanAsset(WETH));
+
+        // setCollateralAsset()
+        assertTrue(!globals.isValidCollateralAsset(CDAI));
+        assertTrue(!fakeGov.try_setCollateralAsset(CDAI,   true));  // Non-governor cant set
+        assertTrue(     gov.try_setCollateralAsset(CDAI,   true));
+        assertTrue(globals.isValidCollateralAsset( CDAI));
+        assertTrue(!fakeGov.try_setCollateralAsset(CDAI,   false));  // Non-governor cant set
+        assertTrue(     gov.try_setCollateralAsset(CDAI,   false));
         assertTrue(!globals.isValidCollateralAsset(CDAI));
 
         // setCalc()
@@ -234,51 +236,48 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!globals.validCalcs(address(repaymentCalc)));
 
         // setInvestorFee()
-        assertEq(   globals.investorFee(), 50);
-        assertTrue(!fakeGov.try_setInvestorFee(30));  // Non-governor cant set
-        assertTrue(    !gov.try_setInvestorFee(10001));
-        assertTrue(     gov.try_setInvestorFee(30));
-        assertEq(   globals.investorFee(), 30);
+        assertEq(   globals.investorFee(),         50);
+        assertTrue(!fakeGov.try_setInvestorFee(10_000));  // Non-governor cant set
+        assertTrue(    !gov.try_setInvestorFee(10_001));  // 100.01% is outside of bounds
+        assertTrue(     gov.try_setInvestorFee(10_000));  // 100% is upper bound
+        assertEq(   globals.investorFee(),     10_000);
 
         // setTreasuryFee
-        assertEq(   globals.treasuryFee(), 50);
-        assertTrue(!fakeGov.try_setTreasuryFee(30));  // Non-governor cant set
-        assertTrue(    !gov.try_setInvestorFee(10001));
-        assertTrue(     gov.try_setTreasuryFee(30));
-        assertEq(   globals.treasuryFee(), 30);
+        assertEq(   globals.treasuryFee(),         50);
+        assertTrue(!fakeGov.try_setTreasuryFee(10_000));  // Non-governor cant set
+        assertTrue(    !gov.try_setInvestorFee(10_001));  // 100.01% is outside of bounds
+        assertTrue(     gov.try_setTreasuryFee(10_000));  // 100% is upper bound
+        assertEq(   globals.treasuryFee(),     10_000);
 
         // setDrawdownGracePeriod
-        assertEq(   globals.drawdownGracePeriod(), 1 days);
-        assertTrue(!fakeGov.try_setDrawdownGracePeriod(3 days));
-        assertTrue(    !gov.try_setDrawdownGracePeriod(86399));
-        assertTrue(     gov.try_setDrawdownGracePeriod(3 days));
-        assertEq(   globals.drawdownGracePeriod(), 3 days);
+        assertEq(   globals.drawdownGracePeriod(),    10 days);
         assertTrue(!fakeGov.try_setDrawdownGracePeriod(1 days));
+        assertTrue(    !gov.try_setDrawdownGracePeriod(1 days - 1));  // Lower bound is 1 day
         assertTrue(     gov.try_setDrawdownGracePeriod(1 days));
-        assertEq(  globals.drawdownGracePeriod(), 1 days);
+        assertEq(   globals.drawdownGracePeriod(),     1 days);
 
         // setGracePeriod
-        assertEq(   globals.gracePeriod(), 5 days);
-        assertTrue(!fakeGov.try_setGracePeriod(3 days));
-        assertTrue(    !gov.try_setGracePeriod(86399)); // 1 sec less than 1 day.
-        assertTrue(     gov.try_setGracePeriod(3 days));
-        assertEq(   globals.gracePeriod(), 3 days);
-        assertTrue(!fakeGov.try_setGracePeriod(7 days));
-        assertTrue(     gov.try_setGracePeriod(7 days));
-        assertEq(   globals.gracePeriod(), 7 days);
+        assertEq(   globals.gracePeriod(),     5 days);
+        assertTrue(!fakeGov.try_setGracePeriod(1 days));
+        assertTrue(    !gov.try_setGracePeriod(1 days - 1));   // Lower bound is 1 day
+        assertTrue(     gov.try_setGracePeriod(1 days));
+        assertEq(   globals.gracePeriod(),     1 days);
 
         // setSwapOutRequired()
-        assertEq(   globals.swapOutRequired(), 100);
-        assertTrue(!fakeGov.try_setSwapOutRequired(100000));
-        assertTrue(    !gov.try_setSwapOutRequired(99));
-        assertTrue(     gov.try_setSwapOutRequired(100000));
-        assertEq(   globals.swapOutRequired(), 100000);
+        assertEq(   globals.swapOutRequired(),     10_000);
+        assertTrue(!fakeGov.try_setSwapOutRequired(15_000));
+        assertTrue(    !gov.try_setSwapOutRequired( 9_999));  // Lower bound is $10,000 of pool cover
+        assertTrue(     gov.try_setSwapOutRequired(15_000));
+        assertEq(   globals.swapOutRequired(),     15_000);
+        assertTrue(     gov.try_setSwapOutRequired(10_000));  // Lower bound is $10,000 of pool cover
+        assertEq(   globals.swapOutRequired(),     10_000);
 
         // setUnstakeDelay()
-        assertEq(   globals.unstakeDelay(), 90 days);
-        assertTrue(!fakeGov.try_setUnstakeDelay(30 days));
-        assertTrue(     gov.try_setUnstakeDelay(30 days));
-        assertEq(   globals.unstakeDelay(), 30 days);
+        assertEq(   globals.unstakeDelay(),    90 days);
+        assertTrue(!fakeGov.try_setUnstakeDelay(1 days));
+        assertTrue(    !gov.try_setUnstakeDelay(1 days - 1));
+        assertTrue(     gov.try_setUnstakeDelay(1 days));
+        assertEq(   globals.unstakeDelay(),     1 days);
 
          // setMapleTreasury()
         assertEq(   globals.mapleTreasury(), address(trs));
@@ -298,10 +297,11 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(globals.getLatestPrice(WBTC) != 0); // Shows real WBTC value from Chainlink
 
         // setMaxSwapSlippage()
-        assertTrue(!fakeGov.try_setMaxSwapSlippage(12));  // 0.12 %
-        assertTrue(    !gov.try_setMaxSwapSlippage(2001));  // 21 %
-        assertTrue(     gov.try_setMaxSwapSlippage(1999));  // 19.99 %
-        assertEq(   globals.maxSwapSlippage(), 1999);
+        assertEq(   globals.maxSwapSlippage(),      1_000);
+        assertTrue(!fakeGov.try_setMaxSwapSlippage(10_000));
+        assertTrue(    !gov.try_setMaxSwapSlippage(10_001));  // 100.01% is outside of bounds
+        assertTrue(     gov.try_setMaxSwapSlippage(10_000));  // 100% is upper bound
+        assertEq(   globals.maxSwapSlippage(),     10_000);
 
         // setStakingRewards()
         assertTrue(!globals.isStakingRewards(address(1)));
@@ -310,10 +310,11 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue( globals.isStakingRewards(address(1))); 
 
         // setMinLoanEquity
-        assertTrue(!fakeGov.try_setMinLoanEquity(10)); // 0.10%
-        assertTrue(    !gov.try_setMinLoanEquity(10001));  // 100.1%
-        assertTrue(     gov.try_setMinLoanEquity(9999));  // 99.99 %
-        assertEq(   globals.minLoanEquity(), 9999);
+        assertEq(   globals.minLoanEquity(),      2_000);
+        assertTrue(!fakeGov.try_setMinLoanEquity(10_000)); 
+        assertTrue(    !gov.try_setMinLoanEquity(10_001));  // 100.01% is outside of bounds
+        assertTrue(     gov.try_setMinLoanEquity(10_000));  // 99.99 %
+        assertEq(   globals.minLoanEquity(),     10_000);   // 100% is upper bound
     }
 
     function test_transfer_governor() public {
