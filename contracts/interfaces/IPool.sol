@@ -49,4 +49,6 @@ interface IPool {
     function allowedLiquidityProviders(address user) external view returns(bool);
 
     function openToPublic() external view returns(bool);
+
+    function intendToWithdraw() external;
 }

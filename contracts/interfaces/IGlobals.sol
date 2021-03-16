@@ -61,4 +61,6 @@ interface IGlobals {
     function maxSwapSlippage() external view returns (uint256);
 
     function protocolPaused() external view returns (bool);
+
+    function cooldownPeriod() external view returns(uint256);
 }
