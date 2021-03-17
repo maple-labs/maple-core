@@ -420,6 +420,16 @@ contract Loan is FDT, Pausable {
     }
 
     /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+     */
+    function reclaimERC20(address token) external {
+        require(msg.sender == _globals(superFactory).governor(), "Pool:NOT_AUTHORISED");
+        require(token != address(loanAsset) && token != address(0) && token != address(collateralAsset), "Pool:INVALID_TOKEN");
+        IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
+    }
+
+    /**
         @dev Withdraws all available funds earned through FDT for a token holder.
     */
     function withdrawFunds() public override {

@@ -525,6 +525,14 @@ contract Pool is PoolFDT {
     }
 
     /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+     */
+    function reclaimERC20(address token) external {
+        PoolLib.reclaimERC20(token, address(liquidityAsset), _globals(superFactory));
+    }
+
+    /**
       @dev Checks whether pool state is `Finalized`?
       @return bool Boolean value to know the status of state.
      */
