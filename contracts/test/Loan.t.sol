@@ -570,4 +570,27 @@ contract LoanTest is TestUtil {
         assertEq(collateralAsset.balanceOf(collateralLocker),                      0);
         assertEq(collateralAsset.balanceOf(address(ali)),     _delta + reqCollateral);
     }
+
+    function test_reclaim_erc20() external {
+        Loan loan = createAndFundLoan(address(repaymentCalc));
+
+        // Fund the loan with different kind of asset.
+        mint("USDC", address(loan), 1000 * USD);
+        mint("DAI",  address(loan), 1000 * WAD);
+        mint("WETH", address(loan),  100 * WAD);
+
+        Governor fakeGov = new Governor();
+
+        uint256 beforeBalanceDAI  = IERC20(DAI).balanceOf(address(gov));
+
+        assertTrue(!fakeGov.try_reclaimERC20(address(loan), DAI));
+        assertTrue(    !gov.try_reclaimERC20(address(loan), USDC));
+        assertTrue(    !gov.try_reclaimERC20(address(loan), address(0)));
+        assertTrue(    !gov.try_reclaimERC20(address(loan), WETH));
+        assertTrue(     gov.try_reclaimERC20(address(loan), DAI));
+
+        uint256 afterBalanceDAI  = IERC20(DAI).balanceOf(address(gov));
+
+        assertEq(afterBalanceDAI - beforeBalanceDAI,   1000 * WAD);
+    }
 }

@@ -215,4 +215,10 @@ contract Governor {
         string memory sig = "convertERC20(address)"; 
         (ok,) = address(treasury).call(abi.encodeWithSignature(sig, asset));    
     }
+
+    /*** Pool Functions ***/
+    function try_reclaimERC20(address target, address token) external returns(bool ok) {
+        string memory sig = "reclaimERC20(address)";
+        (ok,) = target.call(abi.encodeWithSignature(sig, token));
+    }
 }

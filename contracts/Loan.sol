@@ -420,6 +420,14 @@ contract Loan is FDT, Pausable {
     }
 
     /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+     */
+    function reclaimERC20(address token) external {
+        LoanLib.reclaimERC20(token, address(loanAsset), address(collateralAsset), _globals(superFactory));
+    }
+
+    /**
         @dev Withdraws all available funds earned through FDT for a token holder.
     */
     function withdrawFunds() public override {

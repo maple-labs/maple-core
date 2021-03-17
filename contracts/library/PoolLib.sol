@@ -521,6 +521,18 @@ library PoolLib {
     }
 
     /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+        @param liquidityAsset Address of liquidity asset that is supported by the pool.
+        @param globals Instance of the `MapleGlobals` contract.
+     */
+    function reclaimERC20(address token, address liquidityAsset, IGlobals globals) external {
+        require(msg.sender == globals.governor(), "Pool:NOT_AUTHORISED");
+        require(token != liquidityAsset && token != address(0), "Pool:INVALID_TOKEN");
+        IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
+    }
+
+    /**
         @dev Utility to convert from WAD precision to liquidtyAsset precision.
         @param amt Amount to convert
         @param liquidityAssetDecimals Liquidity asset decimal

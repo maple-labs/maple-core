@@ -209,6 +209,19 @@ library LoanLib {
         collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - collateralAsset.decimals()));
     }
 
+    /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+        @param loanAsset Address of loan asset that is supported by the loan in other words denominated currency in which it taking funds.
+        @param collateralAsset Address of the collateral asset supported by the loan.
+        @param globals Instance of the `MapleGlobals` contract.
+     */
+    function reclaimERC20(address token, address loanAsset, address collateralAsset, IGlobals globals) external {
+        require(msg.sender == globals.governor(), "Loan:NOT_AUTHORISED");
+        require(token != loanAsset && token != address(0) && token != collateralAsset, "Loan:INVALID_TOKEN");
+        IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
+    }
+
     function _globals(address loanFactory) internal view returns (IGlobals) {
         return IGlobals(ILoanFactory(loanFactory).globals());
     }

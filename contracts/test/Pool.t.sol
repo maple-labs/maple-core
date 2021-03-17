@@ -1925,4 +1925,28 @@ contract PoolTest is TestUtil {
 
         assertEq(kim_bal_post - kim_bal_pre, principal_kim + interest_kim);
     }
+
+    function test_reclaim_erc20() external {
+        // Fund the pool with different kind of asset.
+        mint("USDC", address(pool1), 1000 * USD);
+        mint("DAI",  address(pool1), 1000 * WAD);
+        mint("WETH", address(pool1),  100 * WAD);
+
+        Governor fakeGov = new Governor();
+
+        uint256 beforeBalanceDAI  = IERC20(DAI).balanceOf(address(gov));
+        uint256 beforeBalanceWETH = IERC20(WETH).balanceOf(address(gov));
+
+        assertTrue(!fakeGov.try_reclaimERC20(address(pool1), DAI));
+        assertTrue(    !gov.try_reclaimERC20(address(pool1), USDC));
+        assertTrue(    !gov.try_reclaimERC20(address(pool1), address(0)));
+        assertTrue(     gov.try_reclaimERC20(address(pool1), DAI));
+        assertTrue(     gov.try_reclaimERC20(address(pool1), WETH));
+
+        uint256 afterBalanceDAI  = IERC20(DAI).balanceOf(address(gov));
+        uint256 afterBalanceWETH = IERC20(WETH).balanceOf(address(gov));
+
+        assertEq(afterBalanceDAI - beforeBalanceDAI,   1000 * WAD);
+        assertEq(afterBalanceWETH - beforeBalanceWETH,  100 * WAD);
+    }
 }
