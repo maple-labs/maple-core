@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://www.maple.finance/static/logo-52b94a65fa2c9a7c9ede3cb978b2408f.png" />
+  <img src="https://user-images.githubusercontent.com/304108/111410773-5039e800-8714-11eb-862d-07c461164eec.png" height="60" />
 </p>
 
 ## Background
