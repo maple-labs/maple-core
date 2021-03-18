@@ -57,7 +57,7 @@ contract DebtLocker {
         uint256 loan_defaultSuffered = loan.defaultSuffered();
     
         // If a default has occurred, update storage variable and update memory variable from zero for return.
-        // Default will occur only once so below statement will only be executed only once
+        // Default will occur only once so below statement will only be executed once
         if (defaultSuffered == uint256(0) && loan_defaultSuffered > uint256(0)) {
             newDefaultSuffered = defaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan_defaultSuffered, loan.totalSupply());
         }
