@@ -339,6 +339,7 @@ contract Loan is FDT, Pausable {
         @dev Trigger a default if a Loan is in a condition where a default can be triggered.
     */
     // TODO: Talk with auditors about having a switch for this function
+    // TODO: Remove internal function
     function triggerDefault() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);

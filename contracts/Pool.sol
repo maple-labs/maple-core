@@ -378,6 +378,13 @@ contract Pool is PoolFDT {
     }
 
     /**
+        @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
+    **/
+    function intendToWithdraw() external {
+        PoolLib.intendToWithdraw(depositCooldown, balanceOf(msg.sender));
+    }
+
+    /**
         @dev Liquidity providers can withdraw liquidityAsset from the LiquidityLocker, burning FDTs.
         @param amt Amount of liquidityAsset to withdraw
     */
@@ -409,13 +416,6 @@ contract Pool is PoolFDT {
         _transferLiquidityLockerFunds(msg.sender, due);
 
         _emitBalanceUpdatedEvent();
-    }
-
-    /**
-        @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
-    **/
-    function intendToWithdraw() external {
-        PoolLib.intendToWithdraw(depositCooldown, balanceOf(msg.sender));
     }
 
     /**
