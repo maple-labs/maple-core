@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-[[ "$ETH_RPC_URL" && "$(seth chain)" == "ethlive"  ]] || { echo "Please set a mainnet ETH_RPC_URL"; exit 1;  }
+[[ $SKIP_MAINNET_CHECK || "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || { echo "Please set a mainnet ETH_RPC_URL"; exit 1; }
 
 export DAPP_TEST_TIMESTAMP=1615792486
 export DAPP_TEST_NUMBER=12045000
