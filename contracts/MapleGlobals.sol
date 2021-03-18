@@ -94,10 +94,9 @@ contract MapleGlobals {
     /************************/
 
     /**
-        @dev Update the `cooldownPeriod` state variable.
+        @dev Update the `cooldownPeriod` state variable. This change will affect existing cool down period for the LPs/stakers who already applied for the withdraw/unstake.
         @param newCooldownPeriod New value for the cool down period.
      */
-    // Note: This change will affect existing cool down period for the LPs/stakers who already applied for the withdraw/unstake.
     function setCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
         _checkTimeRange(newCooldownPeriod); 
         cooldownPeriod = newCooldownPeriod;
