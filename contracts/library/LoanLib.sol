@@ -14,13 +14,14 @@ import "../interfaces/IRepaymentCalc.sol";
 import "../interfaces/IUniswapRouter.sol";
 import "../library/Util.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 /// @title LoanLib is a library of utility functions used by Loan.
 library LoanLib {
 
-    using SafeMath for uint256;
+    using SafeMath  for uint256;
+    using SafeERC20 for IERC20;
 
     enum State { Live, Active, Matured, Expired, Liquidated }
 
@@ -52,7 +53,6 @@ library LoanLib {
     /**
         @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
         @param collateralAsset   IERC20 of the collateralAsset
-        @param liquidationAmt    Amount of collateralAsset to liquidate (balance of CollateralLocker)
         @param loanAsset         Address of loanAsset
         @param superFactory      Factory that instantiated Loan
         @param collateralLocker  Address of CollateralLocker
@@ -60,8 +60,7 @@ library LoanLib {
         @return amountRecovered  Amount of loanAsset that was returned to the Loan from the liquidation
     */
     function triggerDefault(
-        IERC20Details collateralAsset,
-        uint256 liquidationAmt,
+        IERC20 collateralAsset,
         address loanAsset,
         address superFactory,
         address collateralLocker
@@ -73,11 +72,15 @@ library LoanLib {
         ) 
     {
 
+        // Get liquidation amount from CollateralLocker
+        uint256 liquidationAmt = collateralAsset.balanceOf(address(collateralLocker));
+        
         // Pull collateralAsset from collateralLocker
-        require(ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt), "Loan:COLLATERAL_PULL");
+        ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt);
 
-        if (address(collateralAsset) != loanAsset) {
-            collateralAsset.approve(UNISWAP_ROUTER, liquidationAmt);
+        if (address(collateralAsset) != loanAsset && liquidationAmt > uint256(0)) {
+            collateralAsset.safeApprove(UNISWAP_ROUTER, uint256(0));
+            collateralAsset.safeApprove(UNISWAP_ROUTER, liquidationAmt);
 
             IGlobals globals = _globals(superFactory);
 
@@ -116,26 +119,23 @@ library LoanLib {
         @param nextPaymentDue Timestamp of when payment is due
         @param superFactory   Factory that instantiated Loan
         @param balance        LoanFDT balance of msg.sender
+        @param totalSupply    LoanFDT totalSupply
         @return boolean indicating if default can be triggered
     */
-    function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance) external returns(bool) {
+    function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance, uint256 totalSupply) external returns(bool) {
 
-        uint256 gracePeriodEnd         = nextPaymentDue.add(_globals(superFactory).gracePeriod());
-        bool pastGracePeriod           = block.timestamp > gracePeriodEnd;
-        bool withinExtendedGracePeriod = pastGracePeriod && block.timestamp <= gracePeriodEnd.add(_globals(superFactory).extendedGracePeriod());
+        bool pastGracePeriod = block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod());
 
-        // It checks following conditions - 
-        // 1. If `current time - nextPaymentDue` is within the (gracePeriod, gracePeriod + extendedGracePeriod] & `msg.sender` is
-        //    a lender (Assumption: Only lenders will have non zero balance) then liquidate the loan.
-        // 2. If `current time - nextPaymentDue` is greater than gracePeriod + extendedGracePeriod then any msg.sender can liquidate the loan.
-        return ((withinExtendedGracePeriod && balance > 0) || (pastGracePeriod && !withinExtendedGracePeriod));
+        // Check if the loan is past the gracePeriod and that msg.sender has a percentage of total LoanFDTs that is greater
+        // the minimum equity needed (specified in globals)
+        return pastGracePeriod && balance >= totalSupply * _globals(superFactory).minLoanEquity() / 10_000;
     }
 
     /**
         @dev Returns information on next payment amount.
         @param superFactory    Factory that instantiated Loan
         @param repaymentCalc   Address of RepaymentCalc
-        @param nextPaymentDue  Timestamp of when payment is due
+        @param _nextPaymentDue Timestamp of when payment is due
         @param lateFeeCalc     Address of LateFeeCalc
         @return total          Principal + Interest
         @return principal      Principal 
@@ -145,7 +145,7 @@ library LoanLib {
     function getNextPayment(
         address superFactory,
         address repaymentCalc,
-        uint256 nextPaymentDue,
+        uint256 _nextPaymentDue,
         address lateFeeCalc
     ) 
         public
@@ -154,31 +154,26 @@ library LoanLib {
             uint256 total,
             uint256 principal,
             uint256 interest,
-            uint256
+            uint256 nextPaymentDue,
+            bool    paymentLate
         ) 
     {
-
         IGlobals globals = _globals(superFactory);
+        nextPaymentDue   = _nextPaymentDue;
 
-        (
-            total, 
-            principal, 
-            interest
-        ) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
+        // Get next payment amounts from repayment calc
+        (total, principal, interest) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
 
-        if (block.timestamp > nextPaymentDue) {
-            (
-                uint256 totalExtra, 
-                uint256 principalExtra, 
-                uint256 interestExtra
-            ) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
+        paymentLate = block.timestamp > nextPaymentDue;
+
+        // If payment is late, add late fees
+        if (paymentLate) {
+            (uint256 totalExtra, uint256 principalExtra, uint256 interestExtra) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
 
             total     = total.add(totalExtra);
             interest  = interest.add(interestExtra);
             principal = principal.add(principalExtra);
         }
-        
-        return (total, principal, interest, nextPaymentDue);
     }
 
     /**
@@ -213,6 +208,18 @@ library LoanLib {
         uint256 collateralRequiredUSD = loanAssetPrice.mul(wad).mul(collateralRatio).div(10000);
         uint256 collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
         collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - collateralAsset.decimals()));
+    }
+
+    /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+        @param loanAsset Address of loan asset that is supported by the loan in other words denominated currency in which it taking funds.
+        @param globals Instance of the `MapleGlobals` contract.
+     */
+    function reclaimERC20(address token, address loanAsset, IGlobals globals) external {
+        require(msg.sender == globals.governor(), "Loan:UNAUTHORIZED");
+        require(token != loanAsset && token != address(0), "Loan:INVALID_TOKEN");
+        IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
     }
 
     function _globals(address loanFactory) internal view returns (IGlobals) {

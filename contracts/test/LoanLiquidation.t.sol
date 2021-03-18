@@ -94,15 +94,15 @@ contract LoanLiquidationTest is TestUtil {
         mint("USDC", address(ali), 100000 * USD);
     }
 
-    function createAndFundLoan(address _interestStructure, address _collateral) internal returns (Loan loan) {
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
+    function createAndFundLoan(address _interestStructure, address _collateral, uint256 collateralRatio) internal returns (Loan loan) {
+        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), collateralRatio, 7];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
         loan = ali.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
 
         bob.approve(USDC, address(loan), 5000 * USD);
 
-        bob.fundLoan(address(loan), 5000 * USD, address(ali));
+        bob.fundLoan(address(loan), 5000 * USD, address(bob));
         ali.approve(_collateral, address(loan), MAX_UINT);
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
     }
@@ -124,7 +124,7 @@ contract LoanLiquidationTest is TestUtil {
         assertEq(uint256(loan.loanState()),                                                     1);
         assertEq(IERC20(collateralAsset).balanceOf(address(collateralLocker)),  collateralBalance);
 
-        loan.triggerDefault();
+        bob.triggerDefault(address(loan));
 
         {
             uint256 principalOwed_post = loan.principalOwed();
@@ -161,15 +161,19 @@ contract LoanLiquidationTest is TestUtil {
 
     function test_basic_liquidation() public {
         // Triangular uniswap path
-        Loan wbtcLoan = createAndFundLoan(address(repaymentCalc), WBTC);
+        Loan wbtcLoan = createAndFundLoan(address(repaymentCalc), WBTC, 2000);
         performLiquidationAssertions(wbtcLoan);
 
         // Bilateral uniswap path
-        Loan wethLoan = createAndFundLoan(address(repaymentCalc), WETH);
+        Loan wethLoan = createAndFundLoan(address(repaymentCalc), WETH, 2000);
         performLiquidationAssertions(wethLoan);
 
         // collateralAsset == loanAsset 
-        Loan usdcLoan = createAndFundLoan(address(repaymentCalc), USDC);
+        Loan usdcLoan = createAndFundLoan(address(repaymentCalc), USDC, 2000);
         performLiquidationAssertions(usdcLoan);
+
+        // Zero collateralization
+        Loan wethLoan2 = createAndFundLoan(address(repaymentCalc), WETH, 0);
+        performLiquidationAssertions(wethLoan2);
     }
 }

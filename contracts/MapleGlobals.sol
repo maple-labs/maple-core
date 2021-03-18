@@ -7,26 +7,28 @@ import "./interfaces/IPriceFeed.sol";
 import "./interfaces/IOracle.sol";
 import "./interfaces/ISubFactory.sol";
 
-interface ICalc { function calcType() external returns (uint8); }
+interface ICalc { function calcType() external view returns (uint8); }
 
 /// @title MapleGlobals maintains a central source of parameters and allowlists for the Maple protocol.
 contract MapleGlobals {
 
-    address immutable public BFactory;   // Official Balancer pool factory
+    address public immutable BFactory;   // Official Balancer pool factory
+    address public immutable mpl;        // Maple Token is the ERC-2222 token for the Maple protocol
 
+    address public pendingGovernor;      // Governor that is declared for transfer, must be accepted for transfer to take effect
     address public governor;             // Governor is responsible for management of global Maple variables
-    address public mpl;                  // Maple Token is the ERC-2222 token for the Maple protocol
     address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
     address public admin;                // Admin of the whole network, has the power to switch off/on the functionality of entire protocol
 
     uint256 public gracePeriod;          // Represents the amount of time a borrower has to make a missed payment before a default can be triggered
-    uint256 public extendedGracePeriod;  // Extended time period provided to the borrowers to make their due payment. During this period LoanFDT holders are free to liquidate the Loan.
     uint256 public swapOutRequired;      // Represents minimum amount of Pool cover that a Pool Delegate has to provide before they can finalize a Pool
     uint256 public unstakeDelay;         // Parameter for unstake delay with relation to StakeLocker withdrawals
     uint256 public drawdownGracePeriod;  // Amount of time to allow borrower to drawdown on their loan after funding period ends
     uint256 public investorFee;          // Portion of drawdown that goes to Pool Delegates/individual lenders
     uint256 public treasuryFee;          // Portion of drawdown that goes to MapleTreasury
     uint256 public maxSwapSlippage;      // Maximum amount of slippage for Uniswap transactions
+    uint256 public minLoanEquity;        // Minimum amount of LoanFDTs required to trigger liquidations (basis points percentage of totalSupply)
+    uint256 public cooldownPeriod;       // Period (in secs) after that stakers/LPs are allowed to unstake/withdraw their funds from the StakingRewards/Pool contract
 
     bool public protocolPaused;  // Switch to pausedthe functionality of the entire protocol
 
@@ -34,6 +36,7 @@ contract MapleGlobals {
     mapping(address => bool) public isValidCollateralAsset;  // Mapping of valid collateralAssets
     mapping(address => bool) public validCalcs;              // Mapping of valid calculator contracts
     mapping(address => bool) public isValidPoolDelegate;     // Validation data structure for Pool Delegates (prevent invalid addresses from creating pools)
+    mapping(address => bool) public isStakingRewards;        // Validation of if address is StakingRewards contract used for MPL liquidity mining programs
     
     // Determines the liquidation path of various assets in Loans and Treasury.
     // The value provided will determine whether or not to perform a bilateral or triangular swap on Uniswap.
@@ -51,6 +54,9 @@ contract MapleGlobals {
     event CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event       LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event          OracleSet(address asset, address oracle);
+    event  StakingRewardsSet(address stakingRewards, bool valid);
+    event PendingGovernorSet(address pendingGovernor);
+    event   GovernorAccepted(address governor);
     event    GlobalsParamSet(bytes32 indexed which, uint256 value);
     event  GlobalsAddressSet(bytes32 indexed which, address addr);
     event     ProtocolPaused(bool pause);
@@ -71,15 +77,27 @@ contract MapleGlobals {
         governor             = _governor;
         mpl                  = _mpl;
         gracePeriod          = 5 days;
-        extendedGracePeriod  = 5 days;
-        swapOutRequired      = 100;
+        swapOutRequired      = 10_000;
         unstakeDelay         = 90 days;
-        drawdownGracePeriod  = 1 days;
+        drawdownGracePeriod  = 10 days;
         investorFee          = 50;
         treasuryFee          = 50;
         BFactory             = _bFactory;
-        maxSwapSlippage      = 1000; // 10 %
+        maxSwapSlippage      = 1000;       // 10 %
+        minLoanEquity        = 2000;       // 20 %
         admin                = _admin;
+        cooldownPeriod       = 10 days;
+    }
+
+    /**
+        @dev Update the `cooldownPeriod` state variable.
+        @param newCooldownPeriod New value for the cool down period.
+     */
+    // Note: This change will affect existing cool down period for the LPs/stakers who already applied for the withdraw/unstake.
+    function setCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
+        _checkTimeRange(newCooldownPeriod); 
+        cooldownPeriod = newCooldownPeriod;
+        emit GlobalsParamSet("COOLDOWN_PERIOD", newCooldownPeriod);
     }
 
     /**
@@ -87,6 +105,7 @@ contract MapleGlobals {
         @param newSlippage New slippage percentage (in basis points)
      */
     function setMaxSwapSlippage(uint256 newSlippage) external isGovernor {
+        _checkPercentageRange(newSlippage);
         maxSwapSlippage = newSlippage;
         emit GlobalsParamSet("MAX_SWAP_SLIPPAGE", newSlippage);
     }
@@ -96,10 +115,20 @@ contract MapleGlobals {
       @param newAdmin New admin address
      */
     function setAdmin(address newAdmin) external {
-        require(msg.sender == governor && admin != address(0));
+        require(msg.sender == governor && admin != address(0), "MapleGlobals:UNAUTHORIZED");
         admin = newAdmin;
     }
 
+    /**
+        @dev Update the valid StakingRewards mapping. Only Governor can call.
+        @param stakingRewards Address of `StakingRewards` contract.
+        @param valid          The new bool value for validating loanFactory.
+    */
+    function setStakingRewards(address stakingRewards, bool valid) external isGovernor {
+        isStakingRewards[stakingRewards] = valid;
+        emit StakingRewardsSet(stakingRewards, valid);
+    }
+    
     /**
       @dev Pause/unpause the protocol. Only admin user can call.
       @param pause Boolean flag to switch externally facing functionality in the protocol on/off
@@ -108,15 +137,6 @@ contract MapleGlobals {
         require(msg.sender == admin, "MapleGlobals:UNAUTHORIZED");
         protocolPaused = pause;
         emit ProtocolPaused(pause);
-    }
-
-    /**
-        @dev Update the `extendedGracePeriod` variable. Only Governor can call.
-        @param newExtendedGracePeriod New value of extendedGracePeriod
-     */
-    function setExtendedGracePeriod(uint256 newExtendedGracePeriod) external isGovernor {
-        extendedGracePeriod = newExtendedGracePeriod;
-        emit GlobalsParamSet("EXTENDED_GRACE_PERIOD", newExtendedGracePeriod);
     }
     
     /**
@@ -180,7 +200,7 @@ contract MapleGlobals {
         @param calc     Calculator address
         @param calcType Calculator type
     */
-    function isValidCalc(address calc, uint8 calcType) external returns(bool) {
+    function isValidCalc(address calc, uint8 calcType) external view returns(bool) {
         return validCalcs[calc] && ICalc(calc).calcType() == calcType;
     }
 
@@ -226,6 +246,7 @@ contract MapleGlobals {
         @param _fee The fee, e.g., 50 = 0.50%
     */
     function setInvestorFee(uint256 _fee) public isGovernor {
+        _checkPercentageRange(_fee);
         investorFee = _fee;
         emit GlobalsParamSet("INVESTOR_FEE", _fee);
     }
@@ -235,6 +256,7 @@ contract MapleGlobals {
         @param _fee The fee, e.g., 50 = 0.50%
     */
     function setTreasuryFee(uint256 _fee) public isGovernor {
+        _checkPercentageRange(_fee);
         treasuryFee = _fee;
         emit GlobalsParamSet("TREASURY_FEE", _fee);
     }
@@ -244,6 +266,7 @@ contract MapleGlobals {
         @param _mapleTreasury New MapleTreasury address
     */
     function setMapleTreasury(address _mapleTreasury) public isGovernor {
+        require(_mapleTreasury != address(0), "MapleGlobals: ZERO_ADDRESS");
         mapleTreasury = _mapleTreasury;
         emit GlobalsAddressSet("MAPLE_TREASURY", _mapleTreasury);
     }
@@ -253,8 +276,19 @@ contract MapleGlobals {
         @param _gracePeriod Number of seconds to set the grace period to
     */
     function setGracePeriod(uint256 _gracePeriod) public isGovernor {
+        _checkTimeRange(_gracePeriod);
         gracePeriod = _gracePeriod;
         emit GlobalsParamSet("GRACE_PERIOD", _gracePeriod);
+    }
+
+    /**
+        @dev Adjust minLoanEquity. Only Governor can call.
+        @param _minLoanEquity Min percentage of Loan equity an address must have to trigger liquidations.
+    */
+    function setMinLoanEquity(uint256 _minLoanEquity) public isGovernor {
+        _checkPercentageRange(_minLoanEquity);
+        minLoanEquity = _minLoanEquity;
+        emit GlobalsParamSet("MIN_LOAN_EQUITY", _minLoanEquity);
     }
 
     /**
@@ -262,6 +296,7 @@ contract MapleGlobals {
         @param _drawdownGracePeriod Number of seconds to set the drawdown grace period to
     */
     function setDrawdownGracePeriod(uint256 _drawdownGracePeriod) public isGovernor {
+        _checkTimeRange(_drawdownGracePeriod);
         drawdownGracePeriod = _drawdownGracePeriod;
         emit GlobalsParamSet("DRAWDOWN_GRACE_PERIOD", _drawdownGracePeriod);
     }
@@ -271,18 +306,29 @@ contract MapleGlobals {
         @param amt The new minimum swap out required
     */
     function setSwapOutRequired(uint256 amt) public isGovernor {
+        require(amt >= uint256(10_000), "MapleGlobals:SWAP_OUT_TOO_LOW");
         swapOutRequired = amt;
         emit GlobalsParamSet("SWAP_OUT_REQUIRED", amt);
     }
 
     /**
-        @dev Set a new Governor. Only Governor can call.
-        @param _newGovernor Address of new Governor
+        @dev Set a new pending Governor. This address can become governor if they accept. Only Governor can call.
+        @param _pendingGovernor Address of new Governor
     */
-    function setGovernor(address _newGovernor) public isGovernor {
-        require(_newGovernor != address(0), "MapleGlobals:ZERO_ADDRESS_GOVERNOR");
-        governor = _newGovernor;
-        emit GlobalsAddressSet("GOVERNOR", _newGovernor);
+    function setPendingGovernor(address _pendingGovernor) public isGovernor {
+        require(_pendingGovernor != address(0), "MapleGlobals:ZERO_ADDRESS_GOVERNOR");
+        pendingGovernor = _pendingGovernor;
+        emit PendingGovernorSet(_pendingGovernor);
+    }
+
+    /**
+        @dev Accept the Governor position. Only PendingGovernor can call.
+    */
+    function acceptGovernor() public {
+        require(msg.sender == pendingGovernor, "MapleGlobals:NOT_PENDING_GOVERNOR");
+        governor = pendingGovernor;
+        pendingGovernor = address(0);
+        emit GovernorAccepted(governor);
     }
 
     /**
@@ -290,6 +336,7 @@ contract MapleGlobals {
         @param _unstakeDelay New unstake delay
     */
     function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
+        _checkTimeRange(_unstakeDelay);
         unstakeDelay = _unstakeDelay;
         emit GlobalsParamSet("UNSTAKE_DELAY", _unstakeDelay);
     }
@@ -311,5 +358,13 @@ contract MapleGlobals {
     function setPriceOracle(address asset, address oracle) public isGovernor {
         oracleFor[asset] = oracle;
         emit OracleSet(asset, oracle);
+    }
+
+    function _checkPercentageRange(uint256 percentage) internal {
+        require(percentage >= uint256(0) && percentage <= uint256(10_000), "MapleGlobals:PCT_BOUND_CHECK");
+    }
+
+    function _checkTimeRange(uint256 duration) internal  {
+        require(duration >= 1 days, "MapleGlobals:TIME_BOUND_CHECK");
     }
 }

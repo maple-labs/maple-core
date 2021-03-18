@@ -7,7 +7,7 @@ import "./interfaces/IPoolFactory.sol";
 
 import "./token/StakeLockerFDT.sol";
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title StakeLocker holds custody of stakeAsset tokens for a given Pool and earns revenue from interest.
@@ -15,6 +15,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     using SafeMathInt    for int256;
     using SignedSafeMath for int256;
+    using SafeERC20      for IERC20;
 
     uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division
 
@@ -23,10 +24,12 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     address public immutable liquidityAsset;  // The liquidityAsset for the Pool as well as the dividend token for FDT interest.
     address public immutable owner;           // The parent liquidity pool.
 
-    mapping(address => uint256) public stakeDate; // Map address to effective stake date value
-    mapping(address => bool)    public allowed;   // Map address to allowed status
+    mapping(address => uint256) public stakeDate;      // Map address to effective stake date value
+    mapping(address => uint256) public stakeCooldown;  // Timestamp of when staker called cooldown()
+    mapping(address => bool)    public allowed;        // Map address to allowed status
 
     event BalanceUpdated(address who, address token, uint256 balance);
+    event       Cooldown(address staker);
 
     constructor(
         address _stakeAsset,
@@ -40,16 +43,17 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     event   Stake(uint256 _amount, address _staker);
     event Unstake(uint256 _amount, address _staker);
+    event AllowListUpdated(address _user, bool _status);
 
     /** 
         @dev canUnstake enables unstaking in the following conditions:
         1. User is not Pool Delegate and the Pool is in Finalized state.
-        2. User is Pool Delegate and the Pool is in Initialized or Deactivated state.
+        2. The Pool is in Initialized or Deactivated state.
     */
     modifier canUnstake() {
         require(
-            (msg.sender != IPool(owner).poolDelegate() && IPool(owner).poolState() == 1) || 
-            IPool(owner).poolState() == 0 || IPool(owner).poolState() == 2, 
+            (msg.sender != IPool(owner).poolDelegate() && IPool(owner).isPoolFinalized()) || 
+            !IPool(owner).isPoolFinalized(), 
             "StakeLocker:ERR_STAKE_LOCKED"
         );
         _;
@@ -102,6 +106,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function setAllowlist(address user, bool status) isPool public {
         allowed[user] = status;
+        emit AllowListUpdated(user, status);
     }
 
     /**
@@ -135,22 +140,30 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function unstake(uint256 amt) external canUnstake {
         _whenProtocolNotPaused();
-        require(amt <= getUnstakeableBalance(msg.sender), "Stakelocker:AMT_GT_UNSTAKEABLE_BALANCE");
+        _isCooldownFinished(stakeCooldown[msg.sender]);
+        require(amt <= getUnstakeableBalance(msg.sender), "StakeLocker:AMT_GT_UNSTAKEABLE_BALANCE");
 
         amt = totalSupply() == amt && amt > 0 ? amt - 1 : amt;  // If last withdraw, subtract 1 wei to maintain FDT accounting
 
-        updateFundsReceived();  // Account for any funds transferred into contract since last call
+        stakeCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what unstake amount is
 
-        uint256 recognizedLosses = recognizableLossesOf(msg.sender);  // Get all losses of user
-
+        updateFundsReceived();   // Account for any funds transferred into contract since last call
         _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
-        recognizeLosses();       // Update loss accounting for Staker, decrement `bptLosses`
         withdrawFunds();         // Transfer full entitled interest
 
-        require(stakeAsset.transfer(msg.sender, amt.sub(recognizedLosses)), "StakeLocker:UNSTAKE_TRANSFER");  // Unstake amt minus losses
+        require(stakeAsset.transfer(msg.sender, amt.sub(recognizeLosses())), "StakeLocker:UNSTAKE_TRANSFER");  // Unstake amt minus losses
 
         emit Unstake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
+    }
+
+    /**
+        @dev Activates the cooldown period to unstake. It can't be called if the user is not staking.
+    **/
+    function intendToUnstake() external {
+        require(balanceOf(msg.sender) != uint256(0), "StakeLocker:INVALID_BALANCE_ON_COOLDOWN");
+        stakeCooldown[msg.sender] = block.timestamp;
+        emit Cooldown(msg.sender);
     }
 
     /** 
@@ -160,11 +173,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _updateStakeDate(address who, uint256 amt) internal {
         uint256 stkDate = stakeDate[who];
-        if (stkDate == 0) {
+        if (stkDate == uint256(0)) {
             stakeDate[who] = block.timestamp;
         } else {
-            uint256 coef   = WAD.mul(amt).div(balanceOf(who) + amt); 
-            stakeDate[who] = stkDate.add(((block.timestamp.sub(stkDate)).mul(coef)).div(WAD));  // date + (now - stkDate) * coef
+            uint256 dTime  = block.timestamp.sub(stkDate); 
+            stakeDate[who] = stkDate.add(dTime.mul(amt).div(balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
         }
     }
 
@@ -189,9 +202,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        require(fundsToken.transfer(msg.sender, withdrawableFunds), "FDT:TRANSFER_FAILED");
+        if (withdrawableFunds > uint256(0)) {
+            fundsToken.safeTransfer(msg.sender, withdrawableFunds);
 
-        _updateFundsTokenBalance();
+            _updateFundsTokenBalance();
+        }
     }
 
     /**
@@ -207,13 +222,15 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Transfer StakerLockerFDTs.
         @param from Address sending   StakeLockerFDTs
         @param to   Address receiving StakeLockerFDTs
-        @param amt  Amount of FDTs to transfer
+        @param wad  Amount of FDTs to transfer
     */
-    function _transfer(address from, address to, uint256 amt) internal override canUnstake {
+    function _transfer(address from, address to, uint256 wad) internal override canUnstake {
         _whenProtocolNotPaused();
         _isAllowed(to);
-        super._transfer(from, to, amt);
-        _updateStakeDate(to, amt);
+        _isCooldownFinished(stakeCooldown[from]);
+        _updateStakeDate(to, wad);
+        stakeCooldown[from] = uint256(0);  // Reset cooldown time no matter what transfer amount is
+        super._transfer(from, to, wad);
     }
 
     /**
@@ -233,10 +250,17 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
+        @dev View function to indicate if cooldown period has passed for msg.sender
+    */
+    function _isCooldownFinished(uint256 _stakeCooldown) internal view {
+        require(_stakeCooldown != uint256(0), "StakeLocker:COOLDOWN_NOT_SET");
+        require(block.timestamp > _stakeCooldown + _globals().cooldownPeriod(), "StakeLocker:COOLDOWN_NOT_FINISHED");
+    }
+
+    /**
         @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
     */
     function _isValidAdminOrPoolDelegate() internal view {
         require(msg.sender == IPool(owner).poolDelegate() || IPool(owner).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
     }
-    
 }

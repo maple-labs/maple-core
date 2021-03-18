@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "../interfaces/ILoan.sol";
 import "../interfaces/IBPool.sol";
 import "../interfaces/IGlobals.sol";
@@ -16,12 +16,38 @@ import "../interfaces/IDebtLockerFactory.sol";
 library PoolLib {
 
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     uint256 public constant MAX_UINT256 = uint256(-1);
     uint256 public constant WAD         = 10 ** 18;
     uint8   public constant DL_FACTORY  = 1;         // Factory type of `DebtLockerFactory`
 
     event LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
+    event Cooldown(address staker);
+
+    /** 
+        @dev Conducts sanity checks for Pools in the constructor
+        @param globals        Address of MapleGlobals
+        @param liquidityAsset Asset used by Pool for liquidity to fund loans
+        @param stakeAsset     Asset escrowed in StakeLocker
+        @param liquidityCap   Max amount of liquidityAsset accepted by the Pool
+    */
+    function poolSanityChecks(IGlobals globals, address liquidityAsset, address stakeAsset, uint256 liquidityCap) external {
+        require(globals.isValidLoanAsset(liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
+        require(IBPool(stakeAsset).isBound(globals.mpl()), "Pool:INVALID_BALANCER_POOL");
+        require(liquidityCap != uint256(0),                "Pool:INVALID_CAP");
+
+        // NOTE: Max length of this array would be 8, as thats the limit of assets in a balancer pool
+        address[] memory tokens = IBPool(stakeAsset).getFinalTokens();  // Also ensures that BPool is finalized
+
+        uint256  i = 0;
+        bool valid = false;
+
+        // Check that one of the assets in balancer pool is liquidityAsset
+        while(i < tokens.length && !valid) { valid = tokens[i] == liquidityAsset; i++; }  
+
+        require(valid, "Pool:INVALID_STAKING_POOL");
+    }
 
     /// @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision
     function bdiv(uint256 a, uint256 b) public pure returns (uint256) {
@@ -202,7 +228,7 @@ library PoolLib {
         uint256 poolAmountInRequired,
         uint256 poolAmountPresent
     ) {
-        swapOutAmountRequired = globals.swapOutRequired() * (10 ** IERC20Details(liquidityAsset).decimals());  // TODO: Allow this to use any liquidityAsset, not just USDC (need oracles)
+        swapOutAmountRequired = convertFromUsd(globals, liquidityAsset, globals.swapOutRequired());
         (
             poolAmountInRequired,
             poolAmountPresent
@@ -226,10 +252,12 @@ library PoolLib {
         address dlFactory,
         uint256 amt
     ) external {
-        IGlobals globals = _globals(superFactory);
+        IGlobals globals    = _globals(superFactory);
+        address loanFactory = ILoan(loan).superFactory();
+
         // Auth checks
-        require(globals.isValidLoanFactory(ILoan(loan).superFactory()),         "Pool:INVALID_LOAN_FACTORY");
-        require(ILoanFactory(ILoan(loan).superFactory()).isLoan(loan),          "Pool:INVALID_LOAN");
+        require(globals.isValidLoanFactory(loanFactory),                        "Pool:INVALID_LOAN_FACTORY");
+        require(ILoanFactory(loanFactory).isLoan(loan),                         "Pool:INVALID_LOAN");
         require(globals.isValidSubFactory(superFactory, dlFactory, DL_FACTORY), "Pool:INVALID_DL_FACTORY");
 
         address _debtLocker = debtLockers[loan][dlFactory];
@@ -293,7 +321,7 @@ library PoolLib {
         IBPool(stakeAsset).exitswapExternAmountOut(
             address(liquidityAsset), 
             availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
-            MAX_UINT256
+            preBptBalance
         );
 
         // Return remaining BPTs to stakeLocker
@@ -301,6 +329,7 @@ library PoolLib {
         bptsBurned   = preBptBalance.sub(bptsReturned);
         IBPool(stakeAsset).transfer(stakeLocker, bptsReturned);
         liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this)).sub(preBurnBalance);
+        IStakeLocker(stakeLocker).updateLosses(bptsBurned);  // Update StakeLocker FDT loss accounting for BPTs
     }
 
     /**
@@ -349,7 +378,7 @@ library PoolLib {
         @param  depositDate  Weighted timestamp representing effective deposit date
         @return penalty Total penalty
     */
-    function calcWithdrawPenalty(uint256 lockupPeriod, uint256 penaltyDelay, uint256 amt, uint256 depositDate) external view returns (uint256 penalty) {
+    function calcWithdrawPenalty(uint256 lockupPeriod, uint256 penaltyDelay, uint256 amt, uint256 depositDate) public view returns (uint256 penalty) {
         if (lockupPeriod < penaltyDelay) {
             uint256 dTime    = block.timestamp.sub(depositDate);
             uint256 unlocked = dTime.mul(amt).div(penaltyDelay);
@@ -371,8 +400,8 @@ library PoolLib {
             depositDate[who] = block.timestamp;
         } else {
             uint256 depDate  = depositDate[who];
-            uint256 coef     = (WAD.mul(amt)).div(balance + amt);
-            depositDate[who] = (depDate.mul(WAD).add((block.timestamp.sub(depDate)).mul(coef))).div(WAD);  // depDate + (now - depDate) * coef
+            uint256 dTime    = block.timestamp.sub(depDate);
+            depositDate[who] = depDate.add(dTime.mul(amt).div(balance + amt));  // depDate + (now - depDate) * (amt / (balance + amt))
         }
     }
 
@@ -383,5 +412,132 @@ library PoolLib {
     */
     function _globals(address poolFactory) internal view returns (IGlobals) {
         return IGlobals(ILoanFactory(poolFactory).globals());
+    }
+
+    /** 
+        @dev Function to return liquidityAsset in liquidityAsset units when given integer USD (E.g., $100 = 100).
+        @param  globals        Globals contract interface
+        @param  liquidityAsset Liquidity Asset of the pool 
+        @param  usdAmount      USD amount to convert, in integer units (e.g., $100 = 100)
+        @return usdAmount worth of liquidityAsset, in liquidityAsset units
+    */
+    function convertFromUsd(IGlobals globals, address liquidityAsset, uint256 usdAmount) public view returns (uint256) {
+        return usdAmount
+            .mul(10 ** 8)                                         // Cancel out 10 ** 8 decimals from oracle
+            .mul(10 ** IERC20Details(liquidityAsset).decimals())  // Convert to liquidityAsset precision
+            .div(globals.getLatestPrice(liquidityAsset));         // Convert to liquidityAsset value
+    }
+
+    /**
+        @dev Check whether the deactivation is allowed or not.
+        @param  globals        Globals contract interface
+        @param  confirmation   Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
+        @param  principalOut   Amount of funds that is already funded to loans.
+        @param  liquidityAsset Liquidity Asset of the pool 
+     */
+    function validateDeactivation(IGlobals globals, uint256 confirmation, uint256 principalOut, address liquidityAsset) public view {
+        require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
+        require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "Pool:PRINCIPAL_OUTSTANDING");
+    }
+
+    /**
+        @dev View function to indicate if cooldown period has passed for msg.sender
+    */
+    function isCooldownFinished(uint256 _depositCooldown, IGlobals globals) public view {
+        require(_depositCooldown != uint256(0), "Pool:COOLDOWN_NOT_SET");
+        require(block.timestamp > _depositCooldown + globals.cooldownPeriod(), "Pool:COOLDOWN_NOT_FINISHED");
+    }
+
+    /**
+        @dev Performing some checks before doing actual transfers.
+    */
+    function prepareTransfer(
+        mapping(address => uint256) storage depositCooldown,
+        mapping(address => uint256) storage depositDate,
+        address from,
+        address to,
+        uint256 wad,
+        IGlobals globals,
+        uint256 toBalance
+    ) external {
+        // If transferring in and out of yield farming contract, do not update depositDate
+        if(!globals.isStakingRewards(from) && !globals.isStakingRewards(to)) {
+            isCooldownFinished(depositCooldown[from], globals);
+            depositCooldown[from] = uint256(0);
+            updateDepositDate(depositDate, toBalance, wad, to);
+        }
+    }
+
+    /**
+        @dev Signal to withdraw the funds from the pool.
+     */
+    function intendToWithdraw(mapping(address => uint256) storage depositCooldown, uint256 balance) external {
+        require(balance != uint256(0), "Pool:ZERO_BALANCE");
+        depositCooldown[msg.sender] = block.timestamp;
+        emit Cooldown(msg.sender);
+    }
+
+    /**
+        @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
+        @param  withdrawableFundsOfLp  FDT withdrawableFundsOf LP
+        @param  depositDateForLp       LP deposit date
+        @param  lockupPeriod           Pool lockup period
+        @param  penaltyDelay           Pool penalty delay
+        @param  balanceOfLp            LP FDT balance
+        @param  principalPenalty       Principal penalty percentage
+        @param  liquidityAssetDecimals Decimals of liquidityAsset
+        @return total     Total     amount claimable
+        @return principal Principal amount claimable
+        @return interest  Interest  amount claimable
+    */
+    function claimableFunds(
+        uint256 withdrawableFundsOfLp,
+        uint256 depositDateForLp,
+        uint256 lockupPeriod,
+        uint256 penaltyDelay,
+        uint256 balanceOfLp,
+        uint256 principalPenalty,
+        uint256 liquidityAssetDecimals
+    ) 
+        public
+        view
+        returns(
+            uint256 total,
+            uint256 principal,
+            uint256 interest
+        ) 
+    {
+        interest = withdrawableFundsOfLp;
+        // Deposit is still within lockupPeriod, user has 0 claimable principal under this condition.
+        if (depositDateForLp.add(lockupPeriod) > block.timestamp) total = interest; 
+        else {
+            uint256 userBalance  = fromWad(balanceOfLp, liquidityAssetDecimals);
+            uint256 firstPenalty = principalPenalty.mul(userBalance).div(10000);                                                   // Calculate flat principal penalty
+            uint256 totalPenalty = calcWithdrawPenalty(lockupPeriod, penaltyDelay, interest.add(firstPenalty), depositDateForLp);  // Calculate total penalty
+
+            principal = userBalance.sub(totalPenalty);
+            total     = principal.add(interest);
+        }
+    }
+
+    /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+        @param liquidityAsset Address of liquidity asset that is supported by the pool.
+        @param globals Instance of the `MapleGlobals` contract.
+     */
+    function reclaimERC20(address token, address liquidityAsset, IGlobals globals) external {
+        require(msg.sender == globals.governor(), "Pool:UNAUTHORIZED");
+        require(token != liquidityAsset && token != address(0), "Pool:INVALID_TOKEN");
+        IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
+    }
+
+    /**
+        @dev Utility to convert from WAD precision to liquidtyAsset precision.
+        @param amt Amount to convert
+        @param liquidityAssetDecimals Liquidity asset decimal
+    */
+    function fromWad(uint256 amt, uint256 liquidityAssetDecimals) public view returns(uint256) {
+        return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 }

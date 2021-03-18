@@ -7,6 +7,7 @@ import "./TestUtil.sol";
 
 import "./user/Borrower.sol";
 import "./user/Governor.sol";
+import "./user/Lender.sol";
 import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
 import "./user/Staker.sol";
@@ -51,6 +52,7 @@ contract PoolLiquidationTest is TestUtil {
     LP                                     bob;
     Staker                                 dan;
     Staker                                 eli;
+    Lender                                 fay;
     PoolDelegate                           sid;
     PoolDelegate                           joe;
 
@@ -90,6 +92,7 @@ contract PoolLiquidationTest is TestUtil {
         bob            = new LP();                           // Actor: Liquidity provider.
         dan            = new Staker();                       // Actor: Stakes BPTs in Pool.
         eli            = new Staker();                       // Actor: Stakes BPTs in Pool.
+        fay            = new Lender();                       // Actor: Funds loan directly (test liquidation)
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -205,9 +208,45 @@ contract PoolLiquidationTest is TestUtil {
         joe.stake(address(stakeLocker_b), 25 * WAD);
         sid.finalize(address(pool_a));
         joe.finalize(address(pool_b));
-
+        sid.openPoolToPublic(address(pool_a));
+        joe.openPoolToPublic(address(pool_b));
+        
         assertEq(uint256(pool_a.poolState()), 1);  // Finalize
         assertEq(uint256(pool_b.poolState()), 1);  // Finalize
+    }
+
+    function test_triggerDefault_pool_delegate() public {
+        // Individual lender funds loan for 60% + 1 wei
+        mint("USDC", address(fay),  60_000_000 * USD + 1);
+        fay.approve(USDC, address(loan), MAX_UINT);
+        fay.fundLoan(address(loan), 60_000_000 * USD + 1, address(fay));
+
+        // Fund the pool
+        mint("USDC", address(ali), 40_000_000 * USD);
+        ali.approve(USDC, address(pool_a), MAX_UINT);
+        ali.approve(USDC, address(pool_b), MAX_UINT);
+        ali.deposit(address(pool_a), 20_000_000 * USD);
+        ali.deposit(address(pool_b), 20_000_000 * USD);
+
+        // Fund the loan
+        sid.fundLoan(address(pool_a), address(loan), address(dlFactory),     20_000_000 * USD);  // Exactly 20% equity
+        joe.fundLoan(address(pool_b), address(loan), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1 wei equity 
+        uint cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
+
+        // Drawdown loan
+        mint("WETH", address(che), cReq);
+        che.approve(WETH, address(loan), MAX_UINT);
+        che.drawdown(address(loan), 4_000_000 * USD);  // Draw down less than total amount
+        
+        // Warp to late payment
+        uint256 start = block.timestamp;
+        uint256 nextPaymentDue = loan.nextPaymentDue();
+        uint256 gracePeriod = globals.gracePeriod();
+        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+
+        // Trigger default
+        assertTrue(!joe.try_triggerDefault(address(pool_b), address(loan), address(dlFactory)));
+        assertTrue( sid.try_triggerDefault(address(pool_a), address(loan), address(dlFactory)));
     }
 
     function setUpLoanAndDefault() public {
@@ -235,7 +274,7 @@ contract PoolLiquidationTest is TestUtil {
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
         // Trigger default
-        loan.triggerDefault();
+        sid.triggerDefault(address(pool_a), address(loan), address(dlFactory));
     }
 
     function test_claim_default_info() public {
@@ -255,6 +294,12 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(vals_a[6], loan.defaultSuffered() * (1_000_000 * WAD) / (4_000_000 * WAD));
         assertEq(vals_b[6], loan.defaultSuffered() * (3_000_000 * WAD) / (4_000_000 * WAD));
         withinPrecision(vals_a[6] + vals_b[6], loan.defaultSuffered(), 2);
+
+        // Call claim again to make sure that default isn't double accounted
+        vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
+        vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
+        assertEq(vals_a[6], 0);
+        assertEq(vals_b[6], 0);
     }
 
     function test_claim_default_burn_BPT_full_recover() public {
@@ -337,39 +382,38 @@ contract PoolLiquidationTest is TestUtil {
 
     function test_claim_default_burn_BPT_shortfall() public {
 
-        {
-            // Fund the pool
-            mint("USDC", address(ali), 500_000_000 * USD);
-            mint("USDC", address(bob),  10_000_000 * USD);
+        // Fund the pool
+        mint("USDC", address(ali), 500_000_000 * USD);
+        mint("USDC", address(bob),  10_000_000 * USD);
 
-            ali.approve(USDC, address(pool_a), MAX_UINT);
-            bob.approve(USDC, address(pool_a), MAX_UINT);
-            ali.deposit(address(pool_a), 500_000_000 * USD);  // Ali symbolizes all other LPs, test focuses on Bob
-            bob.deposit(address(pool_a), 10_000_000 * USD);
+        ali.approve(USDC, address(pool_a), MAX_UINT);
+        bob.approve(USDC, address(pool_a), MAX_UINT);
+        ali.deposit(address(pool_a), 500_000_000 * USD);  // Ali symbolizes all other LPs, test focuses on Bob
+        bob.deposit(address(pool_a), 10_000_000 * USD);
+        assertTrue(bob.try_intendToWithdraw(address(pool_a)));
 
-            assertPoolAccounting(pool_a);
+        assertPoolAccounting(pool_a);
 
-            sid.setPenaltyDelay(address(pool_a), 0);  // So Bob can withdraw without penalty
+        sid.setPenaltyDelay(address(pool_a), 0);  // So Bob can withdraw without penalty
 
-            // Fund the loan
-            sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 100_000_000 * USD);
-            uint cReq = loan.collateralRequiredForDrawdown(100_000_000 * USD);
+        // Fund the loan
+        sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 100_000_000 * USD);
+        uint cReq = loan.collateralRequiredForDrawdown(100_000_000 * USD);
 
-            assertPoolAccounting(pool_a);
+        assertPoolAccounting(pool_a);
 
-            // Drawdown loan
-            mint("WETH", address(che), cReq);
-            che.approve(WETH, address(loan), MAX_UINT);
-            che.drawdown(address(loan), 100_000_000 * USD);
+        // Drawdown loan
+        mint("WETH", address(che), cReq);
+        che.approve(WETH, address(loan), MAX_UINT);
+        che.drawdown(address(loan), 100_000_000 * USD);
 
-            assertPoolAccounting(pool_a);
-        }
+        assertPoolAccounting(pool_a);
 
         // Warp to late payment
         hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.gracePeriod() + 1);
 
         // Trigger default
-        loan.triggerDefault();
+        sid.triggerDefault(address(pool_a), address(loan), address(dlFactory));
 
         // Instantiate all test variables
         TestObj memory liquidityLockerBal;
@@ -429,6 +473,8 @@ contract PoolLiquidationTest is TestUtil {
         /*** Liquidity Provider Minimum Withdrawal Accounting ***/
         /********************************************************/
 
+        make_withdrawable(bob, pool_a);
+
         bob_recognizableLosses.pre = pool_a.recognizableLossesOf(address(bob));  // Unrealized losses of bob from shortfall
 
         assertTrue(!bob.try_withdraw(address(pool_a), bob_recognizableLosses.pre - 1));  // Cannot withdraw less than recognizableLosses
@@ -477,6 +523,8 @@ contract PoolLiquidationTest is TestUtil {
 
         uint256 withdrawAmt = bob_poolBal.pre * 1E6 / WAD;
 
+        make_withdrawable(bob, pool_a);
+
         assertTrue(bob.try_withdraw(address(pool_a), withdrawAmt));  // Withdraw max amount
 
         assertPoolAccounting(pool_a);
@@ -498,5 +546,12 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(fdtSupply.pre - fdtSupply.post, bob_poolBal.pre); // Bob's FDTs have been burned
 
         assertEq(liquidityLockerBal.pre - liquidityLockerBal.post, withdrawAmt);  // All Bob's USDC was transferred out of LL
+    }
+
+    function make_withdrawable(LP investor, Pool pool) public {
+        uint256 currentTime = block.timestamp;
+        assertTrue(investor.try_intendToWithdraw(address(pool)));
+        assertEq(      pool.depositCooldown(address(investor)), currentTime, "Incorrect value set");
+        hevm.warp(currentTime + globals.cooldownPeriod() + 1);
     }
 } 

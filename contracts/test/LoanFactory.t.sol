@@ -203,7 +203,6 @@ contract LoanFactoryTest is TestUtil {
         assertEq(loan.repaymentCalc(),             calcs[0], "Incorrect repayment calculator");
         assertEq(loan.lateFeeCalc(),               calcs[1], "Incorrect late fee calculator");
         assertEq(loan.premiumCalc(),               calcs[2], "Incorrect premium calculator");
-        assertEq(loan.nextPaymentDue(),            (loan.createdAt()).add(loan.paymentIntervalSeconds()), "Incorrect next payment due timestamp");
         assertEq(loan.superFactory(),              address(lFactory), "Incorrect super factory address");
     }
 }

@@ -28,6 +28,8 @@ contract Staker {
         IERC20(token).transfer(dst, amt);
     }
 
+    function intendToUnstake(address stakeLocker) external { IStakeLocker(stakeLocker).intendToUnstake(); }
+
 
     /*********************/
     /*** TRY FUNCTIONS ***/
@@ -51,6 +53,11 @@ contract Staker {
     function try_transferFrom(address token, address from, address to, uint256 amt) external returns(bool ok) {
         string memory sig = "transferFrom(address,address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, from, to, amt));
+    }
+
+    function try_intendToUnstake(address stakeLocker) external returns (bool ok) {
+        string memory sig = "intendToUnstake()";
+        (ok,) = stakeLocker.call(abi.encodeWithSignature(sig));
     }
 
 }

@@ -30,4 +30,8 @@ interface IStakeLocker is IERC20 {
 
     function recognizableLossesOf(address) external view returns(uint256);
 
+    function intendToUnstake() external;
+
+    function stakeCooldown(address) external view returns(uint256);
+
 }

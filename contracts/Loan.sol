@@ -18,6 +18,7 @@ import "./library/LoanLib.sol";
 import "./token/FDT.sol";
 
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 /// @title Loan maintains all accounting and functionality related to Loans.
 contract Loan is FDT, Pausable {
@@ -25,6 +26,7 @@ contract Loan is FDT, Pausable {
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
     using SafeMath        for uint256;
+    using SafeERC20       for IERC20;
 
     /**
         Live       = The loan has been initialized and is open for funding (assuming funding period not ended)
@@ -37,8 +39,8 @@ contract Loan is FDT, Pausable {
 
     State public loanState;  // The current state of this loan, as defined in the State enum below
 
-    IERC20Details public immutable loanAsset;        // Asset deposited by lenders into the FundingLocker, when funding this loan
-    IERC20Details public immutable collateralAsset;  // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan
+    IERC20 public immutable loanAsset;          // Asset deposited by lenders into the FundingLocker, when funding this loan
+    IERC20 public immutable collateralAsset;    // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan
 
     address public immutable fundingLocker;     // Funding locker - holds custody of loan funds before drawdown    
     address public immutable flFactory;         // Funding locker factory
@@ -55,14 +57,14 @@ contract Loan is FDT, Pausable {
     uint256 public nextPaymentDue;  // The unix timestamp due date of next payment
 
     // Loan specifications
-    uint256 public apr;                     // APR in basis points        
-    uint256 public paymentsRemaining;       // Number of payments remaining on the Loan
-    uint256 public termDays;                // Total length of the Loan term in days
-    uint256 public paymentIntervalSeconds;  // Time between Loan payments in seconds
-    uint256 public requestAmount;           // Total requested amount for Loan
-    uint256 public collateralRatio;         // Percentage of value of drawdown amount to post as collateral in basis points
-    uint256 public fundingPeriodSeconds;    // Time for a Loan to be funded in seconds
-    uint256 public createdAt;               // Timestamp of when Loan was instantiated
+    uint256 public immutable apr;                     // APR in basis points        
+    uint256 public           paymentsRemaining;       // Number of payments remaining on the Loan
+    uint256 public immutable termDays;                // Total length of the Loan term in days
+    uint256 public immutable paymentIntervalSeconds;  // Time between Loan payments in seconds
+    uint256 public immutable requestAmount;           // Total requested amount for Loan
+    uint256 public immutable collateralRatio;         // Percentage of value of drawdown amount to post as collateral in basis points
+    uint256 public immutable fundingPeriodSeconds;    // Time for a Loan to be funded in seconds
+    uint256 public immutable createdAt;               // Timestamp of when Loan was instantiated
 
     // Accounting variables
     uint256 public principalOwed;   // The principal owed (initially the drawdown amount)
@@ -135,8 +137,8 @@ contract Loan is FDT, Pausable {
         public
     {
         borrower        = _borrower;
-        loanAsset       = IERC20Details(_loanAsset);
-        collateralAsset = IERC20Details(_collateralAsset);
+        loanAsset       = IERC20(_loanAsset);
+        collateralAsset = IERC20(_collateralAsset);
         flFactory       = _flFactory;
         clFactory       = _clFactory;
         createdAt       = block.timestamp;
@@ -163,7 +165,6 @@ contract Loan is FDT, Pausable {
         repaymentCalc          = calcs[0];
         lateFeeCalc            = calcs[1];
         premiumCalc            = calcs[2];
-        nextPaymentDue         = block.timestamp.add(paymentIntervalSeconds);
         superFactory           = msg.sender;
 
         // Deploy lockers
@@ -179,7 +180,7 @@ contract Loan is FDT, Pausable {
     function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
         _whenProtocolNotPaused();
         _isValidState(State.Live);
-        _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, fundingLocker, amt));
+        loanAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
 
         uint256 wad = _toWad(amt);  // Convert to WAD precision
         _mint(mintTo, wad);         // Mint FDT to `mintTo` i.e DebtLocker contract.
@@ -198,6 +199,8 @@ contract Loan is FDT, Pausable {
 
         // Update accounting for claim(), transfer funds from FundingLocker to Loan
         excessReturned += LoanLib.unwind(loanAsset, superFactory, fundingLocker, createdAt);
+
+        updateFundsReceived();
 
         // Transition state to Expired
         loanState = State.Expired;
@@ -218,14 +221,15 @@ contract Loan is FDT, Pausable {
         require(amt >= requestAmount,               "Loan:AMT_LT_MIN_RAISE");
         require(amt <= _getFundingLockerBalance(),  "Loan:AMT_GT_FUNDED_AMT");
 
-        // Update the principal owed and drawdown amount for this loan.
+        // Update accounting variables for Loan
         principalOwed  = amt;
         drawdownAmount = amt;
+        nextPaymentDue = block.timestamp.add(paymentIntervalSeconds);
 
         loanState = State.Active;
 
         // Transfer the required amount of collateral for drawdown from Borrower to CollateralLocker.
-        _checkValidTransferFrom(collateralAsset.transferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt)));
+        collateralAsset.safeTransferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt));
 
         // Transfer funding amount from FundingLocker to Borrower, then drain remaining funds to Loan.
         uint256 treasuryFee = globals.treasuryFee();
@@ -244,7 +248,10 @@ contract Loan is FDT, Pausable {
         excessReturned = _getFundingLockerBalance();
 
         // Drain remaining funds from FundingLocker (amount equal to excessReturned)
-        require(_fundingLocker.drain(), "Loan:DRAIN");
+        _fundingLocker.drain();
+
+        // Call updateFundsReceived() update FDT accounting with funds recieved from fees and excess returned
+        updateFundsReceived();
 
         _emitBalanceUpdateEventForCollateralLocker();
         _emitBalanceUpdateEventForFundingLocker();
@@ -269,13 +276,13 @@ contract Loan is FDT, Pausable {
     */
     function _triggerDefault() internal {
 
-        (amountLiquidated, amountRecovered) = LoanLib.triggerDefault(collateralAsset, _getCollateralLockerBalance(), address(loanAsset), superFactory, collateralLocker);
+        (amountLiquidated, amountRecovered) = LoanLib.triggerDefault(collateralAsset, address(loanAsset), superFactory, collateralLocker);
 
         // Set principalOwed to zero and return excess value from liquidation back to borrower
         if (amountRecovered > principalOwed) {
             liquidationExcess = amountRecovered.sub(principalOwed);
             principalOwed = 0;
-            loanAsset.transfer(borrower, liquidationExcess); // Send excess to Borrower.
+            loanAsset.safeTransfer(borrower, liquidationExcess); // Send excess to Borrower.
         }
         // Decrement principalOwed by amountRecovered, set defaultSuffered to the difference (shortfall from liquidation)
         else {
@@ -306,7 +313,7 @@ contract Loan is FDT, Pausable {
     function triggerDefault() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-        require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender)), "Loan:FAILED_TO_LIQUIDATE");
+        require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
         _triggerDefault();
     }
 
@@ -316,8 +323,9 @@ contract Loan is FDT, Pausable {
                 [1] = Principal 
                 [2] = Interest
                 [3] = Payment Due Date
+                [4] = Is Payment Late
     */
-    function getNextPayment() public view returns(uint256, uint256, uint256, uint256) {
+    function getNextPayment() public view returns(uint256, uint256, uint256, uint256, bool) {
         return LoanLib.getNextPayment(superFactory, repaymentCalc, nextPaymentDue, lateFeeCalc);
     }
 
@@ -327,9 +335,9 @@ contract Loan is FDT, Pausable {
     function makePayment() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-        (uint256 total, uint256 principal, uint256 interest,) = getNextPayment();
+        (uint256 total, uint256 principal, uint256 interest,, bool paymentLate) = getNextPayment();
         paymentsRemaining--;
-        _makePayment(total, principal, interest);
+        _makePayment(total, principal, interest, paymentLate);
     }
 
     /**
@@ -340,15 +348,15 @@ contract Loan is FDT, Pausable {
         _isValidState(State.Active);
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
         paymentsRemaining = uint256(0);
-        _makePayment(total, principal, interest);
+        _makePayment(total, principal, interest, false);
     }
 
     /**
         @dev Internal function to update the payment variables and transfer funds from the borrower into the Loan.
     */
-    function _makePayment(uint256 total, uint256 principal, uint256 interest) internal {
+    function _makePayment(uint256 total, uint256 principal, uint256 interest, bool paymentLate) internal {
 
-        _checkValidTransferFrom(loanAsset.transferFrom(msg.sender, address(this), total));
+        loanAsset.safeTransferFrom(msg.sender, address(this), total);
 
         // Caching it to reduce the `SLOADS`.
         uint256 _paymentsRemaining = paymentsRemaining;
@@ -374,13 +382,13 @@ contract Loan is FDT, Pausable {
             _paymentsRemaining, 
             principalOwed, 
             _paymentsRemaining > 0 ? nextPaymentDue : 0, 
-            false
+            paymentLate
         );
 
         // Handle final payment.
         if (_paymentsRemaining == 0) {
             // Transferring all collaterised funds back to the borrower
-            require(ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance()), "Loan:COLLATERAL_PULL");
+            ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance());
             _emitBalanceUpdateEventForCollateralLocker();
         }
         _emitBalanceUpdateEventForLoan();
@@ -402,7 +410,21 @@ contract Loan is FDT, Pausable {
         @return The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
     */
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
-        return LoanLib.collateralRequiredForDrawdown(collateralAsset, loanAsset, collateralRatio, superFactory, amt);
+        return LoanLib.collateralRequiredForDrawdown(
+            IERC20Details(address(collateralAsset)),
+            IERC20Details(address(loanAsset)),
+            collateralRatio,
+            superFactory,
+            amt
+        );
+    }
+
+    /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+     */
+    function reclaimERC20(address token) external {
+        LoanLib.reclaimERC20(token, address(loanAsset), _globals(superFactory));
     }
 
     /**
@@ -435,6 +457,7 @@ contract Loan is FDT, Pausable {
         @param allowed  Status of an admin
     */
     function setAdmin(address newAdmin, bool allowed) external {
+        _whenProtocolNotPaused();
         _isValidBorrower();
         admins[newAdmin] = allowed;
     }
@@ -457,14 +480,7 @@ contract Loan is FDT, Pausable {
         @dev Utility to convert to WAD precision.
     */
     function _toWad(uint256 amt) internal view returns(uint256) {
-        return amt.mul(10 ** 18).div(10 ** loanAsset.decimals());
-    }
-
-    /**
-        @dev Utility for transferFrom calls.
-    */
-    function _checkValidTransferFrom(bool isValid) internal pure {
-        require(isValid, "Loan:INSUFFICIENT_APPROVAL");
+        return amt.mul(10 ** 18).div(10 ** IERC20Details(address(loanAsset)).decimals());
     }
 
     /**
@@ -510,7 +526,7 @@ contract Loan is FDT, Pausable {
         @param value Amount to send
     */
     function _transferFunds(IFundingLocker from, address to, uint256 value) internal {
-        require(from.pull(to, value), "Loan:FAILED_TO_TRANSFER_FEE");
+        from.pull(to, value);
     }
 
     /**

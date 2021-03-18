@@ -20,6 +20,18 @@ contract Lender {
         IERC20(token).approve(who, amt);
     }
 
+    function transfer(address token, address who, uint256 amt) external {
+        IERC20(token).transfer(who, amt);
+    }
+
+    function triggerDefault(address loan) public {
+        ILoan(loan).triggerDefault();
+    }
+
+    function withdrawFunds(address loan) public {
+        ILoan(loan).withdrawFunds();
+    }
+
 
     /*********************/
     /*** TRY FUNCTIONS ***/
@@ -35,5 +47,4 @@ contract Lender {
         string memory sig = "triggerDefault()";
         (ok,) = loan.call(abi.encodeWithSignature(sig));
     }
-
 }

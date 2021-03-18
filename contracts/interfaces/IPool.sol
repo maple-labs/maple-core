@@ -8,6 +8,8 @@ interface IPool {
 
     function deposit(uint256) external;
 
+    function transfer(address, uint256) external;
+
     function poolState() external view returns(uint256);
 
     function deactivate(uint256) external;
@@ -24,6 +26,8 @@ interface IPool {
 
     function setPrincipalPenalty(uint256) external;
 
+    function setAdmin(address, bool) external;
+
     function fundLoan(address, address, uint256) external;
 
     function withdraw(uint256) external;
@@ -33,4 +37,18 @@ interface IPool {
     function setAllowlistStakeLocker(address, bool) external;
 
     function claimableFunds(address) external view returns(uint256, uint256, uint256);
+
+    function triggerDefault(address, address) external;
+
+    function isPoolFinalized() external view returns(bool);
+
+    function openPoolToPublic() external;
+
+    function setAllowList(address user, bool status) external;
+
+    function allowedLiquidityProviders(address user) external view returns(bool);
+
+    function openToPublic() external view returns(bool);
+
+    function intendToWithdraw() external;
 }

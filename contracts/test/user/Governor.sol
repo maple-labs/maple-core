@@ -56,10 +56,12 @@ contract Governor {
     function setDrawdownGracePeriod(uint256 gracePeriod)                  external { globals.setDrawdownGracePeriod(gracePeriod); }
     function setSwapOutRequired(uint256 swapAmt)                          external { globals.setSwapOutRequired(swapAmt); }
     function setUnstakeDelay(uint256 delay)                               external { globals.setUnstakeDelay(delay); }
-    function setGovernor(address gov)                                     external { globals.setGovernor(gov); }
+    function setPendingGovernor(address gov)                              external { globals.setPendingGovernor(gov); }
+    function acceptGovernor()                                             external { globals.acceptGovernor(); }
     function setPriceOracle(address asset, address oracle)                external { globals.setPriceOracle(asset, oracle); }
     function setMaxSwapSlippage(uint256 newSlippage)                      external { globals.setMaxSwapSlippage(newSlippage); }
     function setDefaultUniswapPath(address from, address to, address mid) external { globals.setDefaultUniswapPath(from, to, mid); }
+    function setStakingRewards(address _stakingRewards, bool valid)       external { globals.setStakingRewards(_stakingRewards, valid); }
 
     /*** MapleTreasury Functions ***/
     function setGlobals(address newGlobals)                external { treasury.setGlobals(newGlobals); }
@@ -145,9 +147,13 @@ contract Governor {
         string memory sig = "setUnstakeDelay(uint256)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, delay)); 
     }
-    function try_setGovernor(address gov) external returns (bool ok) { 
-        string memory sig = "setGovernor(address)";
-        (ok,) = address(globals).call(abi.encodeWithSignature(sig, gov)); 
+    function try_setPendingGovernor(address pendingGov) external returns (bool ok) { 
+        string memory sig = "setPendingGovernor(address)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, pendingGov)); 
+    }
+    function try_acceptGovernor() external returns (bool ok) { 
+        string memory sig = "acceptGovernor()";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig)); 
     }
     function try_setPriceOracle(address asset, address oracle) external returns (bool ok) { 
         string memory sig = "setPriceOracle(address,address)";
@@ -156,6 +162,14 @@ contract Governor {
     function try_setMaxSwapSlippage(uint256 newSlippage) external returns (bool ok) { 
         string memory sig = "setMaxSwapSlippage(uint256)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, newSlippage)); 
+    }
+    function try_setStakingRewards(address _stakingRewards, bool valid) external returns (bool ok) { 
+        string memory sig = "setStakingRewards(address,bool)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, _stakingRewards, valid)); 
+    }
+    function try_setMinLoanEquity(uint256 newLiquidity) external returns (bool ok) { 
+        string memory sig = "setMinLoanEquity(uint256)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, newLiquidity)); 
     }
     
     /*** StakingRewards Setters ***/ 
@@ -200,5 +214,11 @@ contract Governor {
     function try_convertERC20(address asset) external returns (bool ok) { 
         string memory sig = "convertERC20(address)"; 
         (ok,) = address(treasury).call(abi.encodeWithSignature(sig, asset));    
+    }
+
+    /*** Pool Functions ***/
+    function try_reclaimERC20(address target, address token) external returns(bool ok) {
+        string memory sig = "reclaimERC20(address)";
+        (ok,) = target.call(abi.encodeWithSignature(sig, token));
     }
 }

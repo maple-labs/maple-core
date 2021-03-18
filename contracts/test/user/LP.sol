@@ -24,6 +24,13 @@ contract LP {
         IPool(pool).deposit(amt);
     }
 
+    function transferFDT(address pool, address who, uint256 amt) external {
+        IPool(pool).transfer(who, amt);
+    }
+
+    function claim(address pool, address loan, address dlFactory) external { IPool(pool).claim(loan, dlFactory); }
+
+    function intendToWithdraw(address pool) external { IPool(pool).intendToWithdraw(); }
 
     /*********************/
     /*** TRY FUNCTIONS ***/
@@ -38,5 +45,14 @@ contract LP {
         string memory sig = "withdraw(uint256)";
         (ok,) = pool.call(abi.encodeWithSignature(sig, amt));
     }
-    
+
+    function try_claim(address pool, address loan, address dlFactory) external returns (bool ok) {
+        string memory sig = "claim(address,address)";
+        (ok,) = pool.call(abi.encodeWithSignature(sig, loan, dlFactory));
+    }
+
+    function try_intendToWithdraw(address pool) external returns (bool ok) {
+        string memory sig = "intendToWithdraw()";
+        (ok,) = pool.call(abi.encodeWithSignature(sig));
+    }
 }

@@ -10,6 +10,8 @@ interface IGlobals {
 
     function mapleTreasury() external view returns (address);
 
+    function isStakingRewards(address) external view returns (bool);
+
     function treasuryFee() external view returns (uint256);
 
     function investorFee() external view returns (uint256);
@@ -54,9 +56,11 @@ interface IGlobals {
     
     function defaultUniswapPath(address, address) external view returns (address);
 
-    function extendedGracePeriod() external view returns (uint256);
+    function minLoanEquity() external view returns (uint256);
     
     function maxSwapSlippage() external view returns (uint256);
 
     function protocolPaused() external view returns (bool);
+
+    function cooldownPeriod() external view returns(uint256);
 }

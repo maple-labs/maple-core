@@ -71,7 +71,7 @@ contract LoanTest is TestUtil {
         loanFactory   = new LoanFactory(address(globals));
         trs           = new Treasury();
 
-        gov.setCalc(address(repaymentCalc),         true);
+        gov.setCalc(address(repaymentCalc),      true);
         gov.setCalc(address(lateFeeCalc),        true);
         gov.setCalc(address(premiumCalc),        true);
         gov.setCollateralAsset(WETH,             true);
@@ -120,7 +120,6 @@ contract LoanTest is TestUtil {
         assertEq(loan.repaymentCalc(),             address(repaymentCalc));
         assertEq(loan.lateFeeCalc(),               address(lateFeeCalc));
         assertEq(loan.premiumCalc(),               address(premiumCalc));
-        assertEq(loan.nextPaymentDue(),            block.timestamp + loan.paymentIntervalSeconds());
     }
 
     function test_fundLoan() public {
@@ -132,13 +131,13 @@ contract LoanTest is TestUtil {
 
         bob.approve(USDC, address(loan), 5000 * USD);
     
-        assertEq(IERC20(loan).balanceOf(address(ali)),                    0);
+        assertEq(IERC20(loan).balanceOf(address(bob)),                    0);
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),          0);
         assertEq(IERC20(USDC).balanceOf(address(bob)),           5000 * USD);
 
-        bob.fundLoan(address(loan), 5000 * USD, address(ali));
+        bob.fundLoan(address(loan), 5000 * USD, address(bob));
 
-        assertEq(IERC20(loan).balanceOf(address(ali)),           5000 ether);
+        assertEq(IERC20(loan).balanceOf(address(bob)),           5000 ether);
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 5000 * USD);
         assertEq(IERC20(USDC).balanceOf(address(bob)),                    0);
     }
@@ -202,12 +201,23 @@ contract LoanTest is TestUtil {
         assertEq(loan.principalOwed(),                           1000 * USD);  // Principal owed
         assertEq(uint256(loan.loanState()),                               1);  // Loan state: Active
 
-        
+        assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());  // Next payment due timestamp calculated from time of drawdown
+
         // Fee related variables post-check.
         assertEq(loan.feePaid(),                          5 * USD);  // Drawdown amount
         assertEq(loan.excessReturned(),                4000 * USD);  // Principal owed
         assertEq(IERC20(USDC).balanceOf(address(trs)),    5 * USD);  // Treasury reqAsset balance
 
+        // Test FDT accounting
+        assertEq(IERC20(USDC).balanceOf(address(bob)), 0);
+
+        bob.withdrawFunds(address(loan));
+
+        withinDiff(IERC20(USDC).balanceOf(address(bob)),              4005 * USD, 1);
+        withinDiff(IERC20(loan.loanAsset()).balanceOf(address(loan)),          0, 1);
+
+        // Can't drawdown() loan after it has already been called.
+        assertTrue(!ali.try_drawdown(address(loan), 1000 * USD));
     }
 
     function test_makePayment() public {
@@ -232,7 +242,7 @@ contract LoanTest is TestUtil {
         assertTrue(!ali.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
 
         // Approve 1st of 3 payments.
-        (uint _amt, uint _pri, uint _int, uint _due) = loan.getNextPayment();
+        (uint _amt, uint _pri, uint _int, uint _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
 
         // Before state
@@ -257,7 +267,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Approve 2nd of 3 payments.
-        (_amt, _pri, _int, _due) = loan.getNextPayment();
+        (_amt, _pri, _int, _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
         
         // Make payment.
@@ -274,12 +284,12 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Approve 3nd of 3 payments.
-        (_amt, _pri, _int, _due) = loan.getNextPayment();
+        (_amt, _pri, _int, _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
         
         // Check collateral locker balance.
         uint256 reqCollateral   = loan.collateralRequiredForDrawdown(1000 * USD);
-        IERC20Details collateralAsset = loan.collateralAsset();
+        IERC20Details collateralAsset = IERC20Details(address(loan.collateralAsset()));
         uint _delta = collateralAsset.balanceOf(address(ali));
         assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
         
@@ -323,7 +333,7 @@ contract LoanTest is TestUtil {
         assertTrue(!ali.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
 
         // Approve 1st of 3 payments.
-        (uint _amt, uint _pri, uint _int, uint _due) = loan.getNextPayment();
+        (uint _amt, uint _pri, uint _int, uint _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
 
         // Before state
@@ -352,7 +362,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Approve 2nd of 3 payments.
-        (_amt, _pri, _int, _due) = loan.getNextPayment();
+        (_amt, _pri, _int, _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
 
         // Warp to *300 seconds* after next payment is due
@@ -373,12 +383,12 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Approve 3nd of 3 payments.
-        (_amt, _pri, _int, _due) = loan.getNextPayment();
+        (_amt, _pri, _int, _due,) = loan.getNextPayment();
         ali.approve(USDC, address(loan), _amt);
         
         // Check collateral locker balance.
         uint256 reqCollateral   = loan.collateralRequiredForDrawdown(1000 * USD);
-        IERC20Details collateralAsset = loan.collateralAsset();
+        IERC20Details collateralAsset = IERC20Details(address(loan.collateralAsset()));
         uint _delta = collateralAsset.balanceOf(address(ali));
         assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
 
@@ -435,6 +445,13 @@ contract LoanTest is TestUtil {
 
         assertEq(loan.excessReturned(), loanBalance_post);
 
+        assertEq(IERC20(USDC).balanceOf(address(bob)), 0);
+
+        bob.withdrawFunds(address(loan));
+
+        withinDiff(IERC20(USDC).balanceOf(address(bob)),              5000 * USD, 1);
+        withinDiff(IERC20(loan.loanAsset()).balanceOf(address(loan)),          0, 1);
+
         // Can't unwind() loan after it has already been called.
         assertTrue(!ali.try_unwind(address(loan)));
     }
@@ -449,7 +466,7 @@ contract LoanTest is TestUtil {
 
         assertTrue(!bob.try_trigger_default(address(loan)), "Should fail to trigger default by lender");   // Should fail to trigger default because current time is still less than the `nextPaymentDue`.
         assertEq(loan.loanState(), 1,                       "Loan State should remain `Active`");
-        assertTrue(!com.try_trigger_default(address(loan)), "Should fail to trigger default by commoner"); // Failed because commoner in not allowed to default the loan till the extendedGracePeriod passed.
+        assertTrue(!com.try_trigger_default(address(loan)), "Should fail to trigger default by commoner"); // Failed because commoner in not allowed to default the loan because they do not own any LoanFDTs.
         assertEq(loan.loanState(), 1,                       "Loan State should remain `Active`");
 
         hevm.warp(loan.nextPaymentDue() + 1);
@@ -468,27 +485,23 @@ contract LoanTest is TestUtil {
 
         hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + 1);
 
-        assertTrue(bob.try_trigger_default(address(loan)),  "Should not fail to default the loan");
+        assertTrue(!com.try_trigger_default(address(loan)),  "Still fails to default the loan by commoner"); // Failed because still commoner is not allowed to default the loan.
+        assertEq(loan.loanState(), 1,                        "Loan State should remain `Active`");
+
+        // Bob currently has 100% of LoanFDTs, so he can trigger the loan.
+        // For this test, minLoanEquity is transferred to the commoner to test the minimum loan equity condition.
+        assertEq(loan.totalSupply(),      5000 * WAD); 
+        assertEq(globals.minLoanEquity(),       2000);  // 20%
+    
+        bob.transfer(address(loan), address(com), 1000 * WAD - 1);  // Just under 20% equity requirement to trigger liquidation
+
+        assertTrue(!com.try_trigger_default(address(loan)),  "Still fails to default the loan by commoner"); // Failed because still commoner is not allowed to default the loan.
+        assertEq(loan.loanState(), 1,                        "Loan State should remain `Active`");
+
+        bob.transfer(address(loan), address(com), 1);  // Transfer 1 wei to meet 20% minimum equity requirement
+
+        assertTrue(com.try_trigger_default(address(loan)),  "Should not fail to default the loan");
         assertEq(loan.loanState(), 4,                       "Loan State should change to `Liquidated`");
-    }
-
-    function test_trigger_default_by_commoner() external  {
-        ILoan loan = ILoan(address(createAndFundLoan(address(repaymentCalc))));
-
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(5000 * USD);
-        ali.approve(WETH, address(loan), reqCollateral);
-
-        assertTrue(ali.try_drawdown(address(loan), 5000 * USD));  // Draw down the loan.
-
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + globals.extendedGracePeriod());
-
-        assertTrue(!com.try_trigger_default(address(loan)), "Should fail to trigger default by commoner"); // Failed because commoner in not allowed to default the loan till the extendedGracePeriod passed.
-        assertEq(loan.loanState(), 1,                       "Loan State should remain `Active`");
-
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + globals.extendedGracePeriod() + 1);
-
-        assertTrue(com.try_trigger_default(address(loan)), "Should not fail to default the loan");
-        assertEq(loan.loanState(), 4,                      "Loan State should change to `Liquidated`");
     }
 
     function test_calc_min_amount() external {
@@ -538,7 +551,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.interestPaid(),                0);
         assertEq(loan.paymentsRemaining(),           3);
 
-        IERC20Details collateralAsset = loan.collateralAsset();
+        IERC20Details collateralAsset = IERC20Details(address(loan.collateralAsset()));
         uint256 _delta                = collateralAsset.balanceOf(address(ali));
         uint256 _usdcDelta            = IERC20(USDC).balanceOf(address(loan));
 
@@ -556,5 +569,31 @@ contract LoanTest is TestUtil {
         // Collateral locker after state.
         assertEq(collateralAsset.balanceOf(collateralLocker),                      0);
         assertEq(collateralAsset.balanceOf(address(ali)),     _delta + reqCollateral);
+    }
+
+    function test_reclaim_erc20() external {
+        Loan loan = createAndFundLoan(address(repaymentCalc));
+
+        // Fund the loan with different kind of asset.
+        mint("USDC", address(loan), 1000 * USD);
+        mint("DAI",  address(loan), 1000 * WAD);
+        mint("WETH", address(loan),  100 * WAD);
+
+        Governor fakeGov = new Governor();
+
+        uint256 beforeBalanceDAI   = IERC20(DAI).balanceOf(address(gov));
+        uint256 beforeBalanceWETH  = IERC20(WETH).balanceOf(address(gov));
+
+        assertTrue(!fakeGov.try_reclaimERC20(address(loan), DAI));
+        assertTrue(    !gov.try_reclaimERC20(address(loan), USDC));
+        assertTrue(    !gov.try_reclaimERC20(address(loan), address(0)));
+        assertTrue(     gov.try_reclaimERC20(address(loan), WETH));
+        assertTrue(     gov.try_reclaimERC20(address(loan), DAI));
+
+        uint256 afterBalanceDAI   = IERC20(DAI).balanceOf(address(gov));
+        uint256 afterBalanceWETH  = IERC20(WETH).balanceOf(address(gov));
+
+        assertEq(afterBalanceDAI - beforeBalanceDAI,    1000 * WAD);
+        assertEq(afterBalanceWETH - beforeBalanceWETH,   100 * WAD);
     }
 }

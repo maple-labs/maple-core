@@ -77,6 +77,22 @@ contract PoolDelegate {
         IPool(pool).setAllowlistStakeLocker(user, status);
     }
 
+    function triggerDefault(address pool, address loan, address dlFactory) external {
+        IPool(pool).triggerDefault(loan, dlFactory);
+    }
+    
+    function setAdmin(address pool, address newAdmin, bool status) external {
+        IPool(pool).setAdmin(newAdmin, status);
+    }
+
+    function openPoolToPublic(address pool) external {
+        IPool(pool).openPoolToPublic();
+    }
+
+    function setAllowList(address pool, address user, bool status) external {
+        IPool(pool).setAllowList(user, status);
+    }
+
 
     /*********************/
     /*** TRY FUNCTIONS ***/
@@ -99,15 +115,15 @@ contract PoolDelegate {
             abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, slFactory, llFactory, stakingFee, delegateFee, liquidityCap)
         );
     }
-
-    function try_setExtendedGracePeriod(address globals, uint256 newEGP) external returns(bool ok) {
-        string memory sig = "setExtendedGracePeriod(uint256)";
-        (ok,) = globals.call(abi.encodeWithSignature(sig, newEGP));
-    }
     
     function try_fundLoan(address pool, address loan, address dlFactory, uint256 amt) external returns (bool ok) {
         string memory sig = "fundLoan(address,address,uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory, amt));
+    }
+
+    function try_claim(address pool, address loan, address dlFactory) external returns (bool ok) {
+        string memory sig = "claim(address,address)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
     }
 
     function try_finalize(address pool) external returns (bool ok) {
@@ -140,4 +156,18 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, newPeriod));
     }
 
+    function try_triggerDefault(address pool, address loan, address dlFactory) external returns(bool ok) {
+        string memory sig = "triggerDefault(address,address)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
+    }
+
+    function try_openPoolToPublic(address pool) external returns(bool ok) {
+        string memory sig = "openPoolToPublic()";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig));
+    }
+
+    function try_setAllowList(address pool, address users, bool status) external returns(bool ok) {
+        string memory sig = "setAllowList(address,bool)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, users, status));
+    }
 }
