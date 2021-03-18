@@ -91,7 +91,8 @@ contract MapleTreasury {
         uint256 assetBalance = IERC20(asset).balanceOf(address(this));
         uint256 minAmount    = Util.calcMinAmount(_globals, asset, fundsToken, assetBalance);
 
-        IERC20(asset).safeIncreaseAllowance(uniswapRouter, assetBalance);
+        IERC20(asset).safeApprove(uniswapRouter, uint256(0));
+        IERC20(asset).safeApprove(uniswapRouter, assetBalance);
 
         address uniswapAssetForPath = _globals.defaultUniswapPath(asset, fundsToken);
         bool middleAsset = uniswapAssetForPath != fundsToken && uniswapAssetForPath != address(0);
