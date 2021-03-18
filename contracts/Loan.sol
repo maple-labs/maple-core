@@ -172,39 +172,9 @@ contract Loan is FDT, Pausable {
         fundingLocker    = IFundingLockerFactory(_flFactory).newLocker(_loanAsset);
     }
 
-    /**
-        @dev Fund this loan and mint LoanFDTs for mintTo (DebtLocker in the case of Pool funding)
-        @param  amt    Amount to fund the loan
-        @param  mintTo Address that LoanFDTs are minted to
-    */
-    function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
-        _whenProtocolNotPaused();
-        _isValidState(State.Live);
-        loanAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
-
-        uint256 wad = _toWad(amt);  // Convert to WAD precision
-        _mint(mintTo, wad);         // Mint FDT to `mintTo` i.e DebtLocker contract.
-
-        emit LoanFunded(amt, mintTo);
-        _emitBalanceUpdateEventForFundingLocker();
-    }
-
-    /**
-        @dev If the borrower has not drawn down on the Loan past the drawdown grace period, return capital to Loan, 
-             where it can be claimed back by LoanFDT holders.
-    */
-    function unwind() external {
-        _whenProtocolNotPaused();
-        _isValidState(State.Live);
-
-        // Update accounting for claim(), transfer funds from FundingLocker to Loan
-        excessReturned += LoanLib.unwind(loanAsset, superFactory, fundingLocker, createdAt);
-
-        updateFundsReceived();
-
-        // Transition state to Expired
-        loanState = State.Expired;
-    }
+    /**************************/
+    /*** Borrower Functions ***/
+    /**************************/
 
     /**
         @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from Funding to Active.
@@ -260,73 +230,6 @@ contract Loan is FDT, Pausable {
         emit BalanceUpdated(treasury, address(loanAsset), loanAsset.balanceOf(treasury));
         
         emit Drawdown(amt);
-    }
-
-    /**
-        @dev Public getter to know how much minimum amount of loan asset will get by swapping collateral asset.
-        @return Expected amount of loanAsset to be recovered from liquidation based on current oracle prices
-    */
-    function getExpectedAmountRecovered() public view returns(uint256) {
-        uint256 liquidationAmt = _getCollateralLockerBalance();
-        return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(loanAsset), liquidationAmt);
-    }
-
-    /**
-        @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
-    */
-    function _triggerDefault() internal {
-
-        (amountLiquidated, amountRecovered) = LoanLib.triggerDefault(collateralAsset, address(loanAsset), superFactory, collateralLocker);
-
-        // Set principalOwed to zero and return excess value from liquidation back to borrower
-        if (amountRecovered > principalOwed) {
-            liquidationExcess = amountRecovered.sub(principalOwed);
-            principalOwed = 0;
-            loanAsset.safeTransfer(borrower, liquidationExcess); // Send excess to Borrower.
-        }
-        // Decrement principalOwed by amountRecovered, set defaultSuffered to the difference (shortfall from liquidation)
-        else {
-            principalOwed   = principalOwed.sub(amountRecovered);
-            defaultSuffered = principalOwed;
-        }
-
-        // Call updateFundsReceived() update FDT accounting with funds recieved from liquidation
-        updateFundsReceived();
-
-        // Transition loanState to Liquidated
-        loanState = State.Liquidated;
-
-        // Emit liquidation event
-        emit Liquidation(
-            amountLiquidated,  // Amount of collateralAsset swapped
-            amountRecovered,   // Amount of loanAsset recovered from swap
-            liquidationExcess, // Amount of loanAsset returned to borrower
-            defaultSuffered    // Remaining losses after liquidation
-        );
-
-    }
-
-    /**
-        @dev Trigger a default if a Loan is in a condition where a default can be triggered.
-    */
-    // TODO: Talk with auditors about having a switch for this function
-    function triggerDefault() external {
-        _whenProtocolNotPaused();
-        _isValidState(State.Active);
-        require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
-        _triggerDefault();
-    }
-
-    /**
-        @dev Returns information on next payment amount.
-        @return [0] = Principal + Interest
-                [1] = Principal 
-                [2] = Interest
-                [3] = Payment Due Date
-                [4] = Is Payment Late
-    */
-    function getNextPayment() public view returns(uint256, uint256, uint256, uint256, bool) {
-        return LoanLib.getNextPayment(superFactory, repaymentCalc, nextPaymentDue, lateFeeCalc);
     }
 
     /**
@@ -394,46 +297,93 @@ contract Loan is FDT, Pausable {
         _emitBalanceUpdateEventForLoan();
     }
 
-    /**
-        @dev Returns information on full payment amount.
-        @return total     Principal and interest owed, combined
-        @return principal Principal owed
-        @return interest  Interest owed
-    */
-    function getFullPayment() public view returns(uint256 total, uint256 principal, uint256 interest) {
-        (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
-    }
+    /************************/
+    /*** Lender Functions ***/
+    /************************/
 
     /**
-        @dev Helper for calculating collateral required to draw down amt.
-        @param  amt The amount of loanAsset to draw down from FundingLocker
-        @return The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
+        @dev Fund this loan and mint LoanFDTs for mintTo (DebtLocker in the case of Pool funding)
+        @param  amt    Amount to fund the loan
+        @param  mintTo Address that LoanFDTs are minted to
     */
-    function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
-        return LoanLib.collateralRequiredForDrawdown(
-            IERC20Details(address(collateralAsset)),
-            IERC20Details(address(loanAsset)),
-            collateralRatio,
-            superFactory,
-            amt
-        );
-    }
-
-    /**
-        @dev Transfer any locked funds to the governor.
-        @param token Address of the token that need to reclaimed.
-     */
-    function reclaimERC20(address token) external {
-        LoanLib.reclaimERC20(token, address(loanAsset), _globals(superFactory));
-    }
-
-    /**
-        @dev Withdraws all available funds earned through FDT for a token holder.
-    */
-    function withdrawFunds() public override {
+    function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
         _whenProtocolNotPaused();
-        super.withdrawFunds();
+        _isValidState(State.Live);
+        loanAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
+
+        uint256 wad = _toWad(amt);  // Convert to WAD precision
+        _mint(mintTo, wad);         // Mint FDT to `mintTo` i.e DebtLocker contract.
+
+        emit LoanFunded(amt, mintTo);
+        _emitBalanceUpdateEventForFundingLocker();
     }
+
+    /**
+        @dev If the borrower has not drawn down on the Loan past the drawdown grace period, return capital to Loan, 
+             where it can be claimed back by LoanFDT holders.
+    */
+    function unwind() external {
+        _whenProtocolNotPaused();
+        _isValidState(State.Live);
+
+        // Update accounting for claim(), transfer funds from FundingLocker to Loan
+        excessReturned += LoanLib.unwind(loanAsset, superFactory, fundingLocker, createdAt);
+
+        updateFundsReceived();
+
+        // Transition state to Expired
+        loanState = State.Expired;
+    }
+
+    /**
+        @dev Trigger a default if a Loan is in a condition where a default can be triggered.
+    */
+    // TODO: Talk with auditors about having a switch for this function
+    function triggerDefault() external {
+        _whenProtocolNotPaused();
+        _isValidState(State.Active);
+        require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
+        _triggerDefault();
+    }
+
+    /**
+        @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
+    */
+    function _triggerDefault() internal {
+
+        (amountLiquidated, amountRecovered) = LoanLib.triggerDefault(collateralAsset, address(loanAsset), superFactory, collateralLocker);
+
+        // Set principalOwed to zero and return excess value from liquidation back to borrower
+        if (amountRecovered > principalOwed) {
+            liquidationExcess = amountRecovered.sub(principalOwed);
+            principalOwed = 0;
+            loanAsset.safeTransfer(borrower, liquidationExcess); // Send excess to Borrower.
+        }
+        // Decrement principalOwed by amountRecovered, set defaultSuffered to the difference (shortfall from liquidation)
+        else {
+            principalOwed   = principalOwed.sub(amountRecovered);
+            defaultSuffered = principalOwed;
+        }
+
+        // Call updateFundsReceived() update FDT accounting with funds recieved from liquidation
+        updateFundsReceived();
+
+        // Transition loanState to Liquidated
+        loanState = State.Liquidated;
+
+        // Emit liquidation event
+        emit Liquidation(
+            amountLiquidated,  // Amount of collateralAsset swapped
+            amountRecovered,   // Amount of loanAsset recovered from swap
+            liquidationExcess, // Amount of loanAsset returned to borrower
+            defaultSuffered    // Remaining losses after liquidation
+        );
+
+    }
+
+    /***********************/
+    /*** Admin Functions ***/
+    /***********************/
 
     /**
         @dev Triggers paused state. Halts functionality for certain functions.
@@ -461,6 +411,84 @@ contract Loan is FDT, Pausable {
         _isValidBorrower();
         admins[newAdmin] = allowed;
     }
+
+    /**************************/
+    /*** Governor Functions ***/
+    /**************************/
+
+    /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+     */
+    function reclaimERC20(address token) external {
+        LoanLib.reclaimERC20(token, address(loanAsset), _globals(superFactory));
+    }
+
+    /*********************/
+    /*** FDT Functions ***/
+    /*********************/
+
+    /**
+        @dev Withdraws all available funds earned through FDT for a token holder.
+    */
+    function withdrawFunds() public override {
+        _whenProtocolNotPaused();
+        super.withdrawFunds();
+    }
+
+    /************************/
+    /*** Getter Functions ***/
+    /************************/
+
+    /**
+        @dev Public getter to know how much minimum amount of loan asset will get by swapping collateral asset.
+        @return Expected amount of loanAsset to be recovered from liquidation based on current oracle prices
+    */
+    function getExpectedAmountRecovered() public view returns(uint256) {
+        uint256 liquidationAmt = _getCollateralLockerBalance();
+        return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(loanAsset), liquidationAmt);
+    }
+    
+    /**
+        @dev Returns information on next payment amount.
+        @return [0] = Principal + Interest
+                [1] = Principal 
+                [2] = Interest
+                [3] = Payment Due Date
+                [4] = Is Payment Late
+    */
+    function getNextPayment() public view returns(uint256, uint256, uint256, uint256, bool) {
+        return LoanLib.getNextPayment(superFactory, repaymentCalc, nextPaymentDue, lateFeeCalc);
+    }
+
+    /**
+        @dev Returns information on full payment amount.
+        @return total     Principal and interest owed, combined
+        @return principal Principal owed
+        @return interest  Interest owed
+    */
+    function getFullPayment() public view returns(uint256 total, uint256 principal, uint256 interest) {
+        (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
+    }
+
+    /**
+        @dev Helper for calculating collateral required to draw down amt.
+        @param  amt The amount of loanAsset to draw down from FundingLocker
+        @return The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
+    */
+    function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
+        return LoanLib.collateralRequiredForDrawdown(
+            IERC20Details(address(collateralAsset)),
+            IERC20Details(address(loanAsset)),
+            collateralRatio,
+            superFactory,
+            amt
+        );
+    }
+
+    /************************/
+    /*** Helper Functions ***/
+    /************************/
 
     /**
         @dev Function to block functionality of functions when protocol is in a paused state.

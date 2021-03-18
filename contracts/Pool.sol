@@ -132,6 +132,10 @@ contract Pool is PoolFDT {
         emit PoolStateChanged(poolState);
     }
 
+    /*******************************/
+    /*** Pool Delegate Functions ***/
+    /*******************************/
+
     /**
         @dev Finalize the Pool, enabling deposits. Checks Pool Delegate amount deposited to StakeLocker.
     */
@@ -145,45 +149,141 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Returns information on the stake requirements.
-        @return [0] = Min amount of liquidityAsset coverage from staking required
-                [1] = Present amount of liquidityAsset coverage from Pool Delegate stake
-                [2] = If enough stake is present from Pool Delegate for finalization
-                [3] = Staked BPTs required for minimum liquidityAsset coverage
-                [4] = Current staked BPTs
+        @dev Open Pool to public. Once it is set to `true` it cannot be set back to `false`.
     */
-    function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
-        return PoolLib.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
+    function openPoolToPublic() external {
+        _isValidDelegateAndProtocolNotPaused();
+        openToPublic = true;
     }
 
     /**
-        @dev Calculates BPTs required if burning BPTs for liquidityAsset, given supplied tokenAmountOutRequired.
-        @param  _bPool                        Balancer pool that issues the BPTs
-        @param  _liquidityAsset               Swap out asset (e.g. USDC) to receive when burning BPTs
-        @param  _staker                       Address that deposited BPTs to stakeLocker
-        @param  _stakeLocker                  Escrows BPTs deposited by staker
-        @param  _liquidityAssetAmountRequired Amount of liquidityAsset required to recover
-        @return [0] = poolAmountIn required
-                [1] = poolAmountIn currently staked
+        @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
+        @param  loan      Address of the loan to fund
+        @param  dlFactory The DebtLockerFactory to utilize
+        @param  amt       Amount to fund the loan
     */
-    function getPoolSharesRequired(
-        address _bPool,
-        address _liquidityAsset,
-        address _staker,
-        address _stakeLocker,
-        uint256 _liquidityAssetAmountRequired
-    ) external view returns (uint256, uint256) {
-        return PoolLib.getPoolSharesRequired(_bPool, _liquidityAsset, _staker, _stakeLocker, _liquidityAssetAmountRequired);
+    function fundLoan(address loan, address dlFactory, uint256 amt) external {
+        _isValidDelegateAndProtocolNotPaused();
+        _isValidState(State.Finalized);
+        principalOut = principalOut.add(amt);
+        PoolLib.fundLoan(debtLockers, superFactory, liquidityLocker, loan, dlFactory, amt);
+        _emitBalanceUpdatedEvent();
     }
 
     /**
-        @dev Check whether the given `depositAmt` is acceptable based on current liquidityCap.
-        @param depositAmt Amount of tokens (i.e loanAsset type) user is trying to deposit
-    */
-    function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
-        uint256 totalDeposits = _balanceOfLiquidityLocker().add(principalOut);
-        return totalDeposits.add(depositAmt) <= liquidityCap;
+        @dev Liquidate the loan. Pool delegate could liquidate a loan only when loan completes its grace period.
+        Pool delegate can claim its proportion of recovered funds from liquidation using the `claim()` function.
+        @param loan      Address of the loan contract to liquidate
+        @param dlFactory Address of the debt locker factory that is used to pull corresponding debt locker
+     */
+    function triggerDefault(address loan, address dlFactory) external {
+        _isValidDelegateAndProtocolNotPaused();
+        IDebtLocker(debtLockers[loan][dlFactory]).triggerDefault();
     }
+
+    /**
+        @dev Claim available funds for loan through specified DebtLockerFactory.
+        @param  loan      Address of the loan to claim from
+        @param  dlFactory The DebtLockerFactory (always maps to a single debt locker)
+        @return [0] = Total amount claimed
+                [1] = Interest  portion claimed
+                [2] = Principal portion claimed
+                [3] = Fee       portion claimed
+                [4] = Excess    portion claimed
+                [5] = Recovered portion claimed (from liquidations)
+                [6] = Default suffered
+    */
+    function claim(address loan, address dlFactory) external returns(uint256[7] memory) { 
+        _whenProtocolNotPaused();
+        _isValidDelegateOrAdmin();
+        uint256[7] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
+
+        (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
+
+        // Subtract outstanding principal by principal claimed plus excess returned
+        // Considers possible overflow if loanAsset is transferred directly into Loan
+        if (principalClaim <= principalOut) {
+            principalOut = principalOut - principalClaim;
+        } else {
+            interestClaim  = interestClaim.add(principalClaim - principalOut);  // Distribute principalClaim overflow as interest to LPs
+            principalClaim = principalOut;                                      // Set principalClaim to principalOut so correct amount gets transferred
+            principalOut   = 0;                                                 // Set principalOUt to zero to avoid subtraction overflow
+        }
+
+        // Accounts for rounding error in stakeLocker/poolDelegate/liquidityLocker interest split
+        interestSum = interestSum.add(interestClaim);
+
+        _transferLiquidityAsset(poolDelegate, poolDelegatePortion);  // Transfer fee and portion of interest to pool delegate
+        _transferLiquidityAsset(stakeLocker,  stakeLockerPortion);   // Transfer portion of interest to stakeLocker
+
+        // Transfer remaining claim (remaining interest + principal + excess + recovered) to liquidityLocker
+        // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
+        // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
+        // Ensures that internal accounting is exactly reflective of balance change.
+        _transferLiquidityAsset(liquidityLocker, principalClaim.add(interestClaim)); 
+        
+        // Handle default if defaultSuffered > 0
+        if (claimInfo[6] > 0) _handleDefault(loan, claimInfo[6]);
+
+        // Update funds received for StakeLockerFDTs
+        IStakeLocker(stakeLocker).updateFundsReceived();
+        
+        // Update funds received for PoolFDTs
+        updateFundsReceived();
+
+        _emitBalanceUpdatedEvent();
+        emit BalanceUpdated(stakeLocker, address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
+
+        emit Claim(loan, interestClaim, principalClaim, claimInfo[3]);  // TODO: Discuss with offchain team about requirements for event
+
+        return claimInfo;  // TODO: Discuss with offchain team about requirements for return
+    }
+
+    /**
+        @dev Helper function if a claim has been made and there is a non-zero defaultSuffered amount.
+        @param loan            Address of loan that has defaulted
+        @param defaultSuffered Losses suffered from default after liquidation
+    */
+    function _handleDefault(address loan, uint256 defaultSuffered) internal {
+
+        (uint256 bptsBurned, uint256 bptsReturned, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
+
+        // Handle shortfall in StakeLocker, updated LiquidityLocker FDT loss accounting for liquidityAsset
+        if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
+            bptShortfall = bptShortfall.add(defaultSuffered - liquidityAssetRecoveredFromBurn);
+            updateLossesReceived();
+        }
+
+        // Transfer USDC to liquidityLocker
+        liquidityAsset.safeTransfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
+
+        principalOut = principalOut.sub(defaultSuffered);  // Subtract rest of Loan's principal from principalOut
+
+        emit DefaultSuffered(
+            loan,                            // Which loan defaultSuffered is from
+            defaultSuffered,                 // Total default suffered from loan by Pool after liquidation
+            bptsBurned,                      // Amount of BPTs burned from stakeLocker
+            bptsReturned,                    // Remaining BPTs in stakeLocker post-burn                      
+            liquidityAssetRecoveredFromBurn  // Amount of liquidityAsset recovered from burning BPTs
+        );
+    }
+
+    /**
+        @dev Pool Delegate triggers deactivation, permanently shutting down the pool. Must have less that 100 units of liquidityAsset principalOut.
+        @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
+    */
+    // TODO: Ask auditors about standard for confirmations
+    function deactivate(uint confirmation) external {
+        _isValidDelegateAndProtocolNotPaused();
+        _isValidState(State.Finalized);
+        PoolLib.validateDeactivation(_globals(superFactory), confirmation, principalOut, address(liquidityAsset));
+        poolState = State.Deactivated;
+        emit PoolStateChanged(poolState);
+    }
+
+    /**************************************/
+    /*** Pool Delegate Setter Functions ***/
+    /**************************************/
 
     /**
         @dev Set `liquidityCap`, Only allowed by the Pool Delegate or the admin.
@@ -195,6 +295,70 @@ contract Pool is PoolFDT {
         liquidityCap = newLiquidityCap;
         emit LiquidityCapSet(newLiquidityCap);
     }
+
+    /**
+        @dev Set the amount of time required to recover 100% of claimable funds 
+             (i.e. calcWithdrawPenalty = 0)
+        @param _penaltyDelay Effective time needed in pool for user to be able to claim 100% of funds
+    */
+    function setPenaltyDelay(uint256 _penaltyDelay) external {
+        _isValidDelegateAndProtocolNotPaused();
+        penaltyDelay = _penaltyDelay;
+    }
+
+    /**
+        @dev Set the principal penalty. Only Pool Delegate can call this function.
+        @param _newPrincipalPenalty New principal penalty percentage (in basis points) that corresponds to withdrawal amount
+    */
+    function setPrincipalPenalty(uint256 _newPrincipalPenalty) external {
+        _isValidDelegateAndProtocolNotPaused();
+        principalPenalty = _newPrincipalPenalty;
+    }
+
+    /**
+        @dev Set the lockup period. Only Pool Delegate can call this function.
+        @param _newLockupPeriod New lockup period used to restrict the withdrawals.
+     */
+    function setLockupPeriod(uint256 _newLockupPeriod) external {
+        _isValidDelegateAndProtocolNotPaused();
+        require(_newLockupPeriod <= lockupPeriod, "Pool:INVALID_VALUE");
+        lockupPeriod = _newLockupPeriod;
+    }
+
+    /**
+        @dev Update user status on Pool allowlist. Only Pool Delegate can call this function.
+        @param user   The address to set status for.
+        @param status The status of user on allowlist.
+    */
+    function setAllowList(address user, bool status) external {
+        _isValidDelegateAndProtocolNotPaused();
+        allowedLiquidityProviders[user] = status;
+        emit LPStatusChanged(user, status);
+    }
+
+    /**
+        @dev Update user status on StakeLocker allowlist. Only Pool Delegate can call this function.
+        @param user   The address to set status for.
+        @param status The status of user on allowlist.
+    */
+    function setAllowlistStakeLocker(address user, bool status) external {
+        _isValidDelegateAndProtocolNotPaused();
+        IStakeLocker(stakeLocker).setAllowlist(user, status);
+    }
+
+    /**
+        @dev Set admin
+        @param newAdmin new admin address.
+        @param allowed Status of an admin.
+    */
+    function setAdmin(address newAdmin, bool allowed) external {
+        _isValidDelegateAndProtocolNotPaused();
+        admins[newAdmin] = allowed;
+    }
+
+    /************************************/
+    /*** Liquidity Provider Functions ***/
+    /************************************/
 
     /**
         @dev Liquidity providers can deposit liquidityAsset into the LiquidityLocker, minting FDTs.
@@ -267,118 +431,36 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
-        @param  loan      Address of the loan to fund
-        @param  dlFactory The DebtLockerFactory to utilize
-        @param  amt       Amount to fund the loan
+        @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
     */
-    function fundLoan(address loan, address dlFactory, uint256 amt) external {
-        _isValidDelegateAndProtocolNotPaused();
-        _isValidState(State.Finalized);
-        principalOut = principalOut.add(amt);
-        PoolLib.fundLoan(debtLockers, superFactory, liquidityLocker, loan, dlFactory, amt);
-        _emitBalanceUpdatedEvent();
-    }
-
-    /**
-        @dev Helper function if a claim has been made and there is a non-zero defaultSuffered amount.
-        @param loan            Address of loan that has defaulted
-        @param defaultSuffered Losses suffered from default after liquidation
-    */
-    function _handleDefault(address loan, uint256 defaultSuffered) internal {
-
-        (uint256 bptsBurned, uint256 bptsReturned, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
-
-        // Handle shortfall in StakeLocker, updated LiquidityLocker FDT loss accounting for liquidityAsset
-        if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
-            bptShortfall = bptShortfall.add(defaultSuffered - liquidityAssetRecoveredFromBurn);
-            updateLossesReceived();
-        }
-
-        // Transfer USDC to liquidityLocker
-        liquidityAsset.safeTransfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
-
-        principalOut = principalOut.sub(defaultSuffered);  // Subtract rest of Loan's principal from principalOut
-
-        emit DefaultSuffered(
-            loan,                            // Which loan defaultSuffered is from
-            defaultSuffered,                 // Total default suffered from loan by Pool after liquidation
-            bptsBurned,                      // Amount of BPTs burned from stakeLocker
-            bptsReturned,                    // Remaining BPTs in stakeLocker post-burn                      
-            liquidityAssetRecoveredFromBurn  // Amount of liquidityAsset recovered from burning BPTs
-        );
-    }
-
-    /**
-        @dev Claim available funds for loan through specified DebtLockerFactory.
-        @param  loan      Address of the loan to claim from
-        @param  dlFactory The DebtLockerFactory (always maps to a single debt locker)
-        @return [0] = Total amount claimed
-                [1] = Interest  portion claimed
-                [2] = Principal portion claimed
-                [3] = Fee       portion claimed
-                [4] = Excess    portion claimed
-                [5] = Recovered portion claimed (from liquidations)
-                [6] = Default suffered
-    */
-    function claim(address loan, address dlFactory) external returns(uint256[7] memory) { 
+    function withdrawFunds() public override {
         _whenProtocolNotPaused();
-        _isValidDelegateOrAdmin();
-        uint256[7] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
+        uint256 withdrawableFunds = _prepareWithdraw();
 
-        (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
+        if (withdrawableFunds > uint256(0)) { 
+            _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
 
-        // Subtract outstanding principal by principal claimed plus excess returned
-        // Considers possible overflow if loanAsset is transferred directly into Loan
-        if (principalClaim <= principalOut) {
-            principalOut = principalOut - principalClaim;
-        } else {
-            interestClaim  = interestClaim.add(principalClaim - principalOut);  // Distribute principalClaim overflow as interest to LPs
-            principalClaim = principalOut;                                      // Set principalClaim to principalOut so correct amount gets transferred
-            principalOut   = 0;                                                 // Set principalOUt to zero to avoid subtraction overflow
+            interestSum = interestSum.sub(withdrawableFunds);
+
+            _updateFundsTokenBalance();
         }
-
-        // Accounts for rounding error in stakeLocker/poolDelegate/liquidityLocker interest split
-        interestSum = interestSum.add(interestClaim);
-
-        _transferLiquidityAsset(poolDelegate, poolDelegatePortion);  // Transfer fee and portion of interest to pool delegate
-        _transferLiquidityAsset(stakeLocker,  stakeLockerPortion);   // Transfer portion of interest to stakeLocker
-
-        // Transfer remaining claim (remaining interest + principal + excess + recovered) to liquidityLocker
-        // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
-        // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
-        // Ensures that internal accounting is exactly reflective of balance change.
-        _transferLiquidityAsset(liquidityLocker, principalClaim.add(interestClaim)); 
-        
-        // Handle default if defaultSuffered > 0
-        if (claimInfo[6] > 0) _handleDefault(loan, claimInfo[6]);
-
-        // Update funds received for StakeLockerFDTs
-        IStakeLocker(stakeLocker).updateFundsReceived();
-        
-        // Update funds received for PoolFDTs
-        updateFundsReceived();
-
-        _emitBalanceUpdatedEvent();
-        emit BalanceUpdated(stakeLocker, address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
-
-        emit Claim(loan, interestClaim, principalClaim, claimInfo[3]);  // TODO: Discuss with offchain team about requirements for event
-
-        return claimInfo;  // TODO: Discuss with offchain team about requirements for return
     }
+
+    /**************************/
+    /*** Governor Functions ***/
+    /**************************/
 
     /**
-        @dev Pool Delegate triggers deactivation, permanently shutting down the pool. Must have less that 100 units of liquidityAsset principalOut.
-        @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
-    */
-    // TODO: Ask auditors about standard for confirmations
-    function deactivate(uint confirmation) external {
-        _isValidDelegateAndProtocolNotPaused();
-        _isValidState(State.Finalized);
-        PoolLib.validateDeactivation(_globals(superFactory), confirmation, principalOut, address(liquidityAsset));
-        poolState = State.Deactivated;
-        emit PoolStateChanged(poolState);
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+     */
+    function reclaimERC20(address token) external {
+        PoolLib.reclaimERC20(token, address(liquidityAsset), _globals(superFactory));
     }
+
+    /*************************/
+    /*** Getter Functions ***/
+    /*************************/
 
     /** 
         @dev Calculate the amount of funds to deduct from total claimable amount based on how
@@ -390,64 +472,6 @@ contract Pool is PoolFDT {
     */
     function calcWithdrawPenalty(uint256 amt, address who) public view returns (uint256 penalty) {
         return PoolLib.calcWithdrawPenalty(lockupPeriod, penaltyDelay, amt, depositDate[who]);
-    }
-
-    /**
-        @dev Set the amount of time required to recover 100% of claimable funds 
-             (i.e. calcWithdrawPenalty = 0)
-        @param _penaltyDelay Effective time needed in pool for user to be able to claim 100% of funds
-    */
-    function setPenaltyDelay(uint256 _penaltyDelay) external {
-        _isValidDelegateAndProtocolNotPaused();
-        penaltyDelay = _penaltyDelay;
-    }
-
-    /**
-        @dev Set the principal penalty. Only Pool Delegate can call this function.
-        @param _newPrincipalPenalty New principal penalty percentage (in basis points) that corresponds to withdrawal amount
-    */
-    function setPrincipalPenalty(uint256 _newPrincipalPenalty) external {
-        _isValidDelegateAndProtocolNotPaused();
-        principalPenalty = _newPrincipalPenalty;
-    }
-
-    /**
-        @dev Set the lockup period. Only Pool Delegate can call this function.
-        @param _newLockupPeriod New lockup period used to restrict the withdrawals.
-     */
-    function setLockupPeriod(uint256 _newLockupPeriod) external {
-        _isValidDelegateAndProtocolNotPaused();
-        require(_newLockupPeriod <= lockupPeriod, "Pool:INVALID_VALUE");
-        lockupPeriod = _newLockupPeriod;
-    }
-
-    /**
-        @dev Open Pool to public. Once it is set to `true` it cannot be set back to `false`.
-    */
-    function openPoolToPublic() external {
-        _isValidDelegateAndProtocolNotPaused();
-        openToPublic = true;
-    }
-
-    /**
-        @dev Update user status on Pool allowlist. Only Pool Delegate can call this function.
-        @param user   The address to set status for.
-        @param status The status of user on allowlist.
-    */
-    function setAllowList(address user, bool status) external {
-        _isValidDelegateAndProtocolNotPaused();
-        allowedLiquidityProviders[user] = status;
-        emit LPStatusChanged(user, status);
-    }
-
-    /**
-        @dev Update user status on StakeLocker allowlist. Only Pool Delegate can call this function.
-        @param user   The address to set status for.
-        @param status The status of user on allowlist.
-    */
-    function setAllowlistStakeLocker(address user, bool status) external {
-        _isValidDelegateAndProtocolNotPaused();
-        IStakeLocker(stakeLocker).setAllowlist(user, status);
     }
 
     /**
@@ -488,48 +512,44 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Liquidate the loan. Pool delegate could liquidate a loan only when loan completes its grace period.
-        Pool delegate can claim its proportion of recovered funds from liquidation using the `claim()` function.
-        @param loan      Address of the loan contract to liquidate
-        @param dlFactory Address of the debt locker factory that is used to pull corresponding debt locker
-     */
-    function triggerDefault(address loan, address dlFactory) external {
-        _isValidDelegateAndProtocolNotPaused();
-        IDebtLocker(debtLockers[loan][dlFactory]).triggerDefault();
-    }
-
-    /**
-        @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
+        @dev Check whether the given `depositAmt` is acceptable based on current liquidityCap.
+        @param depositAmt Amount of tokens (i.e loanAsset type) user is trying to deposit
     */
-    function withdrawFunds() public override {
-        _whenProtocolNotPaused();
-        uint256 withdrawableFunds = _prepareWithdraw();
-
-        if (withdrawableFunds > uint256(0)) { 
-            _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
-
-            interestSum = interestSum.sub(withdrawableFunds);
-
-            _updateFundsTokenBalance();
-        }
+    function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
+        uint256 totalDeposits = _balanceOfLiquidityLocker().add(principalOut);
+        return totalDeposits.add(depositAmt) <= liquidityCap;
     }
 
     /**
-      @dev Set admin
-      @param newAdmin new admin address.
-      @param allowed Status of an admin.
-     */
-    function setAdmin(address newAdmin, bool allowed) external {
-        _isValidDelegateAndProtocolNotPaused();
-        admins[newAdmin] = allowed;
+        @dev Returns information on the stake requirements.
+        @return [0] = Min amount of liquidityAsset coverage from staking required
+                [1] = Present amount of liquidityAsset coverage from Pool Delegate stake
+                [2] = If enough stake is present from Pool Delegate for finalization
+                [3] = Staked BPTs required for minimum liquidityAsset coverage
+                [4] = Current staked BPTs
+    */
+    function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
+        return PoolLib.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
     }
 
     /**
-        @dev Transfer any locked funds to the governor.
-        @param token Address of the token that need to reclaimed.
-     */
-    function reclaimERC20(address token) external {
-        PoolLib.reclaimERC20(token, address(liquidityAsset), _globals(superFactory));
+        @dev Calculates BPTs required if burning BPTs for liquidityAsset, given supplied tokenAmountOutRequired.
+        @param  _bPool                        Balancer pool that issues the BPTs
+        @param  _liquidityAsset               Swap out asset (e.g. USDC) to receive when burning BPTs
+        @param  _staker                       Address that deposited BPTs to stakeLocker
+        @param  _stakeLocker                  Escrows BPTs deposited by staker
+        @param  _liquidityAssetAmountRequired Amount of liquidityAsset required to recover
+        @return [0] = poolAmountIn required
+                [1] = poolAmountIn currently staked
+    */
+    function getPoolSharesRequired(
+        address _bPool,
+        address _liquidityAsset,
+        address _staker,
+        address _stakeLocker,
+        uint256 _liquidityAssetAmountRequired
+    ) external view returns (uint256, uint256) {
+        return PoolLib.getPoolSharesRequired(_bPool, _liquidityAsset, _staker, _stakeLocker, _liquidityAssetAmountRequired);
     }
 
     /**
@@ -539,6 +559,10 @@ contract Pool is PoolFDT {
     function isPoolFinalized() external view returns(bool) {
         return poolState == State.Finalized;
     }
+
+    /************************/
+    /*** Helper Functions ***/
+    /************************/
 
     /**
         @dev Utility to convert to WAD precision.

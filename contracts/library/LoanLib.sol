@@ -27,6 +27,10 @@ library LoanLib {
 
     address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
+    /********************************/
+    /*** Lender Utility Functions ***/
+    /********************************/
+
     /**
         @dev If the borrower has not drawn down loan past grace period, return capital to lenders.
         @param loanAsset       IERC20 of the loanAsset
@@ -114,6 +118,26 @@ library LoanLib {
         }
     }
 
+    /**********************************/
+    /*** Governor Utility Functions ***/
+    /**********************************/
+
+    /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+        @param loanAsset Address of loan asset that is supported by the loan in other words denominated currency in which it taking funds.
+        @param globals Instance of the `MapleGlobals` contract.
+     */
+    function reclaimERC20(address token, address loanAsset, IGlobals globals) external {
+        require(msg.sender == globals.governor(), "Loan:UNAUTHORIZED");
+        require(token != loanAsset && token != address(0), "Loan:INVALID_TOKEN");
+        IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
+    }
+
+    /************************/
+    /*** Getter Functions ***/
+    /************************/
+
     /**
         @dev Determines if a default can be triggered.
         @param nextPaymentDue Timestamp of when payment is due
@@ -122,7 +146,7 @@ library LoanLib {
         @param totalSupply    LoanFDT totalSupply
         @return boolean indicating if default can be triggered
     */
-    function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance, uint256 totalSupply) external returns(bool) {
+    function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance, uint256 totalSupply) external view returns(bool) {
 
         bool pastGracePeriod = block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod());
 
@@ -210,17 +234,9 @@ library LoanLib {
         collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - collateralAsset.decimals()));
     }
 
-    /**
-        @dev Transfer any locked funds to the governor.
-        @param token Address of the token that need to reclaimed.
-        @param loanAsset Address of loan asset that is supported by the loan in other words denominated currency in which it taking funds.
-        @param globals Instance of the `MapleGlobals` contract.
-     */
-    function reclaimERC20(address token, address loanAsset, IGlobals globals) external {
-        require(msg.sender == globals.governor(), "Loan:UNAUTHORIZED");
-        require(token != loanAsset && token != address(0), "Loan:INVALID_TOKEN");
-        IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
-    }
+    /************************/
+    /*** Helper Functions ***/
+    /************************/
 
     function _globals(address loanFactory) internal view returns (IGlobals) {
         return IGlobals(ILoanFactory(loanFactory).globals());
