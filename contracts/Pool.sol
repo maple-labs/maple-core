@@ -255,9 +255,9 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Transfer StakeLockerFDTs.
-        @param from Address sending   StakeLockerFDTs
-        @param to   Address receiving StakeLockerFDTs
+        @dev Transfer PoolFDTs.
+        @param from Address sending   PoolFDTs
+        @param to   Address receiving PoolFDTs
         @param wad  Amount of PoolFDTs to transfer
     */
     function _transfer(address from, address to, uint256 wad) internal override {
