@@ -45,6 +45,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     event Unstake(uint256 _amount, address _staker);
     event AllowListUpdated(address _user, bool _status);
 
+    /*****************/
+    /*** Modifiers ***/
+    /*****************/
+
     /** 
         @dev canUnstake enables unstaking in the following conditions:
         1. User is not Pool Delegate and the Pool is in Finalized state.
@@ -75,29 +79,9 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _;
     }
 
-    /** 
-        @dev Internal function to check whether `msg.sender` is allowed to stake.
-    */
-    function _isAllowed(address user) internal view {
-        require(
-            allowed[user] || user == IPool(owner).poolDelegate(), 
-            "StakeLocker:MSG_SENDER_NOT_ALLOWED"
-        );
-    }
-
-    /** 
-        @dev Helper function to return interface of MapleGlobals.
-    */
-    function _globals() internal view returns(IGlobals) {
-        return IGlobals(IPoolFactory(IPool(owner).superFactory()).globals());
-    }
-
-    /**
-        @dev Function to block functionality of functions when protocol is in a paused state.
-    */
-    function _whenProtocolNotPaused() internal {
-        require(!_globals().protocolPaused(), "StakeLocker:PROTOCOL_PAUSED");
-    }
+    /**********************/
+    /*** Pool Functions ***/
+    /**********************/
 
     /**
         @dev Update user status on the allowlist. Only Pool can call this.
@@ -119,6 +103,19 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
+        @dev Updates loss accounting for FDTs after BPTs have been burned. Only Pool can call this function.
+        @param bptsBurned Amount of BPTs that have been burned
+    */
+    function updateLosses(uint256 bptsBurned) isPool external {
+        bptLosses = bptLosses.add(bptsBurned);
+        updateLossesReceived();
+    }
+
+    /************************/
+    /*** Staker Functions ***/
+    /************************/
+
+    /**
         @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
         @param amt Amount of stakeAsset (BPTs) to deposit
     */
@@ -132,6 +129,30 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
         emit Stake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
+    }
+
+    /** 
+        @dev Updates information used to calculate unstake delay.
+        @param who Staker who deposited BPTs
+        @param amt Amount of BPTs staker has deposited
+    */
+    function _updateStakeDate(address who, uint256 amt) internal {
+        uint256 stkDate = stakeDate[who];
+        if (stkDate == uint256(0)) {
+            stakeDate[who] = block.timestamp;
+        } else {
+            uint256 dTime  = block.timestamp.sub(stkDate); 
+            stakeDate[who] = stkDate.add(dTime.mul(amt).div(balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
+        }
+    }
+
+    /**
+        @dev Activates the cooldown period to unstake. It can't be called if the user is not staking.
+    **/
+    function intendToUnstake() external {
+        require(balanceOf(msg.sender) != uint256(0), "StakeLocker:INVALID_BALANCE_ON_COOLDOWN");
+        stakeCooldown[msg.sender] = block.timestamp;
+        emit Cooldown(msg.sender);
     }
 
     /**
@@ -157,44 +178,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
-    /**
-        @dev Activates the cooldown period to unstake. It can't be called if the user is not staking.
-    **/
-    function intendToUnstake() external {
-        require(balanceOf(msg.sender) != uint256(0), "StakeLocker:INVALID_BALANCE_ON_COOLDOWN");
-        stakeCooldown[msg.sender] = block.timestamp;
-        emit Cooldown(msg.sender);
-    }
-
-    /** 
-        @dev Updates information used to calculate unstake delay.
-        @param who Staker who deposited BPTs
-        @param amt Amount of BPTs staker has deposited
-    */
-    function _updateStakeDate(address who, uint256 amt) internal {
-        uint256 stkDate = stakeDate[who];
-        if (stkDate == uint256(0)) {
-            stakeDate[who] = block.timestamp;
-        } else {
-            uint256 dTime  = block.timestamp.sub(stkDate); 
-            stakeDate[who] = stkDate.add(dTime.mul(amt).div(balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
-        }
-    }
-
-    /**
-        @dev Returns information for staker's unstakeable balance.
-        @param staker The address to view information for
-        @return balance Amount of BPTs staker can unstake
-    */
-    function getUnstakeableBalance(address staker) public view returns (uint256 balance) {
-        uint256 bal          = balanceOf(staker);
-        uint256 passedTime   = block.timestamp - stakeDate[staker];
-        uint256 unstakeDelay = _globals().unstakeDelay();
-        uint256 out          = unstakeDelay != uint256(0) ? passedTime.mul(bal).div(unstakeDelay) : bal;
-        balance = out > bal ? bal : out;
-    }
-
-    /**
+     /**
         @dev Withdraws all available FDT interest earned for a token holder.
     */
     function withdrawFunds() public override {
@@ -207,15 +191,6 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
             _updateFundsTokenBalance();
         }
-    }
-
-    /**
-        @dev Updates loss accounting for FDTs after BPTs have been burned. Only Pool can call this function.
-        @param bptsBurned Amount of BPTs that have been burned
-    */
-    function updateLosses(uint256 bptsBurned) isPool external {
-        bptLosses = bptLosses.add(bptsBurned);
-        updateLossesReceived();
     }
 
     /**
@@ -233,6 +208,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         super._transfer(from, to, wad);
     }
 
+    /***********************/
+    /*** Admin Functions ***/
+    /***********************/
+
     /**
         @dev Triggers paused state. Halts functionality for certain functions.
     */
@@ -249,6 +228,27 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         super._unpause();
     }
 
+    /************************/
+    /*** Getter Functions ***/
+    /************************/
+
+    /**
+        @dev Returns information for staker's unstakeable balance.
+        @param staker The address to view information for
+        @return balance Amount of BPTs staker can unstake
+    */
+    function getUnstakeableBalance(address staker) public view returns (uint256 balance) {
+        uint256 bal          = balanceOf(staker);
+        uint256 passedTime   = block.timestamp - stakeDate[staker];
+        uint256 unstakeDelay = _globals().unstakeDelay();
+        uint256 out          = unstakeDelay != uint256(0) ? passedTime.mul(bal).div(unstakeDelay) : bal;
+        balance = out > bal ? bal : out;
+    }
+
+    /************************/
+    /*** Helper Functions ***/
+    /************************/
+
     /**
         @dev View function to indicate if cooldown period has passed for msg.sender
     */
@@ -263,4 +263,29 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function _isValidAdminOrPoolDelegate() internal view {
         require(msg.sender == IPool(owner).poolDelegate() || IPool(owner).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
     }
+
+    /** 
+        @dev Internal function to check whether `msg.sender` is allowed to stake.
+    */
+    function _isAllowed(address user) internal view {
+        require(
+            allowed[user] || user == IPool(owner).poolDelegate(), 
+            "StakeLocker:MSG_SENDER_NOT_ALLOWED"
+        );
+    }
+
+    /** 
+        @dev Helper function to return interface of MapleGlobals.
+    */
+    function _globals() internal view returns(IGlobals) {
+        return IGlobals(IPoolFactory(IPool(owner).superFactory()).globals());
+    }
+
+    /**
+        @dev Function to block functionality of functions when protocol is in a paused state.
+    */
+    function _whenProtocolNotPaused() internal {
+        require(!_globals().protocolPaused(), "StakeLocker:PROTOCOL_PAUSED");
+    }
+
 }

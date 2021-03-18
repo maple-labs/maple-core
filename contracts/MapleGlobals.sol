@@ -89,6 +89,10 @@ contract MapleGlobals {
         cooldownPeriod       = 10 days;
     }
 
+    /************************/
+    /*** Setter Functions ***/
+    /************************/
+
     /**
         @dev Update the `cooldownPeriod` state variable.
         @param newCooldownPeriod New value for the cool down period.
@@ -178,30 +182,6 @@ contract MapleGlobals {
     */
     function setDefaultUniswapPath(address from, address to, address mid) external isGovernor {
         defaultUniswapPath[from][to] = mid;
-    }
-
-    /**
-        @dev Check the validity of a subFactory as it relates to a superFactory.
-        @param superFactory The core factory (e.g. PoolFactory, LoanFactory)
-        @param subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory)
-        @param factoryType  The type expected for the subFactory. References listed below.
-            0 = COLLATERAL_LOCKER_FACTORY
-            1 = DEBT_LOCKER_FACTORY
-            2 = FUNDING_LOCKER_FACTORY
-            3 = LIQUIDUITY_LOCKER_FACTORY
-            4 = STAKE_LOCKER_FACTORY
-    */
-    function isValidSubFactory(address superFactory, address subFactory, uint8 factoryType) external view returns(bool) {
-        return validSubFactories[superFactory][subFactory] && ISubFactory(subFactory).factoryType() == factoryType;
-    }
-
-    /**
-        @dev Check the validity of a calculator.
-        @param calc     Calculator address
-        @param calcType Calculator type
-    */
-    function isValidCalc(address calc, uint8 calcType) external view returns(bool) {
-        return validCalcs[calc] && ICalc(calc).calcType() == calcType;
     }
 
     /**
@@ -312,6 +292,30 @@ contract MapleGlobals {
     }
 
     /**
+        @dev Set a new unstake delay value. Only Governor can call.
+        @param _unstakeDelay New unstake delay
+    */
+    function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
+        _checkTimeRange(_unstakeDelay);
+        unstakeDelay = _unstakeDelay;
+        emit GlobalsParamSet("UNSTAKE_DELAY", _unstakeDelay);
+    }
+
+    /**
+        @dev Update a price feed's oracle.
+        @param asset  Asset to update price for
+        @param oracle New oracle to use
+    */
+    function setPriceOracle(address asset, address oracle) public isGovernor {
+        oracleFor[asset] = oracle;
+        emit OracleSet(asset, oracle);
+    }
+
+    /************************************/
+    /*** Transfer Ownership Functions ***/
+    /************************************/
+
+    /**
         @dev Set a new pending Governor. This address can become governor if they accept. Only Governor can call.
         @param _pendingGovernor Address of new Governor
     */
@@ -331,15 +335,9 @@ contract MapleGlobals {
         emit GovernorAccepted(governor);
     }
 
-    /**
-        @dev Set a new unstake delay value. Only Governor can call.
-        @param _unstakeDelay New unstake delay
-    */
-    function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
-        _checkTimeRange(_unstakeDelay);
-        unstakeDelay = _unstakeDelay;
-        emit GlobalsParamSet("UNSTAKE_DELAY", _unstakeDelay);
-    }
+    /************************/
+    /*** Getter Functions ***/
+    /************************/
 
     /**
         @dev Fetch price for asset from Chainlink oracles.
@@ -351,14 +349,32 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update a price feed's oracle.
-        @param asset  Asset to update price for
-        @param oracle New oracle to use
+        @dev Check the validity of a subFactory as it relates to a superFactory.
+        @param superFactory The core factory (e.g. PoolFactory, LoanFactory)
+        @param subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory)
+        @param factoryType  The type expected for the subFactory. References listed below.
+            0 = COLLATERAL_LOCKER_FACTORY
+            1 = DEBT_LOCKER_FACTORY
+            2 = FUNDING_LOCKER_FACTORY
+            3 = LIQUIDUITY_LOCKER_FACTORY
+            4 = STAKE_LOCKER_FACTORY
     */
-    function setPriceOracle(address asset, address oracle) public isGovernor {
-        oracleFor[asset] = oracle;
-        emit OracleSet(asset, oracle);
+    function isValidSubFactory(address superFactory, address subFactory, uint8 factoryType) external view returns(bool) {
+        return validSubFactories[superFactory][subFactory] && ISubFactory(subFactory).factoryType() == factoryType;
     }
+
+    /**
+        @dev Check the validity of a calculator.
+        @param calc     Calculator address
+        @param calcType Calculator type
+    */
+    function isValidCalc(address calc, uint8 calcType) external view returns(bool) {
+        return validCalcs[calc] && ICalc(calc).calcType() == calcType;
+    }
+
+    /************************/
+    /*** Helper Functions ***/
+    /************************/
 
     function _checkPercentageRange(uint256 percentage) internal {
         require(percentage >= uint256(0) && percentage <= uint256(10_000), "MapleGlobals:PCT_BOUND_CHECK");

@@ -132,6 +132,10 @@ contract Pool is PoolFDT {
         emit PoolStateChanged(poolState);
     }
 
+    /*******************************/
+    /*** Pool Delegate Functions ***/
+    /*******************************/
+
     /**
         @dev Finalize the Pool, enabling deposits. Checks Pool Delegate amount deposited to StakeLocker.
     */
@@ -145,125 +149,11 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Returns information on the stake requirements.
-        @return [0] = Min amount of liquidityAsset coverage from staking required
-                [1] = Present amount of liquidityAsset coverage from Pool Delegate stake
-                [2] = If enough stake is present from Pool Delegate for finalization
-                [3] = Staked BPTs required for minimum liquidityAsset coverage
-                [4] = Current staked BPTs
+        @dev Open Pool to public. Once it is set to `true` it cannot be set back to `false`.
     */
-    function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
-        return PoolLib.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
-    }
-
-    /**
-        @dev Calculates BPTs required if burning BPTs for liquidityAsset, given supplied tokenAmountOutRequired.
-        @param  _bPool                        Balancer pool that issues the BPTs
-        @param  _liquidityAsset               Swap out asset (e.g. USDC) to receive when burning BPTs
-        @param  _staker                       Address that deposited BPTs to stakeLocker
-        @param  _stakeLocker                  Escrows BPTs deposited by staker
-        @param  _liquidityAssetAmountRequired Amount of liquidityAsset required to recover
-        @return [0] = poolAmountIn required
-                [1] = poolAmountIn currently staked
-    */
-    function getPoolSharesRequired(
-        address _bPool,
-        address _liquidityAsset,
-        address _staker,
-        address _stakeLocker,
-        uint256 _liquidityAssetAmountRequired
-    ) external view returns (uint256, uint256) {
-        return PoolLib.getPoolSharesRequired(_bPool, _liquidityAsset, _staker, _stakeLocker, _liquidityAssetAmountRequired);
-    }
-
-    /**
-        @dev Check whether the given `depositAmt` is acceptable based on current liquidityCap.
-        @param depositAmt Amount of tokens (i.e loanAsset type) user is trying to deposit
-    */
-    function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
-        uint256 totalDeposits = _balanceOfLiquidityLocker().add(principalOut);
-        return totalDeposits.add(depositAmt) <= liquidityCap;
-    }
-
-    /**
-        @dev Set `liquidityCap`, Only allowed by the Pool Delegate or the admin.
-        @param newLiquidityCap New liquidityCap value
-    */
-    function setLiquidityCap(uint256 newLiquidityCap) external {
-        _whenProtocolNotPaused();
-        _isValidDelegateOrAdmin();
-        liquidityCap = newLiquidityCap;
-        emit LiquidityCapSet(newLiquidityCap);
-    }
-
-    /**
-        @dev Liquidity providers can deposit liquidityAsset into the LiquidityLocker, minting FDTs.
-        @param amt Amount of liquidityAsset to deposit
-    */
-    function deposit(uint256 amt) external {
-        _whenProtocolNotPaused();
-        _isValidState(State.Finalized);
-        require(openToPublic || allowedLiquidityProviders[msg.sender], "Pool:INVALID_LP");
-        require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
-        liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
-        uint256 wad = _toWad(amt);
-
-        PoolLib.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
-        _mint(msg.sender, wad);
-        _emitBalanceUpdatedEvent();
-    }
-
-    /**
-        @dev Liquidity providers can withdraw liquidityAsset from the LiquidityLocker, burning FDTs.
-        @param amt Amount of liquidityAsset to withdraw
-    */
-    function withdraw(uint256 amt) external {
-        _whenProtocolNotPaused();
-        PoolLib.isCooldownFinished(depositCooldown[msg.sender], _globals(superFactory));
-        uint256 wad    = _toWad(amt);
-        uint256 fdtAmt = wad == totalSupply() && wad > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
-        require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
-        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
-
-        uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // FDT accounting interest
-        uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty
-        uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Calculate total penalty
-
-        depositCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what transfer amount is
-
-        _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance
-        withdrawFunds();            // Transfer full entitled interest, decrement `interestSum`
-
-        interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount
-        updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`
-
-        // Amount that is due after penalties and realized losses are accounted for. 
-        // Total penalty is distributed to other LPs as interest, recognizedLosses are absorbed by the LP.
-        uint256 due = amt.sub(totPenalty).sub(recognizeLosses());
-
-        // Transfer amt - totPenalty - recognizedLosses
-        _transferLiquidityLockerFunds(msg.sender, due);
-
-        _emitBalanceUpdatedEvent();
-    }
-
-    /**
-        @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
-    **/
-    function intendToWithdraw() external {
-        PoolLib.intendToWithdraw(depositCooldown, balanceOf(msg.sender));
-    }
-
-    /**
-        @dev Transfer PoolFDTs.
-        @param from Address sending   PoolFDTs
-        @param to   Address receiving PoolFDTs
-        @param wad  Amount of PoolFDTs to transfer
-    */
-    function _transfer(address from, address to, uint256 wad) internal override {
-        _whenProtocolNotPaused();
-        PoolLib.prepareTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
-        super._transfer(from, to, wad);
+    function openPoolToPublic() external {
+        _isValidDelegateAndProtocolNotPaused();
+        openToPublic = true;
     }
 
     /**
@@ -281,32 +171,14 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Helper function if a claim has been made and there is a non-zero defaultSuffered amount.
-        @param loan            Address of loan that has defaulted
-        @param defaultSuffered Losses suffered from default after liquidation
-    */
-    function _handleDefault(address loan, uint256 defaultSuffered) internal {
-
-        (uint256 bptsBurned, uint256 bptsReturned, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
-
-        // Handle shortfall in StakeLocker, updated LiquidityLocker FDT loss accounting for liquidityAsset
-        if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
-            bptShortfall = bptShortfall.add(defaultSuffered - liquidityAssetRecoveredFromBurn);
-            updateLossesReceived();
-        }
-
-        // Transfer USDC to liquidityLocker
-        liquidityAsset.safeTransfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
-
-        principalOut = principalOut.sub(defaultSuffered);  // Subtract rest of Loan's principal from principalOut
-
-        emit DefaultSuffered(
-            loan,                            // Which loan defaultSuffered is from
-            defaultSuffered,                 // Total default suffered from loan by Pool after liquidation
-            bptsBurned,                      // Amount of BPTs burned from stakeLocker
-            bptsReturned,                    // Remaining BPTs in stakeLocker post-burn                      
-            liquidityAssetRecoveredFromBurn  // Amount of liquidityAsset recovered from burning BPTs
-        );
+        @dev Liquidate the loan. Pool delegate could liquidate a loan only when loan completes its grace period.
+        Pool delegate can claim its proportion of recovered funds from liquidation using the `claim()` function.
+        @param loan      Address of the loan contract to liquidate
+        @param dlFactory Address of the debt locker factory that is used to pull corresponding debt locker
+     */
+    function triggerDefault(address loan, address dlFactory) external {
+        _isValidDelegateAndProtocolNotPaused();
+        IDebtLocker(debtLockers[loan][dlFactory]).triggerDefault();
     }
 
     /**
@@ -368,6 +240,35 @@ contract Pool is PoolFDT {
     }
 
     /**
+        @dev Helper function if a claim has been made and there is a non-zero defaultSuffered amount.
+        @param loan            Address of loan that has defaulted
+        @param defaultSuffered Losses suffered from default after liquidation
+    */
+    function _handleDefault(address loan, uint256 defaultSuffered) internal {
+
+        (uint256 bptsBurned, uint256 bptsReturned, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
+
+        // Handle shortfall in StakeLocker, updated LiquidityLocker FDT loss accounting for liquidityAsset
+        if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
+            bptShortfall = bptShortfall.add(defaultSuffered - liquidityAssetRecoveredFromBurn);
+            updateLossesReceived();
+        }
+
+        // Transfer USDC to liquidityLocker
+        liquidityAsset.safeTransfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
+
+        principalOut = principalOut.sub(defaultSuffered);  // Subtract rest of Loan's principal from principalOut
+
+        emit DefaultSuffered(
+            loan,                            // Which loan defaultSuffered is from
+            defaultSuffered,                 // Total default suffered from loan by Pool after liquidation
+            bptsBurned,                      // Amount of BPTs burned from stakeLocker
+            bptsReturned,                    // Remaining BPTs in stakeLocker post-burn                      
+            liquidityAssetRecoveredFromBurn  // Amount of liquidityAsset recovered from burning BPTs
+        );
+    }
+
+    /**
         @dev Pool Delegate triggers deactivation, permanently shutting down the pool. Must have less that 100 units of liquidityAsset principalOut.
         @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
     */
@@ -380,16 +281,19 @@ contract Pool is PoolFDT {
         emit PoolStateChanged(poolState);
     }
 
-    /** 
-        @dev Calculate the amount of funds to deduct from total claimable amount based on how
-             the effective length of time a user has been in a pool. This is a linear decrease
-             until block.timestamp - depositDate[who] >= penaltyDelay, after which it returns 0.
-        @param  amt Total claimable amount 
-        @param  who Address of user claiming
-        @return penalty Total penalty
+    /**************************************/
+    /*** Pool Delegate Setter Functions ***/
+    /**************************************/
+
+    /**
+        @dev Set `liquidityCap`, Only allowed by the Pool Delegate or the admin.
+        @param newLiquidityCap New liquidityCap value
     */
-    function calcWithdrawPenalty(uint256 amt, address who) public view returns (uint256 penalty) {
-        return PoolLib.calcWithdrawPenalty(lockupPeriod, penaltyDelay, amt, depositDate[who]);
+    function setLiquidityCap(uint256 newLiquidityCap) external {
+        _whenProtocolNotPaused();
+        _isValidDelegateOrAdmin();
+        liquidityCap = newLiquidityCap;
+        emit LiquidityCapSet(newLiquidityCap);
     }
 
     /**
@@ -422,14 +326,6 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Open Pool to public. Once it is set to `true` it cannot be set back to `false`.
-    */
-    function openPoolToPublic() external {
-        _isValidDelegateAndProtocolNotPaused();
-        openToPublic = true;
-    }
-
-    /**
         @dev Update user status on Pool allowlist. Only Pool Delegate can call this function.
         @param user   The address to set status for.
         @param status The status of user on allowlist.
@@ -448,6 +344,134 @@ contract Pool is PoolFDT {
     function setAllowlistStakeLocker(address user, bool status) external {
         _isValidDelegateAndProtocolNotPaused();
         IStakeLocker(stakeLocker).setAllowlist(user, status);
+    }
+
+    /**
+        @dev Set admin
+        @param newAdmin new admin address.
+        @param allowed Status of an admin.
+    */
+    function setAdmin(address newAdmin, bool allowed) external {
+        _isValidDelegateAndProtocolNotPaused();
+        admins[newAdmin] = allowed;
+    }
+
+    /************************************/
+    /*** Liquidity Provider Functions ***/
+    /************************************/
+
+    /**
+        @dev Liquidity providers can deposit liquidityAsset into the LiquidityLocker, minting FDTs.
+        @param amt Amount of liquidityAsset to deposit
+    */
+    function deposit(uint256 amt) external {
+        _whenProtocolNotPaused();
+        _isValidState(State.Finalized);
+        require(openToPublic || allowedLiquidityProviders[msg.sender], "Pool:INVALID_LP");
+        require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
+        liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
+        uint256 wad = _toWad(amt);
+
+        PoolLib.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
+        _mint(msg.sender, wad);
+        _emitBalanceUpdatedEvent();
+    }
+
+    /**
+        @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
+    **/
+    function intendToWithdraw() external {
+        PoolLib.intendToWithdraw(depositCooldown, balanceOf(msg.sender));
+    }
+
+    /**
+        @dev Liquidity providers can withdraw liquidityAsset from the LiquidityLocker, burning FDTs.
+        @param amt Amount of liquidityAsset to withdraw
+    */
+    function withdraw(uint256 amt) external {
+        _whenProtocolNotPaused();
+        PoolLib.isCooldownFinished(depositCooldown[msg.sender], _globals(superFactory));
+        uint256 wad    = _toWad(amt);
+        uint256 fdtAmt = wad == totalSupply() && wad > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
+        require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
+        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
+
+        uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // FDT accounting interest
+        uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty
+        uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Calculate total penalty
+
+        depositCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what transfer amount is
+
+        _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance
+        withdrawFunds();            // Transfer full entitled interest, decrement `interestSum`
+
+        interestSum = interestSum.add(totPenalty);  // Update the `interestSum` with the penalty amount
+        updateFundsReceived();                      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`
+
+        // Amount that is due after penalties and realized losses are accounted for. 
+        // Total penalty is distributed to other LPs as interest, recognizedLosses are absorbed by the LP.
+        uint256 due = amt.sub(totPenalty).sub(recognizeLosses());
+
+        // Transfer amt - totPenalty - recognizedLosses
+        _transferLiquidityLockerFunds(msg.sender, due);
+
+        _emitBalanceUpdatedEvent();
+    }
+
+    /**
+        @dev Transfer PoolFDTs.
+        @param from Address sending   PoolFDTs
+        @param to   Address receiving PoolFDTs
+        @param wad  Amount of PoolFDTs to transfer
+    */
+    function _transfer(address from, address to, uint256 wad) internal override {
+        _whenProtocolNotPaused();
+        PoolLib.prepareTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
+        super._transfer(from, to, wad);
+    }
+
+    /**
+        @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
+    */
+    function withdrawFunds() public override {
+        _whenProtocolNotPaused();
+        uint256 withdrawableFunds = _prepareWithdraw();
+
+        if (withdrawableFunds > uint256(0)) { 
+            _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
+
+            interestSum = interestSum.sub(withdrawableFunds);
+
+            _updateFundsTokenBalance();
+        }
+    }
+
+    /**************************/
+    /*** Governor Functions ***/
+    /**************************/
+
+    /**
+        @dev Transfer any locked funds to the governor.
+        @param token Address of the token that need to reclaimed.
+     */
+    function reclaimERC20(address token) external {
+        PoolLib.reclaimERC20(token, address(liquidityAsset), _globals(superFactory));
+    }
+
+    /*************************/
+    /*** Getter Functions ***/
+    /*************************/
+
+    /** 
+        @dev Calculate the amount of funds to deduct from total claimable amount based on how
+             the effective length of time a user has been in a pool. This is a linear decrease
+             until block.timestamp - depositDate[who] >= penaltyDelay, after which it returns 0.
+        @param  amt Total claimable amount 
+        @param  who Address of user claiming
+        @return penalty Total penalty
+    */
+    function calcWithdrawPenalty(uint256 amt, address who) public view returns (uint256 penalty) {
+        return PoolLib.calcWithdrawPenalty(lockupPeriod, penaltyDelay, amt, depositDate[who]);
     }
 
     /**
@@ -488,48 +512,44 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Liquidate the loan. Pool delegate could liquidate a loan only when loan completes its grace period.
-        Pool delegate can claim its proportion of recovered funds from liquidation using the `claim()` function.
-        @param loan      Address of the loan contract to liquidate
-        @param dlFactory Address of the debt locker factory that is used to pull corresponding debt locker
-     */
-    function triggerDefault(address loan, address dlFactory) external {
-        _isValidDelegateAndProtocolNotPaused();
-        IDebtLocker(debtLockers[loan][dlFactory]).triggerDefault();
-    }
-
-    /**
-        @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
+        @dev Check whether the given `depositAmt` is acceptable based on current liquidityCap.
+        @param depositAmt Amount of tokens (i.e loanAsset type) user is trying to deposit
     */
-    function withdrawFunds() public override {
-        _whenProtocolNotPaused();
-        uint256 withdrawableFunds = _prepareWithdraw();
-
-        if (withdrawableFunds > uint256(0)) { 
-            _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
-
-            interestSum = interestSum.sub(withdrawableFunds);
-
-            _updateFundsTokenBalance();
-        }
+    function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
+        uint256 totalDeposits = _balanceOfLiquidityLocker().add(principalOut);
+        return totalDeposits.add(depositAmt) <= liquidityCap;
     }
 
     /**
-      @dev Set admin
-      @param newAdmin new admin address.
-      @param allowed Status of an admin.
-     */
-    function setAdmin(address newAdmin, bool allowed) external {
-        _isValidDelegateAndProtocolNotPaused();
-        admins[newAdmin] = allowed;
+        @dev Returns information on the stake requirements.
+        @return [0] = Min amount of liquidityAsset coverage from staking required
+                [1] = Present amount of liquidityAsset coverage from Pool Delegate stake
+                [2] = If enough stake is present from Pool Delegate for finalization
+                [3] = Staked BPTs required for minimum liquidityAsset coverage
+                [4] = Current staked BPTs
+    */
+    function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
+        return PoolLib.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
     }
 
     /**
-        @dev Transfer any locked funds to the governor.
-        @param token Address of the token that need to reclaimed.
-     */
-    function reclaimERC20(address token) external {
-        PoolLib.reclaimERC20(token, address(liquidityAsset), _globals(superFactory));
+        @dev Calculates BPTs required if burning BPTs for liquidityAsset, given supplied tokenAmountOutRequired.
+        @param  _bPool                        Balancer pool that issues the BPTs
+        @param  _liquidityAsset               Swap out asset (e.g. USDC) to receive when burning BPTs
+        @param  _staker                       Address that deposited BPTs to stakeLocker
+        @param  _stakeLocker                  Escrows BPTs deposited by staker
+        @param  _liquidityAssetAmountRequired Amount of liquidityAsset required to recover
+        @return [0] = poolAmountIn required
+                [1] = poolAmountIn currently staked
+    */
+    function getPoolSharesRequired(
+        address _bPool,
+        address _liquidityAsset,
+        address _staker,
+        address _stakeLocker,
+        uint256 _liquidityAssetAmountRequired
+    ) external view returns (uint256, uint256) {
+        return PoolLib.getPoolSharesRequired(_bPool, _liquidityAsset, _staker, _stakeLocker, _liquidityAssetAmountRequired);
     }
 
     /**
@@ -539,6 +559,10 @@ contract Pool is PoolFDT {
     function isPoolFinalized() external view returns(bool) {
         return poolState == State.Finalized;
     }
+
+    /************************/
+    /*** Helper Functions ***/
+    /************************/
 
     /**
         @dev Utility to convert to WAD precision.
