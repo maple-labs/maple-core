@@ -121,7 +121,7 @@ contract MapleGlobals {
 
     /**
         @dev Update the valid StakingRewards mapping. Only Governor can call.
-        @param stakingRewards Address of StakingRewards
+        @param stakingRewards Address of `StakingRewards` contract.
         @param valid          The new bool value for validating loanFactory.
     */
     function setStakingRewards(address stakingRewards, bool valid) external isGovernor {

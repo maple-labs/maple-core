@@ -62,7 +62,7 @@ contract DebtLocker {
             newDefaultSuffered = defaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan_defaultSuffered, loan.totalSupply());
         }
         
-        // Account for any transfers into Loan that have occured since last call
+        // Account for any transfers into Loan that have occurred since last call
         loan.updateFundsReceived();
 
         if(loan.withdrawableFundsOf(address(this)) > uint256(0)) {
