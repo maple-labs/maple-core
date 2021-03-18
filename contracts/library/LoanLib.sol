@@ -78,8 +78,9 @@ library LoanLib {
         // Pull collateralAsset from collateralLocker
         ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt);
 
-        if (address(collateralAsset) != loanAsset && liquidationAmt > 0) {
-            collateralAsset.safeIncreaseAllowance(UNISWAP_ROUTER, liquidationAmt);
+        if (address(collateralAsset) != loanAsset && liquidationAmt > uint256(0)) {
+            collateralAsset.safeApprove(UNISWAP_ROUTER, uint256(0));
+            collateralAsset.safeApprove(UNISWAP_ROUTER, liquidationAmt);
 
             IGlobals globals = _globals(superFactory);
 
