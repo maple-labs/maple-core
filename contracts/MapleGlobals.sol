@@ -95,8 +95,7 @@ contract MapleGlobals {
      */
     // Note: This change will affect existing cool down period for the LPs/stakers who already applied for the withdraw/unstake.
     function setCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
-        // TODO: What will be the sanity check range for it.
-        require(newCooldownPeriod != uint256(0), "MapleGlobals:ZERO_VALUE_NOT_ALLOWED");
+        _checkTimeRange(newCooldownPeriod); 
         cooldownPeriod = newCooldownPeriod;
         emit GlobalsParamSet("COOLDOWN_PERIOD", newCooldownPeriod);
     }
@@ -362,10 +361,10 @@ contract MapleGlobals {
     }
 
     function _checkPercentageRange(uint256 percentage) internal {
-        require(percentage >= uint256(0) && percentage <= uint256(10_000), "MapleGlobals: BOUND_CHECK_FAIL");
+        require(percentage >= uint256(0) && percentage <= uint256(10_000), "MapleGlobals:PCT_BOUND_CHECK");
     }
 
     function _checkTimeRange(uint256 duration) internal  {
-        require(duration >= 1 days, "MapleGlobals: SHOULD_GTE_ONE");
+        require(duration >= 1 days, "MapleGlobals:TIME_BOUND_CHECK");
     }
 }

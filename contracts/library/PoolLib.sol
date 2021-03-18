@@ -527,7 +527,7 @@ library PoolLib {
         @param globals Instance of the `MapleGlobals` contract.
      */
     function reclaimERC20(address token, address liquidityAsset, IGlobals globals) external {
-        require(msg.sender == globals.governor(), "Pool:NOT_AUTHORISED");
+        require(msg.sender == globals.governor(), "Pool:UNAUTHORIZED");
         require(token != liquidityAsset && token != address(0), "Pool:INVALID_TOKEN");
         IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
     }
