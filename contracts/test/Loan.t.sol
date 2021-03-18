@@ -581,16 +581,19 @@ contract LoanTest is TestUtil {
 
         Governor fakeGov = new Governor();
 
-        uint256 beforeBalanceDAI  = IERC20(DAI).balanceOf(address(gov));
+        uint256 beforeBalanceDAI   = IERC20(DAI).balanceOf(address(gov));
+        uint256 beforeBalanceWETH  = IERC20(WETH).balanceOf(address(gov));
 
         assertTrue(!fakeGov.try_reclaimERC20(address(loan), DAI));
         assertTrue(    !gov.try_reclaimERC20(address(loan), USDC));
         assertTrue(    !gov.try_reclaimERC20(address(loan), address(0)));
-        assertTrue(    !gov.try_reclaimERC20(address(loan), WETH));
+        assertTrue(     gov.try_reclaimERC20(address(loan), WETH));
         assertTrue(     gov.try_reclaimERC20(address(loan), DAI));
 
-        uint256 afterBalanceDAI  = IERC20(DAI).balanceOf(address(gov));
+        uint256 afterBalanceDAI   = IERC20(DAI).balanceOf(address(gov));
+        uint256 afterBalanceWETH  = IERC20(WETH).balanceOf(address(gov));
 
-        assertEq(afterBalanceDAI - beforeBalanceDAI,   1000 * WAD);
+        assertEq(afterBalanceDAI - beforeBalanceDAI,    1000 * WAD);
+        assertEq(afterBalanceWETH - beforeBalanceWETH,   100 * WAD);
     }
 }

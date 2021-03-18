@@ -221,7 +221,7 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         PoolLib.isCooldownFinished(depositCooldown[msg.sender], _globals(superFactory));
         uint256 wad    = _toWad(amt);
-        uint256 fdtAmt = totalSupply() == wad && amt > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
+        uint256 fdtAmt = wad == totalSupply() && wad > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
 
@@ -255,10 +255,10 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Transfer StakeLockerFDTs.
-        @param from Address sending   StakeLockerFDTs
-        @param to   Address receiving StakeLockerFDTs
-        @param wad  Amount of FDTs to transfer
+        @dev Transfer PoolFDTs.
+        @param from Address sending   PoolFDTs
+        @param to   Address receiving PoolFDTs
+        @param wad  Amount of PoolFDTs to transfer
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
@@ -609,8 +609,8 @@ contract Pool is PoolFDT {
     }
 
     function _isValidDelegateAndProtocolNotPaused() internal {
-        _whenProtocolNotPaused();
         _isValidDelegate();
+        _whenProtocolNotPaused();
     }
 
     function _transferLiquidityLockerFunds(address to, uint256 value) internal {

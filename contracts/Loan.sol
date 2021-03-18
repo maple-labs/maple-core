@@ -424,7 +424,7 @@ contract Loan is FDT, Pausable {
         @param token Address of the token that need to reclaimed.
      */
     function reclaimERC20(address token) external {
-        LoanLib.reclaimERC20(token, address(loanAsset), address(collateralAsset), _globals(superFactory));
+        LoanLib.reclaimERC20(token, address(loanAsset), _globals(superFactory));
     }
 
     /**

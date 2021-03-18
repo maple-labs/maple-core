@@ -53,17 +53,16 @@ contract DebtLocker {
     function claim() external isOwner returns(uint256[7] memory) {
 
         // Initialize newDefaultSuffered as zero
-        uint256 newDefaultSuffered = uint256(0);
-
-        // Avoid stack too deep
+        uint256 newDefaultSuffered   = uint256(0);
         uint256 loan_defaultSuffered = loan.defaultSuffered();
     
-        // If a default has occured, update storage variable and update memory variable from zero for return
+        // If a default has occurred, update storage variable and update memory variable from zero for return.
+        // Default will occur only once so below statement will only be executed once
         if (defaultSuffered == uint256(0) && loan_defaultSuffered > uint256(0)) {
             newDefaultSuffered = defaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan_defaultSuffered, loan.totalSupply());
         }
         
-        // Account for any transfers into Loan that have occured since last call
+        // Account for any transfers into Loan that have occurred since last call
         loan.updateFundsReceived();
 
         if(loan.withdrawableFundsOf(address(this)) > uint256(0)) {
@@ -95,10 +94,11 @@ contract DebtLocker {
             // Calculate distributed amounts, transfer the asset, and return metadata
             uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess).add(newAmountRecovered);
 
-            // Calculate portions based on FDT claim
+            // Calculate payment portions based on FDT claim
             newInterest  = calcAllotment(newInterest,  claimBal, sum);
             newPrincipal = calcAllotment(newPrincipal, claimBal, sum);
 
+            // Calculate one-time portions based on FDT claim
             newFee             = newFee             == uint256(0) ? uint256(0) : calcAllotment(newFee,             claimBal, sum);
             newExcess          = newExcess          == uint256(0) ? uint256(0) : calcAllotment(newExcess,          claimBal, sum);
             newAmountRecovered = newAmountRecovered == uint256(0) ? uint256(0) : calcAllotment(newAmountRecovered, claimBal, sum);
