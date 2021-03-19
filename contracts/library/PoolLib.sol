@@ -22,8 +22,9 @@ library PoolLib {
     uint256 public constant WAD         = 10 ** 18;
     uint8   public constant DL_FACTORY  = 1;         // Factory type of `DebtLockerFactory`
 
-    event LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
-    event Cooldown(address staker);
+    event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
+    event DepositDateUpdated(address indexed lp, uint256 depositDate);
+    event           Cooldown(address indexed lp);
 
     /***************************************/
     /*** Pool Delegate Utility Functions ***/
@@ -227,12 +228,15 @@ library PoolLib {
         @param  who         Address of user depositing
     */
     function updateDepositDate(mapping(address => uint256) storage depositDate, uint256 balance, uint256 amt, address who) internal {
-        if (depositDate[who] == 0) {
+        uint256 prevDate = depositDate[who];
+        if (prevDate == 0) {
             depositDate[who] = block.timestamp;
+            emit DepositDateUpdated(who, block.timestamp);
         } else {
-            uint256 depDate  = depositDate[who];
-            uint256 dTime    = block.timestamp.sub(depDate);
-            depositDate[who] = depDate.add(dTime.mul(amt).div(balance + amt));  // depDate + (now - depDate) * (amt / (balance + amt))
+            uint256 dTime    = block.timestamp.sub(prevDate);
+            uint256 newDate  = prevDate.add(dTime.mul(amt).div(balance + amt));  // prevDate + (now - prevDate) * (amt / (balance + amt))
+            depositDate[who] = newDate;
+            emit DepositDateUpdated(who, newDate);
         }
     }
 
