@@ -22,6 +22,12 @@ interface IStakeLocker is IERC20 {
 
     function setAllowlist(address, bool) external;
 
+    function openStakeLockerToPublic() external;
+
+    function openToPublic() external view returns (bool);
+
+    function allowed(address) external view returns (bool);
+
     function getUnstakeableBalance(address) external view returns (uint256);
 
     function updateLosses(uint256) external;
