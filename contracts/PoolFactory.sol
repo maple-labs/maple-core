@@ -18,10 +18,9 @@ contract PoolFactory is Pausable {
     uint256  public poolsCreated;  // Incrementor for number of Pools created
     IGlobals public globals;       // MapleGlobals contract
 
-    mapping(uint256 => address) public pools;   // Pools address mapping
-    mapping(address => bool)    public isPool;  // Used to check if a Pool was instantiated from this contract
-
-    mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
+    mapping(uint256 => address) public pools;   // Map to keep `Pool` contract corresponds to its index.
+    mapping(address => bool)    public isPool;  // Used to check if a `Pool` was instantiated from this factory.
+    mapping(address => bool)    public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
 
     event PoolCreated(
         string  indexed tUUID,
