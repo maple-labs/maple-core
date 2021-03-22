@@ -81,7 +81,7 @@ contract Pool is PoolFDT {
     /**
         @dev Constructor for a Pool.
         @param  _poolDelegate   Address that has manager privileges of the Pool
-        @param  _liquidityAsset Asset used to fund the Pool, It get escrowed in `LiquidityLocker`
+        @param  _liquidityAsset Asset used to fund the Pool, It gets escrowed in `LiquidityLocker`
         @param  _stakeAsset     Asset escrowed in StakeLocker
         @param  _slFactory      Factory used to instantiate StakeLocker
         @param  _llFactory      Factory used to instantiate LiquidityLocker
