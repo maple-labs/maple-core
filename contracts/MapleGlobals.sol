@@ -30,7 +30,7 @@ contract MapleGlobals {
     uint256 public minLoanEquity;        // Minimum amount of LoanFDTs required to trigger liquidations (basis points percentage of totalSupply)
     uint256 public cooldownPeriod;       // Period (in secs) after that stakers/LPs are allowed to unstake/withdraw their funds from the StakingRewards/Pool contract
 
-    bool public protocolPaused;  // Switch to pausedthe functionality of the entire protocol
+    bool public protocolPaused;  // Switch to pause the functionality of the entire protocol
 
     mapping(address => bool) public isValidLoanAsset;        // Mapping of valid loanAssets
     mapping(address => bool) public isValidCollateralAsset;  // Mapping of valid collateralAssets

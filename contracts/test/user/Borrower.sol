@@ -15,6 +15,14 @@ contract Borrower {
     /************************/
     /*** DIRECT FUNCTIONS ***/
     /************************/
+
+    function pause(address loan) external {
+        ILoan(loan).pause();
+    }
+
+    function unpause(address loan) external {
+        ILoan(loan).unpause();
+    }
     
     function makePayment(address loan) external {
         ILoan(loan).makePayment();
@@ -99,4 +107,8 @@ contract Borrower {
         (ok,) = address(locker).call(abi.encodeWithSignature(sig, dst, amt));
     }
 
+    function try_setAdmin(address loan, address newAdmin, bool status) external returns(bool ok) {
+        string memory sig = "setAdmin(address,bool)";
+        (ok,) = address(loan).call(abi.encodeWithSignature(sig, newAdmin, status));
+    }
 }

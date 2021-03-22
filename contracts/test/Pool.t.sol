@@ -7,8 +7,10 @@ import "./TestUtil.sol";
 import "./user/Borrower.sol";
 import "./user/Governor.sol";
 import "./user/LP.sol";
+import "./user/Staker.sol";
 import "./user/PoolDelegate.sol";
 import "./user/PoolAdmin.sol";
+import "./user/EmergencyAdmin.sol";
 
 import "../interfaces/IBFactory.sol";
 import "../interfaces/IBPool.sol";
@@ -41,6 +43,13 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract Treasury { }
 
+contract Commoner {
+    function try_setLiquidityCap(address pool, uint256 liquidityCap) external returns(bool ok) {
+        string memory sig = "setLiquidityCap(uint256)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, liquidityCap));
+    }
+}
+
 contract PoolTest is TestUtil {
 
     using SafeMath for uint256;
@@ -53,9 +62,12 @@ contract PoolTest is TestUtil {
     LP                                     che;
     LP                                     dan;
     LP                                     kim;
+    Staker                                 buf;
+    Commoner                               com;
     PoolDelegate                           sid;
     PoolDelegate                           joe;
     PoolAdmin                              pop;
+    EmergencyAdmin                         mic;
 
     RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
@@ -67,12 +79,14 @@ contract PoolTest is TestUtil {
     Loan                                  loan;
     Loan                                 loan2;
     Loan                                 loan3;
+    Loan                                 loan4;
     LoanFactory                    loanFactory;
     MapleGlobals                       globals;
     MapleToken                             mpl;
     PoolFactory                    poolFactory;
     Pool                                 pool1;
     Pool                                 pool2;
+    Pool                                 pool3;
     PremiumCalc                    premiumCalc;
     StakeLockerFactory               slFactory;
     Treasury                               trs;
@@ -95,9 +109,12 @@ contract PoolTest is TestUtil {
         che            = new LP();                                                      // Actor: Liquidity provider.
         dan            = new LP();                                                      // Actor: Liquidity provider.
         kim            = new LP();                                                      // Actor: Liquidity provider.
+        buf            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
+        com            = new Commoner();                                                // Actor: Any user or an incentive seeker.                                            // Actor: Manager of the Pool.
         sid            = new PoolDelegate();                                            // Actor: Manager of the Pool.
         joe            = new PoolDelegate();                                            // Actor: Manager of the Pool.
         pop            = new PoolAdmin();                                               // Actor: Admin of the Pool.
+        mic            = new EmergencyAdmin();                                          // Actor: Emergency Admin of the protocol.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -150,6 +167,7 @@ contract PoolTest is TestUtil {
         gov.setPoolDelegateAllowlist(address(sid), true);
         gov.setPoolDelegateAllowlist(address(joe), true);
         gov.setMapleTreasury(address(trs));
+        gov.setAdmin(address(mic));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
@@ -228,6 +246,14 @@ contract PoolTest is TestUtil {
         // Admin can claim once added
         sid.setAdmin(address(pool1), address(pop), true);                                // Add admin to allow to call the `claim()` function
         assertTrue(pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function
+
+        // Pause protocol and attempt claim()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));
+        
+        // Unpause protocol and claim()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(pop.try_claim(address(pool1), address(loan), address(dlFactory1)));
 
         // Admin can't claim after removed
         sid.setAdmin(address(pool1), address(pop), false);                                // Add admin to allow to call the `claim()` function
@@ -343,7 +369,14 @@ contract PoolTest is TestUtil {
         assertEq(uint256(pool1.poolState()), 0);  // Initialized
 
         assertTrue(!joe.try_finalize(address(pool1)));  // Can't finalize if not PD
-        assertTrue( sid.try_finalize(address(pool1)));  // PD that staked can finalize
+
+        // Pause protocol and attempt finalize()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_finalize(address(pool1)));
+        
+        // Unpause protocol and finalize()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(sid.try_finalize(address(pool1)));  // PD that staked can finalize
 
         assertEq(uint256(pool1.poolState()), 1);  // Finalized
     }
@@ -399,7 +432,12 @@ contract PoolTest is TestUtil {
         assertTrue(!pool1.allowedLiquidityProviders(address(dan)));
         assertTrue(  !dan.try_deposit(address(pool1),    100 * USD)); // Fail to invest as dan is not in the allowed list.
 
-        // open pool to the public.
+        // Pause protocol and attempt openPoolToPublic()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_openPoolToPublic(address(pool1)));
+
+        // Unpause protocol and openPoolToPublic()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
         assertTrue(!joe.try_openPoolToPublic(address(pool1)));  // Incorrect PD.
         assertTrue( sid.try_openPoolToPublic(address(pool1)));
 
@@ -408,16 +446,55 @@ contract PoolTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(dan)),         0);
         assertEq(IERC20(USDC).balanceOf(liqLocker),    200 * USD);
         assertEq(pool1.balanceOf(address(dan)),        100 * WAD);
+
+        mint("USDC", address(bob), 200 * USD);
+
+        // Pool-specific pause by Pool Delegate via setLiquidityCap(0)
+        assertEq(pool1.liquidityCap(), MAX_UINT);
+        assertTrue(!com.try_setLiquidityCap(address(pool1), 0));
+        assertTrue(sid.try_setLiquidityCap(address(pool1), 0));
+        assertEq(pool1.liquidityCap(), 0);
+        assertTrue(!bob.try_deposit(address(pool1), 1 * USD));
+        assertTrue(sid.try_setLiquidityCap(address(pool1), MAX_UINT));
+        assertEq(pool1.liquidityCap(), MAX_UINT);
+        assertTrue(bob.try_deposit(address(pool1), 100 * USD));
+        assertEq(pool1.balanceOf(address(bob)), 200 * WAD);
+ 
+        // Protocol-wide pause by Emergency Admin
+        assertTrue(!globals.protocolPaused());
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!bob.try_deposit(address(pool1), 1 * USD));
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(bob.try_deposit(address(pool1),100 * USD));
+        assertEq(pool1.balanceOf(address(bob)), 300 * WAD);
+
+        // Pause protocol and attempt setLiquidityCap()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_setLiquidityCap(address(pool1), MAX_UINT));
+
+        // Unpause protocol and setLiquidityCap()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(sid.try_setLiquidityCap(address(pool1), MAX_UINT));
     }
 
     function test_setLockupPeriod() public {
         assertEq(pool1.lockupPeriod(), 180 days);
-        assertTrue(!joe.try_setLockupPeriod(address(pool1), 15 days));       // Cannot set lockup periodif not pool delegate
+        assertTrue(!joe.try_setLockupPeriod(address(pool1), 15 days));       // Cannot set lockup period if not pool delegate
         assertTrue(!sid.try_setLockupPeriod(address(pool1), 180 days + 1));  // Cannot increase lockup period
         assertTrue( sid.try_setLockupPeriod(address(pool1), 180 days));      // Can set the same lockup period
         assertTrue( sid.try_setLockupPeriod(address(pool1), 180 days - 1));  // Can decrease lockup period
         assertEq(pool1.lockupPeriod(), 180 days - 1);
         assertTrue(!sid.try_setLockupPeriod(address(pool1), 180 days));      // Cannot increase lockup period
+
+        // Pause protocol and attempt setLockupPeriod()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_setLockupPeriod(address(pool1), 180 days - 2));
+        assertEq(pool1.lockupPeriod(), 180 days - 1);
+
+        // Unpause protocol and setLockupPeriod()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(sid.try_setLockupPeriod(address(pool1), 180 days - 2));
+        assertEq(pool1.lockupPeriod(), 180 days - 2);
     }
 
     function test_deposit_with_liquidity_cap() public {
@@ -551,7 +628,14 @@ contract PoolTest is TestUtil {
         assertEq(pool1.balanceOf(address(che)), initialAmt);
 
         make_withdrawable(che, pool1);
-        che.transferFDT(address(pool1), address(bob), newAmt);  // Pool.transfer()
+
+        // Pause protocol and attempt to transfer FDTs
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!che.try_transfer(address(pool1), address(bob), newAmt));
+
+        // Unpause protocol and transfer FDTs
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(che.try_transfer(address(pool1), address(bob), newAmt));  // Pool.transfer()
 
         assertEq(pool1.balanceOf(address(bob)), initialAmt + newAmt);
         assertEq(pool1.balanceOf(address(che)), initialAmt - newAmt);
@@ -590,9 +674,15 @@ contract PoolTest is TestUtil {
         /*******************/
         /*** Fund a Loan ***/
         /*******************/
+        // Pause protocol and attempt fundLoan()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 1 * USD));
+
+        // Unpause protocol and fundLoan()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
         assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 20 * USD), "Fail to fund a loan");  // Fund loan for 20 USDC
 
-        DebtLocker debtLocker = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory1)));
+        DebtLocker debtLocker = DebtLocker(pool1.debtLockers(address(loan), address(dlFactory1)));
 
         assertEq(address(debtLocker.loan()), address(loan));
         assertEq(debtLocker.owner(), address(pool1));
@@ -1767,18 +1857,64 @@ contract PoolTest is TestUtil {
         }
     }
 
+    function test_withdraw_protocol_paused() public {
+        setUpWithdraw();
+        
+        sid.setPrincipalPenalty(address(pool1), 0);
+        assertTrue(sid.try_setLockupPeriod(address(pool1), 0));
+        assertEq(pool1.lockupPeriod(), uint256(0));
+
+        mint("USDC", address(kim), 2000 * USD);
+        kim.approve(USDC, address(pool1), MAX_UINT);
+        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+        make_withdrawable(kim, pool1);
+
+        // Protocol-wide pause by Emergency Admin
+        assertTrue(!globals.protocolPaused());
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+
+        // Attempt to withdraw while protocol paused
+        assertTrue(globals.protocolPaused());
+        assertTrue(!kim.try_withdrawFunds(address(pool1)));
+        assertTrue(!kim.try_withdraw(address(pool1), 1000 * USD));
+
+        // Unpause and withdraw
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(kim.try_withdrawFunds(address(pool1)));
+        assertTrue(kim.try_withdraw(address(pool1), 1000 * USD));
+
+        assertEq(IERC20(USDC).balanceOf(address(kim)), 2000 * USD);
+    }
+
     function test_setPenaltyDelay() public {
-        assertEq(pool1.penaltyDelay(),                      30 days);
+        assertEq(pool1.penaltyDelay(), 30 days);
         assertTrue(!joe.try_setPenaltyDelay(address(pool1), 45 days));
-        assertTrue( sid.try_setPenaltyDelay(address(pool1), 45 days));
-        assertEq(pool1.penaltyDelay(),                      45 days);
+        
+        // Pause protocol and attempt setPenaltyDelay()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_setPenaltyDelay(address(pool1), 45 days));
+        assertEq(pool1.penaltyDelay(), 30 days);
+
+        // Unpause protocol and setPenaltyDelay()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(sid.try_setPenaltyDelay(address(pool1), 45 days));
+        assertEq(pool1.penaltyDelay(), 45 days);
+        
     }
 
     function test_setPrincipalPenalty() public {
-        assertEq(pool1.principalPenalty(),                      500);
+        assertEq(pool1.principalPenalty(), 500);
         assertTrue(!joe.try_setPrincipalPenalty(address(pool1), 1125));
-        assertTrue( sid.try_setPrincipalPenalty(address(pool1), 1125));
-        assertEq(pool1.principalPenalty(),                      1125);
+
+        // Pause protocol and attempt setPrincipalPenalty()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_setPrincipalPenalty(address(pool1), 1125));
+        assertEq(pool1.principalPenalty(), 500);
+
+        // Unpause protocol and setPrincipalPenalty()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(sid.try_setPrincipalPenalty(address(pool1), 1125));
+        assertEq(pool1.principalPenalty(), 1125);
     }
 
     function _makeLoanPayment(Loan _loan, Borrower by) internal {
@@ -1809,7 +1945,13 @@ contract PoolTest is TestUtil {
         // Pre-state checks.
         assertTrue(pool1.principalOut() <= 100 * 10 ** liquidityAssetDecimals);
 
-        sid.deactivate(address(pool1), 86);
+        // Pause protocol and attempt deactivate()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_deactivate(address(pool1), 86));
+
+        // Unpause protocol and deactivate()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(sid.try_deactivate(address(pool1), 86));
 
         // Post-state checks.
         assertEq(int(pool1.poolState()), 2);
@@ -1825,7 +1967,7 @@ contract PoolTest is TestUtil {
         assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 1));
 
         // deactivate()
-        assertTrue(!sid.try_deactivate(address(pool1)));
+        assertTrue(!sid.try_deactivate(address(pool1), 86));
 
     }
 
@@ -1879,8 +2021,7 @@ contract PoolTest is TestUtil {
 
         // Pre-state checks.
         assertTrue(pool1.principalOut() >= 100 * 10 ** liquidityAssetDecimals);
-        assertTrue(!sid.try_deactivate(address(pool1)));
-
+        assertTrue(!sid.try_deactivate(address(pool1), 86));
     }
 
     function test_view_balance() public {
@@ -1949,4 +2090,41 @@ contract PoolTest is TestUtil {
         assertEq(afterBalanceDAI - beforeBalanceDAI,   1000 * WAD);
         assertEq(afterBalanceWETH - beforeBalanceWETH,  100 * WAD);
     }
+
+    function test_setAllowList() public {
+        // Pause protocol and attempt setAllowList()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_setAllowList(address(pool1), address(bob), true));
+        assertTrue(!pool1.allowedLiquidityProviders(address(bob)));
+
+        // Unpause protocol and setAllowList()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(sid.try_setAllowList(address(pool1), address(bob), true));
+        assertTrue(pool1.allowedLiquidityProviders(address(bob)));
+    }
+
+    function test_setAllowlistStakeLocker() public {
+        // Pause protocol and attempt setAllowlistStakeLocker()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_setAllowlistStakeLocker(address(pool1), address(buf), true));
+        assertTrue(!IStakeLocker(pool1.stakeLocker()).allowed(address(buf)));
+
+        // Unpause protocol and setAllowlistStakeLocker()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(sid.try_setAllowlistStakeLocker(address(pool1), address(buf), true));
+        assertTrue(IStakeLocker(pool1.stakeLocker()).allowed(address(buf)));
+    }
+
+    function test_setAdmin() public {
+        // Pause protocol and attempt setAdmin()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_setAdmin(address(pool1), address(pop), true));
+        assertTrue(!pool1.admins(address(pop)));
+
+        // Unpause protocol and setAdmin()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(sid.try_setAdmin(address(pool1), address(pop), true));
+        assertTrue(pool1.admins(address(pop)));
+    }
+
 }

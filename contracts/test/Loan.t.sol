@@ -7,6 +7,8 @@ import "./TestUtil.sol";
 import "./user/Borrower.sol";
 import "./user/Governor.sol";
 import "./user/Lender.sol";
+import "./user/SecurityAdmin.sol";
+import "./user/EmergencyAdmin.sol";
 
 import "../RepaymentCalc.sol";
 import "../CollateralLockerFactory.sol";
@@ -30,6 +32,18 @@ contract Commoner {
         string memory sig = "triggerDefault()";
         (ok,) = loan.call(abi.encodeWithSignature(sig));
     }
+   function try_setProtocolPause(address globals, bool pause) external returns (bool ok) {
+        string memory sig = "setProtocolPause(bool)";
+        (ok,) = globals.call(abi.encodeWithSignature(sig, pause));
+    }
+    function try_pause(address loan) external returns (bool ok) {
+        string memory sig = "pause()";
+        (ok,) = loan.call(abi.encodeWithSignature(sig));
+    }
+    function try_unpause(address loan) external returns (bool ok) {
+        string memory sig = "unpause()";
+        (ok,) = loan.call(abi.encodeWithSignature(sig));
+    }
 }
 
 contract LoanTest is TestUtil {
@@ -38,6 +52,8 @@ contract LoanTest is TestUtil {
     Governor                         gov;
     Lender                           bob;
     Commoner                         com;
+    SecurityAdmin                    pop;
+    EmergencyAdmin                   mic;
 
     RepaymentCalc          repaymentCalc;
     CollateralLockerFactory    clFactory;
@@ -60,6 +76,8 @@ contract LoanTest is TestUtil {
         gov         = new Governor();       // Actor: Governor of Maple.
         bob         = new Lender();         // Actor: Individual lender.
         com         = new Commoner();       // Actor: Any user or an incentive seeker.
+        pop         = new SecurityAdmin();  // Actor: Security Admin of the Loan.
+        mic         = new EmergencyAdmin(); // Actor: Emergency Admin of the protocol.
 
         mpl           = new MapleToken("MapleToken", "MAPL", USDC);
         globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -89,6 +107,7 @@ contract LoanTest is TestUtil {
         gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
 
         gov.setMapleTreasury(address(trs));
+        gov.setAdmin(address(mic));
 
         mint("WETH", address(ali),   10 ether);
         mint("USDC", address(bob), 5000 * USD);
@@ -131,15 +150,39 @@ contract LoanTest is TestUtil {
 
         bob.approve(USDC, address(loan), 5000 * USD);
     
-        assertEq(IERC20(loan).balanceOf(address(bob)),                    0);
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),          0);
-        assertEq(IERC20(USDC).balanceOf(address(bob)),           5000 * USD);
+        assertEq(IERC20(loan).balanceOf(address(bob)),                     0);
+        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),           0);
+        assertEq(IERC20(USDC).balanceOf(address(bob)),            5000 * USD);
 
-        bob.fundLoan(address(loan), 5000 * USD, address(bob));
+        // Loan-specific pause by Borrower
+        assertTrue(!loan.paused());
+        assertTrue(!com.try_pause(address(loan)));
+        ali.pause(address(loan));
+        assertTrue(loan.paused());
+        assertTrue(!bob.try_fundLoan(address(loan), address(bob),   1 * USD));
 
-        assertEq(IERC20(loan).balanceOf(address(bob)),           5000 ether);
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 5000 * USD);
-        assertEq(IERC20(USDC).balanceOf(address(bob)),                    0);
+        assertTrue(!com.try_unpause(address(loan)));
+        ali.unpause(address(loan));
+        assertTrue(!loan.paused());
+        assertTrue(bob.try_fundLoan(address(loan), address(bob), 2500 * USD));
+
+        assertEq(IERC20(loan).balanceOf(address(bob)),            2500 ether);
+        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),  2500 * USD);
+        assertEq(IERC20(USDC).balanceOf(address(bob)),            2500 * USD);
+
+        // Protocol-wide pause by Emergency Admin
+        assertTrue(!com.try_setProtocolPause(address(globals),         true));
+        assertTrue(mic.try_setProtocolPause(address(globals),          true));
+        assertTrue(globals.protocolPaused());
+        assertTrue(!bob.try_fundLoan(address(loan), address(bob),   1 * USD));
+
+        assertTrue(mic.try_setProtocolPause(address(globals),         false));
+        assertTrue(!globals.protocolPaused());
+        assertTrue(bob.try_fundLoan(address(loan), address(bob), 2500 * USD));
+
+        assertEq(IERC20(loan).balanceOf(address(bob)),            5000 ether);
+        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),  5000 * USD);
+        assertEq(IERC20(USDC).balanceOf(address(bob)),                     0);
     }
 
     function createAndFundLoan(address _interestStructure) internal returns (Loan loan) {
@@ -158,6 +201,21 @@ contract LoanTest is TestUtil {
 
         uint256 reqCollateral = loan.collateralRequiredForDrawdown(1000 * USD);
         withinDiff(reqCollateral * globals.getLatestPrice(address(WETH)) * USD / WAD / 10 ** 8, 200 * USD, 1);  // 20% of $1000, 1 wei diff
+    }
+
+    function test_drawdown_protocol_paused() external {
+        Loan loan = createAndFundLoan(address(repaymentCalc));
+
+        uint256 reqCollateral = loan.collateralRequiredForDrawdown(5000 * USD);
+        ali.approve(WETH, address(loan), reqCollateral);
+
+        // Pause protocol and attempt drawdown()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!ali.try_drawdown(address(loan), 5000 * USD));
+
+        // Unpause protocol and drawdown()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(ali.try_drawdown(address(loan), 5000 * USD));
     }
 
     function test_drawdown() public {
@@ -253,8 +311,13 @@ contract LoanTest is TestUtil {
         assertEq(loan.paymentsRemaining(),           3);
         assertEq(loan.nextPaymentDue(),           _due);
 
-        // Make payment.
-        assertTrue(ali.try_makePayment(address(loan)));
+        // Pause protocol and attempt makePayment()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!ali.try_makePayment(address(loan)));
+
+        // Unpause protocol and makePayment()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(ali.try_makePayment(address(loan)));  // Make payment.
 
         uint _nextPaymentDue = _due + loan.paymentIntervalSeconds();
 
@@ -428,6 +491,13 @@ contract LoanTest is TestUtil {
 
         // Warp 1 more second ... can call unwind()
         hevm.warp(loan.createdAt() + globals.drawdownGracePeriod() + 1);
+
+        // Pause protocol and attempt unwind()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!ali.try_unwind(address(loan)));
+
+        // Unpause protocol and unwind()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
         assertTrue(ali.try_unwind(address(loan)));
 
         uint256 flBalance_post   = IERC20(loan.loanAsset()).balanceOf(loan.fundingLocker());
@@ -447,7 +517,13 @@ contract LoanTest is TestUtil {
 
         assertEq(IERC20(USDC).balanceOf(address(bob)), 0);
 
-        bob.withdrawFunds(address(loan));
+        // Pause protocol and attempt withdrawFunds()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!bob.try_withdrawFunds(address(loan)));
+
+        // Unpause protocol and withdrawFunds()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(bob.try_withdrawFunds(address(loan)));
 
         withinDiff(IERC20(USDC).balanceOf(address(bob)),              5000 * USD, 1);
         withinDiff(IERC20(loan.loanAsset()).balanceOf(address(loan)),          0, 1);
@@ -555,8 +631,13 @@ contract LoanTest is TestUtil {
         uint256 _delta                = collateralAsset.balanceOf(address(ali));
         uint256 _usdcDelta            = IERC20(USDC).balanceOf(address(loan));
 
-        // Make payment.
-        assertTrue(ali.try_makeFullPayment(address(loan)));
+        // Pause protocol and attempt makeFullPayment()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!ali.try_makeFullPayment(address(loan)));
+
+        // Unpause protocol and makeFullPayment()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(ali.try_makeFullPayment(address(loan)));  // Make full payment.
 
         // After state
         assertEq(IERC20(USDC).balanceOf(address(loan)),  _usdcDelta + _amt);
@@ -595,5 +676,19 @@ contract LoanTest is TestUtil {
 
         assertEq(afterBalanceDAI - beforeBalanceDAI,    1000 * WAD);
         assertEq(afterBalanceWETH - beforeBalanceWETH,   100 * WAD);
+    }
+
+    function test_setAdmin() public {
+        Loan loan = createAndFundLoan(address(repaymentCalc));
+
+        // Pause protocol and attempt setAdmin()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!ali.try_setAdmin(address(loan), address(pop), true));
+        assertTrue(!loan.admins(address(pop)));
+
+        // Unpause protocol and setAdmin()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(ali.try_setAdmin(address(loan), address(pop), true));
+        assertTrue(loan.admins(address(pop)));
     }
 }

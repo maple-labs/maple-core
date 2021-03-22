@@ -9,6 +9,7 @@ import "./user/Governor.sol";
 import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
 import "./user/Staker.sol";
+import "./user/EmergencyAdmin.sol";
 
 import "../interfaces/IBFactory.sol";
 import "../interfaces/IBPool.sol";
@@ -51,6 +52,7 @@ contract StakeLockerTest is TestUtil {
     Staker                                 che;
     Staker                                 dan;
     Staker                                 eli;
+    EmergencyAdmin                         mic;
 
     RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
@@ -85,6 +87,7 @@ contract StakeLockerTest is TestUtil {
         che            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
         dan            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
         eli            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
+        mic            = new EmergencyAdmin();                                          // Actor: Emergency Admin of the protocol.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -136,6 +139,7 @@ contract StakeLockerTest is TestUtil {
 
         gov.setPoolDelegateAllowlist(address(sid), true);
         gov.setMapleTreasury(address(trs));
+        gov.setAdmin(address(mic));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
@@ -241,6 +245,21 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.stakeDate(staker),          staker_slStakeDate,  "Incorrect stake date for staker");
     }
 
+    function test_stake_protocol_paused() public {
+        sid.setAllowlistStakeLocker(address(pool), address(che), true);
+        che.approve(address(bPool), address(stakeLocker), 25 * WAD);
+
+        // Pause protocol and attempt to stake()
+        assertTrue(!globals.protocolPaused());
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(globals.protocolPaused());
+        assertTrue(!che.try_stake(address(stakeLocker), 25 * WAD));
+
+        // Unpause protocol and stake()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));
+    }
+
     function test_stake() public {
         uint256 startDate = block.timestamp;
 
@@ -267,6 +286,23 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.stakeDate(address(che)),   startDate);
     }
 
+    function test_withdrawFunds_protocol_paused() public {
+        // Add Staker to allowlist
+        sid.setAllowlistStakeLocker(address(pool), address(che), true);
+
+        // Stake tokens
+        che.approve(address(bPool), address(stakeLocker), 25 * WAD); 
+        assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));
+
+        // Pause protocol and attempt withdrawFunds()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!che.try_withdrawFunds(address(stakeLocker)));
+
+        // Unpause protocol and withdrawFunds()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(che.try_withdrawFunds(address(stakeLocker)));
+    }
+
     function test_stake_transfer_restrictions() public {
 
         sid.setAllowlistStakeLocker(address(pool), address(che), true); // Add Staker to allowlist
@@ -281,6 +317,12 @@ contract StakeLockerTest is TestUtil {
 
         sid.setAllowlistStakeLocker(address(pool), address(ali), true); // Add ali to allowlist
 
+        // Pause protocol and attempt to transfer FDTs
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!che.try_transfer(address(stakeLocker), address(ali), 1 * WAD));
+
+        // Unpause protocol and transfer FDTs
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
         assertTrue(che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // Yes transfer to allowlisted user
 
         make_transferrable(che, stakeLocker);
@@ -382,6 +424,12 @@ contract StakeLockerTest is TestUtil {
         uint256 cheStakerEarnings_FDT  = stakeLocker.withdrawableFundsOf(address(che));
         uint256 cheStakerEarnings_calc = totalStakerEarnings * (25 * WAD) / (75 * WAD);  // Che's portion of staker earnings
 
+        // Pause protocol and attempt unstake()
+        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));
+        
+        // Unpause protocol and unstake()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
         assertTrue(che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker unstakes all BPTs
 
         withinPrecision(cheStakerEarnings_FDT, cheStakerEarnings_calc, 9);
