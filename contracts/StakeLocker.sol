@@ -138,15 +138,15 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _updateStakeDate(address who, uint256 amt) internal {
         uint256 prevDate = stakeDate[who];
+        uint256 newDate  = block.timestamp;
         if (prevDate == uint256(0)) {
-            stakeDate[who] = block.timestamp;
-            emit StakeDateUpdated(who, block.timestamp);
+            stakeDate[who] = newDate;
         } else {
-            uint256 dTime   = block.timestamp.sub(prevDate); 
-            uint256 newDate = prevDate.add(dTime.mul(amt).div(balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
-            stakeDate[who]  = newDate;
-            emit StakeDateUpdated(who, newDate);
+            uint256 dTime  = block.timestamp.sub(prevDate); 
+            newDate        = prevDate.add(dTime.mul(amt).div(balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
+            stakeDate[who] = newDate;
         }
+        emit StakeDateUpdated(who, newDate);
     }
 
     /**

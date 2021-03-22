@@ -229,15 +229,15 @@ library PoolLib {
     */
     function updateDepositDate(mapping(address => uint256) storage depositDate, uint256 balance, uint256 amt, address who) internal {
         uint256 prevDate = depositDate[who];
+        uint256 newDate = block.timestamp;
         if (prevDate == 0) {
-            depositDate[who] = block.timestamp;
-            emit DepositDateUpdated(who, block.timestamp);
+            depositDate[who] = newDate;
         } else {
             uint256 dTime    = block.timestamp.sub(prevDate);
-            uint256 newDate  = prevDate.add(dTime.mul(amt).div(balance + amt));  // prevDate + (now - prevDate) * (amt / (balance + amt))
+            newDate          = prevDate.add(dTime.mul(amt).div(balance + amt));  // prevDate + (now - prevDate) * (amt / (balance + amt))
             depositDate[who] = newDate;
-            emit DepositDateUpdated(who, newDate);
         }
+        emit DepositDateUpdated(who, newDate);
     }
 
     /**
