@@ -336,22 +336,14 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev Trigger a default if a Loan is in a condition where a default can be triggered.
+        @dev Trigger a default if a Loan is in a condition where a default can be triggered, liquidating all collateral and updating accounting.
     */
     // TODO: Talk with auditors about having a switch for this function
-    // TODO: Remove internal function
     function triggerDefault() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
         require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
-        _triggerDefault();
-    }
-
-    /**
-        @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
-    */
-    function _triggerDefault() internal {
-
+        
         (amountLiquidated, amountRecovered) = LoanLib.triggerDefault(collateralAsset, address(loanAsset), superFactory, collateralLocker);
 
         // Set principalOwed to zero and return excess value from liquidation back to borrower
@@ -379,7 +371,6 @@ contract Loan is FDT, Pausable {
             liquidationExcess, // Amount of loanAsset returned to borrower
             defaultSuffered    // Remaining losses after liquidation
         );
-
     }
 
     /***********************/

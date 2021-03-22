@@ -142,8 +142,8 @@ contract Pool is PoolFDT {
     function finalize() external {
         _isValidDelegateAndProtocolNotPaused();
         _isValidState(State.Initialized);
-        (,, bool stakePresent,,) = getInitialStakeRequirements();
-        require(stakePresent, "Pool:INSUFFICIENT_STAKE");
+        (,, bool stakeSufficient,,) = getInitialStakeRequirements();
+        require(stakeSufficient, "Pool:INSUFFICIENT_STAKE");
         poolState = State.Finalized;
         emit PoolStateChanged(poolState);
     }
