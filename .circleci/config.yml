@@ -157,19 +157,19 @@ workflows:
   version: 2
   test_all:
     jobs:
-      # - integration_test_dependencies:
-      #     context: hardhat
+      - integration_test_dependencies:
+          context: hardhat
       # - integration_test:
       #     context: hardhat
       #     requires:
       #       - integration_test_dependencies
 
-      - dapp_build:
-          context: seth
-      - dapp_test: 
-          context: seth
-          requires:
-            - dapp_build
+      # - dapp_build:
+      #     context: seth
+      # - dapp_test: 
+      #     context: seth
+      #     requires:
+      #       - dapp_build
             
       # - deploy_kaleido:
       #     context: kaleido
