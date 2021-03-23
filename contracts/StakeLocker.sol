@@ -28,8 +28,12 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     mapping(address => uint256) public stakeCooldown;  // Timestamp of when staker called cooldown()
     mapping(address => bool)    public allowed;        // Map address to allowed status
 
-    event BalanceUpdated(address who, address token, uint256 balance);
-    event       Cooldown(address staker);
+    event   BalanceUpdated(address stakeLocker, address token, uint256 balance);
+    event AllowListUpdated(address staker, bool status);
+    event StakeDateUpdated(address staker, uint256 stakeDate);
+    event         Cooldown(address staker);
+    event            Stake(uint256 amount, address staker);
+    event          Unstake(uint256 amount, address staker);
 
     constructor(
         address _stakeAsset,
@@ -40,10 +44,6 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         stakeAsset     = IERC20(_stakeAsset);
         owner          = _owner;
     }
-
-    event   Stake(uint256 _amount, address _staker);
-    event Unstake(uint256 _amount, address _staker);
-    event AllowListUpdated(address _user, bool _status);
 
     /*****************/
     /*** Modifiers ***/
@@ -137,13 +137,16 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @param amt Amount of BPTs staker has deposited
     */
     function _updateStakeDate(address who, uint256 amt) internal {
-        uint256 stkDate = stakeDate[who];
-        if (stkDate == uint256(0)) {
-            stakeDate[who] = block.timestamp;
+        uint256 prevDate = stakeDate[who];
+        uint256 newDate  = block.timestamp;
+        if (prevDate == uint256(0)) {
+            stakeDate[who] = newDate;
         } else {
-            uint256 dTime  = block.timestamp.sub(stkDate); 
-            stakeDate[who] = stkDate.add(dTime.mul(amt).div(balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
+            uint256 dTime  = block.timestamp.sub(prevDate); 
+            newDate        = prevDate.add(dTime.mul(amt).div(balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
+            stakeDate[who] = newDate;
         }
+        emit StakeDateUpdated(who, newDate);
     }
 
     /**
