@@ -56,9 +56,12 @@ library PoolLib {
 
     /**
         @dev Fund a loan for amt, utilize the supplied debtLockerFactory for debt lockers.
-        @param  loan      Address of the loan to fund
-        @param  dlFactory The debt locker factory to utilize
-        @param  amt       Amount to fund the loan
+        @param  debtLockers     Mapping contains the `debtLocker` contract address corresponds to the `dlFactory` and `loan`.
+        @param  superFactory    Address of the `PoolFactory`
+        @param  liquidityLocker Address of the `liquidityLocker` contract attached with this Pool
+        @param  loan            Address of the loan to fund
+        @param  dlFactory       The debt locker factory to utilize
+        @param  amt             Amount to fund the loan
     */
     function fundLoan(
         mapping(address => mapping(address => address)) storage debtLockers,
@@ -230,7 +233,7 @@ library PoolLib {
     function updateDepositDate(mapping(address => uint256) storage depositDate, uint256 balance, uint256 amt, address who) internal {
         uint256 prevDate = depositDate[who];
         uint256 newDate = block.timestamp;
-        if (prevDate == 0) {
+        if (prevDate == uint256(0)) {
             depositDate[who] = newDate;
         } else {
             uint256 dTime    = block.timestamp.sub(prevDate);
@@ -261,7 +264,7 @@ library PoolLib {
         uint256 toBalance
     ) external {
         // If transferring in or out of yield farming contract, do not update depositDate
-        if(!globals.isStakingRewards(from) && !globals.isStakingRewards(to)) {
+        if (!globals.isStakingRewards(from) && !globals.isStakingRewards(to)) {
             isCooldownFinished(depositCooldown[from], globals);
             depositCooldown[from] = uint256(0);
             updateDepositDate(depositDate, toBalance, wad, to);
