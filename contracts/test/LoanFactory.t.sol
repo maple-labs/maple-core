@@ -177,22 +177,32 @@ contract LoanFactoryTest is TestUtil {
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");  // Should be incremented by 1.
     }
 
-    function test_createLoan_protocol_paused() public {
+    function test_createLoan_paused() public {
         set_valid_factories();
         address[3] memory calcs = set_calcs();
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
         gov.setLoanAsset(USDC, true);
         gov.setCollateralAsset(WETH, true);
 
+        // Pause LoanFactory and attempt createLoan()
+        assertTrue(gov.try_pause(address(lFactory)));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertEq(lFactory.loansCreated(), 0);
+
+        // Unpause LoanFactory and createLoan()
+        assertTrue(gov.try_unpause(address(lFactory)));
+        assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertEq(lFactory.loansCreated(), 1);
+
         // Pause protocol and attempt createLoan()
         assertTrue(mic.try_setProtocolPause(address(globals), true));
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
-        assertEq(lFactory.loansCreated(), 0);
+        assertEq(lFactory.loansCreated(), 1);
 
         // Unpause protocol and createLoan()
         assertTrue(mic.try_setProtocolPause(address(globals), false));
         assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
-        assertEq(lFactory.loansCreated(), 1);
+        assertEq(lFactory.loansCreated(), 2);
     }
 
     function test_createLoan_successfully() public {
