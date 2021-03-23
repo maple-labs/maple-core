@@ -51,16 +51,16 @@ contract Pool is PoolFDT {
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the Pool
     uint256 public lockupPeriod;      // Unix timestamp during which withdrawal is not allowed
 
-    bool public openToPublic;
+    bool public openToPublic;         // Switch to make pool accessible for the public.
 
     enum State { Initialized, Finalized, Deactivated }
     State public poolState;  // The current state of this pool
 
     mapping(address => uint256)                     public depositDate;                // Used for withdraw penalty calculation
-    mapping(address => mapping(address => address)) public debtLockers;                // loans[LOAN_VAULT][LOCKER_FACTORY] = DebtLocker
+    mapping(address => mapping(address => address)) public debtLockers;                // Address of the `DebtLocker` contract corresponds to [Loan][DebtLockerFactory].
     mapping(address => bool)                        public admins;                     // Admin addresses who have permission to do certain operations in case of disaster mgt.
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
-    mapping(address => uint256)                     public depositCooldown;            // Timestamp of when LP called cooldown()
+    mapping(address => uint256)                     public depositCooldown;            // Timestamp of when LP calls `intendToWithdraw()`
 
     // TODO: Check if offchain team needs a `PoolOpened` event
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
@@ -71,7 +71,7 @@ contract Pool is PoolFDT {
     event PoolStateChanged(State state);
     event         Cooldown(address staker);
     event  DefaultSuffered(
-        address loan, 
+        address indexed loan, 
         uint256 defaultSuffered, 
         uint256 bptsBurned, 
         uint256 bptsReturned,
@@ -80,13 +80,13 @@ contract Pool is PoolFDT {
 
     /**
         @dev Constructor for a Pool.
-        @param  _poolDelegate   Address that has manager privileges for the Pool
-        @param  _liquidityAsset Asset escrowed in LiquidityLocker
+        @param  _poolDelegate   Address that has manager privileges of the Pool
+        @param  _liquidityAsset Asset used to fund the Pool, It gets escrowed in `LiquidityLocker`
         @param  _stakeAsset     Asset escrowed in StakeLocker
         @param  _slFactory      Factory used to instantiate StakeLocker
         @param  _llFactory      Factory used to instantiate LiquidityLocker
-        @param  _stakingFee     Fee that stakers earn on interest, in basis points
-        @param  _delegateFee    Fee that _poolDelegate earns on interest, in basis points
+        @param  _stakingFee     Fee that `stakers` earn on interest, in basis points
+        @param  _delegateFee    Fee that `_poolDelegate` earns on interest, in basis points
         @param  _liquidityCap   Max amount of liquidityAsset accepted by the Pool
         @param  name            Name of Pool token
         @param  symbol          Symbol of Pool token
@@ -129,7 +129,7 @@ contract Pool is PoolFDT {
         penaltyDelay     = 30 days;
         lockupPeriod     = 180 days;
 
-        emit PoolStateChanged(poolState);
+        emit PoolStateChanged(State.Initialized);
     }
 
     /*******************************/
