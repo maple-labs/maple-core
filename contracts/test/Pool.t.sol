@@ -8,6 +8,7 @@ import "./user/Borrower.sol";
 import "./user/Governor.sol";
 import "./user/LP.sol";
 import "./user/Staker.sol";
+import "./user/Commoner.sol";
 import "./user/PoolDelegate.sol";
 import "./user/PoolAdmin.sol";
 import "./user/EmergencyAdmin.sol";
@@ -42,13 +43,6 @@ import "module/maple-token/contracts/MapleToken.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract Treasury { }
-
-contract Commoner {
-    function try_setLiquidityCap(address pool, uint256 liquidityCap) external returns(bool ok) {
-        string memory sig = "setLiquidityCap(uint256)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, liquidityCap));
-    }
-}
 
 contract PoolTest is TestUtil {
 

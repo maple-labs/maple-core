@@ -7,6 +7,7 @@ import "./TestUtil.sol";
 import "./user/Borrower.sol";
 import "./user/Governor.sol";
 import "./user/Lender.sol";
+import "./user/Commoner.sol";
 import "./user/SecurityAdmin.sol";
 import "./user/EmergencyAdmin.sol";
 
@@ -26,25 +27,6 @@ import "../oracles/UsdOracle.sol";
 import "module/maple-token/contracts/MapleToken.sol";
 
 contract Treasury { }
-
-contract Commoner {
-    function try_trigger_default(address loan) external returns (bool ok) {
-        string memory sig = "triggerDefault()";
-        (ok,) = loan.call(abi.encodeWithSignature(sig));
-    }
-   function try_setProtocolPause(address globals, bool pause) external returns (bool ok) {
-        string memory sig = "setProtocolPause(bool)";
-        (ok,) = globals.call(abi.encodeWithSignature(sig, pause));
-    }
-    function try_pause(address loan) external returns (bool ok) {
-        string memory sig = "pause()";
-        (ok,) = loan.call(abi.encodeWithSignature(sig));
-    }
-    function try_unpause(address loan) external returns (bool ok) {
-        string memory sig = "unpause()";
-        (ok,) = loan.call(abi.encodeWithSignature(sig));
-    }
-}
 
 contract LoanTest is TestUtil {
 
