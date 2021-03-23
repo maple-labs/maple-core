@@ -253,12 +253,40 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
-    function test_createPool_protocol_paused() public {
+    function test_createPool_paused() public {
 
         setUpAllowlisting();
         gov.setLoanAsset(USDC, true);
         gov.setPoolDelegateAllowlist(address(ali), true);
         bPool.finalize();
+
+        // Pause PoolFactory and attempt createPool()
+        assertTrue(gov.try_pause(address(poolFactory)));
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            MAX_UINT
+        ));
+        assertEq(poolFactory.poolsCreated(), 0);
+
+        // Unpause PoolFactory and createPool()
+        assertTrue(gov.try_unpause(address(poolFactory)));
+        assertTrue(ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            MAX_UINT
+        ));
+        assertEq(poolFactory.poolsCreated(), 1);
 
         // Pause protocol and attempt createPool()
         assertTrue(!globals.protocolPaused());
@@ -273,7 +301,7 @@ contract PoolFactoryTest is TestUtil {
             100,
             MAX_UINT
         ));
-        assertEq(poolFactory.poolsCreated(), 0);
+        assertEq(poolFactory.poolsCreated(), 1);
 
         // Unpause protocol and createPool()
         assertTrue(mic.try_setProtocolPause(address(globals), false));
@@ -287,7 +315,7 @@ contract PoolFactoryTest is TestUtil {
             100,
             MAX_UINT
         ));
-        assertEq(poolFactory.poolsCreated(), 1);
+        assertEq(poolFactory.poolsCreated(), 2);
     }
 
     function test_createPool() public {
