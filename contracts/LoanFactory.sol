@@ -109,6 +109,7 @@ contract LoanFactory is Pausable {
         // Update LoanFactory identification mappings
         loans[loansCreated]   = address(loan);
         isLoan[address(loan)] = true;
+        loansCreated++;
 
         emit LoanCreated(
             tUUID,
@@ -123,8 +124,6 @@ contract LoanFactory is Pausable {
             loan.name(),
             loan.symbol()
         );
-
-        loansCreated++;
         return address(loan);
     }
 
