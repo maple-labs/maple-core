@@ -53,23 +53,6 @@ jobs:
             ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY ./test-ci.sh $TEST
           no_output_timeout: 60m
 
-  check_size:
-    <<: *defaults
-    steps:
-       - run:
-          name: Checkout maple-deploy
-          command: |
-            cd ~/project
-            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-deploy.git
-            cd ~/project/maple-deploy
-            git checkout develop
-            ./setup.sh
-            cd modules/maple-core
-            git checkout $CIRCLE_BRANCH
-            cd ../..
-            yarn compile && yarn size
-
-  
   integration_test_dependencies:
     <<: *defaults
     steps:
@@ -116,6 +99,15 @@ jobs:
           root: ~/project
           paths:
             - "./*"
+
+  check_size:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Check contract sizes
+          command: yarn compile && yarn size
 
   integration_test:
     <<: *defaults
@@ -179,21 +171,23 @@ workflows:
   version: 2
   test_all:
     jobs:
-      # - integration_test_dependencies:
-      #     context: hardhat
+      - integration_test_dependencies:
+          context: hardhat
       - check_size:
           context: hardhat
+          requires:
+            - integration_test_dependencies
       # - integration_test:
       #     context: hardhat
       #     requires:
       #       - integration_test_dependencies
 
-      # - dapp_build:
-      #     context: seth
-      # - dapp_test: 
-      #     context: seth
-      #     requires:
-      #       - dapp_build
+      - dapp_build:
+          context: seth
+      - dapp_test: 
+          context: seth
+          requires:
+            - dapp_build
             
       # - deploy_kaleido:
       #     context: kaleido
