@@ -144,7 +144,7 @@ contract Loan is FDT, Pausable {
 
         require(specs[2] != uint256(0),               "Loan:PID_EQ_ZERO");
         require(specs[1].mod(specs[2]) == uint256(0), "Loan:INVALID_TERM_DAYS");
-        require(specs[3] > uint256(0),                "Loan:MIN_RAISE_EQ_ZERO");
+        require(specs[3] > uint256(0),                "Loan:REQUEST_AMT_EQ_ZERO");
         require(specs[5] > uint256(0),                "Loan:FUNDING_PERIOD_EQ_ZERO");
 
         borrower        = _borrower;

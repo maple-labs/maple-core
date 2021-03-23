@@ -159,7 +159,7 @@ contract LoanFactoryTest is TestUtil {
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 19, 2, 10_000_000 * MULTIPLIER, 30, 5], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
-        // Fails because of error - ERR_MIN_RAISE_EQUALS_ZERO
+        // Fails because of error - ERR_REQUEST_AMT_EQUALS_ZERO
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [uint256(10), 10, 2, uint256(0), 30, 5], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
