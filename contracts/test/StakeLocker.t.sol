@@ -48,6 +48,7 @@ contract StakeLockerTest is TestUtil {
     Governor                               gov;
     LP                                     ali;
     PoolDelegate                           sid;
+    PoolDelegate                           joe;
     Staker                                 che;
     Staker                                 dan;
     Staker                                 eli;
@@ -82,6 +83,7 @@ contract StakeLockerTest is TestUtil {
         gov            = new Governor();                                                // Actor: Governor of Maple.
         ali            = new LP();                                                      // Actor: Liquidity provider.
         sid            = new PoolDelegate();                                            // Actor: Manager of the Pool.
+        joe            = new PoolDelegate();                                            // Actor: Manager of the Pool.
         che            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
         dan            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
         eli            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
@@ -265,6 +267,31 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.totalSupply(),              75 * WAD);
         assertEq(stakeLocker.balanceOf(address(che)),    25 * WAD);
         assertEq(stakeLocker.stakeDate(address(che)),   startDate);
+
+        dan.approve(address(bPool), address(stakeLocker), 25 * WAD);  // Isn't yet allowlisted
+
+        assertTrue(!dan.try_stake(address(stakeLocker), 25 * WAD)); 
+
+        // Open StakeLocker to public
+        assertTrue(!stakeLocker.openToPublic());
+        assertTrue(!joe.try_openStakeLockerToPublic(address(pool)));
+        assertTrue( sid.try_openStakeLockerToPublic(address(pool)));
+        assertTrue( stakeLocker.openToPublic());
+        assertTrue(!stakeLocker.allowed(address(dan)));  // Dan is not an allowed Staker, but StakeLocker is now open to public
+
+        assertEq(bPool.balanceOf(address(dan)),         25 * WAD);
+        assertEq(bPool.balanceOf(address(stakeLocker)), 75 * WAD);  // PD stake
+        assertEq(stakeLocker.totalSupply(),             75 * WAD);
+        assertEq(stakeLocker.balanceOf(address(dan)),          0);
+        assertEq(stakeLocker.stakeDate(address(dan)),          0);
+
+        assertTrue(dan.try_stake(address(stakeLocker), 25 * WAD));  
+
+        assertEq(bPool.balanceOf(address(dan)),                 0);
+        assertEq(bPool.balanceOf(address(stakeLocker)), 100 * WAD);  // PD + Staker stake
+        assertEq(stakeLocker.totalSupply(),             100 * WAD);
+        assertEq(stakeLocker.balanceOf(address(dan)),    25 * WAD);
+        assertEq(stakeLocker.stakeDate(address(dan)),   startDate);
     }
 
     function test_stake_transfer_restrictions() public {

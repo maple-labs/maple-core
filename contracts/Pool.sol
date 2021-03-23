@@ -51,7 +51,7 @@ contract Pool is PoolFDT {
     uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the Pool
     uint256 public lockupPeriod;      // Unix timestamp during which withdrawal is not allowed
 
-    bool public openToPublic;         // Switch to make pool accessible for the public.
+    bool public openToPublic;  // Boolean opening Pool to public for LP deposits
 
     enum State { Initialized, Finalized, Deactivated }
     State public poolState;  // The current state of this pool
@@ -63,6 +63,7 @@ contract Pool is PoolFDT {
     mapping(address => uint256)                     public depositCooldown;            // Timestamp of when LP calls `intendToWithdraw()`
 
     // TODO: Check if offchain team needs a `PoolOpened` event
+    // TODO: Check if offchain team needs a `StakeLockerOpened` event
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
     event   BalanceUpdated(address indexed who,  address token, uint256 balance);
@@ -154,6 +155,14 @@ contract Pool is PoolFDT {
     function openPoolToPublic() external {
         _isValidDelegateAndProtocolNotPaused();
         openToPublic = true;
+    }
+
+    /**
+        @dev Open StakeLocker to public. Once it is set to `true` it cannot be set back to `false`.
+    */
+    function openStakeLockerToPublic() external {
+        _isValidDelegateAndProtocolNotPaused();
+        IStakeLocker(stakeLocker).openStakeLockerToPublic();
     }
 
     /**
