@@ -185,24 +185,24 @@ contract LoanFactoryTest is TestUtil {
         gov.setCollateralAsset(WETH, true);
 
         // Pause LoanFactory and attempt createLoan()
-        assertTrue(gov.try_pause(address(lFactory)));
+        assertTrue(      gov.try_pause(address(lFactory)));
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
-        assertEq(lFactory.loansCreated(), 0);
+        assertEq(   lFactory.loansCreated(), 0);
 
         // Unpause LoanFactory and createLoan()
-        assertTrue(gov.try_unpause(address(lFactory)));
+        assertTrue(     gov.try_unpause(address(lFactory)));
         assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
-        assertEq(lFactory.loansCreated(), 1);
+        assertEq(  lFactory.loansCreated(), 1);
 
         // Pause protocol and attempt createLoan()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(      mic.try_setProtocolPause(address(globals), true));
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
-        assertEq(lFactory.loansCreated(), 1);
+        assertEq(   lFactory.loansCreated(), 1);
 
         // Unpause protocol and createLoan()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(     mic.try_setProtocolPause(address(globals), false));
         assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
-        assertEq(lFactory.loansCreated(), 2);
+        assertEq(  lFactory.loansCreated(), 2);
     }
 
     function test_createLoan_successfully() public {

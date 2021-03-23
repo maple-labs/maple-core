@@ -305,7 +305,7 @@ contract StakeLockerTest is TestUtil {
         assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));
 
         // Pause protocol and attempt withdrawFunds()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!che.try_withdrawFunds(address(stakeLocker)));
 
         // Unpause protocol and withdrawFunds()
@@ -328,7 +328,7 @@ contract StakeLockerTest is TestUtil {
         sid.setAllowlistStakeLocker(address(pool), address(ali), true); // Add ali to allowlist
 
         // Pause protocol and attempt to transfer FDTs
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!che.try_transfer(address(stakeLocker), address(ali), 1 * WAD));
 
         // Unpause protocol and transfer FDTs
@@ -435,7 +435,7 @@ contract StakeLockerTest is TestUtil {
         uint256 cheStakerEarnings_calc = totalStakerEarnings * (25 * WAD) / (75 * WAD);  // Che's portion of staker earnings
 
         // Pause protocol and attempt unstake()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));
         
         // Unpause protocol and unstake()

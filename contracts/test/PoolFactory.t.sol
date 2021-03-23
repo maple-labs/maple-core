@@ -261,7 +261,7 @@ contract PoolFactoryTest is TestUtil {
         bPool.finalize();
 
         // Pause PoolFactory and attempt createPool()
-        assertTrue(gov.try_pause(address(poolFactory)));
+        assertTrue( gov.try_pause(address(poolFactory)));
         assertTrue(!ali.try_createPool(
             address(poolFactory),
             USDC,
@@ -290,7 +290,7 @@ contract PoolFactoryTest is TestUtil {
 
         // Pause protocol and attempt createPool()
         assertTrue(!globals.protocolPaused());
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!ali.try_createPool(
             address(poolFactory),
             USDC,

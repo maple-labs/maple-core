@@ -248,7 +248,7 @@ contract PoolTest is TestUtil {
         assertTrue(pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function
 
         // Pause protocol and attempt claim()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));
         
         // Unpause protocol and claim()
@@ -371,7 +371,7 @@ contract PoolTest is TestUtil {
         assertTrue(!joe.try_finalize(address(pool1)));  // Can't finalize if not PD
 
         // Pause protocol and attempt finalize()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_finalize(address(pool1)));
         
         // Unpause protocol and finalize()
@@ -433,11 +433,11 @@ contract PoolTest is TestUtil {
         assertTrue(  !dan.try_deposit(address(pool1),    100 * USD)); // Fail to invest as dan is not in the allowed list.
 
         // Pause protocol and attempt openPoolToPublic()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_openPoolToPublic(address(pool1)));
 
         // Unpause protocol and openPoolToPublic()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue( mic.try_setProtocolPause(address(globals), false));
         assertTrue(!joe.try_openPoolToPublic(address(pool1)));  // Incorrect PD.
         assertTrue( sid.try_openPoolToPublic(address(pool1)));
 
@@ -450,26 +450,25 @@ contract PoolTest is TestUtil {
         mint("USDC", address(bob), 200 * USD);
 
         // Pool-specific pause by Pool Delegate via setLiquidityCap(0)
-        assertEq(pool1.liquidityCap(), MAX_UINT);
+        assertEq( pool1.liquidityCap(), MAX_UINT);
         assertTrue(!com.try_setLiquidityCap(address(pool1), 0));
-        assertTrue(sid.try_setLiquidityCap(address(pool1), 0));
-        assertEq(pool1.liquidityCap(), 0);
+        assertTrue( sid.try_setLiquidityCap(address(pool1), 0));
+        assertEq( pool1.liquidityCap(), 0);
         assertTrue(!bob.try_deposit(address(pool1), 1 * USD));
-        assertTrue(sid.try_setLiquidityCap(address(pool1), MAX_UINT));
-        assertEq(pool1.liquidityCap(), MAX_UINT);
-        assertTrue(bob.try_deposit(address(pool1), 100 * USD));
-        assertEq(pool1.balanceOf(address(bob)), 200 * WAD);
+        assertTrue( sid.try_setLiquidityCap(address(pool1), MAX_UINT));
+        assertEq( pool1.liquidityCap(), MAX_UINT);
+        assertTrue( bob.try_deposit(address(pool1), 100 * USD));
+        assertEq( pool1.balanceOf(address(bob)), 200 * WAD);
  
         // Protocol-wide pause by Emergency Admin
-        assertTrue(!globals.protocolPaused());
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!bob.try_deposit(address(pool1), 1 * USD));
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(bob.try_deposit(address(pool1),100 * USD));
-        assertEq(pool1.balanceOf(address(bob)), 300 * WAD);
+        assertTrue( mic.try_setProtocolPause(address(globals), false));
+        assertTrue( bob.try_deposit(address(pool1),100 * USD));
+        assertEq( pool1.balanceOf(address(bob)), 300 * WAD);
 
         // Pause protocol and attempt setLiquidityCap()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_setLiquidityCap(address(pool1), MAX_UINT));
 
         // Unpause protocol and setLiquidityCap()
@@ -487,7 +486,7 @@ contract PoolTest is TestUtil {
         assertTrue(!sid.try_setLockupPeriod(address(pool1), 180 days));      // Cannot increase lockup period
 
         // Pause protocol and attempt setLockupPeriod()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_setLockupPeriod(address(pool1), 180 days - 2));
         assertEq(pool1.lockupPeriod(), 180 days - 1);
 
@@ -630,7 +629,7 @@ contract PoolTest is TestUtil {
         make_withdrawable(che, pool1);
 
         // Pause protocol and attempt to transfer FDTs
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!che.try_transfer(address(pool1), address(bob), newAmt));
 
         // Unpause protocol and transfer FDTs
@@ -675,7 +674,7 @@ contract PoolTest is TestUtil {
         /*** Fund a Loan ***/
         /*******************/
         // Pause protocol and attempt fundLoan()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 1 * USD));
 
         // Unpause protocol and fundLoan()
@@ -1891,7 +1890,7 @@ contract PoolTest is TestUtil {
         assertTrue(!joe.try_setPenaltyDelay(address(pool1), 45 days));
         
         // Pause protocol and attempt setPenaltyDelay()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_setPenaltyDelay(address(pool1), 45 days));
         assertEq(pool1.penaltyDelay(), 30 days);
 
@@ -1907,7 +1906,7 @@ contract PoolTest is TestUtil {
         assertTrue(!joe.try_setPrincipalPenalty(address(pool1), 1125));
 
         // Pause protocol and attempt setPrincipalPenalty()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_setPrincipalPenalty(address(pool1), 1125));
         assertEq(pool1.principalPenalty(), 500);
 
@@ -1946,7 +1945,7 @@ contract PoolTest is TestUtil {
         assertTrue(pool1.principalOut() <= 100 * 10 ** liquidityAssetDecimals);
 
         // Pause protocol and attempt deactivate()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_deactivate(address(pool1), 86));
 
         // Unpause protocol and deactivate()
@@ -2093,7 +2092,7 @@ contract PoolTest is TestUtil {
 
     function test_setAllowList() public {
         // Pause protocol and attempt setAllowList()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_setAllowList(address(pool1), address(bob), true));
         assertTrue(!pool1.allowedLiquidityProviders(address(bob)));
 
@@ -2105,7 +2104,7 @@ contract PoolTest is TestUtil {
 
     function test_setAllowlistStakeLocker() public {
         // Pause protocol and attempt setAllowlistStakeLocker()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_setAllowlistStakeLocker(address(pool1), address(buf), true));
         assertTrue(!IStakeLocker(pool1.stakeLocker()).allowed(address(buf)));
 
@@ -2117,7 +2116,7 @@ contract PoolTest is TestUtil {
 
     function test_setAdmin() public {
         // Pause protocol and attempt setAdmin()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_setAdmin(address(pool1), address(pop), true));
         assertTrue(!pool1.admins(address(pop)));
 

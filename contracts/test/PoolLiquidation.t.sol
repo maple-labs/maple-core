@@ -252,7 +252,7 @@ contract PoolLiquidationTest is TestUtil {
         assertTrue(!joe.try_triggerDefault(address(pool_b), address(loan), address(dlFactory)));
 
         // Pause protocol and attempt triggerDefault()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!sid.try_triggerDefault(address(pool_a), address(loan), address(dlFactory)));
 
         // Unpause protocol and triggerDefault()
@@ -279,7 +279,7 @@ contract PoolLiquidationTest is TestUtil {
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
         // Pause protocol and attempt triggerDefault()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!fay.try_triggerDefault(address(loan)));
 
         // Unpause protocol and triggerDefault()

@@ -157,12 +157,12 @@ contract LoanTest is TestUtil {
         // Loan-specific pause by Borrower
         assertTrue(!loan.paused());
         assertTrue(!com.try_pause(address(loan)));
-        ali.pause(address(loan));
+        assertTrue( ali.try_pause(address(loan)));
         assertTrue(loan.paused());
         assertTrue(!bob.try_fundLoan(address(loan), address(bob),   1 * USD));
 
         assertTrue(!com.try_unpause(address(loan)));
-        ali.unpause(address(loan));
+        assertTrue( ali.try_unpause(address(loan)));
         assertTrue(!loan.paused());
         assertTrue(bob.try_fundLoan(address(loan), address(bob), 2500 * USD));
 
@@ -172,7 +172,7 @@ contract LoanTest is TestUtil {
 
         // Protocol-wide pause by Emergency Admin
         assertTrue(!com.try_setProtocolPause(address(globals),         true));
-        assertTrue(mic.try_setProtocolPause(address(globals),          true));
+        assertTrue( mic.try_setProtocolPause(address(globals),         true));
         assertTrue(globals.protocolPaused());
         assertTrue(!bob.try_fundLoan(address(loan), address(bob),   1 * USD));
 
@@ -210,7 +210,7 @@ contract LoanTest is TestUtil {
         ali.approve(WETH, address(loan), reqCollateral);
 
         // Pause protocol and attempt drawdown()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!ali.try_drawdown(address(loan), 5000 * USD));
 
         // Unpause protocol and drawdown()
@@ -312,7 +312,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),           _due);
 
         // Pause protocol and attempt makePayment()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!ali.try_makePayment(address(loan)));
 
         // Unpause protocol and makePayment()
@@ -493,7 +493,7 @@ contract LoanTest is TestUtil {
         hevm.warp(loan.createdAt() + globals.drawdownGracePeriod() + 1);
 
         // Pause protocol and attempt unwind()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!ali.try_unwind(address(loan)));
 
         // Unpause protocol and unwind()
@@ -518,7 +518,7 @@ contract LoanTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(bob)), 0);
 
         // Pause protocol and attempt withdrawFunds()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!bob.try_withdrawFunds(address(loan)));
 
         // Unpause protocol and withdrawFunds()
@@ -632,7 +632,7 @@ contract LoanTest is TestUtil {
         uint256 _usdcDelta            = IERC20(USDC).balanceOf(address(loan));
 
         // Pause protocol and attempt makeFullPayment()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!ali.try_makeFullPayment(address(loan)));
 
         // Unpause protocol and makeFullPayment()
@@ -682,7 +682,7 @@ contract LoanTest is TestUtil {
         Loan loan = createAndFundLoan(address(repaymentCalc));
 
         // Pause protocol and attempt setAdmin()
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!ali.try_setAdmin(address(loan), address(pop), true));
         assertTrue(!loan.admins(address(pop)));
 
