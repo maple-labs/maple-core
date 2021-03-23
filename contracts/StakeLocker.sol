@@ -28,6 +28,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     mapping(address => uint256) public stakeCooldown;  // Timestamp of when staker called cooldown()
     mapping(address => bool)    public allowed;        // Map address to allowed status
 
+    bool public openToPublic;  // Boolean opening StakeLocker to public for staking BPTs
+
     event   BalanceUpdated(address stakeLocker, address token, uint256 balance);
     event AllowListUpdated(address staker, bool status);
     event StakeDateUpdated(address staker, uint256 stakeDate);
@@ -91,6 +93,13 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function setAllowlist(address user, bool status) isPool public {
         allowed[user] = status;
         emit AllowListUpdated(user, status);
+    }
+
+    /**
+        @dev Open StakerLocker to public. Once it is set to `true` it cannot be set back to `false`.
+    */
+    function openStakeLockerToPublic() isPool external {
+        openToPublic = true;
     }
 
     /**
@@ -272,7 +281,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _isAllowed(address user) internal view {
         require(
-            allowed[user] || user == IPool(owner).poolDelegate(), 
+            allowed[user] || openToPublic || user == IPool(owner).poolDelegate(), 
             "StakeLocker:MSG_SENDER_NOT_ALLOWED"
         );
     }
