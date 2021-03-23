@@ -180,4 +180,14 @@ contract PoolDelegate {
         string memory sig = "setAdmin(address,bool)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, newAdmin, status));
     }
+
+    function try_pause(address target) external returns(bool ok) {
+        string memory sig = "pause()";
+        (ok,) = target.call(abi.encodeWithSignature(sig));
+    }
+
+    function try_unpause(address target) external returns(bool ok) {
+        string memory sig = "unpause()";
+        (ok,) = target.call(abi.encodeWithSignature(sig));
+    }
 }

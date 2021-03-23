@@ -245,19 +245,29 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.stakeDate(staker),          staker_slStakeDate,  "Incorrect stake date for staker");
     }
 
-    function test_stake_protocol_paused() public {
+    function test_stake_paused() public {
         sid.setAllowlistStakeLocker(address(pool), address(che), true);
-        che.approve(address(bPool), address(stakeLocker), 25 * WAD);
+        che.approve(address(bPool), address(stakeLocker), 20 * WAD);
+
+        // Pause StakeLocker and attempt stake()
+        assertTrue( sid.try_pause(address(stakeLocker)));
+        assertTrue(!che.try_stake(address(stakeLocker), 10 * WAD));
+        assertEq(stakeLocker.balanceOf(address(che)),   0 * WAD);
+
+        // Unpause StakeLocker and stake()
+        assertTrue(sid.try_unpause(address(stakeLocker)));
+        assertTrue(che.try_stake(address(stakeLocker), 10 * WAD));
+        assertEq(stakeLocker.balanceOf(address(che)),  10 * WAD);
 
         // Pause protocol and attempt to stake()
-        assertTrue(!globals.protocolPaused());
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
-        assertTrue(globals.protocolPaused());
-        assertTrue(!che.try_stake(address(stakeLocker), 25 * WAD));
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!che.try_stake(address(stakeLocker), 10 * WAD));
+        assertEq(stakeLocker.balanceOf(address(che)),   10 * WAD);
 
         // Unpause protocol and stake()
         assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));
+        assertTrue(che.try_stake(address(stakeLocker), 10 * WAD));
+        assertEq(stakeLocker.balanceOf(address(che)),  20 * WAD);
     }
 
     function test_stake() public {
