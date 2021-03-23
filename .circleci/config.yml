@@ -182,12 +182,12 @@ workflows:
       #     requires:
       #       - integration_test_dependencies
 
-      # - dapp_build:
-      #     context: seth
-      # - dapp_test: 
-      #     context: seth
-      #     requires:
-      #       - dapp_build
+      - dapp_build:
+          context: seth
+      - dapp_test: 
+          context: seth
+          requires:
+            - dapp_build
             
       # - deploy_kaleido:
       #     context: kaleido
