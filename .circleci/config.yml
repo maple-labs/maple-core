@@ -52,6 +52,23 @@ jobs:
             TEST=$(circleci tests glob contracts/**/*.t.sol | circleci tests split --split-by=name)
             ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY ./test-ci.sh $TEST
           no_output_timeout: 60m
+
+  check_size:
+    <<: *defaults
+    steps:
+       - run:
+          name: Checkout maple-deploy
+          command: |
+            cd ~/project
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:maple-labs/maple-deploy.git
+            cd ~/project/maple-deploy
+            git checkout develop
+            ./setup.sh
+            cd modules/maple-core
+            git checkout $CIRCLE_BRANCH
+            cd ../..
+            yarn compile && yarn size
+
   
   integration_test_dependencies:
     <<: *defaults
@@ -85,6 +102,11 @@ jobs:
             echo "HARDHAT_FORK_RPC_URL=$HARDHAT_FORK_RPC_URL" >> .env
             echo "HARDHAT_FORK_BLOCK_HEIGHT=11780000" >> .env
             echo "NETWORK=localhost" >> .env
+      - run:
+          name: Setup maple-deploy symlinks
+          command: |
+            ln -s ../../../maple-core/contracts ~/project/maple-deploy/hardhat/contracts/core
+            ln -s ../../maple-core/lib ~/project/maple-deploy/hardhat/lib
       - run:
           name: Setup maple-deploy symlinks
           command: |
@@ -157,7 +179,9 @@ workflows:
   version: 2
   test_all:
     jobs:
-      - integration_test_dependencies:
+      # - integration_test_dependencies:
+      #     context: hardhat
+      - check_size:
           context: hardhat
       # - integration_test:
       #     context: hardhat
