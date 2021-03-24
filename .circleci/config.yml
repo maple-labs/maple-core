@@ -52,7 +52,7 @@ jobs:
             TEST=$(circleci tests glob contracts/**/*.t.sol | circleci tests split --split-by=name)
             ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY ./test-ci.sh $TEST
           no_output_timeout: 60m
-  
+
   integration_test_dependencies:
     <<: *defaults
     steps:
@@ -94,6 +94,15 @@ jobs:
           root: ~/project
           paths:
             - "./*"
+
+  check_size:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Check contract sizes
+          command: cd ~/project/maple-deploy && yarn compile && yarn size
 
   integration_test:
     <<: *defaults
@@ -157,8 +166,12 @@ workflows:
   version: 2
   test_all:
     jobs:
-      # - integration_test_dependencies:
-      #     context: hardhat
+      - integration_test_dependencies:
+          context: hardhat
+      - check_size:
+          context: hardhat
+          requires:
+            - integration_test_dependencies
       # - integration_test:
       #     context: hardhat
       #     requires:
