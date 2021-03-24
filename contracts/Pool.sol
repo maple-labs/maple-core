@@ -150,14 +150,6 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Open StakeLocker to public. Once it is set to `true` it cannot be set back to `false`.
-    */
-    function openStakeLockerToPublic() external {
-        _isValidDelegateAndProtocolNotPaused();
-        IStakeLocker(stakeLocker).openStakeLockerToPublic();
-    }
-
-    /**
         @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
         @param  loan      Address of the loan to fund
         @param  dlFactory The DebtLockerFactory to utilize
