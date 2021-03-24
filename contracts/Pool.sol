@@ -106,7 +106,7 @@ contract Pool is PoolFDT {
     ) PoolFDT(name, symbol) public {
 
         // Conduct sanity checks on Pool params
-        PoolLib.poolSanityChecks(_globals(msg.sender), _liquidityAsset, _stakeAsset, _liquidityCap);
+        PoolLib.poolSanityChecks(_globals(msg.sender), _liquidityAsset, _stakeAsset, _liquidityCap, _stakingFee, _delegateFee);
 
         // Assign variables relating to liquidityAsset
         liquidityAsset         = IERC20(_liquidityAsset);

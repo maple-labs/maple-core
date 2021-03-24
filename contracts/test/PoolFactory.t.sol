@@ -236,6 +236,34 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
+    function test_createPool_invalid_fees() public {
+        setUpAllowlisting();
+        bPool.finalize();
+        
+        // PoolLib:INVALID_FEES
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            5000,  // 50.00%
+            5001,  // 50.01%
+            MAX_UINT
+        ));
+
+        assertTrue(ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            5000,  // 50.00%
+            5000,  // 50.00%
+            MAX_UINT
+        ));
+    }
+
     // Tests failure mode in createStakeLocker
     function test_createPool_createStakeLocker_bPool_not_finalized() public {
         setUpAllowlisting();

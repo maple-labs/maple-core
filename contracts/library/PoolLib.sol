@@ -36,10 +36,20 @@ library PoolLib {
         @param liquidityAsset Asset used by Pool for liquidity to fund loans
         @param stakeAsset     Asset escrowed in StakeLocker
         @param liquidityCap   Max amount of liquidityAsset accepted by the Pool
+        @param stakingFee     Fee that `stakers` earn on interest, in basis points
+        @param delegateFee    Fee that `_poolDelegate` earns on interest, in basis points
     */
-    function poolSanityChecks(IGlobals globals, address liquidityAsset, address stakeAsset, uint256 liquidityCap) external {
+    function poolSanityChecks(
+        IGlobals globals, 
+        address liquidityAsset, 
+        address stakeAsset, 
+        uint256 liquidityCap, 
+        uint256 stakingFee, 
+        uint256 delegateFee
+    ) external {
         require(globals.isValidLoanAsset(liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
         require(liquidityCap != uint256(0),                "Pool:INVALID_CAP");
+        require(stakingFee + delegateFee <= 10_000,        "Pool:INVALID_FEES");
         require(
             IBPool(stakeAsset).isBound(globals.mpl())  && 
             IBPool(stakeAsset).isBound(liquidityAsset) &&
