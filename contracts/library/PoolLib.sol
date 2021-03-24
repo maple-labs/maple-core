@@ -39,19 +39,13 @@ library PoolLib {
     */
     function poolSanityChecks(IGlobals globals, address liquidityAsset, address stakeAsset, uint256 liquidityCap) external {
         require(globals.isValidLoanAsset(liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
-        require(IBPool(stakeAsset).isBound(globals.mpl()), "Pool:INVALID_BALANCER_POOL");
         require(liquidityCap != uint256(0),                "Pool:INVALID_CAP");
-
-        // NOTE: Max length of this array would be 8, as thats the limit of assets in a balancer pool
-        address[] memory tokens = IBPool(stakeAsset).getFinalTokens();  // Also ensures that BPool is finalized
-
-        uint256  i = 0;
-        bool valid = false;
-
-        // Check that one of the assets in balancer pool is liquidityAsset
-        while(i < tokens.length && !valid) { valid = tokens[i] == liquidityAsset; i++; }  
-
-        require(valid, "Pool:INVALID_STAKING_POOL");
+        require(
+            IBPool(stakeAsset).isBound(globals.mpl())  && 
+            IBPool(stakeAsset).isBound(liquidityAsset) &&
+            IBPool(stakeAsset).isFinalized(), 
+            "Pool:INVALID_BALANCER_POOL"
+        );
     }
 
     /**

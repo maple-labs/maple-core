@@ -212,8 +212,8 @@ contract PoolLiquidationTest is TestUtil {
         joe.stake(address(stakeLocker_b), 25 * WAD);
         sid.finalize(address(pool_a));
         joe.finalize(address(pool_b));
-        sid.openPoolToPublic(address(pool_a));
-        joe.openPoolToPublic(address(pool_b));
+        sid.setOpenToPublic(address(pool_a), true);
+        joe.setOpenToPublic(address(pool_b), true);
         
         assertEq(uint256(pool_a.poolState()), 1);  // Finalize
         assertEq(uint256(pool_b.poolState()), 1);  // Finalize
@@ -522,7 +522,8 @@ contract PoolLiquidationTest is TestUtil {
 
         // Withdraw lowest possible amount (amt == recognizableLosses)
         // NOTE: LPs can withdraw more than this amount, it will just go towards their USDC
-        assertTrue(bob.try_withdraw(address(pool_a), bob_recognizableLosses.pre));
+        assertTrue(!bob.try_transfer(address(pool_a), address(ali), bob_poolBal.pre));
+        assertTrue( bob.try_withdraw(address(pool_a), bob_recognizableLosses.pre));
 
         assertPoolAccounting(pool_a);
 
