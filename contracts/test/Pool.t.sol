@@ -1917,11 +1917,11 @@ contract PoolTest is TestUtil {
         by.makePayment(address(_loan));
     }
 
-    function _drawDownLoan(uint256 drawDownAmount, Loan _loan, Borrower by) internal  {
-        uint cReq =  _loan.collateralRequiredForDrawdown(drawDownAmount);
+    function _drawDownLoan(uint256 drawdownAmount, Loan _loan, Borrower by) internal  {
+        uint cReq =  _loan.collateralRequiredForDrawdown(drawdownAmount);
         mint("WETH", address(by), cReq);
         by.approve(WETH, address(_loan),  cReq);
-        by.drawdown(address(_loan),  drawDownAmount);
+        by.drawdown(address(_loan),  drawdownAmount);
     }
 
     function _getLLBal(Pool who) internal view returns(uint256) {
