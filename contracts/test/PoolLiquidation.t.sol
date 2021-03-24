@@ -522,7 +522,8 @@ contract PoolLiquidationTest is TestUtil {
 
         // Withdraw lowest possible amount (amt == recognizableLosses)
         // NOTE: LPs can withdraw more than this amount, it will just go towards their USDC
-        assertTrue(bob.try_withdraw(address(pool_a), bob_recognizableLosses.pre));
+        assertTrue(!bob.try_transfer(address(pool_a), address(ali), bob_poolBal.pre));
+        assertTrue( bob.try_withdraw(address(pool_a), bob_recognizableLosses.pre));
 
         assertPoolAccounting(pool_a);
 
