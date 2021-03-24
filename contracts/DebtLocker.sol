@@ -16,7 +16,7 @@ contract DebtLocker {
 
     ILoan   public immutable loan;       // The Loan that this locker is holding tokens for
     IERC20  public immutable loanAsset;  // The loanAsset that this locker will claim
-    address public immutable owner;      // The owner of this Locker (the Pool)
+    address public immutable pool;       // The owner of this Locker (the Pool)
 
     uint256 public principalPaid;    // Loan total principal   paid at time of claim()
     uint256 public interestPaid;     // Loan total interest    paid at time of claim()
@@ -25,14 +25,14 @@ contract DebtLocker {
     uint256 public defaultSuffered;  // Loan total default suffered at time of claim()
     uint256 public amountRecovered;  // Liquidity asset (a.k.a. loan asset) recovered from liquidation of Loan collateral
     
-    modifier isOwner() {
-        require(msg.sender == owner, "DebtLocker:MSG_SENDER_NOT_OWNER");
+    modifier isPool() {
+        require(msg.sender == pool, "DebtLocker:MSG_SENDER_NOT_POOL");
         _;
     }
 
-    constructor(address _loan, address _owner) public {
+    constructor(address _loan, address _pool) public {
         loan      = ILoan(_loan);
-        owner     = _owner;
+        pool      = _pool;
         loanAsset = IERC20(ILoan(_loan).loanAsset());
     }
 
@@ -50,7 +50,7 @@ contract DebtLocker {
                 [5] = Amount Recovered (from Liquidation)
                 [6] = Default Suffered
     */
-    function claim() external isOwner returns(uint256[7] memory) {
+    function claim() external isPool returns(uint256[7] memory) {
 
         // Initialize newDefaultSuffered as zero
         uint256 newDefaultSuffered   = uint256(0);
@@ -103,7 +103,7 @@ contract DebtLocker {
             newExcess          = newExcess          == uint256(0) ? uint256(0) : calcAllotment(newExcess,          claimBal, sum);
             newAmountRecovered = newAmountRecovered == uint256(0) ? uint256(0) : calcAllotment(newAmountRecovered, claimBal, sum);
 
-            loanAsset.safeTransfer(owner, claimBal);
+            loanAsset.safeTransfer(pool, claimBal);
 
             return([claimBal, newInterest, newPrincipal, newFee, newExcess, newAmountRecovered, newDefaultSuffered]);
         }
@@ -114,7 +114,7 @@ contract DebtLocker {
     /**
         @dev Liquidate a loan that is held by this contract. Only called by the pool contract.
     */
-    function triggerDefault() external isOwner {
+    function triggerDefault() external isPool {
         loan.triggerDefault();
     }
 }
