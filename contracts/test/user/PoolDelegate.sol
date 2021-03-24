@@ -85,8 +85,8 @@ contract PoolDelegate {
         IPool(pool).setAdmin(newAdmin, status);
     }
 
-    function openPoolToPublic(address pool) external {
-        IPool(pool).openPoolToPublic();
+    function setOpenToPublic(address pool, bool open) external {
+        IPool(pool).setOpenToPublic(open);
     }
 
     function openStakeLockerToPublic(address stakeLocker) external {
@@ -165,9 +165,9 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
     }
 
-    function try_openPoolToPublic(address pool) external returns(bool ok) {
-        string memory sig = "openPoolToPublic()";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig));
+    function try_setOpenToPublic(address pool, bool open) external returns(bool ok) {
+        string memory sig = "setOpenToPublic(bool)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, open));
     }
 
     function try_openStakeLockerToPublic(address stakeLocker) external returns(bool ok) {

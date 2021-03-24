@@ -42,7 +42,7 @@ interface IPool {
 
     function isPoolFinalized() external view returns(bool);
 
-    function openPoolToPublic() external;
+    function setOpenToPublic(bool) external;
 
     function setAllowList(address user, bool status) external;
 

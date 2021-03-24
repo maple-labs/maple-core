@@ -150,14 +150,6 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Open Pool to public. Once it is set to `true` it cannot be set back to `false`.
-    */
-    function openPoolToPublic() external {
-        _isValidDelegateAndProtocolNotPaused();
-        openToPublic = true;
-    }
-
-    /**
         @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
         @param  loan      Address of the loan to fund
         @param  dlFactory The DebtLockerFactory to utilize
@@ -355,6 +347,15 @@ contract Pool is PoolFDT {
     function setAdmin(address newAdmin, bool allowed) external {
         _isValidDelegateAndProtocolNotPaused();
         admins[newAdmin] = allowed;
+    }
+
+    /**
+        @dev Set public pool access. Only Pool Delegate can call this function.
+        @param open Public pool access status.
+    */
+    function setOpenToPublic(bool open) external {
+        _isValidDelegateAndProtocolNotPaused();
+        openToPublic = open;
     }
 
     /************************************/
