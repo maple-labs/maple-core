@@ -11,7 +11,7 @@ contract RepaymentCalc {
 	using SafeMath for uint256;
 
     uint8   public constant calcType = 10;               // INTEREST type
-    bytes32 public constant name     = "INTEREST_ONLY";
+    bytes32 public constant name     = "INTEREST_ONLY";  // Calculator
 
     /**
         @dev    Calculates the next payment for a Loan.
@@ -24,16 +24,19 @@ contract RepaymentCalc {
 
         ILoan loan = ILoan(_loan);
 
-        uint256 principalOwed       = loan.principalOwed();
-        uint256 apr                 = loan.apr();
-        uint256 paymentIntervalDays = loan.paymentIntervalSeconds().div(86400);
-        uint256 paymentsRemaining   = loan.paymentsRemaining();
+        uint256 principalOwed = loan.principalOwed();
 
-        // principalOwed.mul(apr).div(10000) represents interest amount for an annual time-frame.
-        // .mul(paymentIntervalDays).div(365) is the annual interest amount adjusted for actual time-frame.
-        uint256 interest = principalOwed.mul(apr).div(10000).mul(paymentIntervalDays).div(365);
+        // Equation = principal * APR * (paymentInterval / year)
+        // Principal * APR gives annual interest
+        // Multiplying that by (paymentInterval / year) gives portion of annual interest due for each interval
+        uint256 interest = 
+            principalOwed
+                .mul(loan.apr())
+                .mul(loan.paymentIntervalSeconds())
+                .div(10000)
+                .div(365 days);
 
-        if (paymentsRemaining == 1) {
+        if (loan.paymentsRemaining() == 1) {
             return (interest.add(principalOwed), principalOwed, interest); 
         } else {
             return (interest, 0, interest); 
