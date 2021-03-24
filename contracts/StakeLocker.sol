@@ -22,7 +22,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     IERC20  public immutable stakeAsset;  // The asset deposited by stakers into this contract, for liquidation during defaults.
     
     address public immutable liquidityAsset;  // The liquidityAsset for the Pool as well as the dividend token for FDT interest.
-    address public immutable owner;           // The parent liquidity pool.
+    address public immutable pool;            // The parent liquidity pool.
 
     mapping(address => uint256) public stakeDate;      // Map address to effective stake date value
     mapping(address => uint256) public stakeCooldown;  // Timestamp of when staker called cooldown()
@@ -40,11 +40,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     constructor(
         address _stakeAsset,
         address _liquidityAsset,
-        address _owner
+        address _pool
     ) StakeLockerFDT("Maple Stake Locker", "MPLSTAKE", _liquidityAsset) public {
         liquidityAsset = _liquidityAsset;
         stakeAsset     = IERC20(_stakeAsset);
-        owner          = _owner;
+        pool           = _pool;
     }
 
     /*****************/
@@ -58,8 +58,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     modifier canUnstake() {
         require(
-            (msg.sender != IPool(owner).poolDelegate() && IPool(owner).isPoolFinalized()) || 
-            !IPool(owner).isPoolFinalized(), 
+            (msg.sender != IPool(pool).poolDelegate() && IPool(pool).isPoolFinalized()) || 
+            !IPool(pool).isPoolFinalized(), 
             "StakeLocker:ERR_STAKE_LOCKED"
         );
         _;
@@ -77,7 +77,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Modifier to check if msg.sender is Pool.
     */
     modifier isPool() {
-        require(msg.sender == owner, "StakeLocker:MSG_SENDER_NOT_POOL");
+        require(msg.sender == pool, "StakeLocker:MSG_SENDER_NOT_POOL");
         _;
     }
 
@@ -273,7 +273,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
     */
     function _isValidAdminOrPoolDelegate() internal view {
-        require(msg.sender == IPool(owner).poolDelegate() || IPool(owner).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
+        require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
     }
 
     /** 
@@ -281,7 +281,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _isAllowed(address user) internal view {
         require(
-            allowed[user] || openToPublic || user == IPool(owner).poolDelegate(), 
+            allowed[user] || openToPublic || user == IPool(pool).poolDelegate(), 
             "StakeLocker:MSG_SENDER_NOT_ALLOWED"
         );
     }
@@ -290,7 +290,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Helper function to return interface of MapleGlobals.
     */
     function _globals() internal view returns(IGlobals) {
-        return IGlobals(IPoolFactory(IPool(owner).superFactory()).globals());
+        return IGlobals(IPoolFactory(IPool(pool).superFactory()).globals());
     }
 
     /**

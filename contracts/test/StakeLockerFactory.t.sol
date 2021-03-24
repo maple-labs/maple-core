@@ -38,6 +38,6 @@ contract StakeLockerFactoryTest is TestUtil {
         // Validate the storage of sl.
         assertEq(address(sl.stakeAsset()), address(mpl),     "Incorrect stake asset address");
         assertEq(sl.liquidityAsset(),      USDC,             "Incorrect address of loan asset");
-        assertEq(sl.owner(),               address(this),    "Incorrect owner address");
+        assertEq(sl.pool(),                address(this),    "Incorrect pool address");
     }
 }
