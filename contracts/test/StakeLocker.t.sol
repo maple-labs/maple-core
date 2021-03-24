@@ -275,10 +275,10 @@ contract StakeLockerTest is TestUtil {
     function test_stake() public {
         uint256 startDate = block.timestamp;
 
-        assertTrue(!che.try_stake(address(stakeLocker),   10 * WAD));  // Hasn't approved BPTs
-        che.approve(address(bPool), address(stakeLocker), 20 * WAD);   // Approve enough for two stakes
+        assertTrue(!che.try_stake(address(stakeLocker),   25 * WAD));  // Hasn't approved BPTs
+        che.approve(address(bPool), address(stakeLocker), 25 * WAD);
 
-        assertTrue(!che.try_stake(address(stakeLocker),   10 * WAD));  // Isn't yet allowlisted
+        assertTrue(!che.try_stake(address(stakeLocker),   25 * WAD));  // Isn't yet allowlisted
 
         sid.setAllowlistStakeLocker(address(pool), address(che), true);
 
@@ -288,17 +288,17 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.balanceOf(address(che)),          0);
         assertEq(stakeLocker.stakeDate(address(che)),          0);
 
-        assertTrue(che.try_stake(address(stakeLocker), 10 * WAD));  
+        assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));  
 
-        assertEq(bPool.balanceOf(address(che)),          15 * WAD);
-        assertEq(bPool.balanceOf(address(stakeLocker)),  60 * WAD);  // PD + Staker stake
-        assertEq(stakeLocker.totalSupply(),              60 * WAD);
-        assertEq(stakeLocker.balanceOf(address(che)),    10 * WAD);
+        assertEq(bPool.balanceOf(address(che)),                 0);
+        assertEq(bPool.balanceOf(address(stakeLocker)),  75 * WAD);  // PD + Staker stake
+        assertEq(stakeLocker.totalSupply(),              75 * WAD);
+        assertEq(stakeLocker.balanceOf(address(che)),    25 * WAD);
         assertEq(stakeLocker.stakeDate(address(che)),   startDate);
 
-        dan.approve(address(bPool), address(stakeLocker), 10 * WAD);  // Isn't yet allowlisted
+        dan.approve(address(bPool), address(stakeLocker), 25 * WAD);  
 
-        assertTrue(!dan.try_stake(address(stakeLocker), 10 * WAD)); 
+        assertTrue(!dan.try_stake(address(stakeLocker), 25 * WAD)); // Isn't allowlisted
 
         // Open StakeLocker to public
         assertTrue(!stakeLocker.openToPublic());
@@ -308,24 +308,18 @@ contract StakeLockerTest is TestUtil {
         assertTrue(!stakeLocker.allowed(address(dan)));  // Dan is not an allowed Staker, but StakeLocker is now open to public
 
         assertEq(bPool.balanceOf(address(dan)),         25 * WAD);
-        assertEq(bPool.balanceOf(address(stakeLocker)), 60 * WAD);  // PD stake
-        assertEq(stakeLocker.totalSupply(),             60 * WAD);
+        assertEq(bPool.balanceOf(address(stakeLocker)), 75 * WAD);  // PD stake
+        assertEq(stakeLocker.totalSupply(),             75 * WAD);
         assertEq(stakeLocker.balanceOf(address(dan)),          0);
         assertEq(stakeLocker.stakeDate(address(dan)),          0);
 
-        assertTrue(dan.try_stake(address(stakeLocker), 10 * WAD));  
+        assertTrue(dan.try_stake(address(stakeLocker), 25 * WAD));  
 
-        assertEq(bPool.balanceOf(address(dan)),         15 * WAD);
-        assertEq(bPool.balanceOf(address(stakeLocker)), 70 * WAD);  // PD + Staker stake
-        assertEq(stakeLocker.totalSupply(),             70 * WAD);
-        assertEq(stakeLocker.balanceOf(address(dan)),   10 * WAD);
-        assertEq(stakeLocker.stakeDate(address(dan)),  startDate);
-
-        assertTrue(!joe.try_openStakeLockerToPublic(address(stakeLocker)));
-        assertTrue( sid.try_openStakeLockerToPublic(address(stakeLocker)));
-
-        assertTrue(!dan.try_stake(address(stakeLocker), 10 * WAD));  // Closed to public again
-        assertTrue( che.try_stake(address(stakeLocker), 10 * WAD));  // Whitelisted can still stake
+        assertEq(bPool.balanceOf(address(dan)),                 0);
+        assertEq(bPool.balanceOf(address(stakeLocker)), 100 * WAD);  // PD + Staker stake
+        assertEq(stakeLocker.totalSupply(),             100 * WAD);
+        assertEq(stakeLocker.balanceOf(address(dan)),    25 * WAD);
+        assertEq(stakeLocker.stakeDate(address(dan)),   startDate);
     }
 
     function test_withdrawFunds_protocol_paused() public {
