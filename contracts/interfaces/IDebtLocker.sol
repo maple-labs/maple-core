@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 
 interface IDebtLocker {
-    function owner() external returns (address);
+    function pool() external returns (address);
 
     function loanAsset() external returns (address);
 

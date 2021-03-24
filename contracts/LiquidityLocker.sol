@@ -10,16 +10,16 @@ contract LiquidityLocker {
 
     using SafeERC20 for IERC20;
 
-    address public immutable owner;           // The Pool that owns this LiquidityLocker, for authorization purposes
+    address public immutable pool;            // The Pool that owns this LiquidityLocker, for authorization purposes
     IERC20  public immutable liquidityAsset;  // The asset which this LiquidityLocker will escrow
 
-    constructor(address _liquidityAsset, address _owner) public {
+    constructor(address _liquidityAsset, address _pool) public {
         liquidityAsset = IERC20(_liquidityAsset);
-        owner          = _owner;
+        pool           = _pool;
     }
     
-    modifier isOwner() {
-        require(msg.sender == owner, "LiquidityLocker:MSG_SENDER_NOT_OWNER");
+    modifier isPool() {
+        require(msg.sender == pool, "LiquidityLocker:MSG_SENDER_NOT_POOL");
         _;
     }
 
@@ -28,7 +28,7 @@ contract LiquidityLocker {
         @param dst Desintation to transfer liquidityAsset to
         @param amt Amount of liquidityAsset to transfer
     */
-    function transfer(address dst, uint256 amt) external isOwner {
+    function transfer(address dst, uint256 amt) external isPool {
         require(dst != address(0), "LiquidityLocker:NULL_TRASNFER_DST");
         liquidityAsset.safeTransfer(dst, amt);
     }
@@ -39,7 +39,7 @@ contract LiquidityLocker {
         @param  debtLocker The locker that will escrow debt tokens
         @param  amt        Amount of liquidityAsset to fund the loan for
     */
-    function fundLoan(address loan, address debtLocker, uint256 amt) external isOwner {
+    function fundLoan(address loan, address debtLocker, uint256 amt) external isPool {
         liquidityAsset.safeApprove(loan, amt);
         ILoan(loan).fundLoan(debtLocker, amt);
     }
