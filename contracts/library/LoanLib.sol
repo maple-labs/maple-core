@@ -151,7 +151,7 @@ library LoanLib {
         bool pastGracePeriod = block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod());
 
         // Check if the loan is past the gracePeriod and that msg.sender has a percentage of total LoanFDTs that is greater
-        // the minimum equity needed (specified in globals)
+        // than the minimum equity needed (specified in globals)
         return pastGracePeriod && balance >= totalSupply * _globals(superFactory).minLoanEquity() / 10_000;
     }
 

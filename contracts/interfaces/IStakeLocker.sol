@@ -4,6 +4,7 @@ pragma solidity 0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 interface IStakeLocker is IERC20 {
+
     function stakeDate(address) external returns (uint256);
 
     function stake(uint256) external;

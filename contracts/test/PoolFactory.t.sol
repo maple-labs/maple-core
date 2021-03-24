@@ -6,6 +6,7 @@ import "./TestUtil.sol";
 
 import "./user/Governor.sol";
 import "./user/PoolDelegate.sol";
+import "./user/EmergencyAdmin.sol";
 
 import "../library/TokenUUID.sol";
 
@@ -29,6 +30,7 @@ contract PoolFactoryTest is TestUtil {
 
     Governor                       gov;
     PoolDelegate                   ali;
+    EmergencyAdmin                 mic;
 
     MapleToken                     mpl;
     MapleGlobals               globals;
@@ -47,6 +49,7 @@ contract PoolFactoryTest is TestUtil {
 
         gov         = new Governor();       // Actor: Governor of Maple.
         ali         = new PoolDelegate();   // Actor: Manager of the Pool.
+        mic         = new EmergencyAdmin(); // Actor: Emergency Admin of the protocol.
 
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
         globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -66,6 +69,8 @@ contract PoolFactoryTest is TestUtil {
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));
         gov.setPriceOracle(USDC, address(usdOracle));
+
+        gov.setAdmin(address(mic));
 
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
 
@@ -246,6 +251,71 @@ contract PoolFactoryTest is TestUtil {
             100,
             MAX_UINT
         ));
+    }
+
+    function test_createPool_paused() public {
+
+        setUpAllowlisting();
+        gov.setLoanAsset(USDC, true);
+        gov.setPoolDelegateAllowlist(address(ali), true);
+        bPool.finalize();
+
+        // Pause PoolFactory and attempt createPool()
+        assertTrue( gov.try_pause(address(poolFactory)));
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            MAX_UINT
+        ));
+        assertEq(poolFactory.poolsCreated(), 0);
+
+        // Unpause PoolFactory and createPool()
+        assertTrue(gov.try_unpause(address(poolFactory)));
+        assertTrue(ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            MAX_UINT
+        ));
+        assertEq(poolFactory.poolsCreated(), 1);
+
+        // Pause protocol and attempt createPool()
+        assertTrue(!globals.protocolPaused());
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            MAX_UINT
+        ));
+        assertEq(poolFactory.poolsCreated(), 1);
+
+        // Unpause protocol and createPool()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            MAX_UINT
+        ));
+        assertEq(poolFactory.poolsCreated(), 2);
     }
 
     function test_createPool() public {
