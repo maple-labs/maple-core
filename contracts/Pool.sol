@@ -158,14 +158,6 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Open StakeLocker to public. Once it is set to `true` it cannot be set back to `false`.
-    */
-    function openStakeLockerToPublic() external {
-        _isValidDelegateAndProtocolNotPaused();
-        IStakeLocker(stakeLocker).openStakeLockerToPublic();
-    }
-
-    /**
         @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
         @param  loan      Address of the loan to fund
         @param  dlFactory The DebtLockerFactory to utilize
@@ -376,8 +368,7 @@ contract Pool is PoolFDT {
     function deposit(uint256 amt) external {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
-        require(openToPublic || allowedLiquidityProviders[msg.sender], "Pool:INVALID_LP");
-        require(isDepositAllowed(amt), "Pool:LIQUIDITY_CAP_HIT");
+        require(isDepositAllowed(amt), "Pool:NOT_ALLOWED");
         liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
         uint256 wad = _toWad(amt);
 
@@ -435,6 +426,7 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
+        require(recognizableLossesOf(from) == uint256(0), "Pool:NOT_ALLOWED");
         PoolLib.prepareTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
         super._transfer(from, to, wad);
     }
@@ -525,8 +517,8 @@ contract Pool is PoolFDT {
         @param depositAmt Amount of tokens (i.e loanAsset type) user is trying to deposit
     */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
-        uint256 totalDeposits = _balanceOfLiquidityLocker().add(principalOut);
-        return totalDeposits.add(depositAmt) <= liquidityCap;
+        bool isValidLP = openToPublic || allowedLiquidityProviders[msg.sender];
+        return _balanceOfLiquidityLocker().add(principalOut).add(depositAmt) <= liquidityCap && isValidLP;
     }
 
     /**
@@ -594,7 +586,7 @@ contract Pool is PoolFDT {
         @param _state Enum of desired Pool state
     */
     function _isValidState(State _state) internal view {
-        require(poolState == _state, "Pool:STATE_CHECK");
+        require(poolState == _state, "Pool:INVALID_STATE");
     }
 
     /**

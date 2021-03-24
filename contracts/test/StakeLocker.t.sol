@@ -279,7 +279,6 @@ contract StakeLockerTest is TestUtil {
         che.approve(address(bPool), address(stakeLocker), 25 * WAD);
 
         assertTrue(!che.try_stake(address(stakeLocker),   25 * WAD));  // Isn't yet allowlisted
-        che.approve(address(bPool), address(stakeLocker), 25 * WAD);
 
         sid.setAllowlistStakeLocker(address(pool), address(che), true);
 
@@ -297,14 +296,14 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.balanceOf(address(che)),    25 * WAD);
         assertEq(stakeLocker.stakeDate(address(che)),   startDate);
 
-        dan.approve(address(bPool), address(stakeLocker), 25 * WAD);  // Isn't yet allowlisted
+        dan.approve(address(bPool), address(stakeLocker), 25 * WAD);  
 
-        assertTrue(!dan.try_stake(address(stakeLocker), 25 * WAD)); 
+        assertTrue(!dan.try_stake(address(stakeLocker), 25 * WAD)); // Isn't allowlisted
 
         // Open StakeLocker to public
         assertTrue(!stakeLocker.openToPublic());
-        assertTrue(!joe.try_openStakeLockerToPublic(address(pool)));
-        assertTrue( sid.try_openStakeLockerToPublic(address(pool)));
+        assertTrue(!joe.try_openStakeLockerToPublic(address(stakeLocker)));
+        assertTrue( sid.try_openStakeLockerToPublic(address(stakeLocker)));
         assertTrue( stakeLocker.openToPublic());
         assertTrue(!stakeLocker.allowed(address(dan)));  // Dan is not an allowed Staker, but StakeLocker is now open to public
 
