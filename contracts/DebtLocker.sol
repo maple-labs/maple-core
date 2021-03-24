@@ -32,7 +32,7 @@ contract DebtLocker {
 
     constructor(address _loan, address _pool) public {
         loan      = ILoan(_loan);
-        pool     = _pool;
+        pool      = _pool;
         loanAsset = IERC20(ILoan(_loan).loanAsset());
     }
 
