@@ -5,8 +5,6 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 interface IStakeLocker is IERC20 {
 
-    function allowed(address) external returns (bool);
-
     function stakeDate(address) external returns (uint256);
 
     function stake(uint256) external;
