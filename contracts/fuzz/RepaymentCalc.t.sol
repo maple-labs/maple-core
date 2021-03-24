@@ -186,7 +186,7 @@ contract RepaymentCalcTest is TestUtil {
         sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
         sid.finalize(address(pool1)); 
-        sid.openPoolToPublic(address(pool1));
+        sid.setOpenToPublic(address(pool1), true);
     }
 
     function setUpRepayments(uint256 loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee, uint256 premiumFee) public {

@@ -42,15 +42,13 @@ interface IPool {
 
     function isPoolFinalized() external view returns(bool);
 
-    function openPoolToPublic() external;
+    function setOpenToPublic(bool) external;
 
     function setAllowList(address user, bool status) external;
 
     function allowedLiquidityProviders(address user) external view returns(bool);
 
     function openToPublic() external view returns(bool);
-
-    function openStakeLockerToPublic() external view returns(bool);
 
     function intendToWithdraw() external;
 }
