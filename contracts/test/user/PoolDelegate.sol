@@ -145,9 +145,9 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, delay));
     }
 
-    function try_deactivate(address pool) external returns(bool ok) {
-        string memory sig = "deactivate()";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig));
+    function try_deactivate(address pool, uint confirmation) external returns(bool ok) {
+        string memory sig = "deactivate(uint256)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, confirmation));
     }
 
     function try_setLiquidityCap(address pool, uint256 liquidityCap) external returns(bool ok) {
@@ -175,8 +175,28 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig));
     }
 
-    function try_setAllowList(address pool, address users, bool status) external returns(bool ok) {
+    function try_setAllowList(address pool, address user, bool status) external returns(bool ok) {
         string memory sig = "setAllowList(address,bool)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, users, status));
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, user, status));
+    }
+
+    function try_setAllowlistStakeLocker(address pool, address user, bool status) external returns(bool ok) {
+        string memory sig = "setAllowlistStakeLocker(address,bool)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, user, status));
+    }
+
+    function try_setAdmin(address pool, address newAdmin, bool status) external returns(bool ok) {
+        string memory sig = "setAdmin(address,bool)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, newAdmin, status));
+    }
+
+    function try_pause(address target) external returns(bool ok) {
+        string memory sig = "pause()";
+        (ok,) = target.call(abi.encodeWithSignature(sig));
+    }
+
+    function try_unpause(address target) external returns(bool ok) {
+        string memory sig = "unpause()";
+        (ok,) = target.call(abi.encodeWithSignature(sig));
     }
 }

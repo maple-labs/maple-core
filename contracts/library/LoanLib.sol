@@ -151,7 +151,7 @@ library LoanLib {
         bool pastGracePeriod = block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod());
 
         // Check if the loan is past the gracePeriod and that msg.sender has a percentage of total LoanFDTs that is greater
-        // the minimum equity needed (specified in globals)
+        // than the minimum equity needed (specified in globals)
         return pastGracePeriod && balance >= totalSupply * _globals(superFactory).minLoanEquity() / 10_000;
     }
 
@@ -207,7 +207,7 @@ library LoanLib {
         @param collateralRatio Percentage of drawdown value that must be posted as collateral
         @param superFactory    Factory that instantiated Loan
         @param amt             Drawdown amount
-        @return collateralRequiredFIN The amount of collateralAsset required to post in CollateralLocker for given drawdown amt
+        @return Amount of collateralAsset required to post in CollateralLocker for given drawdown amt
     */
     function collateralRequiredForDrawdown(
         IERC20Details collateralAsset,
@@ -218,20 +218,21 @@ library LoanLib {
     ) 
         external
         view
-        returns (uint256 collateralRequiredFIN) 
+        returns (uint256) 
     {
         IGlobals globals = _globals(superFactory);
 
         uint256 wad = _toWad(amt, loanAsset);  // Convert to WAD precision
 
-        // Fetch value of collateral and funding asset
+        // Fetch current value of loanAsset and collateralAsset (Chainlink oracles provide 8 decimal precision)
         uint256 loanAssetPrice  = globals.getLatestPrice(address(loanAsset));
         uint256 collateralPrice = globals.getLatestPrice(address(collateralAsset));
 
         // Calculate collateral required
-        uint256 collateralRequiredUSD = loanAssetPrice.mul(wad).mul(collateralRatio).div(10000);
-        uint256 collateralRequiredWEI = collateralRequiredUSD.div(collateralPrice);
-        collateralRequiredFIN = collateralRequiredWEI.div(10 ** (18 - collateralAsset.decimals()));
+        uint256 collateralRequiredUSD = wad.mul(loanAssetPrice).mul(collateralRatio).div(10000);  // 18 + 8 = 26 decimals
+        uint256 collateralRequiredWAD = collateralRequiredUSD.div(collateralPrice);               // 26 - 8 = 18 decimals
+
+        return collateralRequiredWAD.div(10 ** (18 - collateralAsset.decimals()));  // 18 - (18 - collateralDecimals) = collateralDecimals
     }
 
     /************************/
