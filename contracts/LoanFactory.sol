@@ -12,11 +12,12 @@ contract LoanFactory is Pausable {
 
     using SafeMath for uint256;
 
-    uint8 public constant COLLATERAL_LOCKER_FACTORY  = 0;   // Factory type of `CollateralLockerFactory`
-    uint8 public constant FUNDING_LOCKER_FACTORY     = 2;   // Factory type of `FundingLockerFactory`
-    uint8 public constant INTEREST_CALC_TYPE         = 10;  // Calc type of `RepaymentCalc`
-    uint8 public constant LATEFEE_CALC_TYPE          = 11;  // Calc type of `LateFeeCalc`
-    uint8 public constant PREMIUM_CALC_TYPE          = 12;  // Calc type of `PremiumCalc`
+    uint8 public constant CL_FACTORY = 0;  // Factory type of `CollateralLockerFactory`
+    uint8 public constant FL_FACTORY = 2;  // Factory type of `FundingLockerFactory`
+
+    uint8 public constant INTEREST_CALC_TYPE = 10;  // Calc type of `RepaymentCalc`
+    uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`
+    uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`
 
     IGlobals public globals;  // Interface of MapleGlobals
 
@@ -85,8 +86,8 @@ contract LoanFactory is Pausable {
         IGlobals _globals = globals;
 
         // Validity checks
-        require(_globals.isValidSubFactory(address(this), flFactory, FUNDING_LOCKER_FACTORY),    "LF:INVALID_FL_FACTORY");
-        require(_globals.isValidSubFactory(address(this), clFactory, COLLATERAL_LOCKER_FACTORY), "LF:INVALID_CL_FACTORY");
+        require(_globals.isValidSubFactory(address(this), flFactory, FL_FACTORY), "LF:INVALID_FL_FACTORY");
+        require(_globals.isValidSubFactory(address(this), clFactory, CL_FACTORY), "LF:INVALID_CL_FACTORY");
 
         require(_globals.isValidCalc(calcs[0], INTEREST_CALC_TYPE), "LF:INVALID_INTEREST_CALC");
         require(_globals.isValidCalc(calcs[1],  LATEFEE_CALC_TYPE), "LF:INVALID_LATE_FEE_CALC");

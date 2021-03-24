@@ -349,7 +349,6 @@ contract PoolFactoryTest is TestUtil {
 
         assertEq(address(pool.liquidityAsset()),  USDC);
         assertEq(pool.stakeAsset(),               address(bPool));
-        assertEq(pool.slFactory(),                address(slFactory));
         assertEq(pool.poolDelegate(),             address(ali));
         assertEq(pool.stakingFee(),               500);
         assertEq(pool.delegateFee(),              100);
