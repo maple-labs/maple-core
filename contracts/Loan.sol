@@ -136,23 +136,23 @@ contract Loan is FDT, Pausable {
         )
         public
     {
-        borrower        = _borrower;
-        loanAsset       = IERC20(_loanAsset);
-        collateralAsset = IERC20(_collateralAsset);
-        flFactory       = _flFactory;
-        clFactory       = _clFactory;
-        createdAt       = block.timestamp;
-
         IGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks
         require(globals.isValidLoanAsset(_loanAsset),             "Loan:INVALID_LOAN_ASSET");
         require(globals.isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
 
-        require(specs[2] != 0,               "Loan:PID_EQ_ZERO");
-        require(specs[1].mod(specs[2]) == 0, "Loan:INVALID_TERM_DAYS");
-        require(specs[3] > 0,                "Loan:MIN_RAISE_EQ_ZERO");
-        require(specs[5] > 0,                "Loan:FUNDING_PERIOD_EQ_ZERO");
+        require(specs[2] != uint256(0),               "Loan:PID_EQ_ZERO");
+        require(specs[1].mod(specs[2]) == uint256(0), "Loan:INVALID_TERM_DAYS");
+        require(specs[3] > uint256(0),                "Loan:MIN_RAISE_EQ_ZERO");
+        require(specs[5] > uint256(0),                "Loan:FUNDING_PERIOD_EQ_ZERO");
+
+        borrower        = _borrower;
+        loanAsset       = IERC20(_loanAsset);
+        collateralAsset = IERC20(_collateralAsset);
+        flFactory       = _flFactory;
+        clFactory       = _clFactory;
+        createdAt       = block.timestamp;
 
         // Update state variables
         apr                    = specs[0];
