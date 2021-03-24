@@ -435,7 +435,7 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
-        require(recognizedLossesOf(from) > uint256(0), "Pool:NOT_ALLOWED");
+        require(recognizedLossesOf(from) == uint256(0), "Pool:NOT_ALLOWED");
         PoolLib.prepareTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
         super._transfer(from, to, wad);
     }

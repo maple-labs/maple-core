@@ -39,9 +39,13 @@ library PoolLib {
     */
     function poolSanityChecks(IGlobals globals, address liquidityAsset, address stakeAsset, uint256 liquidityCap) external {
         require(globals.isValidLoanAsset(liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
-        require(IBPool(stakeAsset).isFinalized(),          "Pool:BALANCER_POOL_SHOULD_FINALIZE");
         require(liquidityCap != uint256(0),                "Pool:INVALID_CAP");
-        require(IBPool(stakeAsset).isBound(globals.mpl()) && IBPool(stakeAsset).isBound(liquidityAsset), "Pool:INVALID_BALANCER_POOL");
+        require(
+            IBPool(stakeAsset).isBound(globals.mpl())  && 
+            IBPool(stakeAsset).isBound(liquidityAsset) &&
+            IBPool(stakeAsset).isFinalized(), 
+            "Pool:INVALID_BALANCER_POOL"
+        );
     }
 
     /**
