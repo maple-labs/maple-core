@@ -471,7 +471,6 @@ contract PoolTest is TestUtil {
 
         assertTrue(sid.try_setOpenToPublic(address(pool1), false));  // Close pool to public
         assertTrue(!dan.try_deposit(address(pool1),    100 * USD));  // Fail to deposit as pool no longer public
-        assertEq(pool1.balanceOf(address(bob)),        100 * WAD);
     }
 
     function test_setLockupPeriod() public {
