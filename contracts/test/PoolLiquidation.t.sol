@@ -11,6 +11,7 @@ import "./user/Lender.sol";
 import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
 import "./user/Staker.sol";
+import "./user/EmergencyAdmin.sol";
 
 import "../interfaces/IBFactory.sol";
 import "../interfaces/IBPool.sol";
@@ -55,6 +56,7 @@ contract PoolLiquidationTest is TestUtil {
     Lender                                 fay;
     PoolDelegate                           sid;
     PoolDelegate                           joe;
+    EmergencyAdmin                         mic;
 
     RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
@@ -93,6 +95,7 @@ contract PoolLiquidationTest is TestUtil {
         dan            = new Staker();                       // Actor: Stakes BPTs in Pool.
         eli            = new Staker();                       // Actor: Stakes BPTs in Pool.
         fay            = new Lender();                       // Actor: Funds loan directly (test liquidation)
+        mic            = new EmergencyAdmin();               // Actor: Emergency Admin of the protocol.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl), BPOOL_FACTORY);
@@ -150,6 +153,7 @@ contract PoolLiquidationTest is TestUtil {
         gov.setPoolDelegateAllowlist(address(sid), true);
         gov.setPoolDelegateAllowlist(address(joe), true);
         gov.setMapleTreasury(address(trs));
+        gov.setAdmin(address(mic));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
@@ -231,9 +235,9 @@ contract PoolLiquidationTest is TestUtil {
         // Fund the loan
         sid.fundLoan(address(pool_a), address(loan), address(dlFactory),     20_000_000 * USD);  // Exactly 20% equity
         joe.fundLoan(address(pool_b), address(loan), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1 wei equity 
-        uint cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
 
         // Drawdown loan
+        uint cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
         mint("WETH", address(che), cReq);
         che.approve(WETH, address(loan), MAX_UINT);
         che.drawdown(address(loan), 4_000_000 * USD);  // Draw down less than total amount
@@ -244,9 +248,43 @@ contract PoolLiquidationTest is TestUtil {
         uint256 gracePeriod = globals.gracePeriod();
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
-        // Trigger default
+        // Attempt to trigger default as PD holding less than minimum LoanFDTs required (MapleGlobals.minLoanEquity)
         assertTrue(!joe.try_triggerDefault(address(pool_b), address(loan), address(dlFactory)));
-        assertTrue( sid.try_triggerDefault(address(pool_a), address(loan), address(dlFactory)));
+
+        // Pause protocol and attempt triggerDefault()
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!sid.try_triggerDefault(address(pool_a), address(loan), address(dlFactory)));
+
+        // Unpause protocol and triggerDefault()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(sid.try_triggerDefault(address(pool_a), address(loan), address(dlFactory)));
+    }
+
+    function test_triggerDefault_individual_lender() public {
+        // Individual lender funds loan
+        mint("USDC", address(fay),  1_000_000 * USD);
+        fay.approve(USDC, address(loan), MAX_UINT);
+        fay.fundLoan(address(loan), 1_000_000 * USD, address(fay));
+
+        // Drawdown loan
+        uint cReq = loan.collateralRequiredForDrawdown(1_000_000 * USD);
+        mint("WETH", address(che), cReq);
+        che.approve(WETH, address(loan), MAX_UINT);
+        che.drawdown(address(loan), 1_000_000 * USD);  // Draw down less than total amount
+        
+        // Warp to late payment
+        uint256 start = block.timestamp;
+        uint256 nextPaymentDue = loan.nextPaymentDue();
+        uint256 gracePeriod = globals.gracePeriod();
+        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+
+        // Pause protocol and attempt triggerDefault()
+        assertTrue( mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!fay.try_triggerDefault(address(loan)));
+
+        // Unpause protocol and triggerDefault()
+        assertTrue(mic.try_setProtocolPause(address(globals), false));
+        assertTrue(fay.try_triggerDefault(address(loan)));
     }
 
     function setUpLoanAndDefault() public {

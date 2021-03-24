@@ -43,8 +43,23 @@ contract Lender {
         (ok,) = address(loan).call(abi.encodeWithSignature(sig, amt));
     }
 
+    function try_fundLoan(address loan, address mintTo, uint256 amt) external returns (bool ok) {
+        string memory sig = "fundLoan(address,uint256)";
+        (ok,) = address(loan).call(abi.encodeWithSignature(sig, mintTo, amt));
+    }
+
     function try_trigger_default(address loan) external returns (bool ok) {
         string memory sig = "triggerDefault()";
         (ok,) = loan.call(abi.encodeWithSignature(sig));
+    }
+
+    function try_withdrawFunds(address loan) external returns(bool ok) {
+        string memory sig = "withdrawFunds()";
+        (ok,) = loan.call(abi.encodeWithSignature(sig));
+    }
+
+    function try_triggerDefault(address loan) external returns(bool ok) {
+        string memory sig = "triggerDefault()";
+        (ok,) = address(loan).call(abi.encodeWithSignature(sig));
     }
 }
