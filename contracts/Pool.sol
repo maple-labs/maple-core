@@ -150,11 +150,11 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Open Pool to public. Once it is set to `true` it cannot be set back to `false`.
+        @dev Open StakeLocker to public. Once it is set to `true` it cannot be set back to `false`.
     */
-    function openPoolToPublic() external {
+    function openStakeLockerToPublic() external {
         _isValidDelegateAndProtocolNotPaused();
-        openToPublic = true;
+        IStakeLocker(stakeLocker).openStakeLockerToPublic();
     }
 
     /**
@@ -355,6 +355,15 @@ contract Pool is PoolFDT {
     function setAdmin(address newAdmin, bool allowed) external {
         _isValidDelegateAndProtocolNotPaused();
         admins[newAdmin] = allowed;
+    }
+
+    /**
+        @dev Set public pool access. Only Pool Delegate can call this function.
+        @param open Public pool access status.
+    */
+    function setOpenToPublic(bool open) external {
+        _isValidDelegateAndProtocolNotPaused();
+        openToPublic = open;
     }
 
     /************************************/
