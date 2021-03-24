@@ -46,6 +46,11 @@ contract LP {
         (ok,) = pool.call(abi.encodeWithSignature(sig, amt));
     }
 
+    function try_withdrawFunds(address pool) external returns(bool ok) {
+        string memory sig = "withdrawFunds()";
+        (ok,) = pool.call(abi.encodeWithSignature(sig));
+    }
+
     function try_claim(address pool, address loan, address dlFactory) external returns (bool ok) {
         string memory sig = "claim(address,address)";
         (ok,) = pool.call(abi.encodeWithSignature(sig, loan, dlFactory));
@@ -54,5 +59,10 @@ contract LP {
     function try_intendToWithdraw(address pool) external returns (bool ok) {
         string memory sig = "intendToWithdraw()";
         (ok,) = pool.call(abi.encodeWithSignature(sig));
+    }
+
+    function try_transfer(address pool, address who, uint256 amt) external returns (bool ok) {
+        string memory sig = "transfer(address,uint256)";
+        (ok,) = pool.call(abi.encodeWithSignature(sig, who, amt));
     }
 }

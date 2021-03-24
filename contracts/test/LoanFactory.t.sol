@@ -6,6 +6,7 @@ import "./TestUtil.sol";
 
 import "./user/Borrower.sol";
 import "./user/Governor.sol";
+import "./user/EmergencyAdmin.sol";
 
 import "../CollateralLockerFactory.sol";
 import "../FundingLockerFactory.sol";
@@ -31,6 +32,7 @@ contract LoanFactoryTest is TestUtil {
 
     Borrower                   borrower;
     Governor                        gov;
+    EmergencyAdmin                  mic;
 
     CollateralLockerFactory   clFactory;
     FundingLockerFactory      flFactory;
@@ -44,12 +46,15 @@ contract LoanFactoryTest is TestUtil {
 
         borrower  = new Borrower();                                  // Actor: Borrower of the Loan.
         gov       = new Governor();                                  // Actor: Governor of Maple.
+        mic       = new EmergencyAdmin();                            // Actor: Emergency Admin of the protocol.
 
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
         globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
         flFactory = new FundingLockerFactory();                      // Setup Funding Locker Factory to support Loan Factory creation.
         clFactory = new CollateralLockerFactory();                   // Setup Collateral Locker Factory to support Loan Factory creation.
         lFactory  = new LoanFactory(address(globals));               // Setup Loan Factory to support Loan creation.
+
+        gov.setAdmin(address(mic));
     }
 
     function set_calcs() public returns (address[3] memory calcs) {
@@ -170,6 +175,34 @@ contract LoanFactoryTest is TestUtil {
         // Should successfully created
         assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");  // Should be incremented by 1.
+    }
+
+    function test_createLoan_paused() public {
+        set_valid_factories();
+        address[3] memory calcs = set_calcs();
+        uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
+        gov.setLoanAsset(USDC, true);
+        gov.setCollateralAsset(WETH, true);
+
+        // Pause LoanFactory and attempt createLoan()
+        assertTrue(      gov.try_pause(address(lFactory)));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertEq(   lFactory.loansCreated(), 0);
+
+        // Unpause LoanFactory and createLoan()
+        assertTrue(     gov.try_unpause(address(lFactory)));
+        assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertEq(  lFactory.loansCreated(), 1);
+
+        // Pause protocol and attempt createLoan()
+        assertTrue(      mic.try_setProtocolPause(address(globals), true));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertEq(   lFactory.loansCreated(), 1);
+
+        // Unpause protocol and createLoan()
+        assertTrue(     mic.try_setProtocolPause(address(globals), false));
+        assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        assertEq(  lFactory.loansCreated(), 2);
     }
 
     function test_createLoan_successfully() public {

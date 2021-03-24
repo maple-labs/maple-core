@@ -99,4 +99,9 @@ interface ILoan is IERC20 {
     function withdrawFunds() external;
 
     function withdrawableFundsOf(address) external view returns(uint256);
+
+    // Security 
+    function pause() external;
+
+    function unpause() external;
 }
