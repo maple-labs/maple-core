@@ -90,11 +90,6 @@ jobs:
           command: |
             ln -s ../../../maple-core/contracts ~/project/maple-deploy/hardhat/contracts/core
             ln -s ../../maple-core/lib ~/project/maple-deploy/hardhat/lib
-      - run:
-          name: Setup maple-deploy symlinks
-          command: |
-            ln -s ../../../maple-core/contracts ~/project/maple-deploy/hardhat/contracts/core
-            ln -s ../../maple-core/lib ~/project/maple-deploy/hardhat/lib
       - persist_to_workspace:
           root: ~/project
           paths:
