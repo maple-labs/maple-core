@@ -302,8 +302,8 @@ contract StakeLockerTest is TestUtil {
 
         // Open StakeLocker to public
         assertTrue(!stakeLocker.openToPublic());
-        assertTrue(!joe.try_openStakeLockerToPublic(address(stakeLocker), true));
-        assertTrue( sid.try_openStakeLockerToPublic(address(stakeLocker), true));
+        assertTrue(!joe.try_openStakeLockerToPublic(address(stakeLocker)));
+        assertTrue( sid.try_openStakeLockerToPublic(address(stakeLocker)));
         assertTrue( stakeLocker.openToPublic());
         assertTrue(!stakeLocker.allowed(address(dan)));  // Dan is not an allowed Staker, but StakeLocker is now open to public
 
@@ -321,8 +321,8 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.balanceOf(address(dan)),   10 * WAD);
         assertEq(stakeLocker.stakeDate(address(dan)),  startDate);
 
-        assertTrue(!joe.try_openStakeLockerToPublic(address(stakeLocker), false));
-        assertTrue( sid.try_openStakeLockerToPublic(address(stakeLocker), false));
+        assertTrue(!joe.try_openStakeLockerToPublic(address(stakeLocker)));
+        assertTrue( sid.try_openStakeLockerToPublic(address(stakeLocker)));
 
         assertTrue(!dan.try_stake(address(stakeLocker), 10 * WAD));  // Closed to public again
         assertTrue( che.try_stake(address(stakeLocker), 10 * WAD));  // Whitelisted can still stake

@@ -89,8 +89,8 @@ contract PoolDelegate {
         IPool(pool).openPoolToPublic();
     }
 
-    function openStakeLockerToPublic(address stakeLocker, bool open) external {
-        IStakeLocker(stakeLocker).openStakeLockerToPublic(open);
+    function openStakeLockerToPublic(address stakeLocker) external {
+        IStakeLocker(stakeLocker).openStakeLockerToPublic();
     }
 
     function setAllowList(address pool, address user, bool status) external {
@@ -170,9 +170,9 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig));
     }
 
-    function try_openStakeLockerToPublic(address stakeLocker, bool open) external returns(bool ok) {
-        string memory sig = "openStakeLockerToPublic(bool)";
-        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, open));
+    function try_openStakeLockerToPublic(address stakeLocker) external returns(bool ok) {
+        string memory sig = "openStakeLockerToPublic()";
+        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig));
     }
 
     function try_setAllowList(address pool, address user, bool status) external returns(bool ok) {

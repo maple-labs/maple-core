@@ -97,12 +97,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Set StakerLocker public access. Only PoolDelegate can call this function.
-        @param open Public StakeLocker access status.
     */
-    function openStakeLockerToPublic(bool open) external {
+    function openStakeLockerToPublic() external {
         _whenProtocolNotPaused();
         _isValidPoolDelegate();
-        openToPublic = open;
+        openToPublic = true;
     }
 
     /**
