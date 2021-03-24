@@ -72,10 +72,10 @@ contract PoolFactory is Pausable {
         _whenProtocolNotPaused();
         {
             IGlobals _globals = globals;
-            require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PoolFactory:INVALID_LL_FACTORY");
-            require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PoolFactory:INVALID_SL_FACTORY");
-            require(_globals.isValidPoolDelegate(msg.sender),                         "PoolFactory:INVALID_DELEGATE");
-            require(IBFactory(_globals.BFactory()).isBPool(stakeAsset),               "PoolFactory:STAKE_ASSET_NOT_BPOOL");
+            require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PF:INVALID_LL_FACTORY");
+            require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PF:INVALID_SL_FACTORY");
+            require(_globals.isValidPoolDelegate(msg.sender),                         "PF:INVALID_DELEGATE");
+            require(IBFactory(_globals.BFactory()).isBPool(stakeAsset),               "PF:STAKE_ASSET_NOT_BPOOL");
         }
         
         string memory tUUID  = TokenUUID.generateUUID(poolsCreated + 1);
@@ -147,20 +147,20 @@ contract PoolFactory is Pausable {
         @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
     */
     function _isValidGovernor() internal view {
-        require(msg.sender == globals.governor(), "PoolFactory:INVALID_GOVERNOR");
+        require(msg.sender == globals.governor(), "PF:INVALID_GOVERNOR");
     }
 
     /**
         @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
     */
     function _isValidGovernorOrAdmin() internal {
-        require(msg.sender == globals.governor() || admins[msg.sender], "PoolFactory:UNAUTHORIZED");
+        require(msg.sender == globals.governor() || admins[msg.sender], "PF:UNAUTHORIZED");
     }
 
     /**
         @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
     */
     function _whenProtocolNotPaused() internal {
-        require(!globals.protocolPaused(), "PoolFactory:PROTOCOL_PAUSED");
+        require(!globals.protocolPaused(), "PF:PROTOCOL_PAUSED");
     }
 }

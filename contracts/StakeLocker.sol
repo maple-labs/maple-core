@@ -96,9 +96,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Open StakerLocker to public. Once it is set to `true` it cannot be set back to `false`.
+        @dev Set StakerLocker public access. Only PoolDelegate can call this function.
     */
-    function openStakeLockerToPublic() isPool external {
+    function openStakeLockerToPublic() external {
+        _whenProtocolNotPaused();
+        _isValidPoolDelegate();
         openToPublic = true;
     }
 
@@ -276,12 +278,19 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
     }
 
+    /**
+        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+    */
+    function _isValidPoolDelegate() internal view {
+        require(msg.sender == IPool(pool).poolDelegate(), "StakeLocker:UNAUTHORIZED");
+    }
+
     /** 
         @dev Internal function to check whether `msg.sender` is allowed to stake.
     */
     function _isAllowed(address user) internal view {
         require(
-            allowed[user] || openToPublic || user == IPool(pool).poolDelegate(), 
+            openToPublic || allowed[user] || user == IPool(pool).poolDelegate(), 
             "StakeLocker:MSG_SENDER_NOT_ALLOWED"
         );
     }
