@@ -428,7 +428,7 @@ contract PoolTest is TestUtil {
 
         // Pause protocol and attempt openPoolToPublic()
         assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue( sid.try_setOpenToPublic(address(pool1), true));
+        assertTrue(!sid.try_setOpenToPublic(address(pool1), true));
 
         // Unpause protocol and openPoolToPublic()
         assertTrue( mic.try_setProtocolPause(address(globals), false));
