@@ -23,7 +23,7 @@ interface IStakeLocker is IERC20 {
 
     function setAllowlist(address, bool) external;
 
-    function openStakeLockerToPublic() external;
+    function openStakeLockerToPublic(bool) external;
 
     function openToPublic() external view returns (bool);
 

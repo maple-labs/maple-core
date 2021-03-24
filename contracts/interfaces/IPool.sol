@@ -50,7 +50,5 @@ interface IPool {
 
     function openToPublic() external view returns(bool);
 
-    function openStakeLockerToPublic() external view returns(bool);
-
     function intendToWithdraw() external;
 }

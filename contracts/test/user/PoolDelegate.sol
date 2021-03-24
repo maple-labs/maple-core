@@ -89,8 +89,8 @@ contract PoolDelegate {
         IPool(pool).openPoolToPublic();
     }
 
-    function openStakeLockerToPublic(address pool) external {
-        IPool(pool).openStakeLockerToPublic();
+    function openStakeLockerToPublic(address stakeLocker, bool open) external {
+        IStakeLocker(stakeLocker).openStakeLockerToPublic(open);
     }
 
     function setAllowList(address pool, address user, bool status) external {
