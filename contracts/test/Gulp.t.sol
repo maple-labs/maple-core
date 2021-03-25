@@ -213,7 +213,7 @@ contract GulpTest is TestUtil {
         uint256 mplBal          = mpl.balanceOf(address(bPool));
         uint256 earnings        = mpl.withdrawableFundsOf(address(bPool));
 
-        assertEq(totalFundsToken, loan.drawdownAmount() * globals.treasuryFee() / 10_000);
+        assertEq(totalFundsToken, loan.principalOwed() * globals.treasuryFee() / 10_000);
         assertEq(mplBal,          550_000 * WAD);
         withinPrecision(earnings, totalFundsToken * mplBal / mpl.totalSupply(), 9);
 

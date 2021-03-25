@@ -8,8 +8,6 @@ import "./user/Governor.sol";
 import "./user/PoolDelegate.sol";
 import "./user/EmergencyAdmin.sol";
 
-import "../library/TokenUUID.sol";
-
 import "../LiquidityLockerFactory.sol";
 import "../Pool.sol";
 import "../PoolFactory.sol";
@@ -43,7 +41,6 @@ contract PoolFactoryTest is TestUtil {
     UsdOracle                usdOracle;
 
     uint256 public constant MAX_UINT = uint256(-1);
-    mapping(string => bool) uuid;
 
     function setUp() public {
 
@@ -236,6 +233,34 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
+    function test_createPool_invalid_fees() public {
+        setUpAllowlisting();
+        bPool.finalize();
+        
+        // PoolLib:INVALID_FEES
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            5000,  // 50.00%
+            5001,  // 50.01%
+            MAX_UINT
+        ));
+
+        assertTrue(ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            5000,  // 50.00%
+            5000,  // 50.00%
+            MAX_UINT
+        ));
+    }
+
     // Tests failure mode in createStakeLocker
     function test_createPool_createStakeLocker_bPool_not_finalized() public {
         setUpAllowlisting();
@@ -349,7 +374,6 @@ contract PoolFactoryTest is TestUtil {
 
         assertEq(address(pool.liquidityAsset()),  USDC);
         assertEq(pool.stakeAsset(),               address(bPool));
-        assertEq(pool.slFactory(),                address(slFactory));
         assertEq(pool.poolDelegate(),             address(ali));
         assertEq(pool.stakingFee(),               500);
         assertEq(pool.delegateFee(),              100);
@@ -357,14 +381,5 @@ contract PoolFactoryTest is TestUtil {
 
         assertTrue(pool.stakeLocker()     != address(0));
         assertTrue(pool.liquidityLocker() != address(0));
-    }
-
-    function test_check_collision(uint256 noOfPools) public {
-        uint256 noOfPools = noOfPools > uint256(1000) ? uint256(1000) : noOfPools; 
-        for (uint256 i = 0; i < noOfPools; i++) {
-            string memory newUUID = TokenUUID.generateUUID(i + 1);
-            assertTrue(!uuid[newUUID]);
-            uuid[newUUID] = true;
-        }
     }
 }
