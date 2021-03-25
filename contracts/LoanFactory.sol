@@ -3,8 +3,6 @@ pragma solidity 0.6.11;
 
 import "./Loan.sol";
 
-import "./library/TokenUUID.sol";
-
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title LoanFactory instantiates Loans.
@@ -12,11 +10,12 @@ contract LoanFactory is Pausable {
 
     using SafeMath for uint256;
 
-    uint8 public constant COLLATERAL_LOCKER_FACTORY  = 0;   // Factory type of `CollateralLockerFactory`
-    uint8 public constant FUNDING_LOCKER_FACTORY     = 2;   // Factory type of `FundingLockerFactory`
-    uint8 public constant INTEREST_CALC_TYPE         = 10;  // Calc type of `RepaymentCalc`
-    uint8 public constant LATEFEE_CALC_TYPE          = 11;  // Calc type of `LateFeeCalc`
-    uint8 public constant PREMIUM_CALC_TYPE          = 12;  // Calc type of `PremiumCalc`
+    uint8 public constant CL_FACTORY = 0;  // Factory type of `CollateralLockerFactory`
+    uint8 public constant FL_FACTORY = 2;  // Factory type of `FundingLockerFactory`
+
+    uint8 public constant INTEREST_CALC_TYPE = 10;  // Calc type of `RepaymentCalc`
+    uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`
+    uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`
 
     IGlobals public globals;  // Interface of MapleGlobals
 
@@ -28,7 +27,6 @@ contract LoanFactory is Pausable {
     mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
 
     event LoanCreated(
-        string  indexed tUUID,
         address loan,
         address indexed borrower,
         address indexed loanAsset,
@@ -85,14 +83,12 @@ contract LoanFactory is Pausable {
         IGlobals _globals = globals;
 
         // Validity checks
-        require(_globals.isValidSubFactory(address(this), flFactory, FUNDING_LOCKER_FACTORY),    "LF:INVALID_FL_FACTORY");
-        require(_globals.isValidSubFactory(address(this), clFactory, COLLATERAL_LOCKER_FACTORY), "LF:INVALID_CL_FACTORY");
+        require(_globals.isValidSubFactory(address(this), flFactory, FL_FACTORY), "LF:INVALID_FL_FACTORY");
+        require(_globals.isValidSubFactory(address(this), clFactory, CL_FACTORY), "LF:INVALID_CL_FACTORY");
 
         require(_globals.isValidCalc(calcs[0], INTEREST_CALC_TYPE), "LF:INVALID_INTEREST_CALC");
         require(_globals.isValidCalc(calcs[1],  LATEFEE_CALC_TYPE), "LF:INVALID_LATE_FEE_CALC");
         require(_globals.isValidCalc(calcs[2],  PREMIUM_CALC_TYPE), "LF:INVALID_PREMIUM_CALC");
-        
-	    string memory tUUID = TokenUUID.generateUUID(loansCreated + 1);  // Generate UUID based on number of Loans created
 
         // Deploy new Loan
         Loan loan = new Loan(
@@ -102,8 +98,7 @@ contract LoanFactory is Pausable {
             flFactory,
             clFactory,
             specs,
-            calcs,
-            tUUID
+            calcs
         );
 
         // Update LoanFactory identification mappings
@@ -112,7 +107,6 @@ contract LoanFactory is Pausable {
         loansCreated++;
 
         emit LoanCreated(
-            tUUID,
             address(loan),
             msg.sender,
             loanAsset,
