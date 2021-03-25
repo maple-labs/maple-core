@@ -271,7 +271,7 @@ contract RepaymentCalcTest is TestUtil {
             } else {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
-                withinPrecision(totalPaid, sumTotal, 10);
+                withinPrecision(totalPaid, sumTotal, 8);
                 assertEq(beforeBal - IERC20(USDC).balanceOf(address(eli)), sumTotal); // Pays back all principal, plus interest
             }
             
@@ -331,7 +331,7 @@ contract RepaymentCalcTest is TestUtil {
             } else {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
-                withinPrecision(totalPaid, sumTotal, 10);
+                withinPrecision(totalPaid, sumTotal, 8);
                 assertEq(beforeBal - IERC20(USDC).balanceOf(address(eli)), sumTotal); // Pays back all principal, plus interest
             }
             
