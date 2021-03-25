@@ -5,8 +5,6 @@ import "./Pool.sol";
 
 import "./interfaces/IBFactory.sol";
 
-import "./library/TokenUUID.sol";
-
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title PoolFactory instantiates Pools.
@@ -23,7 +21,6 @@ contract PoolFactory is Pausable {
     mapping(address => bool)    public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
 
     event PoolCreated(
-        string  indexed tUUID,
         address indexed pool,
         address indexed delegate,
         address liquidityAsset,
@@ -78,9 +75,8 @@ contract PoolFactory is Pausable {
             require(IBFactory(_globals.BFactory()).isBPool(stakeAsset),               "PF:STAKE_ASSET_NOT_BPOOL");
         }
         
-        string memory tUUID  = TokenUUID.generateUUID(poolsCreated + 1);
-        string memory name   = string(abi.encodePacked("Maple Pool Token ", tUUID));
-        string memory symbol = string(abi.encodePacked("LP", tUUID));
+        string memory name   = string(abi.encodePacked("Maple Pool Token"));
+        string memory symbol = string(abi.encodePacked("MPL-LP"));
 
         Pool pool =
             new Pool(
@@ -101,7 +97,6 @@ contract PoolFactory is Pausable {
         poolsCreated++;
 
         emit PoolCreated(
-            tUUID,
             address(pool),
             msg.sender,
             liquidityAsset,
