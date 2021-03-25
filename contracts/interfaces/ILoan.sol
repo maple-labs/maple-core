@@ -52,8 +52,6 @@ interface ILoan is IERC20 {
     
     function principalOwed() external view returns (uint256);
     
-    function drawdownAmount() external view returns (uint256);
-    
     function principalPaid() external view returns (uint256);
     
     function interestPaid() external view returns (uint256);

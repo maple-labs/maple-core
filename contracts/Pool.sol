@@ -34,7 +34,6 @@ contract Pool is PoolFDT {
     address public immutable liquidityLocker;  // The LiquidityLocker owned by this contract
     address public immutable stakeAsset;       // The asset deposited by stakers into the StakeLocker (BPTs), for liquidation during default events
     address public immutable stakeLocker;      // Address of the StakeLocker, escrowing stakeAsset
-    address public immutable slFactory;        // Address of the StakeLocker factory
     address public immutable superFactory;     // The factory that deployed this Loan
 
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset
@@ -114,7 +113,6 @@ contract Pool is PoolFDT {
 
         // Assign state variables
         stakeAsset   = _stakeAsset;
-        slFactory    = _slFactory;
         poolDelegate = _poolDelegate;
         stakingFee   = _stakingFee;
         delegateFee  = _delegateFee;
