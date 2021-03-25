@@ -227,8 +227,8 @@ contract RepaymentCalcTest is TestUtil {
         }
     }
 
-    function test_repayments(uint56 _loanAmt, uint16 apr, uint16 index, uint16 numPayments) public {
-        uint256 loanAmt = uint256(_loanAmt) + 10 ** 6;  // uint56(-1) = ~72b * 10 ** 6 (add 10 ** 6 so its always at least $1)
+    function test_repayments(uint256 _loanAmt, uint16 apr, uint16 index, uint16 numPayments) public {
+        uint256 loanAmt = constrictToRange(_loanAmt, 10_000 * USD, 100 * 1E9 * USD, true);  // $10k to $100b, non zero
 
         apr = apr % 10_000;
 
@@ -271,7 +271,7 @@ contract RepaymentCalcTest is TestUtil {
             } else {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
-                withinPrecision(totalPaid, sumTotal, 4);
+                withinPrecision(totalPaid, sumTotal, 8);
                 assertEq(beforeBal - IERC20(USDC).balanceOf(address(eli)), sumTotal); // Pays back all principal, plus interest
             }
             
@@ -281,7 +281,7 @@ contract RepaymentCalcTest is TestUtil {
     }
 
     function test_late_fee(uint56 _loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee) public {
-        uint256 loanAmt = uint256(_loanAmt) + 10 ** 6;  // uint56(-1) = ~72b * 10 ** 6
+        uint256 loanAmt = constrictToRange(_loanAmt, 10_000 * USD, 100 * 1E9 * USD, true);  // $10k to $100b, non zero
 
         apr     = apr     % 10_000;
         lateFee = lateFee % 10_000;
@@ -331,7 +331,7 @@ contract RepaymentCalcTest is TestUtil {
             } else {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
-                withinPrecision(totalPaid, sumTotal, 4);
+                withinPrecision(totalPaid, sumTotal, 8);
                 assertEq(beforeBal - IERC20(USDC).balanceOf(address(eli)), sumTotal); // Pays back all principal, plus interest
             }
             
