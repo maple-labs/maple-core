@@ -205,17 +205,16 @@ contract Loan is FDT, Pausable {
 
         address treasury = globals.mapleTreasury();
 
-        feePaid             = amt.mul(investorFee).div(10000);  // Update fees paid for claim()
-        uint256 treasuryAmt = amt.mul(treasuryFee).div(10000);  // Calculate amt to send to MapleTreasury
+        uint256 _feePaid = feePaid = amt.mul(investorFee).div(10000);  // Update fees paid for claim()
+        uint256 treasuryAmt        = amt.mul(treasuryFee).div(10000);  // Calculate amt to send to MapleTreasury
 
-        _transferFunds(_fundingLocker, treasury,      treasuryAmt);                        // Send treasuryFee directly to MapleTreasury
-        _transferFunds(_fundingLocker, address(this), feePaid);                            // Transfer `feePaid` to the this i.e Loan contract
-        _transferFunds(_fundingLocker, borrower,      amt.sub(treasuryAmt).sub(feePaid));  // Transfer drawdown amount to Borrower
+        _transferFunds(_fundingLocker, treasury, treasuryAmt);                         // Send treasuryFee directly to MapleTreasury
+        _transferFunds(_fundingLocker, borrower, amt.sub(treasuryAmt).sub(_feePaid));  // Transfer drawdown amount to Borrower
 
         // Update excessReturned for claim()
-        excessReturned = _getFundingLockerBalance();
+        excessReturned = _getFundingLockerBalance().sub(_feePaid);
 
-        // Drain remaining funds from FundingLocker (amount equal to excessReturned)
+        // Drain remaining funds from FundingLocker (amount equal to excessReturned plus feePaid)
         _fundingLocker.drain();
 
         // Call updateFundsReceived() update FDT accounting with funds recieved from fees and excess returned
@@ -325,7 +324,7 @@ contract Loan is FDT, Pausable {
         _isValidState(State.Live);
 
         // Update accounting for claim(), transfer funds from FundingLocker to Loan
-        excessReturned += LoanLib.unwind(loanAsset, superFactory, fundingLocker, createdAt);
+        excessReturned = LoanLib.unwind(loanAsset, superFactory, fundingLocker, createdAt);
 
         updateFundsReceived();
 
