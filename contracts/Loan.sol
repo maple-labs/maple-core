@@ -117,7 +117,6 @@ contract Loan is FDT, Pausable {
                 calcs[0] = repaymentCalc
                 calcs[1] = lateFeeCalc
                 calcs[2] = premiumCalc
-        @param tUUID LoanFDT UUID generated in LoanFactory
     */
     constructor(
         address _borrower,
@@ -126,12 +125,11 @@ contract Loan is FDT, Pausable {
         address _flFactory,
         address _clFactory,
         uint256[6] memory specs,
-        address[3] memory calcs,
-        string memory tUUID
+        address[3] memory calcs
     )
         FDT(
-            string(abi.encodePacked("Maple Loan Token ", tUUID)),
-            string(abi.encodePacked("ML", tUUID)),
+            string(abi.encodePacked("Maple Loan Token")),
+            string(abi.encodePacked("MPL-LOAN")),
             _loanAsset
         )
         public

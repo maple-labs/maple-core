@@ -12,4 +12,4 @@ export DAPP_LINK_TEST_LIBRARIES=1
 
 if [ ${1} ]; then match=${1}; else match="contracts/test"; fi
 
-LANG=C.UTF-8 dapp test --match "$match" --rpc-url "$ETH_RPC_URL" --verbose --cache "cache/dapp-cache" --fuzz-runs 100
+LANG=C.UTF-8 dapp test --match "$match" --rpc-url "$ETH_RPC_URL" --verbose --cache "cache/dapp-cache" --fuzz-runs 10

@@ -8,8 +8,6 @@ import "./user/Governor.sol";
 import "./user/PoolDelegate.sol";
 import "./user/EmergencyAdmin.sol";
 
-import "../library/TokenUUID.sol";
-
 import "../LiquidityLockerFactory.sol";
 import "../Pool.sol";
 import "../PoolFactory.sol";
@@ -43,7 +41,6 @@ contract PoolFactoryTest is TestUtil {
     UsdOracle                usdOracle;
 
     uint256 public constant MAX_UINT = uint256(-1);
-    mapping(string => bool) uuid;
 
     function setUp() public {
 
@@ -356,14 +353,5 @@ contract PoolFactoryTest is TestUtil {
 
         assertTrue(pool.stakeLocker()     != address(0));
         assertTrue(pool.liquidityLocker() != address(0));
-    }
-
-    function test_check_collision(uint256 noOfPools) public {
-        uint256 noOfPools = noOfPools > uint256(1000) ? uint256(1000) : noOfPools; 
-        for (uint256 i = 0; i < noOfPools; i++) {
-            string memory newUUID = TokenUUID.generateUUID(i + 1);
-            assertTrue(!uuid[newUUID]);
-            uuid[newUUID] = true;
-        }
     }
 }
