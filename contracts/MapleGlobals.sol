@@ -226,6 +226,7 @@ contract MapleGlobals {
     */
     function setInvestorFee(uint256 _fee) public isGovernor {
         _checkPercentageRange(_fee);
+        require(_fee + treasuryFee <= 10_000, "MapleGlobals:INVALID_INVESTOR_FEE");
         investorFee = _fee;
         emit GlobalsParamSet("INVESTOR_FEE", _fee);
     }
@@ -236,6 +237,7 @@ contract MapleGlobals {
     */
     function setTreasuryFee(uint256 _fee) public isGovernor {
         _checkPercentageRange(_fee);
+        require(_fee + investorFee <= 10_000, "MapleGlobals:INVALID_TREASURY_FEE");
         treasuryFee = _fee;
         emit GlobalsParamSet("TREASURY_FEE", _fee);
     }
@@ -245,7 +247,7 @@ contract MapleGlobals {
         @param _mapleTreasury New MapleTreasury address
     */
     function setMapleTreasury(address _mapleTreasury) public isGovernor {
-        require(_mapleTreasury != address(0), "MapleGlobals: ZERO_ADDRESS");
+        require(_mapleTreasury != address(0), "MapleGlobals:ZERO_ADDRESS");
         mapleTreasury = _mapleTreasury;
         emit GlobalsAddressSet("MAPLE_TREASURY", _mapleTreasury);
     }

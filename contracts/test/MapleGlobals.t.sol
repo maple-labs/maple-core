@@ -240,27 +240,38 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!globals.validCalcs(address(repaymentCalc)));
 
         // setInvestorFee()
-        assertEq(   globals.investorFee(),         50);
+        assertTrue(     gov.try_setInvestorFee(     0));  // Set to zero to test upper bound condition for treasuryFee
+        assertTrue(     gov.try_setTreasuryFee(     0));  // Set to zero to test upper bound condition for investorFee
+
+        assertEq(   globals.investorFee(),          0);
         assertTrue(!fakeGov.try_setInvestorFee(10_000));  // Non-governor cant set
         assertTrue(    !gov.try_setInvestorFee(10_001));  // 100.01% is outside of bounds
         assertTrue(     gov.try_setInvestorFee(10_000));  // 100% is upper bound
         assertEq(   globals.investorFee(),     10_000);
+        assertTrue(     gov.try_setInvestorFee(     0));  // Set to zero to test combined condition
 
-        // setTreasuryFee
-        assertEq(   globals.treasuryFee(),         50);
+        // setTreasuryFee()
+        assertEq(   globals.treasuryFee(),          0);
         assertTrue(!fakeGov.try_setTreasuryFee(10_000));  // Non-governor cant set
-        assertTrue(    !gov.try_setInvestorFee(10_001));  // 100.01% is outside of bounds
+        assertTrue(    !gov.try_setTreasuryFee(10_001));  // 100.01% is outside of bounds
         assertTrue(     gov.try_setTreasuryFee(10_000));  // 100% is upper bound
         assertEq(   globals.treasuryFee(),     10_000);
+        assertTrue(     gov.try_setTreasuryFee(     0));  // Set to zero to test combined condition
 
-        // setDrawdownGracePeriod
+        // investorFee + treasuryFee <= 100%
+        assertTrue(     gov.try_setInvestorFee(5_000));  // 100% is combined upper bound
+        assertTrue(     gov.try_setTreasuryFee(5_000));  // 100% is combined upper bound
+        assertTrue(    !gov.try_setInvestorFee(5_001));  // 100% is combined upper bound
+        assertTrue(    !gov.try_setTreasuryFee(5_001));  // 100% is combined upper bound
+
+        // setDrawdownGracePeriod()
         assertEq(   globals.drawdownGracePeriod(),    10 days);
         assertTrue(!fakeGov.try_setDrawdownGracePeriod(1 days));
         assertTrue(    !gov.try_setDrawdownGracePeriod(1 days - 1));  // Lower bound is 1 day
         assertTrue(     gov.try_setDrawdownGracePeriod(1 days));
         assertEq(   globals.drawdownGracePeriod(),     1 days);
 
-        // setGracePeriod
+        // setGracePeriod()
         assertEq(   globals.gracePeriod(),     5 days);
         assertTrue(!fakeGov.try_setGracePeriod(1 days));
         assertTrue(    !gov.try_setGracePeriod(1 days - 1));   // Lower bound is 1 day
