@@ -9,6 +9,8 @@ import "./interfaces/IFundingLockerFactory.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/ILoanFactory.sol";
+import "./interfaces/IPool.sol";
+import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IPremiumCalc.sol";
 import "./interfaces/IRepaymentCalc.sol";
 import "./interfaces/IUniswapRouter.sol";
@@ -310,6 +312,7 @@ contract Loan is FDT, Pausable {
     function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
         _whenProtocolNotPaused();
         _isValidState(State.Live);
+        _isValidPool();
         loanAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
 
         uint256 wad = _toWad(amt);  // Convert to WAD precision
@@ -541,6 +544,18 @@ contract Loan is FDT, Pausable {
     */
     function _isValidBorrower() internal view {	
         require(msg.sender == borrower, "Loan:INVALID_BORROWER");	
+    }
+
+    /**
+        @dev Utility to return if msg.sender is an approved Maple Pool
+    */
+    function _isValidPool() internal view {	
+        address poolFactory = IPool(msg.sender).superFactory();
+        require(
+            _globals(superFactory).isValidPoolFactory(poolFactory) &&
+            IPoolFactory(poolFactory).isPool(msg.sender),
+            "Loan:INVALID_LENDER"
+        );
     }
 
     /**
