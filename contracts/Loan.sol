@@ -68,7 +68,6 @@ contract Loan is FDT, Pausable {
 
     // Accounting variables
     uint256 public principalOwed;   // The principal owed (initially the drawdown amount)
-    uint256 public drawdownAmount;  // The amount the borrower drew down, historical reference for calculators
     uint256 public principalPaid;   // Amount of principal  that has been paid by borrower since Loan instantiation
     uint256 public interestPaid;    // Amount of interest   that has been paid by borrower since Loan instantiation
     uint256 public feePaid;         // Amount of fees      that have been paid by borrower since Loan instantiation
@@ -191,7 +190,6 @@ contract Loan is FDT, Pausable {
 
         // Update accounting variables for Loan
         principalOwed  = amt;
-        drawdownAmount = amt;
         nextPaymentDue = block.timestamp.add(paymentIntervalSeconds);
 
         loanState = State.Active;

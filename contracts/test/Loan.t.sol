@@ -219,7 +219,6 @@ contract LoanTest is TestUtil {
         assertEq(IERC20(loan).balanceOf(address(bob)),  5000 ether);  // Lender loan token balance
         assertEq(IERC20(USDC).balanceOf(fundingLocker), 5000 * USD);  // Funding locker reqAssset balance
         assertEq(IERC20(USDC).balanceOf(address(loan)),          0);  // Loan vault reqAsset balance
-        assertEq(loan.drawdownAmount(),                          0);  // Drawdown amount
         assertEq(loan.principalOwed(),                           0);  // Principal owed
         assertEq(uint256(loan.loanState()),                      0);  // Loan state: Live
 
@@ -237,7 +236,6 @@ contract LoanTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(fundingLocker),                   0);  // Funding locker reqAssset balance
         assertEq(IERC20(USDC).balanceOf(address(loan)),          4005 * USD);  // Loan vault reqAsset balance
         assertEq(IERC20(USDC).balanceOf(address(ali)),      990 * USD + pre);  // Lender reqAsset balance
-        assertEq(loan.drawdownAmount(),                          1000 * USD);  // Drawdown amount
         assertEq(loan.principalOwed(),                           1000 * USD);  // Principal owed
         assertEq(uint256(loan.loanState()),                               1);  // Loan state: Active
 
