@@ -82,6 +82,7 @@ contract Loan is FDT, Pausable {
     event LoanFunded(uint256 amtFunded, address indexed _fundedBy);
     event BalanceUpdated(address who, address token, uint256 balance);
     event Drawdown(uint256 drawdownAmt);
+    event LoanStateChanged(State state);
     event PaymentMade(
         uint totalPaid,
         uint principalPaid,
@@ -167,6 +168,7 @@ contract Loan is FDT, Pausable {
         // Deploy lockers
         collateralLocker = ICollateralLockerFactory(_clFactory).newLocker(_collateralAsset);
         fundingLocker    = IFundingLockerFactory(_flFactory).newLocker(_loanAsset);
+        emit LoanStateChanged(State.Live);
     }
 
     /**************************/
@@ -223,7 +225,7 @@ contract Loan is FDT, Pausable {
         _emitBalanceUpdateEventForLoan();
 
         emit BalanceUpdated(treasury, address(loanAsset), loanAsset.balanceOf(treasury));
-        
+        emit LoanStateChanged(State.Active);
         emit Drawdown(amt);
     }
 
@@ -274,6 +276,7 @@ contract Loan is FDT, Pausable {
             // Transfer all collateral back to the borrower
             ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance());
             _emitBalanceUpdateEventForCollateralLocker();
+            emit LoanStateChanged(State.Matured);
         }
 
         // Loan payer sends funds to loan
@@ -331,6 +334,7 @@ contract Loan is FDT, Pausable {
 
         // Transition state to Expired
         loanState = State.Expired;
+        emit LoanStateChanged(State.Expired);
     }
 
     /**
@@ -369,6 +373,7 @@ contract Loan is FDT, Pausable {
             liquidationExcess, // Amount of loanAsset returned to borrower
             defaultSuffered    // Remaining losses after liquidation
         );
+        emit LoanStateChanged(State.Liquidated);
     }
 
     /***********************/
