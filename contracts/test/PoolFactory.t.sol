@@ -343,6 +343,23 @@ contract PoolFactoryTest is TestUtil {
         assertEq(poolFactory.poolsCreated(), 2);
     }
 
+    function test_createPool_overflow() public {
+        setUpAllowlisting();
+        bPool.finalize();
+
+        assertTrue(!ali.try_createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            uint(-1),
+            MAX_UINT
+        ));
+        assertEq(poolFactory.poolsCreated(), 0);
+    }
+
     function test_createPool() public {
 
         setUpAllowlisting();
