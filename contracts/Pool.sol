@@ -61,8 +61,6 @@ contract Pool is PoolFDT {
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
     mapping(address => uint256)                     public depositCooldown;            // Timestamp of when LP calls `intendToWithdraw()`
 
-    // TODO: Check if offchain team needs a `PoolOpened` event
-    // TODO: Check if offchain team needs a `StakeLockerOpened` event
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
     event   BalanceUpdated(address indexed who,  address token, uint256 balance);
