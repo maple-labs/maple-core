@@ -61,8 +61,6 @@ contract Pool is PoolFDT {
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
     mapping(address => uint256)                     public depositCooldown;            // Timestamp of when LP calls `intendToWithdraw()`
 
-    // TODO: Check if offchain team needs a `PoolOpened` event
-    // TODO: Check if offchain team needs a `StakeLockerOpened` event
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
     event   BalanceUpdated(address indexed who,  address token, uint256 balance);
@@ -77,6 +75,7 @@ contract Pool is PoolFDT {
         uint256 bptsReturned,
         uint256 liquidityAssetRecoveredFromBurn
     );
+    event  PoolOpenedToPublic(bool isOpen);
 
     /**
         @dev Constructor for a Pool.
@@ -354,6 +353,7 @@ contract Pool is PoolFDT {
     function setOpenToPublic(bool open) external {
         _isValidDelegateAndProtocolNotPaused();
         openToPublic = open;
+        emit PoolOpenedToPublic(open);
     }
 
     /************************************/
