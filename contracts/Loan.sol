@@ -346,18 +346,19 @@ contract Loan is FDT, Pausable {
         _isValidState(State.Active);
         require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
         
+        // Pull collateralAsset from CollateralLocker, swap to loanAsset, and hold custody of resulting loanAsset in Loan
         (amountLiquidated, amountRecovered) = LoanLib.triggerDefault(collateralAsset, address(loanAsset), superFactory, collateralLocker);
 
-        // Set principalOwed to zero and return excess value from liquidation back to borrower
-        if (amountRecovered > principalOwed) {
-            liquidationExcess = amountRecovered.sub(principalOwed);
-            principalOwed = 0;
-            loanAsset.safeTransfer(borrower, liquidationExcess); // Send excess to Borrower.
-        }
         // Decrement principalOwed by amountRecovered, set defaultSuffered to the difference (shortfall from liquidation)
-        else {
+        if (amountRecovered <= principalOwed) {
             principalOwed   = principalOwed.sub(amountRecovered);
             defaultSuffered = principalOwed;
+        }
+        // Set principalOwed to zero and return excess value from liquidation back to borrower
+        else {
+            liquidationExcess = amountRecovered.sub(principalOwed);
+            principalOwed = 0;
+            loanAsset.safeTransfer(borrower, liquidationExcess); // Send excess to Borrower
         }
 
         // Call updateFundsReceived() update FDT accounting with funds recieved from liquidation
