@@ -157,19 +157,20 @@ library LoanLib {
 
     /**
         @dev Returns information on next payment amount.
-        @param superFactory    Factory that instantiated Loan
-        @param repaymentCalc   Address of RepaymentCalc
-        @param _nextPaymentDue Timestamp of when payment is due
-        @param lateFeeCalc     Address of LateFeeCalc
-        @return total          Principal + Interest
-        @return principal      Principal 
-        @return interest       Interest
-        @return nextPaymentDue Payment Due Date
+        @param superFactory     Factory that instantiated Loan
+        @param repaymentCalc    Address of RepaymentCalc
+        @param nextPaymentDue   Timestamp of when payment is due
+        @param lateFeeCalc      Address of LateFeeCalc
+        @return total           Principal + Interest
+        @return principal       Principal 
+        @return interest        Interest
+        @return _nextPaymentDue Payment Due Date
+        @return paymentLate     Boolean if payment is late
     */
     function getNextPayment(
         address superFactory,
         address repaymentCalc,
-        uint256 _nextPaymentDue,
+        uint256 nextPaymentDue,
         address lateFeeCalc
     ) 
         public
@@ -178,17 +179,17 @@ library LoanLib {
             uint256 total,
             uint256 principal,
             uint256 interest,
-            uint256 nextPaymentDue,
+            uint256 _nextPaymentDue,
             bool    paymentLate
         ) 
     {
         IGlobals globals = _globals(superFactory);
-        nextPaymentDue   = _nextPaymentDue;
+        _nextPaymentDue  = nextPaymentDue;
 
         // Get next payment amounts from repayment calc
         (total, principal, interest) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
 
-        paymentLate = block.timestamp > nextPaymentDue;
+        paymentLate = block.timestamp > _nextPaymentDue;
 
         // If payment is late, add late fees
         if (paymentLate) {
