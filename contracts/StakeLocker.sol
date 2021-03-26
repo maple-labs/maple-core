@@ -36,6 +36,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     event         Cooldown(address staker);
     event            Stake(uint256 amount, address staker);
     event          Unstake(uint256 amount, address staker);
+    event StakeLockerOpened();
 
     constructor(
         address _stakeAsset,
@@ -102,6 +103,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _whenProtocolNotPaused();
         _isValidPoolDelegate();
         openToPublic = true;
+        emit StakeLockerOpened();
     }
 
     /**
