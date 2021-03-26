@@ -75,6 +75,7 @@ contract Pool is PoolFDT {
         uint256 bptsReturned,
         uint256 liquidityAssetRecoveredFromBurn
     );
+    event  PoolOpenedToPublic(bool isOpen);
 
     /**
         @dev Constructor for a Pool.
@@ -352,6 +353,7 @@ contract Pool is PoolFDT {
     function setOpenToPublic(bool open) external {
         _isValidDelegateAndProtocolNotPaused();
         openToPublic = open;
+        emit PoolOpenedToPublic(open);
     }
 
     /************************************/
