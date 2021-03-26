@@ -254,21 +254,30 @@ contract Loan is FDT, Pausable {
     */
     function _makePayment(uint256 total, uint256 principal, uint256 interest, bool paymentLate) internal {
 
-        loanAsset.safeTransferFrom(msg.sender, address(this), total);
-
-        // Caching it to reduce the `SLOADS`.
+        // Caching to reduce `SLOADs`
         uint256 _paymentsRemaining = paymentsRemaining;
-        // Update internal accounting variables.
-        if (_paymentsRemaining == uint256(0)) {
+
+        // Update internal accounting variables
+        interestPaid = interestPaid.add(interest);
+        if(principal > uint256(0)) principalPaid = principalPaid.add(principal);
+
+        if (_paymentsRemaining > uint256(0)) {
+            // Update info related to next payment, decrement principalOwed if needed
+            nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
+            if(principal > uint256(0)) principalOwed = principalOwed.sub(principal);
+        } else {
+            // Update info to close loan
             principalOwed  = uint256(0);
             loanState      = State.Matured;
             nextPaymentDue = uint256(0);
-        } else {
-            principalOwed  = principalOwed.sub(principal);
-            nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
+
+            // Transfer all collateral back to the borrower
+            ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance());
+            _emitBalanceUpdateEventForCollateralLocker();
         }
-        principalPaid = principalPaid.add(principal);
-        interestPaid  = interestPaid.add(interest);
+
+        // Loan payer sends funds to loan
+        loanAsset.safeTransferFrom(msg.sender, address(this), total);
 
         // Call updateFundsReceived() update FDT accounting with funds recieved from interest payment
         updateFundsReceived(); 
@@ -283,12 +292,6 @@ contract Loan is FDT, Pausable {
             paymentLate
         );
 
-        // Handle final payment.
-        if (_paymentsRemaining == 0) {
-            // Transferring all collaterised funds back to the borrower
-            ICollateralLocker(collateralLocker).pull(borrower, _getCollateralLockerBalance());
-            _emitBalanceUpdateEventForCollateralLocker();
-        }
         _emitBalanceUpdateEventForLoan();
     }
 
