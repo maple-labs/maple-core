@@ -69,7 +69,7 @@ library LoanLib {
         address superFactory,
         address collateralLocker
     ) 
-        external 
+        external
         returns (
             uint256 amountLiquidated,
             uint256 amountRecovered
