@@ -196,8 +196,8 @@ library LoanLib {
             (uint256 totalExtra, uint256 principalExtra, uint256 interestExtra) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
 
             total     = total.add(totalExtra);
-            interest  = interest.add(interestExtra);
             principal = principal.add(principalExtra);
+            interest  = interest.add(interestExtra);
         }
     }
 
