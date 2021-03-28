@@ -205,8 +205,8 @@ contract Loan is FDT, Pausable {
 
         address treasury = globals.mapleTreasury();
 
-        uint256 _feePaid = feePaid = amt.mul(investorFee).div(10000);  // Update fees paid for claim()
-        uint256 treasuryAmt        = amt.mul(treasuryFee).div(10000);  // Calculate amt to send to MapleTreasury
+        uint256 _feePaid = feePaid = amt.mul(investorFee).div(10_000);  // Update fees paid for claim()
+        uint256 treasuryAmt        = amt.mul(treasuryFee).div(10_000);  // Calculate amt to send to MapleTreasury
 
         _transferFunds(_fundingLocker, treasury, treasuryAmt);                         // Send treasuryFee directly to MapleTreasury
         _transferFunds(_fundingLocker, borrower, amt.sub(treasuryAmt).sub(_feePaid));  // Transfer drawdown amount to Borrower
