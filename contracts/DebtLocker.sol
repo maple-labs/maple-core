@@ -45,7 +45,7 @@ contract DebtLocker {
         @return [0] = Total Claimed
                 [1] = Interest Claimed
                 [2] = Principal Claimed
-                [3] = Fee Claimed
+                [3] = Pool Delegate Fee Claimed
                 [4] = Excess Returned Claimed
                 [5] = Amount Recovered (from Liquidation)
                 [6] = Default Suffered
@@ -65,7 +65,7 @@ contract DebtLocker {
         // Account for any transfers into Loan that have occurred since last call
         loan.updateFundsReceived();
 
-        if(loan.withdrawableFundsOf(address(this)) > uint256(0)) {
+        if (loan.withdrawableFundsOf(address(this)) > uint256(0)) {
 
             // Calculate payment deltas
             uint256 newInterest  = loan.interestPaid() - interestPaid;
@@ -81,9 +81,9 @@ contract DebtLocker {
             uint256 newAmountRecovered = amountRecovered > uint256(0) ? uint256(0) : loan.amountRecovered();
 
             // Update one-time accounting
-            if(newFee > 0)             feePaid         = loan.feePaid();
-            if(newExcess > 0)          excessReturned  = loan.excessReturned();
-            if(newAmountRecovered > 0) amountRecovered = loan.amountRecovered();
+            if (newFee > 0)             feePaid         = loan.feePaid();
+            if (newExcess > 0)          excessReturned  = loan.excessReturned();
+            if (newAmountRecovered > 0) amountRecovered = loan.amountRecovered();
 
             // Withdraw funds via FDT
             uint256 beforeBal = loanAsset.balanceOf(address(this));  // Current balance of locker (accounts for direct inflows)
