@@ -84,6 +84,8 @@ contract PoolFactoryTest is TestUtil {
         assertEq(mpl.balanceOf(address(bPool)),   100_000 * WAD);
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
+
+        gov.setValidBalancerPool(address(bPool), true);
     }
 
     function test_setGlobals() public {
