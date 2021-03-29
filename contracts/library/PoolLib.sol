@@ -103,11 +103,11 @@ library PoolLib {
         @param  loan            Address of loan
         @param  defaultSuffered Amount of shortfall in defaulted loan after liquidation
         @return bptsBurned                      Amount of BPTs burned to cover shortfall
-        @return bptsReturned                    Amount of BPTs returned to stakeLocker after burn
+        @return postBurnBptBal                  Amount of BPTs returned to stakeLocker after burn
         @return liquidityAssetRecoveredFromBurn Amount of liquidityAsset recovered from burn
      */
     function handleDefault(
-        IERC20 liquidityAsset,
+        IERC20  liquidityAsset,
         address stakeLocker,
         address stakeAsset,
         address loan,
@@ -116,44 +116,40 @@ library PoolLib {
         external
         returns (
             uint256 bptsBurned,
-            uint256 bptsReturned,
+            uint256 postBurnBptBal,
             uint256 liquidityAssetRecoveredFromBurn
         ) 
     {
 
-        // Check liquidityAsset swapOut value of StakeLocker coverage
-        uint256 availableSwapOut = getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
-        uint256 maxSwapOut       = liquidityAsset.balanceOf(stakeAsset).mul(IBPool(stakeAsset).MAX_OUT_RATIO()).div(WAD);  // Max amount that can be swapped 
+        IBPool bPool = IBPool(stakeAsset);  // stakeAsset == Balancer Pool Tokens
 
-        availableSwapOut = availableSwapOut > maxSwapOut ? maxSwapOut : availableSwapOut;
+        // Check amount of liquidityAsset coverage that exists in the StakeLocker
+        uint256 availableSwapOut = getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
 
         // Pull BPTs from StakeLocker
-        require(
-            IStakeLocker(stakeLocker).pull(address(this), IBPool(stakeAsset).balanceOf(stakeLocker)),
-            "Pool:STAKE_PULL"
-        );
+        require(IStakeLocker(stakeLocker).pull(address(this), bPool.balanceOf(stakeLocker)), "Pool:STAKE_PULL");
 
-        // To maintain accounting, account for accidental transfers into Pool
-        uint256 preBurnBalance = liquidityAsset.balanceOf(address(this));
-        uint256 preBptBalance  = IBPool(stakeAsset).balanceOf(address(this));
+        // To maintain accounting, account for direct transfers into Pool
+        uint256 preBurnLiquidityAssetBal = liquidityAsset.balanceOf(address(this));
+        uint256 preBurnBptBal            = bPool.balanceOf(address(this));
 
         // Burn enough BPTs for liquidityAsset to cover defaultSuffered
-        IBPool(stakeAsset).exitswapExternAmountOut(
+        bPool.exitswapExternAmountOut(
             address(liquidityAsset), 
-            availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut, 
-            preBptBalance
+            availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut,  // Burn BPTs up to defaultSuffered amount
+            preBurnBptBal
         );
 
         // Return remaining BPTs to stakeLocker
-        bptsReturned = IBPool(stakeAsset).balanceOf(address(this));
-        bptsBurned   = preBptBalance.sub(bptsReturned);
-        IBPool(stakeAsset).transfer(stakeLocker, bptsReturned);
-        liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this)).sub(preBurnBalance);
+        postBurnBptBal = bPool.balanceOf(address(this));
+        bptsBurned     = preBurnBptBal.sub(postBurnBptBal);
+        bPool.transfer(stakeLocker, postBurnBptBal);
+        liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this)).sub(preBurnLiquidityAssetBal);
         IStakeLocker(stakeLocker).updateLosses(bptsBurned);  // Update StakeLocker FDT loss accounting for BPTs
     }
 
     /**
-        @dev Claim available funds for loan through specified debt locker factory.
+        @dev Calculate portions of claim from DebtLocker to be used by Pool claim function.
         @param claimInfo   [0] = Total Claimed
                            [1] = Interest Claimed
                            [2] = Principal Claimed
@@ -181,11 +177,11 @@ library PoolLib {
             uint256 interestClaim
         ) 
     { 
-        poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10000).add(claimInfo[3]);  // PD portion of interest plus fee
-        stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10000);                     // SL portion of interest
+        poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10_000).add(claimInfo[3]);  // PD portion of interest plus fee
+        stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10_000);                     // SL portion of interest
 
-        principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);                                    // Principal + excess + amountRecovered
-        interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10000)).sub(stakeLockerPortion);  // Leftover interest
+        principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);                                     // Principal + excess + amountRecovered
+        interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10_000)).sub(stakeLockerPortion);  // Leftover interest
     }
 
     /**
@@ -376,7 +372,10 @@ library PoolLib {
             swapFee
         );
 
-        return tokenAmountOut;
+        // Max amount that can be swapped based on amount of liquidtyAsset in the Balancer Pool
+        uint256 maxSwapOut = tokenBalanceOut.mul(bPool.MAX_OUT_RATIO()).div(WAD);  
+
+        return tokenAmountOut <= maxSwapOut ? tokenAmountOut : maxSwapOut;
     }
 
     /** 
@@ -413,7 +412,10 @@ library PoolLib {
             swapFee
         );
 
-        return tokenAmountOut;
+        // Max amount that can be swapped based on amount of liquidtyAsset in the Balancer Pool
+        uint256 maxSwapOut = tokenBalanceOut.mul(bPool.MAX_OUT_RATIO()).div(WAD);  
+
+        return tokenAmountOut <= maxSwapOut ? tokenAmountOut : maxSwapOut;
     }
 
     /**
