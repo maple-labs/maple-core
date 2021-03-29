@@ -12,7 +12,7 @@ interface IPool {
 
     function poolState() external view returns(uint256);
 
-    function deactivate(uint256) external;
+    function deactivate() external;
 
     function finalize() external;
 
