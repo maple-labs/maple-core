@@ -45,7 +45,7 @@ contract DebtLocker {
         @return [0] = Total Claimed
                 [1] = Interest Claimed
                 [2] = Principal Claimed
-                [3] = Fee Claimed
+                [3] = Pool Delegate Fee Claimed
                 [4] = Excess Returned Claimed
                 [5] = Amount Recovered (from Liquidation)
                 [6] = Default Suffered
