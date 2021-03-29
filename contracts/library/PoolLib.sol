@@ -49,7 +49,7 @@ library PoolLib {
     ) external {
         require(globals.isValidLoanAsset(liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
         require(liquidityCap != uint256(0),                "Pool:INVALID_CAP");
-        require(stakingFee + delegateFee <= 10_000,        "Pool:INVALID_FEES");
+        require(stakingFee.add(delegateFee) <= 10_000,     "Pool:INVALID_FEES");
         require(
             IBPool(stakeAsset).isBound(globals.mpl())  && 
             IBPool(stakeAsset).isBound(liquidityAsset) &&
@@ -194,12 +194,10 @@ library PoolLib {
     /**
         @dev Check whether the deactivation is allowed or not.
         @param  globals        Globals contract interface
-        @param  confirmation   Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
         @param  principalOut   Amount of funds that is already funded to loans.
         @param  liquidityAsset Liquidity Asset of the pool 
      */
-    function validateDeactivation(IGlobals globals, uint256 confirmation, uint256 principalOut, address liquidityAsset) public view {
-        require(confirmation == 86, "Pool:INVALID_CONFIRMATION");
+    function validateDeactivation(IGlobals globals, uint256 principalOut, address liquidityAsset) public view {
         require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "Pool:PRINCIPAL_OUTSTANDING");
     }
 

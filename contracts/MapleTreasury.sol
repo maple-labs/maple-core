@@ -102,7 +102,7 @@ contract MapleTreasury {
         path[0] = asset;
         path[1] = middleAsset ? uniswapAssetForPath : fundsToken;
 
-        if(middleAsset) path[2] = fundsToken;
+        if (middleAsset) path[2] = fundsToken;
 
         uint256[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
             assetBalance,

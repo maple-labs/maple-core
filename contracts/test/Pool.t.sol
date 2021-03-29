@@ -791,7 +791,7 @@ contract PoolTest is TestUtil {
             assertEq(balances[9] - balances[4], (beforePrincipalOut - pool.principalOut()) + (pool.interestSum() - beforeInterestSum));
 
             // Normal case, principalClaim <= principalOut
-            if(claim[2] + claim[4] <= beforePrincipalOut) {
+            if (claim[2] + claim[4] <= beforePrincipalOut) {
                 // interestSum incremented by remainder of interest
                 withinPrecision(
                     pool.interestSum() - beforeInterestSum, 
@@ -1943,11 +1943,11 @@ contract PoolTest is TestUtil {
 
         // Pause protocol and attempt deactivate()
         assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_deactivate(address(pool1), 86));
+        assertTrue(!sid.try_deactivate(address(pool1)));
 
         // Unpause protocol and deactivate()
         assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_deactivate(address(pool1), 86));
+        assertTrue(sid.try_deactivate(address(pool1)));
 
         // Post-state checks.
         assertEq(int(pool1.poolState()), 2);
@@ -1963,7 +1963,7 @@ contract PoolTest is TestUtil {
         assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 1));
 
         // deactivate()
-        assertTrue(!sid.try_deactivate(address(pool1), 86));
+        assertTrue(!sid.try_deactivate(address(pool1)));
 
     }
 
@@ -2017,7 +2017,7 @@ contract PoolTest is TestUtil {
 
         // Pre-state checks.
         assertTrue(pool1.principalOut() >= 100 * 10 ** liquidityAssetDecimals);
-        assertTrue(!sid.try_deactivate(address(pool1), 86));
+        assertTrue(!sid.try_deactivate(address(pool1)));
     }
 
     function test_view_balance() public {

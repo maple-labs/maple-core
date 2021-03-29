@@ -98,7 +98,7 @@ library LoanLib {
             path[0] = address(collateralAsset);
             path[1] = middleAsset ? uniswapAssetForPath : loanAsset;
 
-            if(middleAsset) path[2] = loanAsset;
+            if (middleAsset) path[2] = loanAsset;
 
             // Swap collateralAsset for loanAsset
             uint256[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
@@ -195,8 +195,8 @@ library LoanLib {
             (uint256 totalExtra, uint256 principalExtra, uint256 interestExtra) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
 
             total     = total.add(totalExtra);
-            interest  = interest.add(interestExtra);
             principal = principal.add(principalExtra);
+            interest  = interest.add(interestExtra);
         }
     }
 
