@@ -354,7 +354,7 @@ contract PoolFactoryTest is TestUtil {
             address(slFactory),
             address(llFactory),
             500,
-            uint(-1),
+            MAX_UINT,
             MAX_UINT
         ));
         assertEq(poolFactory.poolsCreated(), 0);
