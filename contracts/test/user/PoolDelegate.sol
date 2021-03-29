@@ -61,8 +61,8 @@ contract PoolDelegate {
         return IPool(pool).claim(loan, dlFactory);  
     }
 
-    function deactivate(address pool, uint confirmation) external {
-        IPool(pool).deactivate(confirmation);
+    function deactivate(address pool) external {
+        IPool(pool).deactivate();
     }
 
     function setPrincipalPenalty(address pool, uint256 penalty) external {
@@ -145,9 +145,9 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, delay));
     }
 
-    function try_deactivate(address pool, uint confirmation) external returns(bool ok) {
-        string memory sig = "deactivate(uint256)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, confirmation));
+    function try_deactivate(address pool) external returns(bool ok) {
+        string memory sig = "deactivate()";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig));
     }
 
     function try_setLiquidityCap(address pool, uint256 liquidityCap) external returns(bool ok) {
