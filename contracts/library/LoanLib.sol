@@ -64,7 +64,7 @@ library LoanLib {
         @return amountRecovered  Amount of loanAsset that was returned to the Loan from the liquidation
     */
     function triggerDefault(
-        IERC20 collateralAsset,
+        IERC20  collateralAsset,
         address loanAsset,
         address superFactory,
         address collateralLocker
@@ -75,7 +75,6 @@ library LoanLib {
             uint256 amountRecovered
         ) 
     {
-
         // Get liquidation amount from CollateralLocker
         uint256 liquidationAmt = collateralAsset.balanceOf(address(collateralLocker));
         
