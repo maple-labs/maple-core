@@ -39,8 +39,6 @@ contract StakingRewardsTest is TestUtil {
 
     StakingRewards         stakingRewards;
 
-    uint256 constant public MAX_UINT = uint(-1);
-
     function setUp() public {
 
         ali     = new Farmer(stakingRewards, pool);  // Actor: Yield farmer

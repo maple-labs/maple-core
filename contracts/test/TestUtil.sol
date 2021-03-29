@@ -46,6 +46,8 @@ contract TestUtil is DSTest {
     uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
 
+    uint256 constant MAX_UINT = uint(-1);
+
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
     event Debug(string, uint256);
@@ -54,23 +56,24 @@ contract TestUtil is DSTest {
     constructor() public {
         hevm = Hevm(address(CHEAT_CODE));
 
-        tokens["DAI"].addr  = DAI;
-        tokens["DAI"].slot  = 2;
-        tokens["DAI"].orcl  = 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9;
+        tokens["DAI"].addr = DAI;
+        tokens["DAI"].slot = 2;
+        tokens["DAI"].orcl = 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9;
 
         tokens["USDC"].addr = USDC;
         tokens["USDC"].slot = 9;
 
         tokens["WETH"].addr = WETH;
         tokens["WETH"].slot = 3;
-        tokens["WETH"].orcl  = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+        tokens["WETH"].orcl = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
 
         tokens["WBTC"].addr = WBTC;
         tokens["WBTC"].slot = 0;
-        tokens["WBTC"].orcl  = 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
+        tokens["WBTC"].orcl = 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
 
         tokens["CDAI"].addr = CDAI;
         tokens["CDAI"].slot = 14;
+        
         tokens["CUSDC"].addr = CUSDC;
         tokens["CUSDC"].slot = 15;
     }

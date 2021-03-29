@@ -76,8 +76,6 @@ contract PoolExcessTest is TestUtil {
     IStakeLocker                 stakeLocker_a;
     IStakeLocker                 stakeLocker_b;
 
-    uint256 constant public MAX_UINT = uint(-1);
-
     function setUp() public {
 
         bob            = new Borrower();                     // Actor: Borrower of the Loan.
@@ -103,6 +101,7 @@ contract PoolExcessTest is TestUtil {
         trs            = new Treasury();                     // Treasury.
 
         gov.setValidLoanFactory(address(loanFactory), true);
+        gov.setValidPoolFactory(address(poolFactory), true);
 
         gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
         gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
@@ -250,8 +249,5 @@ contract PoolExcessTest is TestUtil {
         // pool_b invested 3mm USD
         withinDiff(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD, 1);
         withinDiff(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD, 1);
-
-
     }
-
 } 

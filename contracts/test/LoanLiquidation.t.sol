@@ -6,15 +6,23 @@ import "./TestUtil.sol";
 
 import "./user/Borrower.sol";
 import "./user/Governor.sol";
-import "./user/Lender.sol";
+import "./user/LP.sol";
+import "./user/PoolDelegate.sol";
 
 import "../RepaymentCalc.sol";
 import "../CollateralLockerFactory.sol";
+import "../DebtLocker.sol";
+import "../DebtLockerFactory.sol";
 import "../FundingLockerFactory.sol";
 import "../LateFeeCalc.sol";
+import "../LiquidityLockerFactory.sol";
+import "../Loan.sol";
 import "../LoanFactory.sol";
-import "../MapleGlobals.sol";
+import "../MapleTreasury.sol";
+import "../Pool.sol";
+import "../PoolFactory.sol";
 import "../PremiumCalc.sol";
+import "../StakeLockerFactory.sol";
 
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/ILoan.sol";
@@ -28,51 +36,80 @@ contract Treasury { }
 
 contract LoanLiquidationTest is TestUtil {
 
-    Borrower                          ali;
-    Governor                          gov;
-    Lender                            bob;
+    Borrower                               ali;
+    Governor                               gov;
+    LP                                     bob;
+    PoolDelegate                           sid;
 
-    RepaymentCalc           repaymentCalc;
-    CollateralLockerFactory     clFactory;
-    FundingLockerFactory        flFactory;
-    LateFeeCalc               lateFeeCalc;
-    LoanFactory               loanFactory;
-    MapleToken                        mpl;
-    MapleGlobals                  globals;
-    PremiumCalc               premiumCalc;
-    Treasury                          trs;
-    ChainlinkOracle            wethOracle;
-    ChainlinkOracle            wbtcOracle;
-    UsdOracle                   usdOracle;
+    RepaymentCalc                repaymentCalc;
+    CollateralLockerFactory          clFactory;
+    DebtLockerFactory                dlFactory;
+    FundingLockerFactory             flFactory;
+    LateFeeCalc                    lateFeeCalc;
+    LiquidityLockerFactory           llFactory;
+    LoanFactory                    loanFactory;
+    MapleGlobals                       globals;
+    MapleToken                             mpl;
+    MapleTreasury                     treasury;
+    Pool                                  pool; 
+    PoolFactory                    poolFactory;
+    PremiumCalc                    premiumCalc;
+    StakeLockerFactory               slFactory;
+    ChainlinkOracle                 wethOracle;
+    ChainlinkOracle                 wbtcOracle;
+    UsdOracle                        usdOracle;
 
-    ERC20                      fundsToken;
-
-    uint256 constant public MAX_UINT = uint256(-1);
+    IBPool                               bPool;
+    IStakeLocker                   stakeLocker;
 
     function setUp() public {
 
-        ali = new Borrower();   // Actor: Borrower of the Loan.
-        gov = new Governor();   // Actor: Governor of Maple.
-        bob = new Lender();     // Actor: Individual lender.
+        ali = new Borrower();     // Actor: Borrower of the Loan.
+        gov = new Governor();     // Actor: Governor of Maple.
+        bob = new LP();           // Actor: Individual lender.
+        sid = new PoolDelegate(); // Actor: Manager of the Pool.
 
-        mpl           = new MapleToken("MapleToken", "MAPL", USDC);
-        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
-        flFactory     = new FundingLockerFactory();
-        clFactory     = new CollateralLockerFactory();
-        repaymentCalc = new RepaymentCalc();
-        lateFeeCalc   = new LateFeeCalc(0);   // Flat 0% fee
-        premiumCalc   = new PremiumCalc(500); // Flat 5% premium
-        loanFactory   = new LoanFactory(address(globals));
-        trs           = new Treasury();
+        mpl      = new MapleToken("MapleToken", "MAPL", USDC);
+        globals  = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        treasury = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals));
+
+        flFactory     = new FundingLockerFactory();         // Setup the FL factory to facilitate Loan factory functionality.
+        clFactory     = new CollateralLockerFactory();      // Setup the CL factory to facilitate Loan factory functionality.
+        loanFactory   = new LoanFactory(address(globals));  // Create Loan factory.
+        slFactory     = new StakeLockerFactory();           // Setup the SL factory to facilitate Pool factory functionality.
+        llFactory     = new LiquidityLockerFactory();       // Setup the SL factory to facilitate Pool factory functionality.
+        poolFactory   = new PoolFactory(address(globals));  // Create pool factory.
+        dlFactory     = new DebtLockerFactory();            // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
+        repaymentCalc = new RepaymentCalc();                // Repayment model.
+        lateFeeCalc   = new LateFeeCalc(0);                 // Flat 0% fee
+        premiumCalc   = new PremiumCalc(500);               // Flat 5% premium
+
+        /*** Globals administrative actions ***/
+        gov.setPoolDelegateAllowlist(address(sid), true);
+        gov.setMapleTreasury(address(treasury));
+        gov.setDefaultUniswapPath(WETH, USDC, USDC);
+        gov.setDefaultUniswapPath(WBTC, USDC, WETH);
+
+        /*** Validate all relevant contracts in Globals ***/
+        gov.setValidLoanFactory(address(loanFactory), true);
+        gov.setValidPoolFactory(address(poolFactory), true);
+
+        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
+
+        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
 
         gov.setCalc(address(repaymentCalc), true);
         gov.setCalc(address(lateFeeCalc),   true);
         gov.setCalc(address(premiumCalc),   true);
-        gov.setCollateralAsset(WETH,        true);
         gov.setCollateralAsset(WBTC,        true);
+        gov.setCollateralAsset(WETH,        true);
         gov.setCollateralAsset(USDC,        true);
         gov.setLoanAsset(USDC,              true);
-        
+
+        /*** Set up oracles ***/
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
         wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
         usdOracle  = new UsdOracle();
@@ -81,17 +118,47 @@ contract LoanLiquidationTest is TestUtil {
         gov.setPriceOracle(WBTC, address(wbtcOracle));
         gov.setPriceOracle(USDC, address(usdOracle));
 
-        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
-        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
+        /*** Mint balances to relevant actors ***/
+        mint("WETH", address(ali),         100 ether);
+        mint("WBTC", address(ali),          10 * BTC);
+        mint("USDC", address(bob),     100_000 * USD);
+        mint("USDC", address(ali),     100_000 * USD);
+        mint("USDC", address(this), 50_000_000 * USD);
 
-        gov.setDefaultUniswapPath(WETH, USDC, USDC);
-        gov.setDefaultUniswapPath(WBTC, USDC, WETH);
-        gov.setMapleTreasury(address(trs));
+        /*** Create and finalize MPL-USDC 50-50 Balancer Pool ***/
+        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); // Initialize MPL/USDC Balancer pool (without finalizing)
 
-        mint("WETH", address(ali),    100 ether);
-        mint("WBTC", address(ali),     10 * BTC);
-        mint("USDC", address(bob), 100000 * USD);
-        mint("USDC", address(ali), 100000 * USD);
+        IERC20(USDC).approve(address(bPool), MAX_UINT);
+        mpl.approve(address(bPool), MAX_UINT);
+
+        bPool.bind(USDC,         1_650_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(address(mpl),   550_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
+        bPool.finalize();
+        bPool.transfer(address(sid), 100 * WAD);  // Give PD a balance of BPTs to finalize pool
+
+        /*** Create Liqiuidty Pool ***/
+        pool = Pool(sid.createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            MAX_UINT  // liquidityCap value
+        ));
+
+        /*** Pool Delegate stakes and finalizes Pool ***/ 
+        stakeLocker = IStakeLocker(pool.stakeLocker());
+        sid.approve(address(bPool), address(stakeLocker), 50 * WAD);
+        sid.stake(address(stakeLocker), 50 * WAD);
+        sid.finalize(address(pool));  // PD that staked can finalize
+        sid.setOpenToPublic(address(pool), true);
+        assertEq(uint256(pool.poolState()), 1);  // Finalize
+
+        /*** LP deposits USDC into Pool ***/
+        bob.approve(USDC, address(pool), MAX_UINT);
+        bob.deposit(address(pool), 5000 * USD); 
     }
 
     function createAndFundLoan(address _interestStructure, address _collateral, uint256 collateralRatio) internal returns (Loan loan) {
@@ -100,9 +167,8 @@ contract LoanLiquidationTest is TestUtil {
 
         loan = ali.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
 
-        bob.approve(USDC, address(loan), 5000 * USD);
+        sid.fundLoan(address(pool), address(loan), address(dlFactory), 1000 * USD); 
 
-        bob.fundLoan(address(loan), 5000 * USD, address(bob));
         ali.approve(_collateral, address(loan), MAX_UINT);
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
     }
@@ -124,7 +190,7 @@ contract LoanLiquidationTest is TestUtil {
         assertEq(uint256(loan.loanState()),                                                     1);
         assertEq(IERC20(collateralAsset).balanceOf(address(collateralLocker)),  collateralBalance);
 
-        bob.triggerDefault(address(loan));
+        sid.triggerDefault(address(pool), address(loan), address(dlFactory));
 
         {
             uint256 principalOwed_post = loan.principalOwed();

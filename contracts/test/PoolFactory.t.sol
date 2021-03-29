@@ -39,9 +39,7 @@ contract PoolFactoryTest is TestUtil {
     ChainlinkOracle         wethOracle;
     ChainlinkOracle         wbtcOracle;
     UsdOracle                usdOracle;
-
-    uint256 public constant MAX_UINT = uint256(-1);
-
+    
     function setUp() public {
 
         gov         = new Governor();       // Actor: Governor of Maple.

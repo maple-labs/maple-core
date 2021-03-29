@@ -82,8 +82,6 @@ contract PoolLiquidationTest is TestUtil {
     IStakeLocker                 stakeLocker_a;
     IStakeLocker                 stakeLocker_b;
 
-    uint256 constant public MAX_UINT = uint(-1);
-
     function setUp() public {
 
         che            = new Borrower();                     // Actor: Borrower of the Loan.
@@ -112,6 +110,7 @@ contract PoolLiquidationTest is TestUtil {
         trs            = new Treasury();                     // Treasury.
 
         gov.setValidLoanFactory(address(loanFactory), true);
+        gov.setValidPoolFactory(address(poolFactory), true);
 
         gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
         gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
@@ -222,21 +221,16 @@ contract PoolLiquidationTest is TestUtil {
     }
 
     function test_triggerDefault_pool_delegate() public {
-        // Individual lender funds loan for 60% + 1 wei
-        mint("USDC", address(fay),  60_000_000 * USD + 1);
-        fay.approve(USDC, address(loan), MAX_UINT);
-        fay.fundLoan(address(loan), 60_000_000 * USD + 1, address(fay));
-
         // Fund the pool
-        mint("USDC", address(ali), 40_000_000 * USD);
+        mint("USDC", address(ali), 100_000_000 * USD);
         ali.approve(USDC, address(pool_a), MAX_UINT);
         ali.approve(USDC, address(pool_b), MAX_UINT);
-        ali.deposit(address(pool_a), 20_000_000 * USD);
-        ali.deposit(address(pool_b), 20_000_000 * USD);
+        ali.deposit(address(pool_a), 80_000_000 * USD + 1);
+        ali.deposit(address(pool_b), 20_000_000 * USD - 1);
 
         // Fund the loan
-        sid.fundLoan(address(pool_a), address(loan), address(dlFactory),     20_000_000 * USD);  // Exactly 20% equity
-        joe.fundLoan(address(pool_b), address(loan), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1 wei equity 
+        sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 80_000_000 * USD + 1);  // Plus 1e-6 to create exact 100m totalSupply
+        joe.fundLoan(address(pool_b), address(loan), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1e-6 equity 
 
         // Drawdown loan
         uint cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
@@ -253,40 +247,20 @@ contract PoolLiquidationTest is TestUtil {
         // Attempt to trigger default as PD holding less than minimum LoanFDTs required (MapleGlobals.minLoanEquity)
         assertTrue(!joe.try_triggerDefault(address(pool_b), address(loan), address(dlFactory)));
 
-        // Pause protocol and attempt triggerDefault()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_triggerDefault(address(pool_a), address(loan), address(dlFactory)));
-
-        // Unpause protocol and triggerDefault()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_triggerDefault(address(pool_a), address(loan), address(dlFactory)));
-    }
-
-    function test_triggerDefault_individual_lender() public {
-        // Individual lender funds loan
-        mint("USDC", address(fay),  1_000_000 * USD);
-        fay.approve(USDC, address(loan), MAX_UINT);
-        fay.fundLoan(address(loan), 1_000_000 * USD, address(fay));
-
-        // Drawdown loan
-        uint cReq = loan.collateralRequiredForDrawdown(1_000_000 * USD);
-        mint("WETH", address(che), cReq);
-        che.approve(WETH, address(loan), MAX_UINT);
-        che.drawdown(address(loan), 1_000_000 * USD);  // Draw down less than total amount
-        
-        // Warp to late payment
-        uint256 start = block.timestamp;
-        uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 gracePeriod = globals.gracePeriod();
-        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+        // Update storage to have exactly 20% equity (totalSupply remains the same)
+        hevm.store(
+            address(loan),
+            keccak256(abi.encode(address(pool_b.debtLockers(address(loan), address(dlFactory))), 0)), // Overwrite balance to have exact 20% equity
+            bytes32(uint256(20_000_000 * WAD))
+        );
 
         // Pause protocol and attempt triggerDefault()
         assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!fay.try_triggerDefault(address(loan)));
+        assertTrue(!joe.try_triggerDefault(address(pool_b), address(loan), address(dlFactory)));
 
         // Unpause protocol and triggerDefault()
         assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(fay.try_triggerDefault(address(loan)));
+        assertTrue(joe.try_triggerDefault(address(pool_b), address(loan), address(dlFactory)));
     }
 
     function setUpLoanAndDefault() public {

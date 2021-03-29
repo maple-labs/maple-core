@@ -8,6 +8,7 @@ import "./interfaces/IFundingLocker.sol";
 import "./interfaces/IFundingLockerFactory.sol";
 import "./interfaces/IGlobals.sol";
 import "./interfaces/ILateFeeCalc.sol";
+import "./interfaces/ILiquidityLocker.sol";
 import "./interfaces/ILoanFactory.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IPoolFactory.sol";
@@ -547,13 +548,14 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev Utility to return if msg.sender is an approved Maple Pool
+        @dev Utility to return if lender is using an approved Pool to fund the loan.
     */
     function _isValidPool() internal view {	
-        address poolFactory = IPool(msg.sender).superFactory();
+        address pool        = ILiquidityLocker(msg.sender).pool();
+        address poolFactory = IPool(pool).superFactory();
         require(
             _globals(superFactory).isValidPoolFactory(poolFactory) &&
-            IPoolFactory(poolFactory).isPool(msg.sender),
+            IPoolFactory(poolFactory).isPool(pool),
             "Loan:INVALID_LENDER"
         );
     }

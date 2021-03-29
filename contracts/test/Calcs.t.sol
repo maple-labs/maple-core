@@ -86,8 +86,6 @@ contract CalcsTest is TestUtil {
     ERC20                           fundsToken;
     IBPool                               bPool;
 
-    uint256 constant public MAX_UINT = uint(-1);
-
     function setUp() public {
 
         eli            = new Borrower();                                                // Actor: Borrower of the Loan.

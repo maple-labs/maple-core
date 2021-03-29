@@ -77,8 +77,6 @@ contract StakeLockerTest is TestUtil {
     IBPool                               bPool;
     IStakeLocker                   stakeLocker;
 
-    uint256 constant public MAX_UINT = uint(-1);
-
     function setUp() public {
 
         bob            = new Borrower();                                                // Actor: Borrower of the Loan.
@@ -106,6 +104,7 @@ contract StakeLockerTest is TestUtil {
         trs            = new Treasury();                                                // Treasury.
 
         gov.setValidLoanFactory(address(loanFactory), true);
+        gov.setValidPoolFactory(address(poolFactory), true);
 
         gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
         gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
@@ -653,14 +652,14 @@ contract StakeLockerTest is TestUtil {
         // re-using the variable to avoid stack too deep issue.
         interestPaid = block.timestamp;
 
-        assertTrue(      che.try_intendToUnstake(address(stakeLocker)));
+        assertTrue(che.try_intendToUnstake(address(stakeLocker)));
         assertEq(stakeLocker.stakeCooldown(address(che)), interestPaid);
         hevm.warp(interestPaid + globals.cooldownPeriod() + 1);
-        assertTrue(     !che.try_unstake(address(stakeLocker), recognizableLossesOf.pre - 1));  // Cannot withdraw less than the losses incurred
+        assertTrue(!che.try_unstake(address(stakeLocker), recognizableLossesOf.pre - 1));  // Cannot withdraw less than the losses incurred
         hevm.warp(interestPaid + globals.cooldownPeriod());
-        assertTrue(     !che.try_unstake(address(stakeLocker), recognizableLossesOf.pre));
+        assertTrue(!che.try_unstake(address(stakeLocker), recognizableLossesOf.pre));
         hevm.warp(interestPaid + globals.cooldownPeriod() + 1);
-        assertTrue(      che.try_unstake(address(stakeLocker), recognizableLossesOf.pre));  // Withdraw lowest possible amount (amt == recognizableLosses), FDTs burned to cover losses, no BPTs left to withdraw
+        assertTrue(che.try_unstake(address(stakeLocker), recognizableLossesOf.pre));  // Withdraw lowest possible amount (amt == recognizableLosses), FDTs burned to cover losses, no BPTs left to withdraw
 
         stakeLockerBal.post       = bPool.balanceOf(address(stakeLocker));
         fdtTotalSupply.post       = stakeLocker.totalSupply();
@@ -705,11 +704,11 @@ contract StakeLockerTest is TestUtil {
 
         interestPaid = block.timestamp;
 
-        assertTrue(      dan.try_intendToUnstake(address(stakeLocker)));
+        assertTrue(dan.try_intendToUnstake(address(stakeLocker)));
         assertEq(stakeLocker.stakeCooldown(address(dan)), interestPaid);
         hevm.warp(interestPaid + globals.cooldownPeriod() + 1);
-        assertTrue(     !dan.try_unstake(address(stakeLocker), stakerFDTBal.pre + 1));  // Cannot withdraw more than current FDT bal
-        assertTrue(      dan.try_unstake(address(stakeLocker), stakerFDTBal.pre));      // Withdraw remaining BPTs
+        assertTrue(!dan.try_unstake(address(stakeLocker), stakerFDTBal.pre + 1));  // Cannot withdraw more than current FDT bal
+        assertTrue( dan.try_unstake(address(stakeLocker), stakerFDTBal.pre));      // Withdraw remaining BPTs
 
         stakeLockerBal.post       = bPool.balanceOf(address(stakeLocker));
         fdtTotalSupply.post       = stakeLocker.totalSupply();
