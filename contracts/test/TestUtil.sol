@@ -93,7 +93,7 @@ contract TestUtil is DSTest {
     // Verify equality within accuracy decimals
     function withinPrecision(uint256 val0, uint256 val1, uint256 accuracy) public {
         uint256 diff  = val0 > val1 ? val0 - val1 : val1 - val0;
-        if(diff == 0) return;
+        if (diff == 0) return;
 
         uint256 denominator = val0 == 0 ? val1 : val0;
         bool check = ((diff * RAY) / denominator) < (RAY / 10 ** accuracy);   

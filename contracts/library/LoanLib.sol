@@ -99,7 +99,7 @@ library LoanLib {
             path[0] = address(collateralAsset);
             path[1] = middleAsset ? uniswapAssetForPath : loanAsset;
 
-            if(middleAsset) path[2] = loanAsset;
+            if (middleAsset) path[2] = loanAsset;
 
             // Swap collateralAsset for loanAsset
             uint256[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(

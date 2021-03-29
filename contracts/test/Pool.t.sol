@@ -791,7 +791,7 @@ contract PoolTest is TestUtil {
             assertEq(balances[9] - balances[4], (beforePrincipalOut - pool.principalOut()) + (pool.interestSum() - beforeInterestSum));
 
             // Normal case, principalClaim <= principalOut
-            if(claim[2] + claim[4] <= beforePrincipalOut) {
+            if (claim[2] + claim[4] <= beforePrincipalOut) {
                 // interestSum incremented by remainder of interest
                 withinPrecision(
                     pool.interestSum() - beforeInterestSum, 

@@ -261,12 +261,12 @@ contract Loan is FDT, Pausable {
 
         // Update internal accounting variables
         interestPaid = interestPaid.add(interest);
-        if(principal > uint256(0)) principalPaid = principalPaid.add(principal);
+        if (principal > uint256(0)) principalPaid = principalPaid.add(principal);
 
         if (_paymentsRemaining > uint256(0)) {
             // Update info related to next payment, decrement principalOwed if needed
             nextPaymentDue = nextPaymentDue.add(paymentIntervalSeconds);
-            if(principal > uint256(0)) principalOwed = principalOwed.sub(principal);
+            if (principal > uint256(0)) principalOwed = principalOwed.sub(principal);
         } else {
             // Update info to close loan
             principalOwed  = uint256(0);
