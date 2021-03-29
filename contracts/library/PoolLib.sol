@@ -49,7 +49,7 @@ library PoolLib {
     ) external {
         require(globals.isValidLoanAsset(liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
         require(liquidityCap != uint256(0),                "Pool:INVALID_CAP");
-        require(stakingFee + delegateFee <= 10_000,        "Pool:INVALID_FEES");
+        require(stakingFee.add(delegateFee) <= 10_000,     "Pool:INVALID_FEES");
         require(
             IBPool(stakeAsset).isBound(globals.mpl())  && 
             IBPool(stakeAsset).isBound(liquidityAsset) &&
