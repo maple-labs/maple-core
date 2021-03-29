@@ -11,6 +11,6 @@ export DAPP_BUILD_OPTIMIZE=1
 export DAPP_BUILD_OPTIMIZE_RUNS=200
 export DAPP_LINK_TEST_LIBRARIES=1
 
-if [ ${1} ]; then match=${1}; else match="contracts/test"; fi
+if [ ${1} ]; then match=${1}; dapp_test_verbosity=2; else match="contracts/test"; dapp_test_verbosity=1; fi
 
-LANG=C.UTF-8 dapp test --match "$match" --rpc-url "$ETH_RPC_URL" --verbosity 1 --cache "cache/dapp-cache" --fuzz-runs 10
+LANG=C.UTF-8 dapp test --match "$match" --rpc-url "$ETH_RPC_URL" --verbosity $dapp_test_verbosity --cache "cache/dapp-cache" --fuzz-runs 10
