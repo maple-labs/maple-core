@@ -259,7 +259,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Pool Delegate triggers deactivation, permanently shutting down the pool. Must have less that 100 units of liquidityAsset principalOut.
+        @dev Pool Delegate triggers deactivation, permanently shutting down the pool. Must have less than 100 USD worth of liquidityAsset principalOut.
         @param confirmation Pool delegate must supply the number 86 for this function to deactivate, a simple confirmation.
     */
     // TODO: Ask auditors about standard for confirmations
