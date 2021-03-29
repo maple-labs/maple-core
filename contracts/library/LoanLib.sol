@@ -191,13 +191,7 @@ library LoanLib {
         paymentLate = block.timestamp > _nextPaymentDue;
 
         // If payment is late, add late fees
-        if (paymentLate) {
-            (uint256 totalExtra, uint256 principalExtra, uint256 interestExtra) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
-
-            total     = total.add(totalExtra);
-            principal = principal.add(principalExtra);
-            interest  = interest.add(interestExtra);
-        }
+        if (paymentLate) interest = interest.add(ILateFeeCalc(lateFeeCalc).getLateFee(address(this)));
     }
 
     /**
