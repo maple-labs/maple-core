@@ -143,6 +143,8 @@ contract LoanTest is TestUtil {
         bPool.finalize();
         bPool.transfer(address(sid), 100 * WAD);  // Give PD a balance of BPTs to finalize pool
 
+        gov.setValidBalancerPool(address(bPool), true);
+
         /*** Create Liqiuidty Pool ***/
         pool = Pool(sid.createPool(
             address(poolFactory),
