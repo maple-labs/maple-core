@@ -170,6 +170,8 @@ contract PoolTest is TestUtil {
         bPool.transfer(address(sid), bPool.balanceOf(address(this)) / 2);
         bPool.transfer(address(joe), bPool.balanceOf(address(this)));
 
+        gov.setValidBalancerPool(address(bPool), true);
+
         // Set Globals
         gov.setCalc(address(repaymentCalc),  true);
         gov.setCalc(address(lateFeeCalc),    true);

@@ -36,7 +36,8 @@ contract MapleGlobals {
     mapping(address => bool) public isValidCollateralAsset;  // Mapping of valid collateralAssets
     mapping(address => bool) public validCalcs;              // Mapping of valid calculator contracts
     mapping(address => bool) public isValidPoolDelegate;     // Validation data structure for Pool Delegates (prevent invalid addresses from creating pools)
-    mapping(address => bool) public isStakingRewards;        // Validation of if address is StakingRewards contract used for MPL liquidity mining programs
+    mapping(address => bool) public isValidStakingRewards;   // Validation of if address is StakingRewards contract used for MPL liquidity mining programs
+    mapping(address => bool) public isValidBalancerPool;     // Validation of if address is a Balancer Pool that Maple has approved for BPT staking
     
     // Determines the liquidation path of various assets in Loans and Treasury.
     // The value provided will determine whether or not to perform a bilateral or triangular swap on Uniswap.
@@ -55,6 +56,7 @@ contract MapleGlobals {
     event       LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event          OracleSet(address asset, address oracle);
     event  StakingRewardsSet(address stakingRewards, bool valid);
+    event    BalancerPoolSet(address balancerPool,   bool valid);
     event PendingGovernorSet(address pendingGovernor);
     event   GovernorAccepted(address governor);
     event    GlobalsParamSet(bytes32 indexed which, uint256 value);
@@ -125,11 +127,21 @@ contract MapleGlobals {
     /**
         @dev Update the valid StakingRewards mapping. Only Governor can call.
         @param stakingRewards Address of `StakingRewards` contract.
-        @param valid          The new bool value for validating loanFactory.
+        @param valid          The new bool value for validating stakingRewards.
     */
-    function setStakingRewards(address stakingRewards, bool valid) external isGovernor {
-        isStakingRewards[stakingRewards] = valid;
+    function setValidStakingRewards(address stakingRewards, bool valid) external isGovernor {
+        isValidStakingRewards[stakingRewards] = valid;
         emit StakingRewardsSet(stakingRewards, valid);
+    }
+
+    /**
+        @dev Update the valid Balancer Pool mapping. Only Governor can call.
+        @param balancerPool Address of Balancer Pool contract.
+        @param valid        The new bool value for validating Balancer Pool.
+    */
+    function setValidBalancerPool(address balancerPool, bool valid) external isGovernor {
+        isValidBalancerPool[balancerPool] = valid;
+        emit BalancerPoolSet(balancerPool, valid);
     }
     
     /**
