@@ -28,6 +28,6 @@ contract LateFeeCalc {
     function getLateFee(address loan) view public returns(uint256) {
         IRepaymentCalc repaymentCalc = IRepaymentCalc(ILoan(loan).repaymentCalc());
         (,, uint256 interest)        = repaymentCalc.getNextPayment(loan);
-        return interest.mul(lateFee).div(10000);
+        return interest.mul(lateFee).div(10_000);
     }
 } 

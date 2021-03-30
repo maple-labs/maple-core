@@ -313,7 +313,7 @@ contract CalcsTest is TestUtil {
             
             uint256 interest_late = lateFeeCalc.getLateFee(address(loan));  // USDC required for payment on loan
 
-            assertEq(total,                        total_calc);
+            assertEq(total,        total_calc + interest_late);  // Late fee is added to total
             assertEq(principal,                principal_calc);
             assertEq(interest,  interest_calc + interest_late);
 
