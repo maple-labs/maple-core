@@ -72,8 +72,6 @@ contract GulpTest is TestUtil {
     IBPool                               bPool;
     IStakeLocker                   stakeLocker;
 
-    uint256 constant public MAX_UINT = uint(-1);
-
     function setUp() public {
 
         bob            = new Borrower();                      // Actor: Borrower of the Loan.
@@ -99,6 +97,7 @@ contract GulpTest is TestUtil {
         premiumCalc    = new PremiumCalc(500);                // Flat 5% premium
 
         gov.setValidLoanFactory(address(loanFactory), true);
+        gov.setValidPoolFactory(address(poolFactory), true);
 
         gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
         gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
@@ -153,7 +152,6 @@ contract GulpTest is TestUtil {
         gov.setPriceOracle(WBTC, address(wbtcOracle));
         gov.setPriceOracle(USDC, address(usdOracle));
 
-        
         // Create Liquidity Pool
         pool = Pool(sid.createPool(
             address(poolFactory),

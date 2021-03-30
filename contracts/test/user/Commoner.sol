@@ -9,7 +9,7 @@ contract Commoner {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, liquidityCap));
     }
 
-    function try_trigger_default(address loan) external returns (bool ok) {
+    function try_triggerDefault(address loan) external returns (bool ok) {
         string memory sig = "triggerDefault()";
         (ok,) = loan.call(abi.encodeWithSignature(sig));
     }

@@ -91,8 +91,6 @@ contract PoolTest is TestUtil {
     ERC20                           fundsToken;
     IBPool                               bPool;
 
-    uint256 constant public MAX_UINT = uint(-1);
-
     function setUp() public {
 
         eli            = new Borrower();                                                // Actor: Borrower of the Loan.
@@ -124,6 +122,10 @@ contract PoolTest is TestUtil {
         lateFeeCalc    = new LateFeeCalc(0);                                            // Flat 0% fee
         premiumCalc    = new PremiumCalc(500);                                          // Flat 5% premium
         trs            = new Treasury();                                                // Treasury.
+
+        /*** Validate all relevant contracts in Globals ***/
+        gov.setValidLoanFactory(address(loanFactory), true);
+        gov.setValidPoolFactory(address(poolFactory), true);
 
         gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
         gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
@@ -661,6 +663,8 @@ contract PoolTest is TestUtil {
         bob.approve(USDC, address(pool1), MAX_UINT);
 
         assertTrue(bob.try_deposit(address(pool1), 100 * USD));
+
+        gov.setValidLoanFactory(address(loanFactory), false);
 
         assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 100 * USD)); // LoanFactory not in globals
 
