@@ -1839,6 +1839,9 @@ contract PoolTest is TestUtil {
 
     function test_withdraw_principal_penalty() public {
         setUpWithdraw();
+
+        // Ignore cooldown for this test
+        gov.setLpWithdrawWindow(MAX_UINT);
         
         // Note: LP is able to withdraw immediately because of the cooldown being sest to zero in the constructor
         // This will be revisited in the test refactor
@@ -1860,7 +1863,6 @@ contract PoolTest is TestUtil {
         assertEq(interest_kim,          0);
 
         kim.intendToWithdraw(address(pool1));
-        hevm.warp(currentTime + globals.lpCooldownPeriod() + 1);
         kim.withdraw(address(pool1), depositAmount);
         uint256 bal1 = IERC20(USDC).balanceOf(address(kim));  // Balance after principal penalty
 

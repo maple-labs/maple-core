@@ -273,7 +273,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         uint256 endOfCooldownPeriod = _stakeCooldown + globals.stakerCooldownPeriod();  // Timestamp of when cooldown period has ended for staker (start of unstake window)
         
         require(_stakeCooldown != uint256(0),                                           "StakeLocker:COOLDOWN_NOT_SET");
-        require(block.timestamp > endOfCooldownPeriod,                                  "StakeLocker:COOLDOWN_NOT_FINISHED");
+        require(block.timestamp >= endOfCooldownPeriod,                                 "StakeLocker:COOLDOWN_NOT_FINISHED");
         require(block.timestamp - endOfCooldownPeriod <= globals.stakerUnstakeWindow(), "StakeLocker:UNSTAKE_WINDOW_FINISHED");
     }
 

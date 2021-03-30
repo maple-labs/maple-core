@@ -245,7 +245,7 @@ library PoolLib {
     function isWithdrawAllowed(uint256 depositCooldown, IGlobals globals) public view {
         uint256 endOfCooldownPeriod = depositCooldown + globals.lpCooldownPeriod();  // Timestamp of when cooldown period has ended for LP (start of withdraw window)
         require(depositCooldown != uint256(0),                                       "Pool:COOLDOWN_NOT_SET");
-        require(block.timestamp > endOfCooldownPeriod,                               "Pool:COOLDOWN_NOT_FINISHED");
+        require(block.timestamp >= endOfCooldownPeriod,                              "Pool:COOLDOWN_NOT_FINISHED");
         require(block.timestamp - endOfCooldownPeriod <= globals.lpWithdrawWindow(), "Pool:WITHDRAW_WINDOW_FINISHED");
     }
 
