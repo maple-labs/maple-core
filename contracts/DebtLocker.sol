@@ -57,7 +57,9 @@ contract DebtLocker {
         uint256 loan_defaultSuffered = loan.defaultSuffered();
     
         // If a default has occurred, update storage variable and update memory variable from zero for return.
-        // Default will occur only once so below statement will only be executed once
+        // `defaultSuffered` represents the proportional loss that the DebtLocker registers based on its balance
+        // of LoanFDTs in comparison to the totalSupply of LoanFDTs.
+        // Default will occur only once so below statement will only be `true` once.
         if (defaultSuffered == uint256(0) && loan_defaultSuffered > uint256(0)) {
             newDefaultSuffered = defaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan_defaultSuffered, loan.totalSupply());
         }
@@ -65,49 +67,52 @@ contract DebtLocker {
         // Account for any transfers into Loan that have occurred since last call
         loan.updateFundsReceived();
 
+        // If there are claimable funds, calculate portions and claim using LoanFDT
         if (loan.withdrawableFundsOf(address(this)) > uint256(0)) {
 
             // Calculate payment deltas
-            uint256 newInterest  = loan.interestPaid() - interestPaid;
-            uint256 newPrincipal = loan.principalPaid() - principalPaid;
+            uint256 newInterest  = loan.interestPaid() - interestPaid;    // `loan.interestPaid`  updated in `loan._makePayment()`
+            uint256 newPrincipal = loan.principalPaid() - principalPaid;  // `loan.principalPaid` updated in `loan._makePayment()` 
 
-            // Update payments accounting
+            // Update storage variables for next delta calculation
             interestPaid  = loan.interestPaid();
             principalPaid = loan.principalPaid();
 
-            // Calculate one-time deltas
-            uint256 newFee             = feePaid         > uint256(0) ? uint256(0) : loan.feePaid();
-            uint256 newExcess          = excessReturned  > uint256(0) ? uint256(0) : loan.excessReturned();
-            uint256 newAmountRecovered = amountRecovered > uint256(0) ? uint256(0) : loan.amountRecovered();
+            // Calculate one-time deltas if storage variables have not yet been updated
+            uint256 newFee             = feePaid         == uint256(0) ? loan.feePaid()         : uint256(0);  // `loan.feePaid`          updated in `loan.drawdown()` 
+            uint256 newExcess          = excessReturned  == uint256(0) ? loan.excessReturned()  : uint256(0);  // `loan.excessReturned`   updated in `loan.unwind()` OR `loan.drawdown()` if `amt < fundingLockerBal`
+            uint256 newAmountRecovered = amountRecovered == uint256(0) ? loan.amountRecovered() : uint256(0);  // `loan.amountRecovered`  updated in `loan.triggerDefault()`
 
-            // Update one-time accounting
-            if (newFee > 0)             feePaid         = loan.feePaid();
-            if (newExcess > 0)          excessReturned  = loan.excessReturned();
-            if (newAmountRecovered > 0) amountRecovered = loan.amountRecovered();
+            // Update DebtLocker storage variable if Loan storage variable has been updated since last claim
+            if (newFee > 0)             feePaid         = newFee;
+            if (newExcess > 0)          excessReturned  = newExcess;
+            if (newAmountRecovered > 0) amountRecovered = newAmountRecovered;
 
-            // Withdraw funds via FDT
-            uint256 beforeBal = loanAsset.balanceOf(address(this));  // Current balance of locker (accounts for direct inflows)
-            loan.withdrawFunds();                                    // Transfer funds from loan to debtLocker
+            // Withdraw all claimable funds via LoanFDT
+            uint256 beforeBal = loanAsset.balanceOf(address(this));                 // Current balance of DebtLocker (accounts for direct inflows)
+            loan.withdrawFunds();                                                   // Transfer funds from Loan to DebtLocker
+            uint256 claimBal  = loanAsset.balanceOf(address(this)).sub(beforeBal);  // Amount claimed from Loan using LoanFDT
             
-            uint256 claimBal = loanAsset.balanceOf(address(this)).sub(beforeBal);  // Amount claimed from loan using FDT
-            
-            // Calculate distributed amounts, transfer the asset, and return metadata
+            // Calculate sum of all deltas, to be used to calculate portions for metadata
             uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess).add(newAmountRecovered);
 
-            // Calculate payment portions based on FDT claim
+            // Calculate payment portions based on LoanFDT claim
             newInterest  = calcAllotment(newInterest,  claimBal, sum);
             newPrincipal = calcAllotment(newPrincipal, claimBal, sum);
 
-            // Calculate one-time portions based on FDT claim
+            // Calculate one-time portions based on LoanFDT claim
             newFee             = newFee             == uint256(0) ? uint256(0) : calcAllotment(newFee,             claimBal, sum);
             newExcess          = newExcess          == uint256(0) ? uint256(0) : calcAllotment(newExcess,          claimBal, sum);
             newAmountRecovered = newAmountRecovered == uint256(0) ? uint256(0) : calcAllotment(newAmountRecovered, claimBal, sum);
 
-            loanAsset.safeTransfer(pool, claimBal);
+            loanAsset.safeTransfer(pool, claimBal);  // Transfer entire amount claimed using LoanFDT
 
+            // Return claim amount plus all relevant metadata, to be used by Pool for further claim logic
+            // Note: newInterest + newPrincipal + newFee + newExcess + newAmountRecovered = claimBal - dust
             return([claimBal, newInterest, newPrincipal, newFee, newExcess, newAmountRecovered, newDefaultSuffered]);
         }
-
+        
+        // Handles case where no claimable funds are present but a default must be registered (zero-collateralized loans defaulting)
         return([0, 0, 0, 0, 0, 0, newDefaultSuffered]);
     }
 

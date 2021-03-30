@@ -11,7 +11,7 @@ abstract contract PoolFDT is ExtendedFDT {
     using SafeMathInt    for  int256;
 
     uint256 public interestSum;   // Sum of all withdrawable interest 
-    uint256 public bptShortfall;  // Sum of all unrecognized losses 
+    uint256 public poolLosses;  // Sum of all unrecognized losses 
 
     uint256 public interestBalance;  // The amount of earned interest present and accounted for in this contract.
     uint256 public lossesBalance;    // The amount of losses present and accounted for in this contract.
@@ -24,7 +24,7 @@ abstract contract PoolFDT is ExtendedFDT {
     function recognizeLosses() internal override returns (uint256 losses) {
         losses = _prepareLossesWithdraw();
 
-        bptShortfall = bptShortfall.sub(losses);
+        poolLosses = poolLosses.sub(losses);
 
         _updateLossesBalance();
     }
@@ -36,7 +36,7 @@ abstract contract PoolFDT is ExtendedFDT {
     function _updateLossesBalance() internal override returns (int256) {
         uint256 _prevLossesTokenBalance = lossesBalance;
 
-        lossesBalance = bptShortfall;
+        lossesBalance = poolLosses;
 
         return int256(lossesBalance).sub(int256(_prevLossesTokenBalance));
     }

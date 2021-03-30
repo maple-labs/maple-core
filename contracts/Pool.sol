@@ -38,8 +38,8 @@ contract Pool is PoolFDT {
 
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset
 
-    // Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + bptShortfall
-    //        liquidityLockerBal + principalOut = fdtTotalSupply + interestSum - bptShortfall
+    // Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
+    //        liquidityLockerBal + principalOut = fdtTotalSupply + interestSum - poolLosses
     
     uint256 public immutable stakingFee;   // Fee for stakers   (in basis points)
     uint256 public immutable delegateFee;  // Fee for delegates (in basis points)
@@ -191,13 +191,13 @@ contract Pool is PoolFDT {
         (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
 
         // Subtract outstanding principal by principal claimed plus excess returned
-        // Considers possible overflow if loanAsset is transferred directly into Loan
+        // Considers possible principalClaim overflow if loanAsset is transferred directly into Loan
         if (principalClaim <= principalOut) {
             principalOut = principalOut - principalClaim;
         } else {
             interestClaim  = interestClaim.add(principalClaim - principalOut);  // Distribute principalClaim overflow as interest to LPs
             principalClaim = principalOut;                                      // Set principalClaim to principalOut so correct amount gets transferred
-            principalOut   = 0;                                                 // Set principalOUt to zero to avoid subtraction overflow
+            principalOut   = 0;                                                 // Set principalOut to zero to avoid subtraction overflow
         }
 
         // Accounts for rounding error in stakeLocker/poolDelegate/liquidityLocker interest split
@@ -236,15 +236,15 @@ contract Pool is PoolFDT {
     */
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
-        (uint256 bptsBurned, uint256 bptsReturned, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
+        (uint256 bptsBurned, uint256 postBurnBptBal, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
 
-        // Handle shortfall in StakeLocker, updated LiquidityLocker FDT loss accounting for liquidityAsset
+        // If BPT burn is not enough to cover full default amount, pass on losses to LPs with PoolFDT loss accounting
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
-            bptShortfall = bptShortfall.add(defaultSuffered - liquidityAssetRecoveredFromBurn);
+            poolLosses = poolLosses.add(defaultSuffered - liquidityAssetRecoveredFromBurn);
             updateLossesReceived();
         }
 
-        // Transfer USDC to liquidityLocker
+        // Transfer liquidityAsset from burn to liquidityLocker
         liquidityAsset.safeTransfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
 
         principalOut = principalOut.sub(defaultSuffered);  // Subtract rest of Loan's principal from principalOut
@@ -253,7 +253,7 @@ contract Pool is PoolFDT {
             loan,                            // Which loan defaultSuffered is from
             defaultSuffered,                 // Total default suffered from loan by Pool after liquidation
             bptsBurned,                      // Amount of BPTs burned from stakeLocker
-            bptsReturned,                    // Remaining BPTs in stakeLocker post-burn                      
+            postBurnBptBal,                  // Remaining BPTs in stakeLocker post-burn                      
             liquidityAssetRecoveredFromBurn  // Amount of liquidityAsset recovered from burning BPTs
         );
     }
