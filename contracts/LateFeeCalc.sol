@@ -14,23 +14,20 @@ contract LateFeeCalc {
     uint8   public constant calcType = 11;  // "LATEFEE type"
     bytes32 public constant name     = 'FLAT';
     
-    uint256 public immutable feeBips;  // The fee in bips, charged on the payment amount.
+    uint256 public immutable lateFee;  // The fee in basis points, charged on the payment amount.
 
-    constructor(uint256 _feeBips) public {
-        feeBips = _feeBips;
+    constructor(uint256 _lateFee) public {
+        lateFee = _lateFee;
     }
 
     /**
         @dev    Calculates the late fee payment for a _loan.
         @param  loan Address of the Loan to calculate late fee for
-        @return [0] = Principal + Interest (Total)
-                [1] = Principal
-                [2] = Interest
+        @return Late fee to be added to interest
     */
-    function getLateFee(address loan) view public returns(uint256, uint256, uint256) {
+    function getLateFee(address loan) view public returns(uint256) {
         IRepaymentCalc repaymentCalc = IRepaymentCalc(ILoan(loan).repaymentCalc());
-        (,, uint256 paymentDue)      = repaymentCalc.getNextPayment(loan);
-        uint256 lateFee              = paymentDue.mul(feeBips).div(10000);
-        return (lateFee, 0, lateFee);
+        (,, uint256 interest)        = repaymentCalc.getNextPayment(loan);
+        return interest.mul(lateFee).div(10_000);
     }
 } 

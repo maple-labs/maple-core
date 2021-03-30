@@ -192,11 +192,10 @@ library LoanLib {
 
         // If payment is late, add late fees
         if (paymentLate) {
-            (uint256 totalExtra, uint256 principalExtra, uint256 interestExtra) = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
-
-            total     = total.add(totalExtra);
-            principal = principal.add(principalExtra);
-            interest  = interest.add(interestExtra);
+            uint256 lateFee = ILateFeeCalc(lateFeeCalc).getLateFee(address(this));
+            
+            total    = total.add(lateFee);
+            interest = interest.add(lateFee);
         }
     }
 
