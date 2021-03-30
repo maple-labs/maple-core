@@ -49,7 +49,7 @@ jobs:
           name: Run unit tests
           command: |
             cd ~/project
-            TEST=$(circleci tests glob contracts/**/*.t.sol | circleci tests split --split-by=name)
+            TEST=$(circleci tests glob contracts/test/*.t.sol | circleci tests split --split-by=name)
             ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY ./test-ci.sh $TEST
           no_output_timeout: 60m
 

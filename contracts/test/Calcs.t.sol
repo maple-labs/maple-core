@@ -2,12 +2,12 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../test/TestUtil.sol";
+import "./TestUtil.sol";
 
-import "../test/user/Borrower.sol";
-import "../test/user/Governor.sol";
-import "../test/user/LP.sol";
-import "../test/user/PoolDelegate.sol";
+import "./user/Borrower.sol";
+import "./user/Governor.sol";
+import "./user/LP.sol";
+import "./user/PoolDelegate.sol";
 
 import "../interfaces/IBFactory.sol";
 import "../interfaces/IBPool.sol";
@@ -45,7 +45,7 @@ interface IBPoolFactory {
 
 contract Treasury { }
 
-contract RepaymentCalcTest is TestUtil {
+contract CalcsTest is TestUtil {
 
     using SafeMath for uint256;
 
