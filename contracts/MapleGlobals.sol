@@ -28,7 +28,10 @@ contract MapleGlobals {
     uint256 public treasuryFee;          // Portion of drawdown that goes to MapleTreasury
     uint256 public maxSwapSlippage;      // Maximum amount of slippage for Uniswap transactions
     uint256 public minLoanEquity;        // Minimum amount of LoanFDTs required to trigger liquidations (basis points percentage of totalSupply)
-    uint256 public cooldownPeriod;       // Period (in secs) after that stakers/LPs are allowed to unstake/withdraw their funds from the StakeLocker/Pool contract
+    uint256 public stakerCooldownPeriod; // Period (in secs) after which stakers are allowed to unstake  their BPTs  from the StakeLocker contract
+    uint256 public lpCooldownPeriod;     // Period (in secs) after which LPs     are allowed to withdraw their funds from the Pool contract
+    uint256 public stakerUnstakeWindow;  // Window of time (in secs) after `stakerCooldownPeriod` that a user has to withdraw before their intent to unstake  is invalidated
+    uint256 public lpWithdrawWindow;     // Window of time (in secs) after `lpCooldownPeriod`     that a user has to withdraw before their intent to withdraw is invalidated
 
     bool public protocolPaused;  // Switch to pause the functionality of the entire protocol
 
@@ -76,19 +79,20 @@ contract MapleGlobals {
         @param  _admin    Address that takes care of protocol security switch 
     */
     constructor(address _governor, address _mpl, address _bFactory, address _admin) public {
-        governor             = _governor;
-        mpl                  = _mpl;
-        gracePeriod          = 5 days;
-        swapOutRequired      = 10_000;
-        unstakeDelay         = 90 days;
-        drawdownGracePeriod  = 10 days;
-        investorFee          = 50;
-        treasuryFee          = 50;
-        BFactory             = _bFactory;
-        maxSwapSlippage      = 1000;       // 10 %
-        minLoanEquity        = 2000;       // 20 %
-        admin                = _admin;
-        cooldownPeriod       = 10 days;
+        governor            = _governor;
+        mpl                 = _mpl;
+        gracePeriod         = 5 days;
+        swapOutRequired     = 10_000;     // $10,000 of Pool cover
+        unstakeDelay        = 90 days;
+        drawdownGracePeriod = 10 days;
+        investorFee         = 50;         // 0.5%
+        treasuryFee         = 50;         // 0.5%
+        BFactory            = _bFactory;
+        maxSwapSlippage     = 1000;       // 10 %
+        minLoanEquity       = 2000;       // 20 %
+        admin               = _admin;
+        stakerUnstakeWindow = 2 days;     // Staker cooldown period must be set manually by the governor
+        lpWithdrawWindow    = 2 days;     // LP     cooldown period must be set manually by the governor
     }
 
     /************************/
@@ -96,13 +100,43 @@ contract MapleGlobals {
     /************************/
 
     /**
-        @dev Update the `cooldownPeriod` state variable. This change will affect existing cool down period for the LPs/stakers who already applied for the withdraw/unstake.
+        @dev Update the `stakerCooldownPeriod` state variable. This change will affect existing cool down period for the stakers who already applied for the unstake.
         @param newCooldownPeriod New value for the cool down period.
      */
-    function setCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
+    function setStakerCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
         _checkTimeRange(newCooldownPeriod); 
-        cooldownPeriod = newCooldownPeriod;
-        emit GlobalsParamSet("COOLDOWN_PERIOD", newCooldownPeriod);
+        stakerCooldownPeriod = newCooldownPeriod;
+        emit GlobalsParamSet("STAKER_COOLDOWN_PERIOD", newCooldownPeriod);
+    }
+
+    /**
+        @dev Update the `lpCooldownPeriod` state variable. This change will affect existing cool down period for the LPs who already applied for the withdraw.
+        @param newCooldownPeriod New value for the cool down period.
+     */
+    function setLpCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
+        _checkTimeRange(newCooldownPeriod); 
+        lpCooldownPeriod = newCooldownPeriod;
+        emit GlobalsParamSet("LP_COOLDOWN_PERIOD", newCooldownPeriod);
+    }
+
+    /**
+        @dev Update the `stakerUnstakeWindow` state variable. TODO: "This change" update
+        @param newUnstakeWindow New value for the unstake window.
+     */
+    function setStakerUnstakeWindow(uint256 newUnstakeWindow) external isGovernor {
+        _checkTimeRange(newUnstakeWindow); 
+        stakerUnstakeWindow = newUnstakeWindow;
+        emit GlobalsParamSet("STAKER_UNSTAKE_WINDOW", newUnstakeWindow);
+    }
+
+    /**
+        @dev Update the `cooldownPeriod` state variable. TODO: "This change" update
+        @param newLpWithdrawWindow New value for the withdraw window.
+     */
+    function setLpWithdrawWindow(uint256 newLpWithdrawWindow) external isGovernor {
+        _checkTimeRange(newLpWithdrawWindow); 
+        lpWithdrawWindow = newLpWithdrawWindow;
+        emit GlobalsParamSet("LP_WITHDRAW_WINDOW", newLpWithdrawWindow);
     }
 
     /**

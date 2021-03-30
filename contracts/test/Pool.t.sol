@@ -538,6 +538,7 @@ contract PoolTest is TestUtil {
 
         uint256 currentTime = block.timestamp;
 
+        // TODO: These tests can probably be removed
         assertEq(claimable, 500 * USD);
         assertTrue(!bob.try_withdraw(address(pool1), claimable),    "Should fail to withdraw 500 USD because user has to show the intend first");
         assertTrue(!dan.try_intendToWithdraw(address(pool1)),       "Failed to show intend to withdraw because dan has zero pool FDTs");
@@ -545,11 +546,11 @@ contract PoolTest is TestUtil {
         assertEq( pool1.depositCooldown(address(bob)), currentTime, "Incorrect value set");
         assertTrue(!bob.try_withdraw(address(pool1), claimable),    "Should fail to withdraw as cool down period hasn't passed yet");
 
-        hevm.warp(currentTime + globals.cooldownPeriod() - 1);
+        hevm.warp(currentTime + globals.lpCooldownPeriod() - 1);
         assertTrue(!bob.try_withdraw(address(pool1), claimable), "Should fail to withdraw as cool down period hasn't passed yet");
-        hevm.warp(currentTime + globals.cooldownPeriod());
+        hevm.warp(currentTime + globals.lpCooldownPeriod());
         assertTrue(!bob.try_withdraw(address(pool1), claimable), "Should fail to withdraw as cool down period hasn't passed yet");
-        hevm.warp(currentTime + globals.cooldownPeriod() + 1);
+        hevm.warp(currentTime + globals.lpCooldownPeriod() + 1);
         assertTrue(bob.try_withdraw(address(pool1), claimable),  "Should pass to withdraw the funds from the pool");
     }
 
@@ -557,7 +558,7 @@ contract PoolTest is TestUtil {
         uint256 currentTime = block.timestamp;
         assertTrue(investor.try_intendToWithdraw(address(pool)));
         assertEq(      pool.depositCooldown(address(investor)), currentTime, "Incorrect value set");
-        hevm.warp(currentTime + globals.cooldownPeriod() + 1);
+        hevm.warp(currentTime + globals.lpCooldownPeriod() + 1);
     }
 
     function test_deposit_depositDate() public {
@@ -1618,6 +1619,62 @@ contract PoolTest is TestUtil {
             assertEq(uint256(loan2.loanState()), 2);
         }
     }
+
+    function test_withdraw_cooldown() public {
+
+        gov.setLpCooldownPeriod(10 days);
+
+        address stakeLocker = pool1.stakeLocker();
+
+        sid.approve(address(bPool), stakeLocker, MAX_UINT);
+        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+
+        // Mint 1000 USDC into this LP account
+        mint("USDC", address(bob), 10000 * USD);
+
+        sid.finalize(address(pool1));
+        sid.setPrincipalPenalty(address(pool1), 0);
+        sid.setLockupPeriod(address(pool1), 0); 
+        sid.setOpenToPublic(address(pool1), true);
+        
+        bob.approve(USDC, address(pool1), MAX_UINT);
+
+        bob.deposit(address(pool1), 1000 * USD);
+
+        uint256 amt = 500 * USD; // Half of deposit so withdraw can happen twice
+
+        uint256 start = block.timestamp;
+
+        assertTrue(!bob.try_withdraw(address(pool1), amt),    "Should fail to withdraw 500 USD because user has to intendToWithdraw");
+        assertTrue(!dan.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw because dan has zero pool FDTs");
+        assertTrue( bob.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
+        assertEq( pool1.depositCooldown(address(bob)), start);
+        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cool down period hasn't passed yet");
+
+        // Just before cooldown ends
+        hevm.warp(start + globals.lpCooldownPeriod());
+        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cool down period hasn't passed yet");
+        
+        // Right when cooldown ends
+        hevm.warp(start + globals.lpCooldownPeriod() + 1);
+        assertTrue(bob.try_withdraw(address(pool1), amt), "Should be able to withdraw funds at beginning of cooldown window");
+
+        // Same time, forgot to intend to withdraw so cannot
+        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw 500 USD because user has to intendToWithdraw");
+
+        uint256 newStart = block.timestamp;
+
+        // Intend to withdraw
+        assertTrue(bob.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
+
+        // Second after LP withdrawal window ends
+        hevm.warp(newStart + globals.lpCooldownPeriod() + globals.lpWithdrawWindow() + 1);
+        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cool down window has been passed");
+        
+        // Last second of LP withdrawal window
+        hevm.warp(newStart + globals.lpCooldownPeriod() + globals.lpWithdrawWindow());
+        assertTrue(bob.try_withdraw(address(pool1), amt), "Should be able to withdraw funds at end of cooldown window");
+    }
     
     function test_withdraw_calculator() public {
 
@@ -1658,6 +1715,10 @@ contract PoolTest is TestUtil {
 
     function test_withdraw_under_lockup_period() public {
         setUpWithdraw();
+
+        // Ignore cooldown for this test
+        gov.setLpWithdrawWindow(MAX_UINT);
+        
         uint start = block.timestamp;
 
         // Mint USDC to kim
@@ -1690,6 +1751,10 @@ contract PoolTest is TestUtil {
 
     function test_withdraw_under_weighted_lockup_period() public {
         setUpWithdraw();
+
+        // Ignore cooldown for this test
+        gov.setLpWithdrawWindow(MAX_UINT);
+
         uint start = block.timestamp;
 
         // Mint USDC to kim
@@ -1775,6 +1840,8 @@ contract PoolTest is TestUtil {
     function test_withdraw_principal_penalty() public {
         setUpWithdraw();
         
+        // Note: LP is able to withdraw immediately because of the cooldown being sest to zero in the constructor
+        // This will be revisited in the test refactor
         sid.setPrincipalPenalty(address(pool1), 500);
         assertTrue(sid.try_setLockupPeriod(address(pool1), 0));
         assertEq(pool1.lockupPeriod(), uint256(0));
@@ -1785,22 +1852,26 @@ contract PoolTest is TestUtil {
         uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
         uint256 depositAmount = 1000 * USD;
         assertTrue(kim.try_deposit(address(pool1), depositAmount));  // Deposit and withdraw in same tx
-        make_withdrawable(kim, pool1);
 
         (uint total_kim, uint principal_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
 
-        withinPrecision(total_kim,     966 * USD, 3);
-        withinPrecision(principal_kim, 966 * USD, 3);
+        assertEq(total_kim,     950 * USD);
+        assertEq(principal_kim, 950 * USD);
         assertEq(interest_kim,          0);
 
+        kim.intendToWithdraw(address(pool1));
+        hevm.warp(currentTime + globals.lpCooldownPeriod() + 1);
         kim.withdraw(address(pool1), depositAmount);
         uint256 bal1 = IERC20(USDC).balanceOf(address(kim));  // Balance after principal penalty
 
-        withinPrecision(bal0 - bal1, 33 * USD, 2); // 3% principal penalty.
+        assertEq(bal0 - bal1, 50 * USD); // 5% principal penalty.
     }
 
     function test_withdraw_principal_and_interest_penalty() public {
         setUpWithdraw();
+
+        // Ignore cooldown for this test
+        gov.setLpWithdrawWindow(MAX_UINT);
 
         uint start = block.timestamp;
         

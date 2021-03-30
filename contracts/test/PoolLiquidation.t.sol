@@ -567,6 +567,6 @@ contract PoolLiquidationTest is TestUtil {
         uint256 currentTime = block.timestamp;
         assertTrue(investor.try_intendToWithdraw(address(pool)));
         assertEq(      pool.depositCooldown(address(investor)), currentTime, "Incorrect value set");
-        hevm.warp(currentTime + globals.cooldownPeriod() + 1);
+        hevm.warp(currentTime + globals.lpCooldownPeriod() + 1);
     }
 } 

@@ -387,7 +387,7 @@ contract Pool is PoolFDT {
     */
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
-        PoolLib.isCooldownFinished(depositCooldown[msg.sender], _globals(superFactory));
+        PoolLib.isWithdrawAllowed(depositCooldown[msg.sender], _globals(superFactory));
         uint256 wad    = _toWad(amt);
         uint256 fdtAmt = wad == totalSupply() && wad > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");

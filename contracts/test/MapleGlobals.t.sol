@@ -174,6 +174,8 @@ contract MapleGlobalsTest is TestUtil {
         fakeGov.setGovGlobals(globals);  // Point to globals created by gov.
         fakeGov2.setGovGlobals(globals);
 
+
+
         // setValidPoolFactory()
         assertTrue(!globals.isValidPoolFactory(address(sid)));             // Use dummy address since poolFactory is already valid
         assertTrue(!fakeGov.try_setValidPoolFactory(address(sid), true));  // Non-governor cant set
@@ -263,6 +265,34 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setTreasuryFee(5_000));  // 100% is combined upper bound
         assertTrue(    !gov.try_setInvestorFee(5_001));  // 100% is combined upper bound
         assertTrue(    !gov.try_setTreasuryFee(5_001));  // 100% is combined upper bound
+
+        // setStakerCooldownPeriod()
+        assertEq(   globals.stakerCooldownPeriod(),          0);
+        assertTrue(!fakeGov.try_setStakerCooldownPeriod(1 days));
+        assertTrue(    !gov.try_setStakerCooldownPeriod(1 days - 1));  // Lower bound is 1 day
+        assertTrue(     gov.try_setStakerCooldownPeriod(1 days));
+        assertEq(   globals.stakerCooldownPeriod(),     1 days);
+
+        // setLpCooldownPeriod()
+        assertEq(   globals.lpCooldownPeriod(),          0);
+        assertTrue(!fakeGov.try_setLpCooldownPeriod(1 days));
+        assertTrue(    !gov.try_setLpCooldownPeriod(1 days - 1));  // Lower bound is 1 day
+        assertTrue(     gov.try_setLpCooldownPeriod(1 days));
+        assertEq(   globals.lpCooldownPeriod(),     1 days);
+
+        // setStakerUnstakeWindow()
+        assertEq(   globals.stakerUnstakeWindow(),     2 days);
+        assertTrue(!fakeGov.try_setStakerUnstakeWindow(1 days));
+        assertTrue(    !gov.try_setStakerUnstakeWindow(1 days - 1));  // Lower bound is 1 day
+        assertTrue(     gov.try_setStakerUnstakeWindow(1 days));
+        assertEq(   globals.stakerUnstakeWindow(),     1 days);
+
+        // setLpWithdrawWindow()
+        assertEq(   globals.lpWithdrawWindow(),     2 days);
+        assertTrue(!fakeGov.try_setLpWithdrawWindow(1 days));
+        assertTrue(    !gov.try_setLpWithdrawWindow(1 days - 1));  // Lower bound is 1 day
+        assertTrue(     gov.try_setLpWithdrawWindow(1 days));
+        assertEq(   globals.lpWithdrawWindow(),     1 days);
 
         // setDrawdownGracePeriod()
         assertEq(   globals.drawdownGracePeriod(),    10 days);

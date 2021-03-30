@@ -75,6 +75,10 @@ contract Governor {
     function setDefaultUniswapPath(address from, address to, address mid) external { globals.setDefaultUniswapPath(from, to, mid); }
     function setValidMplRewards(address _mplRewards, bool valid)          external { globals.setValidMplRewards(_mplRewards, valid); }
     function setValidBalancerPool(address balancerPool, bool valid)       external { globals.setValidBalancerPool(balancerPool, valid); }
+    function setLpCooldownPeriod(uint256 period)                          external { globals.setLpCooldownPeriod(period); }
+    function setStakerCooldownPeriod(uint256 period)                      external { globals.setStakerCooldownPeriod(period); }
+    function setLpWithdrawWindow(uint256 period)                          external { globals.setLpWithdrawWindow(period); }
+    function setStakerUnstakeWindow(uint256 period)                       external { globals.setStakerUnstakeWindow(period); }
 
     /*** MapleTreasury Functions ***/
     function setGlobals(address newGlobals)                external { treasury.setGlobals(newGlobals); }
@@ -191,6 +195,22 @@ contract Governor {
     function try_setMinLoanEquity(uint256 newLiquidity) external returns (bool ok) { 
         string memory sig = "setMinLoanEquity(uint256)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, newLiquidity)); 
+    }
+    function try_setLpCooldownPeriod(uint256 period) external returns (bool ok) { 
+        string memory sig = "setLpCooldownPeriod(uint256)"; 
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, period));
+    }
+    function try_setStakerCooldownPeriod(uint256 period) external returns (bool ok) { 
+        string memory sig = "setStakerCooldownPeriod(uint256)"; 
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, period));
+    }
+    function try_setLpWithdrawWindow(uint256 period) external returns (bool ok) { 
+        string memory sig = "setLpWithdrawWindow(uint256)"; 
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, period));
+    }
+    function try_setStakerUnstakeWindow(uint256 period) external returns (bool ok) { 
+        string memory sig = "setStakerUnstakeWindow(uint256)"; 
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, period));
     }
     
     /*** MplRewards Setters ***/ 

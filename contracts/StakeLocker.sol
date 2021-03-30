@@ -177,7 +177,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function unstake(uint256 amt) external canUnstake {
         _whenProtocolNotPaused();
-        _isCooldownFinished(stakeCooldown[msg.sender]);
+        _isUnstakeAllowed(stakeCooldown[msg.sender]);
         require(amt <= getUnstakeableBalance(msg.sender), "StakeLocker:AMT_GT_UNSTAKEABLE_BALANCE");
 
         amt = totalSupply() == amt && amt > 0 ? amt - 1 : amt;  // If last withdraw, subtract 1 wei to maintain FDT accounting
@@ -218,7 +218,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function _transfer(address from, address to, uint256 wad) internal override canUnstake {
         _whenProtocolNotPaused();
         _isAllowed(to);
-        _isCooldownFinished(stakeCooldown[from]);
+        _isUnstakeAllowed(stakeCooldown[from]);
         _updateStakeDate(to, wad);
         stakeCooldown[from] = uint256(0);  // Reset cooldown time no matter what transfer amount is
         super._transfer(from, to, wad);
@@ -266,11 +266,15 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /************************/
 
     /**
-        @dev View function to indicate if cooldown period has passed for msg.sender
+        @dev View function to indicate if cooldown period has passed for msg.sender and if they are in the unstake window
     */
-    function _isCooldownFinished(uint256 _stakeCooldown) internal view {
-        require(_stakeCooldown != uint256(0), "StakeLocker:COOLDOWN_NOT_SET");
-        require(block.timestamp > _stakeCooldown + _globals().cooldownPeriod(), "StakeLocker:COOLDOWN_NOT_FINISHED");
+    function _isUnstakeAllowed(uint256 _stakeCooldown) internal view {
+        IGlobals globals = _globals();
+        uint256 endOfCooldownPeriod = _stakeCooldown + globals.stakerCooldownPeriod();  // Timestamp of when cooldown period has ended for staker (start of unstake window)
+        
+        require(_stakeCooldown != uint256(0),                                           "StakeLocker:COOLDOWN_NOT_SET");
+        require(block.timestamp > endOfCooldownPeriod,                                  "StakeLocker:COOLDOWN_NOT_FINISHED");
+        require(block.timestamp - endOfCooldownPeriod <= globals.stakerUnstakeWindow(), "StakeLocker:UNSTAKE_WINDOW_FINISHED");
     }
 
     /**

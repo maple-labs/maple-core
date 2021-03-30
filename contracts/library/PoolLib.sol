@@ -242,9 +242,11 @@ library PoolLib {
     /**
         @dev View function to indicate if cooldown period has passed for msg.sender
     */
-    function isCooldownFinished(uint256 _depositCooldown, IGlobals globals) public view {
-        require(_depositCooldown != uint256(0), "Pool:COOLDOWN_NOT_SET");
-        require(block.timestamp > _depositCooldown + globals.cooldownPeriod(), "Pool:COOLDOWN_NOT_FINISHED");
+    function isWithdrawAllowed(uint256 depositCooldown, IGlobals globals) public view {
+        uint256 endOfCooldownPeriod = depositCooldown + globals.lpCooldownPeriod();  // Timestamp of when cooldown period has ended for LP (start of withdraw window)
+        require(depositCooldown != uint256(0),                                       "Pool:COOLDOWN_NOT_SET");
+        require(block.timestamp > endOfCooldownPeriod,                               "Pool:COOLDOWN_NOT_FINISHED");
+        require(block.timestamp - endOfCooldownPeriod <= globals.lpWithdrawWindow(), "Pool:WITHDRAW_WINDOW_FINISHED");
     }
 
     /**
@@ -261,7 +263,7 @@ library PoolLib {
     ) external {
         // If transferring in or out of yield farming contract, do not update depositDate
         if (!globals.isValidMplRewards(from) && !globals.isValidMplRewards(to)) {
-            isCooldownFinished(depositCooldown[from], globals);
+            isWithdrawAllowed(depositCooldown[from], globals);
             depositCooldown[from] = uint256(0);
             updateDepositDate(depositDate, toBalance, wad, to);
         }

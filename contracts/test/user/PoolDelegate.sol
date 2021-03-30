@@ -65,6 +65,10 @@ contract PoolDelegate {
         IPool(pool).deactivate();
     }
 
+    function setLockupPeriod(address pool, uint256 lockupPeriod) external {
+        IPool(pool).setLockupPeriod(lockupPeriod);
+    }
+
     function setPrincipalPenalty(address pool, uint256 penalty) external {
         IPool(pool).setPrincipalPenalty(penalty);
     }
