@@ -260,7 +260,7 @@ library PoolLib {
         uint256 toBalance
     ) external {
         // If transferring in or out of yield farming contract, do not update depositDate
-        if (!globals.isValidStakingRewards(from) && !globals.isValidStakingRewards(to)) {
+        if (!globals.isValidMplRewards(from) && !globals.isValidMplRewards(to)) {
             isCooldownFinished(depositCooldown[from], globals);
             depositCooldown[from] = uint256(0);
             updateDepositDate(depositDate, toBalance, wad, to);
