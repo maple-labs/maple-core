@@ -13,10 +13,10 @@ contract PremiumCalc {
     uint8   public constant calcType = 12;      // PREMIUM type
     bytes32 public constant name     = "FLAT";
     
-    uint256 public immutable premiumBips;  // Flat percentage fee (in basis points) of principal to charge as a premium when calling a Loan
+    uint256 public immutable premiumFee;  // Flat percentage fee (in basis points) of principal to charge as a premium when calling a Loan
 
-    constructor(uint256 _premiumBips) public {
-        premiumBips = _premiumBips;
+    constructor(uint256 _premiumFee) public {
+        premiumFee = _premiumFee;
     }
 
     /**
@@ -29,7 +29,7 @@ contract PremiumCalc {
     function getPremiumPayment(address _loan) view public returns(uint256, uint256, uint256) {
         ILoan   loan          = ILoan(_loan);
         uint256 principalOwed = loan.principalOwed();
-        uint256 interest      = principalOwed.mul(premiumBips).div(10000);
+        uint256 interest      = principalOwed.mul(premiumFee).div(10000);
         return (interest.add(principalOwed), principalOwed, interest);
     }
 } 

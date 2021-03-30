@@ -311,7 +311,7 @@ contract CalcsTest is TestUtil {
             (uint256 total,      uint256 principal,      uint256 interest,,)    = loan.getNextPayment();                       // USDC required for payment on loan
             (uint256 total_calc, uint256 principal_calc, uint256 interest_calc) = repaymentCalc.getNextPayment(address(loan)); // USDC required for payment on loan
             
-            uint256 interest_late = lateFeeCalc.getLateFee(address(loan));  // USDC required for payment on loan
+            uint256 interest_late = lateFeeCalc.getLateFee(interest);  // USDC required for payment on loan
 
             assertEq(total,        total_calc + interest_late);  // Late fee is added to total
             assertEq(principal,                principal_calc);
@@ -357,7 +357,7 @@ contract CalcsTest is TestUtil {
         assertEq(principal, principal_premium);
         assertEq(interest,   interest_premium);
 
-        assertEq(interest, principal * premiumCalc.premiumBips() / 10_000);
+        assertEq(interest, principal * premiumCalc.premiumFee() / 10_000);
 
         eli.makeFullPayment(address(loan));
 
