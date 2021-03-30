@@ -7,7 +7,7 @@ import "./interfaces/IGlobals.sol";
 /// @title MplRewardsFactory instantiates MplRewards contracts.
 contract MplRewardsFactory {
 
-    IGlobals globals;  // Address of globals contract used to retrieve current governor
+    IGlobals public globals;  // Address of globals contract used to retrieve current governor
 
     mapping(address => bool) public isMplRewards;  // True if MplRewards was created by this factory, otherwise false.
 

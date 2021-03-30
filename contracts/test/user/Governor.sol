@@ -25,6 +25,7 @@ contract Governor {
 
     function createMplRewardsFactory() external returns (MplRewardsFactory) {
         mplRewardsFactory = new MplRewardsFactory(address(globals));
+        return mplRewardsFactory;
     }
 
     function createMplRewards(address mpl, address pool) external returns (MplRewards) {
@@ -35,6 +36,10 @@ contract Governor {
     // Used for "fake" governors pointing at a globals contract they didnt create
     function setGovGlobals(MapleGlobals _globals) external {
         globals = _globals;
+    }
+
+    function setGovMplRewardsFactory(MplRewardsFactory _mplRewardsFactory) external {
+        mplRewardsFactory = _mplRewardsFactory;
     }
 
     // Used for "fake" governors pointing at a staking rewards contract they dont own
