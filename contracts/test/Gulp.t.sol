@@ -135,6 +135,8 @@ contract GulpTest is TestUtil {
         bPool.transfer(address(che), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
         bPool.transfer(address(dan), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
 
+        gov.setValidBalancerPool(address(bPool), true);
+
         // Set Globals
         gov.setCalc(address(repaymentCalc), true);
         gov.setCalc(address(lateFeeCalc),   true);

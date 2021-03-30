@@ -318,11 +318,17 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setMaxSwapSlippage(10_000));  // 100% is upper bound
         assertEq(   globals.maxSwapSlippage(),     10_000);
 
-        // setStakingRewards()
-        assertTrue(!globals.isStakingRewards(address(1)));
-        assertTrue(!fakeGov.try_setStakingRewards(address(1), true));
-        assertTrue(     gov.try_setStakingRewards(address(1), true));
-        assertTrue( globals.isStakingRewards(address(1))); 
+        // setValidStakingRewards()
+        assertTrue(!globals.isValidStakingRewards(address(1)));
+        assertTrue(!fakeGov.try_setValidStakingRewards(address(1), true));
+        assertTrue(     gov.try_setValidStakingRewards(address(1), true));
+        assertTrue( globals.isValidStakingRewards(address(1))); 
+
+        // setValidBalancerPool()
+        assertTrue(!globals.isValidBalancerPool(address(1)));
+        assertTrue(!fakeGov.try_setValidBalancerPool(address(1), true));
+        assertTrue(     gov.try_setValidBalancerPool(address(1), true));
+        assertTrue( globals.isValidBalancerPool(address(1))); 
 
         // setMinLoanEquity
         assertEq(   globals.minLoanEquity(),      2_000);

@@ -79,6 +79,8 @@ contract StakingRewardsTest is TestUtil {
         bPool.finalize();
         bPool.transfer(address(sid), bPool.balanceOf(address(this)) / 2);
 
+        gov.setValidBalancerPool(address(bPool), true);
+
         gov.setLoanAsset(USDC, true);
         gov.setSwapOutRequired(1_000_000);
 
@@ -103,7 +105,7 @@ contract StakingRewardsTest is TestUtil {
         // Create new staking rewards contract with MPL rewards and Pool FDTs as the stake token
         stakingRewards = gov.createStakingRewards(address(mpl), address(pool)); 
 
-        gov.setStakingRewards(address(stakingRewards), true); // Set in globals so that depDate is not affected on stake/unstake
+        gov.setValidStakingRewards(address(stakingRewards), true); // Set in globals so that depDate is not affected on stake/unstake
 
         fakeGov.setGovStakingRewards(stakingRewards); // Used to assert failures 
 

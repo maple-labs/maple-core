@@ -48,8 +48,9 @@ library PoolLib {
         require(globals.isValidLoanAsset(liquidityAsset),  "Pool:INVALID_LIQ_ASSET");
         require(stakingFee.add(delegateFee) <= 10_000,     "Pool:INVALID_FEES");
         require(
-            IBPool(stakeAsset).isBound(globals.mpl())  && 
-            IBPool(stakeAsset).isBound(liquidityAsset) &&
+            globals.isValidBalancerPool(address(stakeAsset)) &&
+            IBPool(stakeAsset).isBound(globals.mpl())        && 
+            IBPool(stakeAsset).isBound(liquidityAsset)       &&
             IBPool(stakeAsset).isFinalized(), 
             "Pool:INVALID_BALANCER_POOL"
         );
@@ -259,7 +260,7 @@ library PoolLib {
         uint256 toBalance
     ) external {
         // If transferring in or out of yield farming contract, do not update depositDate
-        if (!globals.isStakingRewards(from) && !globals.isStakingRewards(to)) {
+        if (!globals.isValidStakingRewards(from) && !globals.isValidStakingRewards(to)) {
             isCooldownFinished(depositCooldown[from], globals);
             depositCooldown[from] = uint256(0);
             updateDepositDate(depositDate, toBalance, wad, to);
