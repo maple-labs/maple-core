@@ -109,6 +109,7 @@ contract DebtLocker {
 
             // Return claim amount plus all relevant metadata, to be used by Pool for further claim logic
             // Note: newInterest + newPrincipal + newFee + newExcess + newAmountRecovered = claimBal - dust
+            //       The dust on the right side of the equation gethers in the pool after transfers are made
             return([claimBal, newInterest, newPrincipal, newFee, newExcess, newAmountRecovered, newDefaultSuffered]);
         }
         

@@ -22,12 +22,10 @@ contract LateFeeCalc {
 
     /**
         @dev    Calculates the late fee payment for a _loan.
-        @param  loan Address of the Loan to calculate late fee for
+        @param  interest Amount of interest to be used to calculate late fee for
         @return Late fee to be added to interest
     */
-    function getLateFee(address loan) view public returns(uint256) {
-        IRepaymentCalc repaymentCalc = IRepaymentCalc(ILoan(loan).repaymentCalc());
-        (,, uint256 interest)        = repaymentCalc.getNextPayment(loan);
+    function getLateFee(uint256 interest) view public returns(uint256) {
         return interest.mul(lateFee).div(10_000);
     }
 } 
