@@ -465,6 +465,31 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.stakeDate(address(ali)), start + globals.stakerCooldownPeriod() + 2 days);  // Ali stake date = 1/(1+1) * (3 days + coolDown - (1 days + cooldown)) + (1 days + cooldown) = 1/2 * (3 + 10 - (1 + 10)) + (1+10) = 12 days past start
     }
 
+    function test_stake_transfer_stakeCooldown() public {
+
+        gov.setStakerUnstakeWindow(7 days);
+
+        uint256 start = block.timestamp;
+
+        sid.setAllowlistStakeLocker(address(pool), address(che), true); // Add Staker to allowlist
+        che.approve(address(bPool), address(stakeLocker), 25 * WAD); // Stake tokens
+        che.stake(address(stakeLocker), 25 * WAD);
+
+        sid.setAllowlistStakeLocker(address(pool), address(dan), true); // Add dan to allowlist
+        dan.approve(address(bPool), address(stakeLocker), 25 * WAD); // Stake tokens
+        dan.stake(address(stakeLocker), 25 * WAD);
+
+        assertTrue(dan.try_intendToUnstake(address(stakeLocker)));
+        hevm.warp(start + 1 days);
+        assertTrue(che.try_intendToUnstake(address(stakeLocker)));
+
+        hevm.warp(start + globals.stakerCooldownPeriod());
+        assertTrue(!che.try_transfer(address(stakeLocker), address(dan), 1 * WAD)); // Can't transfer to dan because they're currently unstaking
+
+        hevm.warp(start + globals.stakerCooldownPeriod() + 8 days);
+        assertTrue(che.try_transfer(address(stakeLocker), address(dan), 1 * WAD)); // Can transfer to dan because they're past the unstaking window
+    }
+
     function setUpLoanAndRepay() public {
         mint("USDC", address(ali), 10_000_000 * USD);  // Mint USDC to LP
         ali.approve(USDC, address(pool), MAX_UINT);    // LP approves USDC

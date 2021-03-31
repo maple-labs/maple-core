@@ -219,6 +219,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _whenProtocolNotPaused();
         _isAllowed(to);
         _isUnstakeAllowed(stakeCooldown[from]);
+        _isNotUnstaking(stakeCooldown[to]);
         _updateStakeDate(to, wad);
         stakeCooldown[from] = uint256(0);  // Reset cooldown time no matter what transfer amount is
         super._transfer(from, to, wad);
@@ -271,10 +272,20 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function _isUnstakeAllowed(uint256 _stakeCooldown) internal view {
         IGlobals globals = _globals();
         uint256 endOfCooldownPeriod = _stakeCooldown + globals.stakerCooldownPeriod();  // Timestamp of when cooldown period has ended for staker (start of unstake window)
-        
+
         require(_stakeCooldown != uint256(0),                                           "StakeLocker:COOLDOWN_NOT_SET");
         require(block.timestamp >= endOfCooldownPeriod,                                 "StakeLocker:COOLDOWN_NOT_FINISHED");
         require(block.timestamp - endOfCooldownPeriod <= globals.stakerUnstakeWindow(), "StakeLocker:UNSTAKE_WINDOW_FINISHED");
+    }
+
+    /**
+        @dev Function to ensure not actively unstaking.
+    */
+    function _isNotUnstaking(uint256 _stakeCooldown) internal view {
+        IGlobals globals = _globals();
+        uint256 endOfUnstakeWindow = _stakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow();
+
+        require(_stakeCooldown == uint256(0) || block.timestamp > endOfUnstakeWindow, "StakeLocker:RECIPIENT_UNSTAKING");
     }
 
     /**
