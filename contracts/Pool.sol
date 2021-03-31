@@ -394,7 +394,7 @@ contract Pool is PoolFDT {
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
 
         uint256 allocatedInterest = withdrawableFundsOf(msg.sender);                                     // FDT accounting interest
-        uint256 priPenalty        = principalPenalty.mul(amt).div(10000);                                // Calculate flat principal penalty
+        uint256 priPenalty        = principalPenalty.mul(amt).div(10_000);                               // Calculate flat principal penalty
         uint256 totPenalty        = calcWithdrawPenalty(allocatedInterest.add(priPenalty), msg.sender);  // Calculate total penalty
 
         depositCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what transfer amount is

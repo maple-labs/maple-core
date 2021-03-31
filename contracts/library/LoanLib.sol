@@ -103,7 +103,7 @@ library LoanLib {
             // Swap collateralAsset for loanAsset
             uint256[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
                 liquidationAmt,
-                minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10000)),
+                minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10_000)),
                 path,
                 address(this),
                 block.timestamp
@@ -228,7 +228,7 @@ library LoanLib {
         uint256 collateralPrice = globals.getLatestPrice(address(collateralAsset));
 
         // Calculate collateral required
-        uint256 collateralRequiredUSD = wad.mul(loanAssetPrice).mul(collateralRatio).div(10000);  // 18 + 8 = 26 decimals
+        uint256 collateralRequiredUSD = wad.mul(loanAssetPrice).mul(collateralRatio).div(10_000); // 18 + 8 = 26 decimals
         uint256 collateralRequiredWAD = collateralRequiredUSD.div(collateralPrice);               // 26 - 8 = 18 decimals
 
         return collateralRequiredWAD.div(10 ** (18 - collateralAsset.decimals()));  // 18 - (18 - collateralDecimals) = collateralDecimals

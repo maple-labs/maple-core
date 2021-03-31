@@ -29,7 +29,7 @@ contract PremiumCalc {
     function getPremiumPayment(address _loan) view public returns(uint256, uint256, uint256) {
         ILoan   loan          = ILoan(_loan);
         uint256 principalOwed = loan.principalOwed();
-        uint256 interest      = principalOwed.mul(premiumFee).div(10000);
+        uint256 interest      = principalOwed.mul(premiumFee).div(10_000);
         return (interest.add(principalOwed), principalOwed, interest);
     }
 } 
