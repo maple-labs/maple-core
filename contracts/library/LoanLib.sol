@@ -55,7 +55,7 @@ library LoanLib {
     }
 
     /**
-        @dev Triggers default flow for loan, liquidating all collateral and updating accounting.
+        @dev Liquidate a Borrower's collateral via Uniswap when a default is triggered.
         @param collateralAsset   IERC20 of the collateralAsset
         @param loanAsset         Address of loanAsset
         @param superFactory      Factory that instantiated Loan
@@ -63,7 +63,7 @@ library LoanLib {
         @return amountLiquidated Amount of collateralAsset that was liquidated
         @return amountRecovered  Amount of loanAsset that was returned to the Loan from the liquidation
     */
-    function triggerDefault(
+    function liquidateCollateral(
         IERC20  collateralAsset,
         address loanAsset,
         address superFactory,
