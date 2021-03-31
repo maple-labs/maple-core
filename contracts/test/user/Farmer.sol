@@ -3,16 +3,16 @@ pragma solidity 0.6.11;
 
 import "./LP.sol";
 
-import "../../StakingRewards.sol";
+import "../../MplRewards.sol";
 
 contract Farmer is LP {
 
-    StakingRewards public stakingRewards;
-    IERC20         public poolFDT;
+    MplRewards public mplRewards;
+    IERC20     public poolFDT;
 
-    constructor(StakingRewards _stakingRewards, IERC20 _liquidityAsset) public {
-        stakingRewards = _stakingRewards;
-        poolFDT        = _liquidityAsset;
+    constructor(MplRewards _mplRewards, IERC20 _liquidityAsset) public {
+        mplRewards = _mplRewards;
+        poolFDT    = _liquidityAsset;
     }
 
     /************************/
@@ -28,19 +28,19 @@ contract Farmer is LP {
     }
 
     function stake(uint256 amt) public {
-        stakingRewards.stake(amt);
+        mplRewards.stake(amt);
     }
 
     function withdraw(uint256 amt) public {
-        stakingRewards.withdraw(amt);
+        mplRewards.withdraw(amt);
     }
 
     function getReward() public {
-        stakingRewards.getReward();
+        mplRewards.getReward();
     }
 
     function exit() public {
-        stakingRewards.exit();
+        mplRewards.exit();
     }
 
     /*********************/
@@ -49,11 +49,11 @@ contract Farmer is LP {
 
     function try_stake(uint256 amt) external returns (bool ok) {
         string memory sig = "stake(uint256)";
-        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, amt));
+        (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, amt));
     }
 
     function try_withdraw(uint256 amt) external returns (bool ok) {
         string memory sig = "withdraw(uint256)";
-        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, amt));
+        (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, amt));
     }
 }

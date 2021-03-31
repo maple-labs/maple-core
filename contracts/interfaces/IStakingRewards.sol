@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 
 
-interface IStakingRewards {
+interface IMplRewards {
     // Views
     function lastTimeRewardApplicable() external view returns (uint256);
 

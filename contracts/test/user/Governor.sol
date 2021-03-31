@@ -3,8 +3,9 @@ pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "../../MapleGlobals.sol";
-import "../../StakingRewards.sol";
 import "../../MapleTreasury.sol";
+import "../../MplRewards.sol";
+import "../../MplRewardsFactory.sol";
 
 contract Governor {
 
@@ -12,18 +13,24 @@ contract Governor {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    MapleGlobals   globals;
-    StakingRewards stakingRewards;
-    MapleTreasury  treasury;
+    MapleGlobals      globals;
+    MplRewards        mplRewards;
+    MplRewardsFactory mplRewardsFactory;
+    MapleTreasury     treasury;
 
     function createGlobals(address mpl, address bPoolFactory) external returns (MapleGlobals) {
         globals = new MapleGlobals(address(this), mpl, bPoolFactory, address(1));
         return globals;
     }
 
-    function createStakingRewards(address mpl, address pool) external returns (StakingRewards) {
-        stakingRewards = new StakingRewards(mpl, pool);
-        return stakingRewards;
+    function createMplRewardsFactory() external returns (MplRewardsFactory) {
+        mplRewardsFactory = new MplRewardsFactory(address(globals));
+        return mplRewardsFactory;
+    }
+
+    function createMplRewards(address mpl, address pool) external returns (MplRewards) {
+        mplRewards = MplRewards(mplRewardsFactory.createMplRewards(mpl, pool));
+        return mplRewards;
     }
 
     // Used for "fake" governors pointing at a globals contract they didnt create
@@ -31,9 +38,13 @@ contract Governor {
         globals = _globals;
     }
 
+    function setGovMplRewardsFactory(MplRewardsFactory _mplRewardsFactory) external {
+        mplRewardsFactory = _mplRewardsFactory;
+    }
+
     // Used for "fake" governors pointing at a staking rewards contract they dont own
-    function setGovStakingRewards(StakingRewards _stakingRewards) external {
-        stakingRewards = _stakingRewards;
+    function setGovMplRewards(MplRewards _mplRewards) external {
+        mplRewards = _mplRewards;
     }
 
     // Used for "fake" governors pointing at a treasury contract they didnt create
@@ -62,7 +73,7 @@ contract Governor {
     function setPriceOracle(address asset, address oracle)                external { globals.setPriceOracle(asset, oracle); }
     function setMaxSwapSlippage(uint256 newSlippage)                      external { globals.setMaxSwapSlippage(newSlippage); }
     function setDefaultUniswapPath(address from, address to, address mid) external { globals.setDefaultUniswapPath(from, to, mid); }
-    function setValidStakingRewards(address _stakingRewards, bool valid)  external { globals.setValidStakingRewards(_stakingRewards, valid); }
+    function setValidMplRewards(address _mplRewards, bool valid)          external { globals.setValidMplRewards(_mplRewards, valid); }
     function setValidBalancerPool(address balancerPool, bool valid)       external { globals.setValidBalancerPool(balancerPool, valid); }
 
     /*** MapleTreasury Functions ***/
@@ -71,13 +82,13 @@ contract Governor {
     function distributeToHolders()                         external { treasury.distributeToHolders(); }
     function convertERC20(address asset)                   external { treasury.convertERC20(asset); }
 
-    /*** StakingRewards Setters ***/ 
-    function transferOwnership(address newOwner)      external { stakingRewards.transferOwnership(newOwner); }
-    function notifyRewardAmount(uint256 reward)       external { stakingRewards.notifyRewardAmount(reward); }
-    function updatePeriodFinish(uint256 timestamp)    external { stakingRewards.updatePeriodFinish(timestamp); }
-    function recoverERC20(address asset, uint256 amt) external { stakingRewards.recoverERC20(asset, amt); }
-    function setRewardsDuration(uint256 duration)     external { stakingRewards.setRewardsDuration(duration); }
-    function setPaused(bool paused)                   external { stakingRewards.setPaused(paused); }
+    /*** MplRewards Setters ***/ 
+    function transferOwnership(address newOwner)      external { mplRewards.transferOwnership(newOwner); }
+    function notifyRewardAmount(uint256 reward)       external { mplRewards.notifyRewardAmount(reward); }
+    function updatePeriodFinish(uint256 timestamp)    external { mplRewards.updatePeriodFinish(timestamp); }
+    function recoverERC20(address asset, uint256 amt) external { mplRewards.recoverERC20(asset, amt); }
+    function setRewardsDuration(uint256 duration)     external { mplRewards.setRewardsDuration(duration); }
+    function setPaused(bool paused)                   external { mplRewards.setPaused(paused); }
 
 
     /*********************/
@@ -88,6 +99,10 @@ contract Governor {
     function try_setGlobals(address target, address _globals) external returns (bool ok) {
         string memory sig = "setGlobals(address)";
         (ok,) = address(target).call(abi.encodeWithSignature(sig, _globals));
+    }
+    function try_createMplRewards(address mpl, address pool) external returns (bool ok) {
+        string memory sig = "createMplRewards(address,address)";
+        (ok,) = address(mplRewardsFactory).call(abi.encodeWithSignature(sig, mpl, pool));
     }
     function try_setDefaultUniswapPath(address from, address to, address mid) external returns (bool ok) { 
         string memory sig = "setDefaultUniswapPath(address,address,address)";
@@ -165,9 +180,9 @@ contract Governor {
         string memory sig = "setMaxSwapSlippage(uint256)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, newSlippage)); 
     }
-    function try_setValidStakingRewards(address _stakingRewards, bool valid) external returns (bool ok) { 
-        string memory sig = "setValidStakingRewards(address,bool)";
-        (ok,) = address(globals).call(abi.encodeWithSignature(sig, _stakingRewards, valid)); 
+    function try_setValidMplRewards(address _mplRewards, bool valid) external returns (bool ok) { 
+        string memory sig = "setValidMplRewards(address,bool)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, _mplRewards, valid)); 
     }
     function try_setValidBalancerPool(address balancerPool, bool valid) external returns (bool ok) { 
         string memory sig = "setValidBalancerPool(address,bool)";
@@ -178,30 +193,30 @@ contract Governor {
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, newLiquidity)); 
     }
     
-    /*** StakingRewards Setters ***/ 
+    /*** MplRewards Setters ***/ 
     function try_transferOwnership(address newOwner) external returns (bool ok) { 
         string memory sig = "transferOwnership(address)";
-        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, newOwner)); 
+        (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, newOwner)); 
     }
     function try_notifyRewardAmount(uint256 reward) external returns (bool ok) { 
         string memory sig = "notifyRewardAmount(uint256)";
-        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, reward)); 
+        (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, reward)); 
     }
     function try_updatePeriodFinish(uint256 timestamp) external returns (bool ok) { 
         string memory sig = "updatePeriodFinish(uint256)";
-        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, timestamp)); 
+        (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, timestamp)); 
     }
     function try_recoverERC20(address asset, uint256 amt) external returns (bool ok) { 
         string memory sig = "recoverERC20(address,uint256)";
-        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, asset, amt)); 
+        (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, asset, amt)); 
     }
     function try_setRewardsDuration(uint256 duration) external returns (bool ok) { 
         string memory sig = "setRewardsDuration(uint256)";
-        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, duration)); 
+        (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, duration)); 
     }
     function try_setPaused(bool paused) external returns (bool ok) { 
         string memory sig = "setPaused(bool)";
-        (ok,) = address(stakingRewards).call(abi.encodeWithSignature(sig, paused)); 
+        (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, paused)); 
     }
 
     /*** Treasury Functions ***/

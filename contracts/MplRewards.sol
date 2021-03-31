@@ -7,8 +7,8 @@ import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
-/// @title StakingRewards Synthetix farming contract fork for liquidity mining.
-contract StakingRewards is Ownable {
+/// @title MplRewards Synthetix farming contract fork for liquidity mining.
+contract MplRewards is Ownable {
     
     using SafeMath  for uint256;
     using SafeERC20 for IERC20;
@@ -39,10 +39,11 @@ contract StakingRewards is Ownable {
     event Recovered(address token, uint256 amount);
     event PauseChanged(bool isPaused);
 
-    constructor(address _rewardsToken, address _stakingToken) public {
+    constructor(address _rewardsToken, address _stakingToken, address _owner) public {
         rewardsToken    = IERC20(_rewardsToken);
         stakingToken    = IERC20(_stakingToken);
         rewardsDuration = 7 days;
+        transferOwnership(_owner);
     }
 
     function _updateReward(address account) internal {

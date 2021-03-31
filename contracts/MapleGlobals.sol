@@ -28,7 +28,7 @@ contract MapleGlobals {
     uint256 public treasuryFee;          // Portion of drawdown that goes to MapleTreasury
     uint256 public maxSwapSlippage;      // Maximum amount of slippage for Uniswap transactions
     uint256 public minLoanEquity;        // Minimum amount of LoanFDTs required to trigger liquidations (basis points percentage of totalSupply)
-    uint256 public cooldownPeriod;       // Period (in secs) after that stakers/LPs are allowed to unstake/withdraw their funds from the StakingRewards/Pool contract
+    uint256 public cooldownPeriod;       // Period (in secs) after that stakers/LPs are allowed to unstake/withdraw their funds from the StakeLocker/Pool contract
 
     bool public protocolPaused;  // Switch to pause the functionality of the entire protocol
 
@@ -36,7 +36,7 @@ contract MapleGlobals {
     mapping(address => bool) public isValidCollateralAsset;  // Mapping of valid collateralAssets
     mapping(address => bool) public validCalcs;              // Mapping of valid calculator contracts
     mapping(address => bool) public isValidPoolDelegate;     // Validation data structure for Pool Delegates (prevent invalid addresses from creating pools)
-    mapping(address => bool) public isValidStakingRewards;   // Validation of if address is StakingRewards contract used for MPL liquidity mining programs
+    mapping(address => bool) public isValidMplRewards;       // Validation of if address is MplRewards contract used for MPL liquidity mining programs
     mapping(address => bool) public isValidBalancerPool;     // Validation of if address is a Balancer Pool that Maple has approved for BPT staking
     
     // Determines the liquidation path of various assets in Loans and Treasury.
@@ -55,7 +55,7 @@ contract MapleGlobals {
     event CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event       LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event          OracleSet(address asset, address oracle);
-    event  StakingRewardsSet(address stakingRewards, bool valid);
+    event      MplRewardsSet(address mplRewards, bool valid);
     event    BalancerPoolSet(address balancerPool,   bool valid);
     event PendingGovernorSet(address pendingGovernor);
     event   GovernorAccepted(address governor);
@@ -125,13 +125,13 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the valid StakingRewards mapping. Only Governor can call.
-        @param stakingRewards Address of `StakingRewards` contract.
-        @param valid          The new bool value for validating stakingRewards.
+        @dev Update the valid MplRewards mapping. Only Governor can call.
+        @param mplRewards Address of `MplRewards` contract.
+        @param valid      The new bool value for validating mplRewards.
     */
-    function setValidStakingRewards(address stakingRewards, bool valid) external isGovernor {
-        isValidStakingRewards[stakingRewards] = valid;
-        emit StakingRewardsSet(stakingRewards, valid);
+    function setValidMplRewards(address mplRewards, bool valid) external isGovernor {
+        isValidMplRewards[mplRewards] = valid;
+        emit MplRewardsSet(mplRewards, valid);
     }
 
     /**
