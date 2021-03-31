@@ -498,7 +498,9 @@ contract PoolTest is TestUtil {
     }
 
     function test_deposit_with_liquidity_cap() public {
-    
+
+        gov.setLpCooldownPeriod(10 days);
+
         address stakeLocker = pool1.stakeLocker();
 
         sid.approve(address(bPool), stakeLocker, MAX_UINT);
@@ -540,18 +542,16 @@ contract PoolTest is TestUtil {
 
         // TODO: These tests can probably be removed
         assertEq(claimable, 500 * USD);
-        assertTrue(!bob.try_withdraw(address(pool1), claimable),    "Should fail to withdraw 500 USD because user has to show the intend first");
-        assertTrue(!dan.try_intendToWithdraw(address(pool1)),       "Failed to show intend to withdraw because dan has zero pool FDTs");
-        assertTrue( bob.try_intendToWithdraw(address(pool1)),       "Failed to show intend to withdraw");
+        assertTrue(!bob.try_withdraw(address(pool1), claimable),    "Should fail to withdraw 500 USD because user has to intend to withdraw first");
+        assertTrue(!dan.try_intendToWithdraw(address(pool1)),       "Failed to intend to withdraw because dan has zero pool FDTs");
+        assertTrue( bob.try_intendToWithdraw(address(pool1)),       "Failed to intend to withdraw");
         assertEq( pool1.depositCooldown(address(bob)), currentTime, "Incorrect value set");
-        assertTrue(!bob.try_withdraw(address(pool1), claimable),    "Should fail to withdraw as cool down period hasn't passed yet");
+        assertTrue(!bob.try_withdraw(address(pool1), claimable),    "Should fail to withdraw as cooldown period hasn't passed yet");
 
         hevm.warp(currentTime + globals.lpCooldownPeriod() - 1);
-        assertTrue(!bob.try_withdraw(address(pool1), claimable), "Should fail to withdraw as cool down period hasn't passed yet");
+        assertTrue(!bob.try_withdraw(address(pool1), claimable), "Should fail to withdraw as cooldown period hasn't passed yet");
         hevm.warp(currentTime + globals.lpCooldownPeriod());
-        assertTrue(!bob.try_withdraw(address(pool1), claimable), "Should fail to withdraw as cool down period hasn't passed yet");
-        hevm.warp(currentTime + globals.lpCooldownPeriod() + 1);
-        assertTrue(bob.try_withdraw(address(pool1), claimable),  "Should pass to withdraw the funds from the pool");
+        assertTrue(bob.try_withdraw(address(pool1), claimable),  "Should withdraw funds from the pool");
     }
 
     function make_withdrawable(LP investor, Pool pool) public {
@@ -1649,14 +1649,14 @@ contract PoolTest is TestUtil {
         assertTrue(!dan.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw because dan has zero pool FDTs");
         assertTrue( bob.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
         assertEq( pool1.depositCooldown(address(bob)), start);
-        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cool down period hasn't passed yet");
+        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cooldown period hasn't passed yet");
 
         // Just before cooldown ends
-        hevm.warp(start + globals.lpCooldownPeriod());
-        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cool down period hasn't passed yet");
+        hevm.warp(start + globals.lpCooldownPeriod() - 1);
+        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cooldown period hasn't passed yet");
         
         // Right when cooldown ends
-        hevm.warp(start + globals.lpCooldownPeriod() + 1);
+        hevm.warp(start + globals.lpCooldownPeriod());
         assertTrue(bob.try_withdraw(address(pool1), amt), "Should be able to withdraw funds at beginning of cooldown window");
 
         // Same time, forgot to intend to withdraw so cannot
@@ -1669,7 +1669,7 @@ contract PoolTest is TestUtil {
 
         // Second after LP withdrawal window ends
         hevm.warp(newStart + globals.lpCooldownPeriod() + globals.lpWithdrawWindow() + 1);
-        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cool down window has been passed");
+        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cooldown window has been passed");
         
         // Last second of LP withdrawal window
         hevm.warp(newStart + globals.lpCooldownPeriod() + globals.lpWithdrawWindow());
