@@ -104,7 +104,6 @@ contract MapleGlobals {
         @param newCooldownPeriod New value for the cool down period.
      */
     function setStakerCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
-        _checkTimeRange(newCooldownPeriod);
         stakerCooldownPeriod = newCooldownPeriod;
         emit GlobalsParamSet("STAKER_COOLDOWN_PERIOD", newCooldownPeriod);
     }
@@ -114,7 +113,6 @@ contract MapleGlobals {
         @param newCooldownPeriod New value for the cool down period.
      */
     function setLpCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
-        _checkTimeRange(newCooldownPeriod);
         lpCooldownPeriod = newCooldownPeriod;
         emit GlobalsParamSet("LP_COOLDOWN_PERIOD", newCooldownPeriod);
     }
@@ -124,7 +122,6 @@ contract MapleGlobals {
         @param newUnstakeWindow New value for the unstake window.
      */
     function setStakerUnstakeWindow(uint256 newUnstakeWindow) external isGovernor {
-        _checkTimeRange(newUnstakeWindow);
         stakerUnstakeWindow = newUnstakeWindow;
         emit GlobalsParamSet("STAKER_UNSTAKE_WINDOW", newUnstakeWindow);
     }
@@ -134,7 +131,6 @@ contract MapleGlobals {
         @param newLpWithdrawWindow New value for the withdraw window.
      */
     function setLpWithdrawWindow(uint256 newLpWithdrawWindow) external isGovernor {
-        _checkTimeRange(newLpWithdrawWindow);
         lpWithdrawWindow = newLpWithdrawWindow;
         emit GlobalsParamSet("LP_WITHDRAW_WINDOW", newLpWithdrawWindow);
     }
@@ -303,7 +299,6 @@ contract MapleGlobals {
         @param _gracePeriod Number of seconds to set the grace period to
     */
     function setGracePeriod(uint256 _gracePeriod) public isGovernor {
-        _checkTimeRange(_gracePeriod);
         gracePeriod = _gracePeriod;
         emit GlobalsParamSet("GRACE_PERIOD", _gracePeriod);
     }
@@ -323,7 +318,6 @@ contract MapleGlobals {
         @param _drawdownGracePeriod Number of seconds to set the drawdown grace period to
     */
     function setDrawdownGracePeriod(uint256 _drawdownGracePeriod) public isGovernor {
-        _checkTimeRange(_drawdownGracePeriod);
         drawdownGracePeriod = _drawdownGracePeriod;
         emit GlobalsParamSet("DRAWDOWN_GRACE_PERIOD", _drawdownGracePeriod);
     }
@@ -343,7 +337,6 @@ contract MapleGlobals {
         @param _unstakeDelay New unstake delay
     */
     function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
-        _checkTimeRange(_unstakeDelay);
         unstakeDelay = _unstakeDelay;
         emit GlobalsParamSet("UNSTAKE_DELAY", _unstakeDelay);
     }
@@ -425,9 +418,5 @@ contract MapleGlobals {
 
     function _checkPercentageRange(uint256 percentage) internal {
         require(percentage >= uint256(0) && percentage <= uint256(10_000), "MapleGlobals:PCT_BOUND_CHECK");
-    }
-
-    function _checkTimeRange(uint256 duration) internal  {
-        require(duration >= 1 days, "MapleGlobals:TIME_BOUND_CHECK");
     }
 }

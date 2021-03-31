@@ -365,7 +365,8 @@ contract Pool is PoolFDT {
     function deposit(uint256 amt) external {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
-        require(isDepositAllowed(amt), "Pool:NOT_ALLOWED");
+        require(isUnderLiquidityCap(amt), "Pool:NOT_ALLOWED");
+        _isEntitledToFdt(msg.sender);
         liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
         uint256 wad = _toWad(amt);
 
@@ -387,7 +388,7 @@ contract Pool is PoolFDT {
     */
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
-        PoolLib.isWithdrawAllowed(depositCooldown[msg.sender], _globals(superFactory));
+        require(PoolLib.isWithdrawAllowed(depositCooldown[msg.sender], _globals(superFactory)), "Pool:WITHDRAW_NOT_ALLOWED");
         uint256 wad    = _toWad(amt);
         uint256 fdtAmt = wad == totalSupply() && wad > 0 ? wad - 1 : wad;  // If last withdraw, subtract 1 wei to maintain FDT accounting
         require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
@@ -424,7 +425,7 @@ contract Pool is PoolFDT {
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
         require(recognizableLossesOf(from) == uint256(0), "Pool:NOT_ALLOWED");
-        PoolLib.prepareTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
+        PoolLib.prepareTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to), openToPublic, allowedLiquidityProviders[to]);
         super._transfer(from, to, wad);
     }
 
@@ -513,10 +514,24 @@ contract Pool is PoolFDT {
         @dev Check whether the given `depositAmt` is acceptable based on current liquidityCap.
         @param depositAmt Amount of tokens (i.e loanAsset type) user is trying to deposit
     */
-    function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
-        bool isValidLP = openToPublic || allowedLiquidityProviders[msg.sender];
-        return _balanceOfLiquidityLocker().add(principalOut).add(depositAmt) <= liquidityCap && isValidLP;
+    function isUnderLiquidityCap(uint256 depositAmt) public view returns(bool) {
+        return _balanceOfLiquidityLocker().add(principalOut).add(depositAmt) <= liquidityCap;
     }
+
+    /**
+        @dev View function to check whether a user is allowed to deposit liquidtyAsset and mint FDTs or recieve FDTs from transfers
+    */
+    function _isEntitledToFdt(address user) internal view {
+        PoolLib.isEntitledToFdt(depositCooldown[user], _globals(superFactory), openToPublic, allowedLiquidityProviders[user]);
+    }
+
+    /**
+        @dev View function to check whether a user is allowed to deposit liquidtyAsset and mint FDTs or recieve FDTs from transfers
+    */
+    function isWithdrawAllowed(address user) public view returns (bool) {
+        return PoolLib.isWithdrawAllowed(depositCooldown[user], _globals(superFactory));
+    }
+
 
     /**
         @dev Returns information on the stake requirements.

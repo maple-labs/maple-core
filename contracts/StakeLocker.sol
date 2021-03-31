@@ -134,7 +134,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function stake(uint256 amt) whenNotPaused external {
         _whenProtocolNotPaused();
-        _isAllowed(msg.sender);
+        _isEntitledToFdt(msg.sender);
         require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
 
         _updateStakeDate(msg.sender, amt);
@@ -177,7 +177,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function unstake(uint256 amt) external canUnstake {
         _whenProtocolNotPaused();
-        _isUnstakeAllowed(stakeCooldown[msg.sender]);
+        require(isUnstakeAllowed(msg.sender),             "StakeLocker:UNSTAKE_NOT_ALLOWED");
         require(amt <= getUnstakeableBalance(msg.sender), "StakeLocker:AMT_GT_UNSTAKEABLE_BALANCE");
 
         amt = totalSupply() == amt && amt > 0 ? amt - 1 : amt;  // If last withdraw, subtract 1 wei to maintain FDT accounting
@@ -217,9 +217,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _transfer(address from, address to, uint256 wad) internal override canUnstake {
         _whenProtocolNotPaused();
-        _isAllowed(to);
-        _isUnstakeAllowed(stakeCooldown[from]);
-        _isNotUnstaking(stakeCooldown[to]);
+        require(isUnstakeAllowed(from), "StakeLocker:UNSTAKE_NOT_ALLOWED");
+        _isEntitledToFdt(to);
         _updateStakeDate(to, wad);
         stakeCooldown[from] = uint256(0);  // Reset cooldown time no matter what transfer amount is
         super._transfer(from, to, wad);
@@ -269,23 +268,17 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**
         @dev View function to indicate if cooldown period has passed for msg.sender and if they are in the unstake window
     */
-    function _isUnstakeAllowed(uint256 _stakeCooldown) internal view {
+    function isUnstakeAllowed(address from) public view returns (bool) {
         IGlobals globals = _globals();
+
+        uint256 _stakeCooldown      = stakeCooldown[from];
         uint256 endOfCooldownPeriod = _stakeCooldown + globals.stakerCooldownPeriod();  // Timestamp of when cooldown period has ended for staker (start of unstake window)
 
-        require(_stakeCooldown != uint256(0),                                           "StakeLocker:COOLDOWN_NOT_SET");
-        require(block.timestamp >= endOfCooldownPeriod,                                 "StakeLocker:COOLDOWN_NOT_FINISHED");
-        require(block.timestamp - endOfCooldownPeriod <= globals.stakerUnstakeWindow(), "StakeLocker:UNSTAKE_WINDOW_FINISHED");
-    }
+        bool isCooldownSet      = _stakeCooldown != uint256(0);
+        bool isCooldownFinished = block.timestamp >= endOfCooldownPeriod;
+        bool isWithinWindow     = block.timestamp - endOfCooldownPeriod <= globals.stakerUnstakeWindow();
 
-    /**
-        @dev Function to ensure not actively unstaking.
-    */
-    function _isNotUnstaking(uint256 _stakeCooldown) internal view {
-        IGlobals globals = _globals();
-        uint256 endOfUnstakeWindow = _stakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow();
-
-        require(_stakeCooldown == uint256(0) || block.timestamp > endOfUnstakeWindow, "StakeLocker:RECIPIENT_UNSTAKING");
+        return isCooldownSet && isCooldownFinished && isWithinWindow;
     }
 
     /**
@@ -303,13 +296,18 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /** 
-        @dev Internal function to check whether `msg.sender` is allowed to stake.
+        @dev Internal function to check whether a user is allowed to stake BPTs and mint FDTs or recieve FDTs from transfers
     */
-    function _isAllowed(address user) internal view {
-        require(
-            openToPublic || allowed[user] || user == IPool(pool).poolDelegate(), 
-            "StakeLocker:MSG_SENDER_NOT_ALLOWED"
-        );
+    function _isEntitledToFdt(address user) internal view {
+        IGlobals globals = _globals();
+
+        uint256 _stakeCooldown     = stakeCooldown[user];
+        uint256 endOfUnstakeWindow = _stakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow();
+
+        bool noIntentToUnstake = _stakeCooldown == uint256(0)  || block.timestamp > endOfUnstakeWindow;
+        bool isValidStaker     = openToPublic || allowed[user] || user == IPool(pool).poolDelegate();
+
+        require(noIntentToUnstake && isValidStaker, "StakeLocker:STAKE_OR_RECEIVE_NOT_ALLOWED");     // Cannot stake/receive if intending to unstake
     }
 
     /** 

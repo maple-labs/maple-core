@@ -242,11 +242,25 @@ library PoolLib {
     /**
         @dev View function to indicate if cooldown period has passed for msg.sender
     */
-    function isWithdrawAllowed(uint256 depositCooldown, IGlobals globals) public view {
+    function isWithdrawAllowed(uint256 depositCooldown, IGlobals globals) public view returns (bool) {
         uint256 endOfCooldownPeriod = depositCooldown + globals.lpCooldownPeriod();  // Timestamp of when cooldown period has ended for LP (start of withdraw window)
-        require(depositCooldown != uint256(0),                                       "Pool:COOLDOWN_NOT_SET");
-        require(block.timestamp >= endOfCooldownPeriod,                              "Pool:COOLDOWN_NOT_FINISHED");
-        require(block.timestamp - endOfCooldownPeriod <= globals.lpWithdrawWindow(), "Pool:WITHDRAW_WINDOW_FINISHED");
+        
+        bool isCooldownSet      = depositCooldown != uint256(0);
+        bool isCooldownFinished = block.timestamp >= endOfCooldownPeriod;
+        bool isWithinWindow     = block.timestamp - endOfCooldownPeriod <= globals.lpWithdrawWindow();
+
+        return isCooldownSet && isCooldownFinished && isWithinWindow;
+    }
+
+    /**
+        @dev Internal function to check whether a user is allowed to stake BPTs and mint FDTs or recieve FDTs from transfers
+    */
+    function isEntitledToFdt(uint256 depositCooldown, IGlobals globals, bool openToPublic, bool allowed) public view {
+        uint256 endOfWithdrawWindow = depositCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow();
+
+        bool noIntentToWithdraw = depositCooldown == uint256(0)  || block.timestamp > endOfWithdrawWindow;
+        bool isValidLP          = openToPublic || allowed;
+        require(noIntentToWithdraw && isValidLP, "Pool:DEPOSIT_OR_RECEIVE_NOT_ALLOWED");
     }
 
     /**
@@ -259,11 +273,14 @@ library PoolLib {
         address to,
         uint256 wad,
         IGlobals globals,
-        uint256 toBalance
+        uint256 toBalance,
+        bool openToPublic,
+        bool allowed
     ) external {
         // If transferring in or out of yield farming contract, do not update depositDate
         if (!globals.isValidMplRewards(from) && !globals.isValidMplRewards(to)) {
-            isWithdrawAllowed(depositCooldown[from], globals);
+            isEntitledToFdt(depositCooldown[to], globals, openToPublic, allowed);
+            require(isWithdrawAllowed(depositCooldown[from], globals), "Pool:WITHDRAW_NOT_ALLOWED");
             depositCooldown[from] = uint256(0);
             updateDepositDate(depositDate, toBalance, wad, to);
         }
