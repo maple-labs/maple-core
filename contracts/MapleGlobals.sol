@@ -47,7 +47,7 @@ contract MapleGlobals {
     // For example, defaultUniswapPath[WBTC][USDC] value would indicate what asset to convert WBTC into before
     // conversion to USDC. If defaultUniswapPath[WBTC][USDC] == USDC, then the swap is bilateral and no middle
     // asset is swapped.   If defaultUniswapPath[WBTC][USDC] == WETH, then swap WBTC for WETH, then WETH for USDC.
-    mapping(address => mapping(address => address)) public defaultUniswapPath; 
+    mapping(address => mapping(address => address)) public defaultUniswapPath;
 
     mapping(address => address) public oracleFor;  // Chainlink oracle for a given asset
 
@@ -104,7 +104,7 @@ contract MapleGlobals {
         @param newCooldownPeriod New value for the cool down period.
      */
     function setStakerCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
-        _checkTimeRange(newCooldownPeriod); 
+        _checkTimeRange(newCooldownPeriod);
         stakerCooldownPeriod = newCooldownPeriod;
         emit GlobalsParamSet("STAKER_COOLDOWN_PERIOD", newCooldownPeriod);
     }
@@ -114,7 +114,7 @@ contract MapleGlobals {
         @param newCooldownPeriod New value for the cool down period.
      */
     function setLpCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
-        _checkTimeRange(newCooldownPeriod); 
+        _checkTimeRange(newCooldownPeriod);
         lpCooldownPeriod = newCooldownPeriod;
         emit GlobalsParamSet("LP_COOLDOWN_PERIOD", newCooldownPeriod);
     }
@@ -124,7 +124,7 @@ contract MapleGlobals {
         @param newUnstakeWindow New value for the unstake window.
      */
     function setStakerUnstakeWindow(uint256 newUnstakeWindow) external isGovernor {
-        _checkTimeRange(newUnstakeWindow); 
+        _checkTimeRange(newUnstakeWindow);
         stakerUnstakeWindow = newUnstakeWindow;
         emit GlobalsParamSet("STAKER_UNSTAKE_WINDOW", newUnstakeWindow);
     }
@@ -134,7 +134,7 @@ contract MapleGlobals {
         @param newLpWithdrawWindow New value for the withdraw window.
      */
     function setLpWithdrawWindow(uint256 newLpWithdrawWindow) external isGovernor {
-        _checkTimeRange(newLpWithdrawWindow); 
+        _checkTimeRange(newLpWithdrawWindow);
         lpWithdrawWindow = newLpWithdrawWindow;
         emit GlobalsParamSet("LP_WITHDRAW_WINDOW", newLpWithdrawWindow);
     }
