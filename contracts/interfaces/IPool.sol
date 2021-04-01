@@ -18,13 +18,7 @@ interface IPool {
 
     function claim(address, address) external returns(uint256[7] memory);
 
-    function testValue() external view returns(uint256);
-
-    function setPenaltyDelay(uint256) external;
-
     function setLockupPeriod(uint256) external;
-
-    function setPrincipalPenalty(uint256) external;
 
     function setAdmin(address, bool) external;
 

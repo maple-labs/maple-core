@@ -408,8 +408,6 @@ contract PoolLiquidationTest is TestUtil {
 
         assertPoolAccounting(pool_a);
 
-        sid.setPenaltyDelay(address(pool_a), 0);  // So Bob can withdraw without penalty
-
         // Fund the loan
         sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 100_000_000 * USD);
         uint cReq = loan.collateralRequiredForDrawdown(100_000_000 * USD);

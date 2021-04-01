@@ -65,14 +65,6 @@ contract PoolDelegate {
         IPool(pool).deactivate();
     }
 
-    function setPrincipalPenalty(address pool, uint256 penalty) external {
-        IPool(pool).setPrincipalPenalty(penalty);
-    }
-
-    function setPenaltyDelay(address pool, uint256 delay) external {
-        IPool(pool).setPenaltyDelay(delay);
-    }
-
     function setAllowlistStakeLocker(address pool, address user, bool status) external {
         IPool(pool).setAllowlistStakeLocker(user, status);
     }
@@ -133,16 +125,6 @@ contract PoolDelegate {
     function try_finalize(address pool) external returns (bool ok) {
         string memory sig = "finalize()";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig));
-    }
-
-    function try_setPrincipalPenalty(address pool, uint256 penalty) external returns (bool ok) {
-        string memory sig = "setPrincipalPenalty(uint256)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, penalty));
-    }
-
-    function try_setPenaltyDelay(address pool, uint256 delay) external returns (bool ok) {
-        string memory sig = "setPenaltyDelay(uint256)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, delay));
     }
 
     function try_deactivate(address pool) external returns(bool ok) {
