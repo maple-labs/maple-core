@@ -34,8 +34,6 @@ interface IGlobals {
 
     function validCollateralAssets() external view returns (address[] memory);
 
-    function unstakeDelay() external view returns (uint256);
-
     function loanFactory() external view returns (address);
 
     function poolFactory() external view returns (address);

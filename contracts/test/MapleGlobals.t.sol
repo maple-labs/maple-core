@@ -122,7 +122,6 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.mpl(),              address(mpl));
         assertEq(globals.gracePeriod(),            5 days);
         assertEq(globals.swapOutRequired(),        10_000);
-        assertEq(globals.unstakeDelay(),          90 days);
         assertEq(globals.drawdownGracePeriod(),   10 days);
         assertEq(globals.investorFee(),                50);
         assertEq(globals.treasuryFee(),                50);
@@ -286,14 +285,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setSwapOutRequired(10_000));  // Lower bound is $10,000 of pool cover
         assertEq(   globals.swapOutRequired(),     10_000);
 
-        // setUnstakeDelay()
-        assertEq(   globals.unstakeDelay(),    90 days);
-        assertTrue(!fakeGov.try_setUnstakeDelay(1 days));
-        assertTrue(    !gov.try_setUnstakeDelay(1 days - 1));
-        assertTrue(     gov.try_setUnstakeDelay(1 days));
-        assertEq(   globals.unstakeDelay(),     1 days);
-
-         // setMapleTreasury()
+        // setMapleTreasury()
         assertEq(   globals.mapleTreasury(), address(trs));
         assertTrue(!fakeGov.try_setMapleTreasury(address(this)));
         assertTrue(    !gov.try_setMapleTreasury(address(0)));
