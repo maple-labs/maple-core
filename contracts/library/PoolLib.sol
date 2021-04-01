@@ -351,32 +351,7 @@ library PoolLib {
         address staker,
         address stakeLocker
     ) public view returns (uint256) {
-
-        // Fetch balancer pool token information
-        IBPool bPool            = IBPool(_bPool);
-        uint256 tokenBalanceOut = bPool.getBalance(liquidityAsset);
-        uint256 tokenWeightOut  = bPool.getDenormalizedWeight(liquidityAsset);
-        uint256 poolSupply      = bPool.totalSupply();
-        uint256 totalWeight     = bPool.getTotalDenormalizedWeight();
-        uint256 swapFee         = bPool.getSwapFee();
-
-        // Fetch amount staked in stakeLocker by staker
-        uint256 poolAmountIn = IERC20(stakeLocker).balanceOf(staker);
-
-        // Returns the amount of liquidityAsset that can be recovered from BPT burning
-        uint256 tokenAmountOut = bPool.calcSingleOutGivenPoolIn(
-            tokenBalanceOut,
-            tokenWeightOut,
-            poolSupply,
-            totalWeight,
-            poolAmountIn,
-            swapFee
-        );
-
-        // Max amount that can be swapped based on amount of liquidtyAsset in the Balancer Pool
-        uint256 maxSwapOut = tokenBalanceOut.mul(bPool.MAX_OUT_RATIO()).div(WAD);  
-
-        return tokenAmountOut <= maxSwapOut ? tokenAmountOut : maxSwapOut;
+        return _getSwapOutValue(_bPool, liquidityAsset, IERC20(stakeLocker).balanceOf(staker));
     }
 
     /** 
@@ -391,7 +366,14 @@ library PoolLib {
         address liquidityAsset,
         address stakeLocker
     ) public view returns (uint256) {
+        return _getSwapOutValue(_bPool, liquidityAsset, IBPool(_bPool).balanceOf(stakeLocker));
+    }
 
+    function _getSwapOutValue(
+        address _bPool,
+        address liquidityAsset,
+        uint256 poolAmountIn
+    ) internal view returns (uint256) {
         // Fetch balancer pool token information
         IBPool bPool            = IBPool(_bPool);
         uint256 tokenBalanceOut = bPool.getBalance(liquidityAsset);
@@ -399,9 +381,6 @@ library PoolLib {
         uint256 poolSupply      = bPool.totalSupply();
         uint256 totalWeight     = bPool.getTotalDenormalizedWeight();
         uint256 swapFee         = bPool.getSwapFee();
-
-        // Fetch entire BPT balance of stakeLocker
-        uint256 poolAmountIn = bPool.balanceOf(stakeLocker);
 
         // Returns the amount of liquidityAsset that can be recovered from BPT burning
         uint256 tokenAmountOut = bPool.calcSingleOutGivenPoolIn(
