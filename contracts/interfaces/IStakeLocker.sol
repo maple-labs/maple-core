@@ -41,4 +41,6 @@ interface IStakeLocker is IERC20 {
 
     function lockupPeriod() external view returns(uint256);
 
+    function lockupPeriod() external view returns(uint256);
+
 }
