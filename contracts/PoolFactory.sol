@@ -3,8 +3,6 @@ pragma solidity 0.6.11;
 
 import "./Pool.sol";
 
-import "./interfaces/IBFactory.sol";
-
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title PoolFactory instantiates Pools.
@@ -72,7 +70,6 @@ contract PoolFactory is Pausable {
             require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PF:INVALID_LL_FACTORY");
             require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PF:INVALID_SL_FACTORY");
             require(_globals.isValidPoolDelegate(msg.sender),                         "PF:INVALID_DELEGATE");
-            require(IBFactory(_globals.BFactory()).isBPool(stakeAsset),               "PF:STAKE_ASSET_NOT_BPOOL");
         }
         
         string memory name   = string(abi.encodePacked("Maple Pool Token"));

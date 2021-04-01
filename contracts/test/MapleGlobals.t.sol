@@ -69,7 +69,7 @@ contract MapleGlobalsTest is TestUtil {
         joe         = new PoolDelegate();   // Actor: Manager of the Pool.
 
         mpl           = new MapleToken("MapleToken", "MAPLE", USDC);
-        globals       = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        globals       = gov.createGlobals(address(mpl));
         poolFactory   = new PoolFactory(address(globals));
         loanFactory   = new LoanFactory(address(globals));
         dlFactory     = new DebtLockerFactory();
@@ -116,7 +116,7 @@ contract MapleGlobalsTest is TestUtil {
 
     function test_constructor() public {
 
-        globals = new MapleGlobals(address(gov), address(mpl), BPOOL_FACTORY, address(1));
+        globals = new MapleGlobals(address(gov), address(mpl), address(1));
 
         assertEq(globals.governor(),         address(gov));
         assertEq(globals.mpl(),              address(mpl));
@@ -126,7 +126,6 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.drawdownGracePeriod(),   10 days);
         assertEq(globals.investorFee(),                50);
         assertEq(globals.treasuryFee(),                50);
-        assertEq(globals.BFactory(),        BPOOL_FACTORY);
         assertEq(globals.maxSwapSlippage(),          1000);
         assertEq(globals.minLoanEquity(),            2000);
         assertEq(globals.admin(),              address(1));

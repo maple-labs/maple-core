@@ -24,7 +24,7 @@ contract StakeLockerFactoryTest is TestUtil {
         gov       = new Governor();                                  // Actor: Governor of Maple.
 
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
-        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
+        globals   = gov.createGlobals(address(mpl));                 // Setup Maple Globals.
         slFactory = new StakeLockerFactory();                        // Setup Stake Locker Factory to support Stake Locker creation.
         assertEq(slFactory.factoryType(), uint(4), "Incorrect factory type");
     }

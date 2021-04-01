@@ -24,7 +24,7 @@ contract MplRewardsFactoryTest is TestUtil {
         gov      = new Governor();                                  // Actor: Governor of Maple.
         fakeGov  = new Governor();                                  // Actor: Fake Governor of Maple.
         mpl      = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
-        globals  = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
+        globals  = gov.createGlobals(address(mpl));                 // Setup Maple Globals.
 
         mplRewardsFactory = gov.createMplRewardsFactory();
 
