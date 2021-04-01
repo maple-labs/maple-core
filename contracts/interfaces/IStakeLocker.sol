@@ -29,8 +29,6 @@ interface IStakeLocker is IERC20 {
 
     function allowed(address) external view returns (bool);
 
-    function getUnstakeableBalance(address) external view returns (uint256);
-
     function updateLosses(uint256) external;
 
     function bptLosses() external view returns(uint256);
@@ -40,5 +38,7 @@ interface IStakeLocker is IERC20 {
     function intendToUnstake() external;
 
     function stakeCooldown(address) external view returns(uint256);
+
+    function lockupPeriod() external view returns(uint256);
 
 }

@@ -67,7 +67,6 @@ contract Governor {
     function setGracePeriod(uint256 gracePeriod)                          external { globals.setGracePeriod(gracePeriod); }
     function setDrawdownGracePeriod(uint256 gracePeriod)                  external { globals.setDrawdownGracePeriod(gracePeriod); }
     function setSwapOutRequired(uint256 swapAmt)                          external { globals.setSwapOutRequired(swapAmt); }
-    function setUnstakeDelay(uint256 delay)                               external { globals.setUnstakeDelay(delay); }
     function setPendingGovernor(address gov)                              external { globals.setPendingGovernor(gov); }
     function acceptGovernor()                                             external { globals.acceptGovernor(); }
     function setPriceOracle(address asset, address oracle)                external { globals.setPriceOracle(asset, oracle); }
@@ -159,10 +158,6 @@ contract Governor {
     function try_setSwapOutRequired(uint256 swapAmt) external returns (bool ok) { 
         string memory sig = "setSwapOutRequired(uint256)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, swapAmt)); 
-    }
-    function try_setUnstakeDelay(uint256 delay) external returns (bool ok) { 
-        string memory sig = "setUnstakeDelay(uint256)";
-        (ok,) = address(globals).call(abi.encodeWithSignature(sig, delay)); 
     }
     function try_setPendingGovernor(address pendingGov) external returns (bool ok) { 
         string memory sig = "setPendingGovernor(address)";

@@ -21,7 +21,6 @@ contract MapleGlobals {
 
     uint256 public gracePeriod;          // Represents the amount of time a borrower has to make a missed payment before a default can be triggered
     uint256 public swapOutRequired;      // Represents minimum amount of Pool cover that a Pool Delegate has to provide before they can finalize a Pool
-    uint256 public unstakeDelay;         // Parameter for unstake delay with relation to StakeLocker withdrawals
     uint256 public drawdownGracePeriod;  // Amount of time to allow borrower to drawdown on their loan after funding period ends
     uint256 public investorFee;          // Portion of drawdown that goes to Pool Delegates/individual lenders
     uint256 public treasuryFee;          // Portion of drawdown that goes to MapleTreasury
@@ -78,7 +77,6 @@ contract MapleGlobals {
         mpl                  = _mpl;
         gracePeriod          = 5 days;
         swapOutRequired      = 10_000;
-        unstakeDelay         = 90 days;
         drawdownGracePeriod  = 10 days;
         investorFee          = 50;
         treasuryFee          = 50;
@@ -301,16 +299,6 @@ contract MapleGlobals {
         require(amt >= uint256(10_000), "MapleGlobals:SWAP_OUT_TOO_LOW");
         swapOutRequired = amt;
         emit GlobalsParamSet("SWAP_OUT_REQUIRED", amt);
-    }
-
-    /**
-        @dev Set a new unstake delay value. Only Governor can call.
-        @param _unstakeDelay New unstake delay
-    */
-    function setUnstakeDelay(uint256 _unstakeDelay) external isGovernor {
-        _checkTimeRange(_unstakeDelay);
-        unstakeDelay = _unstakeDelay;
-        emit GlobalsParamSet("UNSTAKE_DELAY", _unstakeDelay);
     }
 
     /**
