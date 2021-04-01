@@ -390,6 +390,7 @@ contract Pool is PoolFDT {
 
         // TODO: Do we need PoolFDT BalanceUpdated events?
         _emitBalanceUpdatedEvent();
+        emit Cooldown(msg.sender, 0);
     }
 
     /**
