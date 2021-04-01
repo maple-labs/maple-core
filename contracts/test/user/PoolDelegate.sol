@@ -81,6 +81,10 @@ contract PoolDelegate {
         IPool(pool).setOpenToPublic(open);
     }
 
+    function setLockupPeriod(address pool, uint256 lockupPeriod) external {
+        IPool(pool).setLockupPeriod(lockupPeriod);
+    }
+
     function openStakeLockerToPublic(address stakeLocker) external {
         IStakeLocker(stakeLocker).openStakeLockerToPublic();
     }

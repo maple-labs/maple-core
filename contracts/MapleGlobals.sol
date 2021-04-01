@@ -125,7 +125,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the `cooldownPeriod` state variable. TODO: "This change" update
+        @dev Update the `lpWithdrawWindow` state variable. TODO: "This change" update
         @param newLpWithdrawWindow New value for the withdraw window.
      */
     function setLpWithdrawWindow(uint256 newLpWithdrawWindow) external isGovernor {
