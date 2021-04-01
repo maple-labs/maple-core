@@ -382,7 +382,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Liquidity providers can withdraw liquidityAsset from the LiquidityLocker, burning FDTs.
+        @dev Liquidity providers can withdraw liquidityAsset from the LiquidityLocker, burning PoolFDTs.
         @param amt Amount of liquidityAsset to withdraw
     */
     function withdraw(uint256 amt) external {
