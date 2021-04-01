@@ -12,24 +12,24 @@ interface ICalc { function calcType() external view returns (uint8); }
 /// @title MapleGlobals maintains a central source of parameters and allowlists for the Maple protocol.
 contract MapleGlobals {
 
-    address public immutable mpl;        // Maple Token is the ERC-2222 token for the Maple protocol
+    address public immutable mpl;         // Maple Token is the ERC-2222 token for the Maple protocol
 
-    address public pendingGovernor;      // Governor that is declared for transfer, must be accepted for transfer to take effect
-    address public governor;             // Governor is responsible for management of global Maple variables
-    address public mapleTreasury;        // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
-    address public admin;                // Admin of the whole network, has the power to switch off/on the functionality of entire protocol
+    address public pendingGovernor;       // Governor that is declared for transfer, must be accepted for transfer to take effect
+    address public governor;              // Governor is responsible for management of global Maple variables
+    address public mapleTreasury;         // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
+    address public admin;                 // Admin of the whole network, has the power to switch off/on the functionality of entire protocol
 
-    uint256 public gracePeriod;          // Represents the amount of time a borrower has to make a missed payment before a default can be triggered
-    uint256 public swapOutRequired;      // Represents minimum amount of Pool cover that a Pool Delegate has to provide before they can finalize a Pool
-    uint256 public drawdownGracePeriod;  // Amount of time to allow borrower to drawdown on their loan after funding period ends
-    uint256 public investorFee;          // Portion of drawdown that goes to Pool Delegates/individual lenders
-    uint256 public treasuryFee;          // Portion of drawdown that goes to MapleTreasury
-    uint256 public maxSwapSlippage;      // Maximum amount of slippage for Uniswap transactions
-    uint256 public minLoanEquity;        // Minimum amount of LoanFDTs required to trigger liquidations (basis points percentage of totalSupply)
-    uint256 public stakerCooldownPeriod; // Period (in secs) after which stakers are allowed to unstake  their BPTs  from the StakeLocker contract
-    uint256 public lpCooldownPeriod;     // Period (in secs) after which LPs     are allowed to withdraw their funds from the Pool contract
-    uint256 public stakerUnstakeWindow;  // Window of time (in secs) after `stakerCooldownPeriod` that a user has to withdraw before their intent to unstake  is invalidated
-    uint256 public lpWithdrawWindow;     // Window of time (in secs) after `lpCooldownPeriod`     that a user has to withdraw before their intent to withdraw is invalidated
+    uint256 public gracePeriod;           // Represents the amount of time a borrower has to make a missed payment before a default can be triggered
+    uint256 public swapOutRequired;       // Represents minimum amount of Pool cover that a Pool Delegate has to provide before they can finalize a Pool
+    uint256 public drawdownGracePeriod;   // Amount of time to allow borrower to drawdown on their loan after funding period ends
+    uint256 public investorFee;           // Portion of drawdown that goes to Pool Delegates/individual lenders
+    uint256 public treasuryFee;           // Portion of drawdown that goes to MapleTreasury
+    uint256 public maxSwapSlippage;       // Maximum amount of slippage for Uniswap transactions
+    uint256 public minLoanEquity;         // Minimum amount of LoanFDTs required to trigger liquidations (basis points percentage of totalSupply)
+    uint256 public stakerCooldownPeriod;  // Period (in secs) after which stakers are allowed to unstake  their BPTs  from the StakeLocker contract
+    uint256 public lpCooldownPeriod;      // Period (in secs) after which LPs     are allowed to withdraw their funds from the Pool contract
+    uint256 public stakerUnstakeWindow;   // Window of time (in secs) after `stakerCooldownPeriod` that a user has to withdraw before their intent to unstake  is invalidated
+    uint256 public lpWithdrawWindow;      // Window of time (in secs) after `lpCooldownPeriod`     that a user has to withdraw before their intent to withdraw is invalidated
 
 
     bool public protocolPaused;  // Switch to pause the functionality of the entire protocol
