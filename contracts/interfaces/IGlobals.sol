@@ -28,10 +28,6 @@ interface IGlobals {
 
     function isValidCollateralAsset(address) external view returns (bool);
 
-    function BFactory() external view returns (address);
-
-    function setBFactory() external view returns (uint256);
-
     function isValidPoolDelegate(address) external view returns (bool);
 
     function validLoanAssets() external view returns (address[] memory);
