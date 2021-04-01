@@ -1664,7 +1664,6 @@ contract PoolTest is TestUtil {
         mint("USDC", address(bob), 10000 * USD);
 
         sid.finalize(address(pool1));
-        sid.setPrincipalPenalty(address(pool1), 0);
         sid.setLockupPeriod(address(pool1), 0); 
         sid.setOpenToPublic(address(pool1), true);
 
