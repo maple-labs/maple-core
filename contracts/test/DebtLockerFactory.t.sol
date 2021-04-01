@@ -45,7 +45,7 @@ contract DebtLockerFactoryTest is TestUtil {
         gov       = new Governor();                                  // Actor: Governor of Maple.
 
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);                  // Setup Maple token.
-        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);              // Setup Maple Globals.
+        globals   = gov.createGlobals(address(mpl));                             // Setup Maple Globals.
         flFactory = new FundingLockerFactory();                                  // Setup Funding Locker Factory to support Loan Factory creation.
         clFactory = new CollateralLockerFactory();                               // Setup Collateral Locker Factory to support Loan Factory creation.
         lFactory  = new LoanFactory(address(globals));                           // Setup Loan Factory to support Loan creation.

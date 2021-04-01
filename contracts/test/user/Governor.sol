@@ -18,8 +18,8 @@ contract Governor {
     MplRewardsFactory mplRewardsFactory;
     MapleTreasury     treasury;
 
-    function createGlobals(address mpl, address bPoolFactory) external returns (MapleGlobals) {
-        globals = new MapleGlobals(address(this), mpl, bPoolFactory, address(1));
+    function createGlobals(address mpl) external returns (MapleGlobals) {
+        globals = new MapleGlobals(address(this), mpl, address(1));
         return globals;
     }
 

@@ -26,6 +26,7 @@ import "../StakeLockerFactory.sol";
 
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/ILoan.sol";
+import "../interfaces/IBFactory.sol";
 
 import "../oracles/ChainlinkOracle.sol";
 import "../oracles/UsdOracle.sol";
@@ -70,7 +71,7 @@ contract LoanLiquidationTest is TestUtil {
         sid = new PoolDelegate(); // Actor: Manager of the Pool.
 
         mpl      = new MapleToken("MapleToken", "MAPL", USDC);
-        globals  = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        globals  = gov.createGlobals(address(mpl));
         treasury = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals));
 
         flFactory     = new FundingLockerFactory();         // Setup the FL factory to facilitate Loan factory functionality.

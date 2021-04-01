@@ -12,7 +12,6 @@ interface ICalc { function calcType() external view returns (uint8); }
 /// @title MapleGlobals maintains a central source of parameters and allowlists for the Maple protocol.
 contract MapleGlobals {
 
-    address public immutable BFactory;   // Official Balancer pool factory
     address public immutable mpl;        // Maple Token is the ERC-2222 token for the Maple protocol
 
     address public pendingGovernor;      // Governor that is declared for transfer, must be accepted for transfer to take effect
@@ -72,10 +71,9 @@ contract MapleGlobals {
         @dev    Constructor function.
         @param  _governor Address of Governor
         @param  _mpl      Address of the ERC-2222 token for the Maple protocol
-        @param  _bFactory The official Balancer pool factory
         @param  _admin    Address that takes care of protocol security switch 
     */
-    constructor(address _governor, address _mpl, address _bFactory, address _admin) public {
+    constructor(address _governor, address _mpl, address _admin) public {
         governor             = _governor;
         mpl                  = _mpl;
         gracePeriod          = 5 days;
@@ -84,7 +82,6 @@ contract MapleGlobals {
         drawdownGracePeriod  = 10 days;
         investorFee          = 50;
         treasuryFee          = 50;
-        BFactory             = _bFactory;
         maxSwapSlippage      = 1000;       // 10 %
         minLoanEquity        = 2000;       // 20 %
         admin                = _admin;
