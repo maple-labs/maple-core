@@ -24,7 +24,7 @@ library PoolLib {
 
     event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event DepositDateUpdated(address indexed lp, uint256 depositDate);
-    event           Cooldown(address indexed lp);
+    event           Cooldown(address indexed lp, uint256 startDate);
 
     /***************************************/
     /*** Pool Delegate Utility Functions ***/
@@ -292,7 +292,16 @@ library PoolLib {
     function intendToWithdraw(mapping(address => uint256) storage depositCooldown, uint256 balance) external {
         require(balance != uint256(0), "Pool:ZERO_BALANCE");
         depositCooldown[msg.sender] = block.timestamp;
-        emit Cooldown(msg.sender);
+        emit Cooldown(msg.sender, block.timestamp);
+    }
+
+    /**
+        @dev Cancel an initiated withdrawal.
+     */
+    function cancelWithdraw(mapping(address => uint256) storage depositCooldown) external {
+        require(depositCooldown[msg.sender] != uint256(0), "Pool:NOT_WITHDRAWING");
+        depositCooldown[msg.sender] = 0;
+        emit Cooldown(msg.sender, 0);
     }
 
     /**********************************/

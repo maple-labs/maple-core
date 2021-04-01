@@ -67,7 +67,6 @@ contract Pool is PoolFDT {
     event  LPStatusChanged(address indexed user, bool status);
     event  LiquidityCapSet(uint256 newLiquidityCap);
     event PoolStateChanged(State state);
-    event         Cooldown(address staker);
     event  DefaultSuffered(
         address indexed loan, 
         uint256 defaultSuffered, 
@@ -380,6 +379,13 @@ contract Pool is PoolFDT {
     **/
     function intendToWithdraw() external {
         PoolLib.intendToWithdraw(depositCooldown, balanceOf(msg.sender));
+    }
+
+    /**
+        @dev Cancels an initiated withdrawal by resetting the cooldown period to 0.
+    **/
+    function cancelWithdraw() external {
+        PoolLib.cancelWithdraw(depositCooldown);
     }
 
     /**

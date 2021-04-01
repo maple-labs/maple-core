@@ -1676,6 +1676,23 @@ contract PoolTest is TestUtil {
         assertTrue(bob.try_withdraw(address(pool1), amt), "Should be able to withdraw funds at end of cooldown window");
     }
     
+    function test_cancelWithdraw() public {
+
+        setUpWithdraw();
+
+        // Mint USDC to kim and deposit into Pool
+        mint("USDC", address(kim), 1000 * USD);
+        kim.approve(USDC, address(pool1), MAX_UINT);
+        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+
+        assertEq(pool1.depositCooldown(address(kim)), 0);
+        assertTrue(kim.try_intendToWithdraw(address(pool1)));
+        assertEq(pool1.depositCooldown(address(kim)), block.timestamp);
+
+        assertTrue(kim.try_cancelWithdraw(address(pool1)));
+        assertEq(pool1.depositCooldown(address(kim)), 0);
+    }
+
     function test_withdraw_calculator() public {
 
         setUpWithdraw();

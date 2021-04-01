@@ -33,7 +33,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     event   BalanceUpdated(address stakeLocker, address token, uint256 balance);
     event AllowListUpdated(address staker, bool status);
     event StakeDateUpdated(address staker, uint256 stakeDate);
-    event         Cooldown(address staker);
+    event         Cooldown(address indexed staker, uint256 startDate);
     event            Stake(uint256 amount, address staker);
     event          Unstake(uint256 amount, address staker);
     event StakeLockerOpened();
@@ -168,7 +168,16 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function intendToUnstake() external {
         require(balanceOf(msg.sender) != uint256(0), "StakeLocker:INVALID_BALANCE_ON_COOLDOWN");
         stakeCooldown[msg.sender] = block.timestamp;
-        emit Cooldown(msg.sender);
+        emit Cooldown(msg.sender, block.timestamp);
+    }
+
+    /**
+        @dev Cancels an initiated unstake by resetting the cooldown period to 0.
+    **/
+    function cancelUnstake() external {
+        require(stakeCooldown[msg.sender] != uint256(0), "StakeLocker:NOT_UNSTAKING");
+        stakeCooldown[msg.sender] = 0;
+        emit Cooldown(msg.sender, 0);
     }
 
     /**

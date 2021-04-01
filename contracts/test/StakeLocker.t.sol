@@ -490,6 +490,20 @@ contract StakeLockerTest is TestUtil {
         assertTrue(che.try_transfer(address(stakeLocker), address(dan), 1 * WAD)); // Can transfer to dan because they're past the unstaking window
     }
 
+    function test_cancelUnstake() public {
+
+        sid.setAllowlistStakeLocker(address(pool), address(che), true); // Add Staker to allowlist
+        che.approve(address(bPool), address(stakeLocker), 25 * WAD); // Stake tokens
+        che.stake(address(stakeLocker), 25 * WAD);
+
+        assertEq(stakeLocker.stakeCooldown(address(che)), 0);
+        assertTrue(che.try_intendToUnstake(address(stakeLocker)));
+        assertEq(stakeLocker.stakeCooldown(address(che)), block.timestamp);
+
+        assertTrue(che.try_cancelUnstake(address(stakeLocker)));
+        assertEq(stakeLocker.stakeCooldown(address(che)), 0);
+    }
+
     function setUpLoanAndRepay() public {
         mint("USDC", address(ali), 10_000_000 * USD);  // Mint USDC to LP
         ali.approve(USDC, address(pool), MAX_UINT);    // LP approves USDC

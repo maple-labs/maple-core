@@ -60,6 +60,11 @@ contract Staker {
         (ok,) = stakeLocker.call(abi.encodeWithSignature(sig));
     }
 
+    function try_cancelUnstake(address stakeLocker) external returns (bool ok) {
+        string memory sig = "cancelUnstake()";
+        (ok,) = stakeLocker.call(abi.encodeWithSignature(sig));
+    }
+
     function try_withdrawFunds(address stakeLocker) external returns(bool ok) {
         string memory sig = "withdrawFunds()";
         (ok,) = stakeLocker.call(abi.encodeWithSignature(sig));
