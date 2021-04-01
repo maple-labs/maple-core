@@ -339,7 +339,7 @@ contract StakeLockerTest is TestUtil {
         che.approve(address(bPool), address(stakeLocker), 20 * WAD); // Stake tokens
         assertTrue(che.try_stake(address(stakeLocker), 20 * WAD));
 
-        hevm.warp(block.timestamp + globals.unstakeDelay());  // Warp to end of unstakeDelay for test
+        hevm.warp(block.timestamp + stakeLocker.lockupPeriod());  // Warp to end of lockup for test
 
         gov.setStakerCooldownPeriod(10 days);
 
@@ -494,20 +494,20 @@ contract StakeLockerTest is TestUtil {
         assertTrue(!eli.try_intendToUnstake(address(stakeLocker)));  // Unstake will not work as eli doesn't possess any balance.
         assertTrue( che.try_intendToUnstake(address(stakeLocker)));
 
-        hevm.warp(stakeDate + globals.cooldownPeriod());
-        assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake BPTs until cooldownPeriod has passed
+        hevm.warp(stakeDate + globals.stakerCooldownPeriod() - 1);
+        assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake BPTs until stakerCooldownPeriod has passed
 
-        hevm.warp(stakeDate + globals.cooldownPeriod() + 1);
+        hevm.warp(stakeDate + globals.stakerCooldownPeriod());
         assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Still cannot unstake because of lockup period
 
-        hevm.warp(stakeDate + stakeLocker.lockupPeriod() - globals.cooldownPeriod());  // Warp to first time that user can cooldown and unstake and will be after lockup
+        hevm.warp(stakeDate + stakeLocker.lockupPeriod() - globals.stakerCooldownPeriod());  // Warp to first time that user can cooldown and unstake and will be after lockup
         uint256 cooldownTimestamp = block.timestamp;
         assertTrue(che.try_intendToUnstake(address(stakeLocker)));
 
-        hevm.warp(stakeDate + globals.cooldownPeriod());
-        assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake BPTs until cooldownPeriod has passed
+        hevm.warp(cooldownTimestamp + globals.stakerCooldownPeriod() - 1);
+        assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake BPTs until stakerCooldownPeriod has passed
 
-        hevm.warp(stakeDate + globals.cooldownPeriod() + 1);  // Now user is able to unstake
+        hevm.warp(cooldownTimestamp + globals.stakerCooldownPeriod());  // Now user is able to unstake
 
         uint256 totalStakerEarnings    = IERC20(USDC).balanceOf(address(stakeLocker));
         uint256 cheStakerEarnings_FDT  = stakeLocker.withdrawableFundsOf(address(che));
@@ -761,7 +761,7 @@ contract StakeLockerTest is TestUtil {
         hevm.warp(block.timestamp + stakeLocker.lockupPeriod());  // Warp to the end of the lockup
 
         assertTrue(eli.try_intendToUnstake(address(stakeLocker)));
-        hevm.warp(block.timestamp + globals.cooldownPeriod() + 1);
+        hevm.warp(block.timestamp + globals.stakerCooldownPeriod() + 1);
         eli.unstake(address(stakeLocker), eliStakeAmount);  // Unstake entire balance
 
         stakeLockerBal.post       = bPool.balanceOf(address(stakeLocker));
