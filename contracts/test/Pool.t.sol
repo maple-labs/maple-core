@@ -505,7 +505,7 @@ contract PoolTest is TestUtil {
         sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
 
         // Mint 1000 USDC into this LP account
-        mint("USDC", address(bob), 10000 * USD);
+        mint("USDC", address(bob), 10_000 * USD);
 
         sid.finalize(address(pool1));
         sid.setPrincipalPenalty(address(pool1), 0);
@@ -1837,7 +1837,7 @@ contract PoolTest is TestUtil {
 
         {
             uint256 interest       = pool1.withdrawableFundsOf(address(kim));
-            uint256 priPenalty     = pool1.principalPenalty().mul(depositAmount).div(10000);             // Calculate flat principal penalty.
+            uint256 priPenalty     = pool1.principalPenalty().mul(depositAmount).div(10_000);            // Calculate flat principal penalty.
             uint256 totPenalty     = pool1.calcWithdrawPenalty(interest.add(priPenalty), address(kim));  // Get total penalty
             uint256 oldInterestSum = pool1.interestSum();
             

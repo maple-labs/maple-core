@@ -33,7 +33,7 @@ contract RepaymentCalc {
             principalOwed
                 .mul(loan.apr())
                 .mul(loan.paymentIntervalSeconds())
-                .div(10000)
+                .div(10_000)
                 .div(365 days);
 
         if (loan.paymentsRemaining() == 1) {

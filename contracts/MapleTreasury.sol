@@ -106,7 +106,7 @@ contract MapleTreasury {
 
         uint256[] memory returnAmounts = IUniswapRouter(uniswapRouter).swapExactTokensForTokens(
             assetBalance,
-            minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10000)),
+            minAmount.sub(minAmount.mul(_globals.maxSwapSlippage()).div(10_000)),
             path,
             address(this),
             block.timestamp

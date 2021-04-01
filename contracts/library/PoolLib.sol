@@ -506,7 +506,7 @@ library PoolLib {
         if (depositDateForLp.add(lockupPeriod) > block.timestamp) total = interest; 
         else {
             uint256 userBalance  = fromWad(balanceOfLp, liquidityAssetDecimals);
-            uint256 firstPenalty = principalPenalty.mul(userBalance).div(10000);                                                   // Calculate flat principal penalty
+            uint256 firstPenalty = principalPenalty.mul(userBalance).div(10_000);                                                  // Calculate flat principal penalty
             uint256 totalPenalty = calcWithdrawPenalty(lockupPeriod, penaltyDelay, interest.add(firstPenalty), depositDateForLp);  // Calculate total penalty
 
             principal = userBalance.sub(totalPenalty);
