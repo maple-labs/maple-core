@@ -26,7 +26,11 @@ contract MapleGlobals {
     uint256 public treasuryFee;          // Portion of drawdown that goes to MapleTreasury
     uint256 public maxSwapSlippage;      // Maximum amount of slippage for Uniswap transactions
     uint256 public minLoanEquity;        // Minimum amount of LoanFDTs required to trigger liquidations (basis points percentage of totalSupply)
-    uint256 public cooldownPeriod;       // Period (in secs) after that stakers/LPs are allowed to unstake/withdraw their funds from the StakeLocker/Pool contract
+    uint256 public stakerCooldownPeriod; // Period (in secs) after which stakers are allowed to unstake  their BPTs  from the StakeLocker contract
+    uint256 public lpCooldownPeriod;     // Period (in secs) after which LPs     are allowed to withdraw their funds from the Pool contract
+    uint256 public stakerUnstakeWindow;  // Window of time (in secs) after `stakerCooldownPeriod` that a user has to withdraw before their intent to unstake  is invalidated
+    uint256 public lpWithdrawWindow;     // Window of time (in secs) after `lpCooldownPeriod`     that a user has to withdraw before their intent to withdraw is invalidated
+
 
     bool public protocolPaused;  // Switch to pause the functionality of the entire protocol
 
@@ -42,7 +46,7 @@ contract MapleGlobals {
     // For example, defaultUniswapPath[WBTC][USDC] value would indicate what asset to convert WBTC into before
     // conversion to USDC. If defaultUniswapPath[WBTC][USDC] == USDC, then the swap is bilateral and no middle
     // asset is swapped.   If defaultUniswapPath[WBTC][USDC] == WETH, then swap WBTC for WETH, then WETH for USDC.
-    mapping(address => mapping(address => address)) public defaultUniswapPath; 
+    mapping(address => mapping(address => address)) public defaultUniswapPath;
 
     mapping(address => address) public oracleFor;  // Chainlink oracle for a given asset
 
@@ -76,14 +80,17 @@ contract MapleGlobals {
         governor             = _governor;
         mpl                  = _mpl;
         gracePeriod          = 5 days;
-        swapOutRequired      = 10_000;
+        swapOutRequired      = 10_000;     // $10,000 of Pool cover
         drawdownGracePeriod  = 10 days;
-        investorFee          = 50;
-        treasuryFee          = 50;
+        investorFee          = 50;         // 0.5%
+        treasuryFee          = 50;         // 0.5%
         maxSwapSlippage      = 1000;       // 10 %
         minLoanEquity        = 2000;       // 20 %
         admin                = _admin;
-        cooldownPeriod       = 10 days;
+        stakerCooldownPeriod = 10 days;
+        lpCooldownPeriod     = 10 days;
+        stakerUnstakeWindow  = 2 days;     // Staker cooldown period must be set manually by the governor
+        lpWithdrawWindow     = 2 days;     // LP     cooldown period must be set manually by the governor
     }
 
     /************************/
@@ -91,13 +98,39 @@ contract MapleGlobals {
     /************************/
 
     /**
-        @dev Update the `cooldownPeriod` state variable. This change will affect existing cool down period for the LPs/stakers who already applied for the withdraw/unstake.
+        @dev Update the `stakerCooldownPeriod` state variable. This change will affect existing cool down period for the stakers who already applied for the unstake.
         @param newCooldownPeriod New value for the cool down period.
      */
-    function setCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
-        _checkTimeRange(newCooldownPeriod); 
-        cooldownPeriod = newCooldownPeriod;
-        emit GlobalsParamSet("COOLDOWN_PERIOD", newCooldownPeriod);
+        function setStakerCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
+        stakerCooldownPeriod = newCooldownPeriod;
+        emit GlobalsParamSet("STAKER_COOLDOWN_PERIOD", newCooldownPeriod);
+    }
+
+    /**
+        @dev Update the `lpCooldownPeriod` state variable. This change will affect existing cool down period for the LPs who already applied for the withdraw.
+        @param newCooldownPeriod New value for the cool down period.
+     */
+    function setLpCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
+        lpCooldownPeriod = newCooldownPeriod;
+        emit GlobalsParamSet("LP_COOLDOWN_PERIOD", newCooldownPeriod);
+    }
+
+    /**
+        @dev Update the `stakerUnstakeWindow` state variable. TODO: "This change" update
+        @param newUnstakeWindow New value for the unstake window.
+     */
+    function setStakerUnstakeWindow(uint256 newUnstakeWindow) external isGovernor {
+        stakerUnstakeWindow = newUnstakeWindow;
+        emit GlobalsParamSet("STAKER_UNSTAKE_WINDOW", newUnstakeWindow);
+    }
+
+    /**
+        @dev Update the `cooldownPeriod` state variable. TODO: "This change" update
+        @param newLpWithdrawWindow New value for the withdraw window.
+     */
+    function setLpWithdrawWindow(uint256 newLpWithdrawWindow) external isGovernor {
+        lpWithdrawWindow = newLpWithdrawWindow;
+        emit GlobalsParamSet("LP_WITHDRAW_WINDOW", newLpWithdrawWindow);
     }
 
     /**
@@ -264,7 +297,6 @@ contract MapleGlobals {
         @param _gracePeriod Number of seconds to set the grace period to
     */
     function setGracePeriod(uint256 _gracePeriod) public isGovernor {
-        _checkTimeRange(_gracePeriod);
         gracePeriod = _gracePeriod;
         emit GlobalsParamSet("GRACE_PERIOD", _gracePeriod);
     }
@@ -284,7 +316,6 @@ contract MapleGlobals {
         @param _drawdownGracePeriod Number of seconds to set the drawdown grace period to
     */
     function setDrawdownGracePeriod(uint256 _drawdownGracePeriod) public isGovernor {
-        _checkTimeRange(_drawdownGracePeriod);
         drawdownGracePeriod = _drawdownGracePeriod;
         emit GlobalsParamSet("DRAWDOWN_GRACE_PERIOD", _drawdownGracePeriod);
     }
@@ -376,9 +407,5 @@ contract MapleGlobals {
 
     function _checkPercentageRange(uint256 percentage) internal {
         require(percentage >= uint256(0) && percentage <= uint256(10_000), "MapleGlobals:PCT_BOUND_CHECK");
-    }
-
-    function _checkTimeRange(uint256 duration) internal  {
-        require(duration >= 1 days, "MapleGlobals:TIME_BOUND_CHECK");
     }
 }

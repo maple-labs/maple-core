@@ -564,7 +564,7 @@ contract PoolLiquidationTest is TestUtil {
     function make_withdrawable(LP investor, Pool pool) public {
         uint256 currentTime = block.timestamp;
         assertTrue(investor.try_intendToWithdraw(address(pool)));
-        assertEq(      pool.depositCooldown(address(investor)), currentTime, "Incorrect value set");
-        hevm.warp(currentTime + globals.cooldownPeriod() + 1);
+        assertEq(pool.withdrawCooldown(address(investor)), currentTime, "Incorrect value set");
+        hevm.warp(currentTime + globals.lpCooldownPeriod());
     }
 } 

@@ -26,16 +26,16 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     uint256 public lockupPeriod;  // No. of seconds for which unstaking is not allowed.
 
-    mapping(address => uint256) public stakeDate;      // Map address to effective stake date value
-    mapping(address => uint256) public stakeCooldown;  // Timestamp of when staker called cooldown()
-    mapping(address => bool)    public allowed;        // Map address to allowed status
+    mapping(address => uint256) public stakeDate;        // Map address to effective stake date value
+    mapping(address => uint256) public unstakeCooldown;  // Timestamp of when staker called cooldown()
+    mapping(address => bool)    public allowed;          // Map address to allowed status
 
     bool public openToPublic;  // Boolean opening StakeLocker to public for staking BPTs
 
     event   BalanceUpdated(address stakeLocker, address token, uint256 balance);
     event AllowListUpdated(address staker, bool status);
     event StakeDateUpdated(address staker, uint256 stakeDate);
-    event         Cooldown(address staker);
+    event         Cooldown(address indexed staker);
     event            Stake(uint256 amount, address staker);
     event          Unstake(uint256 amount, address staker);
     event StakeLockerOpened();
@@ -151,6 +151,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _isAllowed(msg.sender);
         require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
 
+        unstakeCooldown[msg.sender] = uint256(0);  // Reset unstakeCooldown if staker had previously intended to unstake
+
         _updateStakeDate(msg.sender, amt);
         _mint(msg.sender, amt);
 
@@ -181,8 +183,17 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     **/
     function intendToUnstake() external {
         require(balanceOf(msg.sender) != uint256(0), "StakeLocker:INVALID_BALANCE_ON_COOLDOWN");
-        stakeCooldown[msg.sender] = block.timestamp;
+        unstakeCooldown[msg.sender] = block.timestamp;
         emit Cooldown(msg.sender);
+    }
+
+    /**
+        @dev Cancels an initiated unstake by resetting the cooldown period to 0.
+    **/
+    function cancelUnstake() external {
+        require(unstakeCooldown[msg.sender] != uint256(0), "StakeLocker:NOT_UNSTAKING");
+        unstakeCooldown[msg.sender] = 0;
+        emit Cooldown(msg.sender );
     }
 
     /**
@@ -191,10 +202,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function unstake(uint256 amt) external canUnstake {
         _whenProtocolNotPaused();
-        _isCooldownFinished(stakeCooldown[msg.sender]);
+        require(isUnstakeAllowed(msg.sender),                               "StakeLocker:UNSTAKE_NOT_ALLOWED");
         require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "StakeLocker:FUNDS_LOCKED");
 
-        stakeCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what unstake amount is
+        unstakeCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what unstake amount is
 
         updateFundsReceived();   // Account for any funds transferred into contract since last call
         _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
@@ -229,10 +240,12 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _transfer(address from, address to, uint256 wad) internal override canUnstake {
         _whenProtocolNotPaused();
+        require(isUnstakeAllowed(from), "StakeLocker:UNSTAKE_NOT_ALLOWED");
         _isAllowed(to);
-        _isCooldownFinished(stakeCooldown[from]);
+
+        unstakeCooldown[from] = uint256(0);  // Reset cooldown time no matter what transfer amount is
+
         _updateStakeDate(to, wad);
-        stakeCooldown[from] = uint256(0);  // Reset cooldown time no matter what transfer amount is
         super._transfer(from, to, wad);
     }
 
@@ -260,12 +273,20 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /*** Helper Functions ***/
     /************************/
 
-    /**
-        @dev View function to indicate if cooldown period has passed for msg.sender
+        /**
+        @dev View function to indicate if cooldown period has passed for msg.sender and if they are in the unstake window
     */
-    function _isCooldownFinished(uint256 _stakeCooldown) internal view {
-        require(_stakeCooldown != uint256(0), "StakeLocker:COOLDOWN_NOT_SET");
-        require(block.timestamp > _stakeCooldown + _globals().cooldownPeriod(), "StakeLocker:COOLDOWN_NOT_FINISHED");
+    function isUnstakeAllowed(address from) public view returns (bool) {
+        IGlobals globals = _globals();
+
+        uint256 _unstakeCooldown    = unstakeCooldown[from];
+        uint256 endOfCooldownPeriod = _unstakeCooldown + globals.stakerCooldownPeriod();  // Timestamp of when cooldown period has ended for staker (start of unstake window)
+
+        bool isCooldownSet      = _unstakeCooldown != uint256(0);
+        bool isCooldownFinished = block.timestamp >= endOfCooldownPeriod;
+        bool isWithinWindow     = block.timestamp - endOfCooldownPeriod <= globals.stakerUnstakeWindow();
+
+        return isCooldownSet && isCooldownFinished && isWithinWindow;
     }
 
     /**

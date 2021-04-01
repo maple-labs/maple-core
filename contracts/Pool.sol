@@ -57,7 +57,7 @@ contract Pool is PoolFDT {
     mapping(address => mapping(address => address)) public debtLockers;                // Address of the `DebtLocker` contract corresponds to [Loan][DebtLockerFactory].
     mapping(address => bool)                        public admins;                     // Admin addresses who have permission to do certain operations in case of disaster mgt.
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
-    mapping(address => uint256)                     public depositCooldown;            // Timestamp of when LP calls `intendToWithdraw()`
+    mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`
 
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
@@ -65,7 +65,7 @@ contract Pool is PoolFDT {
     event  LPStatusChanged(address indexed user, bool status);
     event  LiquidityCapSet(uint256 newLiquidityCap);
     event PoolStateChanged(State state);
-    event         Cooldown(address staker);
+    event         Cooldown(address indexed lp, uint256 cooldown);
     event  DefaultSuffered(
         address indexed loan, 
         uint256 defaultSuffered, 
@@ -343,18 +343,28 @@ contract Pool is PoolFDT {
         _isValidState(State.Finalized);
         require(isDepositAllowed(amt), "Pool:NOT_ALLOWED");
         liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
-        uint256 wad = _toWad(amt);
 
+        withdrawCooldown[msg.sender] = uint256(0);  // Reset withdrawCooldown if staker had previously intended to unstake
+        
+        uint256 wad = _toWad(amt);
         PoolLib.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
         _mint(msg.sender, wad);
         _emitBalanceUpdatedEvent();
+        emit Cooldown(msg.sender, 0);
     }
 
     /**
         @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
     **/
     function intendToWithdraw() external {
-        PoolLib.intendToWithdraw(depositCooldown, balanceOf(msg.sender));
+        PoolLib.intendToWithdraw(withdrawCooldown, balanceOf(msg.sender));
+    }
+
+    /**
+        @dev Cancels an initiated withdrawal by resetting the cooldown period to 0.
+    **/
+    function cancelWithdraw() external {
+        PoolLib.cancelWithdraw(withdrawCooldown);
     }
 
     /**
@@ -363,12 +373,12 @@ contract Pool is PoolFDT {
     */
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
-        PoolLib.isCooldownFinished(depositCooldown[msg.sender], _globals(superFactory));
-        uint256 fdtAmt    = _toWad(amt);
-        require(balanceOf(msg.sender) >= fdtAmt, "Pool:USER_BAL_LT_AMT");
-        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp, "Pool:FUNDS_LOCKED");
+        uint256 fdtAmt = _toWad(amt);
+        require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "Pool:WITHDRAW_NOT_ALLOWED");
+        require(balanceOf(msg.sender) >= fdtAmt,                                                 "Pool:USER_BAL_LT_AMT");  // TODO: Do we need this?
+        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "Pool:FUNDS_LOCKED");
 
-        depositCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what transfer amount is
+        withdrawCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what transfer amount is
 
         _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance
         withdrawFunds();            // Transfer full entitled interest, decrement `interestSum`
@@ -382,6 +392,7 @@ contract Pool is PoolFDT {
         _transferLiquidityLockerFunds(msg.sender, due);
 
         _emitBalanceUpdatedEvent();
+        emit Cooldown(msg.sender, 0);
     }
 
     /**
@@ -392,8 +403,8 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
-        require(recognizableLossesOf(from) == uint256(0), "Pool:NOT_ALLOWED");
-        PoolLib.prepareTransfer(depositCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
+        require(recognizableLossesOf(from) == uint256(0), "Pool:NOT_ALLOWED");  // If an LP has unrecognized losses, they must recognize losses through withdraw
+        PoolLib.prepareTransfer(withdrawCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
         super._transfer(from, to, wad);
     }
 
