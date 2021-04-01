@@ -508,7 +508,6 @@ contract PoolTest is TestUtil {
         mint("USDC", address(bob), 10_000 * USD);
 
         sid.finalize(address(pool1));
-        sid.setPrincipalPenalty(address(pool1), 0);
         sid.setOpenToPublic(address(pool1), true);
 
         bob.approve(USDC, address(pool1), MAX_UINT);
@@ -1618,43 +1617,6 @@ contract PoolTest is TestUtil {
             assertEq(uint256(loan2.loanState()), 2);
         }
     }
-    
-    function test_withdraw_calculator() public {
-
-        setUpWithdraw();
-
-        uint256 start = block.timestamp;
-        uint256 delay = pool1.penaltyDelay();
-
-        assertEq(pool1.calcWithdrawPenalty(1 * USD, address(bob)), uint256(0));  // Returns 0 when lockupPeriod > penaltyDelay.
-        assertTrue(!joe.try_setLockupPeriod(address(pool1), 15 days));
-        assertEq(pool1.lockupPeriod(), 180 days);
-        assertTrue(sid.try_setLockupPeriod(address(pool1), 15 days));
-        assertEq(pool1.lockupPeriod(), 15 days);
-
-        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 1 ether);  // 100% of (interest + penalty) is subtracted on immediate withdrawal
-
-        hevm.warp(start + delay / 3);
-        withinPrecision(pool1.calcWithdrawPenalty(1 ether, address(bob)), uint(2 ether) / 3, 6); // After 1/3 delay has passed, 2/3 (interest + penalty) is subtracted
-
-        hevm.warp(start + delay / 2);
-        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0.5 ether);  // After half delay has passed, 1/2 (interest + penalty) is subtracted
-
-        hevm.warp(start + delay - 1);
-        assertTrue(pool1.calcWithdrawPenalty(1 ether, address(bob)) > 0); // Still a penalty
-        
-        hevm.warp(start + delay);
-        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0); // After delay has passed, no penalty
-
-        hevm.warp(start + delay + 1);
-        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0); 
-
-        hevm.warp(start + delay * 2);
-        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0);
-
-        hevm.warp(start + delay * 1000);
-        assertEq(pool1.calcWithdrawPenalty(1 ether, address(bob)), 0);
-    }
 
     function test_withdraw_under_lockup_period() public {
         setUpWithdraw();
@@ -1674,7 +1636,6 @@ contract PoolTest is TestUtil {
         _drawDownLoan(1000 * USD, loan3, hal);
         _makeLoanPayment(loan3, hal); 
         sid.claim(address(pool1), address(loan3), address(dlFactory1));
-        assertEq(pool1.calcWithdrawPenalty(1000 * USD, address(kim)), uint256(0)); // lockupPeriod > withdrawDelay
 
         uint256 interest = pool1.withdrawableFundsOf(address(kim));  // Get kims withdrawable funds
 
@@ -1706,7 +1667,6 @@ contract PoolTest is TestUtil {
         _drawDownLoan(1000 * USD, loan3, hal);
         _makeLoanPayment(loan3, hal); 
         sid.claim(address(pool1), address(loan3), address(dlFactory1));
-        assertEq(pool1.calcWithdrawPenalty(1000 * USD, address(kim)), uint256(0)); // lockupPeriod > withdrawDelay
 
         // Warp to exact time that kim can withdraw for the first time
         hevm.warp(start + pool1.lockupPeriod());  
@@ -1729,140 +1689,9 @@ contract PoolTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(kim)) - bal0, interest);
     }
 
-    function test_withdraw_no_principal_penalty() public {
-        setUpWithdraw();
-        
-        uint start = block.timestamp;
-
-        sid.setPrincipalPenalty(address(pool1), 0);
-        assertTrue(sid.try_setLockupPeriod(address(pool1), 0));
-        assertEq(pool1.lockupPeriod(), uint256(0));
-
-        mint("USDC", address(kim), 2000 * USD);
-        kim.approve(USDC, address(pool1), MAX_UINT);
-        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
-        
-        (uint total_kim, uint principal_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
-
-        assertEq(total_kim,     1000 * USD);
-        assertEq(principal_kim, 1000 * USD);
-        assertEq(interest_kim,           0);
-
-        uint256 withdrawAmount = 1000 * USD;
-        make_withdrawable(kim, pool1);
-        kim.withdraw(address(pool1), withdrawAmount);
-
-        assertEq(IERC20(USDC).balanceOf(address(kim)), 2000 * USD);
-        
-        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
-
-        assertTrue(kim.try_deposit(address(pool1), 1000 * USD), "Fail to deposit liquidity");                                      // Add another 1000 USDC.
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");   // Fund the loan.
-        hevm.warp(start + pool1.penaltyDelay());                                                                                   // Fast-forward to claim all proportionate interest.
-        _drawDownLoan(1000 * USD, loan3, hal);                                                                                     // Draw down the loan.
-        _makeLoanPayment(loan3, hal);                                                                                              // Make loan payment.
-        sid.claim(address(pool1), address(loan3), address(dlFactory1));                                                            // Fund claimed by the pool.
-
-        uint256 interest = pool1.withdrawableFundsOf(address(kim));
-
-        make_withdrawable(kim, pool1);
-        kim.withdraw(address(pool1), withdrawAmount);
-        uint256 bal1 = IERC20(USDC).balanceOf(address(kim));
-
-        assertEq(bal1 - bal0, interest);
-    }
-
-    function test_withdraw_principal_penalty() public {
-        setUpWithdraw();
-        
-        sid.setPrincipalPenalty(address(pool1), 500);
-        assertTrue(sid.try_setLockupPeriod(address(pool1), 0));
-        assertEq(pool1.lockupPeriod(), uint256(0));
-
-        mint("USDC", address(kim), 2000 * USD);
-        kim.approve(USDC, address(pool1), MAX_UINT);
-
-        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
-        uint256 depositAmount = 1000 * USD;
-        assertTrue(kim.try_deposit(address(pool1), depositAmount));  // Deposit and withdraw in same tx
-        make_withdrawable(kim, pool1);
-
-        (uint total_kim, uint principal_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
-
-        withinPrecision(total_kim,     966 * USD, 3);
-        withinPrecision(principal_kim, 966 * USD, 3);
-        assertEq(interest_kim,          0);
-
-        kim.withdraw(address(pool1), depositAmount);
-        uint256 bal1 = IERC20(USDC).balanceOf(address(kim));  // Balance after principal penalty
-
-        withinPrecision(bal0 - bal1, 33 * USD, 2); // 3% principal penalty.
-    }
-
-    function test_withdraw_principal_and_interest_penalty() public {
-        setUpWithdraw();
-
-        uint start = block.timestamp;
-        
-        sid.setPrincipalPenalty(address(pool1), 500);
-        assertTrue(sid.try_setLockupPeriod(address(pool1), 0));
-        assertEq(pool1.lockupPeriod(), uint256(0));
-
-        mint("USDC", address(kim), 2000 * USD);
-        kim.approve(USDC, address(pool1), MAX_UINT);
-        
-        // Do another deposit with same amount
-        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));  // Get balance before deposit
-        uint256 depositAmount = 1000 * USD;
-        uint256 lpToken       = 1000 * WAD;
-        uint256 beforeTotalSupply = pool1.totalSupply();
-
-        {
-            uint256 beforeLLBalance = IERC20(USDC).balanceOf(pool1.liquidityLocker());
-
-            assertTrue(kim.try_deposit(address(pool1),  depositAmount));  // Add another 1000 USDC.
-            assertTrue(kim.try_intendToWithdraw(address(pool1)));                                                           
-            assertEq(pool1.balanceOf(address(kim)),     lpToken, "Failed to update LP balance");                                   // Verify the LP token balance.
-            assertEq(pool1.totalSupply(),               beforeTotalSupply.add(lpToken), "Failed to update the TS");                // Pool total supply get increase by the lpToken.
-            assertEq(_getLLBal(pool1),                  beforeLLBalance.add(depositAmount), "Failed to update the LL balance");    // Make sure liquidity locker balance get increases.
-
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");  // Fund the loan.
-            assertEq(_getLLBal(pool1),                  beforeLLBalance, "Failed to update the LL balance");                          // Make sure liquidity locker balance get increases.
-
-            _drawDownLoan(1000 * USD, loan3, hal);                             // Draw down the loan.
-            hevm.warp(start + pool1.penaltyDelay() - 10 days);                 // Fast-forward to claim all proportionate interest, taking a penalty
-            _makeLoanPayment(loan3, hal);                                      // Make loan payment.
-            sid.claim(address(pool1), address(loan3), address(dlFactory1));    // Fund claimed by the pool
-        }
-
-        {
-            uint256 interest       = pool1.withdrawableFundsOf(address(kim));
-            uint256 priPenalty     = pool1.principalPenalty().mul(depositAmount).div(10_000);            // Calculate flat principal penalty.
-            uint256 totPenalty     = pool1.calcWithdrawPenalty(interest.add(priPenalty), address(kim));  // Get total penalty
-            uint256 oldInterestSum = pool1.interestSum();
-            
-            (uint256 total_kim,,) = pool1.claimableFunds(address(kim));
-            uint256 bal1 = IERC20(USDC).balanceOf(address(kim));  // Get balance before withdraw
-
-            kim.withdraw(address(pool1), depositAmount);
-
-            uint256 bal2 = IERC20(USDC).balanceOf(address(kim));                                          // Get balance after withdraw
-            uint256 balanceDiff = bal2 > bal0 ? bal2 - bal0 : bal0 - bal2;                                // Get balance difference between before deposit and after withdraw
-            uint256 extraAmount = totPenalty > interest ? totPenalty - interest : interest - totPenalty;  // Get amount from interest/pentalty
-
-            assertEq(total_kim, bal2 - bal1);
-            assertTrue(totPenalty != uint256(0));
-            withinPrecision(balanceDiff, extraAmount, 6);                                                                        // All of principal returned, plus interest
-            assertEq(pool1.balanceOf(address(kim)),                 0,                    "Failed to burn the tokens");          // LP tokens get burned.
-            assertEq(pool1.totalSupply(),                           beforeTotalSupply,    "Failed to decrement the supply");     // Supply get reset.
-            assertEq(oldInterestSum.sub(interest).add(totPenalty),  pool1.interestSum(),  "Failed to update the interest sum");  // Interest sum is increased by totPenalty and decreased by the entitled interest.
-        }
-    }
-
     function test_withdraw_protocol_paused() public {
         setUpWithdraw();
         
-        sid.setPrincipalPenalty(address(pool1), 0);
         assertTrue(sid.try_setLockupPeriod(address(pool1), 0));
         assertEq(pool1.lockupPeriod(), uint256(0));
 
@@ -1886,37 +1715,6 @@ contract PoolTest is TestUtil {
         assertTrue(kim.try_withdraw(address(pool1), 1000 * USD));
 
         assertEq(IERC20(USDC).balanceOf(address(kim)), 2000 * USD);
-    }
-
-    function test_setPenaltyDelay() public {
-        assertEq(pool1.penaltyDelay(), 30 days);
-        assertTrue(!joe.try_setPenaltyDelay(address(pool1), 45 days));
-        
-        // Pause protocol and attempt setPenaltyDelay()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_setPenaltyDelay(address(pool1), 45 days));
-        assertEq(pool1.penaltyDelay(), 30 days);
-
-        // Unpause protocol and setPenaltyDelay()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_setPenaltyDelay(address(pool1), 45 days));
-        assertEq(pool1.penaltyDelay(), 45 days);
-        
-    }
-
-    function test_setPrincipalPenalty() public {
-        assertEq(pool1.principalPenalty(), 500);
-        assertTrue(!joe.try_setPrincipalPenalty(address(pool1), 1125));
-
-        // Pause protocol and attempt setPrincipalPenalty()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_setPrincipalPenalty(address(pool1), 1125));
-        assertEq(pool1.principalPenalty(), 500);
-
-        // Unpause protocol and setPrincipalPenalty()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_setPrincipalPenalty(address(pool1), 1125));
-        assertEq(pool1.principalPenalty(), 1125);
     }
 
     function _makeLoanPayment(Loan _loan, Borrower by) internal {
