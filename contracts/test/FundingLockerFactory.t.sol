@@ -23,7 +23,7 @@ contract FundingLockerFactoryTest is TestUtil {
         gov       = new Governor();                                  // Actor: Governor of Maple.
 
         mpl       = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
-        globals   = gov.createGlobals(address(mpl), BPOOL_FACTORY);  // Setup Maple Globals.
+        globals   = gov.createGlobals(address(mpl));                 // Setup Maple Globals.
         flFactory = new FundingLockerFactory();                      // Setup Funding Locker Factory to support Loan Factory creation.
         assertEq(flFactory.factoryType(), uint(2), "Incorrect factory type");
     }

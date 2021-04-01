@@ -15,6 +15,8 @@ import "../Pool.sol";
 import "../PoolFactory.sol";
 import "../StakeLockerFactory.sol";
 
+import "../interfaces/IBFactory.sol";
+
 import "module/maple-token/contracts/MapleToken.sol";
 
 contract MplRewardsTest is TestUtil {
@@ -49,7 +51,7 @@ contract MplRewardsTest is TestUtil {
         sid     = new PoolDelegate();                // Actor: Manager of the Pool.
 
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = gov.createGlobals(address(mpl), BPOOL_FACTORY);
+        globals     = gov.createGlobals(address(mpl));
         slFactory   = new StakeLockerFactory();                        // Setup the SL factory to facilitate Pool factory functionality.
         llFactory   = new LiquidityLockerFactory();                    // Setup the SL factory to facilitate Pool factory functionality.
         poolFactory = new PoolFactory(address(globals));               // Create pool factory.
