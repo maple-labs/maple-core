@@ -24,6 +24,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     address public immutable liquidityAsset;  // The liquidityAsset for the Pool as well as the dividend token for FDT interest.
     address public immutable pool;            // The parent liquidity pool.
 
+    uint256 public lockupPeriod;  // No. of seconds for which unstaking is not allowed.
+
     mapping(address => uint256) public stakeDate;      // Map address to effective stake date value
     mapping(address => uint256) public stakeCooldown;  // Timestamp of when staker called cooldown()
     mapping(address => bool)    public allowed;        // Map address to allowed status
@@ -46,6 +48,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         liquidityAsset = _liquidityAsset;
         stakeAsset     = IERC20(_stakeAsset);
         pool           = _pool;
+        lockupPeriod   = 180 days; // (TBD)
     }
 
     /*****************/
@@ -104,6 +107,17 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _isValidPoolDelegate();
         openToPublic = true;
         emit StakeLockerOpened();
+    }
+
+    /**
+        @dev Set the lockup period. Only Pool Delegate can call this function.
+        @param _newLockupPeriod New lockup period used to restrict the unstaking.
+     */
+    function setLockupPeriod(uint256 _newLockupPeriod) external {
+        _whenProtocolNotPaused();
+        _isValidPoolDelegate();
+        require(_newLockupPeriod <= lockupPeriod, "StakeLocker:INVALID_VALUE");
+        lockupPeriod = _newLockupPeriod;
     }
 
     /**
@@ -178,9 +192,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function unstake(uint256 amt) external canUnstake {
         _whenProtocolNotPaused();
         _isCooldownFinished(stakeCooldown[msg.sender]);
-        require(amt <= getUnstakeableBalance(msg.sender), "StakeLocker:AMT_GT_UNSTAKEABLE_BALANCE");
-
-        amt = totalSupply() == amt && amt > 0 ? amt - 1 : amt;  // If last withdraw, subtract 1 wei to maintain FDT accounting
+        require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "StakeLocker:FUNDS_LOCKED");
 
         stakeCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what unstake amount is
 
@@ -242,23 +254,6 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function unpause() external {
         _isValidAdminOrPoolDelegate();
         super._unpause();
-    }
-
-    /************************/
-    /*** Getter Functions ***/
-    /************************/
-
-    /**
-        @dev Returns information for staker's unstakeable balance.
-        @param staker The address to view information for
-        @return balance Amount of BPTs staker can unstake
-    */
-    function getUnstakeableBalance(address staker) public view returns (uint256 balance) {
-        uint256 bal          = balanceOf(staker);
-        uint256 passedTime   = block.timestamp - stakeDate[staker];
-        uint256 unstakeDelay = _globals().unstakeDelay();
-        uint256 out          = unstakeDelay != uint256(0) ? passedTime.mul(bal).div(unstakeDelay) : bal;
-        balance = out > bal ? bal : out;
     }
 
     /************************/
