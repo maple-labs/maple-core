@@ -61,6 +61,11 @@ contract LP {
         (ok,) = pool.call(abi.encodeWithSignature(sig));
     }
 
+    function try_cancelWithdraw(address pool) external returns (bool ok) {
+        string memory sig = "cancelWithdraw()";
+        (ok,) = pool.call(abi.encodeWithSignature(sig));
+    }
+
     function try_transfer(address pool, address who, uint256 amt) external returns (bool ok) {
         string memory sig = "transfer(address,uint256)";
         (ok,) = pool.call(abi.encodeWithSignature(sig, who, amt));

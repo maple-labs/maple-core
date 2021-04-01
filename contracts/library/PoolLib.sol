@@ -24,7 +24,7 @@ library PoolLib {
 
     event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event DepositDateUpdated(address indexed lp, uint256 depositDate);
-    event           Cooldown(address indexed lp);
+    event           Cooldown(address indexed lp, uint256 cooldown);
 
     /***************************************/
     /*** Pool Delegate Utility Functions ***/
@@ -221,18 +221,23 @@ library PoolLib {
     }
 
     /**
-        @dev View function to indicate if cooldown period has passed for msg.sender
+        @dev View function to indicate if msg.sender is within their withdraw window
     */
-    function isCooldownFinished(uint256 _depositCooldown, IGlobals globals) public view {
-        require(_depositCooldown != uint256(0), "Pool:COOLDOWN_NOT_SET");
-        require(block.timestamp > _depositCooldown + globals.cooldownPeriod(), "Pool:COOLDOWN_NOT_FINISHED");
+    function isWithdrawAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
+        uint256 endOfCooldownPeriod = withdrawCooldown + globals.lpCooldownPeriod();  // Timestamp of when cooldown period has ended for LP (start of withdraw window)
+
+        bool isCooldownSet      = withdrawCooldown != uint256(0);
+        bool isCooldownFinished = block.timestamp >= endOfCooldownPeriod;
+        bool isWithinWindow     = block.timestamp - endOfCooldownPeriod <= globals.lpWithdrawWindow();
+
+        return isCooldownSet && isCooldownFinished && isWithinWindow;
     }
 
     /**
         @dev Performing some checks before doing actual transfers.
     */
     function prepareTransfer(
-        mapping(address => uint256) storage depositCooldown,
+        mapping(address => uint256) storage withdrawCooldown,
         mapping(address => uint256) storage depositDate,
         address from,
         address to,
@@ -242,19 +247,29 @@ library PoolLib {
     ) external {
         // If transferring in or out of yield farming contract, do not update depositDate
         if (!globals.isValidMplRewards(from) && !globals.isValidMplRewards(to)) {
-            isCooldownFinished(depositCooldown[from], globals);
-            depositCooldown[from] = uint256(0);
-            updateDepositDate(depositDate, toBalance, wad, to);
+            isWithdrawAllowed(withdrawCooldown[from], globals);  // Sender must be within withdraw window
+            withdrawCooldown[from] = uint256(0);                 // Reset sender withdraw cooldown
+            updateDepositDate(depositDate, toBalance, wad, to);  // Update deposit date of receiver
+            emit Cooldown(from, 0);
         }
     }
 
     /**
         @dev Signal to withdraw the funds from the pool.
      */
-    function intendToWithdraw(mapping(address => uint256) storage depositCooldown, uint256 balance) external {
+    function intendToWithdraw(mapping(address => uint256) storage withdrawCooldown, uint256 balance) external {
         require(balance != uint256(0), "Pool:ZERO_BALANCE");
-        depositCooldown[msg.sender] = block.timestamp;
-        emit Cooldown(msg.sender);
+        withdrawCooldown[msg.sender] = block.timestamp;
+        emit Cooldown(msg.sender, block.timestamp);
+    }
+
+    /**
+        @dev Cancel an initiated withdrawal.
+     */
+    function cancelWithdraw(mapping(address => uint256) storage withdrawCooldown) external {
+        require(withdrawCooldown[msg.sender] != uint256(0), "Pool:NOT_WITHDRAWING");
+        withdrawCooldown[msg.sender] = 0;
+        emit Cooldown(msg.sender, 0);
     }
 
     /**********************************/
