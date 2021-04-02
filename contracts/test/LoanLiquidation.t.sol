@@ -165,7 +165,7 @@ contract LoanLiquidationTest is TestUtil {
     }
 
     function createAndFundLoan(address _interestStructure, address _collateral, uint256 collateralRatio) internal returns (Loan loan) {
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), collateralRatio, 7];
+        uint256[5] memory specs = [500, 90, 30, uint256(1000 * USD), collateralRatio];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
         loan = ali.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);

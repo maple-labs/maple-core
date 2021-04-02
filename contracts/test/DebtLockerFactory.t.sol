@@ -66,7 +66,7 @@ contract DebtLockerFactoryTest is TestUtil {
         gov.setLoanAsset(USDC, true);        // Add loan asset in to the valid list.
         gov.setCollateralAsset(WETH, true);  // Add collateral asset into the valid list
 
-        uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];                                // Create specs for a loan.
+        uint256[5] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30];                                   // Create specs for a loan.
         loan = ILoan(lFactory.createLoan(USDC, WETH, address(flFactory), address(clFactory), specs, calcs));  // Create loan using LF.
         
         assertEq(lFactory.loansCreated(), 1, "Incorrect loan instantiation");  // Should be incrementer by 1.

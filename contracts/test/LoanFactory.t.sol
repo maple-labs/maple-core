@@ -95,7 +95,7 @@ contract LoanFactoryTest is TestUtil {
         gov.setLoanAsset(USDC, true);
         gov.setCollateralAsset(WETH, true);
 
-        uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
+        uint256[5] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30];
 
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
@@ -120,7 +120,7 @@ contract LoanFactoryTest is TestUtil {
         gov.setLoanAsset(USDC, true);
         gov.setCollateralAsset(WETH, true);
 
-        uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
+        uint256[5] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30];
 
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, [calcs[1], calcs[1], calcs[2]]));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
@@ -141,7 +141,7 @@ contract LoanFactoryTest is TestUtil {
     function test_createLoan_invalid_assets_and_specs() public {
         set_valid_factories();
         address[3] memory calcs = set_calcs();
-        uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
+        uint256[5] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30];
 
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
@@ -157,19 +157,15 @@ contract LoanFactoryTest is TestUtil {
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Fails because of error - ERR_PAYMENT_INTERVAL_DAYS_EQUALS_ZERO
-        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 0, 10_000_000 * MULTIPLIER, 30, 5], calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 0, 10_000_000 * MULTIPLIER, 30], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Fails because of error - ERR_INVALID_TERM_AND_PAYMENT_INTERVAL_DIVISION
-        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 19, 2, 10_000_000 * MULTIPLIER, 30, 5], calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 19, 2, 10_000_000 * MULTIPLIER, 30], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Fails because of error - ERR_REQUEST_AMT_EQUALS_ZERO
-        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [uint256(10), 10, 2, uint256(0), 30, 5], calcs));
-        assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
-
-        // fails because of error - ERR_FUNDING_PERIOD_EQUALS_ZERO
-        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 0], calcs));
+        assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), [uint256(10), 10, 2, uint256(0), 30], calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
         // Should successfully created
@@ -180,7 +176,7 @@ contract LoanFactoryTest is TestUtil {
     function test_createLoan_paused() public {
         set_valid_factories();
         address[3] memory calcs = set_calcs();
-        uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
+        uint256[5] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30];
         gov.setLoanAsset(USDC, true);
         gov.setCollateralAsset(WETH, true);
 
@@ -211,7 +207,7 @@ contract LoanFactoryTest is TestUtil {
         gov.setLoanAsset(USDC, true);
         gov.setCollateralAsset(WETH, true);
 
-        uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
+        uint256[5] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30];
 
         // Verify the loan gets created successfully.
         assertTrue(borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
@@ -232,7 +228,7 @@ contract LoanFactoryTest is TestUtil {
         assertEq(loan.paymentIntervalSeconds(),    specs[2].mul(1 days), "Incorrect payment interval in seconds");
         assertEq(loan.requestAmount(),             specs[3], "Incorrect request amount value");
         assertEq(loan.collateralRatio(),           specs[4], "Incorrect collateral ratio");
-        assertEq(loan.fundingPeriodSeconds(),      specs[5].mul(1 days), "Incorrect funding period in seconds");
+        assertEq(loan.fundingPeriodSeconds(),      globals.defaultGracePeriod(), "Incorrect funding period in seconds");
         assertEq(loan.repaymentCalc(),             calcs[0], "Incorrect repayment calculator");
         assertEq(loan.lateFeeCalc(),               calcs[1], "Incorrect late fee calculator");
         assertEq(loan.premiumCalc(),               calcs[2], "Incorrect premium calculator");

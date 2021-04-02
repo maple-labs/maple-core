@@ -207,7 +207,7 @@ contract PoolTest is TestUtil {
         ));
 
         // loan Specifications
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan  = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
@@ -885,7 +885,7 @@ contract PoolTest is TestUtil {
         assertTrue(dan.try_deposit(address(pool1), 10_000 * USD));
 
         // Create Loan with 0% CR so no claimable funds are present after default
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 0, 7];
+        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 0];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         Loan zero_loan = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
@@ -924,7 +924,7 @@ contract PoolTest is TestUtil {
         premiumCalc = new PremiumCalc(0); // Flat 0% premium
         gov.setCalc(address(premiumCalc), true);
 
-        uint256[6] memory specs = [0, 180, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [0, 180, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan  = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);

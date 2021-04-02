@@ -201,7 +201,7 @@ contract PoolLiquidationTest is TestUtil {
         stakeLocker_b = IStakeLocker(pool_b.stakeLocker());
 
         // loan Specifications
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan = che.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);

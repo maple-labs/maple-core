@@ -172,7 +172,7 @@ contract LoanTest is TestUtil {
     }
 
     function test_createLoan() public {
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         // Can't create a loan with DAI since stakingAsset uses USDC.
@@ -192,14 +192,14 @@ contract LoanTest is TestUtil {
         assertEq(loan.paymentIntervalSeconds(),    specs[2] * 1 days);
         assertEq(loan.requestAmount(),             specs[3]);
         assertEq(loan.collateralRatio(),           specs[4]);
-        assertEq(loan.fundingPeriodSeconds(),      specs[5] * 1 days);
+        assertEq(loan.fundingPeriodSeconds(),      globals.defaultGracePeriod());
         assertEq(loan.repaymentCalc(),             address(repaymentCalc));
         assertEq(loan.lateFeeCalc(),               address(lateFeeCalc));
         assertEq(loan.premiumCalc(),               address(premiumCalc));
     }
 
     function test_fundLoan() public {
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 90, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         Loan loan = ali.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
@@ -245,7 +245,7 @@ contract LoanTest is TestUtil {
     }
 
     function createAndFundLoan(address _interestStructure) internal returns (Loan loan) {
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 90, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
         loan = ali.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);

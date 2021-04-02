@@ -115,7 +115,6 @@ contract Loan is FDT, Pausable {
                 specs[2] = paymentIntervalDays (aka PID)
                 specs[3] = requestAmount
                 specs[4] = collateralRatio
-                specs[5] = fundingPeriodDays
         @param  calcs The calculators used for the loan
                 calcs[0] = repaymentCalc
                 calcs[1] = lateFeeCalc
@@ -127,7 +126,7 @@ contract Loan is FDT, Pausable {
         address _collateralAsset,
         address _flFactory,
         address _clFactory,
-        uint256[6] memory specs,
+        uint256[5] memory specs,
         address[3] memory calcs
     )
         FDT(
@@ -146,7 +145,6 @@ contract Loan is FDT, Pausable {
         require(specs[2] != uint256(0),               "Loan:PID_EQ_ZERO");
         require(specs[1].mod(specs[2]) == uint256(0), "Loan:INVALID_TERM_DAYS");
         require(specs[3] > uint256(0),                "Loan:REQUEST_AMT_EQ_ZERO");
-        require(specs[5] > uint256(0),                "Loan:FUNDING_PERIOD_EQ_ZERO");
 
         borrower        = _borrower;
         loanAsset       = IERC20(_loanAsset);
@@ -162,7 +160,7 @@ contract Loan is FDT, Pausable {
         paymentIntervalSeconds = specs[2].mul(1 days);
         requestAmount          = specs[3];
         collateralRatio        = specs[4];
-        fundingPeriodSeconds   = specs[5].mul(1 days);
+        fundingPeriodSeconds   = globals.defaultGracePeriod().mul(1 days);
         repaymentCalc          = calcs[0];
         lateFeeCalc            = calcs[1];
         premiumCalc            = calcs[2];
@@ -314,6 +312,8 @@ contract Loan is FDT, Pausable {
         _whenProtocolNotPaused();
         _isValidState(State.Live);
         _isValidPool();
+        _isWithinFundingPeriod();
+
         loanAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
 
         uint256 wad = _toWad(amt);  // Convert to WAD precision
@@ -558,6 +558,13 @@ contract Loan is FDT, Pausable {
             IPoolFactory(poolFactory).isPool(pool),
             "Loan:INVALID_LENDER"
         );
+    }
+
+    /**
+        @dev Utility to ensure currently within the funding period.
+    */
+    function _isWithinFundingPeriod() internal view {	
+        require(block.timestamp <= createdAt.add(fundingPeriodSeconds), "Loan:PAST_FUNDING_PERIOD");
     }
 
     /**

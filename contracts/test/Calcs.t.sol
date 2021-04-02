@@ -213,8 +213,8 @@ contract CalcsTest is TestUtil {
 
             // Create loan, fund loan, draw down on loan
             address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
-            uint256[6] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000, 7];
-            loan = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
+            uint256[5] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000];
+            loan = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         }
 
         assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), loanAmt));
