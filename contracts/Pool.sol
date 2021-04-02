@@ -340,7 +340,7 @@ contract Pool is PoolFDT {
         _isValidState(State.Finalized);
         require(isDepositAllowed(amt), "Pool:NOT_ALLOWED");
 
-        withdrawCooldown[msg.sender] = uint256(0);  // Reset withdrawCooldown if staker had previously intended to unstake
+        withdrawCooldown[msg.sender] = uint256(0);  // Reset withdrawCooldown if LP had previously intended to withdraw
 
         uint256 wad = _toWad(amt);
         PoolLib.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
@@ -360,7 +360,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Cancels an initiated withdrawal by resetting the cooldown period to 0.
+        @dev Cancels an initiated withdrawal by resetting withdrawCooldown.
     **/
     function cancelWithdraw() external {
         PoolLib.cancelWithdraw(withdrawCooldown);
@@ -376,7 +376,7 @@ contract Pool is PoolFDT {
         require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "Pool:WITHDRAW_NOT_ALLOWED");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "Pool:FUNDS_LOCKED");
 
-        withdrawCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what transfer amount is
+        withdrawCooldown[msg.sender] = uint256(0);  // Reset withdrawCooldown no matter what withdraw amount is
 
         _burn(msg.sender, wad);  // Burn the corresponding FDT balance
         withdrawFunds();         // Transfer full entitled interest, decrement `interestSum`

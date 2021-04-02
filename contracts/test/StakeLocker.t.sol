@@ -442,6 +442,39 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.stakeDate(address(ali)), start + globals.stakerCooldownPeriod() + 2 days);  // Ali stake date = 1/(1+1) * (3 days + coolDown - (1 days + cooldown)) + (1 days + cooldown) = 1/2 * (3 + 10 - (1 + 10)) + (1+10) = 12 days past start
     }
 
+    function test_stake_transfer_recipient_withdrawing() public {
+        sid.openStakeLockerToPublic(address(stakeLocker));
+
+        uint256 start = block.timestamp;
+        uint256 stakeAmt = 25 * WAD;
+
+        // Stake BPTs into StakeLocker
+        che.approve(address(bPool), address(stakeLocker), stakeAmt);
+        che.stake(address(stakeLocker), stakeAmt);
+        dan.approve(address(bPool), address(stakeLocker), stakeAmt);
+        dan.stake(address(stakeLocker), stakeAmt);
+
+         // Staker (Dan) initiates unstake
+        assertTrue(dan.try_intendToUnstake(address(stakeLocker)));
+        assertEq(stakeLocker.unstakeCooldown(address(dan)), start);
+
+        // Staker (Che) fails to transfer to Staker (Dan) who is currently unstaking
+        assertTrue(!che.try_transfer(address(stakeLocker), address(dan), stakeAmt));
+        hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow());  // Very end of Staker unstake window
+        assertTrue(!che.try_transfer(address(stakeLocker), address(dan), stakeAmt));
+
+        // Staker (Che) successfully transfers to Staker (Dan) who is now outside unstake window
+        hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow() + 1);  // Second after Staker unstake window ends
+        assertTrue(che.try_transfer(address(stakeLocker), address(dan), stakeAmt));
+
+        // Check balances and stake dates are correct
+        assertEq(stakeLocker.balanceOf(address(che)), 0);
+        assertEq(stakeLocker.balanceOf(address(dan)), stakeAmt * 2);
+        uint256 newStakeDate = start + (block.timestamp - start) * (stakeAmt) / ((stakeAmt) + (stakeAmt));
+        assertEq(stakeLocker.stakeDate(address(che)), start);         // Stays the same
+        assertEq(stakeLocker.stakeDate(address(dan)), newStakeDate);  // Gets updated
+    }
+
     function setUpLoanAndRepay() public {
         mint("USDC", address(ali), 10_000_000 * USD);  // Mint USDC to LP
         ali.approve(USDC, address(pool), MAX_UINT);    // LP approves USDC
