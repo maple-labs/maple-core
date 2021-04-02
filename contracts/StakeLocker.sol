@@ -282,17 +282,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev View function to indicate if recipient is allowed to receive a transfer.
-        This is only possible if they have zero cooldown or they are passed their unstake window.
+        This is only possible if they have zero cooldown or they are past their unstake window.
     */
     function isReceiveAllowed(uint256 unstakeCooldown) public view returns (bool) {
         IGlobals globals = _globals();
-
-        uint256 endOfUnstakeWindow = unstakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow();  // Timestamp of end of unstake window for staker
-
-        bool isCooldownSet  = unstakeCooldown != uint256(0);
-        bool isWithinWindow = block.timestamp <= endOfUnstakeWindow;
-
-        return !isCooldownSet || !isWithinWindow;
+        return block.timestamp > unstakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow();
     }
 
     /**

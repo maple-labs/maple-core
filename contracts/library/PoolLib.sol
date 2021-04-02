@@ -232,12 +232,7 @@ library PoolLib {
         This is only possible if they have zero cooldown or they are passed their withdraw window.
     */
     function isReceiveAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
-        uint256 endOfWithdrawWindow = withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow();  // Timestamp of end of withdraw window for LP
-
-        bool isCooldownSet  = withdrawCooldown != uint256(0);
-        bool isWithinWindow = block.timestamp <= endOfWithdrawWindow;
-
-        return !isCooldownSet || !isWithinWindow;
+        return block.timestamp > withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow();
     }
 
     /**
