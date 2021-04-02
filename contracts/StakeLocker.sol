@@ -206,7 +206,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function cancelUnstake() external {
         require(unstakeCooldown[msg.sender] != uint256(0), "StakeLocker:NOT_UNSTAKING");
         unstakeCooldown[msg.sender] = 0;
-        emit Cooldown(msg.sender );
+        emit Cooldown(msg.sender, 0);
     }
 
     /**
@@ -225,6 +225,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         stakeAsset.safeTransfer(msg.sender, amt.sub(recognizeLosses()));  // Unstake amt minus losses
 
         emit Unstake(amt, msg.sender);
+        emit Cooldown(msg.sender, 0);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
