@@ -301,7 +301,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev View function to indicate if recipient is allowed to receive a transfer
+        @dev View function to indicate if recipient is allowed to receive a transfer.
+        This is only possible if they have zero cooldown or they are passed their unstake window.
     */
     function isReceiveAllowed(uint256 unstakeCooldown) public view returns (bool) {
         IGlobals globals = _globals();

@@ -236,7 +236,8 @@ library PoolLib {
     }
 
     /**
-        @dev View function to indicate if recipient is allowed to receive a transfer
+        @dev View function to indicate if recipient is allowed to receive a transfer.
+        This is only possible if they have zero cooldown or they are passed their withdraw window.
     */
     function isReceiveAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
         uint256 endOfWithdrawWindow = withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow();  // Timestamp of end of withdraw window for LP
