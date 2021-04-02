@@ -162,7 +162,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the valid PoolFactory mapping. Only Governor can call.
+        @dev Update the valid LoanFactory mapping. Only Governor can call.
         @param loanFactory Address of LoanFactory
         @param valid       The new bool value for validating loanFactory.
     */
