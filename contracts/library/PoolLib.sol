@@ -24,7 +24,7 @@ library PoolLib {
 
     event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event DepositDateUpdated(address indexed lp, uint256 depositDate);
-    event           Cooldown(address indexed lp);
+    event           Cooldown(address indexed lp, uint256 cooldown);
 
     /***************************************/
     /*** Pool Delegate Utility Functions ***/
@@ -199,25 +199,6 @@ library PoolLib {
     /*** Liquidity Provider Utility Functions ***/
     /********************************************/
 
-    /** 
-        @dev Calculate the amount of funds to deduct from total claimable amount based on how
-             the effective length of time a user has been in a pool. This is a linear decrease
-             until block.timestamp - depositDate[who] >= penaltyDelay, after which it returns 0.
-        @param  lockupPeriod Timeperiod during which all funds are locked
-        @param  penaltyDelay After this timestamp there is no penalty
-        @param  amt          Amount to calculate penalty for (all interest plus portion of principal) 
-        @param  depositDate  Weighted timestamp representing effective deposit date
-        @return penalty Total penalty
-    */
-    function calcWithdrawPenalty(uint256 lockupPeriod, uint256 penaltyDelay, uint256 amt, uint256 depositDate) public view returns (uint256 penalty) {
-        if (lockupPeriod < penaltyDelay) {
-            uint256 dTime    = block.timestamp.sub(depositDate);
-            uint256 unlocked = dTime.mul(amt).div(penaltyDelay);
-
-            penalty = unlocked > amt ? 0 : amt - unlocked;
-        }
-    }
-
     /**
         @dev Update the effective deposit date based on how much new capital has been added.
              If more capital is added, the depositDate moves closer to the current timestamp.
@@ -240,40 +221,57 @@ library PoolLib {
     }
 
     /**
-        @dev View function to indicate if cooldown period has passed for msg.sender
+        @dev View function to indicate if msg.sender is within their withdraw window
     */
-    function isCooldownFinished(uint256 _depositCooldown, IGlobals globals) public view {
-        require(_depositCooldown != uint256(0), "Pool:COOLDOWN_NOT_SET");
-        require(block.timestamp > _depositCooldown + globals.cooldownPeriod(), "Pool:COOLDOWN_NOT_FINISHED");
+    function isWithdrawAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
+        return block.timestamp - (withdrawCooldown + globals.lpCooldownPeriod()) <= globals.lpWithdrawWindow();
+    }
+
+    /**
+        @dev View function to indicate if recipient is allowed to receive a transfer.
+        This is only possible if they have zero cooldown or they are passed their withdraw window.
+    */
+    function isReceiveAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
+        return block.timestamp > withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow();
     }
 
     /**
         @dev Performing some checks before doing actual transfers.
     */
     function prepareTransfer(
-        mapping(address => uint256) storage depositCooldown,
+        mapping(address => uint256) storage withdrawCooldown,
         mapping(address => uint256) storage depositDate,
         address from,
         address to,
         uint256 wad,
         IGlobals globals,
-        uint256 toBalance
+        uint256 toBalance,
+        uint256 recognizableLosses
     ) external {
-        // If transferring in or out of yield farming contract, do not update depositDate
+        // If transferring in or out of yield farming contract, do not update depositDate or cooldown
         if (!globals.isValidMplRewards(from) && !globals.isValidMplRewards(to)) {
-            isCooldownFinished(depositCooldown[from], globals);
-            depositCooldown[from] = uint256(0);
-            updateDepositDate(depositDate, toBalance, wad, to);
+            require(isReceiveAllowed(withdrawCooldown[to], globals), "Pool:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently withdrawing
+            require(recognizableLosses == uint256(0),                "Pool:RECOG_LOSSES");           // If an LP has unrecognized losses, they must recognize losses through withdraw
+            updateDepositDate(depositDate, toBalance, wad, to);                                      // Update deposit date of recipient
         }
     }
 
     /**
-        @dev Signal to withdraw the funds from the pool.
+        @dev Activates the cooldown period to withdraw. It can't be called if the user is not an LP.
      */
-    function intendToWithdraw(mapping(address => uint256) storage depositCooldown, uint256 balance) external {
+    function intendToWithdraw(mapping(address => uint256) storage withdrawCooldown, uint256 balance) external {
         require(balance != uint256(0), "Pool:ZERO_BALANCE");
-        depositCooldown[msg.sender] = block.timestamp;
-        emit Cooldown(msg.sender);
+        withdrawCooldown[msg.sender] = block.timestamp;
+        emit Cooldown(msg.sender, block.timestamp);
+    }
+
+    /**
+        @dev Cancel an initiated withdrawal.
+     */
+    function cancelWithdraw(mapping(address => uint256) storage withdrawCooldown) external {
+        require(withdrawCooldown[msg.sender] != uint256(0), "Pool:NOT_WITHDRAWING");
+        withdrawCooldown[msg.sender] = uint256(0);
+        emit Cooldown(msg.sender, uint256(0));
     }
 
     /**********************************/
@@ -475,9 +473,7 @@ library PoolLib {
         @param  withdrawableFundsOfLp  FDT withdrawableFundsOf LP
         @param  depositDateForLp       LP deposit date
         @param  lockupPeriod           Pool lockup period
-        @param  penaltyDelay           Pool penalty delay
         @param  balanceOfLp            LP FDT balance
-        @param  principalPenalty       Principal penalty percentage
         @param  liquidityAssetDecimals Decimals of liquidityAsset
         @return total     Total     amount claimable
         @return principal Principal amount claimable
@@ -488,9 +484,7 @@ library PoolLib {
         uint256 withdrawableFundsOfLp,
         uint256 depositDateForLp,
         uint256 lockupPeriod,
-        uint256 penaltyDelay,
         uint256 balanceOfLp,
-        uint256 principalPenalty,
         uint256 liquidityAssetDecimals
     ) 
         public
@@ -505,11 +499,7 @@ library PoolLib {
         // Deposit is still within lockupPeriod, user has 0 claimable principal under this condition.
         if (depositDateForLp.add(lockupPeriod) > block.timestamp) total = interest; 
         else {
-            uint256 userBalance  = fromWad(balanceOfLp, liquidityAssetDecimals);
-            uint256 firstPenalty = principalPenalty.mul(userBalance).div(10_000);                                                  // Calculate flat principal penalty
-            uint256 totalPenalty = calcWithdrawPenalty(lockupPeriod, penaltyDelay, interest.add(firstPenalty), depositDateForLp);  // Calculate total penalty
-
-            principal = userBalance.sub(totalPenalty);
+            principal = fromWad(balanceOfLp, liquidityAssetDecimals);
             total     = principal.add(interest);
         }
     }

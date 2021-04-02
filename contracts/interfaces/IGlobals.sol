@@ -34,8 +34,6 @@ interface IGlobals {
 
     function validCollateralAssets() external view returns (address[] memory);
 
-    function unstakeDelay() external view returns (uint256);
-
     function loanFactory() external view returns (address);
 
     function poolFactory() external view returns (address);
@@ -60,5 +58,11 @@ interface IGlobals {
 
     function protocolPaused() external view returns (bool);
 
-    function cooldownPeriod() external view returns(uint256);
+    function stakerCooldownPeriod() external view returns(uint256);
+
+    function lpCooldownPeriod() external view returns(uint256);
+
+    function stakerUnstakeWindow() external view returns(uint256);
+
+    function lpWithdrawWindow() external view returns(uint256);
 }

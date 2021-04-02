@@ -122,7 +122,6 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.mpl(),              address(mpl));
         assertEq(globals.gracePeriod(),            5 days);
         assertEq(globals.swapOutRequired(),        10_000);
-        assertEq(globals.unstakeDelay(),          90 days);
         assertEq(globals.drawdownGracePeriod(),   10 days);
         assertEq(globals.investorFee(),                50);
         assertEq(globals.treasuryFee(),                50);
@@ -263,17 +262,39 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(    !gov.try_setInvestorFee(5_001));  // 100% is combined upper bound
         assertTrue(    !gov.try_setTreasuryFee(5_001));  // 100% is combined upper bound
 
+        // setStakerCooldownPeriod()
+        assertEq(   globals.stakerCooldownPeriod(),     10 days);
+        assertTrue(!fakeGov.try_setStakerCooldownPeriod( 1 days));
+        assertTrue(     gov.try_setStakerCooldownPeriod( 1 days));
+        assertEq(   globals.stakerCooldownPeriod(),      1 days);
+
+        // setLpCooldownPeriod()
+        assertEq(   globals.lpCooldownPeriod(),     10 days);
+        assertTrue(!fakeGov.try_setLpCooldownPeriod( 1 days));
+        assertTrue(     gov.try_setLpCooldownPeriod (1 days));
+        assertEq(   globals.lpCooldownPeriod(),      1 days);
+
+        // setStakerUnstakeWindow()
+        assertEq(   globals.stakerUnstakeWindow(),     2 days);
+        assertTrue(!fakeGov.try_setStakerUnstakeWindow(1 days));
+        assertTrue(     gov.try_setStakerUnstakeWindow(1 days));
+        assertEq(   globals.stakerUnstakeWindow(),     1 days);
+
+        // setLpWithdrawWindow()
+        assertEq(   globals.lpWithdrawWindow(),     2 days);
+        assertTrue(!fakeGov.try_setLpWithdrawWindow(1 days));
+        assertTrue(     gov.try_setLpWithdrawWindow(1 days));
+        assertEq(   globals.lpWithdrawWindow(),     1 days);
+
         // setDrawdownGracePeriod()
         assertEq(   globals.drawdownGracePeriod(),    10 days);
         assertTrue(!fakeGov.try_setDrawdownGracePeriod(1 days));
-        assertTrue(    !gov.try_setDrawdownGracePeriod(1 days - 1));  // Lower bound is 1 day
         assertTrue(     gov.try_setDrawdownGracePeriod(1 days));
         assertEq(   globals.drawdownGracePeriod(),     1 days);
 
         // setGracePeriod()
         assertEq(   globals.gracePeriod(),     5 days);
         assertTrue(!fakeGov.try_setGracePeriod(1 days));
-        assertTrue(    !gov.try_setGracePeriod(1 days - 1));   // Lower bound is 1 day
         assertTrue(     gov.try_setGracePeriod(1 days));
         assertEq(   globals.gracePeriod(),     1 days);
 
@@ -286,14 +307,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setSwapOutRequired(10_000));  // Lower bound is $10,000 of pool cover
         assertEq(   globals.swapOutRequired(),     10_000);
 
-        // setUnstakeDelay()
-        assertEq(   globals.unstakeDelay(),    90 days);
-        assertTrue(!fakeGov.try_setUnstakeDelay(1 days));
-        assertTrue(    !gov.try_setUnstakeDelay(1 days - 1));
-        assertTrue(     gov.try_setUnstakeDelay(1 days));
-        assertEq(   globals.unstakeDelay(),     1 days);
-
-         // setMapleTreasury()
+        // setMapleTreasury()
         assertEq(   globals.mapleTreasury(), address(trs));
         assertTrue(!fakeGov.try_setMapleTreasury(address(this)));
         assertTrue(    !gov.try_setMapleTreasury(address(0)));

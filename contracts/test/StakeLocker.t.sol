@@ -201,25 +201,17 @@ contract StakeLockerTest is TestUtil {
 
         assertTrue(che.try_stake(address(stakeLocker), 5 * WAD)); 
         assertStake(address(che), 20 * WAD, 55 * WAD, 55 * WAD, 5 * WAD, currentDate);
-        assertEq(stakeLocker.getUnstakeableBalance(address(che)), 0);
 
         currentDate = currentDate + 1 days;
         hevm.warp(currentDate);
 
         assertTrue(dan.try_stake(address(stakeLocker), 4 * WAD));
         assertStake(address(dan), 21 * WAD, 59 * WAD, 59 * WAD, 4 * WAD, currentDate);
-        assertEq(stakeLocker.getUnstakeableBalance(address(dan)), 0);
 
         uint256 oldStakeDate = stakeLocker.stakeDate(address(che));
         uint256 newStakeDate = getNewStakeDate(address(che), 5 * WAD);
 
-        uint256 che_unstakeableBal_before = stakeLocker.getUnstakeableBalance(address(che));
-        assertEq(che_unstakeableBal_before, 55555555555555555);
-
         assertTrue(che.try_stake(address(stakeLocker), 5 * WAD)); 
-
-        uint256 che_unstakeableBal_after = stakeLocker.getUnstakeableBalance(address(che));
-        assertEq(che_unstakeableBal_after, che_unstakeableBal_before);
 
         assertStake(address(che), 15 * WAD, 64 * WAD, 64 * WAD, 10 * WAD, newStakeDate);
         assertEq(newStakeDate - oldStakeDate, 12 hours);  // coef will be 0.5 days.
@@ -340,6 +332,56 @@ contract StakeLockerTest is TestUtil {
         assertTrue(che.try_withdrawFunds(address(stakeLocker)));
     }
 
+    function test_unstake_cooldown() public {
+
+        sid.setAllowlistStakeLocker(address(pool), address(che), true); // Add Staker to allowlist
+
+        che.approve(address(bPool), address(stakeLocker), 15 * WAD); // Stake tokens
+        assertTrue(che.try_stake(address(stakeLocker), 15 * WAD));
+
+        hevm.warp(block.timestamp + stakeLocker.lockupPeriod());  // Warp to end of lockup for test
+
+        gov.setStakerCooldownPeriod(10 days);
+
+        uint256 amt = 5 * WAD; // 1/3 of stake so unstake can happen thrice
+
+        uint256 start = block.timestamp;
+
+        assertTrue(!che.try_unstake(address(stakeLocker), amt),    "Should fail to unstake 10 WAD because user has to intendToWithdraw");
+        assertTrue( che.try_intendToUnstake(address(stakeLocker)), "Failed to intend to unstake");
+        assertEq(stakeLocker.unstakeCooldown(address(che)), start);
+        assertTrue(!che.try_unstake(address(stakeLocker), amt),    "Should fail to unstake before cooldown period has passed");
+
+        // Just before cooldown ends
+        hevm.warp(start + globals.stakerCooldownPeriod() - 1);
+        assertTrue(!che.try_unstake(address(stakeLocker), amt), "Should fail to unstake before cooldown period has passed");
+
+        // Right when cooldown ends
+        hevm.warp(start + globals.stakerCooldownPeriod());
+        assertTrue(che.try_unstake(address(stakeLocker), amt), "Should be able to unstake during unstake window");
+
+        // Still within Staker unstake window
+        hevm.warp(start + globals.stakerCooldownPeriod() + 1);
+        assertTrue(che.try_unstake(address(stakeLocker), amt), "Should be able to unstake funds again during cooldown window");
+
+        // Second after Staker unstake window ends
+        hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow() + 1);
+        assertTrue(!che.try_unstake(address(stakeLocker), amt), "Should fail to unstake funds because now past unstake window");
+
+        uint256 newStart = block.timestamp;
+
+        // Intend to unstake
+        assertTrue(che.try_intendToUnstake(address(stakeLocker)), "Failed to intend to unstake");
+
+        // After cooldown ends but after unstake window
+        hevm.warp(newStart + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow() + 1);
+        assertTrue(!che.try_unstake(address(stakeLocker), amt), "Should fail to unstake after unstake window has passed");
+
+        // Last second of Staker unstake window
+        hevm.warp(newStart + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow());
+        assertTrue(che.try_unstake(address(stakeLocker), amt), "Should be able to unstake during unstake window");
+    }
+
     function test_stake_transfer_restrictions() public {
 
         sid.setAllowlistStakeLocker(address(pool), address(che), true); // Add Staker to allowlist
@@ -350,9 +392,6 @@ contract StakeLockerTest is TestUtil {
         assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));
 
         make_transferrable(che, stakeLocker);
-        assertTrue(!che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // No transfer to non-allowlisted user
-
-        sid.setAllowlistStakeLocker(address(pool), address(ali), true); // Add ali to allowlist
 
         // Pause protocol and attempt to transfer FDTs
         assertTrue( mic.try_setProtocolPause(address(globals), true));
@@ -360,32 +399,23 @@ contract StakeLockerTest is TestUtil {
 
         // Unpause protocol and transfer FDTs
         assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // Yes transfer to allowlisted user
+        assertTrue(che.try_transfer(address(stakeLocker), address(ali), 1 * WAD));
 
         make_transferrable(che, stakeLocker);
         assertTrue(che.try_transfer(address(stakeLocker), address(sid), 1 * WAD)); // Yes transfer to pool delegate
-
-        // transferFrom() checks
-        che.approve(address(stakeLocker), address(dan), 5 * WAD);
-        sid.setAllowlistStakeLocker(address(pool), address(ali), false); // Remove ali to allowlist
-        sid.setAllowlistStakeLocker(address(pool), address(dan), true); // Add dan to allowlist
-
-        make_transferrable(che, stakeLocker);
-        assertTrue(!dan.try_transferFrom(address(stakeLocker), address(che), address(ali), 1 * WAD)); // No transferFrom to non-allowlisted user
-        assertTrue(dan.try_transferFrom(address(stakeLocker), address(che), address(dan), 1 * WAD)); // Yes transferFrom to allowlisted user
-        make_transferrable(che, stakeLocker);
-        assertTrue(dan.try_transferFrom(address(stakeLocker), address(che), address(sid), 1 * WAD)); // Yes transferFrom to pool delegate
-
     }
 
     function make_transferrable(Staker staker, IStakeLocker stakeLocker) public {
         uint256 currentTime = block.timestamp;
         assertTrue(staker.try_intendToUnstake(address(stakeLocker)));
-        assertEq(      stakeLocker.stakeCooldown(address(staker)), currentTime, "Incorrect value set");
-        hevm.warp(currentTime + globals.cooldownPeriod() + 1);
+        assertEq(      stakeLocker.unstakeCooldown(address(staker)), currentTime, "Incorrect value set");
+        hevm.warp(currentTime + globals.stakerCooldownPeriod());
     }
 
     function test_stake_transfer_stakeDate() public {
+
+        // Ignore cooldown for this test
+        gov.setStakerUnstakeWindow(MAX_UINT);
 
         uint256 start = block.timestamp;
 
@@ -400,21 +430,54 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.stakeDate(address(ali)),     0);  // Ali has not staked
 
         assertTrue(che.try_intendToUnstake(address(stakeLocker)));
-        hevm.warp(start + globals.cooldownPeriod() + 1 days);
+        hevm.warp(start + globals.stakerCooldownPeriod() + 1 days);
         
         che.transfer(address(stakeLocker), address(ali), 1 * WAD); // Transfer to Ali
 
         assertEq(stakeLocker.stakeDate(address(che)),          start);  // Che's date does not change
-        assertEq(stakeLocker.stakeDate(address(ali)), start + globals.cooldownPeriod() + 1 days);  // Ali just got sent FDTs which is effectively "staking"
+        assertEq(stakeLocker.stakeDate(address(ali)), start + globals.stakerCooldownPeriod() + 1 days);  // Ali just got sent FDTs which is effectively "staking"
 
         hevm.warp(start);
         assertTrue(che.try_intendToUnstake(address(stakeLocker)));
-        hevm.warp(start + globals.cooldownPeriod() + 3 days);
+        hevm.warp(start + globals.stakerCooldownPeriod() + 3 days);
 
         che.transfer(address(stakeLocker), address(ali), 1 * WAD); // Transfer to Ali
 
         assertEq(stakeLocker.stakeDate(address(che)),          start);  // Che's date does not change
-        assertEq(stakeLocker.stakeDate(address(ali)), start + globals.cooldownPeriod() + 2 days);  // Ali stake date = 1/(1+1) * (3 days + coolDown - (1 days + cooldown)) + (1 days + cooldown) = 1/2 * (3 + 10 - (1 + 10)) + (1+10) = 12 days past start
+        assertEq(stakeLocker.stakeDate(address(ali)), start + globals.stakerCooldownPeriod() + 2 days);  // Ali stake date = 1/(1+1) * (3 days + coolDown - (1 days + cooldown)) + (1 days + cooldown) = 1/2 * (3 + 10 - (1 + 10)) + (1+10) = 12 days past start
+    }
+
+    function test_stake_transfer_recipient_withdrawing() public {
+        sid.openStakeLockerToPublic(address(stakeLocker));
+
+        uint256 start = block.timestamp;
+        uint256 stakeAmt = 25 * WAD;
+
+        // Stake BPTs into StakeLocker
+        che.approve(address(bPool), address(stakeLocker), stakeAmt);
+        che.stake(address(stakeLocker), stakeAmt);
+        dan.approve(address(bPool), address(stakeLocker), stakeAmt);
+        dan.stake(address(stakeLocker), stakeAmt);
+
+         // Staker (Dan) initiates unstake
+        assertTrue(dan.try_intendToUnstake(address(stakeLocker)));
+        assertEq(stakeLocker.unstakeCooldown(address(dan)), start);
+
+        // Staker (Che) fails to transfer to Staker (Dan) who is currently unstaking
+        assertTrue(!che.try_transfer(address(stakeLocker), address(dan), stakeAmt));
+        hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow());  // Very end of Staker unstake window
+        assertTrue(!che.try_transfer(address(stakeLocker), address(dan), stakeAmt));
+
+        // Staker (Che) successfully transfers to Staker (Dan) who is now outside unstake window
+        hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow() + 1);  // Second after Staker unstake window ends
+        assertTrue(che.try_transfer(address(stakeLocker), address(dan), stakeAmt));
+
+        // Check balances and stake dates are correct
+        assertEq(stakeLocker.balanceOf(address(che)), 0);
+        assertEq(stakeLocker.balanceOf(address(dan)), stakeAmt * 2);
+        uint256 newStakeDate = start + (block.timestamp - start) * (stakeAmt) / ((stakeAmt) + (stakeAmt));
+        assertEq(stakeLocker.stakeDate(address(che)), start);         // Stays the same
+        assertEq(stakeLocker.stakeDate(address(dan)), newStakeDate);  // Gets updated
     }
 
     function setUpLoanAndRepay() public {
@@ -436,12 +499,12 @@ contract StakeLockerTest is TestUtil {
         sid.claim(address(pool), address(loan),  address(dlFactory));  // PD claims interest, distributing funds to stakeLocker
     }
 
-    function test_unstake_past_unstakeDelay() public {
+    function test_unstake() public {
         uint256 stakeDate = block.timestamp;
 
         sid.setAllowlistStakeLocker(address(pool), address(che), true);
         che.approve(address(bPool), address(stakeLocker), 25 * WAD);
-        che.stake(address(stakeLocker), 25 * WAD);  
+        che.stake(address(stakeLocker), 25 * WAD); 
 
         assertEq(IERC20(USDC).balanceOf(address(che)),          0);
         assertEq(bPool.balanceOf(address(che)),                 0);
@@ -453,9 +516,21 @@ contract StakeLockerTest is TestUtil {
         setUpLoanAndRepay();
         assertTrue(!eli.try_intendToUnstake(address(stakeLocker)));  // Unstake will not work as eli doesn't possess any balance.
         assertTrue( che.try_intendToUnstake(address(stakeLocker)));
-        hevm.warp(stakeDate + globals.unstakeDelay() - 1);
-        assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake 100% of BPTs until unstakeDelay has passed
-        hevm.warp(stakeDate + globals.unstakeDelay());
+
+        hevm.warp(stakeDate + globals.stakerCooldownPeriod() - 1);
+        assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake BPTs until stakerCooldownPeriod has passed
+
+        hevm.warp(stakeDate + globals.stakerCooldownPeriod());
+        assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Still cannot unstake because of lockup period
+
+        hevm.warp(stakeDate + stakeLocker.lockupPeriod() - globals.stakerCooldownPeriod());  // Warp to first time that user can cooldown and unstake and will be after lockup
+        uint256 cooldownTimestamp = block.timestamp;
+        assertTrue(che.try_intendToUnstake(address(stakeLocker)));
+
+        hevm.warp(cooldownTimestamp + globals.stakerCooldownPeriod() - 1);
+        assertTrue(!che.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake BPTs until stakerCooldownPeriod has passed
+
+        hevm.warp(cooldownTimestamp + globals.stakerCooldownPeriod());  // Now user is able to unstake
 
         uint256 totalStakerEarnings    = IERC20(USDC).balanceOf(address(stakeLocker));
         uint256 cheStakerEarnings_FDT  = stakeLocker.withdrawableFundsOf(address(che));
@@ -479,56 +554,6 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.totalSupply(),              50 * WAD);  // Total supply of stake tokens has decreased
         assertEq(stakeLocker.balanceOf(address(che)),           0);  // Che has no stake tokens after unstake
         assertEq(stakeLocker.stakeDate(address(che)),   stakeDate);  // StakeDate remains unchanged (doesn't matter since balanceOf == 0 on next stake)
-    }
-
-    function test_unstakeableBalance(uint256 stakeAmount, uint256 dTime, uint256 stakeAmount2, uint256 dTime2) public {
-        TestObj memory unstakeableBal;
-
-        uint256 unstakeDelay = globals.unstakeDelay();
-        uint256 bptMin = WAD / 10_000_000;
-
-        stakeAmount  = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(che)) / 2, true);  // 12.5 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents)   (non-zero to avoid division by zero in stakeDate)
-        stakeAmount2 = constrictToRange(stakeAmount2, bptMin, bPool.balanceOf(address(che)) / 2, true);  // 12.5 WAD max, 1/10m WAD min, or zero (total can't be greater than 25 WAD) (non-zero to avoid division by zero in stakeDate)
-        dTime        = constrictToRange(dTime,  15, unstakeDelay / 2);                                   // Max dtime is half unstakeDelay
-        dTime2       = constrictToRange(dTime2, 15, unstakeDelay / 2);                                   // Max dtime is half unstakeDelay (total less than unstakeDelay for test)
-
-        uint256 start = block.timestamp;
-        sid.setAllowlistStakeLocker(address(pool), address(che), true);
-        che.approve(address(bPool), address(stakeLocker), MAX_UINT);
-
-        che.stake(address(stakeLocker), stakeAmount);  
-
-        assertEq(stakeLocker.balanceOf(address(che)),             stakeAmount);
-        assertEq(stakeLocker.stakeDate(address(che)),                   start);
-        assertEq(stakeLocker.getUnstakeableBalance(address(che)),           0);  // No time has passed
-
-        hevm.warp(start + dTime);
-
-        unstakeableBal.pre = stakeLocker.getUnstakeableBalance(address(che));
-
-        assertEq(stakeLocker.balanceOf(address(che)),       stakeAmount);
-        assertEq(stakeLocker.stakeDate(address(che)),             start);
-        assertEq(unstakeableBal.pre, dTime * stakeAmount / unstakeDelay);  // Withdrawable balance is a linear function of dTime
-
-        uint256 newStakeDate = getNewStakeDate(address(che), stakeAmount2);  // Calculate stake date
-
-        che.stake(address(stakeLocker), stakeAmount2);
-
-        unstakeableBal.post = stakeLocker.getUnstakeableBalance(address(che));
-
-        assertEq(stakeLocker.balanceOf(address(che)), stakeAmount + stakeAmount2);
-        assertEq(stakeLocker.stakeDate(address(che)),               newStakeDate);
-
-        // Withdrawable balance should not change after stakeDate is recalculated (bptMin rounding error accounted for, test_stake_to_measure_effect_on_stake_date proves strict equality)
-        withinDiff(unstakeableBal.pre, unstakeableBal.post, bptMin * 100);  
-
-        hevm.warp(start + dTime + dTime2);
-
-        assertEq(stakeLocker.balanceOf(address(che)), stakeAmount + stakeAmount2);
-        assertEq(stakeLocker.stakeDate(address(che)),               newStakeDate);
-
-    
-        assertEq(stakeLocker.getUnstakeableBalance(address(che)), (block.timestamp - newStakeDate) * (stakeAmount + stakeAmount2) / unstakeDelay);  // Function uses total staked and stakeDate
     }
 
     function setUpLoanMakeOnePaymentAndDefault() public returns (uint256 interestPaid) {
@@ -653,12 +678,12 @@ contract StakeLockerTest is TestUtil {
         interestPaid = block.timestamp;
 
         assertTrue(che.try_intendToUnstake(address(stakeLocker)));
-        assertEq(stakeLocker.stakeCooldown(address(che)), interestPaid);
-        hevm.warp(interestPaid + globals.cooldownPeriod() + 1);
+        assertEq(stakeLocker.unstakeCooldown(address(che)), interestPaid);
+        hevm.warp(interestPaid + globals.stakerCooldownPeriod());
         assertTrue(!che.try_unstake(address(stakeLocker), recognizableLossesOf.pre - 1));  // Cannot withdraw less than the losses incurred
-        hevm.warp(interestPaid + globals.cooldownPeriod());
+        hevm.warp(interestPaid + globals.stakerCooldownPeriod() - 1);
         assertTrue(!che.try_unstake(address(stakeLocker), recognizableLossesOf.pre));
-        hevm.warp(interestPaid + globals.cooldownPeriod() + 1);
+        hevm.warp(interestPaid + globals.stakerCooldownPeriod());
         assertTrue(che.try_unstake(address(stakeLocker), recognizableLossesOf.pre));  // Withdraw lowest possible amount (amt == recognizableLosses), FDTs burned to cover losses, no BPTs left to withdraw
 
         stakeLockerBal.post       = bPool.balanceOf(address(stakeLocker));
@@ -705,8 +730,8 @@ contract StakeLockerTest is TestUtil {
         interestPaid = block.timestamp;
 
         assertTrue(dan.try_intendToUnstake(address(stakeLocker)));
-        assertEq(stakeLocker.stakeCooldown(address(dan)), interestPaid);
-        hevm.warp(interestPaid + globals.cooldownPeriod() + 1);
+        assertEq(stakeLocker.unstakeCooldown(address(dan)), interestPaid);
+        hevm.warp(interestPaid + globals.stakerCooldownPeriod() + 1);
         assertTrue(!dan.try_unstake(address(stakeLocker), stakerFDTBal.pre + 1));  // Cannot withdraw more than current FDT bal
         assertTrue( dan.try_unstake(address(stakeLocker), stakerFDTBal.pre));      // Withdraw remaining BPTs
 
@@ -753,8 +778,10 @@ contract StakeLockerTest is TestUtil {
         assertEq(withdrawableFundsOf.pre,  0);  // Assert FDT interest accounting
         assertEq(recognizableLossesOf.pre, 0);  // Assert FDT loss     accounting
 
+        hevm.warp(block.timestamp + stakeLocker.lockupPeriod());  // Warp to the end of the lockup
+
         assertTrue(eli.try_intendToUnstake(address(stakeLocker)));
-        hevm.warp(block.timestamp + globals.unstakeDelay());
+        hevm.warp(block.timestamp + globals.stakerCooldownPeriod() + 1);
         eli.unstake(address(stakeLocker), eliStakeAmount);  // Unstake entire balance
 
         stakeLockerBal.post       = bPool.balanceOf(address(stakeLocker));
