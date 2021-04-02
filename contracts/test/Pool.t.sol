@@ -1669,9 +1669,9 @@ contract PoolTest is TestUtil {
 
         bob.approve(USDC, address(pool1), MAX_UINT);
 
-        bob.deposit(address(pool1), 1000 * USD);
+        bob.deposit(address(pool1), 1500 * USD);
 
-        uint256 amt = 500 * USD; // Half of deposit so withdraw can happen twice
+        uint256 amt = 500 * USD; // 1/3 of deposit so withdraw can happen thrice
 
         uint256 start = block.timestamp;
 
@@ -1689,8 +1689,13 @@ contract PoolTest is TestUtil {
         hevm.warp(start + globals.lpCooldownPeriod());
         assertTrue(bob.try_withdraw(address(pool1), amt), "Should be able to withdraw funds at beginning of cooldown window");
 
-        // Same time, forgot to intend to withdraw so cannot
-        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw 500 USD because user has to intendToWithdraw");
+        // Still within LP withdrawal window
+        hevm.warp(start + globals.lpCooldownPeriod() + 1);
+        assertTrue(bob.try_withdraw(address(pool1), amt), "Should be able to withdraw funds again during cooldown window");
+
+        // Second after LP withdrawal window ends
+        hevm.warp(start + globals.lpCooldownPeriod() + globals.lpWithdrawWindow() + 1);
+        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw funds because now past withdraw window");
 
         uint256 newStart = block.timestamp;
 

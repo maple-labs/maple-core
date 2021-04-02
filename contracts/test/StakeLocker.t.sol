@@ -336,14 +336,14 @@ contract StakeLockerTest is TestUtil {
 
         sid.setAllowlistStakeLocker(address(pool), address(che), true); // Add Staker to allowlist
 
-        che.approve(address(bPool), address(stakeLocker), 20 * WAD); // Stake tokens
-        assertTrue(che.try_stake(address(stakeLocker), 20 * WAD));
+        che.approve(address(bPool), address(stakeLocker), 15 * WAD); // Stake tokens
+        assertTrue(che.try_stake(address(stakeLocker), 15 * WAD));
 
         hevm.warp(block.timestamp + stakeLocker.lockupPeriod());  // Warp to end of lockup for test
 
         gov.setStakerCooldownPeriod(10 days);
 
-        uint256 amt = 10 * WAD; // Half of deposit so unstake can happen twice
+        uint256 amt = 5 * WAD; // 1/3 of stake so unstake can happen thrice
 
         uint256 start = block.timestamp;
 
@@ -360,8 +360,13 @@ contract StakeLockerTest is TestUtil {
         hevm.warp(start + globals.stakerCooldownPeriod());
         assertTrue(che.try_unstake(address(stakeLocker), amt), "Should be able to unstake during unstake window");
 
-        // Same time, forgot to intend to unstake so cannot
-        assertTrue(!che.try_unstake(address(stakeLocker), amt), "Should fail to unstake 10 WAD because user has to intendToWithdraw");
+        // Still within Staker unstake window
+        hevm.warp(start + globals.stakerCooldownPeriod() + 1);
+        assertTrue(che.try_unstake(address(stakeLocker), amt), "Should be able to unstake funds again during cooldown window");
+
+        // Second after Staker unstake window ends
+        hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow() + 1);
+        assertTrue(!che.try_unstake(address(stakeLocker), amt), "Should fail to unstake funds because now past unstake window");
 
         uint256 newStart = block.timestamp;
 
