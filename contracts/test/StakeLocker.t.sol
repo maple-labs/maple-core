@@ -177,7 +177,7 @@ contract StakeLockerTest is TestUtil {
         stakeLocker = IStakeLocker(pool.stakeLocker());
 
         // loan Specifications
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
@@ -581,8 +581,8 @@ contract StakeLockerTest is TestUtil {
         // Warp to late payment
         uint256 start = block.timestamp;
         uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 gracePeriod = globals.gracePeriod();
-        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+        uint256 defaultGracePeriod = globals.defaultGracePeriod();
+        hevm.warp(start + nextPaymentDue + defaultGracePeriod + 1);
 
         // Trigger default
         pat.triggerDefault(address(pool), address(loan), address(dlFactory));

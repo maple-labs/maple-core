@@ -66,8 +66,9 @@ contract Loan is FDT, Pausable {
     uint256 public immutable paymentIntervalSeconds;  // Time between Loan payments in seconds
     uint256 public immutable requestAmount;           // Total requested amount for Loan
     uint256 public immutable collateralRatio;         // Percentage of value of drawdown amount to post as collateral in basis points
-    uint256 public immutable fundingPeriodSeconds;    // Time for a Loan to be funded in seconds
     uint256 public immutable createdAt;               // Timestamp of when Loan was instantiated
+    uint256 public immutable fundingPeriod;           // Time for a Loan to be funded in seconds
+    uint256 public immutable defaultGracePeriod;      // Time a borrower has after a payment is due to make apayment before a liquidation can occur
 
     // Accounting variables
     uint256 public principalOwed;   // The principal owed (initially the drawdown amount)
@@ -115,7 +116,6 @@ contract Loan is FDT, Pausable {
                 specs[2] = paymentIntervalDays (aka PID)
                 specs[3] = requestAmount
                 specs[4] = collateralRatio
-                specs[5] = fundingPeriodDays
         @param  calcs The calculators used for the loan
                 calcs[0] = repaymentCalc
                 calcs[1] = lateFeeCalc
@@ -127,7 +127,7 @@ contract Loan is FDT, Pausable {
         address _collateralAsset,
         address _flFactory,
         address _clFactory,
-        uint256[6] memory specs,
+        uint256[5] memory specs,
         address[3] memory calcs
     )
         FDT(
@@ -146,7 +146,6 @@ contract Loan is FDT, Pausable {
         require(specs[2] != uint256(0),               "Loan:PID_EQ_ZERO");
         require(specs[1].mod(specs[2]) == uint256(0), "Loan:INVALID_TERM_DAYS");
         require(specs[3] > uint256(0),                "Loan:REQUEST_AMT_EQ_ZERO");
-        require(specs[5] > uint256(0),                "Loan:FUNDING_PERIOD_EQ_ZERO");
 
         borrower        = _borrower;
         liquidityAsset  = IERC20(_liquidityAsset);
@@ -162,7 +161,8 @@ contract Loan is FDT, Pausable {
         paymentIntervalSeconds = specs[2].mul(1 days);
         requestAmount          = specs[3];
         collateralRatio        = specs[4];
-        fundingPeriodSeconds   = specs[5].mul(1 days);
+        fundingPeriod          = globals.fundingPeriod();
+        defaultGracePeriod     = globals.defaultGracePeriod();
         repaymentCalc          = calcs[0];
         lateFeeCalc            = calcs[1];
         premiumCalc            = calcs[2];
@@ -314,6 +314,7 @@ contract Loan is FDT, Pausable {
         _whenProtocolNotPaused();
         _isValidState(State.Live);
         _isValidPool();
+        _isWithinFundingPeriod();
         liquidityAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
 
         uint256 wad = _toWad(amt);  // Convert to WAD precision
@@ -344,11 +345,10 @@ contract Loan is FDT, Pausable {
     /**
         @dev Trigger a default if a Loan is in a condition where a default can be triggered, liquidating all collateral and updating accounting.
     */
-    // TODO: Talk with auditors about having a switch for this function
     function triggerDefault() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-        require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
+        require(LoanLib.canTriggerDefault(nextPaymentDue, defaultGracePeriod, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
         
         // Pull collateralAsset from CollateralLocker, swap to liquidityAsset, and hold custody of resulting liquidityAsset in Loan
         (amountLiquidated, amountRecovered) = LoanLib.liquidateCollateral(collateralAsset, address(liquidityAsset), superFactory, collateralLocker);
@@ -558,6 +558,13 @@ contract Loan is FDT, Pausable {
             IPoolFactory(poolFactory).isPool(pool),
             "Loan:INVALID_LENDER"
         );
+    }
+
+    /**
+        @dev Utility to ensure currently within the funding period.
+    */
+    function _isWithinFundingPeriod() internal view {	
+        require(block.timestamp <= createdAt.add(fundingPeriod), "Loan:PAST_FUNDING_PERIOD");
     }
 
     /**

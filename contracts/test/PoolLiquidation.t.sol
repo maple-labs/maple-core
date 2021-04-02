@@ -201,7 +201,7 @@ contract PoolLiquidationTest is TestUtil {
         stakeLocker_b = IStakeLocker(pool_b.stakeLocker());
 
         // loan Specifications
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan = che.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
@@ -241,8 +241,8 @@ contract PoolLiquidationTest is TestUtil {
         // Warp to late payment
         uint256 start = block.timestamp;
         uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 gracePeriod = globals.gracePeriod();
-        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+        uint256 defaultGracePeriod = globals.defaultGracePeriod();
+        hevm.warp(start + nextPaymentDue + defaultGracePeriod + 1);
 
         // Attempt to trigger default as PD holding less than minimum LoanFDTs required (MapleGlobals.minLoanEquity)
         assertTrue(!pam.try_triggerDefault(address(pool_b), address(loan), address(dlFactory)));
@@ -284,8 +284,8 @@ contract PoolLiquidationTest is TestUtil {
         // Warp to late payment
         uint256 start = block.timestamp;
         uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 gracePeriod = globals.gracePeriod();
-        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+        uint256 defaultGracePeriod = globals.defaultGracePeriod();
+        hevm.warp(start + nextPaymentDue + defaultGracePeriod + 1);
 
         // Trigger default
         pat.triggerDefault(address(pool_a), address(loan), address(dlFactory));
@@ -422,7 +422,7 @@ contract PoolLiquidationTest is TestUtil {
         assertPoolAccounting(pool_a);
 
         // Warp to late payment
-        hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.gracePeriod() + 1);
+        hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 
         // Trigger default
         pat.triggerDefault(address(pool_a), address(loan), address(dlFactory));

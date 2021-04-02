@@ -64,8 +64,8 @@ contract Governor {
     function setPoolDelegateAllowlist(address pd, bool valid)                  external { globals.setPoolDelegateAllowlist(pd, valid); }
     function setInvestorFee(uint256 fee)                                       external { globals.setInvestorFee(fee); }
     function setTreasuryFee(uint256 fee)                                       external { globals.setTreasuryFee(fee); }
-    function setGracePeriod(uint256 gracePeriod)                               external { globals.setGracePeriod(gracePeriod); }
-    function setDrawdownGracePeriod(uint256 gracePeriod)                       external { globals.setDrawdownGracePeriod(gracePeriod); }
+    function setDefaultGracePeriod(uint256 period)                             external { globals.setDefaultGracePeriod(period); }
+    function setFundingPeriod(uint256 period)                                  external { globals.setFundingPeriod(period); }
     function setSwapOutRequired(uint256 swapAmt)                               external { globals.setSwapOutRequired(swapAmt); }
     function setPendingGovernor(address gov)                                   external { globals.setPendingGovernor(gov); }
     function acceptGovernor()                                                  external { globals.acceptGovernor(); }
@@ -73,6 +73,7 @@ contract Governor {
     function setMaxSwapSlippage(uint256 newSlippage)                           external { globals.setMaxSwapSlippage(newSlippage); }
     function setDefaultUniswapPath(address from, address to, address mid)      external { globals.setDefaultUniswapPath(from, to, mid); }
     function setExemptFromTransferRestriction(address _mplRewards, bool valid) external { globals.setExemptFromTransferRestriction(_mplRewards, valid); }
+    function setValidMplRewards(address _mplRewards, bool valid)               external { globals.setValidMplRewards(_mplRewards, valid); }
     function setValidBalancerPool(address balancerPool, bool valid)            external { globals.setValidBalancerPool(balancerPool, valid); }
     function setLpCooldownPeriod(uint256 period)                               external { globals.setLpCooldownPeriod(period); }
     function setStakerCooldownPeriod(uint256 period)                           external { globals.setStakerCooldownPeriod(period); }
@@ -151,13 +152,13 @@ contract Governor {
         string memory sig = "setTreasuryFee(uint256)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, fee));
     }
-    function try_setGracePeriod(uint256 gracePeriod) external returns (bool ok) { 
-        string memory sig = "setGracePeriod(uint256)";
-        (ok,) = address(globals).call(abi.encodeWithSignature(sig, gracePeriod)); 
+    function try_setDefaultGracePeriod(uint256 defaultGracePeriod) external returns (bool ok) { 
+        string memory sig = "setDefaultGracePeriod(uint256)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, defaultGracePeriod)); 
     }
-    function try_setDrawdownGracePeriod(uint256 gracePeriod) external returns (bool ok) { 
-        string memory sig = "setDrawdownGracePeriod(uint256)";
-        (ok,) = address(globals).call(abi.encodeWithSignature(sig, gracePeriod)); 
+    function try_setFundingPeriod(uint256 fundingPeriod) external returns (bool ok) { 
+        string memory sig = "setFundingPeriod(uint256)";
+        (ok,) = address(globals).call(abi.encodeWithSignature(sig, fundingPeriod)); 
     }
     function try_setSwapOutRequired(uint256 swapAmt) external returns (bool ok) { 
         string memory sig = "setSwapOutRequired(uint256)";

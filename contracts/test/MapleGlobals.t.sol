@@ -120,9 +120,9 @@ contract MapleGlobalsTest is TestUtil {
 
         assertEq(globals.governor(),         address(gov));
         assertEq(globals.mpl(),              address(mpl));
-        assertEq(globals.gracePeriod(),            5 days);
+        assertEq(globals.defaultGracePeriod(),     5 days);
         assertEq(globals.swapOutRequired(),        10_000);
-        assertEq(globals.drawdownGracePeriod(),   10 days);
+        assertEq(globals.fundingPeriod(),         10 days);
         assertEq(globals.investorFee(),                50);
         assertEq(globals.treasuryFee(),                50);
         assertEq(globals.maxSwapSlippage(),          1000);
@@ -286,17 +286,17 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setLpWithdrawWindow(1 days));
         assertEq(   globals.lpWithdrawWindow(),     1 days);
 
-        // setDrawdownGracePeriod()
-        assertEq(   globals.drawdownGracePeriod(),    10 days);
-        assertTrue(!fakeGov.try_setDrawdownGracePeriod(1 days));
-        assertTrue(     gov.try_setDrawdownGracePeriod(1 days));
-        assertEq(   globals.drawdownGracePeriod(),     1 days);
+        // setFundingPeriod()
+        assertEq(   globals.fundingPeriod(),    10 days);
+        assertTrue(!fakeGov.try_setFundingPeriod(1 days));
+        assertTrue(     gov.try_setFundingPeriod(1 days));
+        assertEq(   globals.fundingPeriod(),     1 days);
 
-        // setGracePeriod()
-        assertEq(   globals.gracePeriod(),     5 days);
-        assertTrue(!fakeGov.try_setGracePeriod(1 days));
-        assertTrue(     gov.try_setGracePeriod(1 days));
-        assertEq(   globals.gracePeriod(),     1 days);
+        // setDefaultGracePeriod()
+        assertEq(   globals.defaultGracePeriod(),     5 days);
+        assertTrue(!fakeGov.try_setDefaultGracePeriod(1 days));
+        assertTrue(     gov.try_setDefaultGracePeriod(1 days));
+        assertEq(   globals.defaultGracePeriod(),     1 days);
 
         // setSwapOutRequired()
         assertEq(   globals.swapOutRequired(),     10_000);
