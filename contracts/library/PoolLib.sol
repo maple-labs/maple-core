@@ -247,7 +247,7 @@ library PoolLib {
         uint256 recognizableLosses
     ) external {
         // If transferring in or out of yield farming contract, do not update depositDate or cooldown
-        if (!globals.isValidMplRewards(from) && !globals.isValidMplRewards(to)) {
+        if (!globals.isExemptFromTransferRestriction(from) && !globals.isExemptFromTransferRestriction(to)) {
             require(isWithdrawAllowed(withdrawCooldown[from], globals), "Pool:WITHDRAW_NOT_ALLOWED");  // Sender must be within withdraw window
             require(recognizableLosses == uint256(0),                   "Pool:RECOG_LOSSES");          // If an LP has unrecognized losses, they must recognize losses through withdraw
             withdrawCooldown[from] = uint256(0);                 // Reset sender withdraw cooldown

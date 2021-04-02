@@ -53,31 +53,31 @@ contract Governor {
     }
 
     /*** MapleGlobals Setters ***/ 
-    function setCalc(address calc, bool valid)                            external { globals.setCalc(calc, valid); }
-    function setCollateralAsset(address asset, bool valid)                external { globals.setCollateralAsset(asset, valid); }
-    function setLoanAsset(address asset, bool valid)                      external { globals.setLoanAsset(asset, valid); }
-    function setValidLoanFactory(address factory, bool valid)             external { globals.setValidLoanFactory(factory, valid); }
-    function setValidPoolFactory(address factory, bool valid)             external { globals.setValidPoolFactory(factory, valid); }
-    function setValidSubFactory(address fac, address sub, bool valid)     external { globals.setValidSubFactory(fac, sub, valid); }
-    function setMapleTreasury(address _treasury)                          external { globals.setMapleTreasury(_treasury); }
-    function setAdmin(address _admin)                                     external { globals.setAdmin(_admin); }
-    function setPoolDelegateAllowlist(address pd, bool valid)             external { globals.setPoolDelegateAllowlist(pd, valid); }
-    function setInvestorFee(uint256 fee)                                  external { globals.setInvestorFee(fee); }
-    function setTreasuryFee(uint256 fee)                                  external { globals.setTreasuryFee(fee); }
-    function setGracePeriod(uint256 gracePeriod)                          external { globals.setGracePeriod(gracePeriod); }
-    function setDrawdownGracePeriod(uint256 gracePeriod)                  external { globals.setDrawdownGracePeriod(gracePeriod); }
-    function setSwapOutRequired(uint256 swapAmt)                          external { globals.setSwapOutRequired(swapAmt); }
-    function setPendingGovernor(address gov)                              external { globals.setPendingGovernor(gov); }
-    function acceptGovernor()                                             external { globals.acceptGovernor(); }
-    function setPriceOracle(address asset, address oracle)                external { globals.setPriceOracle(asset, oracle); }
-    function setMaxSwapSlippage(uint256 newSlippage)                      external { globals.setMaxSwapSlippage(newSlippage); }
-    function setDefaultUniswapPath(address from, address to, address mid) external { globals.setDefaultUniswapPath(from, to, mid); }
-    function setValidMplRewards(address _mplRewards, bool valid)          external { globals.setValidMplRewards(_mplRewards, valid); }
-    function setValidBalancerPool(address balancerPool, bool valid)       external { globals.setValidBalancerPool(balancerPool, valid); }
-    function setLpCooldownPeriod(uint256 period)                          external { globals.setLpCooldownPeriod(period); }
-    function setStakerCooldownPeriod(uint256 period)                      external { globals.setStakerCooldownPeriod(period); }
-    function setLpWithdrawWindow(uint256 period)                          external { globals.setLpWithdrawWindow(period); }
-    function setStakerUnstakeWindow(uint256 period)                       external { globals.setStakerUnstakeWindow(period); }
+    function setCalc(address calc, bool valid)                                 external { globals.setCalc(calc, valid); }
+    function setCollateralAsset(address asset, bool valid)                     external { globals.setCollateralAsset(asset, valid); }
+    function setLoanAsset(address asset, bool valid)                           external { globals.setLoanAsset(asset, valid); }
+    function setValidLoanFactory(address factory, bool valid)                  external { globals.setValidLoanFactory(factory, valid); }
+    function setValidPoolFactory(address factory, bool valid)                  external { globals.setValidPoolFactory(factory, valid); }
+    function setValidSubFactory(address fac, address sub, bool valid)          external { globals.setValidSubFactory(fac, sub, valid); }
+    function setMapleTreasury(address _treasury)                               external { globals.setMapleTreasury(_treasury); }
+    function setAdmin(address _admin)                                          external { globals.setAdmin(_admin); }
+    function setPoolDelegateAllowlist(address pd, bool valid)                  external { globals.setPoolDelegateAllowlist(pd, valid); }
+    function setInvestorFee(uint256 fee)                                       external { globals.setInvestorFee(fee); }
+    function setTreasuryFee(uint256 fee)                                       external { globals.setTreasuryFee(fee); }
+    function setGracePeriod(uint256 gracePeriod)                               external { globals.setGracePeriod(gracePeriod); }
+    function setDrawdownGracePeriod(uint256 gracePeriod)                       external { globals.setDrawdownGracePeriod(gracePeriod); }
+    function setSwapOutRequired(uint256 swapAmt)                               external { globals.setSwapOutRequired(swapAmt); }
+    function setPendingGovernor(address gov)                                   external { globals.setPendingGovernor(gov); }
+    function acceptGovernor()                                                  external { globals.acceptGovernor(); }
+    function setPriceOracle(address asset, address oracle)                     external { globals.setPriceOracle(asset, oracle); }
+    function setMaxSwapSlippage(uint256 newSlippage)                           external { globals.setMaxSwapSlippage(newSlippage); }
+    function setDefaultUniswapPath(address from, address to, address mid)      external { globals.setDefaultUniswapPath(from, to, mid); }
+    function setExemptFromTransferRestriction(address _mplRewards, bool valid) external { globals.setExemptFromTransferRestriction(_mplRewards, valid); }
+    function setValidBalancerPool(address balancerPool, bool valid)            external { globals.setValidBalancerPool(balancerPool, valid); }
+    function setLpCooldownPeriod(uint256 period)                               external { globals.setLpCooldownPeriod(period); }
+    function setStakerCooldownPeriod(uint256 period)                           external { globals.setStakerCooldownPeriod(period); }
+    function setLpWithdrawWindow(uint256 period)                               external { globals.setLpWithdrawWindow(period); }
+    function setStakerUnstakeWindow(uint256 period)                            external { globals.setStakerUnstakeWindow(period); }
 
     /*** MapleTreasury Functions ***/
     function setGlobals(address newGlobals)                external { treasury.setGlobals(newGlobals); }
@@ -179,8 +179,8 @@ contract Governor {
         string memory sig = "setMaxSwapSlippage(uint256)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, newSlippage)); 
     }
-    function try_setValidMplRewards(address _mplRewards, bool valid) external returns (bool ok) { 
-        string memory sig = "setValidMplRewards(address,bool)";
+    function try_setExemptFromTransferRestriction(address _mplRewards, bool valid) external returns (bool ok) { 
+        string memory sig = "setExemptFromTransferRestriction(address,bool)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, _mplRewards, valid)); 
     }
     function try_setValidBalancerPool(address balancerPool, bool valid) external returns (bool ok) { 

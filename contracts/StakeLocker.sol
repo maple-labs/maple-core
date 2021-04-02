@@ -243,7 +243,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _transfer(address from, address to, uint256 wad) internal override canUnstake {
         _whenProtocolNotPaused();
-        if (!globals.isValidMplRewards(from) && !globals.isValidMplRewards(to)) {
+        if (!_globals().isExemptFromTransferRestriction(from) && !_globals().isExemptFromTransferRestriction(to)) {
             require(isUnstakeAllowed(from),                   "StakeLocker:OUTSIDE_COOLDOWN");
             require(recognizableLossesOf(from) == uint256(0), "StakeLocker:RECOG_LOSSES");  // If an LP has unrecognized losses, they must recognize losses through withdraw
 
