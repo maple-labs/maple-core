@@ -73,7 +73,6 @@ contract Governor {
     function setMaxSwapSlippage(uint256 newSlippage)                           external { globals.setMaxSwapSlippage(newSlippage); }
     function setDefaultUniswapPath(address from, address to, address mid)      external { globals.setDefaultUniswapPath(from, to, mid); }
     function setExemptFromTransferRestriction(address _mplRewards, bool valid) external { globals.setExemptFromTransferRestriction(_mplRewards, valid); }
-    function setValidMplRewards(address _mplRewards, bool valid)               external { globals.setValidMplRewards(_mplRewards, valid); }
     function setValidBalancerPool(address balancerPool, bool valid)            external { globals.setValidBalancerPool(balancerPool, valid); }
     function setLpCooldownPeriod(uint256 period)                               external { globals.setLpCooldownPeriod(period); }
     function setStakerCooldownPeriod(uint256 period)                           external { globals.setStakerCooldownPeriod(period); }
