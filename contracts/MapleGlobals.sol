@@ -31,7 +31,7 @@ contract MapleGlobals {
 
     bool public protocolPaused;  // Switch to pause the functionality of the entire protocol
 
-    mapping(address => bool) public isValidLoanAsset;        // Mapping of valid loanAssets
+    mapping(address => bool) public isValidLiquidityAsset;   // Mapping of valid liquidityAssets
     mapping(address => bool) public isValidCollateralAsset;  // Mapping of valid collateralAssets
     mapping(address => bool) public validCalcs;              // Mapping of valid calculator contracts
     mapping(address => bool) public isValidPoolDelegate;     // Validation data structure for Pool Delegates (prevent invalid addresses from creating pools)
@@ -52,7 +52,7 @@ contract MapleGlobals {
     mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories
     
     event CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
-    event       LoanAssetSet(address asset, uint256 decimals, string symbol, bool valid);
+    event  LiquidityAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event          OracleSet(address asset, address oracle);
     event      MplRewardsSet(address mplRewards, bool valid);
     event    BalancerPoolSet(address balancerPool,   bool valid);
@@ -217,9 +217,9 @@ contract MapleGlobals {
         @param asset Address of the valid asset
         @param valid The new validity of asset for loans/liquidity in Pools
     */
-    function setLoanAsset(address asset, bool valid) external isGovernor {
-        isValidLoanAsset[asset] = valid;
-        emit LoanAssetSet(asset, IERC20Details(asset).decimals(), IERC20Details(asset).symbol(), valid);
+    function setLiquidityAsset(address asset, bool valid) external isGovernor {
+        isValidLiquidityAsset[asset] = valid;
+        emit LiquidityAssetSet(asset, IERC20Details(asset).decimals(), IERC20Details(asset).symbol(), valid);
     }
 
     /**

@@ -191,7 +191,7 @@ contract Pool is PoolFDT {
         (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
 
         // Subtract outstanding principal by principal claimed plus excess returned
-        // Considers possible principalClaim overflow if loanAsset is transferred directly into Loan
+        // Considers possible principalClaim overflow if liquidityAsset is transferred directly into Loan
         if (principalClaim <= principalOut) {
             principalOut = principalOut - principalClaim;
         } else {
@@ -512,7 +512,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Check whether the given `depositAmt` is acceptable based on current liquidityCap.
-        @param depositAmt Amount of tokens (i.e loanAsset type) user is trying to deposit
+        @param depositAmt Amount of tokens (i.e liquidityAsset type) user is trying to deposit
     */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
         bool isValidLP = openToPublic || allowedLiquidityProviders[msg.sender];

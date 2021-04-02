@@ -82,7 +82,7 @@ contract MplRewardsTest is TestUtil {
 
         gov.setValidBalancerPool(address(bPool), true);
 
-        gov.setLoanAsset(USDC, true);
+        gov.setLiquidityAsset(USDC, true);
         gov.setSwapOutRequired(1_000_000);
 
         // Create Liquidity Pool

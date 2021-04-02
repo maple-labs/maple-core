@@ -15,7 +15,7 @@ abstract contract FDT is BasicFDT {
 
     IERC20 public immutable fundsToken;  // The fundsToken (dividends)
 
-    uint256 public fundsTokenBalance;  // The amount of fundsToken (loanAsset) currently present and accounted for in this contract.
+    uint256 public fundsTokenBalance;  // The amount of fundsToken (liquidityAsset) currently present and accounted for in this contract.
 
     constructor(string memory name, string memory symbol, address _fundsToken) BasicFDT(name, symbol) public {
         fundsToken = IERC20(_fundsToken);

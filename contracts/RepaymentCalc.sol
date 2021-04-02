@@ -16,9 +16,9 @@ contract RepaymentCalc {
     /**
         @dev    Calculates the next payment for a Loan.
         @param  _loan Loan to calculate a payment for
-        @return [0] = Principal + Interest
-                [1] = Principal
-                [2] = Interest
+        @return [0] = Entitiled interest to the next payment, Principal + Interest only when the next payment is last payment of the loan
+                [1] = Entitiled principal amount needs to pay in the next payment
+                [2] = Entitiled interest amount needs to pay in the next payment
     */
     function getNextPayment(address _loan) view public returns(uint256, uint256, uint256) {
 

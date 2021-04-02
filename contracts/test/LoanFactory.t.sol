@@ -92,7 +92,7 @@ contract LoanFactoryTest is TestUtil {
 
     function test_createLoan_invalid_locker_factories() public {
         address[3] memory calcs = set_calcs();
-        gov.setLoanAsset(USDC, true);
+        gov.setLiquidityAsset(USDC,  true);
         gov.setCollateralAsset(WETH, true);
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
@@ -117,7 +117,7 @@ contract LoanFactoryTest is TestUtil {
     function test_createLoan_invalid_calc_types() public {
         set_valid_factories();
         address[3] memory calcs = set_calcs();
-        gov.setLoanAsset(USDC, true);
+        gov.setLiquidityAsset(USDC,  true);
         gov.setCollateralAsset(WETH, true);
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
@@ -146,7 +146,7 @@ contract LoanFactoryTest is TestUtil {
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
-        gov.setLoanAsset(USDC, true);  // Allow loan asset
+        gov.setLiquidityAsset(USDC, true);  // Allow loan asset
         // Still fails as collateral asset is not a valid collateral asset
         assertTrue(!borrower.try_createLoan(address(lFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(lFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
@@ -181,7 +181,7 @@ contract LoanFactoryTest is TestUtil {
         set_valid_factories();
         address[3] memory calcs = set_calcs();
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
-        gov.setLoanAsset(USDC, true);
+        gov.setLiquidityAsset(USDC,  true);
         gov.setCollateralAsset(WETH, true);
 
         // Pause LoanFactory and attempt createLoan()
@@ -208,7 +208,7 @@ contract LoanFactoryTest is TestUtil {
     function test_createLoan_successfully() public {
         set_valid_factories();
         address[3] memory calcs = set_calcs();
-        gov.setLoanAsset(USDC, true);
+        gov.setLiquidityAsset(USDC,  true);
         gov.setCollateralAsset(WETH, true);
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];
@@ -221,7 +221,7 @@ contract LoanFactoryTest is TestUtil {
 
         // Verify the storage of loan contract
         assertEq(loan.borrower(),                  address(borrower), "Incorrect borrower");
-        assertEq(address(loan.loanAsset()),        USDC, "Incorrect loan asset");
+        assertEq(address(loan.liquidityAsset()),        USDC, "Incorrect loan asset");
         assertEq(address(loan.collateralAsset()),  WETH, "Incorrect collateral asset");
         assertEq(loan.flFactory(),                 address(flFactory), "Incorrect FLF");
         assertEq(loan.clFactory(),                 address(clFactory), "Incorrect CLF");

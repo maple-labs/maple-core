@@ -116,7 +116,7 @@ contract LoanTest is TestUtil {
         gov.setCalc(address(lateFeeCalc),   true);
         gov.setCalc(address(premiumCalc),   true);
         gov.setCollateralAsset(WETH,        true);
-        gov.setLoanAsset(USDC,              true);
+        gov.setLiquidityAsset(USDC,         true);
 
         /*** Set up oracles ***/
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
@@ -180,7 +180,7 @@ contract LoanTest is TestUtil {
 
         Loan loan = ali.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     
-        assertEq(address(loan.loanAsset()),        USDC);
+        assertEq(address(loan.liquidityAsset()),   USDC);
         assertEq(address(loan.collateralAsset()),  WETH);
         assertEq(loan.flFactory(),                 address(flFactory));
         assertEq(loan.clFactory(),                 address(clFactory));
@@ -292,14 +292,14 @@ contract LoanTest is TestUtil {
 
         assertEq(IERC20(WETH).balanceOf(address(ali)),    10 ether);  // Borrower collateral balance
         assertEq(IERC20(USDC).balanceOf(fundingLocker), 5000 * USD);  // Funding locker reqAssset balance
-        assertEq(IERC20(USDC).balanceOf(address(loan)),          0);  // Loan vault loanAsset balance
+        assertEq(IERC20(USDC).balanceOf(address(loan)),          0);  // Loan vault liquidityAsset balance
         assertEq(loan.principalOwed(),                           0);  // Principal owed
         assertEq(uint256(loan.loanState()),                      0);  // Loan state: Live
 
         // Fee related variables pre-check.
         assertEq(loan.feePaid(),                            0);  // feePaid amount
         assertEq(loan.excessReturned(),                     0);  // excessReturned amount
-        assertEq(IERC20(USDC).balanceOf(address(treasury)), 0);  // Treasury loanAsset balance
+        assertEq(IERC20(USDC).balanceOf(address(treasury)), 0);  // Treasury liquidityAsset balance
 
         assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
 
@@ -307,8 +307,8 @@ contract LoanTest is TestUtil {
         assertEq(IERC20(WETH).balanceOf(address(loan.collateralLocker())),            reqCollateral);  // Collateral locker collateral balance
 
         assertEq(IERC20(USDC).balanceOf(fundingLocker),                   0);  // Funding locker reqAssset balance
-        assertEq(IERC20(USDC).balanceOf(address(loan)),          4005 * USD);  // Loan vault loanAsset balance
-        assertEq(IERC20(USDC).balanceOf(address(ali)),      990 * USD + pre);  // Lender loanAsset balance
+        assertEq(IERC20(USDC).balanceOf(address(loan)),          4005 * USD);  // Loan vault liquidityAsset balance
+        assertEq(IERC20(USDC).balanceOf(address(ali)),      990 * USD + pre);  // Lender liquidityAsset balance
         assertEq(loan.principalOwed(),                           1000 * USD);  // Principal owed
         assertEq(uint256(loan.loanState()),                               1);  // Loan state: Active
 
@@ -317,7 +317,7 @@ contract LoanTest is TestUtil {
         // Fee related variables post-check.
         assertEq(loan.feePaid(),                               5 * USD);  // Drawdown amount
         assertEq(loan.excessReturned(),                     4000 * USD);  // Principal owed
-        assertEq(IERC20(USDC).balanceOf(address(treasury)),    5 * USD);  // Treasury loanAsset balance
+        assertEq(IERC20(USDC).balanceOf(address(treasury)),    5 * USD);  // Treasury liquidityAsset balance
 
         // Test FDT accounting
         address debtLocker = pool.debtLockers(address(loan), address(dlFactory));
@@ -534,8 +534,8 @@ contract LoanTest is TestUtil {
         hevm.warp(loan.createdAt() + globals.drawdownGracePeriod());
         assertTrue(!ali.try_unwind(address(loan)));
 
-        uint256 flBalance_pre   = IERC20(loan.loanAsset()).balanceOf(loan.fundingLocker());
-        uint256 loanBalance_pre = IERC20(loan.loanAsset()).balanceOf(address(loan));
+        uint256 flBalance_pre   = IERC20(loan.liquidityAsset()).balanceOf(loan.fundingLocker());
+        uint256 loanBalance_pre = IERC20(loan.liquidityAsset()).balanceOf(address(loan));
         uint256 loanState_pre   = uint256(loan.loanState());
 
         // Warp 1 more second ... can call unwind()
@@ -549,8 +549,8 @@ contract LoanTest is TestUtil {
         assertTrue(mic.try_setProtocolPause(address(globals), false));
         assertTrue(ali.try_unwind(address(loan)));
 
-        uint256 flBalance_post   = IERC20(loan.loanAsset()).balanceOf(loan.fundingLocker());
-        uint256 loanBalance_post = IERC20(loan.loanAsset()).balanceOf(address(loan));
+        uint256 flBalance_post   = IERC20(loan.liquidityAsset()).balanceOf(loan.fundingLocker());
+        uint256 loanBalance_post = IERC20(loan.liquidityAsset()).balanceOf(address(loan));
         uint256 loanState_post   = uint256(loan.loanState());
 
         assertEq(loanBalance_pre, 0);
@@ -575,7 +575,7 @@ contract LoanTest is TestUtil {
         assertTrue(sid.try_claim(address(pool), address(loan), address(dlFactory)));
 
         withinDiff(IERC20(USDC).balanceOf(address(pool.liquidityLocker())), 5000 * USD, 1);
-        withinDiff(IERC20(loan.loanAsset()).balanceOf(address(loan)),                0, 1);
+        withinDiff(IERC20(loan.liquidityAsset()).balanceOf(address(loan)),                0, 1);
 
         // Can't unwind() loan after it has already been called.
         assertTrue(!ali.try_unwind(address(loan)));
@@ -656,7 +656,7 @@ contract LoanTest is TestUtil {
 
         assertTrue(ali.try_drawdown(address(loan), 5000 * USD));  // Draw down the loan.
 
-        uint256 expectedAmount = (reqCollateral * globals.getLatestPrice(address(loan.collateralAsset()))) / globals.getLatestPrice(address(loan.loanAsset()));
+        uint256 expectedAmount = (reqCollateral * globals.getLatestPrice(address(loan.collateralAsset()))) / globals.getLatestPrice(address(loan.liquidityAsset()));
 
         assertEq((expectedAmount * USD) / WAD, loan.getExpectedAmountRecovered());
     }

@@ -179,7 +179,7 @@ contract PoolTest is TestUtil {
         gov.setCalc(address(lateFeeCalc),    true);
         gov.setCalc(address(premiumCalc),    true);
         gov.setCollateralAsset(WETH,         true);
-        gov.setLoanAsset(USDC,               true);
+        gov.setLiquidityAsset(USDC,          true);
         gov.setSwapOutRequired(1_000_000);
 
         // Create Liquidity Pool
@@ -688,7 +688,7 @@ contract PoolTest is TestUtil {
 
         assertEq(address(debtLocker.loan()), address(loan));
         assertEq(debtLocker.pool(), address(pool1));
-        assertEq(address(debtLocker.loanAsset()), USDC);
+        assertEq(address(debtLocker.liquidityAsset()), USDC);
 
         assertEq(IERC20(USDC).balanceOf(liqLocker),              80 * USD);  // Balance of Liquidity Locker
         assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 20 * USD);  // Balance of Funding Locker
@@ -717,7 +717,7 @@ contract PoolTest is TestUtil {
 
         assertEq(address(debtLocker2.loan()), address(loan));
         assertEq(debtLocker2.pool(), address(pool1));
-        assertEq(address(debtLocker2.loanAsset()), USDC);
+        assertEq(address(debtLocker2.liquidityAsset()), USDC);
 
         assertEq(dlFactory2.owner(address(debtLocker2)), address(pool1));
         assertTrue(dlFactory2.isLocker(address(debtLocker2)));
@@ -746,10 +746,10 @@ contract PoolTest is TestUtil {
         ];
 
         uint256[8] memory debtLockerData = [
-            debtLocker.interestPaid(),
-            debtLocker.principalPaid(),
-            debtLocker.feePaid(),
-            debtLocker.excessReturned(),
+            debtLocker.lastInterestPaid(),
+            debtLocker.lastPrincipalPaid(),
+            debtLocker.lastFeePaid(),
+            debtLocker.lastExcessReturned(),
             0,0,0,0
         ];
 
@@ -758,10 +758,10 @@ contract PoolTest is TestUtil {
         uint256[7] memory claim = pd.claim(address(pool), address(_loan),   address(dlFactory));
 
         // Updated DL state variables
-        debtLockerData[4] = debtLocker.interestPaid();
-        debtLockerData[5] = debtLocker.principalPaid();
-        debtLockerData[6] = debtLocker.feePaid();
-        debtLockerData[7] = debtLocker.excessReturned();
+        debtLockerData[4] = debtLocker.lastInterestPaid();
+        debtLockerData[5] = debtLocker.lastPrincipalPaid();
+        debtLockerData[6] = debtLocker.lastFeePaid();
+        debtLockerData[7] = debtLocker.lastExcessReturned();
 
         balances[5] = liquidityAsset.balanceOf(address(debtLocker));
         balances[6] = liquidityAsset.balanceOf(address(pool));
@@ -821,18 +821,18 @@ contract PoolTest is TestUtil {
         }
     }
 
-    function isConstantPoolValue(Pool pool, IERC20 loanAsset, uint256 constPoolVal) internal view returns(bool) {
-        return pool.principalOut() + loanAsset.balanceOf(pool.liquidityLocker()) == constPoolVal;
+    function isConstantPoolValue(Pool pool, IERC20 liquidityAsset, uint256 constPoolVal) internal view returns(bool) {
+        return pool.principalOut() + liquidityAsset.balanceOf(pool.liquidityLocker()) == constPoolVal;
     }
 
-    function assertConstFundLoan(Pool pool, address _loan, address dlFactory, uint256 amt, IERC20 loanAsset, uint256 constPoolVal) internal returns(bool) {
+    function assertConstFundLoan(Pool pool, address _loan, address dlFactory, uint256 amt, IERC20 liquidityAsset, uint256 constPoolVal) internal returns(bool) {
         assertTrue(sid.try_fundLoan(address(pool), _loan,  dlFactory, amt));
-        assertTrue(isConstantPoolValue(pool1, loanAsset, constPoolVal));
+        assertTrue(isConstantPoolValue(pool1, liquidityAsset, constPoolVal));
     }
 
-    function assertConstClaim(Pool pool, address _loan, address dlFactory, IERC20 loanAsset, uint256 constPoolVal) internal returns(bool) {
+    function assertConstClaim(Pool pool, address _loan, address dlFactory, IERC20 liquidityAsset, uint256 constPoolVal) internal returns(bool) {
         sid.claim(address(pool), _loan, dlFactory);
-        assertTrue(isConstantPoolValue(pool, loanAsset, constPoolVal));
+        assertTrue(isConstantPoolValue(pool, liquidityAsset, constPoolVal));
     }
 
     function test_claim_defaulted_zero_collateral_loan() public {

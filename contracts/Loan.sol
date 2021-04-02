@@ -42,7 +42,7 @@ contract Loan is FDT, Pausable {
 
     State public loanState;  // The current state of this loan, as defined in the State enum below
 
-    IERC20 public immutable loanAsset;          // Asset deposited by lenders into the FundingLocker, when funding this loan
+    IERC20 public immutable liquidityAsset;     // Asset deposited by lenders into the FundingLocker, when funding this loan
     IERC20 public immutable collateralAsset;    // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan
 
     address public immutable fundingLocker;     // Funding locker - holds custody of loan funds before drawdown    
@@ -78,9 +78,9 @@ contract Loan is FDT, Pausable {
     
     // Liquidation variables
     uint256 public amountLiquidated;   // Amount of collateral that has been liquidated after default
-    uint256 public amountRecovered;    // Amount of loanAsset  that has been recovered  after default
+    uint256 public amountRecovered;    // Amount of liquidityAsset  that has been recovered  after default
     uint256 public defaultSuffered;    // Difference between `amountRecovered` and `principalOwed` after liquidation
-    uint256 public liquidationExcess;  // If `amountRecovered > principalOwed`, amount of loanAsset that is to be returned to borrower
+    uint256 public liquidationExcess;  // If `amountRecovered > principalOwed`, amount of liquidityAsset that is to be returned to borrower
 
     event LoanFunded(uint256 amtFunded, address indexed _fundedBy);
     event BalanceUpdated(address who, address token, uint256 balance);
@@ -97,7 +97,7 @@ contract Loan is FDT, Pausable {
     );
     event Liquidation(
         uint collateralSwapped,
-        uint loanAssetReturned,
+        uint liquidityAssetReturned,
         uint liquidationExcess,
         uint defaultSuffered
     );
@@ -105,7 +105,7 @@ contract Loan is FDT, Pausable {
     /**
         @dev Constructor for a Loan.
         @param  _borrower        Will receive the funding when calling drawdown(), is also responsible for repayments
-        @param  _loanAsset       The asset _borrower is requesting funding in
+        @param  _liquidityAsset  The asset _borrower is requesting funding in
         @param  _collateralAsset The asset provided as collateral by _borrower
         @param  _flFactory       Factory to instantiate FundingLocker with
         @param  _clFactory       Factory to instantiate CollateralLocker with
@@ -123,7 +123,7 @@ contract Loan is FDT, Pausable {
     */
     constructor(
         address _borrower,
-        address _loanAsset,
+        address _liquidityAsset,
         address _collateralAsset,
         address _flFactory,
         address _clFactory,
@@ -133,14 +133,14 @@ contract Loan is FDT, Pausable {
         FDT(
             string(abi.encodePacked("Maple Loan Token")),
             string(abi.encodePacked("MPL-LOAN")),
-            _loanAsset
+            _liquidityAsset
         )
         public
     {
         IGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks
-        require(globals.isValidLoanAsset(_loanAsset),             "Loan:INVALID_LOAN_ASSET");
+        require(globals.isValidLiquidityAsset(_liquidityAsset),   "Loan:INVALID_LIQUIDITY_ASSET");
         require(globals.isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
 
         require(specs[2] != uint256(0),               "Loan:PID_EQ_ZERO");
@@ -149,7 +149,7 @@ contract Loan is FDT, Pausable {
         require(specs[5] > uint256(0),                "Loan:FUNDING_PERIOD_EQ_ZERO");
 
         borrower        = _borrower;
-        loanAsset       = IERC20(_loanAsset);
+        liquidityAsset  = IERC20(_liquidityAsset);
         collateralAsset = IERC20(_collateralAsset);
         flFactory       = _flFactory;
         clFactory       = _clFactory;
@@ -170,7 +170,7 @@ contract Loan is FDT, Pausable {
 
         // Deploy lockers
         collateralLocker = ICollateralLockerFactory(_clFactory).newLocker(_collateralAsset);
-        fundingLocker    = IFundingLockerFactory(_flFactory).newLocker(_loanAsset);
+        fundingLocker    = IFundingLockerFactory(_flFactory).newLocker(_liquidityAsset);
         emit LoanStateChanged(State.Live);
     }
 
@@ -180,7 +180,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from Funding to Active.
-        @param amt Amount of loanAsset borrower draws down, remainder is returned to Loan where it can be claimed back by LoanFDT holders.
+        @param amt Amount of liquidityAsset borrower draws down, remainder is returned to Loan where it can be claimed back by LoanFDT holders.
     */
     function drawdown(uint256 amt) external {
         _whenProtocolNotPaused();
@@ -227,7 +227,7 @@ contract Loan is FDT, Pausable {
         _emitBalanceUpdateEventForFundingLocker();
         _emitBalanceUpdateEventForLoan();
 
-        emit BalanceUpdated(treasury, address(loanAsset), loanAsset.balanceOf(treasury));
+        emit BalanceUpdated(treasury, address(liquidityAsset), liquidityAsset.balanceOf(treasury));
         emit LoanStateChanged(State.Active);
         emit Drawdown(amt);
     }
@@ -283,7 +283,7 @@ contract Loan is FDT, Pausable {
         }
 
         // Loan payer sends funds to loan
-        loanAsset.safeTransferFrom(msg.sender, address(this), total);
+        liquidityAsset.safeTransferFrom(msg.sender, address(this), total);
 
         // Call updateFundsReceived() update FDT accounting with funds recieved from interest payment
         updateFundsReceived(); 
@@ -314,7 +314,7 @@ contract Loan is FDT, Pausable {
         _whenProtocolNotPaused();
         _isValidState(State.Live);
         _isValidPool();
-        loanAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
+        liquidityAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
 
         uint256 wad = _toWad(amt);  // Convert to WAD precision
         _mint(mintTo, wad);         // Mint FDT to `mintTo` i.e DebtLocker contract.
@@ -332,7 +332,7 @@ contract Loan is FDT, Pausable {
         _isValidState(State.Live);
 
         // Update accounting for claim(), transfer funds from FundingLocker to Loan
-        excessReturned = LoanLib.unwind(loanAsset, superFactory, fundingLocker, createdAt);
+        excessReturned = LoanLib.unwind(liquidityAsset, superFactory, fundingLocker, createdAt);
 
         updateFundsReceived();
 
@@ -350,8 +350,8 @@ contract Loan is FDT, Pausable {
         _isValidState(State.Active);
         require(LoanLib.canTriggerDefault(nextPaymentDue, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
         
-        // Pull collateralAsset from CollateralLocker, swap to loanAsset, and hold custody of resulting loanAsset in Loan
-        (amountLiquidated, amountRecovered) = LoanLib.liquidateCollateral(collateralAsset, address(loanAsset), superFactory, collateralLocker);
+        // Pull collateralAsset from CollateralLocker, swap to liquidityAsset, and hold custody of resulting liquidityAsset in Loan
+        (amountLiquidated, amountRecovered) = LoanLib.liquidateCollateral(collateralAsset, address(liquidityAsset), superFactory, collateralLocker);
 
         // Decrement principalOwed by amountRecovered, set defaultSuffered to the difference (shortfall from liquidation)
         if (amountRecovered <= principalOwed) {
@@ -362,7 +362,7 @@ contract Loan is FDT, Pausable {
         else {
             liquidationExcess = amountRecovered.sub(principalOwed);
             principalOwed = 0;
-            loanAsset.safeTransfer(borrower, liquidationExcess); // Send excess to Borrower
+            liquidityAsset.safeTransfer(borrower, liquidationExcess); // Send excess to Borrower
         }
 
         // Call updateFundsReceived() update FDT accounting with funds recieved from liquidation
@@ -374,8 +374,8 @@ contract Loan is FDT, Pausable {
         // Emit liquidation event
         emit Liquidation(
             amountLiquidated,  // Amount of collateralAsset swapped
-            amountRecovered,   // Amount of loanAsset recovered from swap
-            liquidationExcess, // Amount of loanAsset returned to borrower
+            amountRecovered,   // Amount of liquidityAsset recovered from swap
+            liquidationExcess, // Amount of liquidityAsset returned to borrower
             defaultSuffered    // Remaining losses after liquidation
         );
         emit LoanStateChanged(State.Liquidated);
@@ -421,7 +421,7 @@ contract Loan is FDT, Pausable {
         @param token Address of the token that need to reclaimed.
      */
     function reclaimERC20(address token) external {
-        LoanLib.reclaimERC20(token, address(loanAsset), _globals(superFactory));
+        LoanLib.reclaimERC20(token, address(liquidityAsset), _globals(superFactory));
     }
 
     /*********************/
@@ -442,18 +442,18 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Public getter to know how much minimum amount of loan asset will get by swapping collateral asset.
-        @return Expected amount of loanAsset to be recovered from liquidation based on current oracle prices
+        @return Expected amount of liquidityAsset to be recovered from liquidation based on current oracle prices
     */
     function getExpectedAmountRecovered() public view returns(uint256) {
         uint256 liquidationAmt = _getCollateralLockerBalance();
-        return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(loanAsset), liquidationAmt);
+        return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(liquidityAsset), liquidationAmt);
     }
     
     /**
         @dev Returns information on next payment amount.
-        @return [0] = Principal + Interest
-                [1] = Principal 
-                [2] = Interest
+        @return [0] = Entitiled interest to the next payment, Principal + Interest only when the next payment is last payment of the loan 
+                [1] = Entitiled principal amount needs to pay in the next payment
+                [2] = Entitiled interest amount needs to pay in the next payment
                 [3] = Payment Due Date
                 [4] = Is Payment Late
     */
@@ -473,13 +473,13 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Helper for calculating collateral required to draw down amt.
-        @param  amt The amount of loanAsset to draw down from FundingLocker
+        @param  amt The amount of liquidityAsset to draw down from FundingLocker
         @return The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
     */
     function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
         return LoanLib.collateralRequiredForDrawdown(
             IERC20Details(address(collateralAsset)),
-            IERC20Details(address(loanAsset)),
+            IERC20Details(address(liquidityAsset)),
             collateralRatio,
             superFactory,
             amt
@@ -508,7 +508,7 @@ contract Loan is FDT, Pausable {
         @dev Utility to convert to WAD precision.
     */
     function _toWad(uint256 amt) internal view returns(uint256) {
-        return amt.mul(10 ** 18).div(10 ** IERC20Details(address(loanAsset)).decimals());
+        return amt.mul(10 ** 18).div(10 ** IERC20Details(address(liquidityAsset)).decimals());
     }
 
     /**
@@ -529,7 +529,7 @@ contract Loan is FDT, Pausable {
         @dev Utility to return FundingLocker balance.
     */
     function _getFundingLockerBalance() internal view returns (uint256) {
-        return loanAsset.balanceOf(fundingLocker);
+        return liquidityAsset.balanceOf(fundingLocker);
     }
 
     /**
@@ -574,14 +574,14 @@ contract Loan is FDT, Pausable {
         @dev Utility to emit BalanceUpdated event for Loan.
     */
     function _emitBalanceUpdateEventForLoan() internal {
-        emit BalanceUpdated(address(this), address(loanAsset), loanAsset.balanceOf(address(this)));
+        emit BalanceUpdated(address(this), address(liquidityAsset), liquidityAsset.balanceOf(address(this)));
     }
 
     /**
         @dev Utility to emit BalanceUpdated event for FundingLocker.
     */
     function _emitBalanceUpdateEventForFundingLocker() internal {
-        emit BalanceUpdated(fundingLocker, address(loanAsset), _getFundingLockerBalance());
+        emit BalanceUpdated(fundingLocker, address(liquidityAsset), _getFundingLockerBalance());
     }
 
     /**

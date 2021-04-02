@@ -8,7 +8,7 @@ interface ILoan is IERC20 {
     // State Variables
     function fundsTokenBalance() external view returns (uint256);
     
-    function loanAsset() external view returns (address);
+    function liquidityAsset() external view returns (address);
     
     function collateralAsset() external view returns (address);
     
