@@ -111,8 +111,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @param dst Desintation to transfer stakeAsset to
         @param amt Amount of stakeAsset to transfer
     */
-    function pull(address dst, uint256 amt) isPool public returns(bool) {
-        return stakeAsset.transfer(dst, amt);
+    function pull(address dst, uint256 amt) isPool external {
+        stakeAsset.safeTransfer(dst, amt);
     }
 
     /**
@@ -135,7 +135,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function stake(uint256 amt) whenNotPaused external {
         _whenProtocolNotPaused();
         _isAllowed(msg.sender);
-        require(stakeAsset.transferFrom(msg.sender, address(this), amt), "StakeLocker:STAKE_TRANSFER_FROM");
+        stakeAsset.safeTransferFrom(msg.sender, address(this), amt);
 
         _updateStakeDate(msg.sender, amt);
         _mint(msg.sender, amt);
@@ -188,7 +188,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
         withdrawFunds();         // Transfer full entitled interest
 
-        require(stakeAsset.transfer(msg.sender, amt.sub(recognizeLosses())), "StakeLocker:UNSTAKE_TRANSFER");  // Unstake amt minus losses
+        stakeAsset.safeTransfer(msg.sender, amt.sub(recognizeLosses()));  // Unstake amt minus losses
 
         emit Unstake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));

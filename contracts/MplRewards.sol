@@ -169,13 +169,13 @@ contract MplRewards is Ownable {
     */
     function setPaused(bool _paused) external onlyOwner {
         // Ensure we're actually changing the state before we do anything
-        if (_paused == paused) return;
+        require(_paused == paused, "MplRewards:ALREADY_IN_SAME_STATE");
 
         // Set our paused state.
         paused = _paused;
 
         // If applicable, set the last pause time.
-        if (paused) lastPauseTime = block.timestamp;
+        if (_paused) lastPauseTime = block.timestamp;
 
         // Let everyone know that our pause state has changed.
         emit PauseChanged(paused);

@@ -11,7 +11,7 @@ contract MplRewardsFactory {
 
     mapping(address => bool) public isMplRewards;  // True if MplRewards was created by this factory, otherwise false.
 
-    event MplRewardsCreated(address rewardsToken, address stakingToken, address owner);
+    event MplRewardsCreated(address indexed rewardsToken, address indexed stakingToken, address owner);
 
     constructor(address _globals) public {
         globals = IGlobals(_globals);
@@ -30,7 +30,7 @@ contract MplRewardsFactory {
         @return Address of the instantiated MplRewards
     */
     function createMplRewards(address rewardsToken, address stakingToken) external returns (address) {
-        require(msg.sender == globals.governor());
+        require(msg.sender == globals.governor(), "MplRewardsFactory:UNAUTHORIZED");
         address mplRewards       = address(new MplRewards(rewardsToken, stakingToken, msg.sender));
         isMplRewards[mplRewards] = true;
 

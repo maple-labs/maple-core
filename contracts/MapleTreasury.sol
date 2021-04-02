@@ -40,9 +40,9 @@ contract MapleTreasury {
         globals       = _globals;
     }
 
-    event ERC20Conversion(address asset, uint256 amountIn, uint256 amountOut);
-    event PassThrough(uint256 amount);
-    event FundsWithdrawn(uint256 amount);
+    event ERC20Conversion(address indexed asset, uint256 amountIn, uint256 amountOut);
+    event DistributedToHolders(uint256 amount);
+    event ERC20Reclaimed(address indexed asset, uint256 amount);
     event FundsTokenModified(address by, address newFundsToken);
 
     modifier isGovernor() {
@@ -59,13 +59,13 @@ contract MapleTreasury {
     }
 
     /**
-        @dev Withdraws treasury funds to the MapleDAO address. Only Governor can call.
+        @dev Reclaim treasury funds to the MapleDAO address. Only Governor can call.
         @param asset  Address of the token that need to be reclaimed from the treasury contract
         @param amount Amount to withdraw
     */
-    function withdrawFunds(address asset, uint256 amount) isGovernor public {
+    function reclaimERC20(address asset, uint256 amount) isGovernor public {
         IERC20(asset).safeTransfer(msg.sender, amount);
-        emit FundsWithdrawn(amount);
+        emit ERC20Reclaimed(asset, amount);
     }
 
     /**
@@ -73,10 +73,10 @@ contract MapleTreasury {
     */
     function distributeToHolders() isGovernor public {
         IERC20 _fundsToken = IERC20(fundsToken);
-        uint256 passThroughAmount = _fundsToken.balanceOf(address(this));
-        _fundsToken.safeTransfer(mpl, passThroughAmount);
+        uint256 distributeAmount = _fundsToken.balanceOf(address(this));
+        _fundsToken.safeTransfer(mpl, distributeAmount);
         IMapleToken(mpl).updateFundsReceived();
-        emit PassThrough(passThroughAmount);
+        emit DistributedToHolders(distributeAmount);
     }
 
     /**

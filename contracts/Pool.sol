@@ -437,6 +437,7 @@ contract Pool is PoolFDT {
 
         if (withdrawableFunds > uint256(0)) { 
             _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
+            _emitBalanceUpdatedEvent();
 
             interestSum = interestSum.sub(withdrawableFunds);
 
