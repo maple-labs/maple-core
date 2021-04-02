@@ -207,8 +207,6 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         require(isUnstakeAllowed(msg.sender),                               "StakeLocker:OUTSIDE_COOLDOWN");
         require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "StakeLocker:FUNDS_LOCKED");
 
-        unstakeCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what unstake amount is
-
         updateFundsReceived();   // Account for any funds transferred into contract since last call
         _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
         withdrawFunds();         // Transfer full entitled liquidityAsset interest
@@ -216,7 +214,6 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         stakeAsset.safeTransfer(msg.sender, amt.sub(recognizeLosses()));  // Unstake amt minus losses
 
         emit Unstake(amt, msg.sender);
-        emit Cooldown(msg.sender, 0);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 

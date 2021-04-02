@@ -376,8 +376,6 @@ contract Pool is PoolFDT {
         require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "Pool:WITHDRAW_NOT_ALLOWED");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "Pool:FUNDS_LOCKED");
 
-        withdrawCooldown[msg.sender] = uint256(0);  // Reset withdrawCooldown no matter what withdraw amount is
-
         _burn(msg.sender, wad);  // Burn the corresponding FDT balance
         withdrawFunds();         // Transfer full entitled interest, decrement `interestSum`
         
@@ -387,7 +385,6 @@ contract Pool is PoolFDT {
 
         // TODO: Do we need PoolFDT BalanceUpdated events?
         _emitBalanceUpdatedEvent();
-        emit Cooldown(msg.sender, 0);
     }
 
     /**
