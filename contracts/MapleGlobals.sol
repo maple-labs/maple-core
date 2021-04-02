@@ -57,7 +57,7 @@ contract MapleGlobals {
     event              CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event               LiquidityAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event                       OracleSet(address asset, address oracle);
-    event TransferRestrictionExemptionSet(address exemptedContract, bool valid);
+    event TransferRestrictionExemptionSet(address indexed exemptedContract, bool valid);
     event                 BalancerPoolSet(address balancerPool,   bool valid);
     event              PendingGovernorSet(address pendingGovernor);
     event                GovernorAccepted(address governor);
