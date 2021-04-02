@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/304108/111410773-5039e800-8714-11eb-862d-07c461164eec.png" height="60" />
-</p>
-
 ## Background
 Maple is a decentralized corporate credit market. Maple provides capital to institutional borrowers through globally accessible fixed-income yield opportunities.
 
@@ -51,3 +47,9 @@ Note: Number of `--fuzz-runs` in `./test-ci.sh` should remain constant on push. 
 ## Join us on Discord
 
 <a href="https://discord.gg/tuNYQse">Maple Discord</a>
+
+***
+
+<p align="center">
+  <img src="https://maple.finance/static/logo-52b94a65fa2c9a7c9ede3cb978b2408f.png" height="60" />
+</p>
