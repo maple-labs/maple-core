@@ -152,8 +152,6 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
         unstakeCooldown[msg.sender] = uint256(0);  // Reset unstakeCooldown if staker had previously intended to unstake
 
-        unstakeCooldown[msg.sender] = uint256(0);  // Reset unstakeCooldown if staker had previously intended to unstake
-
         _updateStakeDate(msg.sender, amt);
 
         stakeAsset.safeTransferFrom(msg.sender, address(this), amt);
@@ -198,15 +196,6 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         require(unstakeCooldown[msg.sender] != uint256(0), "StakeLocker:NOT_UNSTAKING");
         unstakeCooldown[msg.sender] = 0;
         emit Cooldown(msg.sender, uint256(0));
-    }
-
-    /**
-        @dev Cancels an initiated unstake by resetting the cooldown period to 0.
-    **/
-    function cancelUnstake() external {
-        require(unstakeCooldown[msg.sender] != uint256(0), "StakeLocker:NOT_UNSTAKING");
-        unstakeCooldown[msg.sender] = 0;
-        emit Cooldown(msg.sender, 0);
     }
 
     /**
@@ -294,15 +283,6 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**
         @dev View function to indicate if recipient is allowed to receive a transfer.
         This is only possible if they have zero cooldown or they are past their unstake window.
-    */
-    function isReceiveAllowed(uint256 unstakeCooldown) public view returns (bool) {
-        IGlobals globals = _globals();
-        return block.timestamp > unstakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow();
-    }
-
-    /**
-        @dev View function to indicate if recipient is allowed to receive a transfer.
-        This is only possible if they have zero cooldown or they are passed their unstake window.
     */
     function isReceiveAllowed(uint256 unstakeCooldown) public view returns (bool) {
         IGlobals globals = _globals();
