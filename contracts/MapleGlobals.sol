@@ -89,8 +89,8 @@ contract MapleGlobals {
         admin                = _admin;
         stakerCooldownPeriod = 10 days;
         lpCooldownPeriod     = 10 days;
-        stakerUnstakeWindow  = 2 days;     // Staker cooldown period must be set manually by the governor
-        lpWithdrawWindow     = 2 days;     // LP     cooldown period must be set manually by the governor
+        stakerUnstakeWindow  = 2 days;
+        lpWithdrawWindow     = 2 days;
     }
 
     /************************/
@@ -98,7 +98,7 @@ contract MapleGlobals {
     /************************/
 
     /**
-        @dev Update the `stakerCooldownPeriod` state variable. This change will affect existing cool down period for the stakers who already applied for the unstake.
+        @dev Update the `stakerCooldownPeriod` state variable. This change will affect existing cool down period for the stakers who already intended to unstake.
         @param newCooldownPeriod New value for the cool down period.
      */
         function setStakerCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
@@ -107,7 +107,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the `lpCooldownPeriod` state variable. This change will affect existing cool down period for the LPs who already applied for the withdraw.
+        @dev Update the `lpCooldownPeriod` state variable. This change will affect existing cool down period for the LPs who already intended to withdraw.
         @param newCooldownPeriod New value for the cool down period.
      */
     function setLpCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
@@ -116,7 +116,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the `stakerUnstakeWindow` state variable. TODO: "This change" update
+        @dev Update the `stakerUnstakeWindow` state variable. This change will affect existing window for the stalers who already applied to unstake.
         @param newUnstakeWindow New value for the unstake window.
      */
     function setStakerUnstakeWindow(uint256 newUnstakeWindow) external isGovernor {
@@ -125,7 +125,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the `lpWithdrawWindow` state variable. TODO: "This change" update
+        @dev Update the `lpWithdrawWindow` state variable. This change will affect existing window for the LPs who already intended to withdraw.
         @param newLpWithdrawWindow New value for the withdraw window.
      */
     function setLpWithdrawWindow(uint256 newLpWithdrawWindow) external isGovernor {

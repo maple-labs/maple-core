@@ -387,9 +387,6 @@ contract StakeLockerTest is TestUtil {
         assertTrue(che.try_stake(address(stakeLocker), 25 * WAD));
 
         make_transferrable(che, stakeLocker);
-        assertTrue(!che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // No transfer to non-allowlisted user
-
-        sid.setAllowlistStakeLocker(address(pool), address(ali), true); // Add ali to allowlist
 
         // Pause protocol and attempt to transfer FDTs
         assertTrue( mic.try_setProtocolPause(address(globals), true));
@@ -397,22 +394,10 @@ contract StakeLockerTest is TestUtil {
 
         // Unpause protocol and transfer FDTs
         assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(che.try_transfer(address(stakeLocker), address(ali), 1 * WAD)); // Yes transfer to allowlisted user
+        assertTrue(che.try_transfer(address(stakeLocker), address(ali), 1 * WAD));
 
         make_transferrable(che, stakeLocker);
         assertTrue(che.try_transfer(address(stakeLocker), address(sid), 1 * WAD)); // Yes transfer to pool delegate
-
-        // transferFrom() checks
-        che.approve(address(stakeLocker), address(dan), 5 * WAD);
-        sid.setAllowlistStakeLocker(address(pool), address(ali), false); // Remove ali to allowlist
-        sid.setAllowlistStakeLocker(address(pool), address(dan), true); // Add dan to allowlist
-
-        make_transferrable(che, stakeLocker);
-        assertTrue(!dan.try_transferFrom(address(stakeLocker), address(che), address(ali), 1 * WAD)); // No transferFrom to non-allowlisted user
-        assertTrue(dan.try_transferFrom(address(stakeLocker), address(che), address(dan), 1 * WAD)); // Yes transferFrom to allowlisted user
-        make_transferrable(che, stakeLocker);
-        assertTrue(dan.try_transferFrom(address(stakeLocker), address(che), address(sid), 1 * WAD)); // Yes transferFrom to pool delegate
-
     }
 
     function make_transferrable(Staker staker, IStakeLocker stakeLocker) public {
