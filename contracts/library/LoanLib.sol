@@ -160,9 +160,9 @@ library LoanLib {
         @param repaymentCalc    Address of RepaymentCalc
         @param nextPaymentDue   Timestamp of when payment is due
         @param lateFeeCalc      Address of LateFeeCalc
-        @return total           Principal + Interest
-        @return principal       Principal 
-        @return interest        Interest
+        @return total           Entitiled interest to the next payment, Principal + Interest only when the next payment is last payment of the loan
+        @return principal       Entitiled principal amount needs to pay in the next payment
+        @return interest        Entitiled interest amount needs to pay in the next payment
         @return _nextPaymentDue Payment Due Date
         @return paymentLate     Boolean if payment is late
     */
