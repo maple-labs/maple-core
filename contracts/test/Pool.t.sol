@@ -746,10 +746,10 @@ contract PoolTest is TestUtil {
         ];
 
         uint256[8] memory debtLockerData = [
-            debtLocker.interestPaid(),
-            debtLocker.principalPaid(),
-            debtLocker.feePaid(),
-            debtLocker.excessReturned(),
+            debtLocker.lastInterestPaid(),
+            debtLocker.lastPrincipalPaid(),
+            debtLocker.lastFeePaid(),
+            debtLocker.lastExcessReturned(),
             0,0,0,0
         ];
 
@@ -758,10 +758,10 @@ contract PoolTest is TestUtil {
         uint256[7] memory claim = pd.claim(address(pool), address(_loan),   address(dlFactory));
 
         // Updated DL state variables
-        debtLockerData[4] = debtLocker.interestPaid();
-        debtLockerData[5] = debtLocker.principalPaid();
-        debtLockerData[6] = debtLocker.feePaid();
-        debtLockerData[7] = debtLocker.excessReturned();
+        debtLockerData[4] = debtLocker.lastInterestPaid();
+        debtLockerData[5] = debtLocker.lastPrincipalPaid();
+        debtLockerData[6] = debtLocker.lastFeePaid();
+        debtLockerData[7] = debtLocker.lastExcessReturned();
 
         balances[5] = liquidityAsset.balanceOf(address(debtLocker));
         balances[6] = liquidityAsset.balanceOf(address(pool));
