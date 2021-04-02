@@ -57,10 +57,11 @@ contract MplRewardsTest is TestUtil {
         poolFactory = new PoolFactory(address(globals));               // Create pool factory.
         dlFactory   = new DebtLockerFactory();   
 
-        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
-        gov.setPoolDelegateAllowlist(address(sid),                       true);
+        gov.setValidPoolFactory(address(poolFactory),                     true);
+        gov.setValidSubFactory( address(poolFactory), address(llFactory), true);
+        gov.setValidSubFactory( address(poolFactory), address(slFactory), true);
+        gov.setValidSubFactory( address(poolFactory), address(dlFactory), true);
+        gov.setPoolDelegateAllowlist(address(sid),                        true);
 
         usdOracle = new UsdOracle();
         gov.setPriceOracle(USDC, address(usdOracle));

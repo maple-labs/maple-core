@@ -83,8 +83,8 @@ contract MapleTreasuryTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(treasury)), 100 * USD);
         assertEq(IERC20(USDC).balanceOf(address(gov)),         0);
 
-        assertTrue(!fakeGov.try_withdrawFunds(USDC, 40 * USD));  // Non-governor can't withdraw
-        assertTrue(     gov.try_withdrawFunds(USDC, 40 * USD));
+        assertTrue(!fakeGov.try_reclaimERC20_treasury(USDC, 40 * USD));  // Non-governor can't withdraw
+        assertTrue(     gov.try_reclaimERC20_treasury(USDC, 40 * USD));
 
         assertEq(IERC20(USDC).balanceOf(address(treasury)), 60 * USD);  // Can be distributed to MPL holders
         assertEq(IERC20(USDC).balanceOf(address(gov)), 40 * USD);  // Withdrawn to MapleDAO address for funding

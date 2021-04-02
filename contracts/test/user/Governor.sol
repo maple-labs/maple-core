@@ -78,7 +78,7 @@ contract Governor {
 
     /*** MapleTreasury Functions ***/
     function setGlobals(address newGlobals)                external { treasury.setGlobals(newGlobals); }
-    function withdrawFunds(address asset, uint256 amount)  external { treasury.withdrawFunds(asset, amount); }
+    function reclaimERC20(address asset, uint256 amount)   external { treasury.reclaimERC20(asset, amount); }
     function distributeToHolders()                         external { treasury.distributeToHolders(); }
     function convertERC20(address asset)                   external { treasury.convertERC20(asset); }
 
@@ -224,8 +224,8 @@ contract Governor {
         string memory sig = "setGlobals(address)"; 
         (ok,) = address(treasury).call(abi.encodeWithSignature(sig, newGlobals));    
     }
-    function try_withdrawFunds(address asset, uint256 amount) external returns (bool ok) { 
-        string memory sig = "withdrawFunds(address,uint256)"; 
+    function try_reclaimERC20_treasury(address asset, uint256 amount) external returns (bool ok) { 
+        string memory sig = "reclaimERC20(address,uint256)"; 
         (ok,) = address(treasury).call(abi.encodeWithSignature(sig, asset, amount));    
     }
     function try_distributeToHolders() external returns (bool ok) { 

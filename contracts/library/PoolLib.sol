@@ -128,7 +128,7 @@ library PoolLib {
         uint256 availableSwapOut = getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
 
         // Pull BPTs from StakeLocker
-        require(IStakeLocker(stakeLocker).pull(address(this), bPool.balanceOf(stakeLocker)), "Pool:STAKE_PULL");
+        IStakeLocker(stakeLocker).pull(address(this), bPool.balanceOf(stakeLocker));
 
         // To maintain accounting, account for direct transfers into Pool
         uint256 preBurnLiquidityAssetBal = liquidityAsset.balanceOf(address(this));

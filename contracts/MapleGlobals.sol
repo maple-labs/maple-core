@@ -118,6 +118,7 @@ contract MapleGlobals {
      */
     function setAdmin(address newAdmin) external {
         require(msg.sender == governor && admin != address(0), "MapleGlobals:UNAUTHORIZED");
+        require(!protocolPaused, "MapleGlobals:PROCOTOL_PAUSED");
         admin = newAdmin;
     }
 
@@ -161,7 +162,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the valid PoolFactory mapping. Only Governor can call.
+        @dev Update the valid LoanFactory mapping. Only Governor can call.
         @param loanFactory Address of LoanFactory
         @param valid       The new bool value for validating loanFactory.
     */
@@ -176,6 +177,7 @@ contract MapleGlobals {
         @param valid        The validity of subFactory within context of superFactory
     */
     function setValidSubFactory(address superFactory, address subFactory, bool valid) external isGovernor {
+        require(isValidLoanFactory[superFactory] || isValidPoolFactory[superFactory], "MapleGlobals:SUPER_FACTORY_NOT_VALID");
         validSubFactories[superFactory][subFactory] = valid;
     }
 
@@ -225,7 +227,7 @@ contract MapleGlobals {
         @param  calc  Calculator address
         @param  valid Validity of calculator
     */
-    function setCalc(address calc, bool valid) public isGovernor {
+    function setCalc(address calc, bool valid) external isGovernor {
         validCalcs[calc] = valid;
     }
 
@@ -233,7 +235,7 @@ contract MapleGlobals {
         @dev Adjust investorFee (in basis points). Only Governor can call.
         @param _fee The fee, e.g., 50 = 0.50%
     */
-    function setInvestorFee(uint256 _fee) public isGovernor {
+    function setInvestorFee(uint256 _fee) external isGovernor {
         _checkPercentageRange(_fee);
         require(_fee + treasuryFee <= 10_000, "MapleGlobals:INVALID_INVESTOR_FEE");
         investorFee = _fee;
@@ -244,7 +246,7 @@ contract MapleGlobals {
         @dev Adjust treasuryFee (in basis points). Only Governor can call.
         @param _fee The fee, e.g., 50 = 0.50%
     */
-    function setTreasuryFee(uint256 _fee) public isGovernor {
+    function setTreasuryFee(uint256 _fee) external isGovernor {
         _checkPercentageRange(_fee);
         require(_fee + investorFee <= 10_000, "MapleGlobals:INVALID_TREASURY_FEE");
         treasuryFee = _fee;
@@ -255,7 +257,7 @@ contract MapleGlobals {
         @dev Set the MapleTreasury contract. Only Governor can call.
         @param _mapleTreasury New MapleTreasury address
     */
-    function setMapleTreasury(address _mapleTreasury) public isGovernor {
+    function setMapleTreasury(address _mapleTreasury) external isGovernor {
         require(_mapleTreasury != address(0), "MapleGlobals:ZERO_ADDRESS");
         mapleTreasury = _mapleTreasury;
         emit GlobalsAddressSet("MAPLE_TREASURY", _mapleTreasury);
@@ -265,7 +267,7 @@ contract MapleGlobals {
         @dev Adjust gracePeriod. Only Governor can call.
         @param _gracePeriod Number of seconds to set the grace period to
     */
-    function setGracePeriod(uint256 _gracePeriod) public isGovernor {
+    function setGracePeriod(uint256 _gracePeriod) external isGovernor {
         _checkTimeRange(_gracePeriod);
         gracePeriod = _gracePeriod;
         emit GlobalsParamSet("GRACE_PERIOD", _gracePeriod);
@@ -275,7 +277,7 @@ contract MapleGlobals {
         @dev Adjust minLoanEquity. Only Governor can call.
         @param _minLoanEquity Min percentage of Loan equity an address must have to trigger liquidations.
     */
-    function setMinLoanEquity(uint256 _minLoanEquity) public isGovernor {
+    function setMinLoanEquity(uint256 _minLoanEquity) external isGovernor {
         _checkPercentageRange(_minLoanEquity);
         minLoanEquity = _minLoanEquity;
         emit GlobalsParamSet("MIN_LOAN_EQUITY", _minLoanEquity);
@@ -285,7 +287,7 @@ contract MapleGlobals {
         @dev Adjust drawdownGracePeriod. Only Governor can call.
         @param _drawdownGracePeriod Number of seconds to set the drawdown grace period to
     */
-    function setDrawdownGracePeriod(uint256 _drawdownGracePeriod) public isGovernor {
+    function setDrawdownGracePeriod(uint256 _drawdownGracePeriod) external isGovernor {
         _checkTimeRange(_drawdownGracePeriod);
         drawdownGracePeriod = _drawdownGracePeriod;
         emit GlobalsParamSet("DRAWDOWN_GRACE_PERIOD", _drawdownGracePeriod);
@@ -295,7 +297,7 @@ contract MapleGlobals {
         @dev Adjust the minimum Pool cover required to finalize a Pool. Only Governor can call.
         @param amt The new minimum swap out required
     */
-    function setSwapOutRequired(uint256 amt) public isGovernor {
+    function setSwapOutRequired(uint256 amt) external isGovernor {
         require(amt >= uint256(10_000), "MapleGlobals:SWAP_OUT_TOO_LOW");
         swapOutRequired = amt;
         emit GlobalsParamSet("SWAP_OUT_REQUIRED", amt);
@@ -305,7 +307,7 @@ contract MapleGlobals {
         @dev Set a new unstake delay value. Only Governor can call.
         @param _unstakeDelay New unstake delay
     */
-    function setUnstakeDelay(uint256 _unstakeDelay) public isGovernor {
+    function setUnstakeDelay(uint256 _unstakeDelay) external isGovernor {
         _checkTimeRange(_unstakeDelay);
         unstakeDelay = _unstakeDelay;
         emit GlobalsParamSet("UNSTAKE_DELAY", _unstakeDelay);
@@ -316,7 +318,7 @@ contract MapleGlobals {
         @param asset  Asset to update price for
         @param oracle New oracle to use
     */
-    function setPriceOracle(address asset, address oracle) public isGovernor {
+    function setPriceOracle(address asset, address oracle) external isGovernor {
         oracleFor[asset] = oracle;
         emit OracleSet(asset, oracle);
     }
@@ -329,7 +331,7 @@ contract MapleGlobals {
         @dev Set a new pending Governor. This address can become governor if they accept. Only Governor can call.
         @param _pendingGovernor Address of new Governor
     */
-    function setPendingGovernor(address _pendingGovernor) public isGovernor {
+    function setPendingGovernor(address _pendingGovernor) external isGovernor {
         require(_pendingGovernor != address(0), "MapleGlobals:ZERO_ADDRESS_GOVERNOR");
         pendingGovernor = _pendingGovernor;
         emit PendingGovernorSet(_pendingGovernor);
@@ -338,7 +340,7 @@ contract MapleGlobals {
     /**
         @dev Accept the Governor position. Only PendingGovernor can call.
     */
-    function acceptGovernor() public {
+    function acceptGovernor() external {
         require(msg.sender == pendingGovernor, "MapleGlobals:NOT_PENDING_GOVERNOR");
         governor = pendingGovernor;
         pendingGovernor = address(0);
@@ -354,7 +356,7 @@ contract MapleGlobals {
         @param asset Asset to fetch price
         @return Price of asset
     */
-    function getLatestPrice(address asset) public view returns (uint256) {
+    function getLatestPrice(address asset) external view returns (uint256) {
         return uint256(IOracle(oracleFor[asset]).getLatestPrice());
     }
 
