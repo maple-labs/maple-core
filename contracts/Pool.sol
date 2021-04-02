@@ -28,7 +28,7 @@ contract Pool is PoolFDT {
 
     uint8 public constant DL_FACTORY = 1;  // Factory type of `DebtLockerFactory`
 
-    IERC20  public immutable liquidityAsset;   // The asset deposited by lenders into the LiquidityLocker, for funding Loans
+    IERC20  public immutable liquidityAsset;  // The asset deposited by lenders into the LiquidityLocker, for funding Loans
 
     address public immutable poolDelegate;     // Pool Delegate address, maintains full authority over the Pool
     address public immutable liquidityLocker;  // The LiquidityLocker owned by this contract
@@ -37,21 +37,18 @@ contract Pool is PoolFDT {
     address public immutable superFactory;     // The factory that deployed this Loan
 
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset
-
-    // Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
-    //        liquidityLockerBal + principalOut = fdtTotalSupply + interestSum - poolLosses
     
     uint256 public immutable stakingFee;   // Fee for stakers   (in basis points)
     uint256 public immutable delegateFee;  // Fee for delegates (in basis points)
 
-    uint256 public principalOut;      // Sum of all outstanding principal on Loans
-    uint256 public liquidityCap;      // Amount of liquidity tokens accepted by the Pool
-    uint256 public lockupPeriod;      // Unix timestamp during which withdrawal is not allowed
+    uint256 public principalOut;  // Sum of all outstanding principal on Loans
+    uint256 public liquidityCap;  // Amount of liquidity tokens accepted by the Pool
+    uint256 public lockupPeriod;  // Period of time from a user's depositDate that they cannot withdraw any funds
 
     bool public openToPublic;  // Boolean opening Pool to public for LP deposits
 
     enum State { Initialized, Finalized, Deactivated }
-    State public poolState;  // The current state of this pool
+    State public poolState;
 
     mapping(address => uint256)                     public depositDate;                // Used for withdraw penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;                // Address of the `DebtLocker` contract corresponds to [Loan][DebtLockerFactory].
@@ -342,13 +339,15 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
         require(isDepositAllowed(amt), "Pool:NOT_ALLOWED");
-        liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
 
         withdrawCooldown[msg.sender] = uint256(0);  // Reset withdrawCooldown if staker had previously intended to unstake
-        
+
         uint256 wad = _toWad(amt);
         PoolLib.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
+
+        liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
         _mint(msg.sender, wad);
+
         _emitBalanceUpdatedEvent();
         emit Cooldown(msg.sender, 0);
     }
@@ -373,24 +372,20 @@ contract Pool is PoolFDT {
     */
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
-        uint256 fdtAmt = _toWad(amt);
+        uint256 wad = _toWad(amt);
         require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "Pool:WITHDRAW_NOT_ALLOWED");
-        require(balanceOf(msg.sender) >= fdtAmt,                                                 "Pool:USER_BAL_LT_AMT");  // TODO: Do we need this?
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "Pool:FUNDS_LOCKED");
 
         withdrawCooldown[msg.sender] = uint256(0);  // Reset cooldown time no matter what transfer amount is
 
-        _burn(msg.sender, fdtAmt);  // Burn the corresponding FDT balance
-        withdrawFunds();            // Transfer full entitled interest, decrement `interestSum`
-        updateFundsReceived();      // Update the `pointsPerShare` using this as fundsTokenBalance is incremented by `totPenalty`
-
-        // Amount that is due after realized losses are accounted for. 
+        _burn(msg.sender, wad);  // Burn the corresponding FDT balance
+        withdrawFunds();         // Transfer full entitled interest, decrement `interestSum`
+        
+        // Transfer amount that is due after realized losses are accounted for. 
         // recognizedLosses are absorbed by the LP.
-        uint256 due = amt.sub(recognizeLosses());
+        _transferLiquidityLockerFunds(msg.sender, amt.sub(recognizeLosses()));
 
-        // Transfer amt - totPenalty - recognizedLosses
-        _transferLiquidityLockerFunds(msg.sender, due);
-
+        // TODO: Do we need PoolFDT BalanceUpdated events?
         _emitBalanceUpdatedEvent();
         emit Cooldown(msg.sender, 0);
     }
@@ -403,8 +398,7 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
-        require(recognizableLossesOf(from) == uint256(0), "Pool:NOT_ALLOWED");  // If an LP has unrecognized losses, they must recognize losses through withdraw
-        PoolLib.prepareTransfer(withdrawCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to));
+        PoolLib.prepareTransfer(withdrawCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to), recognizableLossesOf(from));
         super._transfer(from, to, wad);
     }
 

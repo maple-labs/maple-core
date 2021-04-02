@@ -243,11 +243,13 @@ library PoolLib {
         address to,
         uint256 wad,
         IGlobals globals,
-        uint256 toBalance
+        uint256 toBalance,
+        uint256 recognizableLosses
     ) external {
-        // If transferring in or out of yield farming contract, do not update depositDate
+        // If transferring in or out of yield farming contract, do not update depositDate or cooldown
         if (!globals.isValidMplRewards(from) && !globals.isValidMplRewards(to)) {
-            isWithdrawAllowed(withdrawCooldown[from], globals);  // Sender must be within withdraw window
+            require(isWithdrawAllowed(withdrawCooldown[from], globals), "Pool:WITHDRAW_NOT_ALLOWED");  // Sender must be within withdraw window
+            require(recognizableLosses == uint256(0),                   "Pool:RECOG_LOSSES");          // If an LP has unrecognized losses, they must recognize losses through withdraw
             withdrawCooldown[from] = uint256(0);                 // Reset sender withdraw cooldown
             updateDepositDate(depositDate, toBalance, wad, to);  // Update deposit date of receiver
             emit Cooldown(from, 0);
@@ -497,7 +499,7 @@ library PoolLib {
         // Deposit is still within lockupPeriod, user has 0 claimable principal under this condition.
         if (depositDateForLp.add(lockupPeriod) > block.timestamp) total = interest; 
         else {
-            principal  = fromWad(balanceOfLp, liquidityAssetDecimals);
+            principal = fromWad(balanceOfLp, liquidityAssetDecimals);
             total     = principal.add(interest);
         }
     }
