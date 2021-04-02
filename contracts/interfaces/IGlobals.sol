@@ -10,7 +10,7 @@ interface IGlobals {
 
     function mapleTreasury() external view returns (address);
 
-    function isValidMplRewards(address) external view returns (bool);
+    function isExemptFromTransferRestriction(address) external view returns (bool);
 
     function isValidBalancerPool(address) external view returns (bool);
 
