@@ -451,9 +451,9 @@ contract Loan is FDT, Pausable {
     
     /**
         @dev Returns information on next payment amount.
-        @return [0] = Principal + Interest
-                [1] = Principal 
-                [2] = Interest
+        @return [0] = Entitiled interest to the next payment, Principal + Interest only when the next payment is last payment of the loan 
+                [1] = Entitiled principal amount needs to pay in the next payment
+                [2] = Entitiled interest amount needs to pay in the next payment
                 [3] = Payment Due Date
                 [4] = Is Payment Late
     */
