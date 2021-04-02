@@ -33,39 +33,39 @@ library LoanLib {
 
     /**
         @dev If the borrower has not drawn down loan past grace period, return capital to lenders.
-        @param loanAsset       IERC20 of the loanAsset
+        @param liquidityAsset  IERC20 of the liquidityAsset
         @param superFactory    Factory that instantiated Loan
         @param fundingLocker   Address of FundingLocker
         @param createdAt       Timestamp of Loan instantiation
-        @return excessReturned Amount of loanAsset that was returned to the Loan from the FundingLocker
+        @return excessReturned Amount of liquidityAsset that was returned to the Loan from the FundingLocker
     */
-    function unwind(IERC20 loanAsset, address superFactory, address fundingLocker, uint256 createdAt) external returns(uint256 excessReturned) {
+    function unwind(IERC20 liquidityAsset, address superFactory, address fundingLocker, uint256 createdAt) external returns(uint256 excessReturned) {
         IGlobals globals = _globals(superFactory);
 
         // Only callable if time has passed drawdown grace period, set in MapleGlobals
         require(block.timestamp > createdAt.add(globals.drawdownGracePeriod()), "Loan:NOT_PAST_GRACE_PERIOD");
 
-        uint256 preBal = loanAsset.balanceOf(address(this));  // Account for existing balance in Loan
+        uint256 preBal = liquidityAsset.balanceOf(address(this));  // Account for existing balance in Loan
 
-        // Drain funding from FundingLocker, transfers all loanAsset to this Loan
+        // Drain funding from FundingLocker, transfers all liquidityAsset to this Loan
         IFundingLocker(fundingLocker).drain();
 
         // Update excessReturned accounting for claim()
-        return loanAsset.balanceOf(address(this)).sub(preBal);
+        return liquidityAsset.balanceOf(address(this)).sub(preBal);
     }
 
     /**
         @dev Liquidate a Borrower's collateral via Uniswap when a default is triggered.
         @param collateralAsset   IERC20 of the collateralAsset
-        @param loanAsset         Address of loanAsset
+        @param liquidityAsset         Address of liquidityAsset
         @param superFactory      Factory that instantiated Loan
         @param collateralLocker  Address of CollateralLocker
         @return amountLiquidated Amount of collateralAsset that was liquidated
-        @return amountRecovered  Amount of loanAsset that was returned to the Loan from the liquidation
+        @return amountRecovered  Amount of liquidityAsset that was returned to the Loan from the liquidation
     */
     function liquidateCollateral(
         IERC20  collateralAsset,
-        address loanAsset,
+        address liquidityAsset,
         address superFactory,
         address collateralLocker
     ) 
@@ -81,26 +81,26 @@ library LoanLib {
         // Pull collateralAsset from collateralLocker
         ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt);
 
-        if (address(collateralAsset) != loanAsset && liquidationAmt > uint256(0)) {
+        if (address(collateralAsset) != liquidityAsset && liquidationAmt > uint256(0)) {
             collateralAsset.safeApprove(UNISWAP_ROUTER, uint256(0));
             collateralAsset.safeApprove(UNISWAP_ROUTER, liquidationAmt);
 
             IGlobals globals = _globals(superFactory);
 
-            uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), loanAsset, liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset
+            uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), liquidityAsset, liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset
 
             // Generate path
-            address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), loanAsset);
-            bool middleAsset = uniswapAssetForPath != loanAsset && uniswapAssetForPath != address(0);
+            address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), liquidityAsset);
+            bool middleAsset = uniswapAssetForPath != liquidityAsset && uniswapAssetForPath != address(0);
 
             address[] memory path = new address[](middleAsset ? 3 : 2);
 
             path[0] = address(collateralAsset);
-            path[1] = middleAsset ? uniswapAssetForPath : loanAsset;
+            path[1] = middleAsset ? uniswapAssetForPath : liquidityAsset;
 
-            if (middleAsset) path[2] = loanAsset;
+            if (middleAsset) path[2] = liquidityAsset;
 
-            // Swap collateralAsset for loanAsset
+            // Swap collateralAsset for liquidityAsset
             uint256[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
                 liquidationAmt,
                 minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10_000)),
@@ -124,12 +124,12 @@ library LoanLib {
     /**
         @dev Transfer any locked funds to the governor.
         @param token Address of the token that need to reclaimed.
-        @param loanAsset Address of loan asset that is supported by the loan in other words denominated currency in which it taking funds.
+        @param liquidityAsset Address of loan asset that is supported by the loan in other words denominated currency in which it taking funds.
         @param globals Instance of the `MapleGlobals` contract.
      */
-    function reclaimERC20(address token, address loanAsset, IGlobals globals) external {
+    function reclaimERC20(address token, address liquidityAsset, IGlobals globals) external {
         require(msg.sender == globals.governor(), "Loan:UNAUTHORIZED");
-        require(token != loanAsset && token != address(0), "Loan:INVALID_TOKEN");
+        require(token != liquidityAsset && token != address(0), "Loan:INVALID_TOKEN");
         IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
     }
 
@@ -202,7 +202,7 @@ library LoanLib {
     /**
         @dev Helper for calculating collateral required to drawdown amt.
         @param collateralAsset IERC20 of the collateralAsset
-        @param loanAsset       IERC20 of the loanAsset
+        @param liquidityAsset  IERC20 of the liquidityAsset
         @param collateralRatio Percentage of drawdown value that must be posted as collateral
         @param superFactory    Factory that instantiated Loan
         @param amt             Drawdown amount
@@ -210,7 +210,7 @@ library LoanLib {
     */
     function collateralRequiredForDrawdown(
         IERC20Details collateralAsset,
-        IERC20Details loanAsset,
+        IERC20Details liquidityAsset,
         uint256 collateralRatio,
         address superFactory,
         uint256 amt
@@ -221,14 +221,14 @@ library LoanLib {
     {
         IGlobals globals = _globals(superFactory);
 
-        uint256 wad = _toWad(amt, loanAsset);  // Convert to WAD precision
+        uint256 wad = _toWad(amt, liquidityAsset);  // Convert to WAD precision
 
-        // Fetch current value of loanAsset and collateralAsset (Chainlink oracles provide 8 decimal precision)
-        uint256 loanAssetPrice  = globals.getLatestPrice(address(loanAsset));
+        // Fetch current value of liquidityAsset and collateralAsset (Chainlink oracles provide 8 decimal precision)
+        uint256 liquidityAssetPrice  = globals.getLatestPrice(address(liquidityAsset));
         uint256 collateralPrice = globals.getLatestPrice(address(collateralAsset));
 
         // Calculate collateral required
-        uint256 collateralRequiredUSD = wad.mul(loanAssetPrice).mul(collateralRatio).div(10_000); // 18 + 8 = 26 decimals
+        uint256 collateralRequiredUSD = wad.mul(liquidityAssetPrice).mul(collateralRatio).div(10_000); // 18 + 8 = 26 decimals
         uint256 collateralRequiredWAD = collateralRequiredUSD.div(collateralPrice);               // 26 - 8 = 18 decimals
 
         return collateralRequiredWAD.div(10 ** (18 - collateralAsset.decimals()));  // 18 - (18 - collateralDecimals) = collateralDecimals
@@ -242,7 +242,7 @@ library LoanLib {
         return IGlobals(ILoanFactory(loanFactory).globals());
     }
 
-    function _toWad(uint256 amt, IERC20Details loanAsset) internal view returns(uint256) {
-        return amt.mul(10 ** 18).div(10 ** loanAsset.decimals());
+    function _toWad(uint256 amt, IERC20Details liquidityAsset) internal view returns(uint256) {
+        return amt.mul(10 ** 18).div(10 ** liquidityAsset.decimals());
     }
 }

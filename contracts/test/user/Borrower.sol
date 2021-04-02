@@ -42,7 +42,7 @@ contract Borrower {
 
     function createLoan(
         address loanFactory,
-        address loanAsset, 
+        address liquidityAsset, 
         address collateralAsset, 
         address flFactory,
         address clFactory,
@@ -52,7 +52,7 @@ contract Borrower {
         external returns (Loan loan) 
     {
         loan = Loan(
-            ILoanFactory(loanFactory).createLoan(loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
+            ILoanFactory(loanFactory).createLoan(liquidityAsset, collateralAsset, flFactory, clFactory, specs, calcs)
         );
     }
 
@@ -67,7 +67,7 @@ contract Borrower {
 
     function try_createLoan(
         address loanFactory,
-        address loanAsset,
+        address liquidityAsset,
         address collateralAsset,
         address flFactory,
         address clFactory,
@@ -78,7 +78,7 @@ contract Borrower {
     {
         string memory sig = "createLoan(address,address,address,address,uint256[6],address[3])";
         (ok,) = address(loanFactory).call(
-            abi.encodeWithSignature(sig, loanAsset, collateralAsset, flFactory, clFactory, specs, calcs)
+            abi.encodeWithSignature(sig, liquidityAsset, collateralAsset, flFactory, clFactory, specs, calcs)
         );
     }
     

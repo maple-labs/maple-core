@@ -63,7 +63,7 @@ contract DebtLockerFactoryTest is TestUtil {
             gov.setCalc(address(calcs[i]), true);
         }
 
-        gov.setLoanAsset(USDC, true);        // Add loan asset in to the valid list.
+        gov.setLiquidityAsset(USDC,  true);  // Add loan asset in to the valid list.
         gov.setCollateralAsset(WETH, true);  // Add collateral asset into the valid list
 
         uint256[6] memory specs = [10, 10, 2, 10_000_000 * MULTIPLIER, 30, 5];                                // Create specs for a loan.
@@ -84,6 +84,6 @@ contract DebtLockerFactoryTest is TestUtil {
         // Validate the storage of dl.
         assertEq(address(dl.loan()),       address(loan), "Incorrect loan address");
         assertEq(dl.pool(),                address(this), "Incorrect owner of the DebtLocker");
-        assertEq(address(dl.loanAsset()),  USDC,          "Incorrect address of loan asset");
+        assertEq(address(dl.liquidityAsset()),  USDC,     "Incorrect address of loan asset");
     }
 }

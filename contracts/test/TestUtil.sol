@@ -168,10 +168,10 @@ contract TestUtil is DSTest {
     //     assertEq(block.timestamp, loanVault.nextPaymentDue() - 300);
 
     //     // Make payment.
-    //     address _loanAsset = loanVault.loanAsset();
+    //     address _liquidityAsset = loanVault.liquidityAsset();
     //     (uint _amt,,,) = loanVault.getNextPayment();
 
-    //     User(_borrower).approve(_loanAsset, _vault, _amt);
+    //     User(_borrower).approve(_liquidityAsset, _vault, _amt);
 
     //     assertTrue(ali.try_makePayment(_vault));
     // }

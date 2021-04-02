@@ -55,7 +55,7 @@ contract Governor {
     /*** MapleGlobals Setters ***/ 
     function setCalc(address calc, bool valid)                            external { globals.setCalc(calc, valid); }
     function setCollateralAsset(address asset, bool valid)                external { globals.setCollateralAsset(asset, valid); }
-    function setLoanAsset(address asset, bool valid)                      external { globals.setLoanAsset(asset, valid); }
+    function setLiquidityAsset(address asset, bool valid)                 external { globals.setLiquidityAsset(asset, valid); }
     function setValidLoanFactory(address factory, bool valid)             external { globals.setValidLoanFactory(factory, valid); }
     function setValidPoolFactory(address factory, bool valid)             external { globals.setValidPoolFactory(factory, valid); }
     function setValidSubFactory(address fac, address sub, bool valid)     external { globals.setValidSubFactory(fac, sub, valid); }
@@ -116,8 +116,8 @@ contract Governor {
         string memory sig = "setCollateralAsset(address,bool)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, asset, valid)); 
     }
-    function try_setLoanAsset(address asset, bool valid) external returns (bool ok) { 
-        string memory sig = "setLoanAsset(address,bool)";
+    function try_setLiquidityAsset(address asset, bool valid) external returns (bool ok) { 
+        string memory sig = "setLiquidityAsset(address,bool)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, asset, valid)); 
     }
     function try_setValidLoanFactory(address factory, bool valid) external returns (bool ok) { 

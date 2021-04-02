@@ -24,13 +24,13 @@ interface IGlobals {
 
     function swapOutRequired() external view returns (uint256);
 
-    function isValidLoanAsset(address) external view returns (bool);
+    function isValidLiquidityAsset(address) external view returns (bool);
 
     function isValidCollateralAsset(address) external view returns (bool);
 
     function isValidPoolDelegate(address) external view returns (bool);
 
-    function validLoanAssets() external view returns (address[] memory);
+    function validLiquidityAssets() external view returns (address[] memory);
 
     function validCollateralAssets() external view returns (address[] memory);
 

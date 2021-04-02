@@ -93,8 +93,8 @@ contract MapleGlobalsTest is TestUtil {
         gov.setMapleTreasury(address(trs));
         gov.setPoolDelegateAllowlist(address(sid), true);
 
-        gov.setLoanAsset(DAI,        true);
-        gov.setLoanAsset(USDC,       true);
+        gov.setLiquidityAsset(DAI,   true);
+        gov.setLiquidityAsset(USDC,  true);
         gov.setCollateralAsset(DAI,  true);
         gov.setCollateralAsset(USDC, true);
         gov.setCollateralAsset(WETH, true);
@@ -134,8 +134,8 @@ contract MapleGlobalsTest is TestUtil {
     function test_setup() public {
         assertTrue(globals.isValidPoolDelegate(address(sid)));
 
-        assertTrue(globals.isValidLoanAsset(DAI));
-        assertTrue(globals.isValidLoanAsset(USDC));
+        assertTrue(globals.isValidLiquidityAsset(DAI));
+        assertTrue(globals.isValidLiquidityAsset(USDC));
 
         assertTrue(globals.isValidCollateralAsset(DAI));
         assertTrue(globals.isValidCollateralAsset(USDC));
@@ -214,14 +214,14 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(   globals.defaultUniswapPath(WETH, USDC), USDC);
         assertEq(   globals.defaultUniswapPath(WBTC, USDC), WETH);
 
-        // setLoanAsset() 
-        assertTrue(!globals.isValidLoanAsset(WETH));
-        assertTrue(!fakeGov.try_setLoanAsset(WETH,  true));  // Non-governor cant set
-        assertTrue(     gov.try_setLoanAsset(WETH,  true));
-        assertTrue(globals.isValidLoanAsset(WETH));
-        assertTrue(!fakeGov.try_setLoanAsset(WETH,  false));  // Non-governor cant set
-        assertTrue(     gov.try_setLoanAsset(WETH,  false));
-        assertTrue(!globals.isValidLoanAsset(WETH));
+        // setLiquidityAsset() 
+        assertTrue(!globals.isValidLiquidityAsset(WETH));
+        assertTrue(!fakeGov.try_setLiquidityAsset(WETH,  true));  // Non-governor cant set
+        assertTrue(     gov.try_setLiquidityAsset(WETH,  true));
+        assertTrue(globals.isValidLiquidityAsset(WETH));
+        assertTrue(!fakeGov.try_setLiquidityAsset(WETH,  false));  // Non-governor cant set
+        assertTrue(     gov.try_setLiquidityAsset(WETH,  false));
+        assertTrue(!globals.isValidLiquidityAsset(WETH));
 
         // setCollateralAsset()
         assertTrue(!globals.isValidCollateralAsset(CDAI));
