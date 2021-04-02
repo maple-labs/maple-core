@@ -38,7 +38,7 @@ contract DebtLocker {
 
     // Note: If newAmt > 0, totalNewAmt will always be greater than zero.
     function calcAllotment(uint256 newAmt, uint256 totalClaim, uint256 totalNewAmt) internal pure returns (uint256) {
-        return newAmt == uint256(0) ? 0 : newAmt.mul(totalClaim).div(totalNewAmt);
+        return newAmt == uint256(0) ? uint256(0) : newAmt.mul(totalClaim).div(totalNewAmt);
     }
 
     /**
