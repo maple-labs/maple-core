@@ -72,6 +72,11 @@ contract Pool is PoolFDT {
     );
     event  PoolOpenedToPublic(bool isOpen);
 
+    /** 
+        Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
+               liquidityLockerBal + principalOut = fdtTotalSupply + interestSum - poolLosses
+    */
+
     /**
         @dev Constructor for a Pool.
         @param  _poolDelegate   Address that has manager privileges of the Pool
@@ -349,7 +354,7 @@ contract Pool is PoolFDT {
         _mint(msg.sender, wad);
 
         _emitBalanceUpdatedEvent();
-        emit Cooldown(msg.sender, 0);
+        emit Cooldown(msg.sender, uint256(0));
     }
 
     /**

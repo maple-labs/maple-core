@@ -224,17 +224,12 @@ library PoolLib {
         @dev View function to indicate if msg.sender is within their withdraw window
     */
     function isWithdrawAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
-        uint256 endOfCooldownPeriod = withdrawCooldown + globals.lpCooldownPeriod();  // Timestamp of when cooldown period has ended for LP (start of withdraw window)
-
-        bool isCooldownSet      = withdrawCooldown != uint256(0);
-        bool isCooldownFinished = block.timestamp >= endOfCooldownPeriod;
-        bool isWithinWindow     = block.timestamp - endOfCooldownPeriod <= globals.lpWithdrawWindow();
-
-        return isCooldownSet && isCooldownFinished && isWithinWindow;
+        return block.timestamp - (withdrawCooldown + globals.lpCooldownPeriod()) <= globals.lpWithdrawWindow();
     }
 
     /**
-        @dev View function to indicate if recipient is allowed to receive a transfer
+        @dev View function to indicate if recipient is allowed to receive a transfer.
+        This is only possible if they have zero cooldown or they are passed their withdraw window.
     */
     function isReceiveAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
         uint256 endOfWithdrawWindow = withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow();  // Timestamp of end of withdraw window for LP
@@ -280,8 +275,8 @@ library PoolLib {
      */
     function cancelWithdraw(mapping(address => uint256) storage withdrawCooldown) external {
         require(withdrawCooldown[msg.sender] != uint256(0), "Pool:NOT_WITHDRAWING");
-        withdrawCooldown[msg.sender] = 0;
-        emit Cooldown(msg.sender, 0);
+        withdrawCooldown[msg.sender] = uint256(0);
+        emit Cooldown(msg.sender, uint256(0));
     }
 
     /**********************************/

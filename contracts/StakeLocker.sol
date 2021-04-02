@@ -48,7 +48,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         liquidityAsset = _liquidityAsset;
         stakeAsset     = IERC20(_stakeAsset);
         pool           = _pool;
-        lockupPeriod   = 180 days; // (TBD)
+        lockupPeriod   = 180 days; // TODO: Confirm default
     }
 
     /*****************/
@@ -158,7 +158,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _mint(msg.sender, amt);
 
         emit Stake(amt, msg.sender);
-        emit Cooldown(msg.sender, 0);
+        emit Cooldown(msg.sender, uint256(0));
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
@@ -195,7 +195,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function cancelUnstake() external {
         require(unstakeCooldown[msg.sender] != uint256(0), "StakeLocker:NOT_UNSTAKING");
         unstakeCooldown[msg.sender] = 0;
-        emit Cooldown(msg.sender, 0);
+        emit Cooldown(msg.sender, uint256(0));
     }
 
     /**
@@ -277,19 +277,12 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function isUnstakeAllowed(address from) public view returns (bool) {
         IGlobals globals = _globals();
-
-        uint256 _unstakeCooldown    = unstakeCooldown[from];
-        uint256 endOfCooldownPeriod = _unstakeCooldown + globals.stakerCooldownPeriod();  // Timestamp of when cooldown period has ended for staker (start of unstake window)
-
-        bool isCooldownSet      = _unstakeCooldown != uint256(0);
-        bool isCooldownFinished = block.timestamp >= endOfCooldownPeriod;
-        bool isWithinWindow     = block.timestamp - endOfCooldownPeriod <= globals.stakerUnstakeWindow();
-
-        return isCooldownSet && isCooldownFinished && isWithinWindow;
+        return block.timestamp - (unstakeCooldown[from] + globals.stakerCooldownPeriod()) <= globals.stakerUnstakeWindow();
     }
 
     /**
-        @dev View function to indicate if recipient is allowed to receive a transfer
+        @dev View function to indicate if recipient is allowed to receive a transfer.
+        This is only possible if they have zero cooldown or they are passed their unstake window.
     */
     function isReceiveAllowed(uint256 unstakeCooldown) public view returns (bool) {
         IGlobals globals = _globals();

@@ -595,9 +595,6 @@ contract StakeLockerTest is TestUtil {
         TestObj memory bptLosses;             // FDT accounting of losses from burning
         TestObj memory recognizableLossesOf;  // Recognizable losses of Staker
 
-        // Ignore cooldown for this test
-        gov.setStakerUnstakeWindow(MAX_UINT);
-
         uint256 bptMin = WAD / 10_000_000;
 
         stakeAmount = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(che)), true);  // 25 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents) (non-zero)
