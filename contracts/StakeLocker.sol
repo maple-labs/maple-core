@@ -243,12 +243,15 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _transfer(address from, address to, uint256 wad) internal override canUnstake {
         _whenProtocolNotPaused();
-        require(isUnstakeAllowed(from),                   "StakeLocker:OUTSIDE_COOLDOWN");
-        require(recognizableLossesOf(from) == uint256(0), "StakeLocker:RECOG_LOSSES");  // If an LP has unrecognized losses, they must recognize losses through withdraw
+        if (!globals.isValidMplRewards(from) && !globals.isValidMplRewards(to)) {
+            require(isUnstakeAllowed(from),                   "StakeLocker:OUTSIDE_COOLDOWN");
+            require(recognizableLossesOf(from) == uint256(0), "StakeLocker:RECOG_LOSSES");  // If an LP has unrecognized losses, they must recognize losses through withdraw
 
-        unstakeCooldown[from] = uint256(0);  // Reset cooldown time no matter what transfer amount is
+            unstakeCooldown[from] = uint256(0);  // Reset cooldown time no matter what transfer amount is
 
-        _updateStakeDate(to, wad);
+            _updateStakeDate(to, wad);
+            emit Cooldown(from, 0);
+        }
         super._transfer(from, to, wad);
     }
 
