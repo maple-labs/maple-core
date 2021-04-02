@@ -45,10 +45,10 @@ contract GulpTest is TestUtil {
 
     Borrower                               bob;
     Governor                               gov;
-    LP                                     ali;
-    PoolDelegate                           sid;
-    Staker                                 che;
-    Staker                                 dan;
+    LP                                     leo;
+    PoolDelegate                           pat;
+    Staker                                 sam;
+    Staker                                 sid;
     
     RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
@@ -76,10 +76,10 @@ contract GulpTest is TestUtil {
 
         bob            = new Borrower();                      // Actor: Borrower of the Loan.
         gov            = new Governor();                      // Actor: Governor of Maple.
-        ali            = new LP();                            // Actor: Liquidity provider.
-        sid            = new PoolDelegate();                  // Actor: Manager of the Pool.
-        che            = new Staker();                        // Actor: Stakes BPTs in Pool.
-        dan            = new Staker();                        // Actor: Staker BPTs in Pool.
+        leo            = new LP();                            // Actor: Liquidity provider.
+        pat            = new PoolDelegate();                  // Actor: Manager of the Pool.
+        sam            = new Staker();                        // Actor: Stakes BPTs in Pool.
+        sid            = new Staker();                        // Actor: Staker BPTs in Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl));
@@ -123,16 +123,16 @@ contract GulpTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
-        gov.setPoolDelegateAllowlist(address(sid), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
         gov.setMapleTreasury(address(treasury));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
         assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
 
-        bPool.transfer(address(sid), 50 * WAD);  // Give PD a balance of BPTs to finalize pool
-        bPool.transfer(address(che), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
-        bPool.transfer(address(dan), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
+        bPool.transfer(address(pat), 50 * WAD);  // Give PD a balance of BPTs to finalize pool
+        bPool.transfer(address(sam), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
+        bPool.transfer(address(sid), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
 
         gov.setValidBalancerPool(address(bPool), true);
 
@@ -153,7 +153,7 @@ contract GulpTest is TestUtil {
         gov.setPriceOracle(USDC, address(usdOracle));
 
         // Create Liquidity Pool
-        pool = Pool(sid.createPool(
+        pool = Pool(pat.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -173,19 +173,19 @@ contract GulpTest is TestUtil {
         loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         // Stake and finalize pool
-        sid.approve(address(bPool), address(stakeLocker), 50 * WAD);
-        sid.stake(address(stakeLocker), 50 * WAD);
-        sid.finalize(address(pool));  // PD that staked can finalize
-        sid.setOpenToPublic(address(pool), true);
+        pat.approve(address(bPool), address(stakeLocker), 50 * WAD);
+        pat.stake(address(stakeLocker), 50 * WAD);
+        pat.finalize(address(pool));  // PD that staked can finalize
+        pat.setOpenToPublic(address(pool), true);
         assertEq(uint256(pool.poolState()), 1);  // Finalize
     }
 
     function setUpLoanAndDrawdown() public {
-        mint("USDC", address(ali), 10_000_000 * USD);  // Mint USDC to LP
-        ali.approve(USDC, address(pool), MAX_UINT);    // LP approves USDC
+        mint("USDC", address(leo), 10_000_000 * USD);  // Mint USDC to LP
+        leo.approve(USDC, address(pool), MAX_UINT);    // LP approves USDC
 
-        ali.deposit(address(pool), 10_000_000 * USD);                                      // LP deposits 10m USDC to Pool
-        sid.fundLoan(address(pool), address(loan), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
+        leo.deposit(address(pool), 10_000_000 * USD);                                      // LP deposits 10m USDC to Pool
+        pat.fundLoan(address(pool), address(loan), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
 
         uint cReq = loan.collateralRequiredForDrawdown(10_000_000 * USD);  // WETH required for 100_000_000 USDC drawdown on loan
         mint("WETH", address(bob), cReq);                                  // Mint WETH to borrower

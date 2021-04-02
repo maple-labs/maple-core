@@ -46,11 +46,11 @@ contract PoolExcessTest is TestUtil {
 
     Borrower                               bob;
     Governor                               gov;
-    LP                                     ali;
-    PoolDelegate                           sid;
-    PoolDelegate                           joe;
-    Staker                                 che;
-    Staker                                 dan;
+    LP                                     leo;
+    PoolDelegate                           pat;
+    PoolDelegate                           pam;
+    Staker                                 sam;
+    Staker                                 sid;
 
     RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
@@ -80,11 +80,11 @@ contract PoolExcessTest is TestUtil {
 
         bob            = new Borrower();                     // Actor: Borrower of the Loan.
         gov            = new Governor();                     // Actor: Governor of Maple.
-        ali            = new LP();                           // Actor: Liquidity provider.
-        sid            = new PoolDelegate();                 // Actor: Manager of pool_a.
-        joe            = new PoolDelegate();                 // Actor: Manager of pool_b.
-        che            = new Staker();                       // Actor: Stakes BPTs in Pool.
-        dan            = new Staker();                       // Actor: Stakes BPTs in Pool.
+        leo            = new LP();                           // Actor: Liquidity provider.
+        pat            = new PoolDelegate();                 // Actor: Manager of pool_a.
+        pam            = new PoolDelegate();                 // Actor: Manager of pool_b.
+        sam            = new Staker();                       // Actor: Stakes BPTs in Pool.
+        sid            = new Staker();                       // Actor: Stakes BPTs in Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl));
@@ -135,18 +135,18 @@ contract PoolExcessTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
-        gov.setPoolDelegateAllowlist(address(sid), true);
-        gov.setPoolDelegateAllowlist(address(joe), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
+        gov.setPoolDelegateAllowlist(address(pam), true);
         gov.setMapleTreasury(address(trs));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
         assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
 
-        bPool.transfer(address(sid), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
-        bPool.transfer(address(joe), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
-        bPool.transfer(address(che), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
-        bPool.transfer(address(dan), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
+        bPool.transfer(address(pat), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
+        bPool.transfer(address(pam), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
+        bPool.transfer(address(sam), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
+        bPool.transfer(address(sid), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
 
         gov.setValidBalancerPool(address(bPool), true);
 
@@ -159,7 +159,7 @@ contract PoolExcessTest is TestUtil {
         gov.setSwapOutRequired(1_000_000);
 
         // Create Liquidity Pool A
-        pool_a = Pool(sid.createPool(
+        pool_a = Pool(pat.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -171,7 +171,7 @@ contract PoolExcessTest is TestUtil {
         ));
 
         // Create Liquidity Pool
-        pool_b = Pool(joe.createPool(
+        pool_b = Pool(pam.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -192,14 +192,14 @@ contract PoolExcessTest is TestUtil {
         loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         // Stake and finalize pool
-        sid.approve(address(bPool), address(stakeLocker_a), 25 * WAD);
-        joe.approve(address(bPool), address(stakeLocker_b), 25 * WAD);
-        sid.stake(address(stakeLocker_a), 25 * WAD);
-        joe.stake(address(stakeLocker_b), 25 * WAD);
-        sid.finalize(address(pool_a));
-        joe.finalize(address(pool_b));
-        sid.setOpenToPublic(address(pool_a), true);
-        joe.setOpenToPublic(address(pool_b), true);
+        pat.approve(address(bPool), address(stakeLocker_a), 25 * WAD);
+        pam.approve(address(bPool), address(stakeLocker_b), 25 * WAD);
+        pat.stake(address(stakeLocker_a), 25 * WAD);
+        pam.stake(address(stakeLocker_b), 25 * WAD);
+        pat.finalize(address(pool_a));
+        pam.finalize(address(pool_b));
+        pat.setOpenToPublic(address(pool_a), true);
+        pam.setOpenToPublic(address(pool_b), true);
 
         assertEq(uint256(pool_a.poolState()), 1);  // Finalize
         assertEq(uint256(pool_b.poolState()), 1);  // Finalize
@@ -207,15 +207,15 @@ contract PoolExcessTest is TestUtil {
 
     function setUpLoan() public {
         // Fund the pool
-        mint("USDC", address(ali), 20_000_000 * USD);
-        ali.approve(USDC, address(pool_a), MAX_UINT);
-        ali.approve(USDC, address(pool_b), MAX_UINT);
-        ali.deposit(address(pool_a), 10_000_000 * USD);
-        ali.deposit(address(pool_b), 10_000_000 * USD);
+        mint("USDC", address(leo), 20_000_000 * USD);
+        leo.approve(USDC, address(pool_a), MAX_UINT);
+        leo.approve(USDC, address(pool_b), MAX_UINT);
+        leo.deposit(address(pool_a), 10_000_000 * USD);
+        leo.deposit(address(pool_b), 10_000_000 * USD);
 
         // Fund the loan
-        sid.fundLoan(address(pool_a), address(loan), address(dlFactory), 1_000_000 * USD);
-        joe.fundLoan(address(pool_b), address(loan), address(dlFactory), 3_000_000 * USD);
+        pat.fundLoan(address(pool_a), address(loan), address(dlFactory), 1_000_000 * USD);
+        pam.fundLoan(address(pool_b), address(loan), address(dlFactory), 3_000_000 * USD);
     }
 
     function test_unwind_loan_reclaim() public {
@@ -232,8 +232,8 @@ contract PoolExcessTest is TestUtil {
         uint256 llBalance_b_pre = IERC20(pool_b.liquidityAsset()).balanceOf(pool_b.liquidityLocker());
 
         // Claim unwind() excessReturned
-        uint256[7] memory vals_a = sid.claim(address(pool_a), address(loan),  address(dlFactory));
-        uint256[7] memory vals_b = joe.claim(address(pool_b), address(loan),  address(dlFactory));
+        uint256[7] memory vals_a = pat.claim(address(pool_a), address(loan),  address(dlFactory));
+        uint256[7] memory vals_b = pam.claim(address(pool_b), address(loan),  address(dlFactory));
 
         uint256 principalOut_a_post = pool_a.principalOut();
         uint256 principalOut_b_post = pool_b.principalOut();

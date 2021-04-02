@@ -10,7 +10,8 @@ import "./user/LP.sol";
 import "./user/Staker.sol";
 import "./user/Commoner.sol";
 import "./user/PoolDelegate.sol";
-import "./user/PoolAdmin.sol";
+
+import "./user/SecurityAdmin.sol";
 import "./user/EmergencyAdmin.sol";
 
 import "../interfaces/IBFactory.sol";
@@ -48,20 +49,21 @@ contract PoolTest is TestUtil {
 
     using SafeMath for uint256;
 
-    Borrower                               eli;
-    Borrower                               fay;
-    Borrower                               hal;
+    Borrower                               bob;
+    Borrower                               ben;
+    Borrower                               bud;
     Governor                               gov;
-    LP                                     bob;
-    LP                                     che;
-    LP                                     dan;
-    LP                                     kim;
-    Staker                                 buf;
-    Commoner                               com;
-    PoolDelegate                           sid;
-    PoolDelegate                           joe;
-    PoolAdmin                              pop;
-    EmergencyAdmin                         mic;
+    LP                                     leo;
+    LP                                     liz;
+    LP                                     lex;
+    LP                                     lee;
+    Staker                                 sam;
+    Commoner                               cam;
+    PoolDelegate                           pat;
+    PoolDelegate                           pam;
+
+    SecurityAdmin                securityAdmin;
+    EmergencyAdmin              emergencyAdmin;
 
     RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
@@ -93,20 +95,21 @@ contract PoolTest is TestUtil {
 
     function setUp() public {
 
-        eli            = new Borrower();                                                // Actor: Borrower of the Loan.
-        fay            = new Borrower();                                                // Actor: Borrower of the Loan.
-        hal            = new Borrower();                                                // Actor: Borrower of the Loan.
+        bob            = new Borrower();                                                // Actor: Borrower of the Loan.
+        ben            = new Borrower();                                                // Actor: Borrower of the Loan.
+        bud            = new Borrower();                                                // Actor: Borrower of the Loan.
         gov            = new Governor();                                                // Actor: Governor of Maple.
-        bob            = new LP();                                                      // Actor: Liquidity provider.
-        che            = new LP();                                                      // Actor: Liquidity provider.
-        dan            = new LP();                                                      // Actor: Liquidity provider.
-        kim            = new LP();                                                      // Actor: Liquidity provider.
-        buf            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
-        com            = new Commoner();                                                // Actor: Any user or an incentive seeker.                                            // Actor: Manager of the Pool.
-        sid            = new PoolDelegate();                                            // Actor: Manager of the Pool.
-        joe            = new PoolDelegate();                                            // Actor: Manager of the Pool.
-        pop            = new PoolAdmin();                                               // Actor: Admin of the Pool.
-        mic            = new EmergencyAdmin();                                          // Actor: Emergency Admin of the protocol.
+        leo            = new LP();                                                      // Actor: Liquidity provider.
+        liz            = new LP();                                                      // Actor: Liquidity provider.
+        lex            = new LP();                                                      // Actor: Liquidity provider.
+        lee            = new LP();                                                      // Actor: Liquidity provider.
+        sam            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
+        cam            = new Commoner();                                                // Actor: Any user or an incentive seeker.
+        pat            = new PoolDelegate();                                            // Actor: Manager of the Pool.
+        pam            = new PoolDelegate();                                            // Actor: Manager of the Pool.
+
+        securityAdmin  = new SecurityAdmin();                                           // Actor: Admin of the Pool.
+        emergencyAdmin = new EmergencyAdmin();                                          // Actor: Emergency Admin of the protocol.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl));
@@ -160,17 +163,17 @@ contract PoolTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
-        gov.setPoolDelegateAllowlist(address(sid), true);
-        gov.setPoolDelegateAllowlist(address(joe), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
+        gov.setPoolDelegateAllowlist(address(pam), true);
         gov.setMapleTreasury(address(trs));
-        gov.setAdmin(address(mic));
+        gov.setAdmin(address(emergencyAdmin));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
         assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
 
-        bPool.transfer(address(sid), bPool.balanceOf(address(this)) / 2);
-        bPool.transfer(address(joe), bPool.balanceOf(address(this)));
+        bPool.transfer(address(pat), bPool.balanceOf(address(this)) / 2);
+        bPool.transfer(address(pam), bPool.balanceOf(address(this)));
 
         gov.setValidBalancerPool(address(bPool), true);
 
@@ -183,7 +186,7 @@ contract PoolTest is TestUtil {
         gov.setSwapOutRequired(1_000_000);
 
         // Create Liquidity Pool
-        pool1 = Pool(sid.createPool(
+        pool1 = Pool(pat.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -195,7 +198,7 @@ contract PoolTest is TestUtil {
         ));
 
         // Create Liquidity Pool
-        pool2 = Pool(joe.createPool(
+        pool2 = Pool(pam.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -210,9 +213,9 @@ contract PoolTest is TestUtil {
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan  = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-        loan2 = fay.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-        loan3 = hal.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan  = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan3 = bud.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
 
     function test_claim_permissions() public {
@@ -220,42 +223,42 @@ contract PoolTest is TestUtil {
         // Set valid loan factory
         gov.setValidLoanFactory(address(loanFactory), true);
         // Finalizing the Pool
-        sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        pat.approve(address(bPool), pool1.stakeLocker(), uint(-1));
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
 
-        sid.finalize(address(pool1));
+        pat.finalize(address(pool1));
 
         // Add liquidity into the pool (Dan is an LP, but still won't be able to claim)
-        mint("USDC", address(dan), 10_000 * USD);
-        dan.approve(USDC, address(pool1), 10_000 * USD);
-        sid.setOpenToPublic(address(pool1), true);
-        assertTrue(dan.try_deposit(address(pool1), 10_000 * USD));
+        mint("USDC", address(lex), 10_000 * USD);
+        lex.approve(USDC, address(pool1), 10_000 * USD);
+        pat.setOpenToPublic(address(pool1), true);
+        assertTrue(lex.try_deposit(address(pool1), 10_000 * USD));
 
         // Fund Loan (so that debtLocker is instantiated and given LoanFDTs)
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 10_000 * USD));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 10_000 * USD));
         
         // Assert that LPs and non-admins cannot claim
-        assertTrue(!dan.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` function
-        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` function
+        assertTrue(!lex.try_claim(address(pool1), address(loan), address(dlFactory1)));            // Does not have permission to call `claim()` function
+        assertTrue(!securityAdmin.try_claim(address(pool1), address(loan), address(dlFactory1)));  // Does not have permission to call `claim()` function
 
         // Pool delegate can claim
-        assertTrue(sid.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function
+        assertTrue(pat.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function
         
         // Admin can claim once added
-        sid.setAdmin(address(pool1), address(pop), true);                                // Add admin to allow to call the `claim()` function
-        assertTrue(pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function
+        pat.setAdmin(address(pool1), address(securityAdmin), true);                                // Add admin to allow to call the `claim()` function
+        assertTrue(securityAdmin.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Successfully call the `claim()` function
 
         // Pause protocol and attempt claim()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!securityAdmin.try_claim(address(pool1), address(loan), address(dlFactory1)));
         
         // Unpause protocol and claim()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(pop.try_claim(address(pool1), address(loan), address(dlFactory1)));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(securityAdmin.try_claim(address(pool1), address(loan), address(dlFactory1)));
 
         // Admin can't claim after removed
-        sid.setAdmin(address(pool1), address(pop), false);                                // Add admin to allow to call the `claim()` function
-        assertTrue(!pop.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Does not have permission to call `claim()` function
+        pat.setAdmin(address(pool1), address(securityAdmin), false);                                // Add admin to allow to call the `claim()` function
+        assertTrue(!securityAdmin.try_claim(address(pool1), address(loan), address(dlFactory1)));   // Does not have permission to call `claim()` function
     }
 
     function test_getInitialStakeRequirements() public {
@@ -268,65 +271,65 @@ contract PoolTest is TestUtil {
         /*** Approve Stake Locker To Take BPTs ***/
         /*****************************************/
         address stakeLocker = pool1.stakeLocker();
-        sid.approve(address(bPool), stakeLocker, MAX_UINT);
+        pat.approve(address(bPool), stakeLocker, MAX_UINT);
 
         // Pre-state checks.
-        assertEq(bPool.balanceOf(address(sid)),                 50 * WAD);  // PD has 50 BPTs
+        assertEq(bPool.balanceOf(address(pat)),                 50 * WAD);  // PD has 50 BPTs
         assertEq(bPool.balanceOf(stakeLocker),                         0);  // Nothing staked
-        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),          0);  // Nothing staked
+        assertEq(IERC20(stakeLocker).balanceOf(address(pat)),          0);  // Nothing staked
 
         (minCover, curCover, covered, minStake, curStake) = pool1.getInitialStakeRequirements();
 
-        (calc_minStake, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(sid), stakeLocker, minCover);
+        (calc_minStake, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(pat), stakeLocker, minCover);
 
         assertEq(minCover, globals.swapOutRequired() * USD);              // Equal to globally specified value
         assertEq(curCover, 0);                                            // Nothing staked
         assertTrue(!covered);                                             // Not covered
         assertEq(minStake, calc_minStake);                                // Mininum stake equals calculated minimum stake     
         assertEq(curStake, calc_stakerBal);                               // Current stake equals calculated stake
-        assertEq(curStake, IERC20(stakeLocker).balanceOf(address(sid)));  // Current stake equals balance of stakeLocker FDTs
+        assertEq(curStake, IERC20(stakeLocker).balanceOf(address(pat)));  // Current stake equals balance of stakeLocker FDTs
 
         /***************************************/
         /*** Stake Less than Required Amount ***/
         /***************************************/
-        sid.stake(stakeLocker, minStake - 1);
+        pat.stake(stakeLocker, minStake - 1);
 
         // Post-state checks.
-        assertEq(bPool.balanceOf(address(sid)),                50 * WAD - (minStake - 1));  // PD staked minStake - 1 BPTs
+        assertEq(bPool.balanceOf(address(pat)),                50 * WAD - (minStake - 1));  // PD staked minStake - 1 BPTs
         assertEq(bPool.balanceOf(stakeLocker),                             minStake - 1);   // minStake - 1 BPTs staked
-        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),              minStake - 1);   // PD has minStake - 1 SL tokens
+        assertEq(IERC20(stakeLocker).balanceOf(address(pat)),              minStake - 1);   // PD has minStake - 1 SL tokens
 
         (minCover2, curCover, covered, minStake2, curStake) = pool1.getInitialStakeRequirements();
 
-        (, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(sid), stakeLocker, minCover);
+        (, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(pat), stakeLocker, minCover);
 
         assertEq(minCover2, minCover);                                    // Doesn't change
         assertTrue(curCover < minCover);                                  // Not enough cover
         assertTrue(!covered);                                             // Not covered
         assertEq(minStake2, minStake);                                    // Doesn't change
         assertEq(curStake, calc_stakerBal);                               // Current stake equals calculated stake
-        assertEq(curStake, IERC20(stakeLocker).balanceOf(address(sid)));  // Current stake equals balance of stakeLocker FDTs
+        assertEq(curStake, IERC20(stakeLocker).balanceOf(address(pat)));  // Current stake equals balance of stakeLocker FDTs
 
         /***********************************/
         /*** Stake Exact Required Amount ***/
         /***********************************/
-        sid.stake(stakeLocker, 1); // Add one more wei of BPT to get to minStake amount
+        pat.stake(stakeLocker, 1); // Add one more wei of BPT to get to minStake amount
 
         // Post-state checks.
-        assertEq(bPool.balanceOf(address(sid)),                50 * WAD - minStake);  // PD staked minStake
+        assertEq(bPool.balanceOf(address(pat)),                50 * WAD - minStake);  // PD staked minStake
         assertEq(bPool.balanceOf(stakeLocker),                            minStake);  // minStake BPTs staked
-        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),             minStake);  // PD has minStake SL tokens
+        assertEq(IERC20(stakeLocker).balanceOf(address(pat)),             minStake);  // PD has minStake SL tokens
 
         (minCover2, curCover, covered, minStake2, curStake) = pool1.getInitialStakeRequirements();
 
-        (, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(sid), stakeLocker, minCover);
+        (, calc_stakerBal) = pool1.getPoolSharesRequired(address(bPool), USDC, address(pat), stakeLocker, minCover);
 
         assertEq(minCover2, minCover);                                    // Doesn't change
         withinPrecision(curCover, minCover, 6);                           // Roughly enough
         assertTrue(covered);                                              // Covered
         assertEq(minStake2, minStake);                                    // Doesn't change
         assertEq(curStake, calc_stakerBal);                               // Current stake equals calculated stake
-        assertEq(curStake, IERC20(stakeLocker).balanceOf(address(sid)));  // Current stake equals balance of stakeLocker FDTs
+        assertEq(curStake, IERC20(stakeLocker).balanceOf(address(pat)));  // Current stake equals balance of stakeLocker FDTs
     }
 
     function test_stake_and_finalize() public {
@@ -335,46 +338,46 @@ contract PoolTest is TestUtil {
         /*** Approve Stake Locker To Take BPTs ***/
         /*****************************************/
         address stakeLocker = pool1.stakeLocker();
-        sid.approve(address(bPool), stakeLocker, uint(-1));
+        pat.approve(address(bPool), stakeLocker, uint(-1));
 
         // Pre-state checks.
-        assertEq(bPool.balanceOf(address(sid)),                 50 * WAD);  // PD has 50 BPTs
+        assertEq(bPool.balanceOf(address(pat)),                 50 * WAD);  // PD has 50 BPTs
         assertEq(bPool.balanceOf(stakeLocker),                         0);  // Nothing staked
-        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),          0);  // Nothing staked
+        assertEq(IERC20(stakeLocker).balanceOf(address(pat)),          0);  // Nothing staked
 
         /***************************************/
         /*** Stake Less than Required Amount ***/
         /***************************************/
         (,,, uint256 minStake,) = pool1.getInitialStakeRequirements();
-        sid.stake(pool1.stakeLocker(), minStake - 1);
+        pat.stake(pool1.stakeLocker(), minStake - 1);
 
         // Post-state checks.
-        assertEq(bPool.balanceOf(address(sid)),                50 * WAD - (minStake - 1));  // PD staked minStake - 1 BPTs
+        assertEq(bPool.balanceOf(address(pat)),                50 * WAD - (minStake - 1));  // PD staked minStake - 1 BPTs
         assertEq(bPool.balanceOf(stakeLocker),                             minStake - 1);   // minStake - 1 BPTs staked
-        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),              minStake - 1);   // PD has minStake - 1 SL tokens
+        assertEq(IERC20(stakeLocker).balanceOf(address(pat)),              minStake - 1);   // PD has minStake - 1 SL tokens
 
-        assertTrue(!sid.try_finalize(address(pool1)));  // Can't finalize
+        assertTrue(!pat.try_finalize(address(pool1)));  // Can't finalize
 
         /***********************************/
         /*** Stake Exact Required Amount ***/
         /***********************************/
-        sid.stake(stakeLocker, 1); // Add one more wei of BPT to get to minStake amount
+        pat.stake(stakeLocker, 1); // Add one more wei of BPT to get to minStake amount
 
         // Post-state checks.
-        assertEq(bPool.balanceOf(address(sid)),                50 * WAD - minStake);  // PD staked minStake
+        assertEq(bPool.balanceOf(address(pat)),                50 * WAD - minStake);  // PD staked minStake
         assertEq(bPool.balanceOf(stakeLocker),                            minStake);  // minStake BPTs staked
-        assertEq(IERC20(stakeLocker).balanceOf(address(sid)),             minStake);  // PD has minStake SL tokens
+        assertEq(IERC20(stakeLocker).balanceOf(address(pat)),             minStake);  // PD has minStake SL tokens
         assertEq(uint256(pool1.poolState()), 0);  // Initialized
 
-        assertTrue(!joe.try_finalize(address(pool1)));  // Can't finalize if not PD
+        assertTrue(!pam.try_finalize(address(pool1)));  // Can't finalize if not PD
 
         // Pause protocol and attempt finalize()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_finalize(address(pool1)));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_finalize(address(pool1)));
         
         // Unpause protocol and finalize()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_finalize(address(pool1)));  // PD that staked can finalize
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_finalize(address(pool1)));  // PD that staked can finalize
 
         assertEq(uint256(pool1.poolState()), 1);  // Finalized
     }
@@ -383,117 +386,117 @@ contract PoolTest is TestUtil {
         address stakeLocker = pool1.stakeLocker();
         address liqLocker   = pool1.liquidityLocker();
 
-        sid.approve(address(bPool), stakeLocker, MAX_UINT);
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        pat.approve(address(bPool), stakeLocker, MAX_UINT);
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
 
         // Mint 100 USDC into this LP account
-        mint("USDC", address(bob), 100 * USD);
+        mint("USDC", address(leo), 100 * USD);
 
-        assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not finalized
+        assertTrue(!leo.try_deposit(address(pool1), 100 * USD)); // Not finalized
 
-        sid.finalize(address(pool1));
+        pat.finalize(address(pool1));
 
         assertTrue(!pool1.openToPublic());
-        assertTrue(!pool1.allowedLiquidityProviders(address(bob)));
-        assertTrue(  !bob.try_deposit(address(pool1), 100 * USD)); // Not in the LP allow list neither the pool is open to public.
+        assertTrue(!pool1.allowedLiquidityProviders(address(leo)));
+        assertTrue(  !leo.try_deposit(address(pool1), 100 * USD)); // Not in the LP allow list neither the pool is open to public.
 
-        assertTrue( !joe.try_setAllowList(address(pool1), address(bob), true)); // It will fail as `joe` is not the right PD.
-        assertTrue(  sid.try_setAllowList(address(pool1), address(bob), true));
-        assertTrue(pool1.allowedLiquidityProviders(address(bob)));
+        assertTrue( !pam.try_setAllowList(address(pool1), address(leo), true)); // It will fail as `pam` is not the right PD.
+        assertTrue(  pat.try_setAllowList(address(pool1), address(leo), true));
+        assertTrue(pool1.allowedLiquidityProviders(address(leo)));
         
-        assertTrue(!bob.try_deposit(address(pool1), 100 * USD)); // Not Approved
+        assertTrue(!leo.try_deposit(address(pool1), 100 * USD)); // Not Approved
 
-        bob.approve(USDC, address(pool1), MAX_UINT);
+        leo.approve(USDC, address(pool1), MAX_UINT);
 
-        assertEq(IERC20(USDC).balanceOf(address(bob)), 100 * USD);
+        assertEq(IERC20(USDC).balanceOf(address(leo)), 100 * USD);
         assertEq(IERC20(USDC).balanceOf(liqLocker),            0);
-        assertEq(pool1.balanceOf(address(bob)),                0);
+        assertEq(pool1.balanceOf(address(leo)),                0);
 
-        assertTrue(bob.try_deposit(address(pool1),    100 * USD));
+        assertTrue(leo.try_deposit(address(pool1),    100 * USD));
 
-        assertEq(IERC20(USDC).balanceOf(address(bob)),         0);
+        assertEq(IERC20(USDC).balanceOf(address(leo)),         0);
         assertEq(IERC20(USDC).balanceOf(liqLocker),    100 * USD);
-        assertEq(pool1.balanceOf(address(bob)),        100 * WAD);
+        assertEq(pool1.balanceOf(address(leo)),        100 * WAD);
 
-        // Remove bob from the allowed list
-        assertTrue(sid.try_setAllowList(address(pool1), address(bob), false));
-        mint("USDC", address(bob), 100 * USD);
-        assertTrue(!bob.try_deposit(address(pool1),    100 * USD));
+        // Remove leo from the allowed list
+        assertTrue(pat.try_setAllowList(address(pool1), address(leo), false));
+        mint("USDC", address(leo), 100 * USD);
+        assertTrue(!leo.try_deposit(address(pool1),    100 * USD));
 
-        mint("USDC", address(dan), 200 * USD);
-        dan.approve(USDC, address(pool1), MAX_UINT);
+        mint("USDC", address(lex), 200 * USD);
+        lex.approve(USDC, address(pool1), MAX_UINT);
         
-        assertEq(IERC20(USDC).balanceOf(address(dan)), 200 * USD);
+        assertEq(IERC20(USDC).balanceOf(address(lex)), 200 * USD);
         assertEq(IERC20(USDC).balanceOf(liqLocker),    100 * USD);
-        assertEq(pool1.balanceOf(address(dan)),                0);
+        assertEq(pool1.balanceOf(address(lex)),                0);
 
-        assertTrue(!pool1.allowedLiquidityProviders(address(dan)));
-        assertTrue(  !dan.try_deposit(address(pool1),  100 * USD)); // Fail to invest as dan is not in the allowed list.
+        assertTrue(!pool1.allowedLiquidityProviders(address(lex)));
+        assertTrue(  !lex.try_deposit(address(pool1),  100 * USD)); // Fail to invest as lex is not in the allowed list.
 
         // Pause protocol and attempt openPoolToPublic()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_setOpenToPublic(address(pool1), true));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_setOpenToPublic(address(pool1), true));
 
         // Unpause protocol and openPoolToPublic()
-        assertTrue( mic.try_setProtocolPause(address(globals), false));
-        assertTrue(!joe.try_setOpenToPublic(address(pool1), true));  // Incorrect PD.
-        assertTrue( sid.try_setOpenToPublic(address(pool1), true));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(!pam.try_setOpenToPublic(address(pool1), true));  // Incorrect PD.
+        assertTrue( pat.try_setOpenToPublic(address(pool1), true));
 
-        assertTrue(dan.try_deposit(address(pool1),     100 * USD));
+        assertTrue(lex.try_deposit(address(pool1),     100 * USD));
 
-        assertEq(IERC20(USDC).balanceOf(address(dan)), 100 * USD);
+        assertEq(IERC20(USDC).balanceOf(address(lex)), 100 * USD);
         assertEq(IERC20(USDC).balanceOf(liqLocker),    200 * USD);
-        assertEq(pool1.balanceOf(address(dan)),        100 * WAD);
+        assertEq(pool1.balanceOf(address(lex)),        100 * WAD);
 
-        mint("USDC", address(bob), 200 * USD);
+        mint("USDC", address(leo), 200 * USD);
 
         // Pool-specific pause by Pool Delegate via setLiquidityCap(0)
         assertEq( pool1.liquidityCap(), MAX_UINT);
-        assertTrue(!com.try_setLiquidityCap(address(pool1), 0));
-        assertTrue( sid.try_setLiquidityCap(address(pool1), 0));
+        assertTrue(!cam.try_setLiquidityCap(address(pool1), 0));
+        assertTrue( pat.try_setLiquidityCap(address(pool1), 0));
         assertEq( pool1.liquidityCap(), 0);
-        assertTrue(!bob.try_deposit(address(pool1), 1 * USD));
-        assertTrue( sid.try_setLiquidityCap(address(pool1), MAX_UINT));
+        assertTrue(!leo.try_deposit(address(pool1), 1 * USD));
+        assertTrue( pat.try_setLiquidityCap(address(pool1), MAX_UINT));
         assertEq( pool1.liquidityCap(), MAX_UINT);
-        assertTrue( bob.try_deposit(address(pool1), 100 * USD));
-        assertEq( pool1.balanceOf(address(bob)), 200 * WAD);
+        assertTrue( leo.try_deposit(address(pool1), 100 * USD));
+        assertEq( pool1.balanceOf(address(leo)), 200 * WAD);
  
         // Protocol-wide pause by Emergency Admin
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!bob.try_deposit(address(pool1), 1 * USD));
-        assertTrue( mic.try_setProtocolPause(address(globals), false));
-        assertTrue( bob.try_deposit(address(pool1),100 * USD));
-        assertEq( pool1.balanceOf(address(bob)), 300 * WAD);
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!leo.try_deposit(address(pool1), 1 * USD));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue( leo.try_deposit(address(pool1),100 * USD));
+        assertEq( pool1.balanceOf(address(leo)), 300 * WAD);
 
         // Pause protocol and attempt setLiquidityCap()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_setLiquidityCap(address(pool1), MAX_UINT));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_setLiquidityCap(address(pool1), MAX_UINT));
 
         // Unpause protocol and setLiquidityCap()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_setLiquidityCap(address(pool1), MAX_UINT));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_setLiquidityCap(address(pool1), MAX_UINT));
 
-        assertTrue(sid.try_setOpenToPublic(address(pool1), false));  // Close pool to public
-        assertTrue(!dan.try_deposit(address(pool1),    100 * USD));  // Fail to deposit as pool no longer public
+        assertTrue(pat.try_setOpenToPublic(address(pool1), false));  // Close pool to public
+        assertTrue(!lex.try_deposit(address(pool1),    100 * USD));  // Fail to deposit as pool no longer public
     }
 
     function test_setLockupPeriod() public {
         assertEq(pool1.lockupPeriod(), 180 days);
-        assertTrue(!joe.try_setLockupPeriod(address(pool1), 15 days));       // Cannot set lockup period if not pool delegate
-        assertTrue(!sid.try_setLockupPeriod(address(pool1), 180 days + 1));  // Cannot increase lockup period
-        assertTrue( sid.try_setLockupPeriod(address(pool1), 180 days));      // Can set the same lockup period
-        assertTrue( sid.try_setLockupPeriod(address(pool1), 180 days - 1));  // Can decrease lockup period
+        assertTrue(!pam.try_setLockupPeriod(address(pool1), 15 days));       // Cannot set lockup period if not pool delegate
+        assertTrue(!pat.try_setLockupPeriod(address(pool1), 180 days + 1));  // Cannot increase lockup period
+        assertTrue( pat.try_setLockupPeriod(address(pool1), 180 days));      // Can set the same lockup period
+        assertTrue( pat.try_setLockupPeriod(address(pool1), 180 days - 1));  // Can decrease lockup period
         assertEq(pool1.lockupPeriod(), 180 days - 1);
-        assertTrue(!sid.try_setLockupPeriod(address(pool1), 180 days));      // Cannot increase lockup period
+        assertTrue(!pat.try_setLockupPeriod(address(pool1), 180 days));      // Cannot increase lockup period
 
         // Pause protocol and attempt setLockupPeriod()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_setLockupPeriod(address(pool1), 180 days - 2));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_setLockupPeriod(address(pool1), 180 days - 2));
         assertEq(pool1.lockupPeriod(), 180 days - 1);
 
         // Unpause protocol and setLockupPeriod()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_setLockupPeriod(address(pool1), 180 days - 2));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_setLockupPeriod(address(pool1), 180 days - 2));
         assertEq(pool1.lockupPeriod(), 180 days - 2);
     }
 
@@ -501,44 +504,44 @@ contract PoolTest is TestUtil {
     
         address stakeLocker = pool1.stakeLocker();
 
-        sid.approve(address(bPool), stakeLocker, MAX_UINT);
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        pat.approve(address(bPool), stakeLocker, MAX_UINT);
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
 
         // Mint 1000 USDC into this LP account
-        mint("USDC", address(bob), 10_000 * USD);
+        mint("USDC", address(leo), 10_000 * USD);
 
-        sid.finalize(address(pool1));
-        sid.setOpenToPublic(address(pool1), true);
+        pat.finalize(address(pool1));
+        pat.setOpenToPublic(address(pool1), true);
 
-        bob.approve(USDC, address(pool1), MAX_UINT);
+        leo.approve(USDC, address(pool1), MAX_UINT);
 
         // Changes the `liquidityCap`.
-        assertTrue(sid.try_setLiquidityCap(address(pool1), 900 * USD), "Failed to set liquidity cap");
+        assertTrue(pat.try_setLiquidityCap(address(pool1), 900 * USD), "Failed to set liquidity cap");
         assertEq(pool1.liquidityCap(), 900 * USD, "Incorrect value set for liquidity cap");
 
         // Not able to deposit as cap is lower than the deposit amount.
         assertTrue(!pool1.isDepositAllowed(1000 * USD), "Deposit should not be allowed because 900 USD < 1000 USD");
-        assertTrue(!bob.try_deposit(address(pool1), 1000 * USD), "Should not able to deposit 1000 USD");
+        assertTrue(!leo.try_deposit(address(pool1), 1000 * USD), "Should not able to deposit 1000 USD");
 
         // Tries with lower amount it will pass.
         assertTrue(pool1.isDepositAllowed(500 * USD), "Deposit should be allowed because 900 USD > 500 USD");
-        assertTrue(bob.try_deposit(address(pool1), 500 * USD), "Fail to deposit 500 USD");
+        assertTrue(leo.try_deposit(address(pool1), 500 * USD), "Fail to deposit 500 USD");
 
         // Bob tried again with 600 USDC it fails again.
         assertTrue(!pool1.isDepositAllowed(600 * USD), "Deposit should not be allowed because 900 USD < 500 + 600 USD");
-        assertTrue(!bob.try_deposit(address(pool1), 600 * USD), "Should not able to deposit 600 USD");
+        assertTrue(!leo.try_deposit(address(pool1), 600 * USD), "Should not able to deposit 600 USD");
 
         // Set liquidityCap to zero and withdraw
-        assertTrue(sid.try_setLiquidityCap(address(pool1), 0),  "Failed to set liquidity cap");
-        assertTrue(sid.try_setLockupPeriod(address(pool1), 0),  "Failed to set the lockup period");
+        assertTrue(pat.try_setLiquidityCap(address(pool1), 0),  "Failed to set liquidity cap");
+        assertTrue(pat.try_setLockupPeriod(address(pool1), 0),  "Failed to set the lockup period");
         assertEq(pool1.lockupPeriod(), uint256(0),              "Failed to update the lockup period");
 
-        assertTrue(bob.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
+        assertTrue(leo.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
         
-        (uint claimable,,) = pool1.claimableFunds(address(bob));
+        (uint claimable,,) = pool1.claimableFunds(address(leo));
 
         hevm.warp(block.timestamp + globals.lpCooldownPeriod() + 1);
-        assertTrue(bob.try_withdraw(address(pool1), claimable),  "Should pass to withdraw the funds from the pool");
+        assertTrue(leo.try_withdraw(address(pool1), claimable),  "Should pass to withdraw the funds from the pool");
     }
 
     function make_withdrawable(LP investor, Pool pool) public {
@@ -551,131 +554,131 @@ contract PoolTest is TestUtil {
     function test_deposit_depositDate() public {
         address stakeLocker = pool1.stakeLocker();
 
-        sid.approve(address(bPool), stakeLocker, MAX_UINT);
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-        sid.setOpenToPublic(address(pool1), true);
+        pat.approve(address(bPool), stakeLocker, MAX_UINT);
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
+        pat.setOpenToPublic(address(pool1), true);
         
         // Mint 100 USDC into this LP account
-        mint("USDC", address(bob), 200 * USD);
-        bob.approve(USDC, address(pool1), MAX_UINT);
-        sid.finalize(address(pool1));
+        mint("USDC", address(leo), 200 * USD);
+        leo.approve(USDC, address(pool1), MAX_UINT);
+        pat.finalize(address(pool1));
 
         // Deposit 100 USDC on first day
         uint256 startDate = block.timestamp;
 
         uint256 initialAmt = 100 * USD;
 
-        bob.deposit(address(pool1), 100 * USD);
-        assertEq(pool1.depositDate(address(bob)), startDate);
+        leo.deposit(address(pool1), 100 * USD);
+        assertEq(pool1.depositDate(address(leo)), startDate);
 
         uint256 newAmt = 20 * USD;
 
         hevm.warp(startDate + 30 days);
-        bob.deposit(address(pool1), newAmt);
+        leo.deposit(address(pool1), newAmt);
 
         uint256 newDepDate = startDate + (block.timestamp - startDate) * newAmt / (newAmt + initialAmt);
-        assertEq(pool1.depositDate(address(bob)), newDepDate);  // Gets updated
+        assertEq(pool1.depositDate(address(leo)), newDepDate);  // Gets updated
 
-        assertTrue(sid.try_setLockupPeriod(address(pool1), uint256(0)));  // Sets 0 as lockup period to allow withdraw. 
-        make_withdrawable(bob, pool1);
-        bob.withdraw(address(pool1), newAmt);
+        assertTrue(pat.try_setLockupPeriod(address(pool1), uint256(0)));  // Sets 0 as lockup period to allow withdraw. 
+        make_withdrawable(leo, pool1);
+        leo.withdraw(address(pool1), newAmt);
 
-        assertEq(pool1.depositDate(address(bob)), newDepDate);  // Doesn't change
+        assertEq(pool1.depositDate(address(leo)), newDepDate);  // Doesn't change
     }
 
     function test_transfer_depositDate() public {
         address stakeLocker = pool1.stakeLocker();
 
-        sid.approve(address(bPool), stakeLocker, MAX_UINT);
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-        sid.finalize(address(pool1));
-        sid.setOpenToPublic(address(pool1), true);
+        pat.approve(address(bPool), stakeLocker, MAX_UINT);
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
+        pat.finalize(address(pool1));
+        pat.setOpenToPublic(address(pool1), true);
         
         // Mint 200 USDC into this LP account
-        mint("USDC", address(bob), 200 * USD);
-        mint("USDC", address(che), 200 * USD);
-        bob.approve(USDC, address(pool1), MAX_UINT);
-        che.approve(USDC, address(pool1), MAX_UINT);
+        mint("USDC", address(leo), 200 * USD);
+        mint("USDC", address(liz), 200 * USD);
+        leo.approve(USDC, address(pool1), MAX_UINT);
+        liz.approve(USDC, address(pool1), MAX_UINT);
         
         // Deposit 100 USDC on first day
         uint256 startDate = block.timestamp;
 
         uint256 initialAmt = 100 * WAD;  // Amount of FDT minted on first deposit
 
-        bob.deposit(address(pool1), 100 * USD);
-        che.deposit(address(pool1), 100 * USD);
+        leo.deposit(address(pool1), 100 * USD);
+        liz.deposit(address(pool1), 100 * USD);
         
-        assertEq(pool1.depositDate(address(bob)), startDate);
-        assertEq(pool1.depositDate(address(che)), startDate);
+        assertEq(pool1.depositDate(address(leo)), startDate);
+        assertEq(pool1.depositDate(address(liz)), startDate);
 
         uint256 newAmt = 20 * WAD;  // Amount of FDT transferred
 
         hevm.warp(startDate + 30 days);
 
-        assertEq(pool1.balanceOf(address(bob)), initialAmt);
-        assertEq(pool1.balanceOf(address(che)), initialAmt);
+        assertEq(pool1.balanceOf(address(leo)), initialAmt);
+        assertEq(pool1.balanceOf(address(liz)), initialAmt);
 
         // Pause protocol and attempt to transfer FDTs
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!che.try_transfer(address(pool1), address(bob), newAmt));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!liz.try_transfer(address(pool1), address(leo), newAmt));
 
         // Unpause protocol and transfer FDTs
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(che.try_transfer(address(pool1), address(bob), newAmt));  // Pool.transfer()
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(liz.try_transfer(address(pool1), address(leo), newAmt));  // Pool.transfer()
 
-        assertEq(pool1.balanceOf(address(bob)), initialAmt + newAmt);
-        assertEq(pool1.balanceOf(address(che)), initialAmt - newAmt);
+        assertEq(pool1.balanceOf(address(leo)), initialAmt + newAmt);
+        assertEq(pool1.balanceOf(address(liz)), initialAmt - newAmt);
 
         uint256 newDepDate = startDate + (block.timestamp - startDate) * newAmt / (newAmt + initialAmt);
 
-        assertEq(pool1.depositDate(address(bob)), newDepDate);  // Gets updated
-        assertEq(pool1.depositDate(address(che)),  startDate);  // Stays the same
+        assertEq(pool1.depositDate(address(leo)), newDepDate);  // Gets updated
+        assertEq(pool1.depositDate(address(liz)),  startDate);  // Stays the same
     }
 
     function test_transfer_recipient_withdrawing() public {
         address stakeLocker = pool1.stakeLocker();
 
-        sid.approve(address(bPool), stakeLocker, MAX_UINT);
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-        sid.finalize(address(pool1));
-        sid.setOpenToPublic(address(pool1), true);
+        pat.approve(address(bPool), stakeLocker, MAX_UINT);
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
+        pat.finalize(address(pool1));
+        pat.setOpenToPublic(address(pool1), true);
 
         uint256 start = block.timestamp;
         uint256 deposit = 100;
 
         // Mint USDC into LP accounts
-        mint("USDC", address(bob), deposit * USD);
-        mint("USDC", address(che), deposit * USD);
-        bob.approve(USDC, address(pool1), MAX_UINT);
-        che.approve(USDC, address(pool1), MAX_UINT);
+        mint("USDC", address(leo), deposit * USD);
+        mint("USDC", address(liz), deposit * USD);
+        leo.approve(USDC, address(pool1), MAX_UINT);
+        liz.approve(USDC, address(pool1), MAX_UINT);
 
         // Deposit USDC into Pool
-        bob.deposit(address(pool1), deposit * USD);
-        che.deposit(address(pool1), deposit * USD);
-        assertEq(pool1.balanceOf(address(bob)), deposit * WAD);
-        assertEq(pool1.balanceOf(address(che)), deposit * WAD);
-        assertEq(pool1.depositDate(address(bob)), start);
-        assertEq(pool1.depositDate(address(che)), start);
+        leo.deposit(address(pool1), deposit * USD);
+        liz.deposit(address(pool1), deposit * USD);
+        assertEq(pool1.balanceOf(address(leo)), deposit * WAD);
+        assertEq(pool1.balanceOf(address(liz)), deposit * WAD);
+        assertEq(pool1.depositDate(address(leo)), start);
+        assertEq(pool1.depositDate(address(liz)), start);
 
         // LP (Che) initiates withdrawal
-        assertTrue(che.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
-        assertEq(pool1.withdrawCooldown(address(che)), start);
+        assertTrue(liz.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
+        assertEq(pool1.withdrawCooldown(address(liz)), start);
 
         // LP (Bob) fails to transfer to LP (Che) who is currently withdrawing
-        assertTrue(!bob.try_transfer(address(pool1), address(che), deposit * WAD));
+        assertTrue(!leo.try_transfer(address(pool1), address(liz), deposit * WAD));
         hevm.warp(start + globals.lpCooldownPeriod() + globals.lpWithdrawWindow());  // Very end of LP withdrawal window
-        assertTrue(!bob.try_transfer(address(pool1), address(che), deposit * WAD));
+        assertTrue(!leo.try_transfer(address(pool1), address(liz), deposit * WAD));
 
         // LP (Bob) successfully transfers to LP (Che) who is outside withdraw window
         hevm.warp(start + globals.lpCooldownPeriod() + globals.lpWithdrawWindow() + 1);  // Second after LP withdrawal window ends
-        assertTrue(bob.try_transfer(address(pool1), address(che), deposit * WAD));
+        assertTrue(leo.try_transfer(address(pool1), address(liz), deposit * WAD));
 
         // Check balances and deposit dates are correct
-        assertEq(pool1.balanceOf(address(bob)), 0);
-        assertEq(pool1.balanceOf(address(che)), deposit * WAD * 2);
+        assertEq(pool1.balanceOf(address(leo)), 0);
+        assertEq(pool1.balanceOf(address(liz)), deposit * WAD * 2);
         uint256 newDepDate = start + (block.timestamp - start) * (deposit * WAD) / ((deposit * WAD) + (deposit * WAD));
-        assertEq(pool1.depositDate(address(bob)), start);       // Stays the same
-        assertEq(pool1.depositDate(address(che)), newDepDate);  // Gets updated
+        assertEq(pool1.depositDate(address(leo)), start);       // Stays the same
+        assertEq(pool1.depositDate(address(liz)), newDepDate);  // Gets updated
     }
 
     function test_fundLoan() public {
@@ -683,22 +686,22 @@ contract PoolTest is TestUtil {
         address liqLocker     = pool1.liquidityLocker();
         address fundingLocker = loan.fundingLocker();
 
-        sid.approve(address(bPool), stakeLocker, MAX_UINT);
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        pat.approve(address(bPool), stakeLocker, MAX_UINT);
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
 
         // Mint 100 USDC into this LP account
-        mint("USDC", address(bob), 100 * USD);
+        mint("USDC", address(leo), 100 * USD);
 
-        sid.finalize(address(pool1));
-        sid.setOpenToPublic(address(pool1), true);
+        pat.finalize(address(pool1));
+        pat.setOpenToPublic(address(pool1), true);
 
-        bob.approve(USDC, address(pool1), MAX_UINT);
+        leo.approve(USDC, address(pool1), MAX_UINT);
 
-        assertTrue(bob.try_deposit(address(pool1), 100 * USD));
+        assertTrue(leo.try_deposit(address(pool1), 100 * USD));
 
         gov.setValidLoanFactory(address(loanFactory), false);
 
-        assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 100 * USD)); // LoanFactory not in globals
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 100 * USD)); // LoanFactory not in globals
 
         gov.setValidLoanFactory(address(loanFactory), true);
 
@@ -709,12 +712,12 @@ contract PoolTest is TestUtil {
         /*** Fund a Loan ***/
         /*******************/
         // Pause protocol and attempt fundLoan()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 1 * USD));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 1 * USD));
 
         // Unpause protocol and fundLoan()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 20 * USD), "Fail to fund a loan");  // Fund loan for 20 USDC
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 20 * USD), "Fail to fund a loan");  // Fund loan for 20 USDC
 
         DebtLocker debtLocker = DebtLocker(pool1.debtLockers(address(loan), address(dlFactory1)));
 
@@ -730,7 +733,7 @@ contract PoolTest is TestUtil {
         /****************************************/
         /*** Fund same loan with the same DL ***/
         /****************************************/
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 25 * USD)); // Fund same loan for 25 USDC
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 25 * USD)); // Fund same loan for 25 USDC
 
         assertEq(dlFactory1.owner(address(debtLocker)), address(pool1));
         assertTrue(dlFactory1.isLocker(address(debtLocker)));
@@ -743,7 +746,7 @@ contract PoolTest is TestUtil {
         /*******************************************/
         /*** Fund same loan with a different DL ***/
         /*******************************************/
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan), address(dlFactory2), 10 * USD)); // Fund loan for 15 USDC
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan), address(dlFactory2), 10 * USD)); // Fund loan for 15 USDC
 
         DebtLocker debtLocker2 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory2)));
 
@@ -858,56 +861,56 @@ contract PoolTest is TestUtil {
     }
 
     function assertConstFundLoan(Pool pool, address _loan, address dlFactory, uint256 amt, IERC20 liquidityAsset, uint256 constPoolVal) internal returns(bool) {
-        assertTrue(sid.try_fundLoan(address(pool), _loan,  dlFactory, amt));
+        assertTrue(pat.try_fundLoan(address(pool), _loan,  dlFactory, amt));
         assertTrue(isConstantPoolValue(pool1, liquidityAsset, constPoolVal));
     }
 
     function assertConstClaim(Pool pool, address _loan, address dlFactory, IERC20 liquidityAsset, uint256 constPoolVal) internal returns(bool) {
-        sid.claim(address(pool), _loan, dlFactory);
+        pat.claim(address(pool), _loan, dlFactory);
         assertTrue(isConstantPoolValue(pool, liquidityAsset, constPoolVal));
     }
 
     function test_claim_defaulted_zero_collateral_loan() public {
         // Mint 10000 USDC into this LP account
-        mint("USDC", address(dan), 10_000 * USD);
-        dan.approve(USDC, address(pool1), 10_000 * USD);
+        mint("USDC", address(lex), 10_000 * USD);
+        lex.approve(USDC, address(pool1), 10_000 * USD);
 
         // Set valid loan factory
         gov.setValidLoanFactory(address(loanFactory), true);
 
         // Finalizing the Pool
-        sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-        sid.finalize(address(pool1));
-        sid.setOpenToPublic(address(pool1), true);
+        pat.approve(address(bPool), pool1.stakeLocker(), uint(-1));
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
+        pat.finalize(address(pool1));
+        pat.setOpenToPublic(address(pool1), true);
 
         // Add liquidity
-        assertTrue(dan.try_deposit(address(pool1), 10_000 * USD));
+        assertTrue(lex.try_deposit(address(pool1), 10_000 * USD));
 
         // Create Loan with 0% CR so no claimable funds are present after default
         uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 0, 7];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        Loan zero_loan = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        Loan zero_loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         // Fund the loan by pool delegate.
-        assertTrue(sid.try_fundLoan(address(pool1), address(zero_loan), address(dlFactory1), 10_000 * USD));
+        assertTrue(pat.try_fundLoan(address(pool1), address(zero_loan), address(dlFactory1), 10_000 * USD));
 
         // Drawdown of the loan
         uint cReq = zero_loan.collateralRequiredForDrawdown(10_000 * USD); // wETH required for 15000 USDC drawdown on loan
         assertEq(cReq, 0); // No collateral required on 0% collateralized loan
-        mint("WETH", address(eli), cReq);
-        eli.approve(WETH, address(zero_loan),  cReq);
-        eli.drawdown(address(zero_loan), 10_000 * USD);
+        mint("WETH", address(bob), cReq);
+        bob.approve(WETH, address(zero_loan),  cReq);
+        bob.drawdown(address(zero_loan), 10_000 * USD);
 
         // Initial claim to clear out claimable funds
-        uint256[7] memory claim = sid.claim(address(pool1), address(zero_loan), address(dlFactory1));
+        uint256[7] memory claim = pat.claim(address(pool1), address(zero_loan), address(dlFactory1));
 
         // Time warp to default
         hevm.warp(block.timestamp + zero_loan.nextPaymentDue() + globals.gracePeriod() + 1);
-        sid.triggerDefault(address(pool1), address(zero_loan), address(dlFactory1));   // Triggers a "liquidation" that does not perform a swap
+        pat.triggerDefault(address(pool1), address(zero_loan), address(dlFactory1));   // Triggers a "liquidation" that does not perform a swap
 
-        uint256[7] memory claim2 = sid.claim(address(pool1), address(zero_loan), address(dlFactory1));
+        uint256[7] memory claim2 = pat.claim(address(pool1), address(zero_loan), address(dlFactory1));
         assertEq(claim2[0], 0);
         assertEq(claim2[1], 0);
         assertEq(claim2[2], 0);
@@ -927,34 +930,34 @@ contract PoolTest is TestUtil {
         uint256[6] memory specs = [0, 180, 30, uint256(1000 * USD), 2000, 7];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan  = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-        loan2 = fay.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan  = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         /*******************************/
         /*** Finalize liquidity pool ***/
         /*******************************/
         {
-            sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
-            sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+            pat.approve(address(bPool), pool1.stakeLocker(), uint(-1));
+            pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
 
-            sid.finalize(address(pool1));
-            sid.setOpenToPublic(address(pool1), true);
+            pat.finalize(address(pool1));
+            pat.setOpenToPublic(address(pool1), true);
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
         {
-            mint("USDC", address(bob), 1_000_000_000 * USD);
-            mint("USDC", address(che), 1_000_000_000 * USD);
-            mint("USDC", address(dan), 1_000_000_000 * USD);
+            mint("USDC", address(leo), 1_000_000_000 * USD);
+            mint("USDC", address(liz), 1_000_000_000 * USD);
+            mint("USDC", address(lex), 1_000_000_000 * USD);
 
-            bob.approve(USDC, address(pool1), uint(-1));
-            che.approve(USDC, address(pool1), uint(-1));
-            dan.approve(USDC, address(pool1), uint(-1));
+            leo.approve(USDC, address(pool1), uint(-1));
+            liz.approve(USDC, address(pool1), uint(-1));
+            lex.approve(USDC, address(pool1), uint(-1));
 
-            assertTrue(bob.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
-            assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
-            assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
+            assertTrue(leo.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
+            assertTrue(liz.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
+            assertTrue(lex.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
             gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
@@ -984,12 +987,12 @@ contract PoolTest is TestUtil {
         {
             uint cReq1 =  loan.collateralRequiredForDrawdown(100_000_000 * USD); // wETH required for 100_000_000 USDC drawdown on loan
             uint cReq2 = loan2.collateralRequiredForDrawdown(100_000_000 * USD); // wETH required for 100_000_000 USDC drawdown on loan2
-            mint("WETH", address(eli), cReq1);
-            mint("WETH", address(fay), cReq2);
-            eli.approve(WETH, address(loan),  cReq1);
-            fay.approve(WETH, address(loan2), cReq2);
-            eli.drawdown(address(loan),  100_000_000 * USD);
-            fay.drawdown(address(loan2), 100_000_000 * USD);
+            mint("WETH", address(bob), cReq1);
+            mint("WETH", address(ben), cReq2);
+            bob.approve(WETH, address(loan),  cReq1);
+            ben.approve(WETH, address(loan2), cReq2);
+            bob.drawdown(address(loan),  100_000_000 * USD);
+            ben.drawdown(address(loan2), 100_000_000 * USD);
         }
         
         /*********************************/
@@ -998,12 +1001,12 @@ contract PoolTest is TestUtil {
         {
             (uint amtf_1,,) =  loan.getFullPayment(); // USDC required for 2nd payment on loan
             (uint amtf_2,,) = loan2.getFullPayment(); // USDC required for 2nd payment on loan2
-            mint("USDC", address(eli), amtf_1);
-            mint("USDC", address(fay), amtf_2);
-            eli.approve(USDC, address(loan),  amtf_1);
-            fay.approve(USDC, address(loan2), amtf_2);
-            eli.makeFullPayment(address(loan));
-            fay.makeFullPayment(address(loan2));
+            mint("USDC", address(bob), amtf_1);
+            mint("USDC", address(ben), amtf_2);
+            bob.approve(USDC, address(loan),  amtf_1);
+            ben.approve(USDC, address(loan2), amtf_2);
+            bob.makeFullPayment(address(loan));
+            ben.makeFullPayment(address(loan2));
         }
         
         /******************/
@@ -1025,27 +1028,27 @@ contract PoolTest is TestUtil {
         /*** Finalize liquidity pool ***/
         /*******************************/
         {
-            sid.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
-            sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+            pat.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
+            pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
 
-            sid.finalize(address(pool1));
-            sid.setOpenToPublic(address(pool1), true);
+            pat.finalize(address(pool1));
+            pat.setOpenToPublic(address(pool1), true);
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
         {
-            mint("USDC", address(bob), 1_000_000_000 * USD);
-            mint("USDC", address(che), 1_000_000_000 * USD);
-            mint("USDC", address(dan), 1_000_000_000 * USD);
+            mint("USDC", address(leo), 1_000_000_000 * USD);
+            mint("USDC", address(liz), 1_000_000_000 * USD);
+            mint("USDC", address(lex), 1_000_000_000 * USD);
 
-            bob.approve(USDC, address(pool1), MAX_UINT);
-            che.approve(USDC, address(pool1), MAX_UINT);
-            dan.approve(USDC, address(pool1), MAX_UINT);
+            leo.approve(USDC, address(pool1), MAX_UINT);
+            liz.approve(USDC, address(pool1), MAX_UINT);
+            lex.approve(USDC, address(pool1), MAX_UINT);
 
-            assertTrue(bob.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
-            assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
-            assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
+            assertTrue(leo.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
+            assertTrue(liz.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
+            assertTrue(lex.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
             gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
@@ -1054,15 +1057,15 @@ contract PoolTest is TestUtil {
         /*** Fund loan / loan2 (Excess) ***/
         /************************************/
         {
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
 
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
         }
 
         assertEq(pool1.principalOut(), 1_000_000_000 * USD);
@@ -1079,12 +1082,12 @@ contract PoolTest is TestUtil {
         {
             uint cReq1 =  loan.collateralRequiredForDrawdown(100_000_000 * USD); // wETH required for 100_000_000 USDC drawdown on loan
             uint cReq2 = loan2.collateralRequiredForDrawdown(100_000_000 * USD); // wETH required for 100_000_000 USDC drawdown on loan2
-            mint("WETH", address(eli), cReq1);
-            mint("WETH", address(fay), cReq2);
-            eli.approve(WETH, address(loan),  cReq1);
-            fay.approve(WETH, address(loan2), cReq2);
-            eli.drawdown(address(loan),  100_000_000 * USD);
-            fay.drawdown(address(loan2), 100_000_000 * USD);
+            mint("WETH", address(bob), cReq1);
+            mint("WETH", address(ben), cReq2);
+            bob.approve(WETH, address(loan),  cReq1);
+            ben.approve(WETH, address(loan2), cReq2);
+            bob.drawdown(address(loan),  100_000_000 * USD);
+            ben.drawdown(address(loan2), 100_000_000 * USD);
         }
         
         /****************************/
@@ -1093,22 +1096,22 @@ contract PoolTest is TestUtil {
         {
             (uint amt1_1,,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
             (uint amt1_2,,,,) = loan2.getNextPayment(); // USDC required for 1st payment on loan2
-            mint("USDC", address(eli), amt1_1);
-            mint("USDC", address(fay), amt1_2);
-            eli.approve(USDC, address(loan),  amt1_1);
-            fay.approve(USDC, address(loan2), amt1_2);
-            eli.makePayment(address(loan));
-            fay.makePayment(address(loan2));
+            mint("USDC", address(bob), amt1_1);
+            mint("USDC", address(ben), amt1_2);
+            bob.approve(USDC, address(loan),  amt1_1);
+            ben.approve(USDC, address(loan2), amt1_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
         }
         
         /******************/
         /*** Pool Claim ***/
         /******************/
         {      
-            checkClaim(debtLocker1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker2, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
-            checkClaim(debtLocker3, loan2, sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker4, loan2, sid, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker1, loan,  pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker2, loan,  pat, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker3, loan2, pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker4, loan2, pat, IERC20(USDC), pool1, address(dlFactory2));
         }
 
         /******************************/
@@ -1117,31 +1120,31 @@ contract PoolTest is TestUtil {
         {
             (uint amt2_1,,,,) =  loan.getNextPayment(); // USDC required for 2nd payment on loan
             (uint amt2_2,,,,) = loan2.getNextPayment(); // USDC required for 2nd payment on loan2
-            mint("USDC", address(eli), amt2_1);
-            mint("USDC", address(fay), amt2_2);
-            eli.approve(USDC, address(loan),  amt2_1);
-            fay.approve(USDC, address(loan2), amt2_2);
-            eli.makePayment(address(loan));
-            fay.makePayment(address(loan2));
+            mint("USDC", address(bob), amt2_1);
+            mint("USDC", address(ben), amt2_2);
+            bob.approve(USDC, address(loan),  amt2_1);
+            ben.approve(USDC, address(loan2), amt2_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
 
             (uint amt3_1,,,,) =  loan.getNextPayment(); // USDC required for 3rd payment on loan
             (uint amt3_2,,,,) = loan2.getNextPayment(); // USDC required for 3rd payment on loan2
-            mint("USDC", address(eli), amt3_1);
-            mint("USDC", address(fay), amt3_2);
-            eli.approve(USDC, address(loan),  amt3_1);
-            fay.approve(USDC, address(loan2), amt3_2);
-            eli.makePayment(address(loan));
-            fay.makePayment(address(loan2));
+            mint("USDC", address(bob), amt3_1);
+            mint("USDC", address(ben), amt3_2);
+            bob.approve(USDC, address(loan),  amt3_1);
+            ben.approve(USDC, address(loan2), amt3_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
         }
         
         /******************/
         /*** Pool Claim ***/
         /******************/
         {      
-            checkClaim(debtLocker1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker2, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
-            checkClaim(debtLocker3, loan2, sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker4, loan2, sid, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker1, loan,  pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker2, loan,  pat, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker3, loan2, pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker4, loan2, pat, IERC20(USDC), pool1, address(dlFactory2));
         }
         
         /*********************************/
@@ -1150,22 +1153,22 @@ contract PoolTest is TestUtil {
         {
             (uint amtf_1,,) =  loan.getFullPayment(); // USDC required for 2nd payment on loan
             (uint amtf_2,,) = loan2.getFullPayment(); // USDC required for 2nd payment on loan2
-            mint("USDC", address(eli), amtf_1);
-            mint("USDC", address(fay), amtf_2);
-            eli.approve(USDC, address(loan),  amtf_1);
-            fay.approve(USDC, address(loan2), amtf_2);
-            eli.makeFullPayment(address(loan));
-            fay.makeFullPayment(address(loan2));
+            mint("USDC", address(bob), amtf_1);
+            mint("USDC", address(ben), amtf_2);
+            bob.approve(USDC, address(loan),  amtf_1);
+            ben.approve(USDC, address(loan2), amtf_2);
+            bob.makeFullPayment(address(loan));
+            ben.makeFullPayment(address(loan2));
         }
         
         /******************/
         /*** Pool Claim ***/
         /******************/
         {      
-            checkClaim(debtLocker1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker2, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
-            checkClaim(debtLocker3, loan2, sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker4, loan2, sid, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker1, loan,  pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker2, loan,  pat, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker3, loan2, pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker4, loan2, pat, IERC20(USDC), pool1, address(dlFactory2));
 
             // Ensure both loans are matured.
             assertEq(uint256(loan.loanState()),  2);
@@ -1183,14 +1186,14 @@ contract PoolTest is TestUtil {
         address stakeLocker1 = pool1.stakeLocker();
         address stakeLocker2 = pool2.stakeLocker();
         {
-            sid.approve(address(bPool), stakeLocker1, MAX_UINT);
-            joe.approve(address(bPool), stakeLocker2, MAX_UINT);
-            sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-            joe.stake(pool2.stakeLocker(), bPool.balanceOf(address(joe)) / 2);
-            sid.finalize(address(pool1));
-            sid.setOpenToPublic(address(pool1), true);
-            joe.finalize(address(pool2));
-            joe.setOpenToPublic(address(pool2), true);
+            pat.approve(address(bPool), stakeLocker1, MAX_UINT);
+            pam.approve(address(bPool), stakeLocker2, MAX_UINT);
+            pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
+            pam.stake(pool2.stakeLocker(), bPool.balanceOf(address(pam)) / 2);
+            pat.finalize(address(pool1));
+            pat.setOpenToPublic(address(pool1), true);
+            pam.finalize(address(pool2));
+            pam.setOpenToPublic(address(pool2), true);
         }
        
         address liqLocker1 = pool1.liquidityLocker();
@@ -1200,25 +1203,25 @@ contract PoolTest is TestUtil {
         /*** Mint and deposit funds into liquidity pools (1b each) ***/
         /*************************************************************/
         {
-            mint("USDC", address(bob), 1_000_000_000 * USD);
-            mint("USDC", address(che), 1_000_000_000 * USD);
-            mint("USDC", address(dan), 1_000_000_000 * USD);
+            mint("USDC", address(leo), 1_000_000_000 * USD);
+            mint("USDC", address(liz), 1_000_000_000 * USD);
+            mint("USDC", address(lex), 1_000_000_000 * USD);
 
-            bob.approve(USDC, address(pool1), MAX_UINT);
-            che.approve(USDC, address(pool1), MAX_UINT);
-            dan.approve(USDC, address(pool1), MAX_UINT);
+            leo.approve(USDC, address(pool1), MAX_UINT);
+            liz.approve(USDC, address(pool1), MAX_UINT);
+            lex.approve(USDC, address(pool1), MAX_UINT);
 
-            bob.approve(USDC, address(pool2), MAX_UINT);
-            che.approve(USDC, address(pool2), MAX_UINT);
-            dan.approve(USDC, address(pool2), MAX_UINT);
+            leo.approve(USDC, address(pool2), MAX_UINT);
+            liz.approve(USDC, address(pool2), MAX_UINT);
+            lex.approve(USDC, address(pool2), MAX_UINT);
 
-            assertTrue(bob.try_deposit(address(pool1), 100_000_000 * USD));  // 10% BOB in LP1
-            assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30% CHE in LP1
-            assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60% DAN in LP1
+            assertTrue(leo.try_deposit(address(pool1), 100_000_000 * USD));  // 10% BOB in LP1
+            assertTrue(liz.try_deposit(address(pool1), 300_000_000 * USD));  // 30% CHE in LP1
+            assertTrue(lex.try_deposit(address(pool1), 600_000_000 * USD));  // 60% DAN in LP1
 
-            assertTrue(bob.try_deposit(address(pool2), 500_000_000 * USD));  // 50% BOB in LP2
-            assertTrue(che.try_deposit(address(pool2), 400_000_000 * USD));  // 40% BOB in LP2
-            assertTrue(dan.try_deposit(address(pool2), 100_000_000 * USD));  // 10% BOB in LP2
+            assertTrue(leo.try_deposit(address(pool2), 500_000_000 * USD));  // 50% BOB in LP2
+            assertTrue(liz.try_deposit(address(pool2), 400_000_000 * USD));  // 40% BOB in LP2
+            assertTrue(lex.try_deposit(address(pool2), 100_000_000 * USD));  // 10% BOB in LP2
 
             gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
@@ -1231,26 +1234,26 @@ contract PoolTest is TestUtil {
         /***************************/
         {
             // LP 1 Vault 1
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 25_000_000 * USD));  // Fund loan using dlFactory1 for 25m USDC
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 25_000_000 * USD));  // Fund loan using dlFactory1 for 25m USDC, again, 50m USDC total
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 25_000_000 * USD));  // Fund loan using dlFactory2 for 25m USDC
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 25_000_000 * USD));  // Fund loan using dlFactory2 for 25m USDC (no excess), 100m USDC total
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 25_000_000 * USD));  // Fund loan using dlFactory1 for 25m USDC
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 25_000_000 * USD));  // Fund loan using dlFactory1 for 25m USDC, again, 50m USDC total
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 25_000_000 * USD));  // Fund loan using dlFactory2 for 25m USDC
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 25_000_000 * USD));  // Fund loan using dlFactory2 for 25m USDC (no excess), 100m USDC total
 
             // LP 2 Vault 1
-            assertTrue(joe.try_fundLoan(address(pool2), address(loan),  address(dlFactory1), 50_000_000 * USD));  // Fund loan using dlFactory1 for 50m USDC (excess), 150m USDC total
-            assertTrue(joe.try_fundLoan(address(pool2), address(loan),  address(dlFactory2), 50_000_000 * USD));  // Fund loan using dlFactory2 for 50m USDC (excess), 200m USDC total
+            assertTrue(pam.try_fundLoan(address(pool2), address(loan),  address(dlFactory1), 50_000_000 * USD));  // Fund loan using dlFactory1 for 50m USDC (excess), 150m USDC total
+            assertTrue(pam.try_fundLoan(address(pool2), address(loan),  address(dlFactory2), 50_000_000 * USD));  // Fund loan using dlFactory2 for 50m USDC (excess), 200m USDC total
 
             // LP 1 Vault 2
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2),  address(dlFactory1), 50_000_000 * USD));  // Fund loan2 using dlFactory1 for 50m USDC
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2),  address(dlFactory1), 50_000_000 * USD));  // Fund loan2 using dlFactory1 for 50m USDC, again, 100m USDC total
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2),  address(dlFactory2), 50_000_000 * USD));  // Fund loan2 using dlFactory2 for 50m USDC
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2),  address(dlFactory2), 50_000_000 * USD));  // Fund loan2 using dlFactory2 for 50m USDC again, 200m USDC total
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2),  address(dlFactory1), 50_000_000 * USD));  // Fund loan2 using dlFactory1 for 50m USDC
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2),  address(dlFactory1), 50_000_000 * USD));  // Fund loan2 using dlFactory1 for 50m USDC, again, 100m USDC total
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2),  address(dlFactory2), 50_000_000 * USD));  // Fund loan2 using dlFactory2 for 50m USDC
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2),  address(dlFactory2), 50_000_000 * USD));  // Fund loan2 using dlFactory2 for 50m USDC again, 200m USDC total
 
             // LP 2 Vault 2
-            assertTrue(joe.try_fundLoan(address(pool2), address(loan2),  address(dlFactory1), 100_000_000 * USD));  // Fund loan2 using dlFactory1 for 100m USDC
-            assertTrue(joe.try_fundLoan(address(pool2), address(loan2),  address(dlFactory1), 100_000_000 * USD));  // Fund loan2 using dlFactory1 for 100m USDC, again, 400m USDC total
-            assertTrue(joe.try_fundLoan(address(pool2), address(loan2),  address(dlFactory2), 100_000_000 * USD));  // Fund loan2 using dlFactory2 for 100m USDC (excess)
-            assertTrue(joe.try_fundLoan(address(pool2), address(loan2),  address(dlFactory2), 100_000_000 * USD));  // Fund loan2 using dlFactory2 for 100m USDC (excess), 600m USDC total
+            assertTrue(pam.try_fundLoan(address(pool2), address(loan2),  address(dlFactory1), 100_000_000 * USD));  // Fund loan2 using dlFactory1 for 100m USDC
+            assertTrue(pam.try_fundLoan(address(pool2), address(loan2),  address(dlFactory1), 100_000_000 * USD));  // Fund loan2 using dlFactory1 for 100m USDC, again, 400m USDC total
+            assertTrue(pam.try_fundLoan(address(pool2), address(loan2),  address(dlFactory2), 100_000_000 * USD));  // Fund loan2 using dlFactory2 for 100m USDC (excess)
+            assertTrue(pam.try_fundLoan(address(pool2), address(loan2),  address(dlFactory2), 100_000_000 * USD));  // Fund loan2 using dlFactory2 for 100m USDC (excess), 600m USDC total
         }
         
         DebtLocker debtLocker1_pool1 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory1)));  // debtLocker1_pool1 = DebtLocker 1, for pool1, for loan using dlFactory1
@@ -1282,12 +1285,12 @@ contract PoolTest is TestUtil {
         {
             uint cReq1 =  loan.collateralRequiredForDrawdown(500_000_000 * USD); // wETH required for 500m USDC drawdown on loan
             uint cReq2 = loan2.collateralRequiredForDrawdown(400_000_000 * USD); // wETH required for 500m USDC drawdown on loan2
-            mint("WETH", address(eli), cReq1);
-            mint("WETH", address(fay), cReq2);
-            eli.approve(WETH, address(loan),  cReq1);
-            fay.approve(WETH, address(loan2), cReq2);
-            eli.drawdown(address(loan),  100_000_000 * USD); // 100m excess to be returned
-            fay.drawdown(address(loan2), 300_000_000 * USD); // 200m excess to be returned
+            mint("WETH", address(bob), cReq1);
+            mint("WETH", address(ben), cReq2);
+            bob.approve(WETH, address(loan),  cReq1);
+            ben.approve(WETH, address(loan2), cReq2);
+            bob.drawdown(address(loan),  100_000_000 * USD); // 100m excess to be returned
+            ben.drawdown(address(loan2), 300_000_000 * USD); // 200m excess to be returned
         }
 
         
@@ -1297,27 +1300,27 @@ contract PoolTest is TestUtil {
         {
             (uint amt1_1,,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
             (uint amt1_2,,,,) = loan2.getNextPayment(); // USDC required for 1st payment on loan2
-            mint("USDC", address(eli), amt1_1);
-            mint("USDC", address(fay), amt1_2);
-            eli.approve(USDC, address(loan),  amt1_1);
-            fay.approve(USDC, address(loan2), amt1_2);
-            eli.makePayment(address(loan));
-            fay.makePayment(address(loan2));
+            mint("USDC", address(bob), amt1_1);
+            mint("USDC", address(ben), amt1_2);
+            bob.approve(USDC, address(loan),  amt1_1);
+            ben.approve(USDC, address(loan2), amt1_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
         }
         
         /*******************/
         /***  Pool Claim ***/
         /*******************/
         {
-            checkClaim(debtLocker1_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker2_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
-            checkClaim(debtLocker3_pool1, loan2, sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker4_pool1, loan2, sid, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker1_pool1, loan,  pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker2_pool1, loan,  pat, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker3_pool1, loan2, pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker4_pool1, loan2, pat, IERC20(USDC), pool1, address(dlFactory2));
 
-            checkClaim(debtLocker1_pool2, loan,  joe, IERC20(USDC), pool2, address(dlFactory1));
-            checkClaim(debtLocker2_pool2, loan,  joe, IERC20(USDC), pool2, address(dlFactory2));
-            checkClaim(debtLocker3_pool2, loan2, joe, IERC20(USDC), pool2, address(dlFactory1));
-            checkClaim(debtLocker4_pool2, loan2, joe, IERC20(USDC), pool2, address(dlFactory2));
+            checkClaim(debtLocker1_pool2, loan,  pam, IERC20(USDC), pool2, address(dlFactory1));
+            checkClaim(debtLocker2_pool2, loan,  pam, IERC20(USDC), pool2, address(dlFactory2));
+            checkClaim(debtLocker3_pool2, loan2, pam, IERC20(USDC), pool2, address(dlFactory1));
+            checkClaim(debtLocker4_pool2, loan2, pam, IERC20(USDC), pool2, address(dlFactory2));
         }
 
         /******************************/
@@ -1326,36 +1329,36 @@ contract PoolTest is TestUtil {
         {
             (uint amt2_1,,,,) =  loan.getNextPayment(); // USDC required for 2nd payment on loan
             (uint amt2_2,,,,) = loan2.getNextPayment(); // USDC required for 2nd payment on loan2
-            mint("USDC", address(eli), amt2_1);
-            mint("USDC", address(fay), amt2_2);
-            eli.approve(USDC, address(loan),  amt2_1);
-            fay.approve(USDC, address(loan2), amt2_2);
-            eli.makePayment(address(loan));
-            fay.makePayment(address(loan2));
+            mint("USDC", address(bob), amt2_1);
+            mint("USDC", address(ben), amt2_2);
+            bob.approve(USDC, address(loan),  amt2_1);
+            ben.approve(USDC, address(loan2), amt2_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
 
             (uint amt3_1,,,,) =  loan.getNextPayment(); // USDC required for 3rd payment on loan
             (uint amt3_2,,,,) = loan2.getNextPayment(); // USDC required for 3rd payment on loan2
-            mint("USDC", address(eli), amt3_1);
-            mint("USDC", address(fay), amt3_2);
-            eli.approve(USDC, address(loan),  amt3_1);
-            fay.approve(USDC, address(loan2), amt3_2);
-            eli.makePayment(address(loan));
-            fay.makePayment(address(loan2));
+            mint("USDC", address(bob), amt3_1);
+            mint("USDC", address(ben), amt3_2);
+            bob.approve(USDC, address(loan),  amt3_1);
+            ben.approve(USDC, address(loan2), amt3_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
         }
 
         /*******************/
         /***  Pool Claim ***/
         /*******************/
         {
-            checkClaim(debtLocker1_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker2_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
-            checkClaim(debtLocker3_pool1, loan2, sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker4_pool1, loan2, sid, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker1_pool1, loan,  pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker2_pool1, loan,  pat, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker3_pool1, loan2, pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker4_pool1, loan2, pat, IERC20(USDC), pool1, address(dlFactory2));
 
-            checkClaim(debtLocker1_pool2, loan,  joe, IERC20(USDC), pool2, address(dlFactory1));
-            checkClaim(debtLocker2_pool2, loan,  joe, IERC20(USDC), pool2, address(dlFactory2));
-            checkClaim(debtLocker3_pool2, loan2, joe, IERC20(USDC), pool2, address(dlFactory1));
-            checkClaim(debtLocker4_pool2, loan2, joe, IERC20(USDC), pool2, address(dlFactory2));
+            checkClaim(debtLocker1_pool2, loan,  pam, IERC20(USDC), pool2, address(dlFactory1));
+            checkClaim(debtLocker2_pool2, loan,  pam, IERC20(USDC), pool2, address(dlFactory2));
+            checkClaim(debtLocker3_pool2, loan2, pam, IERC20(USDC), pool2, address(dlFactory1));
+            checkClaim(debtLocker4_pool2, loan2, pam, IERC20(USDC), pool2, address(dlFactory2));
         }
         
         /*********************************/
@@ -1364,27 +1367,27 @@ contract PoolTest is TestUtil {
         {
             (uint amtf_1,,) =  loan.getFullPayment(); // USDC required for 2nd payment on loan
             (uint amtf_2,,) = loan2.getFullPayment(); // USDC required for 2nd payment on loan2
-            mint("USDC", address(eli), amtf_1);
-            mint("USDC", address(fay), amtf_2);
-            eli.approve(USDC, address(loan),  amtf_1);
-            fay.approve(USDC, address(loan2), amtf_2);
-            eli.makeFullPayment(address(loan));
-            fay.makeFullPayment(address(loan2));
+            mint("USDC", address(bob), amtf_1);
+            mint("USDC", address(ben), amtf_2);
+            bob.approve(USDC, address(loan),  amtf_1);
+            ben.approve(USDC, address(loan2), amtf_2);
+            bob.makeFullPayment(address(loan));
+            ben.makeFullPayment(address(loan2));
         }
         
         /*******************/
         /***  Pool Claim ***/
         /*******************/
         {
-            checkClaim(debtLocker1_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker2_pool1, loan,  sid, IERC20(USDC), pool1, address(dlFactory2));
-            checkClaim(debtLocker3_pool1, loan2, sid, IERC20(USDC), pool1, address(dlFactory1));
-            checkClaim(debtLocker4_pool1, loan2, sid, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker1_pool1, loan,  pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker2_pool1, loan,  pat, IERC20(USDC), pool1, address(dlFactory2));
+            checkClaim(debtLocker3_pool1, loan2, pat, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker4_pool1, loan2, pat, IERC20(USDC), pool1, address(dlFactory2));
 
-            checkClaim(debtLocker1_pool2, loan,  joe, IERC20(USDC), pool2, address(dlFactory1));
-            checkClaim(debtLocker2_pool2, loan,  joe, IERC20(USDC), pool2, address(dlFactory2));
-            checkClaim(debtLocker3_pool2, loan2, joe, IERC20(USDC), pool2, address(dlFactory1));
-            checkClaim(debtLocker4_pool2, loan2, joe, IERC20(USDC), pool2, address(dlFactory2));
+            checkClaim(debtLocker1_pool2, loan,  pam, IERC20(USDC), pool2, address(dlFactory1));
+            checkClaim(debtLocker2_pool2, loan,  pam, IERC20(USDC), pool2, address(dlFactory2));
+            checkClaim(debtLocker3_pool2, loan2, pam, IERC20(USDC), pool2, address(dlFactory1));
+            checkClaim(debtLocker4_pool2, loan2, pam, IERC20(USDC), pool2, address(dlFactory2));
 
             // Ensure both loans are matured.
             assertEq(uint256(loan.loanState()),  2);
@@ -1400,11 +1403,11 @@ contract PoolTest is TestUtil {
         /*** Finalize liquidity pool ***/
         /*******************************/
         {
-            sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
-            sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+            pat.approve(address(bPool), pool1.stakeLocker(), uint(-1));
+            pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
 
-            sid.finalize(address(pool1));
-            sid.setOpenToPublic(address(pool1), true);
+            pat.finalize(address(pool1));
+            pat.setOpenToPublic(address(pool1), true);
             gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
 
@@ -1412,11 +1415,11 @@ contract PoolTest is TestUtil {
         /*** Mint, deposit funds into liquidity pool, fund loan ***/
         /**********************************************************/
         {
-            mint("USDC", address(bob), 1_000_000_000 * USD);
-            bob.approve(USDC, address(pool1), uint(-1));
-            bob.approve(USDC, address(this),  uint(-1));
-            bob.deposit(address(pool1), 100_000_000 * USD);
-            sid.fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD);
+            mint("USDC", address(leo), 1_000_000_000 * USD);
+            leo.approve(USDC, address(pool1), uint(-1));
+            leo.approve(USDC, address(this),  uint(-1));
+            leo.deposit(address(pool1), 100_000_000 * USD);
+            pat.fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD);
             assertTrue(pool1.debtLockers(address(loan), address(dlFactory1)) != address(0));
             assertEq(pool1.principalOut(), 100_000_000 * USD);
         }
@@ -1426,9 +1429,9 @@ contract PoolTest is TestUtil {
         /*****************/
         {
             uint cReq1 =  loan.collateralRequiredForDrawdown(100_000_000 * USD); // wETH required for 100_000_000 USDC drawdown on loan
-            mint("WETH", address(eli), cReq1);
-            eli.approve(WETH, address(loan),  cReq1);
-            eli.drawdown(address(loan),  100_000_000 * USD);
+            mint("WETH", address(bob), cReq1);
+            bob.approve(WETH, address(loan),  cReq1);
+            bob.drawdown(address(loan),  100_000_000 * USD);
         }
 
         /*****************************/
@@ -1436,9 +1439,9 @@ contract PoolTest is TestUtil {
         /*****************************/
         {
             (uint amt,,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
-            mint("USDC", address(eli), amt);
-            eli.approve(USDC, address(loan),  amt);
-            eli.makePayment(address(loan));
+            mint("USDC", address(bob), amt);
+            bob.approve(USDC, address(loan),  amt);
+            bob.makePayment(address(loan));
         }
 
         /****************************************************/
@@ -1450,9 +1453,9 @@ contract PoolTest is TestUtil {
             uint256 poolBal_before       = IERC20(USDC).balanceOf(address(pool1));
             uint256 debtLockerBal_before = IERC20(USDC).balanceOf(address(debtLocker1));
 
-            IERC20(USDC).transferFrom(address(bob), address(pool1),       1000 * USD);
-            IERC20(USDC).transferFrom(address(bob), address(debtLocker1), 2000 * USD);
-            IERC20(USDC).transferFrom(address(bob), address(loan),        2000 * USD);
+            IERC20(USDC).transferFrom(address(leo), address(pool1),       1000 * USD);
+            IERC20(USDC).transferFrom(address(leo), address(debtLocker1), 2000 * USD);
+            IERC20(USDC).transferFrom(address(leo), address(loan),        2000 * USD);
 
             uint256 poolBal_after       = IERC20(USDC).balanceOf(address(pool1));
             uint256 debtLockerBal_after = IERC20(USDC).balanceOf(address(debtLocker1));
@@ -1463,7 +1466,7 @@ contract PoolTest is TestUtil {
             poolBal_before       = poolBal_after;
             debtLockerBal_before = debtLockerBal_after;
 
-            checkClaim(debtLocker1, loan, sid, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker1, loan, pat, IERC20(USDC), pool1, address(dlFactory1));
 
             poolBal_after       = IERC20(USDC).balanceOf(address(pool1));
             debtLockerBal_after = IERC20(USDC).balanceOf(address(debtLocker1));
@@ -1477,9 +1480,9 @@ contract PoolTest is TestUtil {
         /*************************/
         {
             (uint amt,,) =  loan.getFullPayment(); // USDC required for 1st payment on loan
-            mint("USDC", address(eli), amt);
-            eli.approve(USDC, address(loan),  amt);
-            eli.makeFullPayment(address(loan));
+            mint("USDC", address(bob), amt);
+            bob.approve(USDC, address(loan),  amt);
+            bob.makeFullPayment(address(loan));
         }
 
         /*********************************************************/
@@ -1490,12 +1493,12 @@ contract PoolTest is TestUtil {
             DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan),  address(dlFactory1)));
 
             // Transfer funds into Loan to make principalClaim > principalOut
-            ERC20(USDC).transferFrom(address(bob), address(loan), 200000 * USD);
+            ERC20(USDC).transferFrom(address(leo), address(loan), 200000 * USD);
 
             uint256 poolBal_before       = IERC20(USDC).balanceOf(address(pool1));
             uint256 debtLockerBal_before = IERC20(USDC).balanceOf(address(debtLocker1));
 
-            checkClaim(debtLocker1, loan, sid, IERC20(USDC), pool1, address(dlFactory1));
+            checkClaim(debtLocker1, loan, pat, IERC20(USDC), pool1, address(dlFactory1));
 
             uint256 poolBal_after       = IERC20(USDC).balanceOf(address(pool1));
             uint256 debtLockerBal_after = IERC20(USDC).balanceOf(address(debtLocker1));
@@ -1512,26 +1515,26 @@ contract PoolTest is TestUtil {
         /*** Finalize liquidity pool ***/
         /*******************************/
         {
-            sid.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
-            sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-            sid.setOpenToPublic(address(pool1), true);
-            sid.finalize(address(pool1));
+            pat.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
+            pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
+            pat.setOpenToPublic(address(pool1), true);
+            pat.finalize(address(pool1));
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
         {
-            mint("USDC", address(bob), 1_000_000_000 * USD);
-            mint("USDC", address(che), 1_000_000_000 * USD);
-            mint("USDC", address(dan), 1_000_000_000 * USD);
+            mint("USDC", address(leo), 1_000_000_000 * USD);
+            mint("USDC", address(liz), 1_000_000_000 * USD);
+            mint("USDC", address(lex), 1_000_000_000 * USD);
 
-            bob.approve(USDC, address(pool1), MAX_UINT);
-            che.approve(USDC, address(pool1), MAX_UINT);
-            dan.approve(USDC, address(pool1), MAX_UINT);
+            leo.approve(USDC, address(pool1), MAX_UINT);
+            liz.approve(USDC, address(pool1), MAX_UINT);
+            lex.approve(USDC, address(pool1), MAX_UINT);
 
-            assertTrue(bob.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
-            assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
-            assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
+            assertTrue(leo.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
+            assertTrue(liz.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
+            assertTrue(lex.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
             gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
@@ -1540,15 +1543,15 @@ contract PoolTest is TestUtil {
         /*** Fund loan / loan2 (Excess) ***/
         /************************************/
         {
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
 
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
         }
 
         /*****************/
@@ -1557,12 +1560,12 @@ contract PoolTest is TestUtil {
         {
             uint cReq1 =  loan.collateralRequiredForDrawdown(100_000_000 * USD); // wETH required for 100_000_000 USDC drawdown on loan
             uint cReq2 = loan2.collateralRequiredForDrawdown(100_000_000 * USD); // wETH required for 100_000_000 USDC drawdown on loan2
-            mint("WETH", address(eli), cReq1);
-            mint("WETH", address(fay), cReq2);
-            eli.approve(WETH, address(loan),  cReq1);
-            fay.approve(WETH, address(loan2), cReq2);
-            eli.drawdown(address(loan),  100_000_000 * USD);
-            fay.drawdown(address(loan2), 100_000_000 * USD);
+            mint("WETH", address(bob), cReq1);
+            mint("WETH", address(ben), cReq2);
+            bob.approve(WETH, address(loan),  cReq1);
+            ben.approve(WETH, address(loan2), cReq2);
+            bob.drawdown(address(loan),  100_000_000 * USD);
+            ben.drawdown(address(loan2), 100_000_000 * USD);
         }
         
         /****************************/
@@ -1571,22 +1574,22 @@ contract PoolTest is TestUtil {
         {
             (uint amt1_1,,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
             (uint amt1_2,,,,) = loan2.getNextPayment(); // USDC required for 1st payment on loan2
-            mint("USDC", address(eli), amt1_1);
-            mint("USDC", address(fay), amt1_2);
-            eli.approve(USDC, address(loan),  amt1_1);
-            fay.approve(USDC, address(loan2), amt1_2);
-            eli.makePayment(address(loan));
-            fay.makePayment(address(loan2));
+            mint("USDC", address(bob), amt1_1);
+            mint("USDC", address(ben), amt1_2);
+            bob.approve(USDC, address(loan),  amt1_1);
+            ben.approve(USDC, address(loan2), amt1_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
         }
         
         /******************/
         /*** Pool Claim ***/
         /******************/
         {   
-            sid.claim(address(pool1), address(loan),  address(dlFactory1));
-            sid.claim(address(pool1), address(loan),  address(dlFactory2));
-            sid.claim(address(pool1), address(loan2), address(dlFactory1));
-            sid.claim(address(pool1), address(loan2), address(dlFactory2));
+            pat.claim(address(pool1), address(loan),  address(dlFactory1));
+            pat.claim(address(pool1), address(loan),  address(dlFactory2));
+            pat.claim(address(pool1), address(loan2), address(dlFactory1));
+            pat.claim(address(pool1), address(loan2), address(dlFactory2));
         }
 
         /******************************/
@@ -1595,31 +1598,31 @@ contract PoolTest is TestUtil {
         {
             (uint amt2_1,,,,) =  loan.getNextPayment(); // USDC required for 2nd payment on loan
             (uint amt2_2,,,,) = loan2.getNextPayment(); // USDC required for 2nd payment on loan2
-            mint("USDC", address(eli), amt2_1);
-            mint("USDC", address(fay), amt2_2);
-            eli.approve(USDC, address(loan),  amt2_1);
-            fay.approve(USDC, address(loan2), amt2_2);
-            eli.makePayment(address(loan));
-            fay.makePayment(address(loan2));
+            mint("USDC", address(bob), amt2_1);
+            mint("USDC", address(ben), amt2_2);
+            bob.approve(USDC, address(loan),  amt2_1);
+            ben.approve(USDC, address(loan2), amt2_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
 
             (uint amt3_1,,,,) =  loan.getNextPayment(); // USDC required for 3rd payment on loan
             (uint amt3_2,,,,) = loan2.getNextPayment(); // USDC required for 3rd payment on loan2
-            mint("USDC", address(eli), amt3_1);
-            mint("USDC", address(fay), amt3_2);
-            eli.approve(USDC, address(loan),  amt3_1);
-            fay.approve(USDC, address(loan2), amt3_2);
-            eli.makePayment(address(loan));
-            fay.makePayment(address(loan2));
+            mint("USDC", address(bob), amt3_1);
+            mint("USDC", address(ben), amt3_2);
+            bob.approve(USDC, address(loan),  amt3_1);
+            ben.approve(USDC, address(loan2), amt3_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
         }
         
         /******************/
         /*** Pool Claim ***/
         /******************/
         {      
-            sid.claim(address(pool1), address(loan),  address(dlFactory1));
-            sid.claim(address(pool1), address(loan),  address(dlFactory2));
-            sid.claim(address(pool1), address(loan2), address(dlFactory1));
-            sid.claim(address(pool1), address(loan2), address(dlFactory2));
+            pat.claim(address(pool1), address(loan),  address(dlFactory1));
+            pat.claim(address(pool1), address(loan),  address(dlFactory2));
+            pat.claim(address(pool1), address(loan2), address(dlFactory1));
+            pat.claim(address(pool1), address(loan2), address(dlFactory2));
         }
         
         /*********************************/
@@ -1628,22 +1631,22 @@ contract PoolTest is TestUtil {
         {
             (uint amtf_1,,) =  loan.getFullPayment(); // USDC required for 2nd payment on loan
             (uint amtf_2,,) = loan2.getFullPayment(); // USDC required for 2nd payment on loan2
-            mint("USDC", address(eli), amtf_1);
-            mint("USDC", address(fay), amtf_2);
-            eli.approve(USDC, address(loan),  amtf_1);
-            fay.approve(USDC, address(loan2), amtf_2);
-            eli.makeFullPayment(address(loan));
-            fay.makeFullPayment(address(loan2));
+            mint("USDC", address(bob), amtf_1);
+            mint("USDC", address(ben), amtf_2);
+            bob.approve(USDC, address(loan),  amtf_1);
+            ben.approve(USDC, address(loan2), amtf_2);
+            bob.makeFullPayment(address(loan));
+            ben.makeFullPayment(address(loan2));
         }
         
         /******************/
         /*** Pool Claim ***/
         /******************/
         {   
-            sid.claim(address(pool1), address(loan),  address(dlFactory1));
-            sid.claim(address(pool1), address(loan),  address(dlFactory2));
-            sid.claim(address(pool1), address(loan2), address(dlFactory1));
-            sid.claim(address(pool1), address(loan2), address(dlFactory2));
+            pat.claim(address(pool1), address(loan),  address(dlFactory1));
+            pat.claim(address(pool1), address(loan),  address(dlFactory2));
+            pat.claim(address(pool1), address(loan2), address(dlFactory1));
+            pat.claim(address(pool1), address(loan2), address(dlFactory2));
 
             // Ensure both loans are matured.
             assertEq(uint256(loan.loanState()),  2);
@@ -1657,75 +1660,75 @@ contract PoolTest is TestUtil {
 
         address stakeLocker = pool1.stakeLocker();
 
-        sid.approve(address(bPool), stakeLocker, MAX_UINT);
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        pat.approve(address(bPool), stakeLocker, MAX_UINT);
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
 
         // Mint 1000 USDC into this LP account
-        mint("USDC", address(bob), 10000 * USD);
+        mint("USDC", address(leo), 10000 * USD);
 
-        sid.finalize(address(pool1));
-        sid.setLockupPeriod(address(pool1), 0); 
-        sid.setOpenToPublic(address(pool1), true);
+        pat.finalize(address(pool1));
+        pat.setLockupPeriod(address(pool1), 0); 
+        pat.setOpenToPublic(address(pool1), true);
 
-        bob.approve(USDC, address(pool1), MAX_UINT);
+        leo.approve(USDC, address(pool1), MAX_UINT);
 
-        bob.deposit(address(pool1), 1500 * USD);
+        leo.deposit(address(pool1), 1500 * USD);
 
         uint256 amt = 500 * USD; // 1/3 of deposit so withdraw can happen thrice
 
         uint256 start = block.timestamp;
 
-        assertTrue(!bob.try_withdraw(address(pool1), amt),    "Should fail to withdraw 500 USD because user has to intendToWithdraw");
-        assertTrue(!dan.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw because dan has zero pool FDTs");
-        assertTrue( bob.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
-        assertEq( pool1.withdrawCooldown(address(bob)), start);
-        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cooldown period hasn't passed yet");
+        assertTrue(!leo.try_withdraw(address(pool1), amt),    "Should fail to withdraw 500 USD because user has to intendToWithdraw");
+        assertTrue(!lex.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw because lex has zero pool FDTs");
+        assertTrue( leo.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
+        assertEq( pool1.withdrawCooldown(address(leo)), start);
+        assertTrue(!leo.try_withdraw(address(pool1), amt), "Should fail to withdraw as cooldown period hasn't passed yet");
 
         // Just before cooldown ends
         hevm.warp(start + globals.lpCooldownPeriod() - 1);
-        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cooldown period hasn't passed yet");
+        assertTrue(!leo.try_withdraw(address(pool1), amt), "Should fail to withdraw as cooldown period hasn't passed yet");
 
         // Right when cooldown ends
         hevm.warp(start + globals.lpCooldownPeriod());
-        assertTrue(bob.try_withdraw(address(pool1), amt), "Should be able to withdraw funds at beginning of cooldown window");
+        assertTrue(leo.try_withdraw(address(pool1), amt), "Should be able to withdraw funds at beginning of cooldown window");
 
         // Still within LP withdrawal window
         hevm.warp(start + globals.lpCooldownPeriod() + 1);
-        assertTrue(bob.try_withdraw(address(pool1), amt), "Should be able to withdraw funds again during cooldown window");
+        assertTrue(leo.try_withdraw(address(pool1), amt), "Should be able to withdraw funds again during cooldown window");
 
         // Second after LP withdrawal window ends
         hevm.warp(start + globals.lpCooldownPeriod() + globals.lpWithdrawWindow() + 1);
-        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw funds because now past withdraw window");
+        assertTrue(!leo.try_withdraw(address(pool1), amt), "Should fail to withdraw funds because now past withdraw window");
 
         uint256 newStart = block.timestamp;
 
         // Intend to withdraw
-        assertTrue(bob.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
+        assertTrue(leo.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
 
         // Second after LP withdrawal window ends
         hevm.warp(newStart + globals.lpCooldownPeriod() + globals.lpWithdrawWindow() + 1);
-        assertTrue(!bob.try_withdraw(address(pool1), amt), "Should fail to withdraw as cooldown window has been passed");
+        assertTrue(!leo.try_withdraw(address(pool1), amt), "Should fail to withdraw as cooldown window has been passed");
 
         // Last second of LP withdrawal window
         hevm.warp(newStart + globals.lpCooldownPeriod() + globals.lpWithdrawWindow());
-        assertTrue(bob.try_withdraw(address(pool1), amt), "Should be able to withdraw funds at end of cooldown window");
+        assertTrue(leo.try_withdraw(address(pool1), amt), "Should be able to withdraw funds at end of cooldown window");
     }
 
     function test_cancelWithdraw() public {
 
         setUpWithdraw();
 
-        // Mint USDC to kim and deposit into Pool
-        mint("USDC", address(kim), 1000 * USD);
-        kim.approve(USDC, address(pool1), MAX_UINT);
-        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
+        // Mint USDC to lee and deposit into Pool
+        mint("USDC", address(lee), 1000 * USD);
+        lee.approve(USDC, address(pool1), MAX_UINT);
+        assertTrue(lee.try_deposit(address(pool1), 1000 * USD));
 
-        assertEq(pool1.withdrawCooldown(address(kim)), 0);
-        assertTrue(kim.try_intendToWithdraw(address(pool1)));
-        assertEq(pool1.withdrawCooldown(address(kim)), block.timestamp);
+        assertEq(pool1.withdrawCooldown(address(lee)), 0);
+        assertTrue(lee.try_intendToWithdraw(address(pool1)));
+        assertEq(pool1.withdrawCooldown(address(lee)), block.timestamp);
 
-        assertTrue(kim.try_cancelWithdraw(address(pool1)));
-        assertEq(pool1.withdrawCooldown(address(kim)), 0);
+        assertTrue(lee.try_cancelWithdraw(address(pool1)));
+        assertEq(pool1.withdrawCooldown(address(lee)), 0);
     }
 
     function test_withdraw_under_lockup_period() public {
@@ -1736,31 +1739,31 @@ contract PoolTest is TestUtil {
 
         uint start = block.timestamp;
 
-        // Mint USDC to kim
-        mint("USDC", address(kim), 5000 * USD);
-        kim.approve(USDC, address(pool1), MAX_UINT);
-        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
+        // Mint USDC to lee
+        mint("USDC", address(lee), 5000 * USD);
+        lee.approve(USDC, address(pool1), MAX_UINT);
+        uint256 bal0 = IERC20(USDC).balanceOf(address(lee));
         
         // Deposit 1000 USDC and check depositDate
-        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
-        assertEq(pool1.depositDate(address(kim)), start);
+        assertTrue(lee.try_deposit(address(pool1), 1000 * USD));
+        assertEq(pool1.depositDate(address(lee)), start);
 
-        // Fund loan, drawdown, make payment and claim so kim can claim interest
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
-        _drawDownLoan(1000 * USD, loan3, hal);
-        _makeLoanPayment(loan3, hal); 
-        sid.claim(address(pool1), address(loan3), address(dlFactory1));
+        // Fund loan, drawdown, make payment and claim so lee can claim interest
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
+        _drawDownLoan(1000 * USD, loan3, bud);
+        _makeLoanPayment(loan3, bud); 
+        pat.claim(address(pool1), address(loan3), address(dlFactory1));
 
-        uint256 interest = pool1.withdrawableFundsOf(address(kim));  // Get kims withdrawable funds
+        uint256 interest = pool1.withdrawableFundsOf(address(lee));  // Get kims withdrawable funds
 
-        assertTrue(kim.try_intendToWithdraw(address(pool1)));
-        // Warp to exact time that kim can withdraw with weighted deposit date
-        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() - 1);
-        assertTrue(!kim.try_withdraw(address(pool1), 1000 * USD), "Withdraw failure didn't trigger");
-        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
-        assertTrue( kim.try_withdraw(address(pool1), 1000 * USD), "Failed to withdraw funds");
+        assertTrue(lee.try_intendToWithdraw(address(pool1)));
+        // Warp to exact time that lee can withdraw with weighted deposit date
+        hevm.warp(pool1.depositDate(address(lee)) + pool1.lockupPeriod() - 1);
+        assertTrue(!lee.try_withdraw(address(pool1), 1000 * USD), "Withdraw failure didn't trigger");
+        hevm.warp(pool1.depositDate(address(lee)) + pool1.lockupPeriod());
+        assertTrue( lee.try_withdraw(address(pool1), 1000 * USD), "Failed to withdraw funds");
 
-        assertEq(IERC20(USDC).balanceOf(address(kim)) - bal0, interest);
+        assertEq(IERC20(USDC).balanceOf(address(lee)) - bal0, interest);
     }
 
     function test_withdraw_under_weighted_lockup_period() public {
@@ -1771,68 +1774,68 @@ contract PoolTest is TestUtil {
 
         uint start = block.timestamp;
 
-        // Mint USDC to kim
-        mint("USDC", address(kim), 5000 * USD);
-        kim.approve(USDC, address(pool1), MAX_UINT);
-        uint256 bal0 = IERC20(USDC).balanceOf(address(kim));
+        // Mint USDC to lee
+        mint("USDC", address(lee), 5000 * USD);
+        lee.approve(USDC, address(pool1), MAX_UINT);
+        uint256 bal0 = IERC20(USDC).balanceOf(address(lee));
 
         // Deposit 1000 USDC and check depositDate
-        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
-        assertEq(pool1.depositDate(address(kim)), start);
+        assertTrue(lee.try_deposit(address(pool1), 1000 * USD));
+        assertEq(pool1.depositDate(address(lee)), start);
 
-        // Fund loan, drawdown, make payment and claim so kim can claim interest
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
-        _drawDownLoan(1000 * USD, loan3, hal);
-        _makeLoanPayment(loan3, hal); 
-        sid.claim(address(pool1), address(loan3), address(dlFactory1));
+        // Fund loan, drawdown, make payment and claim so lee can claim interest
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1000 * USD), "Fail to fund the loan");
+        _drawDownLoan(1000 * USD, loan3, bud);
+        _makeLoanPayment(loan3, bud); 
+        pat.claim(address(pool1), address(loan3), address(dlFactory1));
 
-        // Warp to exact time that kim can withdraw for the first time
+        // Warp to exact time that lee can withdraw for the first time
         hevm.warp(start + pool1.lockupPeriod());  
-        assertEq(block.timestamp - pool1.depositDate(address(kim)), pool1.lockupPeriod());  // Can withdraw at this point
+        assertEq(block.timestamp - pool1.depositDate(address(lee)), pool1.lockupPeriod());  // Can withdraw at this point
         
         // Deposit more USDC into pool, increasing deposit date and locking up funds again
-        assertTrue(kim.try_deposit(address(pool1), 3000 * USD));
-        assertEq(pool1.depositDate(address(kim)) - start, (block.timestamp - start) * (3000 * WAD) / (4000 * WAD));  // Deposit date updating using weighting
-        assertTrue( kim.try_intendToWithdraw(address(pool1)));
-        assertTrue(!kim.try_withdraw(address(pool1), 4000 * USD), "Withdraw failure didn't trigger");                // Not able to withdraw the funds as deposit date was updated
+        assertTrue(lee.try_deposit(address(pool1), 3000 * USD));
+        assertEq(pool1.depositDate(address(lee)) - start, (block.timestamp - start) * (3000 * WAD) / (4000 * WAD));  // Deposit date updating using weighting
+        assertTrue( lee.try_intendToWithdraw(address(pool1)));
+        assertTrue(!lee.try_withdraw(address(pool1), 4000 * USD), "Withdraw failure didn't trigger");                // Not able to withdraw the funds as deposit date was updated
 
-        uint256 interest = pool1.withdrawableFundsOf(address(kim));  // Get kims withdrawable funds
+        uint256 interest = pool1.withdrawableFundsOf(address(lee));  // Get kims withdrawable funds
 
-        // Warp to exact time that kim can withdraw with weighted deposit date
-        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod() - 1);
-        assertTrue(!kim.try_withdraw(address(pool1), 4000 * USD), "Withdraw failure didn't trigger");
-        hevm.warp(pool1.depositDate(address(kim)) + pool1.lockupPeriod());
-        assertTrue( kim.try_withdraw(address(pool1), 4000 * USD), "Failed to withdraw funds");
+        // Warp to exact time that lee can withdraw with weighted deposit date
+        hevm.warp(pool1.depositDate(address(lee)) + pool1.lockupPeriod() - 1);
+        assertTrue(!lee.try_withdraw(address(pool1), 4000 * USD), "Withdraw failure didn't trigger");
+        hevm.warp(pool1.depositDate(address(lee)) + pool1.lockupPeriod());
+        assertTrue( lee.try_withdraw(address(pool1), 4000 * USD), "Failed to withdraw funds");
 
-        assertEq(IERC20(USDC).balanceOf(address(kim)) - bal0, interest);
+        assertEq(IERC20(USDC).balanceOf(address(lee)) - bal0, interest);
     }
 
     function test_withdraw_protocol_paused() public {
         setUpWithdraw();
         
-        assertTrue(sid.try_setLockupPeriod(address(pool1), 0));
+        assertTrue(pat.try_setLockupPeriod(address(pool1), 0));
         assertEq(pool1.lockupPeriod(), uint256(0));
 
-        mint("USDC", address(kim), 2000 * USD);
-        kim.approve(USDC, address(pool1), MAX_UINT);
-        assertTrue(kim.try_deposit(address(pool1), 1000 * USD));
-        make_withdrawable(kim, pool1);
+        mint("USDC", address(lee), 2000 * USD);
+        lee.approve(USDC, address(pool1), MAX_UINT);
+        assertTrue(lee.try_deposit(address(pool1), 1000 * USD));
+        make_withdrawable(lee, pool1);
 
         // Protocol-wide pause by Emergency Admin
         assertTrue(!globals.protocolPaused());
-        assertTrue(mic.try_setProtocolPause(address(globals), true));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
 
         // Attempt to withdraw while protocol paused
         assertTrue(globals.protocolPaused());
-        assertTrue(!kim.try_withdrawFunds(address(pool1)));
-        assertTrue(!kim.try_withdraw(address(pool1), 1000 * USD));
+        assertTrue(!lee.try_withdrawFunds(address(pool1)));
+        assertTrue(!lee.try_withdraw(address(pool1), 1000 * USD));
 
         // Unpause and withdraw
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(kim.try_withdrawFunds(address(pool1)));
-        assertTrue(kim.try_withdraw(address(pool1), 1000 * USD));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(lee.try_withdrawFunds(address(pool1)));
+        assertTrue(lee.try_withdraw(address(pool1), 1000 * USD));
 
-        assertEq(IERC20(USDC).balanceOf(address(kim)), 2000 * USD);
+        assertEq(IERC20(USDC).balanceOf(address(lee)), 2000 * USD);
     }
 
     function _makeLoanPayment(Loan _loan, Borrower by) internal {
@@ -1864,12 +1867,12 @@ contract PoolTest is TestUtil {
         assertTrue(pool1.principalOut() <= 100 * 10 ** liquidityAssetDecimals);
 
         // Pause protocol and attempt deactivate()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_deactivate(address(pool1)));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_deactivate(address(pool1)));
 
         // Unpause protocol and deactivate()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_deactivate(address(pool1)));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_deactivate(address(pool1)));
 
         // Post-state checks.
         assertEq(int(pool1.poolState()), 2);
@@ -1877,15 +1880,15 @@ contract PoolTest is TestUtil {
         // Deactivation should block the following functionality:
 
         // deposit()
-        mint("USDC", address(bob), 1_000_000_000 * USD);
-        bob.approve(USDC, address(pool1), uint(-1));
-        assertTrue(!bob.try_deposit(address(pool1), 100_000_000 * USD));
+        mint("USDC", address(leo), 1_000_000_000 * USD);
+        leo.approve(USDC, address(pool1), uint(-1));
+        assertTrue(!leo.try_deposit(address(pool1), 100_000_000 * USD));
 
         // fundLoan()
-        assertTrue(!sid.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 1));
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), 1));
 
         // deactivate()
-        assertTrue(!sid.try_deactivate(address(pool1)));
+        assertTrue(!pat.try_deactivate(address(pool1)));
 
     }
 
@@ -1895,26 +1898,26 @@ contract PoolTest is TestUtil {
         /*** Finalize liquidity pool ***/
         /*******************************/
         {
-            sid.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
-            sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
-            sid.setOpenToPublic(address(pool1), true);
-            sid.finalize(address(pool1));
+            pat.approve(address(bPool), pool1.stakeLocker(), MAX_UINT);
+            pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
+            pat.setOpenToPublic(address(pool1), true);
+            pat.finalize(address(pool1));
         }
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
         {
-            mint("USDC", address(bob), 1_000_000_000 * USD);
-            mint("USDC", address(che), 1_000_000_000 * USD);
-            mint("USDC", address(dan), 1_000_000_000 * USD);
+            mint("USDC", address(leo), 1_000_000_000 * USD);
+            mint("USDC", address(liz), 1_000_000_000 * USD);
+            mint("USDC", address(lex), 1_000_000_000 * USD);
 
-            bob.approve(USDC, address(pool1), MAX_UINT);
-            che.approve(USDC, address(pool1), MAX_UINT);
-            dan.approve(USDC, address(pool1), MAX_UINT);
+            leo.approve(USDC, address(pool1), MAX_UINT);
+            liz.approve(USDC, address(pool1), MAX_UINT);
+            lex.approve(USDC, address(pool1), MAX_UINT);
 
-            assertTrue(bob.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
-            assertTrue(che.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
-            assertTrue(dan.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
+            assertTrue(leo.try_deposit(address(pool1), 100_000_000 * USD));  // 10%
+            assertTrue(liz.try_deposit(address(pool1), 300_000_000 * USD));  // 30%
+            assertTrue(lex.try_deposit(address(pool1), 600_000_000 * USD));  // 60%
 
             gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
         }
@@ -1923,15 +1926,15 @@ contract PoolTest is TestUtil {
         /*** Fund loan / loan2 (Excess) ***/
         /************************************/
         {
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), 100_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory2), 200_000_000 * USD));
 
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
-            assertTrue(sid.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory1),  50_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), 150_000_000 * USD));
         }
 
         address liquidityAsset = address(pool1.liquidityAsset());
@@ -1939,48 +1942,48 @@ contract PoolTest is TestUtil {
 
         // Pre-state checks.
         assertTrue(pool1.principalOut() >= 100 * 10 ** liquidityAssetDecimals);
-        assertTrue(!sid.try_deactivate(address(pool1)));
+        assertTrue(!pat.try_deactivate(address(pool1)));
     }
 
     function test_view_balance() public {
         setUpWithdraw();
 
         // Mint and deposit 1000 USDC
-        mint("USDC", address(kim), 1_000_000 * USD);
-        kim.approve(USDC, address(pool1), MAX_UINT);
-        assertTrue(kim.try_deposit(address(pool1), 1_000_000 * USD));
+        mint("USDC", address(lee), 1_000_000 * USD);
+        lee.approve(USDC, address(pool1), MAX_UINT);
+        assertTrue(lee.try_deposit(address(pool1), 1_000_000 * USD));
 
-        // Fund loan, drawdown, make payment and claim so kim can claim interest
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1_000_000 * USD), "Fail to fund the loan");
-        _drawDownLoan(1_000_000 * USD, loan3, hal);
-        _makeLoanPayment(loan3, hal); 
-        sid.claim(address(pool1), address(loan3), address(dlFactory1));
+        // Fund loan, drawdown, make payment and claim so lee can claim interest
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan3),  address(dlFactory1), 1_000_000 * USD), "Fail to fund the loan");
+        _drawDownLoan(1_000_000 * USD, loan3, bud);
+        _makeLoanPayment(loan3, bud); 
+        pat.claim(address(pool1), address(loan3), address(dlFactory1));
 
-        uint withdrawDate = pool1.depositDate(address(kim)).add(pool1.lockupPeriod());
+        uint withdrawDate = pool1.depositDate(address(lee)).add(pool1.lockupPeriod());
 
         hevm.warp(withdrawDate - 1);
-        (uint total_kim, uint principal_kim, uint interest_kim) = pool1.claimableFunds(address(kim));
+        (uint total_kim, uint principal_kim, uint interest_kim) = pool1.claimableFunds(address(lee));
 
         // Deposit is still in lock-up
         assertEq(principal_kim, 0);
-        assertEq(interest_kim, pool1.withdrawableFundsOf(address(kim)));
+        assertEq(interest_kim, pool1.withdrawableFundsOf(address(lee)));
         assertEq(total_kim, principal_kim + interest_kim);
 
         hevm.warp(withdrawDate);
-        (total_kim, principal_kim, interest_kim) = pool1.claimableFunds(address(kim));
+        (total_kim, principal_kim, interest_kim) = pool1.claimableFunds(address(lee));
 
         assertGt(principal_kim, 0);
         assertGt(interest_kim, 0);
         assertGt(total_kim, 0);
         assertEq(total_kim, principal_kim + interest_kim);
 
-        uint256 kim_bal_pre = IERC20(pool1.liquidityAsset()).balanceOf(address(kim));
+        uint256 kim_bal_pre = IERC20(pool1.liquidityAsset()).balanceOf(address(lee));
         
-        make_withdrawable(kim, pool1);
+        make_withdrawable(lee, pool1);
 
-        assertTrue(kim.try_withdraw(address(pool1), principal_kim), "Failed to withdraw claimable_kim");
+        assertTrue(lee.try_withdraw(address(pool1), principal_kim), "Failed to withdraw claimable_kim");
         
-        uint256 kim_bal_post = IERC20(pool1.liquidityAsset()).balanceOf(address(kim));
+        uint256 kim_bal_post = IERC20(pool1.liquidityAsset()).balanceOf(address(lee));
 
         assertEq(kim_bal_post - kim_bal_pre, principal_kim + interest_kim);
     }
@@ -2011,38 +2014,38 @@ contract PoolTest is TestUtil {
 
     function test_setAllowList() public {
         // Pause protocol and attempt setAllowList()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_setAllowList(address(pool1), address(bob), true));
-        assertTrue(!pool1.allowedLiquidityProviders(address(bob)));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_setAllowList(address(pool1), address(leo), true));
+        assertTrue(!pool1.allowedLiquidityProviders(address(leo)));
 
         // Unpause protocol and setAllowList()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_setAllowList(address(pool1), address(bob), true));
-        assertTrue(pool1.allowedLiquidityProviders(address(bob)));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_setAllowList(address(pool1), address(leo), true));
+        assertTrue(pool1.allowedLiquidityProviders(address(leo)));
     }
 
     function test_setAllowlistStakeLocker() public {
         // Pause protocol and attempt setAllowlistStakeLocker()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_setAllowlistStakeLocker(address(pool1), address(buf), true));
-        assertTrue(!IStakeLocker(pool1.stakeLocker()).allowed(address(buf)));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_setAllowlistStakeLocker(address(pool1), address(sam), true));
+        assertTrue(!IStakeLocker(pool1.stakeLocker()).allowed(address(sam)));
 
         // Unpause protocol and setAllowlistStakeLocker()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_setAllowlistStakeLocker(address(pool1), address(buf), true));
-        assertTrue(IStakeLocker(pool1.stakeLocker()).allowed(address(buf)));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_setAllowlistStakeLocker(address(pool1), address(sam), true));
+        assertTrue(IStakeLocker(pool1.stakeLocker()).allowed(address(sam)));
     }
 
     function test_setAdmin() public {
         // Pause protocol and attempt setAdmin()
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!sid.try_setAdmin(address(pool1), address(pop), true));
-        assertTrue(!pool1.admins(address(pop)));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_setAdmin(address(pool1), address(securityAdmin), true));
+        assertTrue(!pool1.admins(address(securityAdmin)));
 
         // Unpause protocol and setAdmin()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(sid.try_setAdmin(address(pool1), address(pop), true));
-        assertTrue(pool1.admins(address(pop)));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_setAdmin(address(pool1), address(securityAdmin), true));
+        assertTrue(pool1.admins(address(securityAdmin)));
     }
 
 }

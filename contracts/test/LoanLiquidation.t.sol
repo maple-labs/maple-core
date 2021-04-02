@@ -37,10 +37,10 @@ contract Treasury { }
 
 contract LoanLiquidationTest is TestUtil {
 
-    Borrower                               ali;
+    Borrower                               bob;
     Governor                               gov;
-    LP                                     bob;
-    PoolDelegate                           sid;
+    LP                                     leo;
+    PoolDelegate                           pat;
 
     RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
@@ -65,10 +65,10 @@ contract LoanLiquidationTest is TestUtil {
 
     function setUp() public {
 
-        ali = new Borrower();     // Actor: Borrower of the Loan.
+        bob = new Borrower();     // Actor: Borrower of the Loan.
         gov = new Governor();     // Actor: Governor of Maple.
-        bob = new LP();           // Actor: Individual lender.
-        sid = new PoolDelegate(); // Actor: Manager of the Pool.
+        leo = new LP();           // Actor: Individual lender.
+        pat = new PoolDelegate(); // Actor: Manager of the Pool.
 
         mpl      = new MapleToken("MapleToken", "MAPL", USDC);
         globals  = gov.createGlobals(address(mpl));
@@ -86,7 +86,7 @@ contract LoanLiquidationTest is TestUtil {
         premiumCalc   = new PremiumCalc(500);               // Flat 5% premium
 
         /*** Globals administrative actions ***/
-        gov.setPoolDelegateAllowlist(address(sid), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
         gov.setMapleTreasury(address(treasury));
         gov.setDefaultUniswapPath(WETH, USDC, USDC);
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
@@ -120,10 +120,10 @@ contract LoanLiquidationTest is TestUtil {
         gov.setPriceOracle(USDC, address(usdOracle));
 
         /*** Mint balances to relevant actors ***/
-        mint("WETH", address(ali),         100 ether);
-        mint("WBTC", address(ali),          10 * BTC);
+        mint("WETH", address(bob),         100 ether);
+        mint("WBTC", address(bob),          10 * BTC);
+        mint("USDC", address(leo),     100_000 * USD);
         mint("USDC", address(bob),     100_000 * USD);
-        mint("USDC", address(ali),     100_000 * USD);
         mint("USDC", address(this), 50_000_000 * USD);
 
         /*** Create and finalize MPL-USDC 50-50 Balancer Pool ***/
@@ -135,12 +135,12 @@ contract LoanLiquidationTest is TestUtil {
         bPool.bind(USDC,         1_650_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
         bPool.bind(address(mpl),   550_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
         bPool.finalize();
-        bPool.transfer(address(sid), 100 * WAD);  // Give PD a balance of BPTs to finalize pool
+        bPool.transfer(address(pat), 100 * WAD);  // Give PD a balance of BPTs to finalize pool
 
         gov.setValidBalancerPool(address(bPool), true);
 
         /*** Create Liqiuidty Pool ***/
-        pool = Pool(sid.createPool(
+        pool = Pool(pat.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -153,27 +153,27 @@ contract LoanLiquidationTest is TestUtil {
 
         /*** Pool Delegate stakes and finalizes Pool ***/ 
         stakeLocker = IStakeLocker(pool.stakeLocker());
-        sid.approve(address(bPool), address(stakeLocker), 50 * WAD);
-        sid.stake(address(stakeLocker), 50 * WAD);
-        sid.finalize(address(pool));  // PD that staked can finalize
-        sid.setOpenToPublic(address(pool), true);
+        pat.approve(address(bPool), address(stakeLocker), 50 * WAD);
+        pat.stake(address(stakeLocker), 50 * WAD);
+        pat.finalize(address(pool));  // PD that staked can finalize
+        pat.setOpenToPublic(address(pool), true);
         assertEq(uint256(pool.poolState()), 1);  // Finalize
 
         /*** LP deposits USDC into Pool ***/
-        bob.approve(USDC, address(pool), MAX_UINT);
-        bob.deposit(address(pool), 5000 * USD); 
+        leo.approve(USDC, address(pool), MAX_UINT);
+        leo.deposit(address(pool), 5000 * USD); 
     }
 
     function createAndFundLoan(address _interestStructure, address _collateral, uint256 collateralRatio) internal returns (Loan loan) {
         uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), collateralRatio, 7];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
-        loan = ali.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
+        loan = bob.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
 
-        sid.fundLoan(address(pool), address(loan), address(dlFactory), 1000 * USD); 
+        pat.fundLoan(address(pool), address(loan), address(dlFactory), 1000 * USD); 
 
-        ali.approve(_collateral, address(loan), MAX_UINT);
-        assertTrue(ali.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
+        bob.approve(_collateral, address(loan), MAX_UINT);
+        assertTrue(bob.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
     }
 
     function performLiquidationAssertions(Loan loan) internal {
@@ -184,7 +184,7 @@ contract LoanLiquidationTest is TestUtil {
 
         uint256 principalOwed_pre      = loan.principalOwed();
         uint256 liquidityAssetLoan_pre = IERC20(USDC).balanceOf(address(loan));
-        uint256 liquidityAssetBorr_pre = IERC20(USDC).balanceOf(address(ali));
+        uint256 liquidityAssetBorr_pre = IERC20(USDC).balanceOf(address(bob));
 
         // Warp to late payment.
         hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.gracePeriod() + 1);
@@ -193,12 +193,12 @@ contract LoanLiquidationTest is TestUtil {
         assertEq(uint256(loan.loanState()),                                                     1);
         assertEq(IERC20(collateralAsset).balanceOf(address(collateralLocker)),  collateralBalance);
 
-        sid.triggerDefault(address(pool), address(loan), address(dlFactory));
+        pat.triggerDefault(address(pool), address(loan), address(dlFactory));
 
         {
             uint256 principalOwed_post      = loan.principalOwed();
             uint256 liquidityAssetLoan_post = IERC20(USDC).balanceOf(address(loan));
-            uint256 liquidityAssetBorr_post = IERC20(USDC).balanceOf(address(ali));
+            uint256 liquidityAssetBorr_post = IERC20(USDC).balanceOf(address(bob));
             uint256 amountLiquidated        = loan.amountLiquidated();
             uint256 amountRecovered         = loan.amountRecovered();
             uint256 defaultSuffered         = loan.defaultSuffered();
