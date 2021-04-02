@@ -615,8 +615,6 @@ contract PoolTest is TestUtil {
         assertEq(pool1.balanceOf(address(bob)), initialAmt);
         assertEq(pool1.balanceOf(address(che)), initialAmt);
 
-        make_withdrawable(che, pool1);
-
         // Pause protocol and attempt to transfer FDTs
         assertTrue( mic.try_setProtocolPause(address(globals), true));
         assertTrue(!che.try_transfer(address(pool1), address(bob), newAmt));
@@ -632,6 +630,52 @@ contract PoolTest is TestUtil {
 
         assertEq(pool1.depositDate(address(bob)), newDepDate);  // Gets updated
         assertEq(pool1.depositDate(address(che)),  startDate);  // Stays the same
+    }
+
+    function test_transfer_recipient_withdrawing() public {
+        address stakeLocker = pool1.stakeLocker();
+
+        sid.approve(address(bPool), stakeLocker, MAX_UINT);
+        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        sid.finalize(address(pool1));
+        sid.setOpenToPublic(address(pool1), true);
+
+        uint256 start = block.timestamp;
+        uint256 deposit = 100;
+
+        // Mint USDC into LP accounts
+        mint("USDC", address(bob), deposit * USD);
+        mint("USDC", address(che), deposit * USD);
+        bob.approve(USDC, address(pool1), MAX_UINT);
+        che.approve(USDC, address(pool1), MAX_UINT);
+
+        // Deposit USDC into Pool
+        bob.deposit(address(pool1), deposit * USD);
+        che.deposit(address(pool1), deposit * USD);
+        assertEq(pool1.balanceOf(address(bob)), deposit * WAD);
+        assertEq(pool1.balanceOf(address(che)), deposit * WAD);
+        assertEq(pool1.depositDate(address(bob)), start);
+        assertEq(pool1.depositDate(address(che)), start);
+
+        // LP (Che) initiates withdrawal
+        assertTrue(che.try_intendToWithdraw(address(pool1)), "Failed to intend to withdraw");
+        assertEq(pool1.withdrawCooldown(address(che)), start);
+
+        // LP (Bob) fails to transfer to LP (Che) who is currently withdrawing
+        assertTrue(!bob.try_transfer(address(pool1), address(che), deposit * WAD));
+        hevm.warp(start + globals.lpCooldownPeriod() + globals.lpWithdrawWindow());  // Very end of LP withdrawal window
+        assertTrue(!bob.try_transfer(address(pool1), address(che), deposit * WAD));
+
+        // LP (Bob) successfully transfers to LP (Che) who is outside withdraw window
+        hevm.warp(start + globals.lpCooldownPeriod() + globals.lpWithdrawWindow() + 1);  // Second after LP withdrawal window ends
+        assertTrue(bob.try_transfer(address(pool1), address(che), deposit * WAD));
+
+        // Check balances and deposit dates are correct
+        assertEq(pool1.balanceOf(address(bob)), 0);
+        assertEq(pool1.balanceOf(address(che)), deposit * WAD * 2);
+        uint256 newDepDate = start + (block.timestamp - start) * (deposit * WAD) / ((deposit * WAD) + (deposit * WAD));
+        assertEq(pool1.depositDate(address(bob)), start);       // Stays the same
+        assertEq(pool1.depositDate(address(che)), newDepDate);  // Gets updated
     }
 
     function test_fundLoan() public {
@@ -1606,7 +1650,7 @@ contract PoolTest is TestUtil {
             assertEq(uint256(loan2.loanState()), 2);
         }
     }
-    
+
     function test_withdraw_cooldown() public {
 
         gov.setLpCooldownPeriod(10 days);

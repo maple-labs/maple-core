@@ -234,6 +234,18 @@ library PoolLib {
     }
 
     /**
+        @dev View function to indicate if recipient is allowed to receive a transfer
+    */
+    function isReceiveAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
+        uint256 endOfWithdrawWindow = withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow();  // Timestamp of end of withdraw window for LP
+
+        bool isCooldownSet  = withdrawCooldown != uint256(0);
+        bool isWithinWindow = block.timestamp <= endOfWithdrawWindow;
+
+        return !isCooldownSet || !isWithinWindow;
+    }
+
+    /**
         @dev Performing some checks before doing actual transfers.
     */
     function prepareTransfer(
@@ -248,16 +260,14 @@ library PoolLib {
     ) external {
         // If transferring in or out of yield farming contract, do not update depositDate or cooldown
         if (!globals.isValidMplRewards(from) && !globals.isValidMplRewards(to)) {
-            require(isWithdrawAllowed(withdrawCooldown[from], globals), "Pool:WITHDRAW_NOT_ALLOWED");  // Sender must be within withdraw window
-            require(recognizableLosses == uint256(0),                   "Pool:RECOG_LOSSES");          // If an LP has unrecognized losses, they must recognize losses through withdraw
-            withdrawCooldown[from] = uint256(0);                 // Reset sender withdraw cooldown
-            updateDepositDate(depositDate, toBalance, wad, to);  // Update deposit date of receiver
-            emit Cooldown(from, 0);
+            require(isReceiveAllowed(withdrawCooldown[to], globals), "Pool:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently withdrawing
+            require(recognizableLosses == uint256(0),                "Pool:RECOG_LOSSES");           // If an LP has unrecognized losses, they must recognize losses through withdraw
+            updateDepositDate(depositDate, toBalance, wad, to);                                      // Update deposit date of recipient
         }
     }
 
     /**
-        @dev Signal to withdraw the funds from the pool.
+        @dev Activates the cooldown period to withdraw. It can't be called if the user is not an LP.
      */
     function intendToWithdraw(mapping(address => uint256) storage withdrawCooldown, uint256 balance) external {
         require(balance != uint256(0), "Pool:ZERO_BALANCE");
