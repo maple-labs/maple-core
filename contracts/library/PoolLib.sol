@@ -236,6 +236,18 @@ library PoolLib {
     }
 
     /**
+        @dev View function to indicate if recipient is allowed to receive a transfer
+    */
+    function isReceiveAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
+        uint256 endOfWithdrawWindow = withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow();  // Timestamp of end of withdraw window for LP
+
+        bool isCooldownSet  = withdrawCooldown != uint256(0);
+        bool isWithinWindow = block.timestamp <= endOfWithdrawWindow;
+
+        return !isCooldownSet || !isWithinWindow;
+    }
+
+    /**
         @dev Performing some checks before doing actual transfers.
     */
     function prepareTransfer(

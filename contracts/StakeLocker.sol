@@ -302,6 +302,20 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
+        @dev View function to indicate if recipient is allowed to receive a transfer
+    */
+    function isReceiveAllowed(uint256 unstakeCooldown) public view returns (bool) {
+        IGlobals globals = _globals();
+
+        uint256 endOfUnstakeWindow = unstakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow();  // Timestamp of end of unstake window for staker
+
+        bool isCooldownSet  = unstakeCooldown != uint256(0);
+        bool isWithinWindow = block.timestamp <= endOfUnstakeWindow;
+
+        return !isCooldownSet || !isWithinWindow;
+    }
+
+    /**
         @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
     */
     function _isValidAdminOrPoolDelegate() internal view {

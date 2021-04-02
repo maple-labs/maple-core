@@ -1650,7 +1650,7 @@ contract PoolTest is TestUtil {
             assertEq(uint256(loan2.loanState()), 2);
         }
     }
-    
+
     function test_withdraw_cooldown() public {
 
         gov.setLpCooldownPeriod(10 days);
