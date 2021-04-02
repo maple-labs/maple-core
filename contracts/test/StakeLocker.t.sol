@@ -574,8 +574,8 @@ contract StakeLockerTest is TestUtil {
         // Warp to late payment
         uint256 start = block.timestamp;
         uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 gracePeriod = globals.gracePeriod();
-        hevm.warp(start + nextPaymentDue + gracePeriod + 1);
+        uint256 defaultGracePeriod = globals.defaultGracePeriod();
+        hevm.warp(start + nextPaymentDue + defaultGracePeriod + 1);
 
         // Trigger default
         sid.triggerDefault(address(pool), address(loan), address(dlFactory));

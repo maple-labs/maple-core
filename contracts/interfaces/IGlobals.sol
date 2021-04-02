@@ -18,7 +18,7 @@ interface IGlobals {
 
     function investorFee() external view returns (uint256);
 
-    function gracePeriod() external view returns (uint256);
+    function defaultGracePeriod() external view returns (uint256);
 
     function drawdownGracePeriod() external view returns (uint256);
 

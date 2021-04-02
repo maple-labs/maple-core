@@ -457,8 +457,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),           _due);
 
         // Warp to *300 seconds* after next payment is due
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
 
         // Make payment.
         assertTrue(ali.try_makePayment(address(loan)));
@@ -478,8 +478,8 @@ contract LoanTest is TestUtil {
         ali.approve(USDC, address(loan), _amt);
 
         // Warp to *300 seconds* after next payment is due
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
         
         // Make payment.
         assertTrue(ali.try_makePayment(address(loan)));
@@ -505,8 +505,8 @@ contract LoanTest is TestUtil {
         assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
 
         // Warp to *300 seconds* after next payment is due
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
         
         // Make payment.
         assertTrue(ali.try_makePayment(address(loan)));
@@ -601,15 +601,15 @@ contract LoanTest is TestUtil {
 
         hevm.warp(loan.nextPaymentDue() + 1);
 
-        assertTrue(!sid.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has gracePeriod to repay the dues.
+        assertTrue(!sid.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
         assertTrue(!com.try_triggerDefault(address(loan)));                                     // Failed because still commoner is not allowed to default the loan.
 
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
 
-        assertTrue(!sid.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has gracePeriod to repay the dues.
+        assertTrue(!sid.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
         assertTrue(!com.try_triggerDefault(address(loan)));                                     // Failed because still commoner is not allowed to default the loan.
 
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + 1);
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 
         assertTrue(!com.try_triggerDefault(address(loan)));  // Failed because still commoner is not allowed to default the loan.
 

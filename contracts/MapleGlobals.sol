@@ -19,9 +19,9 @@ contract MapleGlobals {
     address public mapleTreasury;         // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
     address public admin;                 // Admin of the whole network, has the power to switch off/on the functionality of entire protocol
 
-    uint256 public gracePeriod;           // Represents the amount of time a borrower has to make a missed payment before a default can be triggered
+    uint256 public defaultGracePeriod;    // Amount of time a borrower has to make a missed payment before a default can be triggered
+    uint256 public drawdownGracePeriod;   // Amount of time a borrower has to drawdown on their loan after it's created
     uint256 public swapOutRequired;       // Represents minimum amount of Pool cover that a Pool Delegate has to provide before they can finalize a Pool
-    uint256 public drawdownGracePeriod;   // Amount of time to allow borrower to drawdown on their loan after funding period ends
     uint256 public investorFee;           // Portion of drawdown that goes to Pool Delegates/individual lenders
     uint256 public treasuryFee;           // Portion of drawdown that goes to MapleTreasury
     uint256 public maxSwapSlippage;       // Maximum amount of slippage for Uniswap transactions
@@ -79,9 +79,9 @@ contract MapleGlobals {
     constructor(address _governor, address _mpl, address _admin) public {
         governor             = _governor;
         mpl                  = _mpl;
-        gracePeriod          = 5 days;
-        swapOutRequired      = 10_000;     // $10,000 of Pool cover
+        defaultGracePeriod   = 5 days;
         drawdownGracePeriod  = 10 days;
+        swapOutRequired      = 10_000;     // $10,000 of Pool cover
         investorFee          = 50;         // 0.5%
         treasuryFee          = 50;         // 0.5%
         maxSwapSlippage      = 1000;       // 10 %
@@ -293,12 +293,12 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Adjust gracePeriod. Only Governor can call.
-        @param _gracePeriod Number of seconds to set the grace period to
+        @dev Adjust defaultGracePeriod. Only Governor can call.
+        @param _defaultGracePeriod Number of seconds to set the default grace period to
     */
-    function setGracePeriod(uint256 _gracePeriod) public isGovernor {
-        gracePeriod = _gracePeriod;
-        emit GlobalsParamSet("GRACE_PERIOD", _gracePeriod);
+    function setDefaultGracePeriod(uint256 _defaultGracePeriod) public isGovernor {
+        defaultGracePeriod = _defaultGracePeriod;
+        emit GlobalsParamSet("DEFAULT_GRACE_PERIOD", _defaultGracePeriod);
     }
 
     /**

@@ -187,7 +187,7 @@ contract LoanLiquidationTest is TestUtil {
         uint256 loanAssetBorr_pre  = IERC20(USDC).balanceOf(address(ali));
 
         // Warp to late payment.
-        hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.gracePeriod() + 1);
+        hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 
         // Pre-state triggerDefault() checks.
         assertEq(uint256(loan.loanState()),                                                     1);

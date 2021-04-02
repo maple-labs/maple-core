@@ -147,9 +147,9 @@ library LoanLib {
     */
     function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance, uint256 totalSupply) external view returns(bool) {
 
-        bool pastGracePeriod = block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod());
+        bool pastGracePeriod = block.timestamp > nextPaymentDue.add(_globals(superFactory).defaultGracePeriod());
 
-        // Check if the loan is past the gracePeriod and that msg.sender has a percentage of total LoanFDTs that is greater
+        // Check if the loan is past the defaultGracePeriod and that msg.sender has a percentage of total LoanFDTs that is greater
         // than the minimum equity needed (specified in globals)
         return pastGracePeriod && balance >= totalSupply * _globals(superFactory).minLoanEquity() / 10_000;
     }

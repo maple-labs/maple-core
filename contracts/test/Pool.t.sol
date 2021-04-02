@@ -904,7 +904,7 @@ contract PoolTest is TestUtil {
         uint256[7] memory claim = sid.claim(address(pool1), address(zero_loan), address(dlFactory1));
 
         // Time warp to default
-        hevm.warp(block.timestamp + zero_loan.nextPaymentDue() + globals.gracePeriod() + 1);
+        hevm.warp(block.timestamp + zero_loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
         sid.triggerDefault(address(pool1), address(zero_loan), address(dlFactory1));   // Triggers a "liquidation" that does not perform a swap
 
         uint256[7] memory claim2 = sid.claim(address(pool1), address(zero_loan), address(dlFactory1));
