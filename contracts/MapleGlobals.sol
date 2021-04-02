@@ -34,12 +34,12 @@ contract MapleGlobals {
 
     bool public protocolPaused;  // Switch to pause the functionality of the entire protocol
 
-    mapping(address => bool) public isValidLiquidityAsset;   // Mapping of valid liquidityAssets
-    mapping(address => bool) public isValidCollateralAsset;  // Mapping of valid collateralAssets
-    mapping(address => bool) public validCalcs;              // Mapping of valid calculator contracts
-    mapping(address => bool) public isValidPoolDelegate;     // Validation data structure for Pool Delegates (prevent invalid addresses from creating pools)
-    mapping(address => bool) public isValidMplRewards;       // Validation of if address is MplRewards contract used for MPL liquidity mining programs
-    mapping(address => bool) public isValidBalancerPool;     // Validation of if address is a Balancer Pool that Maple has approved for BPT staking
+    mapping(address => bool) public isValidLiquidityAsset;            // Mapping of valid liquidityAssets
+    mapping(address => bool) public isValidCollateralAsset;           // Mapping of valid collateralAssets
+    mapping(address => bool) public validCalcs;                       // Mapping of valid calculator contracts
+    mapping(address => bool) public isValidPoolDelegate;              // Validation data structure for Pool Delegates (prevent invalid addresses from creating pools)
+    mapping(address => bool) public isExemptFromTransferRestriction;  // Validation of if address is exempt from FDT transfer restrictions (cooldown + lockup)
+    mapping(address => bool) public isValidBalancerPool;              // Validation of if address is a Balancer Pool that Maple has approved for BPT staking
     
     // Determines the liquidation path of various assets in Loans and Treasury.
     // The value provided will determine whether or not to perform a bilateral or triangular swap on Uniswap.
@@ -54,16 +54,16 @@ contract MapleGlobals {
     mapping(address => bool)                     public isValidLoanFactory;  // Mapping of valid loan factories
     mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories
     
-    event CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
-    event  LiquidityAssetSet(address asset, uint256 decimals, string symbol, bool valid);
-    event          OracleSet(address asset, address oracle);
-    event      MplRewardsSet(address mplRewards, bool valid);
-    event    BalancerPoolSet(address balancerPool,   bool valid);
-    event PendingGovernorSet(address pendingGovernor);
-    event   GovernorAccepted(address governor);
-    event    GlobalsParamSet(bytes32 indexed which, uint256 value);
-    event  GlobalsAddressSet(bytes32 indexed which, address addr);
-    event     ProtocolPaused(bool pause);
+    event              CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
+    event               LiquidityAssetSet(address asset, uint256 decimals, string symbol, bool valid);
+    event                       OracleSet(address asset, address oracle);
+    event TransferRestrictionExemptionSet(address exemptedContract, bool valid);
+    event                 BalancerPoolSet(address balancerPool,   bool valid);
+    event              PendingGovernorSet(address pendingGovernor);
+    event                GovernorAccepted(address governor);
+    event                 GlobalsParamSet(bytes32 indexed which, uint256 value);
+    event               GlobalsAddressSet(bytes32 indexed which, address addr);
+    event                  ProtocolPaused(bool pause);
 
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals:MSG_SENDER_NOT_GOVERNOR");
@@ -152,15 +152,17 @@ contract MapleGlobals {
         require(!protocolPaused, "MapleGlobals:PROCOTOL_PAUSED");
         admin = newAdmin;
     }
-
+    
     /**
-        @dev Update the valid MplRewards mapping. Only Governor can call.
-        @param mplRewards Address of `MplRewards` contract.
-        @param valid      The new bool value for validating mplRewards.
+        @dev Update the allowlist for contracts that will be excempt from transfer restrctions (lockup and cooldown). 
+        These addresses are reserved for DeFi composability such as yield farming, collateral-based lending on other platforms, etc.
+        Only Governor can call.
+        @param addr   Address of exempt contract.
+        @param valid  The new bool value for validating addr.
     */
-    function setValidMplRewards(address mplRewards, bool valid) external isGovernor {
-        isValidMplRewards[mplRewards] = valid;
-        emit MplRewardsSet(mplRewards, valid);
+    function setExemptFromTransferRestriction(address addr, bool valid) external isGovernor {
+        isExemptFromTransferRestriction[addr] = valid;
+        emit TransferRestrictionExemptionSet(addr, valid);
     }
 
     /**

@@ -107,7 +107,7 @@ contract MplRewardsTest is TestUtil {
         gov.createMplRewardsFactory();
         mplRewards = gov.createMplRewards(address(mpl), address(pool)); 
 
-        gov.setValidMplRewards(address(mplRewards), true); // Set in globals so that depDate is not affected on stake/unstake
+        gov.setExemptFromTransferRestriction(address(mplRewards), true); // Set in globals so that depDate is not affected on stake/unstake
 
         fakeGov.setGovMplRewards(mplRewards); // Used to assert failures 
 
