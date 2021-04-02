@@ -14,9 +14,9 @@ contract DebtLocker {
 
     uint256 constant WAD = 10 ** 18;
 
-    ILoan   public immutable loan;       // The Loan that this locker is holding tokens for
-    IERC20  public immutable loanAsset;  // The loanAsset that this locker will claim
-    address public immutable pool;       // The owner of this Locker (the Pool)
+    ILoan   public immutable loan;            // The Loan that this locker is holding tokens for
+    IERC20  public immutable liquidityAsset;  // The liquidityAsset that this locker will claim
+    address public immutable pool;            // The owner of this Locker (the Pool)
 
     uint256 public principalPaid;    // Loan total principal   paid at time of claim()
     uint256 public interestPaid;     // Loan total interest    paid at time of claim()
@@ -31,9 +31,9 @@ contract DebtLocker {
     }
 
     constructor(address _loan, address _pool) public {
-        loan      = ILoan(_loan);
-        pool      = _pool;
-        loanAsset = IERC20(ILoan(_loan).loanAsset());
+        loan           = ILoan(_loan);
+        pool           = _pool;
+        liquidityAsset = IERC20(ILoan(_loan).liquidityAsset());
     }
 
     function calcAllotment(uint256 newAmt, uint256 totalClaim, uint256 totalNewAmt) internal pure returns (uint256) {
@@ -89,9 +89,9 @@ contract DebtLocker {
             if (newAmountRecovered > 0) amountRecovered = newAmountRecovered;
 
             // Withdraw all claimable funds via LoanFDT
-            uint256 beforeBal = loanAsset.balanceOf(address(this));                 // Current balance of DebtLocker (accounts for direct inflows)
-            loan.withdrawFunds();                                                   // Transfer funds from Loan to DebtLocker
-            uint256 claimBal  = loanAsset.balanceOf(address(this)).sub(beforeBal);  // Amount claimed from Loan using LoanFDT
+            uint256 beforeBal = liquidityAsset.balanceOf(address(this));                 // Current balance of DebtLocker (accounts for direct inflows)
+            loan.withdrawFunds();                                                        // Transfer funds from Loan to DebtLocker
+            uint256 claimBal  = liquidityAsset.balanceOf(address(this)).sub(beforeBal);  // Amount claimed from Loan using LoanFDT
             
             // Calculate sum of all deltas, to be used to calculate portions for metadata
             uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess).add(newAmountRecovered);
@@ -105,7 +105,7 @@ contract DebtLocker {
             newExcess          = newExcess          == uint256(0) ? uint256(0) : calcAllotment(newExcess,          claimBal, sum);
             newAmountRecovered = newAmountRecovered == uint256(0) ? uint256(0) : calcAllotment(newAmountRecovered, claimBal, sum);
 
-            loanAsset.safeTransfer(pool, claimBal);  // Transfer entire amount claimed using LoanFDT
+            liquidityAsset.safeTransfer(pool, claimBal);  // Transfer entire amount claimed using LoanFDT
 
             // Return claim amount plus all relevant metadata, to be used by Pool for further claim logic
             // Note: newInterest + newPrincipal + newFee + newExcess + newAmountRecovered = claimBal - dust

@@ -119,7 +119,7 @@ contract PoolFactoryTest is TestUtil {
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
         gov.setPoolDelegateAllowlist(address(ali), true);
-        gov.setLoanAsset(USDC, true);
+        gov.setLiquidityAsset(USDC, true);
     }
 
     function test_createPool_globals_validations() public {
@@ -144,9 +144,9 @@ contract PoolFactoryTest is TestUtil {
         gov.setPoolDelegateAllowlist(address(ali), true);
 
         // PoolFactory:LIQ_ASSET_NOT_ALLOWED
-        gov.setLoanAsset(USDC, false);
+        gov.setLiquidityAsset(USDC, false);
         assertTrue(createPoolFails());   
-        gov.setLoanAsset(USDC, true);
+        gov.setLiquidityAsset(USDC, true);
     }
 
     function test_createPool_bad_stakeAsset() public {
@@ -170,7 +170,7 @@ contract PoolFactoryTest is TestUtil {
         setUpAllowlisting();
         bPool.finalize();
 
-        gov.setLoanAsset(DAI, true);
+        gov.setLiquidityAsset(DAI, true);
         
         // Pool:Pool:INVALID_STAKING_POOL
         assertTrue(!ali.try_createPool(
@@ -281,7 +281,7 @@ contract PoolFactoryTest is TestUtil {
     function test_createPool_paused() public {
 
         setUpAllowlisting();
-        gov.setLoanAsset(USDC, true);
+        gov.setLiquidityAsset(USDC, true);
         gov.setPoolDelegateAllowlist(address(ali), true);
         bPool.finalize();
 
@@ -364,7 +364,7 @@ contract PoolFactoryTest is TestUtil {
 
         setUpAllowlisting();
 
-        gov.setLoanAsset(USDC, true);
+        gov.setLiquidityAsset(USDC, true);
 
         gov.setPoolDelegateAllowlist(address(ali), true);
         bPool.finalize();

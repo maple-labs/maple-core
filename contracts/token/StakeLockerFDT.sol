@@ -14,7 +14,7 @@ abstract contract StakeLockerFDT is ExtendedFDT {
 
     uint256 public bptLosses;          // Sum of all unrecognized losses 
     uint256 public lossesBalance;      // The amount of losses present and accounted for in this contract.
-    uint256 public fundsTokenBalance;  // The amount of fundsToken (loanAsset) currently present and accounted for in this contract.
+    uint256 public fundsTokenBalance;  // The amount of fundsToken (liquidityAsset) currently present and accounted for in this contract.
 
     constructor(string memory name, string memory symbol, address _fundsToken) ExtendedFDT(name, symbol) public {
         fundsToken = IERC20(_fundsToken);

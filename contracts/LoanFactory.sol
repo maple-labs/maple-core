@@ -29,7 +29,7 @@ contract LoanFactory is Pausable {
     event LoanCreated(
         address loan,
         address indexed borrower,
-        address indexed loanAsset,
+        address indexed liquidityAsset,
         address collateralAsset,
         address collateralLocker,
         address fundingLocker,
@@ -54,7 +54,7 @@ contract LoanFactory is Pausable {
 
     /**
         @dev Create a new Loan.
-        @param  loanAsset       Asset the loan will raise funding in
+        @param  liquidityAsset  Asset the loan will raise funding in
         @param  collateralAsset Asset the loan will use as collateral
         @param  flFactory       The factory to instantiate a FundingLocker from
         @param  clFactory       The factory to instantiate a CollateralLocker from
@@ -72,7 +72,7 @@ contract LoanFactory is Pausable {
         @return Address of the instantiated Loan.
     */
     function createLoan(
-        address loanAsset,
+        address liquidityAsset,
         address collateralAsset,
         address flFactory,
         address clFactory,
@@ -93,7 +93,7 @@ contract LoanFactory is Pausable {
         // Deploy new Loan
         Loan loan = new Loan(
             msg.sender,
-            loanAsset,
+            liquidityAsset,
             collateralAsset,
             flFactory,
             clFactory,
@@ -109,7 +109,7 @@ contract LoanFactory is Pausable {
         emit LoanCreated(
             address(loan),
             msg.sender,
-            loanAsset,
+            liquidityAsset,
             collateralAsset,
             loan.collateralLocker(),
             loan.fundingLocker(),

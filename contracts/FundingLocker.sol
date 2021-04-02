@@ -3,17 +3,17 @@ pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-/// @title FundingLocker holds custody of loanAsset tokens during the funding period of a Loan.
+/// @title FundingLocker holds custody of liquidityAsset tokens during the funding period of a Loan.
 contract FundingLocker {
 
     using SafeERC20 for IERC20;
 
-    IERC20  public immutable loanAsset;  // Asset the Loan was funded with
+    IERC20  public immutable liquidityAsset;  // Asset the Loan was funded with
     address public immutable loan;       // Loan this FundingLocker has funded
 
-    constructor(address _loanAsset, address _loan) public {
-        loanAsset = IERC20(_loanAsset);
-        loan      = _loan;
+    constructor(address _liquidityAsset, address _loan) public {
+        liquidityAsset = IERC20(_liquidityAsset);
+        loan           = _loan;
     }
 
     modifier isLoan() {
@@ -22,19 +22,19 @@ contract FundingLocker {
     }
 
     /**
-        @dev Transfers amt of loanAsset to dst. Only the Loan can call this function.
-        @param dst Desintation to transfer loanAsset to
-        @param amt Amount of loanAsset to transfer
+        @dev Transfers amt of liquidityAsset to dst. Only the Loan can call this function.
+        @param dst Desintation to transfer liquidityAsset to
+        @param amt Amount of liquidityAsset to transfer
     */
     function pull(address dst, uint256 amt) isLoan external {
-        loanAsset.safeTransfer(dst, amt);
+        liquidityAsset.safeTransfer(dst, amt);
     }
 
     /**
-        @dev Transfers entire amount of loanAsset held in escrow to Loan. Only the Loan can call this function.
+        @dev Transfers entire amount of liquidityAsset held in escrow to Loan. Only the Loan can call this function.
     */
     function drain() isLoan external {
-        uint256 amt = loanAsset.balanceOf(address(this));
-        loanAsset.safeTransfer(loan, amt);
+        uint256 amt = liquidityAsset.balanceOf(address(this));
+        liquidityAsset.safeTransfer(loan, amt);
     }
 }

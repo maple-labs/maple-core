@@ -141,7 +141,7 @@ contract GulpTest is TestUtil {
         gov.setCalc(address(lateFeeCalc),   true);
         gov.setCalc(address(premiumCalc),   true);
         gov.setCollateralAsset(WETH,        true);
-        gov.setLoanAsset(USDC,              true);
+        gov.setLiquidityAsset(USDC,         true);
         gov.setSwapOutRequired(1_000_000);
         
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));

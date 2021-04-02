@@ -108,7 +108,7 @@ contract LoanLiquidationTest is TestUtil {
         gov.setCollateralAsset(WBTC,        true);
         gov.setCollateralAsset(WETH,        true);
         gov.setCollateralAsset(USDC,        true);
-        gov.setLoanAsset(USDC,              true);
+        gov.setLiquidityAsset(USDC,         true);
 
         /*** Set up oracles ***/
         wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
@@ -182,9 +182,9 @@ contract LoanLiquidationTest is TestUtil {
         address collateralAsset   = address(loan.collateralAsset());
         uint256 collateralBalance = IERC20(collateralAsset).balanceOf(address(collateralLocker));
 
-        uint256 principalOwed_pre = loan.principalOwed();
-        uint256 loanAssetLoan_pre  = IERC20(USDC).balanceOf(address(loan));
-        uint256 loanAssetBorr_pre  = IERC20(USDC).balanceOf(address(ali));
+        uint256 principalOwed_pre      = loan.principalOwed();
+        uint256 liquidityAssetLoan_pre = IERC20(USDC).balanceOf(address(loan));
+        uint256 liquidityAssetBorr_pre = IERC20(USDC).balanceOf(address(ali));
 
         // Warp to late payment.
         hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.gracePeriod() + 1);
@@ -196,13 +196,13 @@ contract LoanLiquidationTest is TestUtil {
         sid.triggerDefault(address(pool), address(loan), address(dlFactory));
 
         {
-            uint256 principalOwed_post = loan.principalOwed();
-            uint256 loanAssetLoan_post = IERC20(USDC).balanceOf(address(loan));
-            uint256 loanAssetBorr_post = IERC20(USDC).balanceOf(address(ali));
-            uint256 amountLiquidated   = loan.amountLiquidated();
-            uint256 amountRecovered    = loan.amountRecovered();
-            uint256 defaultSuffered    = loan.defaultSuffered();
-            uint256 liquidationExcess  = loan.liquidationExcess();
+            uint256 principalOwed_post      = loan.principalOwed();
+            uint256 liquidityAssetLoan_post = IERC20(USDC).balanceOf(address(loan));
+            uint256 liquidityAssetBorr_post = IERC20(USDC).balanceOf(address(ali));
+            uint256 amountLiquidated        = loan.amountLiquidated();
+            uint256 amountRecovered         = loan.amountRecovered();
+            uint256 defaultSuffered         = loan.defaultSuffered();
+            uint256 liquidationExcess       = loan.liquidationExcess();
 
             // Post-state triggerDefault() checks.
             assertEq(uint256(loan.loanState()),                                     4);
@@ -210,20 +210,20 @@ contract LoanLiquidationTest is TestUtil {
             assertEq(amountLiquidated,                              collateralBalance);
 
             if (amountRecovered > principalOwed_pre) {
-                assertEq(loanAssetBorr_post - loanAssetBorr_pre, liquidationExcess);
-                assertEq(principalOwed_post,                                     0);
-                assertEq(liquidationExcess,    amountRecovered - principalOwed_pre);
-                assertEq(defaultSuffered,                                        0);
+                assertEq(liquidityAssetBorr_post - liquidityAssetBorr_pre, liquidationExcess);
+                assertEq(principalOwed_post,                                               0);
+                assertEq(liquidationExcess,              amountRecovered - principalOwed_pre);
+                assertEq(defaultSuffered,                                                  0);
                 assertEq(
                     amountRecovered,                              
-                    (loanAssetBorr_post - loanAssetBorr_pre) + (loanAssetLoan_post - loanAssetLoan_pre)
+                    (liquidityAssetBorr_post - liquidityAssetBorr_pre) + (liquidityAssetLoan_post - liquidityAssetLoan_pre)
                 );
             }
             else {
-                assertEq(principalOwed_post,   principalOwed_pre - amountRecovered);
-                assertEq(defaultSuffered,                       principalOwed_post);
-                assertEq(liquidationExcess,                                      0);
-                assertEq(amountRecovered,   loanAssetLoan_post - loanAssetLoan_pre);
+                assertEq(principalOwed_post,             principalOwed_pre - amountRecovered);
+                assertEq(defaultSuffered,                                 principalOwed_post);
+                assertEq(liquidationExcess,                                                0);
+                assertEq(amountRecovered,   liquidityAssetLoan_post - liquidityAssetLoan_pre);
             }
         }
     }
@@ -237,7 +237,7 @@ contract LoanLiquidationTest is TestUtil {
         Loan wethLoan = createAndFundLoan(address(repaymentCalc), WETH, 2000);
         performLiquidationAssertions(wethLoan);
 
-        // collateralAsset == loanAsset 
+        // collateralAsset == liquidityAsset 
         Loan usdcLoan = createAndFundLoan(address(repaymentCalc), USDC, 2000);
         performLiquidationAssertions(usdcLoan);
 
