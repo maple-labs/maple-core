@@ -16,31 +16,106 @@ interface User {
 }
 
 contract TestUtil is DSTest {
+    
     Hevm hevm;
 
-    struct Token {
-        address addr; // ERC20 Mainnet address
-        uint256 slot; // Balance storage slot
-        address orcl; // Chainlink oracle address
-    }
+    /***********************/
+    /*** Protocol Actors ***/
+    /***********************/
+    Borrower      bob;
+    Borrower      ben;
+    Borrower      bud;
 
-    struct TestObj {
-        uint256 pre;
-        uint256 post;
-    }
+    LP            leo;
+    LP            liz;
+    LP            lex;
+    LP            lee;
 
-    mapping (bytes32 => Token) tokens;
+    Staker        sam;
+    Staker        sid;
+    Staker        sue;
 
+    Commoner      cam;
+
+    PoolDelegate  pat;
+    PoolDelegate  pam;
+
+    /**************************/
+    /*** Multisig Addresses ***/
+    /**************************/
+    Governor                   gov;
+    Governor               fakeGov;
+    SecurityAdmin    securityAdmin;
+    EmergencyAdmin  emergencyAdmin;
+
+    /*******************/
+    /*** Calculators ***/
+    /*******************/
+    LateFeeCalc      lateFeeCalc;
+    PremiumCalc      premiumCalc;
+    RepaymentCalc  repaymentCalc;
+    
+    /*****************/
+    /*** Factories ***/
+    /*****************/
+    CollateralLockerFactory    clFactory;
+    DebtLockerFactory          dlFactory;
+    DebtLockerFactory         dlFactory2;
+    FundingLockerFactory       flFactory;
+    LiquidityLockerFactory     llFactory;
+    LoanFactory              loanFactory;
+    PoolFactory              poolFactory;
+    StakeLockerFactory         slFactory;
+
+    /***********************/
+    /*** Maple Contracts ***/
+    /***********************/
+    MapleGlobals   globals;
+    MapleToken         mpl;
+    Treasury      treasury;
+    IBPool           bPool;
+
+    /***************/
+    /*** Oracles ***/
+    /***************/
+    ChainlinkOracle  wethOracle;
+    ChainlinkOracle  wbtcOracle;
+    UsdOracle         usdOracle;
+
+    /*************/
+    /*** Loans ***/
+    /*************/
+    Loan   loan;
+    Loan  loan2;
+    Loan  loan3;
+    Loan  loan4;
+    
+    /*************/
+    /*** Pools ***/
+    /*************/
+    Pool   pool;
+    Pool  pool2;
+    Pool  pool3;
+
+    /**********************************/
+    /*** Mainnet Contract Addresses ***/
+    /**********************************/
     address constant DAI   = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     address constant USDC  = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
-    address constant CDAI  = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
-    address constant CUSDC = 0x39AA39c021dfbaE8faC545936693aC917d5E7563;
+
+    IERC20 constant dai  = IERC20(DAI);
+    IERC20 constant usdc = IERC20(USDC);
+    IERC20 constant weth = IERC20(WETH);
+    IERC20 constant wbtc = IERC20(WBTC);
 
     address constant BPOOL_FACTORY        = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd; // Balancer pool factory
     address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router
 
+    /*****************/
+    /*** Constants ***/
+    /*****************/
     uint256 constant USD = 10 ** 6;  // USDC precision decimals
     uint256 constant BTC = 10 ** 8;  // WBTC precision decimals
     uint256 constant WAD = 10 ** 18;
@@ -48,20 +123,153 @@ contract TestUtil is DSTest {
 
     uint256 constant MAX_UINT = uint(-1);
 
-    bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
+    /*****************/
+    /*** Utilities ***/
+    /*****************/
+    struct Token {
+        address addr; // ERC20 Mainnet address
+        uint256 slot; // Balance storage slot
+        address orcl; // Chainlink oracle address
+    }
+
+    mapping (bytes32 => Token) tokens;
+
+    struct TestObj {
+        uint256 pre;
+        uint256 post;
+    }
 
     event Debug(string, uint256);
     event Debug(string, address);
 
-    constructor() public {
-        hevm = Hevm(address(CHEAT_CODE));
+    constructor() public { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
+
+    /**************************************/
+    /*** Actor/Multisig Setup Functions ***/
+    /**************************************/
+    function createBorrower()       public { bob = new Borrower(); }
+    function createBorrowers()      public { bob = new Borrower(); ben = new Borrower(); bud = new Borrower(); }
+
+    function createGovernor()       public { gov = new Governor(); }
+    function createGovernors()      public { gov = new Governor(); fakeGov = new Governor(); }
+
+    function createLP()             public { leo = new LP(); }
+    function createLPs()            public { leo = new LP(); liz = new LP(); lex = new LP(); }
+
+    function createPoolDelegate()   public { pat = new PoolDelegate(); }
+    function createPoolDelegates()  public { pat = new PoolDelegate(); pam = new PoolDelegate(); }
+
+    function createStaker()         public { sam = new Staker(); }
+    function createStakers()        public { sam = new Staker(); sid = new Staker(); sue = new Staker(); }
+
+    function createSecurityAdmin()  public { securityAdmin = new SecurityAdmin(); }
+
+    function createEmergencyAdmin() public { emergencyAdmin = new EmergencyAdmin(); }
+
+    /**************************************/
+    /*** Maple Contract Setup Functions ***/
+    /**************************************/
+    function createMpl()      public { mpl      = new MapleToken("MapleToken", "MAPL", USDC); }
+    function createGlobals()  public { globals  = gov.createGlobals(address(mpl)); }
+    function createTreasury() public { treasury = new Treasury();  }
+    function createBPool()    public { bPool    = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); }
+
+    /**********************************/
+    /*** Calculator Setup Functions ***/
+    /**********************************/
+    function createLateFeeCalc()   public { lateFeeCalc   = new LateFeeCalc(); }
+    function createPremiumCalc()   public { premiumCalc   = new PremiumCalc(500); }
+    function createRepaymentCalc() public { repaymentCalc = new RepaymentCalc(); }
+
+    function setUpCalcs() public {
+        createLateFeeCalc(); 
+        createPremiumCalc();
+        createRepaymentCalc();
+
+        gov.setCalc(address(repaymentCalc), true);
+        gov.setCalc(address(lateFeeCalc),   true);
+        gov.setCalc(address(premiumCalc),   true);
+    }
+
+    /********************************/
+    /*** Factory Setup Functions ***/
+    /********************************/
+    function createCollateralLockerFactory() public { clFactory   = new CollateralLockerFactory(); }
+    function createDebtLockerFactories()     public { dlFactory   = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
+    function createLiquidityLockerFactory()  public { llFactory   = new LiquidityLockerFactory(); }
+    function createLoanFactory()             public { loanFactory = new LoanFactory(); }
+    function createPoolFactory()             public { poolFactory = new PoolFactory(); }
+    function createStakeLockerFactory()      public { slFactory   = new StakeLockerFactory(); }
+
+    function setUpFactories() public {
+        createCollateralLockerFactory();
+        createDebtLockerFactories();    
+        createLiquidityLockerFactory(); 
+        createLoanFactory();            
+        createPoolFactory();            
+        createStakeLockerFactory();     
+
+        gov.setValidLoanFactory(address(loanFactory), true);
+        gov.setValidPoolFactory(address(poolFactory), true);
+
+        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
+
+        gov.setValidSubFactory(address(poolFactory), address(llFactory),  true);
+        gov.setValidSubFactory(address(poolFactory), address(slFactory),  true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory1), true);
+        gov.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
+    }
+
+    // TBC
+
+    /******************************/
+    /*** Oracle Setup Functions ***/
+    /******************************/
+    function createWethOracle() public { wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this)); }
+    function createWbtcOracle() public { wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this)); }
+    function createUsdOracle()  public { usdOracle  = new UsdOracle(); }
+    
+    function setUpOracles() public { 
+        createWethOracle(); 
+        createWbtcOracle(); 
+        createUsdOracle();
+
+        gov.setPriceOracle(WETH, address(wethOracle));
+        gov.setPriceOracle(WBTC, address(wbtcOracle));
+        gov.setPriceOracle(USDC, address(usdOracle));
+    }
+
+    /*************************************/
+    /*** Balancer Pool Setup Functions ***/
+    /*************************************/
+    function setUpBalancerPool() public {
+        // Mint 50m USDC into this account
+        mint("USDC", address(this), 50_000_000 * USD);
+
+        // Initialize MPL/USDC Balancer pool (without finalizing)
+        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
+
+        usdc.approve(address(bPool), MAX_UINT);
+        mpl.approve(address(bPool),  MAX_UINT);
+
+        bPool.bind(USDC,         50_000_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(address(mpl),    100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
+
+    }
+    /***  */
+
+    /******************************/
+    /*** Test Utility Functions ***/
+    /******************************/
+
+    function setUpTokens() public {
+        tokens["USDC"].addr = USDC;
+        tokens["USDC"].slot = 9;
 
         tokens["DAI"].addr = DAI;
         tokens["DAI"].slot = 2;
         tokens["DAI"].orcl = 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9;
-
-        tokens["USDC"].addr = USDC;
-        tokens["USDC"].slot = 9;
 
         tokens["WETH"].addr = WETH;
         tokens["WETH"].slot = 3;
@@ -70,12 +278,6 @@ contract TestUtil is DSTest {
         tokens["WBTC"].addr = WBTC;
         tokens["WBTC"].slot = 0;
         tokens["WBTC"].orcl = 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
-
-        tokens["CDAI"].addr = CDAI;
-        tokens["CDAI"].slot = 14;
-        
-        tokens["CUSDC"].addr = CUSDC;
-        tokens["CUSDC"].slot = 15;
     }
 
     // Manipulate mainnet ERC20 balance
@@ -128,13 +330,6 @@ contract TestUtil is DSTest {
 
     function constrictToRange(uint256 val, uint256 min, uint256 max, bool nonZero) public pure returns(uint256) {
         return val == 0 && !nonZero ? 0 : val % (max - min) + min;
-    }
-
-    // Get bytecode size of contract
-    function getExtcodesize(address target) public view returns (uint256 exsize) {
-        assembly {
-            exsize := extcodesize(target)
-        }
     }
 
     // function test_cheat_code_for_slot() public {
