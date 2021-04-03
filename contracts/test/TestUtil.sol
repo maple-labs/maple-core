@@ -1,10 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.11;
 
+import "./user/Borrower.sol";
+import "./user/LP.sol";
+import "./user/Staker.sol";
+import "./user/Commoner.sol";
+import "./user/PoolDelegate.sol";
+import "./user/Governor.sol";
+import "./user/SecurityAdmin.sol";
+import "./user/EmergencyAdmin.sol";
+
+import "../MapleGlobals.sol";
+import "../MapleTreasury.sol";
+import "module/maple-token/contracts/MapleToken.sol";
+
+import "../PoolFactory.sol";
+import "../StakeLockerFactory.sol";
+import "../LiquidityLockerFactory.sol";
+import "../DebtLockerFactory.sol";
+import "../LoanFactory.sol";
+import "../CollateralLockerFactory.sol";
+import "../FundingLockerFactory.sol";
+
+import "../LateFeeCalc.sol";
+import "../PremiumCalc.sol";
+import "../RepaymentCalc.sol";
+
+import "../oracles/ChainlinkOracle.sol";
+import "../oracles/UsdOracle.sol";
+
+import "../interfaces/IBPool.sol";
+import "../interfaces/IBFactory.sol";
+
 import "lib/ds-test/contracts/test.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
-import "../interfaces/ILoan.sol";
 
 interface Hevm {
     function warp(uint256) external;
@@ -16,7 +45,7 @@ interface User {
 }
 
 contract TestUtil is DSTest {
-    
+
     Hevm hevm;
 
     /***********************/
@@ -54,12 +83,12 @@ contract TestUtil is DSTest {
     LateFeeCalc      lateFeeCalc;
     PremiumCalc      premiumCalc;
     RepaymentCalc  repaymentCalc;
-    
+
     /*****************/
     /*** Factories ***/
     /*****************/
     CollateralLockerFactory    clFactory;
-    DebtLockerFactory          dlFactory;
+    DebtLockerFactory         dlFactory1;
     DebtLockerFactory         dlFactory2;
     FundingLockerFactory       flFactory;
     LiquidityLockerFactory     llFactory;
@@ -72,7 +101,7 @@ contract TestUtil is DSTest {
     /***********************/
     MapleGlobals   globals;
     MapleToken         mpl;
-    Treasury      treasury;
+    MapleTreasury treasury;
     IBPool           bPool;
 
     /***************/
@@ -89,7 +118,7 @@ contract TestUtil is DSTest {
     Loan  loan2;
     Loan  loan3;
     Loan  loan4;
-    
+
     /*************/
     /*** Pools ***/
     /*************/
@@ -166,23 +195,48 @@ contract TestUtil is DSTest {
 
     function createEmergencyAdmin() public { emergencyAdmin = new EmergencyAdmin(); }
 
+    function setUpActors() public {
+        createBorrowers();
+        createGovernors();
+        createLPs();
+        createPoolDelegates();
+        createStakers();
+        createSecurityAdmin();
+        createEmergencyAdmin();
+    }
+
     /**************************************/
     /*** Maple Contract Setup Functions ***/
     /**************************************/
     function createMpl()      public { mpl      = new MapleToken("MapleToken", "MAPL", USDC); }
     function createGlobals()  public { globals  = gov.createGlobals(address(mpl)); }
-    function createTreasury() public { treasury = new Treasury();  }
+    function createTreasury() public { treasury = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); }
     function createBPool()    public { bPool    = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); }
+
+    function setUpGlobals() public {
+        createMpl();
+        createGlobals();
+        createTreasury();
+        createBPool();
+
+        gov.setMapleTreasury(address(treasury));
+        gov.setValidBalancerPool(address(bPool), true);
+        gov.setCollateralAsset(WETH, true);
+        gov.setLiquidityAsset(USDC, true);
+        gov.setSwapOutRequired(1_000_000);
+        gov.setPoolDelegateAllowlist(address(pat), true);
+        gov.setPoolDelegateAllowlist(address(pam), true);
+    }
 
     /**********************************/
     /*** Calculator Setup Functions ***/
     /**********************************/
-    function createLateFeeCalc()   public { lateFeeCalc   = new LateFeeCalc(); }
+    function createLateFeeCalc()   public { lateFeeCalc   = new LateFeeCalc(5); }
     function createPremiumCalc()   public { premiumCalc   = new PremiumCalc(500); }
     function createRepaymentCalc() public { repaymentCalc = new RepaymentCalc(); }
 
     function setUpCalcs() public {
-        createLateFeeCalc(); 
+        createLateFeeCalc();
         createPremiumCalc();
         createRepaymentCalc();
 
@@ -194,34 +248,54 @@ contract TestUtil is DSTest {
     /********************************/
     /*** Factory Setup Functions ***/
     /********************************/
-    function createCollateralLockerFactory() public { clFactory   = new CollateralLockerFactory(); }
-    function createDebtLockerFactories()     public { dlFactory   = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
-    function createLiquidityLockerFactory()  public { llFactory   = new LiquidityLockerFactory(); }
-    function createLoanFactory()             public { loanFactory = new LoanFactory(); }
-    function createPoolFactory()             public { poolFactory = new PoolFactory(); }
+    function createPoolFactory()             public { poolFactory = new PoolFactory(address(globals)); }
     function createStakeLockerFactory()      public { slFactory   = new StakeLockerFactory(); }
+    function createLiquidityLockerFactory()  public { llFactory   = new LiquidityLockerFactory(); }
+    function createDebtLockerFactories()     public { dlFactory1  = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
+    function createLoanFactory()             public { loanFactory = new LoanFactory(address(globals)); }
+    function createCollateralLockerFactory() public { clFactory   = new CollateralLockerFactory(); }
+    function createFundingLockerFactory()    public { flFactory   = new FundingLockerFactory(); }
 
     function setUpFactories() public {
+        createPoolFactory();
+        createStakeLockerFactory();
+        createLiquidityLockerFactory();
+        createDebtLockerFactories();
+        createLoanFactory();
         createCollateralLockerFactory();
-        createDebtLockerFactories();    
-        createLiquidityLockerFactory(); 
-        createLoanFactory();            
-        createPoolFactory();            
-        createStakeLockerFactory();     
+        createFundingLockerFactory();
+
+        gov.setValidPoolFactory(address(poolFactory), true);
+        gov.setValidSubFactory( address(poolFactory), address(slFactory),  true);
+        gov.setValidSubFactory( address(poolFactory), address(llFactory),  true);
+        gov.setValidSubFactory( address(poolFactory), address(dlFactory1), true);
+        gov.setValidSubFactory( address(poolFactory), address(dlFactory2), true);
 
         gov.setValidLoanFactory(address(loanFactory), true);
-        gov.setValidPoolFactory(address(poolFactory), true);
-
-        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
-        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
-
-        gov.setValidSubFactory(address(poolFactory), address(llFactory),  true);
-        gov.setValidSubFactory(address(poolFactory), address(slFactory),  true);
-        gov.setValidSubFactory(address(poolFactory), address(dlFactory1), true);
-        gov.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
+        gov.setValidSubFactory( address(loanFactory), address(flFactory), true);
+        gov.setValidSubFactory( address(loanFactory), address(clFactory), true);
     }
 
-    // TBC
+    /**************************************/
+    /*** Liquidity Pool Setup Functions ***/
+    /**************************************/
+    function setUpLiquidityPools() public {
+        // Create and finalize Liquidity Pool
+        pool = Pool(pat.createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            500,
+            100,
+            uint256(-1)
+        ));
+        pat.approve(address(bPool), pool.stakeLocker(), uint(-1));
+        pat.stake(pool.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
+        pat.finalize(address(pool));
+        pat.setOpenToPublic(address(pool), true);
+    }
 
     /******************************/
     /*** Oracle Setup Functions ***/
@@ -229,10 +303,10 @@ contract TestUtil is DSTest {
     function createWethOracle() public { wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this)); }
     function createWbtcOracle() public { wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this)); }
     function createUsdOracle()  public { usdOracle  = new UsdOracle(); }
-    
-    function setUpOracles() public { 
-        createWethOracle(); 
-        createWbtcOracle(); 
+
+    function setUpOracles() public {
+        createWethOracle();
+        createWbtcOracle();
         createUsdOracle();
 
         gov.setPriceOracle(WETH, address(wethOracle));
@@ -247,15 +321,18 @@ contract TestUtil is DSTest {
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);
 
-        // Initialize MPL/USDC Balancer pool (without finalizing)
+        // Initialize MPL/USDC Balancer Pool and whitelist
         bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
-
         usdc.approve(address(bPool), MAX_UINT);
         mpl.approve(address(bPool),  MAX_UINT);
-
         bPool.bind(USDC,         50_000_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
         bPool.bind(address(mpl),    100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
+        bPool.finalize();
+        gov.setValidBalancerPool(address(bPool), true);
 
+        // Transfer 50 BPTs each to pat and pam
+        bPool.transfer(address(pat), bPool.balanceOf(address(this)) / 2);
+        bPool.transfer(address(pam), bPool.balanceOf(address(this)));
     }
     /***  */
 
@@ -301,7 +378,7 @@ contract TestUtil is DSTest {
         if (diff == 0) return;
 
         uint256 denominator = val0 == 0 ? val1 : val0;
-        bool check = ((diff * RAY) / denominator) < (RAY / 10 ** accuracy);   
+        bool check = ((diff * RAY) / denominator) < (RAY / 10 ** accuracy);
 
         if (!check){
             emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", accuracy);
@@ -314,9 +391,9 @@ contract TestUtil is DSTest {
     // Verify equality within difference
     function withinDiff(uint256 val0, uint256 val1, uint256 expectedDiff) public {
         uint actualDiff = val0 > val1 ? val0 - val1 : val1 - val0;
-        bool check = actualDiff <= expectedDiff;   
+        bool check = actualDiff <= expectedDiff;
 
-        if (!check){
+        if (!check) {
             emit log_named_uint("Error: approx a == b not satisfied, accuracy difference ", expectedDiff);
             emit log_named_uint("  Expected", val0);
             emit log_named_uint("    Actual", val1);
@@ -334,7 +411,7 @@ contract TestUtil is DSTest {
 
     // function test_cheat_code_for_slot() public {
     //     address CDAI = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
-    
+
     //     uint256 i = 0;
 
     //     while(IERC20(CDAI).balanceOf(address(this)) == 0) {
@@ -350,7 +427,7 @@ contract TestUtil is DSTest {
     //     }
     //     // assertTrue(false);
     // }
-    
+
     // // Make payment on any given Loan.
     // function makePayment(address _vault, address _borrower) public {
 
