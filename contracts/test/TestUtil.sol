@@ -197,15 +197,23 @@ contract TestUtil is DSTest {
 
     function createEmergencyAdmin() public { emergencyAdmin = new EmergencyAdmin(); }
 
-    function setUpActors() public {
-        createBorrowers();
-        createGovernors();
-        createLPs();
+    function setUpPoolDelegate() public { 
+        createPoolDelegate(); 
+        gov.setPoolDelegateAllowlist(address(pat), true); 
+    } 
+
+    function setUpPoolDelegates() public {
         createPoolDelegates();
+        gov.setPoolDelegateAllowlist(address(pat), true);
+        gov.setPoolDelegateAllowlist(address(pam), true);
+    }
+
+    function setUpActors() public {
+        setUpPoolDelegates();
+        createBorrowers();
+        createLPs();
         createStakers();
         createCommoner();
-        createSecurityAdmin();
-        createEmergencyAdmin();
     }
 
     /**************************************/
@@ -217,6 +225,9 @@ contract TestUtil is DSTest {
     function createBPool()    public { bPool    = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); }
 
     function setUpGlobals() public {
+        createGovernors();
+        createSecurityAdmin();
+        createEmergencyAdmin();
         createMpl();
         createGlobals();
         createTreasury();
@@ -227,8 +238,6 @@ contract TestUtil is DSTest {
         gov.setCollateralAsset(WETH, true);
         gov.setLiquidityAsset(USDC, true);
         gov.setSwapOutRequired(1_000_000);
-        gov.setPoolDelegateAllowlist(address(pat), true);
-        gov.setPoolDelegateAllowlist(address(pam), true);
     }
 
     /**********************************/

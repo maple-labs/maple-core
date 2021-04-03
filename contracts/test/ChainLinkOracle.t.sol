@@ -7,8 +7,8 @@ import "./TestUtil.sol";
 contract ChainlinkOracleTest is TestUtil {
 
     function setUp() public {
-        setUpActors();
         setUpGlobals();
+        createCommoner();
         setUpTokens();
         setUpOracles();
     }

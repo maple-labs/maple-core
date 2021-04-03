@@ -4,23 +4,25 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "./user/Governor.sol";
-import "./user/Borrower.sol";
+// import "./user/Governor.sol";
+// import "./user/Borrower.sol";
 
-import "../CollateralLocker.sol";
-import "../CollateralLockerFactory.sol";
-import "module/maple-token/contracts/MapleToken.sol";
+// import "../CollateralLocker.sol";
+// import "../CollateralLockerFactory.sol";
+// import "module/maple-token/contracts/MapleToken.sol";
 
 contract CollateralLockerFactoryTest is TestUtil {
 
-    Governor                        gov;
+    // Governor                        gov;
 
-    CollateralLockerFactory   clFactory;
-    MapleToken                      mpl;
-    MapleGlobals                globals;
-    Borrower                        bob;
+    // CollateralLockerFactory   clFactory;
+    // MapleToken                      mpl;
+    // MapleGlobals                globals;
+    // Borrower                        bob;
 
     function setUp() public {
+
+        setUp
 
         gov         = new Governor();                                  // Actor: Governor of Maple.
 

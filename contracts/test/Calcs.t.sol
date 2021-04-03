@@ -9,8 +9,9 @@ contract CalcsTest is TestUtil {
     using SafeMath for uint256;
 
     function setUp() public {
-        setUpActors();
         setUpGlobals();
+        setUpPoolDelegate();
+        createBorrower();
         setUpFactories();
         setUpCalcs();
         setUpTokens();
