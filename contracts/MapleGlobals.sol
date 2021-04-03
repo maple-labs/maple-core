@@ -79,7 +79,6 @@ contract MapleGlobals {
     constructor(address _governor, address _mpl, address _admin) public {
         governor             = _governor;
         mpl                  = _mpl;
-        defaultGracePeriod   = 5 days;
         swapOutRequired      = 10_000;     // $10,000 of Pool cover
         fundingPeriod        = 10 days;
         defaultGracePeriod   = 5 days;
