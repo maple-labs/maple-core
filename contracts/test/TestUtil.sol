@@ -191,6 +191,8 @@ contract TestUtil is DSTest {
     function createStaker()         public { sam = new Staker(); }
     function createStakers()        public { sam = new Staker(); sid = new Staker(); sue = new Staker(); }
 
+    function createCommoner()       public { cam = new Commoner(); }
+
     function createSecurityAdmin()  public { securityAdmin = new SecurityAdmin(); }
 
     function createEmergencyAdmin() public { emergencyAdmin = new EmergencyAdmin(); }
@@ -201,6 +203,7 @@ contract TestUtil is DSTest {
         createLPs();
         createPoolDelegates();
         createStakers();
+        createCommoner();
         createSecurityAdmin();
         createEmergencyAdmin();
     }
@@ -300,8 +303,8 @@ contract TestUtil is DSTest {
     /******************************/
     /*** Oracle Setup Functions ***/
     /******************************/
-    function createWethOracle() public { wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this)); }
-    function createWbtcOracle() public { wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this)); }
+    function createWethOracle() public { wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(securityAdmin)); }
+    function createWbtcOracle() public { wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(securityAdmin)); }
     function createUsdOracle()  public { usdOracle  = new UsdOracle(); }
 
     function setUpOracles() public {
