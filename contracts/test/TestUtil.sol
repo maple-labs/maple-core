@@ -16,13 +16,14 @@ import "../MapleGlobals.sol";
 import "../MapleTreasury.sol";
 import "module/maple-token/contracts/MapleToken.sol";
 
+import "../CollateralLockerFactory.sol";
+import "../DebtLockerFactory.sol";
+import "../FundingLockerFactory.sol";
+import "../LiquidityLockerFactory.sol";
+import "../LoanFactory.sol";
+import "../MplRewardsFactory.sol";
 import "../PoolFactory.sol";
 import "../StakeLockerFactory.sol";
-import "../LiquidityLockerFactory.sol";
-import "../DebtLockerFactory.sol";
-import "../LoanFactory.sol";
-import "../CollateralLockerFactory.sol";
-import "../FundingLockerFactory.sol";
 
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
@@ -33,6 +34,7 @@ import "../oracles/UsdOracle.sol";
 
 import "../interfaces/IBPool.sol";
 import "../interfaces/IBFactory.sol";
+import "../interfaces/IStakeLocker.sol";
 
 import "lib/ds-test/contracts/test.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -93,14 +95,15 @@ contract TestUtil is DSTest {
     /*****************/
     /*** Factories ***/
     /*****************/
-    CollateralLockerFactory    clFactory;
-    DebtLockerFactory          dlFactory;
-    DebtLockerFactory         dlFactory2;
-    FundingLockerFactory       flFactory;
-    LiquidityLockerFactory     llFactory;
-    LoanFactory              loanFactory;
-    PoolFactory              poolFactory;
-    StakeLockerFactory         slFactory;
+    CollateralLockerFactory          clFactory;
+    DebtLockerFactory                dlFactory;
+    DebtLockerFactory               dlFactory2;
+    FundingLockerFactory             flFactory;
+    LiquidityLockerFactory           llFactory;
+    LoanFactory                    loanFactory;
+    PoolFactory                    poolFactory;
+    StakeLockerFactory               slFactory;
+    MplRewardsFactory        mplRewardsFactory;
 
     /***********************/
     /*** Maple Contracts ***/
@@ -132,6 +135,11 @@ contract TestUtil is DSTest {
     Pool   pool;
     Pool  pool2;
     Pool  pool3;
+
+    /***************/
+    /*** Lockers ***/
+    /***************/
+    IStakeLocker stakeLocker;
 
     /**********************************/
     /*** Mainnet Contract Addresses ***/
@@ -188,6 +196,7 @@ contract TestUtil is DSTest {
 
     event Debug(string, uint256);
     event Debug(string, address);
+    event Debug(string,    bool);
 
     constructor() public { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
 
@@ -203,7 +212,7 @@ contract TestUtil is DSTest {
     function createHolders()        public { hal = new Holder(); hue = new Holder(); }
 
     function createLP()             public { leo = new LP(); }
-    function createLPs()            public { leo = new LP(); liz = new LP(); lex = new LP(); }
+    function createLPs()            public { leo = new LP(); liz = new LP(); lex = new LP(); lee = new LP(); }
 
     function createPoolDelegate()   public { pat = new PoolDelegate(); }
     function createPoolDelegates()  public { pat = new PoolDelegate(); pam = new PoolDelegate(); }
@@ -241,10 +250,15 @@ contract TestUtil is DSTest {
     /**************************************/
     /*** Maple Contract Setup Functions ***/
     /**************************************/
-    function createMpl()      public { mpl      = new MapleToken("MapleToken", "MAPL", USDC); }
-    function createGlobals()  public { globals  = gov.createGlobals(address(mpl)); }
-    function createTreasury() public { treasury = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); }
-    function createBPool()    public { bPool    = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); }
+    function createMpl()               public { mpl               = new MapleToken("MapleToken", "MAPL", USDC); }
+    function createGlobals()           public { globals           = gov.createGlobals(address(mpl)); }
+    function createTreasury()          public { treasury          = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); }
+    function createBPool()             public { bPool             = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); }
+    
+    function setUpMplRewardsFactory() public { 
+        mplRewardsFactory = gov.createMplRewardsFactory(); 
+        fakeGov.setGovMplRewardsFactory(mplRewardsFactory); 
+    }
 
     function setUpGlobals() public {
         createGovernors();
@@ -316,8 +330,7 @@ contract TestUtil is DSTest {
     /**************************************/
     /*** Liquidity Pool Setup Functions ***/
     /**************************************/
-    function setUpLiquidityPools() public {
-        // Create and finalize Liquidity Pool
+    function createLiquidityPool() public {
         pool = Pool(pat.createPool(
             address(poolFactory),
             USDC,
@@ -328,8 +341,27 @@ contract TestUtil is DSTest {
             100,
             uint256(-1)
         ));
+    }
+
+    function createLiquidityPools() public {
+        createLiquidityPool();
+        pool2 = Pool(pam.createPool(
+            address(poolFactory),
+            USDC,
+            address(bPool),
+            address(slFactory),
+            address(llFactory),
+            7500,
+            50,
+            MAX_UINT // liquidityCap value
+        ));
+    }
+
+    function setUpLiquidityPool() public {
+        createLiquidityPool();
+        stakeLocker = IStakeLocker(pool.stakeLocker());
         pat.approve(address(bPool), pool.stakeLocker(), uint(-1));
-        pat.stake(pool.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
+        pat.stake(pool.stakeLocker(), bPool.balanceOf(address(pat)));
         pat.finalize(address(pool));
         pat.setOpenToPublic(address(pool), true);
     }
@@ -357,7 +389,7 @@ contract TestUtil is DSTest {
     /*************************************/
     /*** Balancer Pool Setup Functions ***/
     /*************************************/
-    function setUpBalancerPool() public {
+    function createBalancerPool() public {
         // Mint 50m USDC into this account
         mint("USDC", address(this), 50_000_000 * USD);
 
@@ -369,10 +401,28 @@ contract TestUtil is DSTest {
         bPool.bind(address(mpl),    100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
         bPool.finalize();
         gov.setValidBalancerPool(address(bPool), true);
+    }
 
+    function setUpBalancerPool() public {
+        createBalancerPool(); 
+        transferBptsToPoolDelegates();
+    }
+
+    function setUpBalancerPoolForStakers() public {
+        createBalancerPool(); 
+        transferBptsToPoolDelegateAndStakers();
+    }
+
+    function transferBptsToPoolDelegates() public {
         // Transfer 50 BPTs each to pat and pam
         bPool.transfer(address(pat), bPool.balanceOf(address(this)) / 2);
         bPool.transfer(address(pam), bPool.balanceOf(address(this)));
+    }
+
+    function transferBptsToPoolDelegateAndStakers() public {
+        bPool.transfer(address(pat), 50 * WAD);  // Give PD a balance of BPTs to finalize pool
+        bPool.transfer(address(sam), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
+        bPool.transfer(address(sid), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
     }
 
     /****************************/
@@ -385,13 +435,18 @@ contract TestUtil is DSTest {
     function createLoan(uint256[6] memory specs) public {
         loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
+    function createLoans() public {
+        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
+        loan  = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan3 = bud.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+    }
 
     /******************************/
     /*** Test Utility Functions ***/
     /******************************/
 
     function setUpTokens() public {
-
         gov.setLiquidityAsset(DAI,   true);
         gov.setLiquidityAsset(USDC,  true);
         gov.setCollateralAsset(DAI,  true);

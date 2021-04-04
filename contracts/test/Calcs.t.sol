@@ -17,7 +17,7 @@ contract CalcsTest is TestUtil {
         setUpTokens();
         setUpOracles();
         setUpBalancerPool();
-        setUpLiquidityPools();
+        setUpLiquidityPool();
     }
 
     function setUpRepayments(uint256 loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee, uint256 premiumFee) public {

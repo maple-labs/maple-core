@@ -4,32 +4,11 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "./user/Governor.sol";
-
-import "../MplRewards.sol";
-import "../MplRewardsFactory.sol";
-
-import "module/maple-token/contracts/MapleToken.sol";
-
 contract MplRewardsFactoryTest is TestUtil {
 
-    Governor                        gov;
-    Governor                    fakeGov;
-
-    MapleGlobals                globals;
-    MapleToken                      mpl;
-    MplRewardsFactory mplRewardsFactory;
-
     function setUp() public {
-        gov      = new Governor();                                  // Actor: Governor of Maple.
-        fakeGov  = new Governor();                                  // Actor: Fake Governor of Maple.
-        mpl      = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
-        globals  = gov.createGlobals(address(mpl));                 // Setup Maple Globals.
-
-        mplRewardsFactory = gov.createMplRewardsFactory();
-
-        fakeGov.setGovGlobals(globals);                      // Point to globals created by gov.
-        fakeGov.setGovMplRewardsFactory(mplRewardsFactory);  // Point to mplRewardsFactory created by gov.
+        setUpGlobals();
+        setUpMplRewardsFactory();
     }
 
     function test_constructor() public {
