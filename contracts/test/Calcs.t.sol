@@ -49,16 +49,12 @@ contract CalcsTest is TestUtil {
 
     using SafeMath for uint256;
 
-    Borrower                               eli;
-    Borrower                               fay;
-    Borrower                               hal;
+    Borrower                               bob;
+    Borrower                               ben;
     Governor                               gov;
-    LP                                     bob;
-    LP                                     che;
-    LP                                     dan;
-    LP                                     kim;
-    PoolDelegate                           sid;
-    PoolDelegate                           joe;
+
+    PoolDelegate                           pat;
+    PoolDelegate                           pam;
 
     RepaymentCalc                repaymentCalc;
     CollateralLockerFactory          clFactory;
@@ -88,16 +84,10 @@ contract CalcsTest is TestUtil {
 
     function setUp() public {
 
-        eli            = new Borrower();                                                // Actor: Borrower of the Loan.
-        fay            = new Borrower();                                                // Actor: Borrower of the Loan.
-        hal            = new Borrower();                                                // Actor: Borrower of the Loan.
+        bob            = new Borrower();                                                // Actor: Borrower of the Loan.
         gov            = new Governor();                                                // Actor: Governor of Maple.
-        bob            = new LP();                                                      // Actor: Liquidity provider.
-        che            = new LP();                                                      // Actor: Liquidity provider.
-        dan            = new LP();                                                      // Actor: Liquidity provider.
-        kim            = new LP();                                                      // Actor: Liquidity provider.
-        sid            = new PoolDelegate();                                            // Actor: Manager of the Pool.
-        joe            = new PoolDelegate();                                            // Actor: Manager of the Pool.
+        pat            = new PoolDelegate();                                            // Actor: Manager of the Pool.
+        pam            = new PoolDelegate();                                            // Actor: Manager of the Pool.
 
         mpl            = new MapleToken("MapleToken", "MAPL", USDC);
         globals        = gov.createGlobals(address(mpl));
@@ -150,16 +140,16 @@ contract CalcsTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
 
-        gov.setPoolDelegateAllowlist(address(sid), true);
-        gov.setPoolDelegateAllowlist(address(joe), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
+        gov.setPoolDelegateAllowlist(address(pam), true);
         gov.setMapleTreasury(address(trs));
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
         assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
 
-        bPool.transfer(address(sid), bPool.balanceOf(address(this)) / 2);
-        bPool.transfer(address(joe), bPool.balanceOf(address(this)));
+        bPool.transfer(address(pat), bPool.balanceOf(address(this)) / 2);
+        bPool.transfer(address(pam), bPool.balanceOf(address(this)));
 
         gov.setValidBalancerPool(address(bPool), true);
 
@@ -172,7 +162,7 @@ contract CalcsTest is TestUtil {
         gov.setSwapOutRequired(1_000_000);
 
         // Create and finalize Liquidity Pool
-        pool1 = Pool(sid.createPool(
+        pool1 = Pool(pat.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -182,11 +172,11 @@ contract CalcsTest is TestUtil {
             100,
             uint256(-1)
         ));
-        sid.approve(address(bPool), pool1.stakeLocker(), uint(-1));
-        sid.stake(pool1.stakeLocker(), bPool.balanceOf(address(sid)) / 2);
+        pat.approve(address(bPool), pool1.stakeLocker(), uint(-1));
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
 
-        sid.finalize(address(pool1)); 
-        sid.setOpenToPublic(address(pool1), true);
+        pat.finalize(address(pool1)); 
+        pat.setOpenToPublic(address(pool1), true);
     }
 
     function setUpRepayments(uint256 loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee, uint256 premiumFee) public {
@@ -214,16 +204,16 @@ contract CalcsTest is TestUtil {
             // Create loan, fund loan, draw down on loan
             address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
             uint256[6] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000, 7];
-            loan = eli.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
+            loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
         }
 
-        assertTrue(sid.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), loanAmt));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan),  address(dlFactory1), loanAmt));
 
         {
             uint cReq = loan.collateralRequiredForDrawdown(loanAmt); // wETH required for 1_000 USDC drawdown on loan
-            mint("WETH", address(eli), cReq);
-            eli.approve(WETH, address(loan), cReq);
-            eli.drawdown(address(loan), loanAmt);
+            mint("WETH", address(bob), cReq);
+            bob.approve(WETH, address(loan), cReq);
+            bob.drawdown(address(loan), loanAmt);
         }
     }
 
@@ -245,10 +235,10 @@ contract CalcsTest is TestUtil {
 
         (uint256 lastTotal,, uint256 lastInterest,,) = loan.getNextPayment();
 
-        mint("USDC",      address(eli),  loanAmt * 1000); // Mint enough to pay interest
-        eli.approve(USDC, address(loan), loanAmt * 1000);
+        mint("USDC",      address(bob),  loanAmt * 1000); // Mint enough to pay interest
+        bob.approve(USDC, address(loan), loanAmt * 1000);
 
-        uint256 beforeBal = IERC20(USDC).balanceOf(address(eli));
+        uint256 beforeBal = IERC20(USDC).balanceOf(address(bob));
 
         while (loan.paymentsRemaining() > 0) {
 
@@ -261,7 +251,7 @@ contract CalcsTest is TestUtil {
 
             sumTotal += total;
 
-            eli.makePayment(address(loan)); 
+            bob.makePayment(address(loan)); 
 
             if (loan.paymentsRemaining() > 0) {
                 assertEq(total,        lastTotal);
@@ -272,7 +262,7 @@ contract CalcsTest is TestUtil {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
                 withinPrecision(totalPaid, sumTotal, 8);
-                assertEq(beforeBal - IERC20(USDC).balanceOf(address(eli)), sumTotal); // Pays back all principal, plus interest
+                assertEq(beforeBal - IERC20(USDC).balanceOf(address(bob)), sumTotal); // Pays back all principal, plus interest
             }
             
             lastTotal    = total;
@@ -300,10 +290,10 @@ contract CalcsTest is TestUtil {
         hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
         (uint256 lastTotal,,,,) =  loan.getNextPayment();
 
-        mint("USDC",      address(eli),  loanAmt * 1000); // Mint enough to pay interest
-        eli.approve(USDC, address(loan), loanAmt * 1000);
+        mint("USDC",      address(bob),  loanAmt * 1000); // Mint enough to pay interest
+        bob.approve(USDC, address(loan), loanAmt * 1000);
 
-        uint256 beforeBal = IERC20(USDC).balanceOf(address(eli));
+        uint256 beforeBal = IERC20(USDC).balanceOf(address(bob));
 
         while (loan.paymentsRemaining() > 0) {
             hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
@@ -319,7 +309,7 @@ contract CalcsTest is TestUtil {
 
             sumTotal += total;
             
-            eli.makePayment(address(loan));
+            bob.makePayment(address(loan));
 
             if (loan.paymentsRemaining() > 0) {
                 assertEq(total,     lastTotal);
@@ -331,7 +321,7 @@ contract CalcsTest is TestUtil {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
                 withinPrecision(totalPaid, sumTotal, 8);
-                assertEq(beforeBal - IERC20(USDC).balanceOf(address(eli)), sumTotal); // Pays back all principal, plus interest
+                assertEq(beforeBal - IERC20(USDC).balanceOf(address(bob)), sumTotal); // Pays back all principal, plus interest
             }
             
             lastTotal = total;
@@ -345,10 +335,10 @@ contract CalcsTest is TestUtil {
 
         setUpRepayments(loanAmt, 100, 1, 1, 100, premiumFee);
 
-        mint("USDC",      address(eli),  loanAmt * 1000); // Mint enough to pay interest
-        eli.approve(USDC, address(loan), loanAmt * 1000);
+        mint("USDC",      address(bob),  loanAmt * 1000); // Mint enough to pay interest
+        bob.approve(USDC, address(loan), loanAmt * 1000);
 
-        uint256 beforeBal = IERC20(USDC).balanceOf(address(eli));
+        uint256 beforeBal = IERC20(USDC).balanceOf(address(bob));
 
         (uint256 total,         uint256 principal,         uint256 interest)         = loan.getFullPayment();                         // USDC required for payment on loan
         (uint256 total_premium, uint256 principal_premium, uint256 interest_premium) = premiumCalc.getPremiumPayment(address(loan));  // USDC required for payment on loan
@@ -359,9 +349,9 @@ contract CalcsTest is TestUtil {
 
         assertEq(interest, principal * premiumCalc.premiumFee() / 10_000);
 
-        eli.makeFullPayment(address(loan));
+        bob.makeFullPayment(address(loan));
 
-        uint256 afterBal = IERC20(USDC).balanceOf(address(eli));
+        uint256 afterBal = IERC20(USDC).balanceOf(address(bob));
         
         assertEq(beforeBal - afterBal, total);
     }

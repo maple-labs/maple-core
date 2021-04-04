@@ -27,8 +27,8 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 contract PoolFactoryTest is TestUtil {
 
     Governor                       gov;
-    PoolDelegate                   ali;
-    EmergencyAdmin                 mic;
+    PoolDelegate                   pat;
+    EmergencyAdmin      emergencyAdmin;
 
     MapleToken                     mpl;
     MapleGlobals               globals;
@@ -42,9 +42,10 @@ contract PoolFactoryTest is TestUtil {
     
     function setUp() public {
 
-        gov         = new Governor();       // Actor: Governor of Maple.
-        ali         = new PoolDelegate();   // Actor: Manager of the Pool.
-        mic         = new EmergencyAdmin(); // Actor: Emergency Admin of the protocol.
+        gov = new Governor();       // Actor: Governor of Maple.
+        pat = new PoolDelegate();   // Actor: Manager of the Pool.
+
+        emergencyAdmin = new EmergencyAdmin(); // Actor: Emergency Admin of the protocol.
 
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);
         globals     = gov.createGlobals(address(mpl));
@@ -65,7 +66,7 @@ contract PoolFactoryTest is TestUtil {
         gov.setPriceOracle(WBTC, address(wbtcOracle));
         gov.setPriceOracle(USDC, address(usdOracle));
 
-        gov.setAdmin(address(mic));
+        gov.setAdmin(address(emergencyAdmin));
 
         mint("USDC", address(this), 50_000_000 * 10 ** 6);
 
@@ -102,7 +103,7 @@ contract PoolFactoryTest is TestUtil {
     }
         
     function createPoolFails() internal returns(bool) {
-        return !ali.try_createPool(
+        return !pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
@@ -118,7 +119,7 @@ contract PoolFactoryTest is TestUtil {
         gov.setValidPoolFactory(address(poolFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        gov.setPoolDelegateAllowlist(address(ali), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
         gov.setLiquidityAsset(USDC, true);
     }
 
@@ -139,9 +140,9 @@ contract PoolFactoryTest is TestUtil {
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
 
         // PoolFactory:MSG_SENDER_NOT_ALLOWED
-        gov.setPoolDelegateAllowlist(address(ali), false);
+        gov.setPoolDelegateAllowlist(address(pat), false);
         assertTrue(createPoolFails()); 
-        gov.setPoolDelegateAllowlist(address(ali), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
 
         // PoolFactory:LIQ_ASSET_NOT_ALLOWED
         gov.setLiquidityAsset(USDC, false);
@@ -154,10 +155,10 @@ contract PoolFactoryTest is TestUtil {
         bPool.finalize();
         
         // PoolFactory:STAKE_ASSET_NOT_BPOOL
-        assertTrue(!ali.try_createPool(
+        assertTrue(!pat.try_createPool(
             address(poolFactory),
             USDC,
-            address(ali),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
+            address(pat),  // Passing in address of pool delegate for StakeAsset, an EOA which should fail isBPool check.
             address(slFactory),
             address(llFactory),
             500,
@@ -173,7 +174,7 @@ contract PoolFactoryTest is TestUtil {
         gov.setLiquidityAsset(DAI, true);
         
         // Pool:Pool:INVALID_STAKING_POOL
-        assertTrue(!ali.try_createPool(
+        assertTrue(!pat.try_createPool(
             address(poolFactory),
             DAI,
             address(bPool),    // This pool uses MPL/USDC, so it can't cover DAI losses
@@ -205,7 +206,7 @@ contract PoolFactoryTest is TestUtil {
 
         bPool.finalize();
         
-        assertTrue(!ali.try_createPool(
+        assertTrue(!pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -218,10 +219,10 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_invalid_liquidity_cap() public {
-        gov.setPoolDelegateAllowlist(address(ali), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
         bPool.finalize();
         
-        assertTrue(!ali.try_createPool(
+        assertTrue(!pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -238,7 +239,7 @@ contract PoolFactoryTest is TestUtil {
         bPool.finalize();
         
         // PoolLib:INVALID_FEES
-        assertTrue(!ali.try_createPool(
+        assertTrue(!pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -249,7 +250,7 @@ contract PoolFactoryTest is TestUtil {
             MAX_UINT
         ));
 
-        assertTrue(ali.try_createPool(
+        assertTrue(pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -266,7 +267,7 @@ contract PoolFactoryTest is TestUtil {
         setUpAllowlisting();
         
         // Pool:INVALID_BALANCER_POOL
-        assertTrue(!ali.try_createPool(
+        assertTrue(!pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -282,12 +283,12 @@ contract PoolFactoryTest is TestUtil {
 
         setUpAllowlisting();
         gov.setLiquidityAsset(USDC, true);
-        gov.setPoolDelegateAllowlist(address(ali), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
         bPool.finalize();
 
         // Pause PoolFactory and attempt createPool()
         assertTrue( gov.try_pause(address(poolFactory)));
-        assertTrue(!ali.try_createPool(
+        assertTrue(!pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -301,7 +302,7 @@ contract PoolFactoryTest is TestUtil {
 
         // Unpause PoolFactory and createPool()
         assertTrue(gov.try_unpause(address(poolFactory)));
-        assertTrue(ali.try_createPool(
+        assertTrue(pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -315,8 +316,8 @@ contract PoolFactoryTest is TestUtil {
 
         // Pause protocol and attempt createPool()
         assertTrue(!globals.protocolPaused());
-        assertTrue( mic.try_setProtocolPause(address(globals), true));
-        assertTrue(!ali.try_createPool(
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -329,8 +330,8 @@ contract PoolFactoryTest is TestUtil {
         assertEq(poolFactory.poolsCreated(), 1);
 
         // Unpause protocol and createPool()
-        assertTrue(mic.try_setProtocolPause(address(globals), false));
-        assertTrue(ali.try_createPool(
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -347,7 +348,7 @@ contract PoolFactoryTest is TestUtil {
         setUpAllowlisting();
         bPool.finalize();
 
-        assertTrue(!ali.try_createPool(
+        assertTrue(!pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -366,13 +367,13 @@ contract PoolFactoryTest is TestUtil {
 
         gov.setLiquidityAsset(USDC, true);
 
-        gov.setPoolDelegateAllowlist(address(ali), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
         bPool.finalize();
 
         assertEq(bPool.balanceOf(address(this)), 100 * WAD);
         assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
 
-        assertTrue(ali.try_createPool(
+        assertTrue(pat.try_createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -391,7 +392,7 @@ contract PoolFactoryTest is TestUtil {
 
         assertEq(address(pool.liquidityAsset()),  USDC);
         assertEq(pool.stakeAsset(),               address(bPool));
-        assertEq(pool.poolDelegate(),             address(ali));
+        assertEq(pool.poolDelegate(),             address(pat));
         assertEq(pool.stakingFee(),               500);
         assertEq(pool.delegateFee(),              100);
         assertEq(pool.liquidityCap(),             MAX_UINT);

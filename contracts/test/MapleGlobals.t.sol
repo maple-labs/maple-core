@@ -30,8 +30,8 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 contract MapleGlobalsTest is TestUtil {
 
     Governor                         gov;
-    PoolDelegate                     sid;
-    PoolDelegate                     joe;
+    PoolDelegate                     pat;
+    PoolDelegate                     pam;
 
     RepaymentCalc          repaymentCalc;
     CollateralLockerFactory    clFactory;
@@ -65,8 +65,8 @@ contract MapleGlobalsTest is TestUtil {
     function setUp() public {
 
         gov         = new Governor();       // Actor: Governor of Maple.
-        sid         = new PoolDelegate();   // Actor: Manager of the Pool.
-        joe         = new PoolDelegate();   // Actor: Manager of the Pool.
+        pat         = new PoolDelegate();   // Actor: Manager of the Pool.
+        pam         = new PoolDelegate();   // Actor: Manager of the Pool.
 
         mpl           = new MapleToken("MapleToken", "MAPLE", USDC);
         globals       = gov.createGlobals(address(mpl));
@@ -91,7 +91,7 @@ contract MapleGlobalsTest is TestUtil {
 
         // The following code was adopted from maple-core/scripts/setup.js
         gov.setMapleTreasury(address(trs));
-        gov.setPoolDelegateAllowlist(address(sid), true);
+        gov.setPoolDelegateAllowlist(address(pat), true);
 
         gov.setLiquidityAsset(DAI,   true);
         gov.setLiquidityAsset(USDC,  true);
@@ -131,7 +131,7 @@ contract MapleGlobalsTest is TestUtil {
     }
 
     function test_setup() public {
-        assertTrue(globals.isValidPoolDelegate(address(sid)));
+        assertTrue(globals.isValidPoolDelegate(address(pat)));
 
         assertTrue(globals.isValidLiquidityAsset(DAI));
         assertTrue(globals.isValidLiquidityAsset(USDC));
@@ -173,20 +173,20 @@ contract MapleGlobalsTest is TestUtil {
         fakeGov2.setGovGlobals(globals);
 
         // setValidPoolFactory()
-        assertTrue(!globals.isValidPoolFactory(address(sid)));             // Use dummy address since poolFactory is already valid
-        assertTrue(!fakeGov.try_setValidPoolFactory(address(sid), true));  // Non-governor cant set
-        assertTrue(     gov.try_setValidPoolFactory(address(sid), true));
-        assertTrue( globals.isValidPoolFactory(address(sid)));
-        assertTrue(     gov.try_setValidPoolFactory(address(sid), false));
-        assertTrue(!globals.isValidPoolFactory(address(sid)));
+        assertTrue(!globals.isValidPoolFactory(address(pat)));             // Use dummy address since poolFactory is already valid
+        assertTrue(!fakeGov.try_setValidPoolFactory(address(pat), true));  // Non-governor cant set
+        assertTrue(     gov.try_setValidPoolFactory(address(pat), true));
+        assertTrue( globals.isValidPoolFactory(address(pat)));
+        assertTrue(     gov.try_setValidPoolFactory(address(pat), false));
+        assertTrue(!globals.isValidPoolFactory(address(pat)));
 
         // setValidLoanFactory()
-        assertTrue(!globals.isValidLoanFactory(address(sid)));             // Use dummy address since loanFactory is already valid
-        assertTrue(!fakeGov.try_setValidLoanFactory(address(sid), true));  // Non-governor cant set
-        assertTrue(     gov.try_setValidLoanFactory(address(sid), true));
-        assertTrue( globals.isValidLoanFactory(address(sid)));
-        assertTrue(     gov.try_setValidLoanFactory(address(sid), false));
-        assertTrue(!globals.isValidLoanFactory(address(sid)));
+        assertTrue(!globals.isValidLoanFactory(address(pat)));             // Use dummy address since loanFactory is already valid
+        assertTrue(!fakeGov.try_setValidLoanFactory(address(pat), true));  // Non-governor cant set
+        assertTrue(     gov.try_setValidLoanFactory(address(pat), true));
+        assertTrue( globals.isValidLoanFactory(address(pat)));
+        assertTrue(     gov.try_setValidLoanFactory(address(pat), false));
+        assertTrue(!globals.isValidLoanFactory(address(pat)));
 
         // setValidSubFactory()
         assertTrue( globals.validSubFactories(address(poolFactory), address(dlFactory)));
@@ -197,12 +197,12 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue( globals.validSubFactories(address(poolFactory), address(dlFactory)));
         
         // setPoolDelegateAllowlist()
-        assertTrue(!globals.isValidPoolDelegate(address(joe)));
-        assertTrue(!fakeGov.try_setPoolDelegateAllowlist(address(joe), true));  // Non-governor cant set
-        assertTrue(     gov.try_setPoolDelegateAllowlist(address(joe), true));
-        assertTrue( globals.isValidPoolDelegate(address(joe)));
-        assertTrue(     gov.try_setPoolDelegateAllowlist(address(joe), false));
-        assertTrue(!globals.isValidPoolDelegate(address(joe)));
+        assertTrue(!globals.isValidPoolDelegate(address(pam)));
+        assertTrue(!fakeGov.try_setPoolDelegateAllowlist(address(pam), true));  // Non-governor cant set
+        assertTrue(     gov.try_setPoolDelegateAllowlist(address(pam), true));
+        assertTrue( globals.isValidPoolDelegate(address(pam)));
+        assertTrue(     gov.try_setPoolDelegateAllowlist(address(pam), false));
+        assertTrue(!globals.isValidPoolDelegate(address(pam)));
 
         // setDefaultUniswapPath()
         assertTrue(!fakeGov.try_setDefaultUniswapPath(WETH, USDC, USDC));  // Non-governor cant set

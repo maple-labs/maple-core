@@ -21,9 +21,9 @@ import "module/maple-token/contracts/MapleToken.sol";
 
 contract MplRewardsTest is TestUtil {
 
-    Farmer                            ali;
-    Farmer                            bob;
-    Farmer                            che;
+    Farmer                            fay;
+    Farmer                            fez;
+    Farmer                            fox;
     Governor                          gov;
     Governor                      fakeGov;
     PoolDelegate                      sid;
@@ -43,9 +43,9 @@ contract MplRewardsTest is TestUtil {
 
     function setUp() public {
 
-        ali     = new Farmer(mplRewards, pool);  // Actor: Yield farmer
-        bob     = new Farmer(mplRewards, pool);  // Actor: Yield farmer
-        che     = new Farmer(mplRewards, pool);  // Actor: Yield farmer
+        fay     = new Farmer(mplRewards, pool);  // Actor: Yield farmer
+        fez     = new Farmer(mplRewards, pool);  // Actor: Yield farmer
+        fox     = new Farmer(mplRewards, pool);  // Actor: Yield farmer
         gov     = new Governor();                    // Actor: Governor of Maple.
         fakeGov = new Governor();                    // Actor: Fake Governor of Maple.
         sid     = new PoolDelegate();                // Actor: Manager of the Pool.
@@ -111,21 +111,21 @@ contract MplRewardsTest is TestUtil {
 
         fakeGov.setGovMplRewards(mplRewards); // Used to assert failures 
 
-        ali = new Farmer(mplRewards, pool);
-        bob = new Farmer(mplRewards, pool);
-        che = new Farmer(mplRewards, pool);
+        fay = new Farmer(mplRewards, pool);
+        fez = new Farmer(mplRewards, pool);
+        fox = new Farmer(mplRewards, pool);
 
-        mint("USDC", address(ali), 1000 * USD);
-        mint("USDC", address(bob), 1000 * USD);
-        mint("USDC", address(che), 1000 * USD);
+        mint("USDC", address(fay), 1000 * USD);
+        mint("USDC", address(fez), 1000 * USD);
+        mint("USDC", address(fox), 1000 * USD);
 
-        ali.approve(USDC, address(pool), MAX_UINT);
-        bob.approve(USDC, address(pool), MAX_UINT);
-        che.approve(USDC, address(pool), MAX_UINT);
+        fay.approve(USDC, address(pool), MAX_UINT);
+        fez.approve(USDC, address(pool), MAX_UINT);
+        fox.approve(USDC, address(pool), MAX_UINT);
 
-        ali.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
-        bob.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
-        che.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
+        fay.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
+        fez.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
+        fox.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
     }
 
     /*******************************/
@@ -172,38 +172,38 @@ contract MplRewardsTest is TestUtil {
     }
 
     function test_recoverERC20() public {
-        mint("USDC", address(ali), 1000 * USD);
+        mint("USDC", address(fay), 1000 * USD);
 
-        assertEq(IERC20(USDC).balanceOf(address(ali)),            1000 * USD);
+        assertEq(IERC20(USDC).balanceOf(address(fay)),            1000 * USD);
         assertEq(IERC20(USDC).balanceOf(address(gov)),                     0);
         assertEq(IERC20(USDC).balanceOf(address(mplRewards)),              0);
-        assertEq(mplRewards.balanceOf(address(ali)),                       0);
+        assertEq(mplRewards.balanceOf(address(fay)),                       0);
         assertEq(mplRewards.totalSupply(),                                 0);
         
-        ali.transfer(USDC, address(mplRewards), 1000 * USD); // Ali transfers USDC directly into Staking rewards accidentally
+        fay.transfer(USDC, address(mplRewards), 1000 * USD); // Ali transfers USDC directly into Staking rewards accidentally
         
-        assertEq(IERC20(USDC).balanceOf(address(ali)),                     0);
+        assertEq(IERC20(USDC).balanceOf(address(fay)),                     0);
         assertEq(IERC20(USDC).balanceOf(address(gov)),                     0);
         assertEq(IERC20(USDC).balanceOf(address(mplRewards)),     1000 * USD);
-        assertEq(mplRewards.balanceOf(address(ali)),                       0);
+        assertEq(mplRewards.balanceOf(address(fay)),                       0);
         assertEq(mplRewards.totalSupply(),                                 0);
 
         assertTrue(!fakeGov.try_recoverERC20(USDC, 400 * USD));
         assertTrue(     gov.try_recoverERC20(USDC, 400 * USD));
 
-        assertEq(IERC20(USDC).balanceOf(address(ali)),                     0);
+        assertEq(IERC20(USDC).balanceOf(address(fay)),                     0);
         assertEq(IERC20(USDC).balanceOf(address(gov)),             400 * USD);
         assertEq(IERC20(USDC).balanceOf(address(mplRewards)),      600 * USD);
-        assertEq(mplRewards.balanceOf(address(ali)),                       0);
+        assertEq(mplRewards.balanceOf(address(fay)),                       0);
         assertEq(mplRewards.totalSupply(),                                 0);
 
         assertTrue(!fakeGov.try_recoverERC20(USDC, 600 * USD));
         assertTrue(     gov.try_recoverERC20(USDC, 600 * USD));
 
-        assertEq(IERC20(USDC).balanceOf(address(ali)),                     0);
+        assertEq(IERC20(USDC).balanceOf(address(fay)),                     0);
         assertEq(IERC20(USDC).balanceOf(address(gov)),            1000 * USD);
         assertEq(IERC20(USDC).balanceOf(address(mplRewards)),              0);
-        assertEq(mplRewards.balanceOf(address(ali)),                       0);
+        assertEq(mplRewards.balanceOf(address(fay)),                       0);
         assertEq(mplRewards.totalSupply(),                                 0);
     }
 
@@ -236,8 +236,8 @@ contract MplRewardsTest is TestUtil {
         assertTrue(!mplRewards.paused());
 
         // Ali can stake
-        ali.approve(address(mplRewards), 100 * WAD);
-        assertTrue(ali.try_stake(100 * WAD));             
+        fay.approve(address(mplRewards), 100 * WAD);
+        assertTrue(fay.try_stake(100 * WAD));             
 
         // Set to paused
         assertTrue(!fakeGov.try_setPaused(true));
@@ -246,23 +246,23 @@ contract MplRewardsTest is TestUtil {
         assertTrue(mplRewards.paused());
 
         // Bob can't stake
-        bob.approve(address(mplRewards), 100 * WAD);
-        assertTrue(!bob.try_stake(100 * WAD));
+        fez.approve(address(mplRewards), 100 * WAD);
+        assertTrue(!fez.try_stake(100 * WAD));
 
         // Ali can't withdraw
-        ali.approve(address(mplRewards), 100 * WAD);
-        assertTrue(!ali.try_withdraw(100 * WAD));
+        fay.approve(address(mplRewards), 100 * WAD);
+        assertTrue(!fay.try_withdraw(100 * WAD));
 
         // Set to unpaused
         assertTrue(!fakeGov.try_setPaused(false));
         assertTrue(     gov.try_setPaused(false));
 
         assertTrue(!mplRewards.paused());
-        assertTrue(ali.try_withdraw(100 * WAD));
+        assertTrue(fay.try_withdraw(100 * WAD));
 
         // Bob can stake
-        bob.approve(address(mplRewards), 100 * WAD);
-        assertTrue(bob.try_stake(100 * WAD));
+        fez.approve(address(mplRewards), 100 * WAD);
+        assertTrue(fez.try_stake(100 * WAD));
     }
 
     /****************************/
@@ -271,49 +271,49 @@ contract MplRewardsTest is TestUtil {
     function test_stake() public {
         uint256 start = block.timestamp;
 
-        assertEq(pool.balanceOf(address(ali)),           1000 * WAD);
-        assertEq(pool.depositDate(address(ali)),              start);
+        assertEq(pool.balanceOf(address(fay)),           1000 * WAD);
+        assertEq(pool.depositDate(address(fay)),              start);
         assertEq(pool.depositDate(address(mplRewards)),           0);  // MplRewards depDate should always be zero so that it can avoid lockup logic
-        assertEq(mplRewards.balanceOf(address(ali)),              0);
+        assertEq(mplRewards.balanceOf(address(fay)),              0);
         assertEq(mplRewards.totalSupply(),                        0);
 
         hevm.warp(start + 1 days); // Warp to ensure no effect on depositDates
 
-        assertTrue(!ali.try_stake(100 * WAD));  // Can't stake before approval
+        assertTrue(!fay.try_stake(100 * WAD));  // Can't stake before approval
 
-        ali.approve(address(mplRewards), 100 * WAD);
+        fay.approve(address(mplRewards), 100 * WAD);
 
-        assertTrue(!ali.try_stake(0));          // Can't stake zero
-        assertTrue( ali.try_stake(100 * WAD));  // Can stake after approval
+        assertTrue(!fay.try_stake(0));          // Can't stake zero
+        assertTrue( fay.try_stake(100 * WAD));  // Can stake after approval
 
-        assertEq(pool.balanceOf(address(ali)),           900 * WAD);
-        assertEq(pool.depositDate(address(ali)),             start);  // Has not changed
+        assertEq(pool.balanceOf(address(fay)),           900 * WAD);
+        assertEq(pool.depositDate(address(fay)),             start);  // Has not changed
         assertEq(pool.depositDate(address(mplRewards)),          0);  // Has not changed
-        assertEq(mplRewards.balanceOf(address(ali)),     100 * WAD);
+        assertEq(mplRewards.balanceOf(address(fay)),     100 * WAD);
         assertEq(mplRewards.totalSupply(),               100 * WAD);
     }
 
     function test_withdraw() public {
         uint256 start = block.timestamp;
 
-        ali.approve(address(mplRewards), 100 * WAD);
-        ali.stake(100 * WAD);
+        fay.approve(address(mplRewards), 100 * WAD);
+        fay.stake(100 * WAD);
 
         hevm.warp(start + 1 days); // Warp to ensure no effect on depositDates
 
-        assertEq(pool.balanceOf(address(ali)),            900 * WAD);
-        assertEq(pool.depositDate(address(ali)),              start);
+        assertEq(pool.balanceOf(address(fay)),            900 * WAD);
+        assertEq(pool.depositDate(address(fay)),              start);
         assertEq(pool.depositDate(address(mplRewards)),           0);  // MplRewards depDate should always be zero so that it can avoid lockup logic
-        assertEq(mplRewards.balanceOf(address(ali)),      100 * WAD);
+        assertEq(mplRewards.balanceOf(address(fay)),      100 * WAD);
         assertEq(mplRewards.totalSupply(),                100 * WAD);
 
-        assertTrue(!ali.try_withdraw(0));          // Can't withdraw zero
-        assertTrue( ali.try_withdraw(100 * WAD));  // Can withdraw 
+        assertTrue(!fay.try_withdraw(0));          // Can't withdraw zero
+        assertTrue( fay.try_withdraw(100 * WAD));  // Can withdraw 
 
-        assertEq(pool.balanceOf(address(ali)),           1000 * WAD);
-        assertEq(pool.depositDate(address(ali)),              start);  // Does not change
+        assertEq(pool.balanceOf(address(fay)),           1000 * WAD);
+        assertEq(pool.depositDate(address(fay)),              start);  // Does not change
         assertEq(pool.depositDate(address(mplRewards)),           0);  // MplRewards depDate should always be zero so that it can avoid lockup logic
-        assertEq(mplRewards.balanceOf(address(ali)),              0);
+        assertEq(mplRewards.balanceOf(address(fay)),              0);
         assertEq(mplRewards.totalSupply(),                        0);
     }
 
@@ -340,9 +340,9 @@ contract MplRewardsTest is TestUtil {
     /*** Rewards accounting testing ***/
     /**********************************/
     function test_rewards_single_epoch() public {
-        ali.approve(address(mplRewards), 100 * WAD);
-        bob.approve(address(mplRewards), 100 * WAD);
-        ali.stake(10 * WAD);
+        fay.approve(address(mplRewards), 100 * WAD);
+        fez.approve(address(mplRewards), 100 * WAD);
+        fay.stake(10 * WAD);
 
         mpl.transfer(address(mplRewards), 25_000 * WAD);
 
@@ -359,7 +359,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = 0 post-stake ***/
         assertRewardsAccounting({
-            user:                   address(ali),  // User for accounting
+            user:                   address(fay),  // User for accounting
             totalSupply:            10 * WAD,      // Ali's stake
             rewardPerTokenStored:   0,             // Starting state
             userRewardPerTokenPaid: 0,             // Starting state
@@ -368,11 +368,11 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         0              // Starting state
         });
 
-        ali.getReward();  // Get reward at time = 0
+        fay.getReward();  // Get reward at time = 0
 
         /*** Ali time = (0 days) post-claim ***/
         assertRewardsAccounting({
-            user:                   address(ali),  // User for accounting
+            user:                   address(fay),  // User for accounting
             totalSupply:            10 * WAD,      // Ali's stake
             rewardPerTokenStored:   0,             // Starting state (getReward has no effect at time = 0)
             userRewardPerTokenPaid: 0,             // Starting state (getReward has no effect at time = 0)
@@ -383,12 +383,12 @@ contract MplRewardsTest is TestUtil {
 
         hevm.warp(start + 1 days);  // Warp to time = (1 days) (dTime = 1 days)
 
-        // Reward per token (RPT) that was used before bob entered the pool (accrued over dTime = 1 days)
+        // Reward per token (RPT) that was used before fez entered the pool (accrued over dTime = 1 days)
         uint256 dTime1_rpt = rewardRate * 1 days * WAD / (10 * WAD);  
 
         /*** Ali time = (1 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(ali),                 // User for accounting
+            user:                   address(fay),                 // User for accounting
             totalSupply:            10 * WAD,                     // Ali's stake
             rewardPerTokenStored:   0,                            // Not updated yet
             userRewardPerTokenPaid: 0,                            // Not updated yet
@@ -397,11 +397,11 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         0                             // Nothing claimed
         });
 
-        ali.getReward();  // Get reward at time = (1 days) 
+        fay.getReward();  // Get reward at time = (1 days) 
 
         /*** Ali time = (1 days) post-claim ***/
         assertRewardsAccounting({
-            user:                   address(ali),                // User for accounting
+            user:                   address(fay),                // User for accounting
             totalSupply:            10 * WAD,                    // Ali's stake
             rewardPerTokenStored:   dTime1_rpt,                  // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt,                  // Updated on updateReward for 100% ownership in pool after 1hr
@@ -410,11 +410,11 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         dTime1_rpt * 10 * WAD / WAD  // Updated on getReward, user has claimed rewards (equal to original earned() amt at this timestamp))
         });
 
-        bob.stake(10 * WAD); // Bob stakes 10 FDTs, giving him 50% stake in the pool rewards going forward
+        fez.stake(10 * WAD); // Bob stakes 10 FDTs, giving him 50% stake in the pool rewards going forward
 
         /*** Bob time = (1 days) post-stake ***/
         assertRewardsAccounting({
-            user:                   address(bob),  // User for accounting
+            user:                   address(fez),  // User for accounting
             totalSupply:            20 * WAD,      // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,    // Doesn't change since no time has passed
             userRewardPerTokenPaid: dTime1_rpt,    // Used so Bob can't claim past rewards
@@ -430,7 +430,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (2 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(ali),                 // User for accounting
+            user:                   address(fay),                 // User for accounting
             totalSupply:            20 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,                   // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt,                   // Used so Ali can't do multiple claims
@@ -441,7 +441,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (2 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(bob),                 // User for accounting
+            user:                   address(fez),                 // User for accounting
             totalSupply:            20 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,                   // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt,                   // Used so Bob can't do claims on past rewards
@@ -450,11 +450,11 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         0                             // Not updated yet
         });
 
-        bob.stake(20 * WAD); // Bob stakes another 20 FDTs, giving him 75% stake in the pool rewards going forward
+        fez.stake(20 * WAD); // Bob stakes another 20 FDTs, giving him 75% stake in the pool rewards going forward
 
         /*** Bob time = (2 days) post-stake ***/
         assertRewardsAccounting({
-            user:                   address(bob),                 // User for accounting
+            user:                   address(fez),                 // User for accounting
             totalSupply:            40 * WAD,                     // Ali + Bob stake 
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,      // Updated on updateReward to snapshot rewardPerToken up to that point
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,      // Used so Bob can't do claims on past rewards
@@ -469,7 +469,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(ali),                                // User for accounting
+            user:                   address(fay),                                // User for accounting
             totalSupply:            40 * WAD,                                    // Ali + Bob stake 
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                     // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt,                                  // Used so Ali can't do multiple claims
@@ -480,7 +480,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(bob),                                           // User for accounting
+            user:                   address(fez),                                           // User for accounting
             totalSupply:            40 * WAD,                                               // Ali + Bob stake 
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                                // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,                                // Used so Bob can't do claims on past rewards
@@ -489,11 +489,11 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         0                                                       // Not updated yet
         });
 
-        bob.getReward();  // Get reward at time = (2 days + 1 hours)
+        fez.getReward();  // Get reward at time = (2 days + 1 hours)
 
         /*** Bob time = (2 days + 1 hours) post-claim ***/
         assertRewardsAccounting({
-            user:                   address(bob),                                          // User for accounting
+            user:                   address(fez),                                          // User for accounting
             totalSupply:            40 * WAD,                                              // Ali + Bob stake 
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Used so Bob can't do multiple claims
@@ -502,11 +502,11 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         (dTime2_rpt * 10 * WAD + dTime3_rpt * 30 * WAD) / WAD  // Updated on getReward, user has claimed rewards (equal to original earned() amt at this timestamp))
         });
 
-        bob.getReward();  // Try double claim
+        fez.getReward();  // Try double claim
 
         /*** Bob time = (2 days + 1 hours) post-claim (ASSERT NOTHING CHANGES) ***/
         assertRewardsAccounting({
-            user:                   address(bob),                                          // Doesn't change
+            user:                   address(fez),                                          // Doesn't change
             totalSupply:            40 * WAD,                                              // Doesn't change
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Doesn't change
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Doesn't change
@@ -515,11 +515,11 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         (dTime2_rpt * 10 * WAD + dTime3_rpt * 30 * WAD) / WAD  // Doesn't change
         });
 
-        ali.withdraw(5 * WAD);  // Ali withdraws 5 * WAD at time = (2 days + 1 hours)
+        fay.withdraw(5 * WAD);  // Ali withdraws 5 * WAD at time = (2 days + 1 hours)
 
         /*** Ali time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(ali),                                // User for accounting
+            user:                   address(fay),                                // User for accounting
             totalSupply:            35 * WAD,                                    // Ali + Bob stake, lower now that Ali withdrew
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,        // From Bob's update
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,        // Used so Ali can't claim past earnings
@@ -534,7 +534,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (3 days + 1 hours) pre-exit ***/
         assertRewardsAccounting({
-            user:                   address(ali),                                                         // User for accounting
+            user:                   address(fay),                                                         // User for accounting
             totalSupply:            35 * WAD,                                                             // Ali + Bob stake 
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                                 // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                                 // Used so Ali can't do multiple claims
@@ -545,7 +545,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (2 days + 1 hours) pre-exit ***/
         assertRewardsAccounting({
-            user:                   address(bob),                                          // User for accounting
+            user:                   address(fez),                                          // User for accounting
             totalSupply:            35 * WAD,                                              // Ali + Bob stake 
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Used so Bob can't do multiple claims
@@ -554,12 +554,12 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         (dTime2_rpt * 10 * WAD + dTime3_rpt * 30 * WAD) / WAD  // From previous claim
         });
 
-        ali.exit();  // Ali exits at time = (3 days + 1 hours)
-        bob.exit();  // Bob exits at time = (3 days + 1 hours)
+        fay.exit();  // Ali exits at time = (3 days + 1 hours)
+        fez.exit();  // Bob exits at time = (3 days + 1 hours)
 
         /*** Ali time = (3 days + 1 hours) post-exit ***/
         assertRewardsAccounting({
-            user:                   address(ali),                                                                     // User for accounting
+            user:                   address(fay),                                                                     // User for accounting
             totalSupply:            0,                                                                                // Ali + Bob withdrew all stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                                // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                                // Used so Ali can't do multiple claims
@@ -570,7 +570,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (2 days + 1 hours) post-exit ***/
         assertRewardsAccounting({
-            user:                   address(bob),                                                         // User for accounting
+            user:                   address(fez),                                                         // User for accounting
             totalSupply:            0,                                                                    // Ali + Bob withdrew all stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                    // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                    // Used so Bob can't do multiple claims
@@ -581,11 +581,11 @@ contract MplRewardsTest is TestUtil {
     }
 
     function test_rewards_multi_epoch() public {
-        ali.approve(address(mplRewards), 100 * WAD);
-        bob.approve(address(mplRewards), 100 * WAD);
+        fay.approve(address(mplRewards), 100 * WAD);
+        fez.approve(address(mplRewards), 100 * WAD);
 
-        ali.stake(10 * WAD);
-        bob.stake(30 * WAD);
+        fay.stake(10 * WAD);
+        fez.stake(30 * WAD);
 
         /**********************/
         /*** EPOCH 1 STARTS ***/
@@ -615,7 +615,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (30 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(ali),                 // User for accounting
+            user:                   address(fay),                 // User for accounting
             totalSupply:            40 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   0,                            // Not updated yet
             userRewardPerTokenPaid: 0,                            // Not updated yet
@@ -626,7 +626,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (30 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(bob),                 // User for accounting
+            user:                   address(fez),                 // User for accounting
             totalSupply:            40 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   0,                            // Not updated yet
             userRewardPerTokenPaid: 0,                            // Not updated yet
@@ -635,11 +635,11 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         0                             // Total claimed earnings from pool
         });
 
-        ali.getReward();  // Ali claims all rewards for epoch 1
+        fay.getReward();  // Ali claims all rewards for epoch 1
 
         /*** Ali time = (30 days) post-claim ***/
         assertRewardsAccounting({
-            user:                   address(ali),                 // User for accounting
+            user:                   address(fay),                 // User for accounting
             totalSupply:            40 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,                   // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt,                   // Used so Ali can't do multiple claims
@@ -658,7 +658,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (31 days) pre-claim (ASSERT NOTHING CHANGES DUE TO EPOCH BEING OVER) ***/
         assertRewardsAccounting({
-            user:                   address(ali),                 // Doesn't change
+            user:                   address(fay),                 // Doesn't change
             totalSupply:            40 * WAD,                     // Doesn't change
             rewardPerTokenStored:   dTime1_rpt,                   // Doesn't change
             userRewardPerTokenPaid: dTime1_rpt,                   // Doesn't change
@@ -667,11 +667,11 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         dTime1_rpt * 10 * WAD / WAD   // Doesn't change
         });
 
-        ali.getReward();  // Ali claims rewards, but epoch 1 is finished
+        fay.getReward();  // Ali claims rewards, but epoch 1 is finished
 
         /*** Ali time = (31 days) post-claim (ASSERT NOTHING CHANGES DUE TO EPOCH BEING OVER) ***/
         assertRewardsAccounting({
-            user:                   address(ali),                 // Doesn't change
+            user:                   address(fay),                 // Doesn't change
             totalSupply:            40 * WAD,                     // Doesn't change
             rewardPerTokenStored:   dTime1_rpt,                   // Doesn't change
             userRewardPerTokenPaid: dTime1_rpt,                   // Doesn't change
@@ -702,7 +702,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (1 days into epoch 2) pre-exit ***/
         assertRewardsAccounting({
-            user:                   address(ali),                 // User for accounting
+            user:                   address(fay),                 // User for accounting
             totalSupply:            40 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,                   // From last epoch
             userRewardPerTokenPaid: dTime1_rpt,                   // Used so Ali can't do multiple claims
@@ -713,7 +713,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (1 days into epoch 2) pre-exit ***/
         assertRewardsAccounting({
-            user:                   address(bob),                                // User for accounting
+            user:                   address(fez),                                // User for accounting
             totalSupply:            40 * WAD,                                    // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,                                  // From last epoch
             userRewardPerTokenPaid: 0,                                           // Used so Ali can't do multiple claims
@@ -722,12 +722,12 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         0                                            // Total claimed earnings from pool
         });
 
-        ali.exit();  // Ali exits at time = (1 days into epoch 2)
-        bob.exit();  // Bob exits at time = (1 days into epoch 2)
+        fay.exit();  // Ali exits at time = (1 days into epoch 2)
+        fez.exit();  // Bob exits at time = (1 days into epoch 2)
 
         /*** Ali time = (1 days into epoch 2) post-exit ***/
         assertRewardsAccounting({
-            user:                   address(ali),                                // User for accounting
+            user:                   address(fay),                                // User for accounting
             totalSupply:            0,                                           // Ali + Bob exited
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                     // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,                     // Used so Ali can't do multiple claims
@@ -738,7 +738,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (1 days into epoch 2) post-exit ***/
         assertRewardsAccounting({
-            user:                   address(bob),                                // User for accounting
+            user:                   address(fez),                                // User for accounting
             totalSupply:            0,                                           // Ali + Bob exited
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                     // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,                     // Used so Bob can't do multiple claims

@@ -18,7 +18,7 @@ contract CollateralLockerFactoryTest is TestUtil {
     CollateralLockerFactory   clFactory;
     MapleToken                      mpl;
     MapleGlobals                globals;
-    Borrower                        ali;
+    Borrower                        bob;
 
     function setUp() public {
 
@@ -27,7 +27,7 @@ contract CollateralLockerFactoryTest is TestUtil {
         mpl         = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
         globals     = gov.createGlobals(address(mpl));                 // Setup Maple Globals.
         clFactory   = new CollateralLockerFactory();                   // Setup Collateral Locker Factory to support Loan Factory creation.
-        ali         = new Borrower();
+        bob         = new Borrower();
         assertEq(clFactory.factoryType(), uint(0), "Incorrect factory type");
     }
 
@@ -42,6 +42,6 @@ contract CollateralLockerFactoryTest is TestUtil {
         assertEq(address(cl.collateralAsset()), USDC, "Incorrect address of collateral asset");
 
         mint("USDC", address(cl),  500 * USD);
-        assertTrue(!ali.try_pull(address(cl), address(ali), 10));
+        assertTrue(!bob.try_pull(address(cl), address(bob), 10));
     }
 }
