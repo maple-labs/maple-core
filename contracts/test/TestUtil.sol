@@ -140,6 +140,7 @@ contract TestUtil is DSTest {
     /*** Lockers ***/
     /***************/
     IStakeLocker stakeLocker;
+    IStakeLocker stakeLocker2;
 
     /**********************************/
     /*** Mainnet Contract Addresses ***/
@@ -366,6 +367,24 @@ contract TestUtil is DSTest {
         pat.setOpenToPublic(address(pool), true);
     }
 
+    function setUpLiquidityPools() public {
+        createLiquidityPools();
+
+        // Finalize Pool
+        stakeLocker = IStakeLocker(pool.stakeLocker());
+        pat.approve(address(bPool), pool.stakeLocker(), uint(-1));
+        pat.stake(pool.stakeLocker(), bPool.balanceOf(address(pat)));
+        pat.finalize(address(pool));
+        pat.setOpenToPublic(address(pool), true);
+
+        // Finalize Pool2
+        stakeLocker2 = IStakeLocker(pool2.stakeLocker());
+        pam.approve(address(bPool), pool2.stakeLocker(), uint(-1));
+        pam.stake(pool2.stakeLocker(), bPool.balanceOf(address(pam)));
+        pam.finalize(address(pool2));
+        pam.setOpenToPublic(address(pool2), true);
+    }
+
     /******************************/
     /*** Oracle Setup Functions ***/
     /******************************/
@@ -413,14 +432,25 @@ contract TestUtil is DSTest {
         transferBptsToPoolDelegateAndStakers();
     }
 
+    function setUpBalancerPoolForPools() public {
+        createBalancerPool(); 
+        transferBptsToPoolDelegatesAndStakers();
+    }
+
     function transferBptsToPoolDelegates() public {
-        // Transfer 50 BPTs each to pat and pam
-        bPool.transfer(address(pat), bPool.balanceOf(address(this)) / 2);
-        bPool.transfer(address(pam), bPool.balanceOf(address(this)));
+        bPool.transfer(address(pat), 50 * WAD);  // Give PD a balance of BPTs to finalize pool
+        bPool.transfer(address(pam), 50 * WAD);  // Give PD a balance of BPTs to finalize pool
     }
 
     function transferBptsToPoolDelegateAndStakers() public {
         bPool.transfer(address(pat), 50 * WAD);  // Give PD a balance of BPTs to finalize pool
+        bPool.transfer(address(sam), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
+        bPool.transfer(address(sid), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
+    }
+
+    function transferBptsToPoolDelegatesAndStakers() public {
+        bPool.transfer(address(pat), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
+        bPool.transfer(address(pam), 25 * WAD);  // Give PD a balance of BPTs to finalize pool
         bPool.transfer(address(sam), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
         bPool.transfer(address(sid), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
     }
