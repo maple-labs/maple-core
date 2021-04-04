@@ -4,94 +4,9 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-// import "./user/Borrower.sol";
-// import "./user/Governor.sol";
-// import "./user/LP.sol";
-// import "./user/Staker.sol";
-// import "./user/Commoner.sol";
-// import "./user/PoolDelegate.sol";
-
-// import "./user/SecurityAdmin.sol";
-// import "./user/EmergencyAdmin.sol";
-
-// import "../interfaces/IBFactory.sol";
-// import "../interfaces/IBPool.sol";
-// import "../interfaces/IERC20Details.sol";
-// import "../interfaces/IPool.sol";
-// import "../interfaces/IPoolFactory.sol";
-// import "../interfaces/IStakeLocker.sol";
-
-// import "../LateFeeCalc.sol";
-
-// import "../RepaymentCalc.sol";
-// import "../CollateralLockerFactory.sol";
-// import "../DebtLocker.sol";
-// import "../DebtLockerFactory.sol";
-// import "../FundingLockerFactory.sol";
-// import "../LiquidityLockerFactory.sol";
-// import "../Loan.sol";
-// import "../LoanFactory.sol";
-// import "../Pool.sol";
-// import "../PoolFactory.sol";
-// import "../PremiumCalc.sol";
-// import "../StakeLockerFactory.sol";
-
-// import "../oracles/ChainlinkOracle.sol";
-// import "../oracles/UsdOracle.sol";
-
-// import "module/maple-token/contracts/MapleToken.sol";
-
-// import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
-contract Treasury { }
-
 contract PoolTest is TestUtil {
 
     using SafeMath for uint256;
-
-    // Borrower                               bob;
-    // Borrower                               ben;
-    // Borrower                               bud;
-    // Governor                               gov;
-    // LP                                     leo;
-    // LP                                     liz;
-    // LP                                     lex;
-    // LP                                     lee;
-    // Staker                                 sam;
-    // Commoner                               cam;
-    // PoolDelegate                           pat;
-    // PoolDelegate                           pam;
-
-    // SecurityAdmin                securityAdmin;
-    // EmergencyAdmin              emergencyAdmin;
-
-    // RepaymentCalc                repaymentCalc;
-    // CollateralLockerFactory          clFactory;
-    // DebtLockerFactory               dlFactory;
-    // DebtLockerFactory               dlFactory2;
-    // FundingLockerFactory             flFactory;
-    // LateFeeCalc                    lateFeeCalc;
-    // LiquidityLockerFactory           llFactory;
-    // Loan                                  loan;
-    // Loan                                 loan2;
-    // Loan                                 loan3;
-    // Loan                                 loan4;
-    // LoanFactory                    loanFactory;
-    // MapleGlobals                       globals;
-    // MapleToken                             mpl;
-    // PoolFactory                    poolFactory;
-    // Pool                                 pool;
-    // Pool                                 pool2;
-    // Pool                                 pool3;
-    // PremiumCalc                    premiumCalc;
-    // StakeLockerFactory               slFactory;
-    // Treasury                               trs;
-    // ChainlinkOracle                 wethOracle;
-    // ChainlinkOracle                 wbtcOracle;
-    // UsdOracle                        usdOracle;
-    
-    // ERC20                           fundsToken;
-    // IBPool                               bPool;
 
     function setUp() public {
 
@@ -104,132 +19,9 @@ contract PoolTest is TestUtil {
         setUpBalancerPool();
         createLiquidityPools();
         createLoans();
-
-        // bob            = new Borrower();                                                // Actor: Borrower of the Loan.
-        // ben            = new Borrower();                                                // Actor: Borrower of the Loan.
-        // bud            = new Borrower();                                                // Actor: Borrower of the Loan.
-        // gov            = new Governor();                                                // Actor: Governor of Maple.
-        // leo            = new LP();                                                      // Actor: Liquidity provider.
-        // liz            = new LP();                                                      // Actor: Liquidity provider.
-        // lex            = new LP();                                                      // Actor: Liquidity provider.
-        // lee            = new LP();                                                      // Actor: Liquidity provider.
-        // sam            = new Staker();                                                  // Actor: Stakes BPTs in Pool.
-        // cam            = new Commoner();                                                // Actor: Any user or an incentive seeker.
-        // pat            = new PoolDelegate();                                            // Actor: Manager of the Pool.
-        // pam            = new PoolDelegate();                                            // Actor: Manager of the Pool.
-
-        // securityAdmin  = new SecurityAdmin();                                           // Actor: Admin of the Pool.
-        // emergencyAdmin = new EmergencyAdmin();                                          // Actor: Emergency Admin of the protocol.
-
-        // mpl            = new MapleToken("MapleToken", "MAPL", USDC);
-        // globals        = gov.createGlobals(address(mpl));
-        // flFactory      = new FundingLockerFactory();                                    // Setup the FL factory to facilitate Loan factory functionality.
-        // clFactory      = new CollateralLockerFactory();                                 // Setup the CL factory to facilitate Loan factory functionality.
-        // loanFactory    = new LoanFactory(address(globals));                             // Create Loan factory.
-        // slFactory      = new StakeLockerFactory();                                      // Setup the SL factory to facilitate Pool factory functionality.
-        // llFactory      = new LiquidityLockerFactory();                                  // Setup the SL factory to facilitate Pool factory functionality.
-        // poolFactory    = new PoolFactory(address(globals));                             // Create pool factory.
-        // dlFactory     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        // dlFactory2     = new DebtLockerFactory();                                       // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        // repaymentCalc  = new RepaymentCalc();                                           // Repayment model.
-        // lateFeeCalc    = new LateFeeCalc(0);                                            // Flat 0% fee
-        // premiumCalc    = new PremiumCalc(500);                                          // Flat 5% premium
-        // trs            = new Treasury();                                                // Treasury.
-
-        // /*** Validate all relevant contracts in Globals ***/
-        // gov.setValidLoanFactory(address(loanFactory), true);
-        // gov.setValidPoolFactory(address(poolFactory), true);
-
-        // gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
-        // gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
-
-        // gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
-        // gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        // gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
-        // gov.setValidSubFactory(address(poolFactory), address(dlFactory2), true);
-
-        // wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
-        // wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        // usdOracle  = new UsdOracle();
-        
-        // gov.setPriceOracle(WETH, address(wethOracle));
-        // gov.setPriceOracle(WBTC, address(wbtcOracle));
-        // gov.setPriceOracle(USDC, address(usdOracle));
-
-        // // Mint 50m USDC into this account
-        // mint("USDC", address(this), 50_000_000 * USD);
-
-        // // Initialize MPL/USDC Balancer pool (without finalizing)
-        // bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
-
-        // IERC20(USDC).approve(address(bPool), MAX_UINT);
-        // mpl.approve(address(bPool), MAX_UINT);
-
-        // bPool.bind(USDC, 50_000_000 * USD, 5 ether);       // Bind 50m USDC with 5 denormalization weight
-        // bPool.bind(address(mpl), 100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
-
-        // assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * USD);
-        // assertEq(mpl.balanceOf(address(bPool)),             100_000 * WAD);
-
-        // assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
-
-        // gov.setPoolDelegateAllowlist(address(pat), true);
-        // gov.setPoolDelegateAllowlist(address(pam), true);
-        // gov.setMapleTreasury(address(trs));
-        // gov.setAdmin(address(emergencyAdmin));
-        // bPool.finalize();
-
-        // assertEq(bPool.balanceOf(address(this)), 100 * WAD);
-        // assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
-
-        // bPool.transfer(address(pat), bPool.balanceOf(address(this)) / 2);
-        // bPool.transfer(address(pam), bPool.balanceOf(address(this)));
-
-        // gov.setValidBalancerPool(address(bPool), true);
-
-        // // Set Globals
-        // gov.setCalc(address(repaymentCalc),  true);
-        // gov.setCalc(address(lateFeeCalc),    true);
-        // gov.setCalc(address(premiumCalc),    true);
-        // gov.setCollateralAsset(WETH,         true);
-        // gov.setLiquidityAsset(USDC,          true);
-        // gov.setSwapOutRequired(1_000_000);
-
-        // // Create Liquidity Pool
-        // pool = Pool(pat.createPool(
-        //     address(poolFactory),
-        //     USDC,
-        //     address(bPool),
-        //     address(slFactory),
-        //     address(llFactory),
-        //     500,
-        //     100,
-        //     MAX_UINT  // liquidityCap value
-        // ));
-
-        // // Create Liquidity Pool
-        // pool2 = Pool(pam.createPool(
-        //     address(poolFactory),
-        //     USDC,
-        //     address(bPool),
-        //     address(slFactory),
-        //     address(llFactory),
-        //     7500,
-        //     50,
-        //     MAX_UINT // liquidityCap value
-        // ));
-
-        // // loan Specifications
-        // uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
-        // address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
-
-        // loan  = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-        // loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-        // loan3 = bud.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
 
     function test_claim_permissions() public {
-        
         // Set valid loan factory
         gov.setValidLoanFactory(address(loanFactory), true);
         // Finalizing the Pool
@@ -270,9 +62,11 @@ contract PoolTest is TestUtil {
         pat.setAdmin(address(pool), address(securityAdmin), false);                                // Add admin to allow to call the `claim()` function
         assertTrue(!securityAdmin.try_claim(address(pool), address(loan), address(dlFactory)));   // Does not have permission to call `claim()` function
     }
-
-    // TODO: Get this passing
+    
     function test_getInitialStakeRequirements() public {
+
+        gov.setSwapOutRequired(1_000_000);  // TODO: Update this to realistic launch param
+
         uint256 minCover; uint256 minCover2; uint256 curCover;
         uint256 minStake; uint256 minStake2; uint256 curStake;
         uint256 calc_minStake; uint256 calc_stakerBal;
