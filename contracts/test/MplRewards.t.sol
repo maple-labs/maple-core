@@ -3,129 +3,19 @@ pragma solidity 0.6.11;
 
 import "./TestUtil.sol";
 
-import "./user/Farmer.sol";
-import "./user/Governor.sol";
-import "./user/PoolDelegate.sol";
-
-import "../oracles/UsdOracle.sol";
-
-import "../DebtLockerFactory.sol";
-import "../LiquidityLockerFactory.sol";
-import "../Pool.sol";
-import "../PoolFactory.sol";
-import "../StakeLockerFactory.sol";
-
-import "../interfaces/IBFactory.sol";
-
-import "module/maple-token/contracts/MapleToken.sol";
-
 contract MplRewardsTest is TestUtil {
 
-    Farmer                            fay;
-    Farmer                            fez;
-    Farmer                            fox;
-    Governor                          gov;
-    Governor                      fakeGov;
-    PoolDelegate                      sid;
-
-    DebtLockerFactory           dlFactory;
-    LiquidityLockerFactory      llFactory;
-    MapleGlobals                  globals;
-    MapleToken                        mpl;
-    PoolFactory               poolFactory;
-    Pool                             pool;
-    StakeLockerFactory          slFactory;
-    UsdOracle                   usdOracle;
-    
-    IBPool                          bPool;
-
-    MplRewards                 mplRewards;
-
     function setUp() public {
-
-        fay     = new Farmer(mplRewards, pool);  // Actor: Yield farmer
-        fez     = new Farmer(mplRewards, pool);  // Actor: Yield farmer
-        fox     = new Farmer(mplRewards, pool);  // Actor: Yield farmer
-        gov     = new Governor();                    // Actor: Governor of Maple.
-        fakeGov = new Governor();                    // Actor: Fake Governor of Maple.
-        sid     = new PoolDelegate();                // Actor: Manager of the Pool.
-
-        mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = gov.createGlobals(address(mpl));
-        slFactory   = new StakeLockerFactory();                        // Setup the SL factory to facilitate Pool factory functionality.
-        llFactory   = new LiquidityLockerFactory();                    // Setup the SL factory to facilitate Pool factory functionality.
-        poolFactory = new PoolFactory(address(globals));               // Create pool factory.
-        dlFactory   = new DebtLockerFactory();   
-
-        gov.setValidPoolFactory(address(poolFactory),                     true);
-        gov.setValidSubFactory( address(poolFactory), address(llFactory), true);
-        gov.setValidSubFactory( address(poolFactory), address(slFactory), true);
-        gov.setValidSubFactory( address(poolFactory), address(dlFactory), true);
-        gov.setPoolDelegateAllowlist(address(sid),                        true);
-
-        usdOracle = new UsdOracle();
-        gov.setPriceOracle(USDC, address(usdOracle));
-
-        // Mint 50m USDC into this account
-        mint("USDC", address(this), 50_000_000 * USD);
-
-        // Initialize MPL/USDC Balancer pool (without finalizing)
-        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
-
-        IERC20(USDC).approve(address(bPool), MAX_UINT);
-        mpl.approve(address(bPool),          MAX_UINT);
-
-        bPool.bind(USDC,         50_000_000 * USD, 5 * WAD);  // Bind 50m USDC with 5 denormalization weight
-        bPool.bind(address(mpl),    100_000 * WAD, 5 * WAD);  // Bind 100k MPL with 5 denormalization weight
-        bPool.finalize();
-        bPool.transfer(address(sid), bPool.balanceOf(address(this)) / 2);
-
-        gov.setValidBalancerPool(address(bPool), true);
-
-        gov.setLiquidityAsset(USDC, true);
-        gov.setSwapOutRequired(1_000_000);
-
-        // Create Liquidity Pool
-        pool = Pool(sid.createPool(
-            address(poolFactory),
-            USDC,
-            address(bPool),
-            address(slFactory),
-            address(llFactory),
-            500,
-            100,
-            MAX_UINT  // liquidityCap value
-        ));
-
-        address stakeLocker = pool.stakeLocker();
-        sid.approve(address(bPool), stakeLocker, MAX_UINT);
-        sid.stake(stakeLocker, bPool.balanceOf(address(sid))); // Stake all BPTs against pool through stakeLocker
-        sid.finalize(address(pool));
-        sid.setOpenToPublic(address(pool), true);
-
-        // Create new staking rewards contract with MPL rewards and Pool FDTs as the stake token
-        gov.createMplRewardsFactory();
-        mplRewards = gov.createMplRewards(address(mpl), address(pool)); 
-
-        gov.setExemptFromTransferRestriction(address(mplRewards), true); // Set in globals so that depDate is not affected on stake/unstake
-
-        fakeGov.setGovMplRewards(mplRewards); // Used to assert failures 
-
-        fay = new Farmer(mplRewards, pool);
-        fez = new Farmer(mplRewards, pool);
-        fox = new Farmer(mplRewards, pool);
-
-        mint("USDC", address(fay), 1000 * USD);
-        mint("USDC", address(fez), 1000 * USD);
-        mint("USDC", address(fox), 1000 * USD);
-
-        fay.approve(USDC, address(pool), MAX_UINT);
-        fez.approve(USDC, address(pool), MAX_UINT);
-        fox.approve(USDC, address(pool), MAX_UINT);
-
-        fay.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
-        fez.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
-        fox.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
+        setUpGlobals();
+        setUpTokens();
+        setUpOracles();
+        setUpFactories();
+        setUpActors();
+        setUpBalancerPool();
+        setUpLiquidityPool();
+        setUpMplRewardsFactory();
+        setUpMplRewards();
+        setUpFarmers();
     }
 
     /*******************************/

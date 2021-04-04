@@ -3,6 +3,7 @@ pragma solidity 0.6.11;
 
 import "./user/Borrower.sol";
 import "./user/Commoner.sol";
+import "./user/Farmer.sol";
 import "./user/Holder.sol";
 import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
@@ -61,6 +62,10 @@ contract TestUtil is DSTest {
 
     Commoner      cam;
 
+    Farmer        fay;
+    Farmer        fez;
+    Farmer        fox;
+
     Holder        hal;
     Holder        hue;
 
@@ -108,10 +113,11 @@ contract TestUtil is DSTest {
     /***********************/
     /*** Maple Contracts ***/
     /***********************/
-    MapleGlobals   globals;
-    MapleToken         mpl;
-    MapleTreasury treasury;
-    IBPool           bPool;
+    MapleGlobals      globals;
+    MapleToken            mpl;
+    MapleTreasury    treasury;
+    IBPool              bPool;
+    MplRewards     mplRewards;
 
     /***************/
     /*** Oracles ***/
@@ -366,22 +372,35 @@ contract TestUtil is DSTest {
         pat.setOpenToPublic(address(pool), true);
     }
 
-    function setUpLiquidityPools() public {
-        createLiquidityPools();
-
-        // Finalize Pool
+    function stakeAndFinalizePool(uint256 stakeAmt) public {
         stakeLocker = IStakeLocker(pool.stakeLocker());
         pat.approve(address(bPool), pool.stakeLocker(), uint(-1));
-        pat.stake(pool.stakeLocker(), bPool.balanceOf(address(pat)));
+        pat.stake(pool.stakeLocker(), stakeAmt);
         pat.finalize(address(pool));
         pat.setOpenToPublic(address(pool), true);
+    }
 
-        // Finalize Pool2
+    function stakeAndFinalizePools(uint256 stakeAmt, uint256 stakeAmt2) public {
+        stakeAndFinalizePool(stakeAmt);
+
         stakeLocker2 = IStakeLocker(pool2.stakeLocker());
         pam.approve(address(bPool), pool2.stakeLocker(), uint(-1));
-        pam.stake(pool2.stakeLocker(), bPool.balanceOf(address(pam)));
+        pam.stake(pool2.stakeLocker(), stakeAmt2);
         pam.finalize(address(pool2));
         pam.setOpenToPublic(address(pool2), true);
+    }
+
+    function stakeAndFinalizePool() public {
+        stakeAndFinalizePool(bPool.balanceOf(address(pat)));
+    }
+
+    function stakeAndFinalizePools() public {
+        stakeAndFinalizePools(bPool.balanceOf(address(pat)), bPool.balanceOf(address(pam)));
+    }
+
+    function setUpLiquidityPools() public {
+        createLiquidityPools();
+        stakeAndFinalizePools();
     }
 
     /******************************/
@@ -469,6 +488,33 @@ contract TestUtil is DSTest {
         loan  = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan3 = bud.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+    }
+
+    /*************************************/
+    /*** Yield Farming Setup Functions ***/
+    /*************************************/
+    function setUpMplRewards() public {
+        mplRewards = gov.createMplRewards(address(mpl), address(pool)); 
+        gov.setExemptFromTransferRestriction(address(mplRewards), true); // Set in globals so that depDate is not affected on stake/unstake
+        fakeGov.setGovMplRewards(mplRewards);                            // Used to assert failures 
+    }
+
+    function setUpFarmers() public {
+        fay = new Farmer(mplRewards, pool);
+        fez = new Farmer(mplRewards, pool);
+        fox = new Farmer(mplRewards, pool);
+
+        mint("USDC", address(fay), 1000 * USD);
+        mint("USDC", address(fez), 1000 * USD);
+        mint("USDC", address(fox), 1000 * USD);
+
+        fay.approve(USDC, address(pool), MAX_UINT);
+        fez.approve(USDC, address(pool), MAX_UINT);
+        fox.approve(USDC, address(pool), MAX_UINT);
+
+        fay.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
+        fez.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
+        fox.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
     }
 
     /******************************/
