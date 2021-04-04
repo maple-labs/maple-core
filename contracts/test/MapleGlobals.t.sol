@@ -4,114 +4,15 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "./user/Governor.sol";
-import "./user/PoolDelegate.sol";
-
-import "../RepaymentCalc.sol";
-import "../CollateralLockerFactory.sol";
-import "../DebtLockerFactory.sol";
-import "../FundingLockerFactory.sol";
-import "../LateFeeCalc.sol";
-import "../LiquidityLockerFactory.sol";
-import "../LoanFactory.sol";
-import "../MapleTreasury.sol";
-import "../PoolFactory.sol";
-import "../PremiumCalc.sol";
-import "../StakeLockerFactory.sol";
-
-import "../oracles/ChainlinkOracle.sol";
-import "../oracles/UsdOracle.sol";
-
-import "module/maple-token/contracts/MapleToken.sol";
-
-import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
 contract MapleGlobalsTest is TestUtil {
 
-    Governor                         gov;
-    PoolDelegate                     pat;
-    PoolDelegate                     pam;
-
-    RepaymentCalc          repaymentCalc;
-    CollateralLockerFactory    clFactory;
-    DebtLockerFactory          dlFactory;
-    FundingLockerFactory       flFactory;
-    LateFeeCalc                   lfCalc;
-    LiquidityLockerFactory     llFactory;
-    LoanFactory              loanFactory;
-    MapleGlobals                 globals;
-    MapleToken                       mpl;
-    MapleTreasury                    trs;
-    PoolFactory              poolFactory;
-    PremiumCalc                    pCalc;
-    StakeLockerFactory         slFactory;
-    ChainlinkOracle           wethOracle;
-    ChainlinkOracle           wbtcOracle;
-    UsdOracle                  usdOracle;
-
-    ERC20                     fundsToken;
-
-    uint8 public constant CL_FACTORY = 0;           // Factory type of `CollateralLockerFactory`.
-    uint8 public constant DL_FACTORY = 1;           // Factory type of `DebtLockerFactory`.
-    uint8 public constant FL_FACTORY = 2;           // Factory type of `FundingLockerFactory`.
-    uint8 public constant LL_FACTORY = 3;           // Factory type of `LiquidityLockerFactory`.
-    uint8 public constant SL_FACTORY = 4;           // Factory type of `StakeLockerFactory`.
-
-    uint8 public constant INTEREST_CALC_TYPE = 10;  // Calc type of `RepaymentCalc`.
-    uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`.
-    uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`.
-
     function setUp() public {
-
-        gov         = new Governor();       // Actor: Governor of Maple.
-        pat         = new PoolDelegate();   // Actor: Manager of the Pool.
-        pam         = new PoolDelegate();   // Actor: Manager of the Pool.
-
-        mpl           = new MapleToken("MapleToken", "MAPLE", USDC);
-        globals       = gov.createGlobals(address(mpl));
-        poolFactory   = new PoolFactory(address(globals));
-        loanFactory   = new LoanFactory(address(globals));
-        dlFactory     = new DebtLockerFactory();
-        slFactory     = new StakeLockerFactory();
-        llFactory     = new LiquidityLockerFactory();
-        flFactory     = new FundingLockerFactory();
-        clFactory     = new CollateralLockerFactory();
-        lfCalc        = new LateFeeCalc(0);
-        pCalc         = new PremiumCalc(200);
-        repaymentCalc = new RepaymentCalc();
-        trs           = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
-        wethOracle    = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
-        wbtcOracle    = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle     = new UsdOracle();
-        
-        gov.setPriceOracle(WETH, address(wethOracle));
-        gov.setPriceOracle(WBTC, address(wbtcOracle));
-        gov.setPriceOracle(USDC, address(usdOracle));
-
-        // The following code was adopted from maple-core/scripts/setup.js
-        gov.setMapleTreasury(address(trs));
-        gov.setPoolDelegateAllowlist(address(pat), true);
-
-        gov.setLiquidityAsset(DAI,   true);
-        gov.setLiquidityAsset(USDC,  true);
-        gov.setCollateralAsset(DAI,  true);
-        gov.setCollateralAsset(USDC, true);
-        gov.setCollateralAsset(WETH, true);
-        gov.setCollateralAsset(WBTC, true);
-
-        gov.setCalc(address(lfCalc),        true);
-        gov.setCalc(address(pCalc),         true);
-        gov.setCalc(address(repaymentCalc), true);
-
-        gov.setValidPoolFactory(address(poolFactory), true);
-        gov.setValidLoanFactory(address(loanFactory), true);
-
-        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
-        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
-        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
+        setUpGlobals();
+        setUpTokens();
+        setUpOracles();
+        setUpFactories();
+        setUpCalcs();
+        setUpPoolDelegates();
     }
 
     function test_constructor() public {
@@ -141,12 +42,12 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(globals.isValidCollateralAsset(WETH));
         assertTrue(globals.isValidCollateralAsset(WBTC));
 
-        assertTrue(globals.validCalcs(address(lfCalc)));
-        assertTrue(globals.validCalcs(address(pCalc)));
+        assertTrue(globals.validCalcs(address(lateFeeCalc)));
+        assertTrue(globals.validCalcs(address(premiumCalc)));
         assertTrue(globals.validCalcs(address(repaymentCalc)));
 
-        assertTrue(globals.isValidCalc(address(lfCalc),         LATEFEE_CALC_TYPE));
-        assertTrue(globals.isValidCalc(address(pCalc),          PREMIUM_CALC_TYPE));
+        assertTrue(globals.isValidCalc(address(lateFeeCalc),         LATEFEE_CALC_TYPE));
+        assertTrue(globals.isValidCalc(address(premiumCalc),          PREMIUM_CALC_TYPE));
         assertTrue(globals.isValidCalc(address(repaymentCalc), INTEREST_CALC_TYPE));
 
         assertTrue(globals.isValidPoolFactory(address(poolFactory)));
@@ -197,21 +98,21 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue( globals.validSubFactories(address(poolFactory), address(dlFactory)));
         
         // setPoolDelegateAllowlist()
-        assertTrue(!globals.isValidPoolDelegate(address(pam)));
-        assertTrue(!fakeGov.try_setPoolDelegateAllowlist(address(pam), true));  // Non-governor cant set
-        assertTrue(     gov.try_setPoolDelegateAllowlist(address(pam), true));
-        assertTrue( globals.isValidPoolDelegate(address(pam)));
-        assertTrue(     gov.try_setPoolDelegateAllowlist(address(pam), false));
-        assertTrue(!globals.isValidPoolDelegate(address(pam)));
+        assertTrue(!globals.isValidPoolDelegate(address(bob)));
+        assertTrue(!fakeGov.try_setPoolDelegateAllowlist(address(bob), true));  // Non-governor cant set
+        assertTrue(     gov.try_setPoolDelegateAllowlist(address(bob), true));
+        assertTrue( globals.isValidPoolDelegate(address(bob)));
+        assertTrue(     gov.try_setPoolDelegateAllowlist(address(bob), false));
+        assertTrue(!globals.isValidPoolDelegate(address(bob)));
 
         // setDefaultUniswapPath()
         assertTrue(!fakeGov.try_setDefaultUniswapPath(WETH, USDC, USDC));  // Non-governor cant set
         assertEq(   globals.defaultUniswapPath(WETH, USDC), address(0));
-        assertEq(   globals.defaultUniswapPath(WBTC, USDC), address(0));
+        assertEq(   globals.defaultUniswapPath(DAI, USDC), address(0));
         assertTrue(     gov.try_setDefaultUniswapPath(WETH, USDC, USDC));
-        assertTrue(     gov.try_setDefaultUniswapPath(WBTC, USDC, WETH));
+        assertTrue(     gov.try_setDefaultUniswapPath(DAI, USDC, WETH));
         assertEq(   globals.defaultUniswapPath(WETH, USDC), USDC);
-        assertEq(   globals.defaultUniswapPath(WBTC, USDC), WETH);
+        assertEq(   globals.defaultUniswapPath(DAI, USDC), WETH);
 
         // setLiquidityAsset() 
         assertTrue(!globals.isValidLiquidityAsset(WETH));
@@ -308,7 +209,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(   globals.swapOutRequired(),     10_000);
 
         // setMapleTreasury()
-        assertEq(   globals.mapleTreasury(), address(trs));
+        assertEq(   globals.mapleTreasury(), address(treasury));
         assertTrue(!fakeGov.try_setMapleTreasury(address(this)));
         assertTrue(    !gov.try_setMapleTreasury(address(0)));
         assertTrue(     gov.try_setMapleTreasury(address(this)));

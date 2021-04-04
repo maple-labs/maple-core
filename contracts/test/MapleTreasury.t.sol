@@ -4,57 +4,13 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "./user/Governor.sol";
-import "./user/Holder.sol";
-
-import "../MapleTreasury.sol";
-
-import "../interfaces/IGlobals.sol";
-
-import "../library/Util.sol";
-
-import "../oracles/ChainlinkOracle.sol";
-import "../oracles/UsdOracle.sol";
-
-import "module/maple-token/contracts/MapleToken.sol";
-
 contract MapleTreasuryTest is TestUtil {
 
-    Governor                gov;
-    Governor            fakeGov;
-
-    MapleGlobals        globals;
-    MapleToken              mpl;
-    MapleTreasury      treasury;
-    ChainlinkOracle  wethOracle;
-    ChainlinkOracle  wbtcOracle;
-    UsdOracle         usdOracle;
-    ChainlinkOracle   daiOracle;
-
     function setUp() public {
-        gov     = new Governor();   // Actor: Governor of Maple.
-        fakeGov = new Governor();
-
-        mpl      = new MapleToken("MapleToken", "MAPLE", USDC);
-        globals  = gov.createGlobals(address(mpl));
-        treasury = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
-
-        // Set test util governor storage var
-        gov.setGovTreasury(treasury);
-        fakeGov.setGovTreasury(treasury);
-
-        wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
-        wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        daiOracle  = new ChainlinkOracle(tokens["DAI"].orcl, USDC, address(this));
-        usdOracle  = new UsdOracle();
-        
-        gov.setMapleTreasury(address(treasury));
-        gov.setPriceOracle(WETH, address(wethOracle));
-        gov.setPriceOracle(WBTC, address(wbtcOracle));
-        gov.setPriceOracle(USDC, address(usdOracle));
-        gov.setPriceOracle(DAI,  address(daiOracle));
-    
-        gov.setDefaultUniswapPath(WBTC, USDC, WETH);
+        setUpGlobals();
+        setUpTokens();
+        setUpOracles();
+        createHolders();
 
         mint("WBTC", address(this),  10 * BTC);
         mint("WETH", address(this),  10 ether);
@@ -91,17 +47,14 @@ contract MapleTreasuryTest is TestUtil {
     }
 
     function test_distributeToHolders() public {
-        Holder ali = new Holder();
-        Holder bob = new Holder();
+        assertEq(mpl.balanceOf(address(hal)), 0);
+        assertEq(mpl.balanceOf(address(hue)), 0);
 
-        assertEq(mpl.balanceOf(address(ali)), 0);
-        assertEq(mpl.balanceOf(address(bob)), 0);
+        mpl.transfer(address(hal), mpl.totalSupply() * 25 / 100);  // 25%
+        mpl.transfer(address(hue), mpl.totalSupply() * 75 / 100);  // 75%
 
-        mpl.transfer(address(ali), mpl.totalSupply() * 25 / 100);  // 25%
-        mpl.transfer(address(bob), mpl.totalSupply() * 75 / 100);  // 75%
-
-        assertEq(mpl.balanceOf(address(ali)), 2_500_000 ether);
-        assertEq(mpl.balanceOf(address(bob)), 7_500_000 ether);
+        assertEq(mpl.balanceOf(address(hal)), 2_500_000 ether);
+        assertEq(mpl.balanceOf(address(hue)), 7_500_000 ether);
 
         assertEq(IERC20(USDC).balanceOf(address(treasury)), 0);
 
@@ -116,14 +69,14 @@ contract MapleTreasuryTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(treasury)),         0);  // Withdraws all funds
         assertEq(IERC20(USDC).balanceOf(address(mpl)),      100 * USD);  // Withdrawn to MPL address, where users can claim funds
 
-        assertEq(IERC20(USDC).balanceOf(address(ali)), 0);  // Token holder hasn't claimed
-        assertEq(IERC20(USDC).balanceOf(address(bob)), 0);  // Token holder hasn't claimed
+        assertEq(IERC20(USDC).balanceOf(address(hal)), 0);  // Token holder hasn't claimed
+        assertEq(IERC20(USDC).balanceOf(address(hue)), 0);  // Token holder hasn't claimed
 
-        ali.withdrawFunds(address(mpl));
-        bob.withdrawFunds(address(mpl));
+        hal.withdrawFunds(address(mpl));
+        hue.withdrawFunds(address(mpl));
 
-        withinDiff(IERC20(USDC).balanceOf(address(ali)), 25 * USD, 1);  // Token holder has claimed proportional share of USDC
-        withinDiff(IERC20(USDC).balanceOf(address(bob)), 75 * USD, 1);  // Token holder has claimed proportional share of USDC
+        withinDiff(IERC20(USDC).balanceOf(address(hal)), 25 * USD, 1);  // Token holder has claimed proportional share of USDC
+        withinDiff(IERC20(USDC).balanceOf(address(hue)), 75 * USD, 1);  // Token holder has claimed proportional share of USDC
     }
 
     function test_convertERC20() public {

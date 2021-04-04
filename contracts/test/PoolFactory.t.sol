@@ -4,92 +4,18 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "./user/Governor.sol";
-import "./user/PoolDelegate.sol";
-import "./user/EmergencyAdmin.sol";
-
-import "../LiquidityLockerFactory.sol";
-import "../Pool.sol";
-import "../PoolFactory.sol";
-import "../StakeLockerFactory.sol";
-
-import "../oracles/ChainlinkOracle.sol";
-import "../oracles/UsdOracle.sol";
-
-import "../interfaces/IBFactory.sol";
-import "../interfaces/IBPool.sol";
-import "../interfaces/IStakeLocker.sol";
-
-import "module/maple-token/contracts/MapleToken.sol";
-
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
 contract PoolFactoryTest is TestUtil {
-
-    Governor                       gov;
-    PoolDelegate                   pat;
-    EmergencyAdmin      emergencyAdmin;
-
-    MapleToken                     mpl;
-    MapleGlobals               globals;
-    PoolFactory            poolFactory;
-    StakeLockerFactory       slFactory;
-    LiquidityLockerFactory   llFactory;
-    IBPool                       bPool;
-    ChainlinkOracle         wethOracle;
-    ChainlinkOracle         wbtcOracle;
-    UsdOracle                usdOracle;
     
     function setUp() public {
-
-        gov = new Governor();       // Actor: Governor of Maple.
-        pat = new PoolDelegate();   // Actor: Manager of the Pool.
-
-        emergencyAdmin = new EmergencyAdmin(); // Actor: Emergency Admin of the protocol.
-
-        mpl         = new MapleToken("MapleToken", "MAPL", USDC);
-        globals     = gov.createGlobals(address(mpl));
-        slFactory   = new StakeLockerFactory();
-        llFactory   = new LiquidityLockerFactory();
-        poolFactory = new PoolFactory(address(globals));
-
-        gov.setValidPoolFactory(address(poolFactory), true);
-        
-        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
-        
-        wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
-        wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new UsdOracle();
-        
-        gov.setPriceOracle(WETH, address(wethOracle));
-        gov.setPriceOracle(WBTC, address(wbtcOracle));
-        gov.setPriceOracle(USDC, address(usdOracle));
-
-        gov.setAdmin(address(emergencyAdmin));
-
-        mint("USDC", address(this), 50_000_000 * 10 ** 6);
-
-        // Initialize MPL/USDC Balancer pool (without finalizing)
-        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
-
-        IERC20(USDC).approve(address(bPool), uint(-1));
-        mpl.approve(address(bPool), uint(-1));
-
-        bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 * WAD);   // Bind 50m USDC with 5 denormalization weight
-        bPool.bind(address(mpl), 100_000 * WAD, 5 * WAD);  // Bind 100k MPL with 5 denormalization weight
-
-        assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * 10 ** 6);
-        assertEq(mpl.balanceOf(address(bPool)),   100_000 * WAD);
-
-        assertEq(bPool.balanceOf(address(this)), 0);  // Not finalized
-
-        gov.setValidBalancerPool(address(bPool), true);
+        setUpGlobals();
+        setUpPoolDelegate();
+        setUpTokens();
+        setUpFactories();
+        setUpOracles();
+        setUpBalancerPool();
     }
 
     function test_setGlobals() public {
-        Governor fakeGov = new Governor();
-
         MapleGlobals globals2 = fakeGov.createGlobals(address(mpl));                   // Create upgraded MapleGlobals
 
         assertEq(address(poolFactory.globals()), address(globals));
@@ -115,17 +41,7 @@ contract PoolFactoryTest is TestUtil {
         );
     }
 
-    function setUpAllowlisting() internal {
-        gov.setValidPoolFactory(address(poolFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        gov.setPoolDelegateAllowlist(address(pat), true);
-        gov.setLiquidityAsset(USDC, true);
-    }
-
     function test_createPool_globals_validations() public {
-        setUpAllowlisting();
-        bPool.finalize();
 
         gov.setValidPoolFactory(address(poolFactory), true);
 
@@ -151,8 +67,6 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_bad_stakeAsset() public {
-        setUpAllowlisting();
-        bPool.finalize();
         
         // PoolFactory:STAKE_ASSET_NOT_BPOOL
         assertTrue(!pat.try_createPool(
@@ -168,8 +82,6 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_wrong_staking_pair_asset() public {
-        setUpAllowlisting();
-        bPool.finalize();
 
         gov.setLiquidityAsset(DAI, true);
         
@@ -203,7 +115,6 @@ contract PoolFactoryTest is TestUtil {
 
         assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * 10 ** 6);
         assertEq(IERC20(DAI).balanceOf(address(bPool)),  50_000_000 * WAD);
-
         bPool.finalize();
         
         assertTrue(!pat.try_createPool(
@@ -218,25 +129,7 @@ contract PoolFactoryTest is TestUtil {
         ));
     }
 
-    function test_createPool_invalid_liquidity_cap() public {
-        gov.setPoolDelegateAllowlist(address(pat), true);
-        bPool.finalize();
-        
-        assertTrue(!pat.try_createPool(
-            address(poolFactory),
-            USDC,
-            address(bPool),
-            address(slFactory),
-            address(llFactory),
-            500,
-            100,
-            0
-        ));
-    }
-
     function test_createPool_invalid_fees() public {
-        setUpAllowlisting();
-        bPool.finalize();
         
         // PoolLib:INVALID_FEES
         assertTrue(!pat.try_createPool(
@@ -264,7 +157,13 @@ contract PoolFactoryTest is TestUtil {
 
     // Tests failure mode in createStakeLocker
     function test_createPool_createStakeLocker_bPool_not_finalized() public {
-        setUpAllowlisting();
+
+        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
+        mint("USDC", address(this), 50_000_000 * USD);
+        usdc.approve(address(bPool), MAX_UINT);
+        mpl.approve(address(bPool),  MAX_UINT);
+        bPool.bind(USDC,         50_000_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
+        bPool.bind(address(mpl),    100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
         
         // Pool:INVALID_BALANCER_POOL
         assertTrue(!pat.try_createPool(
@@ -280,11 +179,6 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_paused() public {
-
-        setUpAllowlisting();
-        gov.setLiquidityAsset(USDC, true);
-        gov.setPoolDelegateAllowlist(address(pat), true);
-        bPool.finalize();
 
         // Pause PoolFactory and attempt createPool()
         assertTrue( gov.try_pause(address(poolFactory)));
@@ -345,8 +239,6 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_overflow() public {
-        setUpAllowlisting();
-        bPool.finalize();
 
         assertTrue(!pat.try_createPool(
             address(poolFactory),
@@ -362,16 +254,6 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool() public {
-
-        setUpAllowlisting();
-
-        gov.setLiquidityAsset(USDC, true);
-
-        gov.setPoolDelegateAllowlist(address(pat), true);
-        bPool.finalize();
-
-        assertEq(bPool.balanceOf(address(this)), 100 * WAD);
-        assertEq(bPool.balanceOf(address(this)), bPool.INIT_POOL_SUPPLY());  // Assert BPTs were minted
 
         assertTrue(pat.try_createPool(
             address(poolFactory),

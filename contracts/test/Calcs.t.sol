@@ -38,7 +38,7 @@ contract CalcsTest is TestUtil {
             loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
         }
 
-        assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory1), loanAmt));
+        assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory), loanAmt));
 
         {
             uint cReq = loan.collateralRequiredForDrawdown(loanAmt); // wETH required for 1_000 USDC drawdown on loan

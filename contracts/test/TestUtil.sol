@@ -2,10 +2,12 @@
 pragma solidity 0.6.11;
 
 import "./user/Borrower.sol";
-import "./user/LP.sol";
-import "./user/Staker.sol";
 import "./user/Commoner.sol";
+import "./user/Holder.sol";
+import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
+import "./user/Staker.sol";
+
 import "./user/Governor.sol";
 import "./user/SecurityAdmin.sol";
 import "./user/EmergencyAdmin.sol";
@@ -55,19 +57,22 @@ contract TestUtil is DSTest {
     Borrower      ben;
     Borrower      bud;
 
+    Commoner      cam;
+
+    Holder        hal;
+    Holder        hue;
+
     LP            leo;
     LP            liz;
     LP            lex;
     LP            lee;
 
+    PoolDelegate  pat;
+    PoolDelegate  pam;
+
     Staker        sam;
     Staker        sid;
     Staker        sue;
-
-    Commoner      cam;
-
-    PoolDelegate  pat;
-    PoolDelegate  pam;
 
     /**************************/
     /*** Multisig Addresses ***/
@@ -83,12 +88,13 @@ contract TestUtil is DSTest {
     LateFeeCalc      lateFeeCalc;
     PremiumCalc      premiumCalc;
     RepaymentCalc  repaymentCalc;
+    address[3]             calcs;
 
     /*****************/
     /*** Factories ***/
     /*****************/
     CollateralLockerFactory    clFactory;
-    DebtLockerFactory         dlFactory1;
+    DebtLockerFactory          dlFactory;
     DebtLockerFactory         dlFactory2;
     FundingLockerFactory       flFactory;
     LiquidityLockerFactory     llFactory;
@@ -109,6 +115,7 @@ contract TestUtil is DSTest {
     /***************/
     ChainlinkOracle  wethOracle;
     ChainlinkOracle  wbtcOracle;
+    ChainlinkOracle   daiOracle;
     UsdOracle         usdOracle;
 
     /*************/
@@ -133,6 +140,7 @@ contract TestUtil is DSTest {
     address constant USDC  = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address constant CDAI  = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
 
     IERC20 constant dai  = IERC20(DAI);
     IERC20 constant usdc = IERC20(USDC);
@@ -145,6 +153,16 @@ contract TestUtil is DSTest {
     /*****************/
     /*** Constants ***/
     /*****************/
+    uint8 public constant CL_FACTORY = 0;  // Factory type of `CollateralLockerFactory`.
+    uint8 public constant DL_FACTORY = 1;  // Factory type of `DebtLockerFactory`.
+    uint8 public constant FL_FACTORY = 2;  // Factory type of `FundingLockerFactory`.
+    uint8 public constant LL_FACTORY = 3;  // Factory type of `LiquidityLockerFactory`.
+    uint8 public constant SL_FACTORY = 4;  // Factory type of `StakeLockerFactory`.
+
+    uint8 public constant INTEREST_CALC_TYPE = 10;  // Calc type of `RepaymentCalc`.
+    uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`.
+    uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`.
+
     uint256 constant USD = 10 ** 6;  // USDC precision decimals
     uint256 constant BTC = 10 ** 8;  // WBTC precision decimals
     uint256 constant WAD = 10 ** 18;
@@ -179,8 +197,10 @@ contract TestUtil is DSTest {
     function createBorrower()       public { bob = new Borrower(); }
     function createBorrowers()      public { bob = new Borrower(); ben = new Borrower(); bud = new Borrower(); }
 
-    function createGovernor()       public { gov = new Governor(); }
-    function createGovernors()      public { gov = new Governor(); fakeGov = new Governor(); }
+    function createCommoner()       public { cam = new Commoner(); }
+
+    function createHolder()         public { hal = new Holder(); }
+    function createHolders()        public { hal = new Holder(); hue = new Holder(); }
 
     function createLP()             public { leo = new LP(); }
     function createLPs()            public { leo = new LP(); liz = new LP(); lex = new LP(); }
@@ -191,7 +211,8 @@ contract TestUtil is DSTest {
     function createStaker()         public { sam = new Staker(); }
     function createStakers()        public { sam = new Staker(); sid = new Staker(); sue = new Staker(); }
 
-    function createCommoner()       public { cam = new Commoner(); }
+    function createGovernor()       public { gov = new Governor(); }
+    function createGovernors()      public { gov = new Governor(); fakeGov = new Governor(); }
 
     function createSecurityAdmin()  public { securityAdmin = new SecurityAdmin(); }
 
@@ -211,9 +232,10 @@ contract TestUtil is DSTest {
     function setUpActors() public {
         setUpPoolDelegates();
         createBorrowers();
+        createCommoner();
+        createHolders();
         createLPs();
         createStakers();
-        createCommoner();
     }
 
     /**************************************/
@@ -234,10 +256,11 @@ contract TestUtil is DSTest {
         createBPool();
 
         gov.setMapleTreasury(address(treasury));
-        gov.setValidBalancerPool(address(bPool), true);
-        gov.setCollateralAsset(WETH, true);
-        gov.setLiquidityAsset(USDC, true);
-        gov.setSwapOutRequired(1_000_000);
+        gov.setAdmin(address(emergencyAdmin));
+        gov.setDefaultUniswapPath(WBTC, USDC, WETH);
+        gov.setGovTreasury(treasury);
+        fakeGov.setGovTreasury(treasury);
+
     }
 
     /**********************************/
@@ -255,6 +278,8 @@ contract TestUtil is DSTest {
         gov.setCalc(address(repaymentCalc), true);
         gov.setCalc(address(lateFeeCalc),   true);
         gov.setCalc(address(premiumCalc),   true);
+
+        calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
     }
 
     /********************************/
@@ -263,7 +288,7 @@ contract TestUtil is DSTest {
     function createPoolFactory()             public { poolFactory = new PoolFactory(address(globals)); }
     function createStakeLockerFactory()      public { slFactory   = new StakeLockerFactory(); }
     function createLiquidityLockerFactory()  public { llFactory   = new LiquidityLockerFactory(); }
-    function createDebtLockerFactories()     public { dlFactory1  = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
+    function createDebtLockerFactories()     public { dlFactory   = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
     function createLoanFactory()             public { loanFactory = new LoanFactory(address(globals)); }
     function createCollateralLockerFactory() public { clFactory   = new CollateralLockerFactory(); }
     function createFundingLockerFactory()    public { flFactory   = new FundingLockerFactory(); }
@@ -280,7 +305,7 @@ contract TestUtil is DSTest {
         gov.setValidPoolFactory(address(poolFactory), true);
         gov.setValidSubFactory( address(poolFactory), address(slFactory),  true);
         gov.setValidSubFactory( address(poolFactory), address(llFactory),  true);
-        gov.setValidSubFactory( address(poolFactory), address(dlFactory1), true);
+        gov.setValidSubFactory( address(poolFactory), address(dlFactory),  true);
         gov.setValidSubFactory( address(poolFactory), address(dlFactory2), true);
 
         gov.setValidLoanFactory(address(loanFactory), true);
@@ -314,15 +339,18 @@ contract TestUtil is DSTest {
     /******************************/
     function createWethOracle() public { wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(securityAdmin)); }
     function createWbtcOracle() public { wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(securityAdmin)); }
+    function createDaiOracle()  public { daiOracle  = new ChainlinkOracle(tokens["DAI"].orcl,  DAI,  address(securityAdmin)); }
     function createUsdOracle()  public { usdOracle  = new UsdOracle(); }
 
     function setUpOracles() public {
         createWethOracle();
         createWbtcOracle();
+        createDaiOracle();
         createUsdOracle();
 
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));
+        gov.setPriceOracle(DAI,  address(daiOracle));
         gov.setPriceOracle(USDC, address(usdOracle));
     }
 
@@ -346,13 +374,31 @@ contract TestUtil is DSTest {
         bPool.transfer(address(pat), bPool.balanceOf(address(this)) / 2);
         bPool.transfer(address(pam), bPool.balanceOf(address(this)));
     }
-    /***  */
+
+    /****************************/
+    /*** Loan Setup Functions ***/
+    /****************************/
+    function createLoan() public {
+        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
+        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+    }
+    function createLoan(uint256[6] memory specs) public {
+        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+    }
 
     /******************************/
     /*** Test Utility Functions ***/
     /******************************/
 
     function setUpTokens() public {
+
+        gov.setLiquidityAsset(DAI,   true);
+        gov.setLiquidityAsset(USDC,  true);
+        gov.setCollateralAsset(DAI,  true);
+        gov.setCollateralAsset(USDC, true);
+        gov.setCollateralAsset(WETH, true);
+        gov.setCollateralAsset(WBTC, true);
+
         tokens["USDC"].addr = USDC;
         tokens["USDC"].slot = 9;
 
