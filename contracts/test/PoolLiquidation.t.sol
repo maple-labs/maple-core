@@ -406,8 +406,6 @@ contract PoolLiquidationTest is TestUtil {
 
     function test_claim_default_burn_BPT_shortfall() public {
 
-        gov.setMaxSwapSlippage(10_000);  // Ignore slippage for this test ($20m ETH trade TODO: Refactor to make this lower)
-
         // Fund the pool
         mint("USDC", address(leo), 500_000_000 * USD);
         mint("USDC", address(liz),  10_000_000 * USD);

@@ -275,7 +275,6 @@ contract TestUtil is DSTest {
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
         gov.setGovTreasury(treasury);
         fakeGov.setGovTreasury(treasury);
-
     }
 
     /**********************************/
