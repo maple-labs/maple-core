@@ -106,10 +106,6 @@ contract LoanFactoryTest is TestUtil {
         assertTrue(!bob.try_createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), [uint256(10), 10, 2, uint256(0), 30], calcs));
         assertEq(loanFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
 
-        // fails because of error - ERR_FUNDING_PERIOD_EQUALS_ZERO
-        assertTrue(!bob.try_createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), [10, 10, 2, 10_000_000 * USD, 30], calcs));
-        assertEq(loanFactory.loansCreated(), 0, "Colluded state");  // Should be 0.
-
         // Should successfully created
         assertTrue(bob.try_createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(loanFactory.loansCreated(), 1, "Incorrect loan instantiation");  // Should be incremented by 1.
