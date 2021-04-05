@@ -4,35 +4,18 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "./user/Governor.sol";
-import "./user/Borrower.sol";
-
-import "../CollateralLocker.sol";
-import "../CollateralLockerFactory.sol";
-import "module/maple-token/contracts/MapleToken.sol";
-
 contract CollateralLockerFactoryTest is TestUtil {
 
-    Governor                        gov;
-
-    CollateralLockerFactory   clFactory;
-    MapleToken                      mpl;
-    MapleGlobals                globals;
-    Borrower                        bob;
-
     function setUp() public {
-
-        gov         = new Governor();                                  // Actor: Governor of Maple.
-
-        mpl         = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
-        globals     = gov.createGlobals(address(mpl));                 // Setup Maple Globals.
-        clFactory   = new CollateralLockerFactory();                   // Setup Collateral Locker Factory to support Loan Factory creation.
-        bob         = new Borrower();
-        assertEq(clFactory.factoryType(), uint(0), "Incorrect factory type");
+        setUpGlobals();
+        setUpTokens();
+        createCollateralLockerFactory();
+        createBorrower();
     }
 
     function test_newLocker() public {
         CollateralLocker cl  = CollateralLocker(clFactory.newLocker(USDC));
+
         // Validate the storage of clfactory.
         assertEq(clFactory.owner(address(cl)), address(this), "Invalid owner");
         assertTrue(clFactory.isLocker(address(cl)));
@@ -41,6 +24,7 @@ contract CollateralLockerFactoryTest is TestUtil {
         assertEq(cl.loan(), address(this), "Incorrect loan address");
         assertEq(address(cl.collateralAsset()), USDC, "Incorrect address of collateral asset");
 
+        // Assert that no one can access collateral locker funds
         mint("USDC", address(cl),  500 * USD);
         assertTrue(!bob.try_pull(address(cl), address(bob), 10));
     }

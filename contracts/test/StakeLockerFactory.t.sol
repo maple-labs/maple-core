@@ -4,33 +4,16 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "./user/Governor.sol";
-
-import "../StakeLocker.sol";
-import "../StakeLockerFactory.sol";
-
-import "module/maple-token/contracts/MapleToken.sol";
-
 contract StakeLockerFactoryTest is TestUtil {
 
-    Governor                        gov;
-
-    MapleGlobals                globals;
-    MapleToken                      mpl;
-    StakeLockerFactory        slFactory;
-
     function setUp() public {
-
-        gov       = new Governor();                                  // Actor: Governor of Maple.
-
-        mpl       = new MapleToken("MapleToken", "MAPL", USDC);      // Setup Maple token.
-        globals   = gov.createGlobals(address(mpl));                 // Setup Maple Globals.
-        slFactory = new StakeLockerFactory();                        // Setup Stake Locker Factory to support Stake Locker creation.
-        assertEq(slFactory.factoryType(), uint(4), "Incorrect factory type");
+        setUpGlobals();
+        createStakeLockerFactory();
     }
 
     function test_newLocker() public {
         StakeLocker sl = StakeLocker(slFactory.newLocker(address(mpl), USDC));
+        
         // Validate the storage of slfactory.
         assertEq(slFactory.owner(address(sl)), address(this));
         assertTrue(slFactory.isLocker(address(sl)));

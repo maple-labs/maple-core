@@ -19,6 +19,21 @@ contract Commoner {
         (ok,) = globals.call(abi.encodeWithSignature(sig, pause));
     }
 
+    function try_setManualOverride(address oracle, bool _override) external returns (bool ok) {
+        string memory sig = "setManualOverride(bool)";
+        (ok,) = oracle.call(abi.encodeWithSignature(sig, _override));
+    }
+
+    function try_setManualPrice(address oracle, int256 priceFeed) external returns (bool ok) {
+        string memory sig = "setManualPrice(int256)";
+        (ok,) = oracle.call(abi.encodeWithSignature(sig, priceFeed));
+    }
+
+    function try_changeAggregator(address oracle, address aggregator) external returns (bool ok) {
+        string memory sig = "changeAggregator(address)";
+        (ok,) = oracle.call(abi.encodeWithSignature(sig, aggregator));
+    }
+
     function try_pause(address target) external returns (bool ok) {
         string memory sig = "pause()";
         (ok,) = target.call(abi.encodeWithSignature(sig));

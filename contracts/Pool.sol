@@ -122,7 +122,7 @@ contract Pool is PoolFDT {
         stakeLocker     = address(IStakeLockerFactory(_slFactory).newLocker(_stakeAsset, _liquidityAsset));
         liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
 
-        lockupPeriod     = 180 days;
+        lockupPeriod = 180 days;
 
         emit PoolStateChanged(State.Initialized);
     }

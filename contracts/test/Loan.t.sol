@@ -4,169 +4,26 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "./user/Borrower.sol";
-import "./user/Commoner.sol";
-import "./user/EmergencyAdmin.sol";
-import "./user/Governor.sol";
-import "./user/LP.sol";
-import "./user/PoolDelegate.sol";
-import "./user/SecurityAdmin.sol";
-
-import "../RepaymentCalc.sol";
-import "../CollateralLockerFactory.sol";
-import "../DebtLocker.sol";
-import "../DebtLockerFactory.sol";
-import "../FundingLockerFactory.sol";
-import "../LateFeeCalc.sol";
-import "../LiquidityLockerFactory.sol";
-import "../Loan.sol";
-import "../LoanFactory.sol";
-import "../MapleTreasury.sol";
-import "../Pool.sol";
-import "../PoolFactory.sol";
-import "../PremiumCalc.sol";
-import "../StakeLockerFactory.sol";
-
-import "../interfaces/IERC20Details.sol";
-import "../interfaces/ILoan.sol";
-import "../interfaces/IBFactory.sol";
-
-import "../oracles/ChainlinkOracle.sol";
-import "../oracles/UsdOracle.sol";
-
-import "module/maple-token/contracts/MapleToken.sol";
-
 contract Treasury { }
 
 contract LoanTest is TestUtil {
 
-    Borrower                               bob;
-    Borrower                               ben;
-    Governor                               gov;
-    LP                                     leo;
-    PoolDelegate                           pat;
-    Commoner                               cam;
-
-    SecurityAdmin                securityAdmin;
-    EmergencyAdmin             emergerncyAdmin;
-
-    RepaymentCalc                repaymentCalc;
-    CollateralLockerFactory          clFactory;
-    DebtLockerFactory                dlFactory;
-    FundingLockerFactory             flFactory;
-    LateFeeCalc                    lateFeeCalc;
-    LiquidityLockerFactory           llFactory;
-    LoanFactory                    loanFactory;
-    MapleGlobals                       globals;
-    MapleToken                             mpl;
-    MapleTreasury                     treasury;
-    Pool                                  pool; 
-    PoolFactory                    poolFactory;
-    PremiumCalc                    premiumCalc;
-    StakeLockerFactory               slFactory;
-    ChainlinkOracle                 wethOracle;
-    ChainlinkOracle                 wbtcOracle;
-    UsdOracle                        usdOracle;
-
-    IBPool                               bPool;
-    IStakeLocker                   stakeLocker;
-
     function setUp() public {
-
-        bob = new Borrower();        // Actor: Borrower of the Loan.
-        ben = new Borrower();        // Actor: Borrower of the Loan.
-        gov = new Governor();        // Actor: Governor of Maple.
-        cam = new Commoner();        // Actor: Any user or an incentive seeker.
-        leo = new LP();              // Actor: Liquidity provider.
-        pat = new PoolDelegate();    // Actor: Manager of the Pool.
-
-        securityAdmin   = new SecurityAdmin();   // Actor: Security Admin of the Loan.
-        emergerncyAdmin = new EmergencyAdmin();  // Actor: Emergency Admin of the protocol.
-
-        mpl      = new MapleToken("MapleToken", "MAPL", USDC);
-        globals  = gov.createGlobals(address(mpl));
-        treasury = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals));
-
-        flFactory     = new FundingLockerFactory();         // Setup the FL factory to facilitate Loan factory functionality.
-        clFactory     = new CollateralLockerFactory();      // Setup the CL factory to facilitate Loan factory functionality.
-        loanFactory   = new LoanFactory(address(globals));  // Create Loan factory.
-        slFactory     = new StakeLockerFactory();           // Setup the SL factory to facilitate Pool factory functionality.
-        llFactory     = new LiquidityLockerFactory();       // Setup the SL factory to facilitate Pool factory functionality.
-        poolFactory   = new PoolFactory(address(globals));  // Create pool factory.
-        dlFactory     = new DebtLockerFactory();            // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        repaymentCalc = new RepaymentCalc();                // Repayment model.
-        lateFeeCalc   = new LateFeeCalc(0);                 // Flat 0% fee
-        premiumCalc   = new PremiumCalc(500);               // Flat 5% premium
-
-        /*** Globals administrative actions ***/
-        gov.setPoolDelegateAllowlist(address(pat), true);
-        gov.setMapleTreasury(address(treasury));
-        gov.setAdmin(address(emergerncyAdmin));
-
-        /*** Validate all relevant contracts in Globals ***/
-        gov.setValidLoanFactory(address(loanFactory), true);
-        gov.setValidPoolFactory(address(poolFactory), true);
-
-        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
-        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
-
-        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
-
-        gov.setCalc(address(repaymentCalc), true);
-        gov.setCalc(address(lateFeeCalc),   true);
-        gov.setCalc(address(premiumCalc),   true);
-        gov.setCollateralAsset(WETH,        true);
-        gov.setLiquidityAsset(USDC,         true);
-
-        /*** Set up oracles ***/
-        wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
-        wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new UsdOracle();
-        
-        gov.setPriceOracle(WETH, address(wethOracle));
-        gov.setPriceOracle(WBTC, address(wbtcOracle));
-        gov.setPriceOracle(USDC, address(usdOracle));
+        setUpGlobals();
+        setUpTokens();
+        setUpOracles();
+        setUpFactories();
+        setUpCalcs();
+        setUpActors();
+        setUpBalancerPool();
+        setUpLiquidityPool();
+        createLoan();
 
         /*** Mint balances to relevant actors ***/
         mint("WETH", address(bob),          10 ether);
         mint("USDC", address(leo),        5000 * USD);
         mint("USDC", address(bob),         500 * USD);
         mint("USDC", address(this), 50_000_000 * USD);
-
-        /*** Create and finalize MPL-USDC 50-50 Balancer Pool ***/
-        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); // Initialize MPL/USDC Balancer pool (without finalizing)
-
-        IERC20(USDC).approve(address(bPool), MAX_UINT);
-        mpl.approve(address(bPool), MAX_UINT);
-
-        bPool.bind(USDC,         1_650_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
-        bPool.bind(address(mpl),   550_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
-        bPool.finalize();
-        bPool.transfer(address(pat), 100 * WAD);  // Give PD a balance of BPTs to finalize pool
-
-        gov.setValidBalancerPool(address(bPool), true);
-
-        /*** Create Liqiuidty Pool ***/
-        pool = Pool(pat.createPool(
-            address(poolFactory),
-            USDC,
-            address(bPool),
-            address(slFactory),
-            address(llFactory),
-            500,
-            100,
-            MAX_UINT  // liquidityCap value
-        ));
-
-        /*** Pool Delegate stakes and finalizes Pool ***/ 
-        stakeLocker = IStakeLocker(pool.stakeLocker());
-        pat.approve(address(bPool), address(stakeLocker), 50 * WAD);
-        pat.stake(address(stakeLocker), 50 * WAD);
-        pat.finalize(address(pool));  // PD that staked can finalize
-        pat.setOpenToPublic(address(pool), true);
-        assertEq(uint256(pool.poolState()), 1);  // Finalize
 
         /*** LP deposits USDC into Pool ***/
         leo.approve(USDC, address(pool), MAX_UINT);
@@ -177,8 +34,7 @@ contract LoanTest is TestUtil {
         uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        // Can't create a loan with DAI since stakingAsset uses USDC.
-        assertTrue(!bob.try_createLoan(address(loanFactory), DAI, WETH, address(flFactory), address(clFactory), specs, calcs));
+        // TODO: Add failure mode coverage here
 
         Loan loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     
@@ -234,11 +90,11 @@ contract LoanTest is TestUtil {
 
         // Protocol-wide pause by Emergency Admin
         assertTrue(!cam.try_setProtocolPause(address(globals), true));
-        assertTrue( emergerncyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(globals.protocolPaused());
         assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), 2500 * USD));
 
-        assertTrue(emergerncyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(!globals.protocolPaused());
         assertTrue(pat.try_fundLoan(address(pool), address(loan), address(dlFactory), 2500 * USD));
 
@@ -270,11 +126,11 @@ contract LoanTest is TestUtil {
         bob.approve(WETH, address(loan), reqCollateral);
 
         // Pause protocol and attempt drawdown()
-        assertTrue(emergerncyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(!bob.try_drawdown(address(loan), 5000 * USD));
 
         // Unpause protocol and drawdown()
-        assertTrue(emergerncyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(bob.try_drawdown(address(loan), 5000 * USD));
     }
 
@@ -364,11 +220,11 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),           _due);
 
         // Pause protocol and attempt makePayment()
-        assertTrue( emergerncyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(!bob.try_makePayment(address(loan)));
 
         // Unpause protocol and makePayment()
-        assertTrue(emergerncyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(bob.try_makePayment(address(loan)));  // Make payment.
 
         uint _nextPaymentDue = _due + loan.paymentIntervalSeconds();
@@ -447,6 +303,10 @@ contract LoanTest is TestUtil {
 
         assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
 
+        // Warp to *300 seconds* after next payment is due (payment is late)
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
+
         // Approve 1st of 3 payments.
         (uint _amt, uint _pri, uint _int, uint _due,) = loan.getNextPayment();
         bob.approve(USDC, address(loan), _amt);
@@ -459,11 +319,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.paymentsRemaining(),           3);
         assertEq(loan.nextPaymentDue(),           _due);
 
-        // Warp to *300 seconds* after next payment is due
-        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
-
         // Make payment.
+        log_named_uint("approval", usdc.allowance(address(bob), address(loan)));
         assertTrue(bob.try_makePayment(address(loan)));
 
         uint _nextPaymentDue = _due + loan.paymentIntervalSeconds();
@@ -476,13 +333,13 @@ contract LoanTest is TestUtil {
         assertEq(loan.paymentsRemaining(),                2);
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
-        // Approve 2nd of 3 payments.
-        (_amt, _pri, _int, _due,) = loan.getNextPayment();
-        bob.approve(USDC, address(loan), _amt);
-
         // Warp to *300 seconds* after next payment is due
         hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
         assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
+
+        // Approve 2nd of 3 payments.
+        (_amt, _pri, _int, _due,) = loan.getNextPayment();
+        bob.approve(USDC, address(loan), _amt);
         
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
@@ -497,6 +354,10 @@ contract LoanTest is TestUtil {
         assertEq(loan.paymentsRemaining(),                1);
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
+        // Warp to *300 seconds* after next payment is due
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
+
         // Approve 3nd of 3 payments.
         (_amt, _pri, _int, _due,) = loan.getNextPayment();
         bob.approve(USDC, address(loan), _amt);
@@ -506,10 +367,6 @@ contract LoanTest is TestUtil {
         IERC20Details collateralAsset = IERC20Details(address(loan.collateralAsset()));
         uint _delta = collateralAsset.balanceOf(address(bob));
         assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
-
-        // Warp to *300 seconds* after next payment is due
-        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
         
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
@@ -545,11 +402,11 @@ contract LoanTest is TestUtil {
         hevm.warp(loan.createdAt() + globals.fundingPeriod() + 1);
 
         // Pause protocol and attempt unwind()
-        assertTrue( emergerncyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(!bob.try_unwind(address(loan)));
 
         // Unpause protocol and unwind()
-        assertTrue(emergerncyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(bob.try_unwind(address(loan)));
 
         uint256 flBalance_post   = IERC20(loan.liquidityAsset()).balanceOf(loan.fundingLocker());
@@ -570,11 +427,11 @@ contract LoanTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(ben)), 0);
 
         // Pause protocol and attempt withdrawFunds() (through claim)
-        assertTrue( emergerncyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(!pat.try_claim(address(pool), address(loan), address(dlFactory)));
 
         // Unpause protocol and withdrawFunds() (through claim)
-        assertTrue(emergerncyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(pat.try_claim(address(pool), address(loan), address(dlFactory)));
 
         withinDiff(IERC20(USDC).balanceOf(address(pool.liquidityLocker())), 5000 * USD, 1);
@@ -703,11 +560,11 @@ contract LoanTest is TestUtil {
         uint256 _usdcDelta            = IERC20(USDC).balanceOf(address(loan));
 
         // Pause protocol and attempt makeFullPayment()
-        assertTrue( emergerncyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(!bob.try_makeFullPayment(address(loan)));
 
         // Unpause protocol and makeFullPayment()
-        assertTrue(emergerncyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(bob.try_makeFullPayment(address(loan)));  // Make full payment.
 
         // After state
@@ -753,12 +610,12 @@ contract LoanTest is TestUtil {
         Loan loan = createAndFundLoan(address(repaymentCalc));
 
         // Pause protocol and attempt setAdmin()
-        assertTrue( emergerncyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(!bob.try_setAdmin(address(loan), address(securityAdmin), true));
         assertTrue(!loan.admins(address(securityAdmin)));
 
         // Unpause protocol and setAdmin()
-        assertTrue(emergerncyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(bob.try_setAdmin(address(loan), address(securityAdmin), true));
         assertTrue(loan.admins(address(securityAdmin)));
     }

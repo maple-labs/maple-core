@@ -4,120 +4,19 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-import "./user/Borrower.sol";
-import "./user/Governor.sol";
-import "./user/LP.sol";
-import "./user/PoolDelegate.sol";
-
-import "../RepaymentCalc.sol";
-import "../CollateralLockerFactory.sol";
-import "../DebtLocker.sol";
-import "../DebtLockerFactory.sol";
-import "../FundingLockerFactory.sol";
-import "../LateFeeCalc.sol";
-import "../LiquidityLockerFactory.sol";
-import "../Loan.sol";
-import "../LoanFactory.sol";
-import "../MapleTreasury.sol";
-import "../Pool.sol";
-import "../PoolFactory.sol";
-import "../PremiumCalc.sol";
-import "../StakeLockerFactory.sol";
-
-import "../interfaces/IERC20Details.sol";
-import "../interfaces/ILoan.sol";
-import "../interfaces/IBFactory.sol";
-
-import "../oracles/ChainlinkOracle.sol";
-import "../oracles/UsdOracle.sol";
-
-import "module/maple-token/contracts/MapleToken.sol";
-
-contract Treasury { }
-
 contract LoanLiquidationTest is TestUtil {
-
-    Borrower                               bob;
-    Governor                               gov;
-    LP                                     leo;
-    PoolDelegate                           pat;
-
-    RepaymentCalc                repaymentCalc;
-    CollateralLockerFactory          clFactory;
-    DebtLockerFactory                dlFactory;
-    FundingLockerFactory             flFactory;
-    LateFeeCalc                    lateFeeCalc;
-    LiquidityLockerFactory           llFactory;
-    LoanFactory                    loanFactory;
-    MapleGlobals                       globals;
-    MapleToken                             mpl;
-    MapleTreasury                     treasury;
-    Pool                                  pool; 
-    PoolFactory                    poolFactory;
-    PremiumCalc                    premiumCalc;
-    StakeLockerFactory               slFactory;
-    ChainlinkOracle                 wethOracle;
-    ChainlinkOracle                 wbtcOracle;
-    UsdOracle                        usdOracle;
-
-    IBPool                               bPool;
-    IStakeLocker                   stakeLocker;
 
     function setUp() public {
 
-        bob = new Borrower();     // Actor: Borrower of the Loan.
-        gov = new Governor();     // Actor: Governor of Maple.
-        leo = new LP();           // Actor: Individual lender.
-        pat = new PoolDelegate(); // Actor: Manager of the Pool.
-
-        mpl      = new MapleToken("MapleToken", "MAPL", USDC);
-        globals  = gov.createGlobals(address(mpl));
-        treasury = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals));
-
-        flFactory     = new FundingLockerFactory();         // Setup the FL factory to facilitate Loan factory functionality.
-        clFactory     = new CollateralLockerFactory();      // Setup the CL factory to facilitate Loan factory functionality.
-        loanFactory   = new LoanFactory(address(globals));  // Create Loan factory.
-        slFactory     = new StakeLockerFactory();           // Setup the SL factory to facilitate Pool factory functionality.
-        llFactory     = new LiquidityLockerFactory();       // Setup the SL factory to facilitate Pool factory functionality.
-        poolFactory   = new PoolFactory(address(globals));  // Create pool factory.
-        dlFactory     = new DebtLockerFactory();            // Setup DL factory to hold the cumulative funds for a loan corresponds to a pool.
-        repaymentCalc = new RepaymentCalc();                // Repayment model.
-        lateFeeCalc   = new LateFeeCalc(0);                 // Flat 0% fee
-        premiumCalc   = new PremiumCalc(500);               // Flat 5% premium
-
-        /*** Globals administrative actions ***/
-        gov.setPoolDelegateAllowlist(address(pat), true);
-        gov.setMapleTreasury(address(treasury));
-        gov.setDefaultUniswapPath(WETH, USDC, USDC);
-        gov.setDefaultUniswapPath(WBTC, USDC, WETH);
-
-        /*** Validate all relevant contracts in Globals ***/
-        gov.setValidLoanFactory(address(loanFactory), true);
-        gov.setValidPoolFactory(address(poolFactory), true);
-
-        gov.setValidSubFactory(address(loanFactory), address(flFactory), true);
-        gov.setValidSubFactory(address(loanFactory), address(clFactory), true);
-
-        gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
-        gov.setValidSubFactory(address(poolFactory), address(dlFactory), true);
-
-        gov.setCalc(address(repaymentCalc), true);
-        gov.setCalc(address(lateFeeCalc),   true);
-        gov.setCalc(address(premiumCalc),   true);
-        gov.setCollateralAsset(WBTC,        true);
-        gov.setCollateralAsset(WETH,        true);
-        gov.setCollateralAsset(USDC,        true);
-        gov.setLiquidityAsset(USDC,         true);
-
-        /*** Set up oracles ***/
-        wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(this));
-        wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(this));
-        usdOracle  = new UsdOracle();
-        
-        gov.setPriceOracle(WETH, address(wethOracle));
-        gov.setPriceOracle(WBTC, address(wbtcOracle));
-        gov.setPriceOracle(USDC, address(usdOracle));
+        setUpGlobals();
+        setUpTokens();
+        setUpOracles();
+        setUpFactories();
+        setUpCalcs();
+        setUpActors();
+        setUpBalancerPool();
+        setUpLiquidityPool();
+        createLoans();
 
         /*** Mint balances to relevant actors ***/
         mint("WETH", address(bob),         100 ether);
@@ -125,39 +24,6 @@ contract LoanLiquidationTest is TestUtil {
         mint("USDC", address(leo),     100_000 * USD);
         mint("USDC", address(bob),     100_000 * USD);
         mint("USDC", address(this), 50_000_000 * USD);
-
-        /*** Create and finalize MPL-USDC 50-50 Balancer Pool ***/
-        bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); // Initialize MPL/USDC Balancer pool (without finalizing)
-
-        IERC20(USDC).approve(address(bPool), MAX_UINT);
-        mpl.approve(address(bPool), MAX_UINT);
-
-        bPool.bind(USDC,         1_650_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
-        bPool.bind(address(mpl),   550_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
-        bPool.finalize();
-        bPool.transfer(address(pat), 100 * WAD);  // Give PD a balance of BPTs to finalize pool
-
-        gov.setValidBalancerPool(address(bPool), true);
-
-        /*** Create Liqiuidty Pool ***/
-        pool = Pool(pat.createPool(
-            address(poolFactory),
-            USDC,
-            address(bPool),
-            address(slFactory),
-            address(llFactory),
-            500,
-            100,
-            MAX_UINT  // liquidityCap value
-        ));
-
-        /*** Pool Delegate stakes and finalizes Pool ***/ 
-        stakeLocker = IStakeLocker(pool.stakeLocker());
-        pat.approve(address(bPool), address(stakeLocker), 50 * WAD);
-        pat.stake(address(stakeLocker), 50 * WAD);
-        pat.finalize(address(pool));  // PD that staked can finalize
-        pat.setOpenToPublic(address(pool), true);
-        assertEq(uint256(pool.poolState()), 1);  // Finalize
 
         /*** LP deposits USDC into Pool ***/
         leo.approve(USDC, address(pool), MAX_UINT);
