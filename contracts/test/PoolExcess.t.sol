@@ -38,7 +38,7 @@ contract PoolExcessTest is TestUtil {
         setUpLoan();
 
         // Warp and call unwind()
-        hevm.warp(loan.createdAt() + globals.drawdownGracePeriod() + 1);
+        hevm.warp(loan.createdAt() + globals.fundingPeriod() + 1);
         assertTrue(bob.try_unwind(address(loan)));
 
         uint256 principalOut_a_pre = pool.principalOut();

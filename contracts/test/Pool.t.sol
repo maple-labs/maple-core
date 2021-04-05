@@ -693,7 +693,7 @@ contract PoolTest is TestUtil {
         assertTrue(lex.try_deposit(address(pool), 10_000 * USD));
 
         // Create Loan with 0% CR so no claimable funds are present after default
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 0, 7];
+        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 0];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         Loan zero_loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
@@ -712,7 +712,7 @@ contract PoolTest is TestUtil {
         uint256[7] memory claim = pat.claim(address(pool), address(zero_loan), address(dlFactory));
 
         // Time warp to default
-        hevm.warp(block.timestamp + zero_loan.nextPaymentDue() + globals.gracePeriod() + 1);
+        hevm.warp(block.timestamp + zero_loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
         pat.triggerDefault(address(pool), address(zero_loan), address(dlFactory));   // Triggers a "liquidation" that does not perform a swap
 
         uint256[7] memory claim2 = pat.claim(address(pool), address(zero_loan), address(dlFactory));
@@ -732,7 +732,7 @@ contract PoolTest is TestUtil {
         premiumCalc = new PremiumCalc(0); // Flat 0% premium
         gov.setCalc(address(premiumCalc), true);
 
-        uint256[6] memory specs = [0, 180, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [0, 180, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan  = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);

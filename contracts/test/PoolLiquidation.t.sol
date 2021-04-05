@@ -45,7 +45,7 @@ contract PoolLiquidationTest is TestUtil {
         // Warp to late payment
         uint256 start = block.timestamp;
         uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 gracePeriod = globals.gracePeriod();
+        uint256 gracePeriod = globals.defaultGracePeriod();
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
         // Attempt to trigger default as PD holding less than minimum LoanFDTs required (MapleGlobals.minLoanEquity)
@@ -88,7 +88,7 @@ contract PoolLiquidationTest is TestUtil {
         // Warp to late payment
         uint256 start = block.timestamp;
         uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 gracePeriod = globals.gracePeriod();
+        uint256 gracePeriod = globals.defaultGracePeriod();
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
         // Trigger default
@@ -226,7 +226,7 @@ contract PoolLiquidationTest is TestUtil {
         assertPoolAccounting(pool);
 
         // Warp to late payment
-        hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.gracePeriod() + 1);
+        hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 
         // Trigger default
         pat.triggerDefault(address(pool), address(loan), address(dlFactory));

@@ -304,8 +304,8 @@ contract LoanTest is TestUtil {
         assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
 
         // Warp to *300 seconds* after next payment is due (payment is late)
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
 
         // Approve 1st of 3 payments.
         (uint _amt, uint _pri, uint _int, uint _due,) = loan.getNextPayment();
@@ -334,8 +334,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Warp to *300 seconds* after next payment is due
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
 
         // Approve 2nd of 3 payments.
         (_amt, _pri, _int, _due,) = loan.getNextPayment();
@@ -355,8 +355,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),     _nextPaymentDue);
 
         // Warp to *300 seconds* after next payment is due
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
 
         // Approve 3nd of 3 payments.
         (_amt, _pri, _int, _due,) = loan.getNextPayment();

@@ -31,7 +31,7 @@ contract LoanLiquidationTest is TestUtil {
     }
 
     function createAndFundLoan(address _interestStructure, address _collateral, uint256 collateralRatio) internal returns (Loan loan) {
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), collateralRatio, 7];
+        uint256[5] memory specs = [500, 90, 30, uint256(1000 * USD), collateralRatio];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
         loan = bob.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
@@ -53,7 +53,7 @@ contract LoanLiquidationTest is TestUtil {
         uint256 liquidityAssetBorr_pre = IERC20(USDC).balanceOf(address(bob));
 
         // Warp to late payment.
-        hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.gracePeriod() + 1);
+        hevm.warp(block.timestamp + loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 
         // Pre-state triggerDefault() checks.
         assertEq(uint256(loan.loanState()),                                                     1);
