@@ -43,7 +43,7 @@ library LoanLib {
         IGlobals globals = _globals(superFactory);
 
         // Only callable if time has passed drawdown grace period, set in MapleGlobals
-        require(block.timestamp > createdAt.add(globals.drawdownGracePeriod()), "Loan:NOT_PAST_GRACE_PERIOD");
+        require(block.timestamp > createdAt.add(globals.fundingPeriod()), "Loan:FUNDING_PERIOD_NOT_FINISHED");
 
         uint256 preBal = liquidityAsset.balanceOf(address(this));  // Account for existing balance in Loan
 
@@ -139,19 +139,20 @@ library LoanLib {
 
     /**
         @dev Determines if a default can be triggered.
-        @param nextPaymentDue Timestamp of when payment is due
-        @param superFactory   Factory that instantiated Loan
-        @param balance        LoanFDT balance of msg.sender
-        @param totalSupply    LoanFDT totalSupply
+        @param nextPaymentDue     Timestamp of when payment is due
+        @param defaultGracePeriod Amount of time after `nextPaymentDue` that a borrower has before a liquidation can occur
+        @param superFactory       Factory that instantiated Loan
+        @param balance            LoanFDT balance of msg.sender
+        @param totalSupply        LoanFDT totalSupply
         @return boolean indicating if default can be triggered
     */
-    function canTriggerDefault(uint256 nextPaymentDue, address superFactory, uint256 balance, uint256 totalSupply) external view returns(bool) {
+    function canTriggerDefault(uint256 nextPaymentDue, uint256 defaultGracePeriod, address superFactory, uint256 balance, uint256 totalSupply) external view returns(bool) {
 
-        bool pastGracePeriod = block.timestamp > nextPaymentDue.add(_globals(superFactory).gracePeriod());
+        bool pastDefaultGracePeriod = block.timestamp > nextPaymentDue.add(defaultGracePeriod);
 
-        // Check if the loan is past the gracePeriod and that msg.sender has a percentage of total LoanFDTs that is greater
+        // Check if the loan is past the defaultGracePeriod and that msg.sender has a percentage of total LoanFDTs that is greater
         // than the minimum equity needed (specified in globals)
-        return pastGracePeriod && balance >= totalSupply * _globals(superFactory).minLoanEquity() / 10_000;
+        return pastDefaultGracePeriod && balance >= totalSupply * _globals(superFactory).minLoanEquity() / 10_000;
     }
 
     /**

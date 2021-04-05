@@ -203,7 +203,7 @@ contract CalcsTest is TestUtil {
 
             // Create loan, fund loan, draw down on loan
             address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
-            uint256[6] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000, 7];
+            uint256[5] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000];
             loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
         }
 

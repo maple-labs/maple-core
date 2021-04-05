@@ -46,7 +46,9 @@ interface ILoan is IERC20 {
     
     function collateralRatio() external view returns (uint256);
     
-    function fundingPeriodSeconds() external view returns (uint256);
+    function fundingPeriod() external view returns (uint256);
+
+    function defaultGracePeriod() external view returns (uint256);
     
     function createdAt() external view returns (uint256);
     

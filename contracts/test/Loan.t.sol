@@ -174,7 +174,7 @@ contract LoanTest is TestUtil {
     }
 
     function test_createLoan() public {
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         // Can't create a loan with DAI since stakingAsset uses USDC.
@@ -194,14 +194,15 @@ contract LoanTest is TestUtil {
         assertEq(loan.paymentIntervalSeconds(),    specs[2] * 1 days);
         assertEq(loan.requestAmount(),             specs[3]);
         assertEq(loan.collateralRatio(),           specs[4]);
-        assertEq(loan.fundingPeriodSeconds(),      specs[5] * 1 days);
+        assertEq(loan.fundingPeriod(),             globals.fundingPeriod());
+        assertEq(loan.defaultGracePeriod(),        globals.defaultGracePeriod());
         assertEq(loan.repaymentCalc(),             address(repaymentCalc));
         assertEq(loan.lateFeeCalc(),               address(lateFeeCalc));
         assertEq(loan.premiumCalc(),               address(premiumCalc));
     }
 
     function test_fundLoan() public {
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 90, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         Loan loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
@@ -247,7 +248,7 @@ contract LoanTest is TestUtil {
     }
 
     function createAndFundLoan(address _interestStructure) internal returns (Loan loan) {
-        uint256[6] memory specs = [500, 90, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 90, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
         loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
@@ -459,8 +460,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),           _due);
 
         // Warp to *300 seconds* after next payment is due
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
 
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
@@ -480,8 +481,8 @@ contract LoanTest is TestUtil {
         bob.approve(USDC, address(loan), _amt);
 
         // Warp to *300 seconds* after next payment is due
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
         
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
@@ -507,8 +508,8 @@ contract LoanTest is TestUtil {
         assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
 
         // Warp to *300 seconds* after next payment is due
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
-        assertEq(block.timestamp, loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
+        assertEq(block.timestamp, loan.nextPaymentDue() + globals.defaultGracePeriod());
         
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
@@ -532,16 +533,16 @@ contract LoanTest is TestUtil {
 
         Loan loan = createAndFundLoan(address(repaymentCalc));
 
-        // Warp to the drawdownGracePeriod ... can't call unwind() yet
-        hevm.warp(loan.createdAt() + globals.drawdownGracePeriod());
+        // Warp to the fundingPeriod, can't call unwind() yet
+        hevm.warp(loan.createdAt() + globals.fundingPeriod());
         assertTrue(!bob.try_unwind(address(loan)));
 
         uint256 flBalance_pre   = IERC20(loan.liquidityAsset()).balanceOf(loan.fundingLocker());
         uint256 loanBalance_pre = IERC20(loan.liquidityAsset()).balanceOf(address(loan));
         uint256 loanState_pre   = uint256(loan.loanState());
 
-        // Warp 1 more second ... can call unwind()
-        hevm.warp(loan.createdAt() + globals.drawdownGracePeriod() + 1);
+        // Warp 1 more second, can call unwind()
+        hevm.warp(loan.createdAt() + globals.fundingPeriod() + 1);
 
         // Pause protocol and attempt unwind()
         assertTrue( emergerncyAdmin.try_setProtocolPause(address(globals), true));
@@ -603,15 +604,15 @@ contract LoanTest is TestUtil {
 
         hevm.warp(loan.nextPaymentDue() + 1);
 
-        assertTrue(!pat.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has gracePeriod to repay the dues.
+        assertTrue(!pat.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
         assertTrue(!cam.try_triggerDefault(address(loan)));                                     // Failed because still commoner is not allowed to default the loan.
 
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod());
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
 
-        assertTrue(!pat.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has gracePeriod to repay the dues.
+        assertTrue(!pat.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
         assertTrue(!cam.try_triggerDefault(address(loan)));                                     // Failed because still commoner is not allowed to default the loan.
 
-        hevm.warp(loan.nextPaymentDue() + globals.gracePeriod() + 1);
+        hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 
         assertTrue(!cam.try_triggerDefault(address(loan)));  // Failed because still commoner is not allowed to default the loan.
 

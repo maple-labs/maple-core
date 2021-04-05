@@ -8,5 +8,5 @@ interface ILoanFactory {
 
     function globals() external view returns (address);
     
-    function createLoan(address, address, address, address, uint256[6] memory, address[3] memory) external returns (address);
+    function createLoan(address, address, address, address, uint256[5] memory, address[3] memory) external returns (address);
 }

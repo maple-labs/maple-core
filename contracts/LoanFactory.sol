@@ -33,7 +33,7 @@ contract LoanFactory is Pausable {
         address collateralAsset,
         address collateralLocker,
         address fundingLocker,
-        uint256[6] specs,
+        uint256[5] specs,
         address[3] calcs,
         string name,
         string symbol
@@ -64,7 +64,6 @@ contract LoanFactory is Pausable {
                 specs[2] = paymentIntervalDays
                 specs[3] = requestAmount
                 specs[4] = collateralRatio
-                specs[5] = fundingPeriodDays
         @param  calcs The calculators used for the loan.
                 calcs[0] = repaymentCalc
                 calcs[1] = lateFeeCalc
@@ -76,7 +75,7 @@ contract LoanFactory is Pausable {
         address collateralAsset,
         address flFactory,
         address clFactory,
-        uint256[6] memory specs,
+        uint256[5] memory specs,
         address[3] memory calcs
     ) external whenNotPaused returns (address) {
         _whenProtocolNotPaused();

@@ -186,7 +186,7 @@ contract PoolExcessTest is TestUtil {
         stakeLocker_b = IStakeLocker(pool_b.stakeLocker());
 
         // loan Specifications
-        uint256[6] memory specs = [500, 180, 30, uint256(1000 * USD), 2000, 7];
+        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
@@ -223,7 +223,7 @@ contract PoolExcessTest is TestUtil {
         setUpLoan();
 
         // Warp and call unwind()
-        hevm.warp(loan.createdAt() + globals.drawdownGracePeriod() + 1);
+        hevm.warp(loan.createdAt() + globals.fundingPeriod() + 1);
         assertTrue(bob.try_unwind(address(loan)));
 
         uint256 principalOut_a_pre = pool_a.principalOut();
