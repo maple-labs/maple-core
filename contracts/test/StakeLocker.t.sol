@@ -302,41 +302,6 @@ contract StakeLockerTest is TestUtil {
         hevm.warp(currentTime + globals.stakerCooldownPeriod());
     }
 
-    function test_stake_transfer_stakeDate() public {
-
-        // Ignore cooldown for this test
-        gov.setStakerUnstakeWindow(MAX_UINT);
-
-        uint256 start = block.timestamp;
-
-        pat.setAllowlistStakeLocker(address(pool), address(sam), true); // Add Staker to allowlist
-
-        sam.approve(address(bPool), address(stakeLocker), 25 * WAD); // Stake tokens
-        sam.stake(address(stakeLocker), 25 * WAD);
-
-        pat.setAllowlistStakeLocker(address(pool), address(leo), true); // Add leo to allowlist
-
-        assertEq(stakeLocker.stakeDate(address(sam)), start);  // Che just staked
-        assertEq(stakeLocker.stakeDate(address(leo)),     0);  // Ali has not staked
-
-        assertTrue(sam.try_intendToUnstake(address(stakeLocker)));
-        hevm.warp(start + globals.stakerCooldownPeriod() + 1 days);
-
-        sam.transfer(address(stakeLocker), address(leo), 1 * WAD); // Transfer to Ali
-
-        assertEq(stakeLocker.stakeDate(address(sam)),          start);  // Che's date does not change
-        assertEq(stakeLocker.stakeDate(address(leo)), start + globals.stakerCooldownPeriod() + 1 days);  // Ali just got sent FDTs which is effectively "staking"
-
-        hevm.warp(start);
-        assertTrue(sam.try_intendToUnstake(address(stakeLocker)));
-        hevm.warp(start + globals.stakerCooldownPeriod() + 3 days);
-
-        sam.transfer(address(stakeLocker), address(leo), 1 * WAD); // Transfer to Ali
-
-        assertEq(stakeLocker.stakeDate(address(sam)),          start);  // Che's date does not change
-        assertEq(stakeLocker.stakeDate(address(leo)), start + globals.stakerCooldownPeriod() + 2 days);  // Ali stake date = 1/(1+1) * (3 days + coolDown - (1 days + cooldown)) + (1 days + cooldown) = 1/2 * (3 + 10 - (1 + 10)) + (1+10) = 12 days past start
-    }
-
     function test_stake_transfer_recipient_withdrawing() public {
         pat.openStakeLockerToPublic(address(stakeLocker));
 
