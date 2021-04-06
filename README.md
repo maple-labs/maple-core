@@ -44,3 +44,9 @@ To alter number of fuzz runs, change the `--fuzz-runs` flag in `test.sh`. Note: 
 ## Join us on Discord
 
 <a href="https://discord.gg/tuNYQse">Maple Discord</a>
+
+---
+
+<p align="center">
+  <img src="https://maple.finance/static/logo-52b94a65fa2c9a7c9ede3cb978b2408f.png" height="60" />
+</p>
