@@ -403,6 +403,26 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.stakeDate(address(sam)),   stakeDate);  // StakeDate remains unchanged (doesn't matter since balanceOf == 0 on next stake)
     }
 
+    function test_unstake_paused() public {
+        // Make StakeLocker public and stake tokens
+        pat.openStakeLockerToPublic(address(stakeLocker));
+        sam.approve(address(bPool), address(stakeLocker), 10 * WAD);
+        sam.stake(address(stakeLocker), 10 * WAD);
+        hevm.warp(block.timestamp + stakeLocker.lockupPeriod());  // Warp to the end of the lockup
+        sam.intendToUnstake(address(stakeLocker));
+        hevm.warp(block.timestamp + globals.stakerCooldownPeriod());  // Warp to the end of the unstake cooldown
+
+        // Pause protocol and attempt to unstake()
+        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!sam.try_unstake(address(stakeLocker), 10 * WAD));
+        assertEq(stakeLocker.balanceOf(address(sam)),     10 * WAD);
+
+        // Unpause protocol and unstake()
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(sam.try_unstake(address(stakeLocker), 10 * WAD));
+        assertEq(stakeLocker.balanceOf(address(sam)),     0 * WAD);
+    }
+
     function setUpLoanMakeOnePaymentAndDefault() public returns (uint256 interestPaid) {
         // Fund the pool
         mint("USDC", address(leo), 20_000_000 * USD);
