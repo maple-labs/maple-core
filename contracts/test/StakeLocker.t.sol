@@ -346,60 +346,58 @@ contract StakeLockerTest is TestUtil {
         pat.claim(address(pool), address(loan),  address(dlFactory));  // PD claims interest, distributing funds to stakeLocker
     }
 
-    function test_unstake() public {
+    function test_unstake(uint256 stakeAmount) public {
+
+        uint256 bptMin = WAD / 10_000_000;
+        stakeAmount = constrictToRange(stakeAmount, bptMin, bPool.balanceOf(address(sam)), true);  // 25 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents) (non-zero)
+
         uint256 stakeDate = block.timestamp;
 
         pat.setAllowlistStakeLocker(address(pool), address(sam), true);
-        sam.approve(address(bPool), address(stakeLocker), 25 * WAD);
-        sam.stake(address(stakeLocker), 25 * WAD);
+        sam.approve(address(bPool), address(stakeLocker), stakeAmount);
+        sam.stake(address(stakeLocker), stakeAmount);
 
-        assertEq(IERC20(USDC).balanceOf(address(sam)),          0);
-        assertEq(bPool.balanceOf(address(sam)),                 0);
-        assertEq(bPool.balanceOf(address(stakeLocker)),  75 * WAD);  // PD + Staker stake
-        assertEq(stakeLocker.totalSupply(),              75 * WAD);
-        assertEq(stakeLocker.balanceOf(address(sam)),    25 * WAD);
-        assertEq(stakeLocker.stakeDate(address(sam)),   stakeDate);
+        assertEq(IERC20(USDC).balanceOf(address(sam)),                         0);
+        assertEq(bPool.balanceOf(address(sam)),         (25 * WAD) - stakeAmount);
+        assertEq(bPool.balanceOf(address(stakeLocker)), (50 * WAD) + stakeAmount);  // PD + Staker stake
+        assertEq(stakeLocker.totalSupply(),             (50 * WAD) + stakeAmount);
+        assertEq(stakeLocker.balanceOf(address(sam)),                stakeAmount);
+        assertEq(stakeLocker.stakeDate(address(sam)),                  stakeDate);
 
         setUpLoanAndRepay();
         assertTrue(!sue.try_intendToUnstake(address(stakeLocker)));  // Unstake will not work as sue doesn't possess any balance.
         assertTrue( sam.try_intendToUnstake(address(stakeLocker)));
 
         hevm.warp(stakeDate + globals.stakerCooldownPeriod() - 1);
-        assertTrue(!sam.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake BPTs until stakerCooldownPeriod has passed
+        assertTrue(!sam.try_unstake(address(stakeLocker), stakeAmount));  // Staker cannot unstake BPTs until stakerCooldownPeriod has passed
 
         hevm.warp(stakeDate + globals.stakerCooldownPeriod());
-        assertTrue(!sam.try_unstake(address(stakeLocker), 25 * WAD));  // Still cannot unstake because of lockup period
+        assertTrue(!sam.try_unstake(address(stakeLocker), stakeAmount));  // Still cannot unstake because of lockup period
 
         hevm.warp(stakeDate + stakeLocker.lockupPeriod() - globals.stakerCooldownPeriod());  // Warp to first time that user can cooldown and unstake and will be after lockup
         uint256 cooldownTimestamp = block.timestamp;
         assertTrue(sam.try_intendToUnstake(address(stakeLocker)));
 
         hevm.warp(cooldownTimestamp + globals.stakerCooldownPeriod() - 1);
-        assertTrue(!sam.try_unstake(address(stakeLocker), 25 * WAD));  // Staker cannot unstake BPTs until stakerCooldownPeriod has passed
+        assertTrue(!sam.try_unstake(address(stakeLocker), stakeAmount));  // Staker cannot unstake BPTs until stakerCooldownPeriod has passed
 
         hevm.warp(cooldownTimestamp + globals.stakerCooldownPeriod());  // Now user is able to unstake
 
         uint256 totalStakerEarnings    = IERC20(USDC).balanceOf(address(stakeLocker));
-        uint256 cheStakerEarnings_FDT  = stakeLocker.withdrawableFundsOf(address(sam));
-        uint256 cheStakerEarnings_calc = totalStakerEarnings * (25 * WAD) / (75 * WAD);  // Che's portion of staker earnings
+        uint256 samStakerEarnings_FDT  = stakeLocker.withdrawableFundsOf(address(sam));
+        uint256 samStakerEarnings_calc = totalStakerEarnings * (stakeAmount) / ((50 * WAD) + stakeAmount);  // Staker's portion of staker earnings
 
-        // Pause protocol and attempt unstake()
-        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!sam.try_unstake(address(stakeLocker), 25 * WAD));
+        assertTrue(sam.try_unstake(address(stakeLocker), stakeAmount));  // Staker unstakes all BPTs
 
-        // Unpause protocol and unstake()
-        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(sam.try_unstake(address(stakeLocker), 25 * WAD));  // Staker unstakes all BPTs
+        withinPrecision(samStakerEarnings_FDT, samStakerEarnings_calc, 9);
 
-        withinPrecision(cheStakerEarnings_FDT, cheStakerEarnings_calc, 9);
+        assertEq(IERC20(USDC).balanceOf(address(sam)),                               samStakerEarnings_FDT);  // Staker got portion of interest
+        assertEq(IERC20(USDC).balanceOf(address(stakeLocker)), totalStakerEarnings - samStakerEarnings_FDT);  // Interest was transferred out of SL
 
-        assertEq(IERC20(USDC).balanceOf(address(sam)),                               cheStakerEarnings_FDT);  // Che got portion of interest
-        assertEq(IERC20(USDC).balanceOf(address(stakeLocker)), totalStakerEarnings - cheStakerEarnings_FDT);  // Interest was transferred out of SL
-
-        assertEq(bPool.balanceOf(address(sam)),          25 * WAD);  // Che unstaked BPTs
+        assertEq(bPool.balanceOf(address(sam)),          25 * WAD);  // Staker's unstaked BPTs
         assertEq(bPool.balanceOf(address(stakeLocker)),  50 * WAD);  // PD + Staker stake
-        assertEq(stakeLocker.totalSupply(),              50 * WAD);  // Total supply of stake tokens has decreased
-        assertEq(stakeLocker.balanceOf(address(sam)),           0);  // Che has no stake tokens after unstake
+        assertEq(stakeLocker.totalSupply(),              50 * WAD);  // Total supply of staked tokens has decreased
+        assertEq(stakeLocker.balanceOf(address(sam)),           0);  // Staker has no staked tokens after unstake
         assertEq(stakeLocker.stakeDate(address(sam)),   stakeDate);  // StakeDate remains unchanged (doesn't matter since balanceOf == 0 on next stake)
     }
 
