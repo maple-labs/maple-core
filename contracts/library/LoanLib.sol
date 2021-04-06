@@ -23,7 +23,7 @@ library LoanLib {
     using SafeMath  for uint256;
     using SafeERC20 for IERC20;
 
-    enum State { Live, Active, Matured, Expired, Liquidated }
+    enum State { Ready, Active, Matured, Expired, Liquidated }
 
     address public constant UNISWAP_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
