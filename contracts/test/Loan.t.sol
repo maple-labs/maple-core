@@ -231,7 +231,7 @@ contract LoanTest is TestUtil {
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
 
         assertTrue(!ben.try_drawdown(address(loan), drawdownAmount));  // Non-borrower can't drawdown
-        assertTrue(!bob.try_drawdown(address(loan), drawdownAmount));  // Can't drawdown without approving collateral
+        if (loan.collateralRatio() > 0) assertTrue(!bob.try_drawdown(address(loan), drawdownAmount));  // Can't drawdown without approving collateral
 
         uint256 reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
         mint("WETH", address(bob),       reqCollateral);
