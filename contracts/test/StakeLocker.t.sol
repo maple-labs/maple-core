@@ -78,9 +78,13 @@ contract StakeLockerTest is TestUtil {
     }
 
     function getNewStakeDate(address who, uint256 amt) public returns(uint256 newStakeDate) {
-        uint256 stkDate = stakeLocker.stakeDate(who);
-        uint256 coef = stakeLocker.balanceOf(who) + amt == 0 ? 0 : (WAD * amt) / (stakeLocker.balanceOf(who) + amt);
-        newStakeDate = stkDate + (((now - stkDate) * coef) / WAD);
+        uint256 prevDate = stakeLocker.stakeDate(who);
+        if (prevDate == uint256(0)) {
+            newStakeDate = block.timestamp;
+        } else {
+            uint256 dTime = block.timestamp - prevDate;
+            newStakeDate  = prevDate + (dTime * amt / (stakeLocker.balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
+        }
     }
 
     function assertStake(address staker, uint256 staker_bPoolBal, uint256 sl_bPoolBal, uint256 sl_totalSupply, uint256 staker_slBal, uint256 staker_slStakeDate) public {
