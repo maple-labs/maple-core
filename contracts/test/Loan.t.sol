@@ -153,7 +153,7 @@ contract LoanTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(fundingLocker), 5000 * USD);  // Funding locker reqAssset balance
         assertEq(IERC20(USDC).balanceOf(address(loan)),          0);  // Loan vault liquidityAsset balance
         assertEq(loan.principalOwed(),                           0);  // Principal owed
-        assertEq(uint256(loan.loanState()),                      0);  // Loan state: Live
+        assertEq(uint256(loan.loanState()),                      0);  // Loan state: Ready
 
         // Fee related variables pre-check.
         assertEq(loan.feePaid(),                            0);  // feePaid amount
@@ -190,7 +190,7 @@ contract LoanTest is TestUtil {
 
         Loan loan = createAndFundLoan(address(repaymentCalc));
 
-        assertEq(uint256(loan.loanState()), 0);  // Loan state: Live
+        assertEq(uint256(loan.loanState()), 0);  // Loan state: Ready
 
         assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment when State != Active
 
@@ -286,7 +286,7 @@ contract LoanTest is TestUtil {
     function test_makePayment_late() public {
         Loan loan = createAndFundLoan(address(repaymentCalc));
 
-        assertEq(uint256(loan.loanState()), 0);  // Loan state: Live
+        assertEq(uint256(loan.loanState()), 0);  // Loan state: Ready
 
         assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment when State != Active
 
@@ -450,7 +450,7 @@ contract LoanTest is TestUtil {
         uint256 reqCollateral = loan.collateralRequiredForDrawdown(5000 * USD);
         bob.approve(WETH, address(loan), reqCollateral);
 
-        assertEq(loan.loanState(), 0);  // `Live` state
+        assertEq(loan.loanState(), 0);  // `Ready` state
 
         assertTrue(bob.try_drawdown(address(loan), 5000 * USD));  // Draw down the loan.
 
@@ -525,7 +525,7 @@ contract LoanTest is TestUtil {
 
         Loan loan = createAndFundLoan(address(repaymentCalc));
 
-        assertEq(uint256(loan.loanState()), 0);  // Loan state: Live
+        assertEq(uint256(loan.loanState()), 0);  // Loan state: Ready
 
         assertTrue(!bob.try_makeFullPayment(address(loan)));  // Can't makePayment when State != Active
 
