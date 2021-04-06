@@ -599,6 +599,196 @@ contract TestUtil is DSTest {
         else                           return val % (max - min) + min;
     }
 
+    /********************/
+    /*** Pool Helpers ***/
+    /********************/
+
+    function finalizePool(Pool pool, PoolDelegate del) internal {
+        del.approve(address(bPool), pool.stakeLocker(), MAX_UINT);
+        del.stake(pool.stakeLocker(), bPool.balanceOf(address(del)) / 2);
+
+        del.finalize(address(pool));
+        del.setOpenToPublic(address(pool), true);
+    }
+
+    function mintFundsAndDepositIntoPool(LP lp, Pool pool, uint256 mintAmt, uint256 liquidityAmt) internal {
+        if (mintAmt > uint256(0)) mint("USDC", address(lp), mintAmt);
+        lp.approve(USDC, address(pool), MAX_UINT);
+        assertTrue(lp.try_deposit(address(pool), liquidityAmt)); 
+    }
+
+    function drawdown(Loan loan, Borrower bow, uint256 usdDrawdownAmt) internal {
+        uint cReq =  loan.collateralRequiredForDrawdown(usdDrawdownAmt); // wETH required for `usdDrawdownAmt` USDC drawdown on loan
+        mint("WETH", address(bow), cReq);
+        bow.approve(WETH, address(loan),  cReq);
+        bow.drawdown(address(loan),  usdDrawdownAmt);
+    }
+
+    function doPartialLoanPayment(Loan loan, Borrower bow) internal {
+        (uint amt,,,,) =  loan.getNextPayment(); // USDC required for next payment of loan
+        mint("USDC", address(bow), amt);
+        bow.approve(USDC, address(loan),  amt);
+        bow.makePayment(address(loan));
+    }
+
+    function doFullLoanPayment(Loan loan, Borrower bow) internal {
+        (uint amt,,) =  loan.getFullPayment(); // USDC required for full payment of loan
+        mint("USDC", address(bow), amt);
+        bow.approve(USDC, address(loan),  amt);
+        bow.makeFullPayment(address(loan));
+    }
+
+    function make_withdrawable(LP investor, Pool pool) internal {
+        uint256 currentTime = block.timestamp;
+        assertTrue(investor.try_intendToWithdraw(address(pool)));
+        assertEq(      pool.withdrawCooldown(address(investor)), currentTime, "Incorrect value set");
+        hevm.warp(currentTime + globals.lpCooldownPeriod());
+    }
+
+    function setUpWithdraw() internal {
+        /*******************************/
+        /*** Finalize liquidity pool ***/
+        /*******************************/
+        {
+            pat.approve(address(bPool), pool.stakeLocker(), MAX_UINT);
+            pat.stake(pool.stakeLocker(), bPool.balanceOf(address(pat)) / 2);
+            pat.setOpenToPublic(address(pool), true);
+            pat.finalize(address(pool));
+        }
+        /**************************************************/
+        /*** Mint and deposit funds into liquidity pool ***/
+        /**************************************************/
+        {
+            mint("USDC", address(leo), 1_000_000_000 * USD);
+            mint("USDC", address(liz), 1_000_000_000 * USD);
+            mint("USDC", address(lex), 1_000_000_000 * USD);
+
+            leo.approve(USDC, address(pool), MAX_UINT);
+            liz.approve(USDC, address(pool), MAX_UINT);
+            lex.approve(USDC, address(pool), MAX_UINT);
+
+            assertTrue(leo.try_deposit(address(pool), 100_000_000 * USD));  // 10%
+            assertTrue(liz.try_deposit(address(pool), 300_000_000 * USD));  // 30%
+            assertTrue(lex.try_deposit(address(pool), 600_000_000 * USD));  // 60%
+
+            gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
+        }
+
+        /************************************/
+        /*** Fund loan / loan2 (Excess) ***/
+        /************************************/
+        {
+            assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory), 100_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory), 100_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory2), 200_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory2), 200_000_000 * USD));
+
+            assertTrue(pat.try_fundLoan(address(pool), address(loan2), address(dlFactory),  50_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool), address(loan2), address(dlFactory),  50_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool), address(loan2), address(dlFactory2), 150_000_000 * USD));
+            assertTrue(pat.try_fundLoan(address(pool), address(loan2), address(dlFactory2), 150_000_000 * USD));
+        }
+
+        /*****************/
+        /*** Draw Down ***/
+        /*****************/
+        {
+            uint cReq1 =  loan.collateralRequiredForDrawdown(100_000_000 * USD); // wETH required for 100_000_000 USDC drawdown on loan
+            uint cReq2 = loan2.collateralRequiredForDrawdown(100_000_000 * USD); // wETH required for 100_000_000 USDC drawdown on loan2
+            mint("WETH", address(bob), cReq1);
+            mint("WETH", address(ben), cReq2);
+            bob.approve(WETH, address(loan),  cReq1);
+            ben.approve(WETH, address(loan2), cReq2);
+            bob.drawdown(address(loan),  100_000_000 * USD);
+            ben.drawdown(address(loan2), 100_000_000 * USD);
+        }
+        
+        /****************************/
+        /*** Make 1 Payment (1/6) ***/
+        /****************************/
+        {
+            (uint amt1_1,,,,) =  loan.getNextPayment(); // USDC required for 1st payment on loan
+            (uint amt1_2,,,,) = loan2.getNextPayment(); // USDC required for 1st payment on loan2
+            mint("USDC", address(bob), amt1_1);
+            mint("USDC", address(ben), amt1_2);
+            bob.approve(USDC, address(loan),  amt1_1);
+            ben.approve(USDC, address(loan2), amt1_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
+        }
+        
+        /******************/
+        /*** Pool Claim ***/
+        /******************/
+        {   
+            pat.claim(address(pool), address(loan),  address(dlFactory));
+            pat.claim(address(pool), address(loan),  address(dlFactory2));
+            pat.claim(address(pool), address(loan2), address(dlFactory));
+            pat.claim(address(pool), address(loan2), address(dlFactory2));
+        }
+
+        /******************************/
+        /*** Make 2 Payments (3/6)  ***/
+        /******************************/
+        {
+            (uint amt2_1,,,,) =  loan.getNextPayment(); // USDC required for 2nd payment on loan
+            (uint amt2_2,,,,) = loan2.getNextPayment(); // USDC required for 2nd payment on loan2
+            mint("USDC", address(bob), amt2_1);
+            mint("USDC", address(ben), amt2_2);
+            bob.approve(USDC, address(loan),  amt2_1);
+            ben.approve(USDC, address(loan2), amt2_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
+
+            (uint amt3_1,,,,) =  loan.getNextPayment(); // USDC required for 3rd payment on loan
+            (uint amt3_2,,,,) = loan2.getNextPayment(); // USDC required for 3rd payment on loan2
+            mint("USDC", address(bob), amt3_1);
+            mint("USDC", address(ben), amt3_2);
+            bob.approve(USDC, address(loan),  amt3_1);
+            ben.approve(USDC, address(loan2), amt3_2);
+            bob.makePayment(address(loan));
+            ben.makePayment(address(loan2));
+        }
+        
+        /******************/
+        /*** Pool Claim ***/
+        /******************/
+        {      
+            pat.claim(address(pool), address(loan),  address(dlFactory));
+            pat.claim(address(pool), address(loan),  address(dlFactory2));
+            pat.claim(address(pool), address(loan2), address(dlFactory));
+            pat.claim(address(pool), address(loan2), address(dlFactory2));
+        }
+        
+        /*********************************/
+        /*** Make (Early) Full Payment ***/
+        /*********************************/
+        {
+            (uint amtf_1,,) =  loan.getFullPayment(); // USDC required for 2nd payment on loan
+            (uint amtf_2,,) = loan2.getFullPayment(); // USDC required for 2nd payment on loan2
+            mint("USDC", address(bob), amtf_1);
+            mint("USDC", address(ben), amtf_2);
+            bob.approve(USDC, address(loan),  amtf_1);
+            ben.approve(USDC, address(loan2), amtf_2);
+            bob.makeFullPayment(address(loan));
+            ben.makeFullPayment(address(loan2));
+        }
+        
+        /******************/
+        /*** Pool Claim ***/
+        /******************/
+        {   
+            pat.claim(address(pool), address(loan),  address(dlFactory));
+            pat.claim(address(pool), address(loan),  address(dlFactory2));
+            pat.claim(address(pool), address(loan2), address(dlFactory));
+            pat.claim(address(pool), address(loan2), address(dlFactory2));
+
+            // Ensure both loans are matured.
+            assertEq(uint256(loan.loanState()),  2);
+            assertEq(uint256(loan2.loanState()), 2);
+        }
+    }
+
     // function test_cheat_code_for_slot() public {
     //     address CDAI = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
 

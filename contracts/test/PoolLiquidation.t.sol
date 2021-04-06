@@ -363,11 +363,4 @@ contract PoolLiquidationTest is TestUtil {
 
         assertEq(liquidityLockerBal.pre - liquidityLockerBal.post, withdrawAmt);  // All Bob's USDC was transferred out of LL
     }
-
-    function make_withdrawable(LP investor, Pool pool) public {
-        uint256 currentTime = block.timestamp;
-        assertTrue(investor.try_intendToWithdraw(address(pool)));
-        assertEq(pool.withdrawCooldown(address(investor)), currentTime, "Incorrect value set");
-        hevm.warp(currentTime + globals.lpCooldownPeriod());
-    }
-}
+} 
