@@ -22,7 +22,7 @@ contract StakeLockerTest is TestUtil {
         createLoan();
     }
 
-    function test_stake_to_measure_effect_on_stake_date(uint256 stakeAmount1, uint256 stakeAmount2, uint256 warpTime) external {
+    function test_stake_to_measure_effect_on_stake_date(uint256 initialStake, uint256 additionalStake, uint256 transferStake, uint256 warpTime) external {
         TestObj memory stakeLockerBal;   // StakeLocker total balance of BPTs
         TestObj memory fdtTotalSupply;   // Total Supply of FDTs
         TestObj memory stakerBPTBal;     // Staker Balancer Pool BPT balance
@@ -30,51 +30,86 @@ contract StakeLockerTest is TestUtil {
         TestObj memory stakerStakeDate;  // Staker stakeDate
 
         uint256 bptMin = WAD / 10_000_000;
-        stakeAmount1 = constrictToRange(stakeAmount1, bptMin, (bPool.balanceOf(address(sam)) / 2) - 1, true);  // 12.5 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents) (non-zero)
-        stakeAmount2 = constrictToRange(stakeAmount1, bptMin, (bPool.balanceOf(address(sam)) / 2) - 1, true);  // 12.5 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents) (non-zero)
-        warpTime     = constrictToRange(warpTime, 1 days, 365 days, true);
+        initialStake    = constrictToRange(initialStake, bptMin, (bPool.balanceOf(address(sam)) / 2) - 1, true);  // 12.5 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents) (non-zero)
+        additionalStake = constrictToRange(additionalStake, bptMin, (bPool.balanceOf(address(sam)) / 2) - 1, true);  // 12.5 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents) (non-zero)
+        transferStake   = constrictToRange(transferStake, bptMin, bPool.balanceOf(address(sid)), true);
+        warpTime        = constrictToRange(warpTime, 1 days, 365 days, true);
+
+        pat.setAllowlistStakeLocker(address(pool), address(sam), true);
+        pat.setAllowlistStakeLocker(address(pool), address(sid), true);
+        sam.approve(address(bPool), address(stakeLocker), uint256(-1));
+        sid.approve(address(bPool), address(stakeLocker), uint256(-1));
 
         uint256 startDate = block.timestamp;
 
-        pat.setAllowlistStakeLocker(address(pool), address(sam), true);
-        sam.approve(address(bPool), address(stakeLocker), uint256(-1));
-
         stakeLockerBal.pre   = bPool.balanceOf(address(stakeLocker));
         fdtTotalSupply.pre   = stakeLocker.totalSupply();
         stakerBPTBal.pre     = bPool.balanceOf(address(sam));
         stakerFDTBal.pre     = stakeLocker.balanceOf(address(sam));
-        stakerStakeDate.pre  = 0;
+        stakerStakeDate.pre  = stakeLocker.stakeDate(address(sam));
 
-        stakeLockerBal.post  = bPool.balanceOf(address(stakeLocker)).add(stakeAmount1);
-        fdtTotalSupply.post  = stakeLocker.totalSupply().add(stakeAmount1);
-        stakerBPTBal.post    = bPool.balanceOf(address(sam)).sub(stakeAmount1);
-        stakerFDTBal.post    = stakeAmount1;
-        stakerStakeDate.post = startDate;
+        sam.stake(address(stakeLocker), initialStake);
 
-        assertStake(address(sam), stakerBPTBal.pre, stakeLockerBal.pre, fdtTotalSupply.pre, stakerFDTBal.pre, stakerStakeDate.pre);
-        sam.stake(address(stakeLocker), stakeAmount1);
-        assertStake(address(sam), stakerBPTBal.post, stakeLockerBal.post, fdtTotalSupply.post, stakerFDTBal.post, stakerStakeDate.post);
+        stakeLockerBal.post  = bPool.balanceOf(address(stakeLocker));
+        fdtTotalSupply.post  = stakeLocker.totalSupply();
+        stakerBPTBal.post    = bPool.balanceOf(address(sam));
+        stakerFDTBal.post    = stakeLocker.balanceOf(address(sam));
+        stakerStakeDate.post = stakeLocker.stakeDate(address(sam));
+
+        assertEq(stakeLockerBal.post, stakeLockerBal.pre + initialStake, "stakeLockerBal = previous + initialStake");
+        assertEq(fdtTotalSupply.post, fdtTotalSupply.pre + initialStake, "fdtTotalSupply = previous + initialStake");
+        assertEq(stakerBPTBal.post, stakerBPTBal.pre - initialStake,     "stakerBPTBal = previous - initialStake");
+        assertEq(stakerFDTBal.post, stakerFDTBal.pre + initialStake,     "stakerFDTBal = previous + initialStake");
+        assertEq(stakerStakeDate.post, startDate,                        "stakerStakeDate = current block timestamp");
 
         // Warp into the future and stake again
         hevm.warp(startDate + warpTime);
-        uint256 oldStakeDate = stakeLocker.stakeDate(address(sam));
-        uint256 newStakeDate = getNewStakeDate(address(sam), stakeAmount2);
+        uint256 newStakeDate = getNewStakeDate(address(sam), additionalStake);
 
         stakeLockerBal.pre   = bPool.balanceOf(address(stakeLocker));
         fdtTotalSupply.pre   = stakeLocker.totalSupply();
         stakerBPTBal.pre     = bPool.balanceOf(address(sam));
         stakerFDTBal.pre     = stakeLocker.balanceOf(address(sam));
-        stakerStakeDate.pre  = oldStakeDate;
+        stakerStakeDate.pre  = stakeLocker.stakeDate(address(sam));
 
-        stakeLockerBal.post  = bPool.balanceOf(address(stakeLocker)).add(stakeAmount2);
-        fdtTotalSupply.post  = stakeLocker.totalSupply().add(stakeAmount2);
-        stakerBPTBal.post    = bPool.balanceOf(address(sam)).sub(stakeAmount2);
-        stakerFDTBal.post    = stakerFDTBal.pre.add(stakeAmount2);
-        stakerStakeDate.post = newStakeDate;
+        sam.stake(address(stakeLocker), additionalStake);
 
-        assertStake(address(sam), stakerBPTBal.pre, stakeLockerBal.pre, fdtTotalSupply.pre, stakerFDTBal.pre, stakerStakeDate.pre);
-        sam.stake(address(stakeLocker), stakeAmount2);
-        assertStake(address(sam), stakerBPTBal.post, stakeLockerBal.post, fdtTotalSupply.post, stakerFDTBal.post, stakerStakeDate.post);
+        stakeLockerBal.post  = bPool.balanceOf(address(stakeLocker));
+        fdtTotalSupply.post  = stakeLocker.totalSupply();
+        stakerBPTBal.post    = bPool.balanceOf(address(sam));
+        stakerFDTBal.post    = stakeLocker.balanceOf(address(sam));
+        stakerStakeDate.post = stakeLocker.stakeDate(address(sam));
+
+        assertEq(stakeLockerBal.post, stakeLockerBal.pre + additionalStake, "stakeLockerBal = previous + additionalStake");
+        assertEq(fdtTotalSupply.post, fdtTotalSupply.pre + additionalStake, "fdtTotalSupply = previous + additionalStake");
+        assertEq(stakerBPTBal.post, stakerBPTBal.pre - additionalStake,     "stakerBPTBal = previous - additionalStake");
+        assertEq(stakerFDTBal.post, stakerFDTBal.pre + additionalStake,     "stakerFDTBal = previous + additionalStake");
+        assertEq(stakerStakeDate.post, newStakeDate,                        "stakerStakeDate = expected newStakeDate");
+
+        // Warp into the future and receive an FDT transfer
+        hevm.warp(startDate + warpTime);
+        newStakeDate = getNewStakeDate(address(sam), transferStake);
+
+        stakeLockerBal.pre   = bPool.balanceOf(address(stakeLocker));
+        fdtTotalSupply.pre   = stakeLocker.totalSupply();
+        stakerBPTBal.pre     = bPool.balanceOf(address(sam));
+        stakerFDTBal.pre     = stakeLocker.balanceOf(address(sam));
+        stakerStakeDate.pre  = stakeLocker.stakeDate(address(sam));
+
+        sid.stake(address(stakeLocker), transferStake);
+        sid.transfer(address(stakeLocker), address(sam), transferStake);
+
+        stakeLockerBal.post  = bPool.balanceOf(address(stakeLocker));
+        fdtTotalSupply.post  = stakeLocker.totalSupply();
+        stakerBPTBal.post    = bPool.balanceOf(address(sam));
+        stakerFDTBal.post    = stakeLocker.balanceOf(address(sam));
+        stakerStakeDate.post = stakeLocker.stakeDate(address(sam));
+
+        assertEq(stakeLockerBal.post, stakeLockerBal.pre + transferStake, "stakeLockerBal = previous + transferStake");
+        assertEq(fdtTotalSupply.post, fdtTotalSupply.pre + transferStake, "fdtTotalSupply = previous + transferStake");
+        assertEq(stakerBPTBal.post, stakerBPTBal.pre,                     "stakerBPTBal = previous");
+        assertEq(stakerFDTBal.post, stakerFDTBal.pre + transferStake,     "stakerFDTBal = previous + transferStake");
+        assertEq(stakerStakeDate.post, newStakeDate,                      "stakerStakeDate = expected newStakeDate");
     }
 
     function getNewStakeDate(address who, uint256 amt) public returns(uint256 newStakeDate) {
