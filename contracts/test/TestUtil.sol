@@ -594,7 +594,9 @@ contract TestUtil is DSTest {
     }
 
     function constrictToRange(uint256 val, uint256 min, uint256 max, bool nonZero) public pure returns(uint256) {
-        return val == 0 && !nonZero ? 0 : val % (max - min) + min;
+        if      (val == 0 && !nonZero) return 0;
+        else if (max == min)           return max;
+        else                           return val % (max - min) + min;
     }
 
     // function test_cheat_code_for_slot() public {
