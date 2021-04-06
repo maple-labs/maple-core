@@ -179,7 +179,7 @@ contract Loan is FDT, Pausable {
     /**************************/
 
     /**
-        @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from Funding to Active.
+        @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from Ready to Active.
         @param amt Amount of liquidityAsset borrower draws down, remainder is returned to Loan where it can be claimed back by LoanFDT holders.
     */
     function drawdown(uint256 amt) external {
