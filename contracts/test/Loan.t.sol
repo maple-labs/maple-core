@@ -39,6 +39,32 @@ contract LoanTest is TestUtil {
         ];
     }
 
+    function assertLoanState(
+        Loan loan, 
+        uint256 loanState, 
+        uint256 principalOwed, 
+        uint256 principalPaid, 
+        uint256 interestPaid, 
+        uint256 paymentsRemaining, 
+        uint256 nextPaymentDue
+    ) 
+        internal    
+    {
+        assertEq(uint256(loan.loanState()),         loanState);
+        assertEq(loan.principalOwed(),          principalOwed);
+        assertEq(loan.principalPaid(),          principalPaid);
+        assertEq(loan.interestPaid(),            interestPaid);
+        assertEq(loan.paymentsRemaining(),  paymentsRemaining);
+        assertEq(loan.nextPaymentDue(),        nextPaymentDue);
+    }
+
+    function drawdown(Loan loan, uint256 drawdownAmount) internal returns (uint256 reqCollateral) {
+        reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
+        mint("WETH", address(bob), reqCollateral);
+        bob.approve(WETH, address(loan), reqCollateral);
+        assertTrue(bob.try_drawdown(address(loan), drawdownAmount));  // Borrow draws down on loan
+    }
+
     function test_createLoan(
         uint256 apr, 
         uint256 index,           
@@ -285,10 +311,7 @@ contract LoanTest is TestUtil {
         assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment when State != Active
 
         // Approve collateral and drawdown loan.
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
-        mint("WETH", address(bob), reqCollateral);
-        bob.approve(WETH, address(loan), reqCollateral);
-        assertTrue(bob.try_drawdown(address(loan), drawdownAmount));  // Borrow draws down on loan
+        uint256 reqCollateral = drawdown(loan, drawdownAmount);
 
         address collateralLocker = loan.collateralLocker();
 
@@ -304,12 +327,15 @@ contract LoanTest is TestUtil {
         bob.approve(USDC, address(loan), total);
 
         // Before state
-        assertEq(uint256(loan.loanState()),              1);  // Loan state is Active, accepting payments
-        assertEq(loan.principalOwed(),      drawdownAmount);  // Initial drawdown amount.
-        assertEq(loan.principalPaid(),                   0);
-        assertEq(loan.interestPaid(),                    0);
-        assertEq(loan.paymentsRemaining(),               3);
-        assertEq(loan.nextPaymentDue(),                due);
+        assertLoanState({
+            loan:              loan, 
+            loanState:         1, 
+            principalOwed:     drawdownAmount, 
+            principalPaid:     0, 
+            interestPaid:      0, 
+            paymentsRemaining: 3, 
+            nextPaymentDue:    due
+        });
 
         // Pause protocol and attempt makePayment()
         assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
@@ -322,12 +348,15 @@ contract LoanTest is TestUtil {
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
 
         // After state
-        assertEq(uint256(loan.loanState()),               1);  // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),       drawdownAmount);  // Initial drawdown amount.
-        assertEq(loan.principalPaid(),                    0);
-        assertEq(loan.interestPaid(),              interest);
-        assertEq(loan.paymentsRemaining(),                2);
-        assertEq(loan.nextPaymentDue(),                 due);
+        assertLoanState({
+            loan:              loan, 
+            loanState:         1, 
+            principalOwed:     drawdownAmount, 
+            principalPaid:     0, 
+            interestPaid:      interest, 
+            paymentsRemaining: 2, 
+            nextPaymentDue:    due
+        });
 
         // Approve 2nd of 3 payments.
         (total, principal, interest, due,) = loan.getNextPayment();
@@ -340,12 +369,15 @@ contract LoanTest is TestUtil {
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
         
         // After state
-        assertEq(uint256(loan.loanState()),               1);  // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),       drawdownAmount);  // Initial drawdown amount.
-        assertEq(loan.principalPaid(),                    0);
-        assertEq(loan.interestPaid(),          interest * 2);
-        assertEq(loan.paymentsRemaining(),                1);
-        assertEq(loan.nextPaymentDue(),                 due);
+        assertLoanState({
+            loan:              loan, 
+            loanState:         1, 
+            principalOwed:     drawdownAmount, 
+            principalPaid:     0, 
+            interestPaid:      interest * 2, 
+            paymentsRemaining: 1, 
+            nextPaymentDue:    due
+        });
 
         // Approve 3nd of 3 payments.
         (total, principal, interest, due,) = loan.getNextPayment();
@@ -361,12 +393,15 @@ contract LoanTest is TestUtil {
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
         
         // After state, state variables.
-        assertEq(uint256(loan.loanState()),            2);  // Loan state is Matured (final payment)
-        assertEq(loan.principalOwed(),                 0);  // Final payment, all principal paid for InterestOnly loan
-        assertEq(loan.principalPaid(),         principal);  // Principal paid on last payment
-        assertEq(loan.interestPaid(),       interest * 3);  // Interest is constant every payment
-        assertEq(loan.paymentsRemaining(),             0);
-        assertEq(loan.nextPaymentDue(),                0);
+        assertLoanState({
+            loan:              loan, 
+            loanState:         2, 
+            principalOwed:     0, 
+            principalPaid:     principal, 
+            interestPaid:      interest * 3, 
+            paymentsRemaining: 0, 
+            nextPaymentDue:    0
+        });
 
         // Collateral locker after state.
         assertEq(weth.balanceOf(collateralLocker),             0);
@@ -394,10 +429,7 @@ contract LoanTest is TestUtil {
         assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment when State != Active
 
         // Approve collateral and drawdown loan.
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
-        mint("WETH", address(bob), reqCollateral);
-        bob.approve(WETH, address(loan), reqCollateral);
-        assertTrue(bob.try_drawdown(address(loan), drawdownAmount));  // Borrow draws down on loan
+        uint256 reqCollateral = drawdown(loan, drawdownAmount);
 
         address collateralLocker = loan.collateralLocker();
 
@@ -416,12 +448,15 @@ contract LoanTest is TestUtil {
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
 
         // After state
-        assertEq(uint256(loan.loanState()),               1);  // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),       drawdownAmount);  // Initial drawdown amount.
-        assertEq(loan.principalPaid(),                    0);
-        assertEq(loan.interestPaid(),              interest);
-        assertEq(loan.paymentsRemaining(),                2);
-        assertEq(loan.nextPaymentDue(),                 due);
+        assertLoanState({
+            loan:              loan, 
+            loanState:         1, 
+            principalOwed:     drawdownAmount, 
+            principalPaid:     0, 
+            interestPaid:      interest, 
+            paymentsRemaining: 2, 
+            nextPaymentDue:    due
+        });
 
         // Warp to 1 second after next payment is due (payment is late)
         hevm.warp(loan.nextPaymentDue() + 1);
@@ -439,12 +474,15 @@ contract LoanTest is TestUtil {
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
         
         // After state
-        assertEq(uint256(loan.loanState()),                         1);  // Loan state is Active (unless final payment, then 2)
-        assertEq(loan.principalOwed(),                 drawdownAmount);  // Initial drawdown amount.
-        assertEq(loan.principalPaid(),                              0);
-        assertEq(loan.interestPaid(),        interest + interest_late);
-        assertEq(loan.paymentsRemaining(),                          1);
-        assertEq(loan.nextPaymentDue(),                           due);
+        assertLoanState({
+            loan:              loan, 
+            loanState:         1, 
+            principalOwed:     drawdownAmount, 
+            principalPaid:     0, 
+            interestPaid:      interest + interest_late, 
+            paymentsRemaining: 1, 
+            nextPaymentDue:    due
+        });
 
         // Warp to 1 second after next payment is due (payment is late)
         hevm.warp(loan.nextPaymentDue() + 1);
@@ -463,12 +501,15 @@ contract LoanTest is TestUtil {
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
         
         // After state, state variables.
-        assertEq(uint256(loan.loanState()),                             2);  // Loan state is Matured
-        assertEq(loan.principalOwed(),                                  0);  // Initial drawdown amount.
-        assertEq(loan.principalPaid(),                          principal);
-        assertEq(loan.interestPaid(),        interest + interest_late * 2);
-        assertEq(loan.paymentsRemaining(),                              0);
-        assertEq(loan.nextPaymentDue(),                                 0);
+        assertLoanState({
+            loan:              loan, 
+            loanState:         2, 
+            principalOwed:     0, 
+            principalPaid:     principal, 
+            interestPaid:      interest + interest_late * 2, 
+            paymentsRemaining: 0, 
+            nextPaymentDue:    0
+        });
 
         // Collateral locker after state.
         assertEq(weth.balanceOf(collateralLocker),             0);
@@ -564,13 +605,9 @@ contract LoanTest is TestUtil {
 
         address debtLocker = pool.debtLockers(address(loan), address(dlFactory));
 
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
-        mint("WETH", address(bob),       reqCollateral);
-        bob.approve(WETH, address(loan), reqCollateral);
-
         assertEq(uint256(loan.loanState()), 0);  // `Ready` state
 
-        assertTrue(bob.try_drawdown(address(loan), drawdownAmount));  // Draw down the loan.
+        uint256 reqCollateral = drawdown(loan, drawdownAmount);
 
         assertEq(uint256(loan.loanState()), 1);  // `Active` state
 
@@ -644,11 +681,7 @@ contract LoanTest is TestUtil {
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
 
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
-        mint("WETH", address(bob), reqCollateral);
-        bob.approve(WETH, address(loan), reqCollateral);
-
-        assertTrue(bob.try_drawdown(address(loan), drawdownAmount));  // Draw down the loan.
+        uint256 reqCollateral = drawdown(loan, drawdownAmount);
 
         uint256 expectedAmount = (reqCollateral * globals.getLatestPrice(WETH)) / globals.getLatestPrice(USDC);
 
@@ -676,10 +709,7 @@ contract LoanTest is TestUtil {
         assertTrue(!bob.try_makeFullPayment(address(loan)));  // Can't makePayment when State != Active
 
         // Approve collateral and drawdown loan.
-        uint256 reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
-        mint("WETH", address(bob), reqCollateral);
-        bob.approve(WETH, address(loan), reqCollateral);
-        assertTrue(bob.try_drawdown(address(loan), drawdownAmount));  // Borrow draws down 1000 USDC
+        uint256 reqCollateral = drawdown(loan, drawdownAmount);
 
         address collateralLocker = loan.collateralLocker();
 
@@ -693,11 +723,15 @@ contract LoanTest is TestUtil {
         uint256 loanBal_pre = usdc.balanceOf(address(loan));
 
         // Before state
-        assertEq(uint256(loan.loanState()),              1);  // Loan state is Active, accepting payments
-        assertEq(loan.principalOwed(),      drawdownAmount);  // Initial drawdown amount.
-        assertEq(loan.principalPaid(),                   0);
-        assertEq(loan.interestPaid(),                    0);
-        assertEq(loan.paymentsRemaining(),               3);
+        assertLoanState({
+            loan:              loan, 
+            loanState:         1, 
+            principalOwed:     drawdownAmount, 
+            principalPaid:     0, 
+            interestPaid:      0, 
+            paymentsRemaining: 3, 
+            nextPaymentDue:    block.timestamp + loan.paymentIntervalSeconds()  // Not relevant to full payment
+        });
 
         // Collateral locker before state.
         assertEq(weth.balanceOf(collateralLocker), reqCollateral);
@@ -713,11 +747,16 @@ contract LoanTest is TestUtil {
 
         // After state
         assertEq(usdc.balanceOf(address(loan)), loanBal_pre + total);
-        assertEq(uint256(loan.loanState()),                       2);  // Loan state is Matured
-        assertEq(loan.principalOwed(),                            0);  // Initial drawdown amount.
-        assertEq(loan.principalPaid(),                    principal);
-        assertEq(loan.interestPaid(),                      interest);
-        assertEq(loan.paymentsRemaining(),                        0);
+
+        assertLoanState({
+            loan:              loan, 
+            loanState:         2, 
+            principalOwed:     0, 
+            principalPaid:     principal, 
+            interestPaid:      interest, 
+            paymentsRemaining: 0, 
+            nextPaymentDue:    0
+        });
 
         // Collateral locker after state.
         assertEq(weth.balanceOf(collateralLocker),             0);
