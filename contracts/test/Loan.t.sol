@@ -16,11 +16,6 @@ contract LoanTest is TestUtil {
         setUpBalancerPool();
         setUpLiquidityPool();
         createLoan();
-
-        /*** Mint balances to relevant actors ***/
-        // mint("WETH", address(bob),          10 ether);
-        // mint("USDC", address(bob),         500 * USD);
-        // mint("USDC", address(this), 50_000_000 * USD);
     }
 
     function getFuzzedSpecs(
@@ -42,12 +37,6 @@ contract LoanTest is TestUtil {
             constrictToRange(requestAmount, 1 * USD, 1E10 * USD, true), // 1 USD - 10b USD loans (non-zero)
             constrictToRange(collateralRatio, 0, 10_000)                // Collateral ratio between 0 and 100%
         ];
-
-        emit Debug("specs[0]", specs[0]);
-        emit Debug("specs[1]", specs[1]);
-        emit Debug("specs[2]", specs[2]);
-        emit Debug("specs[3]", specs[3]);
-        emit Debug("specs[4]", specs[4]);
     }
 
     function test_createLoan(
@@ -115,8 +104,8 @@ contract LoanTest is TestUtil {
         leo.deposit(address(pool),       (fundAmount + fundAmount2));  
     
         // Note: Cannot do pre-state check for LoanFDT balance of debtLocker since it is not instantiated
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),                            0);
-        assertEq(IERC20(USDC).balanceOf(address(liquidityLocker)), (fundAmount + fundAmount2));
+        assertEq(usdc.balanceOf(address(fundingLocker)),                            0);
+        assertEq(usdc.balanceOf(address(liquidityLocker)), (fundAmount + fundAmount2));
 
         // Loan-specific pause by Borrower
         assertTrue(!loan.paused());
@@ -132,9 +121,9 @@ contract LoanTest is TestUtil {
 
         address debtLocker = pool.debtLockers(address(loan), address(dlFactory));
 
-        assertEq(IERC20(loan).balanceOf(address(debtLocker)),        wadAmount);
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),    fundAmount);
-        assertEq(IERC20(USDC).balanceOf(address(liquidityLocker)), fundAmount2);
+        assertEq(loan.balanceOf(address(debtLocker)),        wadAmount);
+        assertEq(usdc.balanceOf(address(fundingLocker)),    fundAmount);
+        assertEq(usdc.balanceOf(address(liquidityLocker)), fundAmount2);
 
         // Protocol-wide pause by Emergency Admin
         assertTrue(!cam.try_setProtocolPause(address(globals), true));
@@ -146,9 +135,9 @@ contract LoanTest is TestUtil {
         assertTrue(!globals.protocolPaused());
         assertTrue(pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount2));
 
-        assertEq(IERC20(loan).balanceOf(address(debtLocker)),        wadAmount + wadAmount2);
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),   fundAmount + fundAmount2);
-        assertEq(IERC20(USDC).balanceOf(address(liquidityLocker)),                        0);
+        assertEq(loan.balanceOf(address(debtLocker)),        wadAmount + wadAmount2);
+        assertEq(usdc.balanceOf(address(fundingLocker)),   fundAmount + fundAmount2);
+        assertEq(usdc.balanceOf(address(liquidityLocker)),                        0);
     }
 
     function createAndFundLoan(
@@ -191,11 +180,11 @@ contract LoanTest is TestUtil {
 
         address fundingLocker = loan.fundingLocker(); 
 
-        drawdownAmount = constrictToRange(drawdownAmount, 1 * USD, IERC20(USDC).balanceOf(fundingLocker));
+        drawdownAmount = constrictToRange(drawdownAmount, 1 * USD, usdc.balanceOf(fundingLocker));
         uint256 collateralValue = drawdownAmount * loan.collateralRatio() / 10_000;
 
         uint256 reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
-        withinDiff(reqCollateral * globals.getLatestPrice(address(WETH)) * USD / WAD / 10 ** 8, collateralValue, 1);  // 20% of $1000, 1 wei diff
+        withinDiff(reqCollateral * globals.getLatestPrice(WETH) * USD / WAD / 10 ** 8, collateralValue, 1);  // 20% of $1000, 1 wei diff
     }
 
     function test_drawdown(
@@ -211,7 +200,7 @@ contract LoanTest is TestUtil {
     {
         Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
         address fundingLocker = loan.fundingLocker(); 
-        fundAmount = IERC20(USDC).balanceOf(fundingLocker);
+        fundAmount = usdc.balanceOf(fundingLocker);
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
 
@@ -225,18 +214,18 @@ contract LoanTest is TestUtil {
         assertTrue(!bob.try_drawdown(address(loan), loan.requestAmount() - 1));  // Can't drawdown less than requestAmount
         assertTrue(!bob.try_drawdown(address(loan),           fundAmount + 1));  // Can't drawdown more than fundingLocker balance
 
-        uint pre = IERC20(USDC).balanceOf(address(bob));
+        uint pre = usdc.balanceOf(address(bob));
 
-        assertEq(IERC20(WETH).balanceOf(address(bob)),  reqCollateral);  // Borrower collateral balance
-        assertEq(IERC20(USDC).balanceOf(fundingLocker),    fundAmount);  // Funding locker reqAssset balance
-        assertEq(IERC20(USDC).balanceOf(address(loan)),             0);  // Loan liquidityAsset balance
-        assertEq(loan.principalOwed(),                              0);  // Principal owed
-        assertEq(uint256(loan.loanState()),                         0);  // Loan state: Ready
+        assertEq(weth.balanceOf(address(bob)),  reqCollateral);  // Borrower collateral balance
+        assertEq(usdc.balanceOf(fundingLocker),    fundAmount);  // Funding locker reqAssset balance
+        assertEq(usdc.balanceOf(address(loan)),             0);  // Loan liquidityAsset balance
+        assertEq(loan.principalOwed(),                      0);  // Principal owed
+        assertEq(uint256(loan.loanState()),                 0);  // Loan state: Ready
 
         // Fee related variables pre-check.
         assertEq(loan.feePaid(),                            0);  // feePaid amount
         assertEq(loan.excessReturned(),                     0);  // excessReturned amount
-        assertEq(IERC20(USDC).balanceOf(address(treasury)), 0);  // Treasury liquidityAsset balance
+        assertEq(usdc.balanceOf(address(treasury)),         0);  // Treasury liquidityAsset balance
 
         // Pause protocol and attempt drawdown()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
@@ -246,25 +235,25 @@ contract LoanTest is TestUtil {
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(bob.try_drawdown(address(loan), drawdownAmount));
 
-        assertEq(IERC20(WETH).balanceOf(address(bob)),                                 0);  // Borrower collateral balance
-        assertEq(IERC20(WETH).balanceOf(address(loan.collateralLocker())), reqCollateral);  // Collateral locker collateral balance
+        assertEq(weth.balanceOf(address(bob)),                                 0);  // Borrower collateral balance
+        assertEq(weth.balanceOf(address(loan.collateralLocker())), reqCollateral);  // Collateral locker collateral balance
 
         uint256 investorFee = drawdownAmount * globals.investorFee() / 10_000;
         uint256 treasuryFee = drawdownAmount * globals.treasuryFee() / 10_000;
 
-        assertEq(IERC20(USDC).balanceOf(fundingLocker),                                         0);  // Funding locker liquidityAsset balance
-        assertEq(IERC20(USDC).balanceOf(address(loan)), fundAmount - drawdownAmount + investorFee);  // Loan liquidityAsset balance
-        assertEq(loan.principalOwed(),                                             drawdownAmount);  // Principal owed
-        assertEq(uint256(loan.loanState()),                                                     1);  // Loan state: Active
+        assertEq(usdc.balanceOf(fundingLocker),                                         0);  // Funding locker liquidityAsset balance
+        assertEq(usdc.balanceOf(address(loan)), fundAmount - drawdownAmount + investorFee);  // Loan liquidityAsset balance
+        assertEq(loan.principalOwed(),                                     drawdownAmount);  // Principal owed
+        assertEq(uint256(loan.loanState()),                                             1);  // Loan state: Active
 
-        withinDiff(IERC20(USDC).balanceOf(address(bob)), drawdownAmount - (investorFee + treasuryFee), 1); // Borrower liqudityAsset balance
+        withinDiff(usdc.balanceOf(address(bob)), drawdownAmount - (investorFee + treasuryFee), 1); // Borrower liqudityAsset balance
  
         assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());  // Next payment due timestamp calculated from time of drawdown
 
         // Fee related variables post-check.
-        assertEq(loan.feePaid(),                                            investorFee);  // Drawdown amount
-        assertEq(loan.excessReturned(),                     fundAmount - drawdownAmount);  // Principal owed
-        assertEq(IERC20(USDC).balanceOf(address(treasury)),                 treasuryFee);  // Treasury loanAsset balance
+        assertEq(loan.feePaid(),                                    investorFee);  // Drawdown amount
+        assertEq(loan.excessReturned(),             fundAmount - drawdownAmount);  // Principal owed
+        assertEq(usdc.balanceOf(address(treasury)),                 treasuryFee);  // Treasury loanAsset balance
 
         // Test FDT accounting
         address debtLocker = pool.debtLockers(address(loan), address(dlFactory));
@@ -287,7 +276,7 @@ contract LoanTest is TestUtil {
     {
         Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker(); 
-        fundAmount = IERC20(USDC).balanceOf(fundingLocker);
+        fundAmount = usdc.balanceOf(fundingLocker);
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
 
@@ -364,8 +353,7 @@ contract LoanTest is TestUtil {
         bob.approve(USDC, address(loan), total);
         
         // Check collateral locker balance.
-        IERC20Details collateralAsset = IERC20Details(address(loan.collateralAsset()));
-        assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
+        assertEq(weth.balanceOf(collateralLocker), reqCollateral);
         
         // Make last payment.
         assertTrue(bob.try_makePayment(address(loan)));
@@ -381,8 +369,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),                0);
 
         // Collateral locker after state.
-        assertEq(collateralAsset.balanceOf(collateralLocker),             0);
-        assertEq(collateralAsset.balanceOf(address(bob)),     reqCollateral);
+        assertEq(weth.balanceOf(collateralLocker),             0);
+        assertEq(weth.balanceOf(address(bob)),     reqCollateral);
     }
     
     function test_makePayment_late(
@@ -397,7 +385,7 @@ contract LoanTest is TestUtil {
     {
         Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker(); 
-        fundAmount = IERC20(USDC).balanceOf(fundingLocker);
+        fundAmount = usdc.balanceOf(fundingLocker);
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
 
@@ -467,8 +455,7 @@ contract LoanTest is TestUtil {
         bob.approve(USDC, address(loan), total);
         
         // Check collateral locker balance.
-        IERC20Details collateralAsset = IERC20Details(address(loan.collateralAsset()));
-        assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
+        assertEq(weth.balanceOf(collateralLocker), reqCollateral);
         
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
@@ -484,8 +471,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.nextPaymentDue(),                                 0);
 
         // Collateral locker after state.
-        assertEq(collateralAsset.balanceOf(collateralLocker),             0);
-        assertEq(collateralAsset.balanceOf(address(bob)),     reqCollateral);
+        assertEq(weth.balanceOf(collateralLocker),             0);
+        assertEq(weth.balanceOf(address(bob)),     reqCollateral);
     }
 
     function test_unwind_loan(
@@ -566,7 +553,7 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        gov.setMaxSwapSlippage(10_000); // Set 100% slippage to account for very large liquidations from fuzzing
+        gov.setMaxSwapSlippage(10_000);  // Set 100% slippage to account for very large liquidations from fuzzing
 
         Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
         address fundingLocker = loan.fundingLocker(); 
@@ -680,7 +667,7 @@ contract LoanTest is TestUtil {
     {
         Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker(); 
-        fundAmount = IERC20(USDC).balanceOf(fundingLocker);
+        fundAmount = usdc.balanceOf(fundingLocker);
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
 
@@ -712,11 +699,9 @@ contract LoanTest is TestUtil {
         assertEq(loan.interestPaid(),                    0);
         assertEq(loan.paymentsRemaining(),               3);
 
-        IERC20Details collateralAsset = IERC20Details(address(loan.collateralAsset()));
-
         // Collateral locker before state.
-        assertEq(collateralAsset.balanceOf(collateralLocker), reqCollateral);
-        assertEq(collateralAsset.balanceOf(address(bob)),                 0);
+        assertEq(weth.balanceOf(collateralLocker), reqCollateral);
+        assertEq(weth.balanceOf(address(bob)),                 0);
 
         // Pause protocol and attempt makeFullPayment()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
@@ -735,8 +720,8 @@ contract LoanTest is TestUtil {
         assertEq(loan.paymentsRemaining(),                        0);
 
         // Collateral locker after state.
-        assertEq(collateralAsset.balanceOf(collateralLocker),             0);
-        assertEq(collateralAsset.balanceOf(address(bob)),     reqCollateral);
+        assertEq(weth.balanceOf(collateralLocker),             0);
+        assertEq(weth.balanceOf(address(bob)),     reqCollateral);
     }
 
     function test_reclaim_erc20() external {
@@ -747,8 +732,8 @@ contract LoanTest is TestUtil {
 
         Governor fakeGov = new Governor();
 
-        uint256 beforeBalanceDAI  = IERC20(DAI).balanceOf(address(gov));
-        uint256 beforeBalanceWETH = IERC20(WETH).balanceOf(address(gov));
+        uint256 beforeBalanceDAI  =  dai.balanceOf(address(gov));
+        uint256 beforeBalanceWETH = weth.balanceOf(address(gov));
 
         assertTrue(!fakeGov.try_reclaimERC20(address(loan), DAI));
         assertTrue(    !gov.try_reclaimERC20(address(loan), USDC));  // Governor cannot remove liquidityAsset from loans
@@ -756,11 +741,11 @@ contract LoanTest is TestUtil {
         assertTrue(     gov.try_reclaimERC20(address(loan), WETH));
         assertTrue(     gov.try_reclaimERC20(address(loan), DAI));
 
-        uint256 afterBalanceDAI  = IERC20(DAI).balanceOf(address(gov));
-        uint256 afterBalanceWETH = IERC20(WETH).balanceOf(address(gov));
+        uint256 afterBalanceDAI  =  dai.balanceOf(address(gov));
+        uint256 afterBalanceWETH = weth.balanceOf(address(gov));
 
-        assertEq(afterBalanceDAI - beforeBalanceDAI,    1000 * WAD);
-        assertEq(afterBalanceWETH - beforeBalanceWETH,   100 * WAD);
+        assertEq(afterBalanceDAI  - beforeBalanceDAI,  1000 * WAD);
+        assertEq(afterBalanceWETH - beforeBalanceWETH,  100 * WAD);
     }
 
     function test_setAdmin() public {
