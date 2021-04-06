@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import "../../interfaces/ILoan.sol";
 import "../../interfaces/IPool.sol";
 import "../../interfaces/IPoolFactory.sol";
 import "../../interfaces/IStakeLocker.sol";
@@ -55,6 +56,10 @@ contract PoolDelegate {
 
     function fundLoan(address pool, address loan, address dlFactory, uint256 amt) external {
         IPool(pool).fundLoan(loan, dlFactory, amt);  
+    }
+
+    function unwind(address loan) external {
+        ILoan(loan).unwind();  
     }
 
     function claim(address pool, address loan, address dlFactory) external returns(uint256[7] memory) {
@@ -119,6 +124,11 @@ contract PoolDelegate {
     function try_fundLoan(address pool, address loan, address dlFactory, uint256 amt) external returns (bool ok) {
         string memory sig = "fundLoan(address,address,uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory, amt));
+    }
+
+    function try_unwind(address loan) external returns (bool ok) {
+        string memory sig = "unwind()";
+        (ok,) = address(loan).call(abi.encodeWithSignature(sig));
     }
 
     function try_claim(address pool, address loan, address dlFactory) external returns (bool ok) {
