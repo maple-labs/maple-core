@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
@@ -90,6 +90,10 @@ contract PoolDelegate {
         IPool(pool).setLockupPeriod(lockupPeriod);
     }
 
+    function setStakingFee(address pool, uint256 stakingFee) external {
+        IPool(pool).setStakingFee(stakingFee);
+    }
+
     function openStakeLockerToPublic(address stakeLocker) external {
         IStakeLocker(stakeLocker).openStakeLockerToPublic();
     }
@@ -154,6 +158,11 @@ contract PoolDelegate {
     function try_setLockupPeriod(address pool, uint256 newPeriod) external returns(bool ok) {
         string memory sig = "setLockupPeriod(uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, newPeriod));
+    }
+
+    function try_setStakingFee(address pool, uint256 newStakingFee) external returns(bool ok) {
+        string memory sig = "setStakingFee(uint256)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, newStakingFee));
     }
 
     function try_triggerDefault(address pool, address loan, address dlFactory) external returns(bool ok) {

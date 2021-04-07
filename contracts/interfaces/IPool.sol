@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
 interface IPool {
@@ -19,6 +19,8 @@ interface IPool {
     function claim(address, address) external returns(uint256[7] memory);
 
     function setLockupPeriod(uint256) external;
+    
+    function setStakingFee(uint256) external;
 
     function setAdmin(address, bool) external;
 
