@@ -106,8 +106,8 @@ contract Loan is FDT, Pausable {
     /**
         @dev Constructor for a Loan.
         @param  _borrower        Will receive the funding when calling `drawdown()`, is also responsible for repayments
-        @param  _liquidityAsset  The asset, `_borrower` is requesting funding in
-        @param  _collateralAsset The asset provided as collateral by `_borrower`
+        @param  _liquidityAsset  The asset, `borrower` is requesting funding in
+        @param  _collateralAsset The asset provided as collateral by `borrower`
         @param  _flFactory       Factory to instantiate FundingLocker with
         @param  _clFactory       Factory to instantiate CollateralLocker with
         @param  specs            Contains specifications for this loan
