@@ -32,6 +32,13 @@ contract StakeLockerTest is TestUtil {
         }
     }
 
+    function makePublicAndStake(uint256 stakeAmount) internal {
+        // Make StakeLocker public and stake tokens
+        pat.openStakeLockerToPublic(address(stakeLocker));
+        sam.approve(address(bPool), address(stakeLocker), stakeAmount);
+        sam.stake(address(stakeLocker), stakeAmount);
+    }
+
     function populateStakeLockerPreState(
         TestObj memory stakeLockerBal, 
         TestObj memory fdtTotalSupply, 
@@ -215,10 +222,7 @@ contract StakeLockerTest is TestUtil {
     }
 
     function test_unstake_cooldown() public {
-        // Make StakeLocker public and stake tokens
-        pat.openStakeLockerToPublic(address(stakeLocker));
-        sam.approve(address(bPool), address(stakeLocker), 15 * WAD);
-        sam.stake(address(stakeLocker), 15 * WAD);
+        makePublicAndStake(15 * WAD);
 
         hevm.warp(block.timestamp + stakeLocker.lockupPeriod());  // Warp to end of lockup for test
 
@@ -264,10 +268,7 @@ contract StakeLockerTest is TestUtil {
     }
 
     function test_stake_transfer_paused() public {
-        // Make StakeLocker public and stake tokens
-        pat.openStakeLockerToPublic(address(stakeLocker));
-        sam.approve(address(bPool), address(stakeLocker), 25 * WAD);
-        sam.stake(address(stakeLocker), 25 * WAD);
+        makePublicAndStake(25 * WAD);
 
         // Pause protocol and attempt to transfer FDTs
         assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
@@ -279,34 +280,31 @@ contract StakeLockerTest is TestUtil {
     }
 
     function test_stake_transfer_recipient_withdrawing() public {
-        pat.openStakeLockerToPublic(address(stakeLocker));
-
         uint256 start = block.timestamp;
-        uint256 stakeAmt = 25 * WAD;
+        uint256 stakeAmount = 25 * WAD;
 
-        // Stake BPTs into StakeLocker
-        sam.approve(address(bPool), address(stakeLocker), stakeAmt);
-        sam.stake(address(stakeLocker), stakeAmt);
-        sid.approve(address(bPool), address(stakeLocker), stakeAmt);
-        sid.stake(address(stakeLocker), stakeAmt);
+        makePublicAndStake(stakeAmount);
+
+        sid.approve(address(bPool), address(stakeLocker), stakeAmount);
+        sid.stake(address(stakeLocker), stakeAmount);
 
         // Staker 1 initiates unstake
         assertTrue(sid.try_intendToUnstake(address(stakeLocker)));
         assertEq(stakeLocker.unstakeCooldown(address(sid)), start);
 
         // Staker 2 fails to transfer to Staker 1 who is currently unstaking
-        assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmt));
+        assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
         hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow());  // Very end of Staker unstake window
-        assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmt));
+        assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
 
         // Staker 2 successfully transfers to Staker 1 who is now outside unstake window
         hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow() + 1);  // Second after Staker unstake window ends
-        assertTrue(sam.try_transfer(address(stakeLocker), address(sid), stakeAmt));
+        assertTrue(sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
 
         // Check balances and stake dates are correct
         assertEq(stakeLocker.balanceOf(address(sam)), 0);
-        assertEq(stakeLocker.balanceOf(address(sid)), stakeAmt * 2);
-        uint256 newStakeDate = start + (block.timestamp - start) * (stakeAmt) / ((stakeAmt) + (stakeAmt));
+        assertEq(stakeLocker.balanceOf(address(sid)), stakeAmount * 2);
+        uint256 newStakeDate = start + (block.timestamp - start) * (stakeAmount) / ((stakeAmount) + (stakeAmount));
         assertEq(stakeLocker.stakeDate(address(sam)), start);         // Stays the same
         assertEq(stakeLocker.stakeDate(address(sid)), newStakeDate);  // Gets updated
     }
@@ -331,15 +329,12 @@ contract StakeLockerTest is TestUtil {
     }
 
     function test_unstake(uint256 stakeAmount) public {
-
         uint256 bptMin = WAD / 10_000_000;
         stakeAmount = constrictToRange(stakeAmount, bptMin, bPool.balanceOf(address(sam)), true);  // 25 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents) (non-zero)
 
         uint256 stakeDate = block.timestamp;
 
-        pat.setAllowlistStakeLocker(address(pool), address(sam), true);
-        sam.approve(address(bPool), address(stakeLocker), stakeAmount);
-        sam.stake(address(stakeLocker), stakeAmount);
+        makePublicAndStake(stakeAmount);
 
         assertEq(IERC20(USDC).balanceOf(address(sam)),                         0);
         assertEq(bPool.balanceOf(address(sam)),         (25 * WAD) - stakeAmount);
@@ -386,10 +381,7 @@ contract StakeLockerTest is TestUtil {
     }
 
     function test_unstake_paused() public {
-        // Make StakeLocker public and stake tokens
-        pat.openStakeLockerToPublic(address(stakeLocker));
-        sam.approve(address(bPool), address(stakeLocker), 10 * WAD);
-        sam.stake(address(stakeLocker), 10 * WAD);
+        makePublicAndStake(10 * WAD);
         hevm.warp(block.timestamp + stakeLocker.lockupPeriod());  // Warp to the end of the lockup
         sam.intendToUnstake(address(stakeLocker));
         hevm.warp(block.timestamp + globals.stakerCooldownPeriod());  // Warp to the end of the unstake cooldown
