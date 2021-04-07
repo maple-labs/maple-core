@@ -300,6 +300,7 @@ contract Pool is PoolFDT {
     */
     function setStakingFee(uint256 newStakingFee) external {
         _isValidDelegateAndProtocolNotPaused();
+        require(newStakingFee.add(delegateFee) <= 10_000, "Pool:INVALID_FEE");
         stakingFee = newStakingFee;
         emit StakingFeeSet(newStakingFee);
     }
