@@ -5,7 +5,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 import "./BasicFDT.sol";
 
-/// @title FDT inherits BasicFDT and uses the original ERC-2222 logic. 
+/// @title FDT inherits BasicFDT and uses the original ERC-2222 logic.
 abstract contract FDT is BasicFDT {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
@@ -27,7 +27,7 @@ abstract contract FDT is BasicFDT {
     function withdrawFunds() public virtual override {
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        if (withdrawableFunds > uint256(0)) { 
+        if (withdrawableFunds > uint256(0)) {
             fundsToken.safeTransfer(msg.sender, withdrawableFunds);
 
             _updateFundsTokenBalance();

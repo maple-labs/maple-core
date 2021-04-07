@@ -20,7 +20,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division
 
     IERC20  public immutable stakeAsset;  // The asset deposited by stakers into this contract, for liquidation during defaults.
-    
+
     address public immutable liquidityAsset;  // The liquidityAsset for the Pool as well as the dividend token for FDT interest.
     address public immutable pool;            // The parent liquidity pool.
 
@@ -55,21 +55,21 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /*** Modifiers ***/
     /*****************/
 
-    /** 
+    /**
         @dev canUnstake enables unstaking in the following conditions:
         1. User is not Pool Delegate and the Pool is in Finalized state.
         2. The Pool is in Initialized or Deactivated state.
     */
     modifier canUnstake() {
         require(
-            (msg.sender != IPool(pool).poolDelegate() && IPool(pool).isPoolFinalized()) || 
-            !IPool(pool).isPoolFinalized(), 
+            (msg.sender != IPool(pool).poolDelegate() && IPool(pool).isPoolFinalized()) ||
+            !IPool(pool).isPoolFinalized(),
             "StakeLocker:ERR_STAKE_LOCKED"
         );
         _;
     }
-    
-    /** 
+
+    /**
         @dev Modifier to check if msg.sender is Governor.
     */
     modifier isGovernor() {
@@ -77,7 +77,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _;
     }
 
-    /** 
+    /**
         @dev Modifier to check if msg.sender is Pool.
     */
     modifier isPool() {
@@ -162,7 +162,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
-    /** 
+    /**
         @dev Updates information used to calculate unstake delay.
         @param who Staker who deposited BPTs
         @param amt Amount of BPTs staker has deposited
@@ -173,7 +173,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         if (prevDate == uint256(0)) {
             stakeDate[who] = newDate;
         } else {
-            uint256 dTime  = block.timestamp.sub(prevDate); 
+            uint256 dTime  = block.timestamp.sub(prevDate);
             newDate        = prevDate.add(dTime.mul(amt).div(balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
             stakeDate[who] = newDate;
         }
@@ -222,7 +222,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function withdrawFunds() public override {
         _whenProtocolNotPaused();
-        
+
         uint256 withdrawableFunds = _prepareWithdraw();
 
         if (withdrawableFunds > uint256(0)) {
@@ -303,17 +303,17 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         require(msg.sender == IPool(pool).poolDelegate(), "StakeLocker:UNAUTHORIZED");
     }
 
-    /** 
+    /**
         @dev Internal function to check whether `msg.sender` is allowed to stake.
     */
     function _isAllowed(address user) internal view {
         require(
-            openToPublic || allowed[user] || user == IPool(pool).poolDelegate(), 
+            openToPublic || allowed[user] || user == IPool(pool).poolDelegate(),
             "StakeLocker:MSG_SENDER_NOT_ALLOWED"
         );
     }
 
-    /** 
+    /**
         @dev Helper function to return interface of MapleGlobals.
     */
     function _globals() internal view returns(IGlobals) {

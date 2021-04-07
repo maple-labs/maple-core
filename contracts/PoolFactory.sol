@@ -24,7 +24,7 @@ contract PoolFactory is Pausable {
         address liquidityAsset,
         address stakeAsset,
         address liquidityLocker,
-        address stakeLocker, 
+        address stakeLocker,
         uint256 stakingFee,
         uint256 delegateFee,
         uint256 liquidityCap,
@@ -56,11 +56,11 @@ contract PoolFactory is Pausable {
         @param  liquidityCap   Amount of liquidityAsset accepted by the pool
     */
     function createPool(
-        address liquidityAsset, 
+        address liquidityAsset,
         address stakeAsset,
-        address slFactory, 
+        address slFactory,
         address llFactory,
-        uint256 stakingFee, 
+        uint256 stakingFee,
         uint256 delegateFee,
         uint256 liquidityCap
     ) public whenNotPaused returns (address) {
@@ -71,7 +71,7 @@ contract PoolFactory is Pausable {
             require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PF:INVALID_SL_FACTORY");
             require(_globals.isValidPoolDelegate(msg.sender),                         "PF:INVALID_DELEGATE");
         }
-        
+
         string memory name   = string(abi.encodePacked("Maple Pool Token"));
         string memory symbol = string(abi.encodePacked("MPL-LP"));
 
@@ -122,7 +122,7 @@ contract PoolFactory is Pausable {
     /**
         @dev Triggers paused state. Halts functionality for certain functions. Only Governor can call this function.
     */
-    function pause() external { 
+    function pause() external {
         _isValidGovernorOrAdmin();
         super._pause();
     }

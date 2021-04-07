@@ -29,8 +29,8 @@ contract MapleTreasury {
         @param  _globals       MapleGlobals contract
     */
     constructor(
-        address _mpl, 
-        address _fundsToken, 
+        address _mpl,
+        address _fundsToken,
         address _uniswapRouter,
         address _globals
     ) public {
@@ -85,7 +85,7 @@ contract MapleTreasury {
     */
     function convertERC20(address asset) isGovernor public {
         require(asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
-        
+
         IGlobals _globals = IGlobals(globals);
 
         uint256 assetBalance = IERC20(asset).balanceOf(address(this));

@@ -13,7 +13,7 @@ contract FundingLockerFactoryTest is TestUtil {
 
     function test_newLocker() public {
         FundingLocker fl  = FundingLocker(flFactory.newLocker(USDC));
-        
+
         // Validate the storage of flfactory.
         assertEq(flFactory.owner(address(fl)), address(this));
         assertTrue(flFactory.isLocker(address(fl)));

@@ -19,10 +19,10 @@ contract LoanTest is TestUtil {
     }
 
     function getFuzzedSpecs(
-        uint256 apr, 
+        uint256 apr,
         uint256 index,             // Random index for random payment interval
         uint256 numPayments,       // Used for termDays
-        uint256 requestAmount, 
+        uint256 requestAmount,
         uint256 collateralRatio
     ) internal returns (uint256[5] memory specs) {
         uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
@@ -40,16 +40,16 @@ contract LoanTest is TestUtil {
     }
 
     function assertLoanState(
-        Loan loan, 
-        uint256 loanState, 
-        uint256 principalOwed, 
-        uint256 principalPaid, 
-        uint256 interestPaid, 
+        Loan loan,
+        uint256 loanState,
+        uint256 principalOwed,
+        uint256 principalPaid,
+        uint256 interestPaid,
         uint256 loanBalance,
-        uint256 paymentsRemaining, 
+        uint256 paymentsRemaining,
         uint256 nextPaymentDue
-    ) 
-        internal    
+    )
+        internal
     {
         assertEq(uint256(loan.loanState()),             loanState);
         assertEq(loan.principalOwed(),              principalOwed);
@@ -68,19 +68,19 @@ contract LoanTest is TestUtil {
     }
 
     function test_createLoan(
-        uint256 apr, 
-        uint256 index,           
-        uint256 numPayments,       
-        uint256 requestAmount, 
+        uint256 apr,
+        uint256 index,
+        uint256 numPayments,
+        uint256 requestAmount,
         uint256 collateralRatio
-    ) 
-        public 
+    )
+        public
     {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         Loan loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-    
+
         assertEq(address(loan.liquidityAsset()),   USDC);
         assertEq(address(loan.collateralAsset()),  WETH);
         assertEq(loan.flFactory(),                 address(flFactory));
@@ -101,15 +101,15 @@ contract LoanTest is TestUtil {
     }
 
     function test_fundLoan(
-        uint256 apr, 
-        uint256 index,           
-        uint256 numPayments,       
-        uint256 requestAmount, 
+        uint256 apr,
+        uint256 index,
+        uint256 numPayments,
+        uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
         uint256 fundAmount2
-    ) 
-        public 
+    )
+        public
     {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
@@ -127,8 +127,8 @@ contract LoanTest is TestUtil {
 
         mint("USDC", address(leo),       (fundAmount + fundAmount2));
         leo.approve(USDC, address(pool), (fundAmount + fundAmount2));
-        leo.deposit(address(pool),       (fundAmount + fundAmount2));  
-    
+        leo.deposit(address(pool),       (fundAmount + fundAmount2));
+
         // Note: Cannot do pre-state check for LoanFDT balance of debtLocker since it is not instantiated
         assertEq(usdc.balanceOf(address(fundingLocker)),                            0);
         assertEq(usdc.balanceOf(address(liquidityLocker)), (fundAmount + fundAmount2));
@@ -143,7 +143,7 @@ contract LoanTest is TestUtil {
         assertTrue(!cam.try_unpause(address(loan)));
         assertTrue( bob.try_unpause(address(loan)));
         assertTrue(!loan.paused());
-        
+
         uint256 start = block.timestamp;
 
         hevm.warp(start + globals.fundingPeriod() + 1);  // Warp to past fundingPeriod, loan cannot be funded
@@ -174,14 +174,14 @@ contract LoanTest is TestUtil {
     }
 
     function createAndFundLoan(
-        uint256 apr, 
-        uint256 index,           
-        uint256 numPayments,       
-        uint256 requestAmount, 
+        uint256 apr,
+        uint256 index,
+        uint256 numPayments,
+        uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount
-    ) 
-        internal returns (Loan loan) 
+    )
+        internal returns (Loan loan)
     {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
@@ -193,25 +193,25 @@ contract LoanTest is TestUtil {
 
         mint("USDC", address(leo),       fundAmount);
         leo.approve(USDC, address(pool), fundAmount);
-        leo.deposit(address(pool),       fundAmount);  
-    
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), fundAmount); 
+        leo.deposit(address(pool),       fundAmount);
+
+        pat.fundLoan(address(pool), address(loan), address(dlFactory), fundAmount);
     }
 
     function test_collateralRequiredForDrawdown(
-        uint256 apr, 
-        uint256 index,           
-        uint256 numPayments,       
-        uint256 requestAmount, 
+        uint256 apr,
+        uint256 index,
+        uint256 numPayments,
+        uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
         uint256 drawdownAmount
-    ) 
-        public 
+    )
+        public
     {
         Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
 
-        address fundingLocker = loan.fundingLocker(); 
+        address fundingLocker = loan.fundingLocker();
 
         drawdownAmount = constrictToRange(drawdownAmount, 1 * USD, usdc.balanceOf(fundingLocker));
         uint256 collateralValue = drawdownAmount * loan.collateralRatio() / 10_000;
@@ -221,10 +221,10 @@ contract LoanTest is TestUtil {
     }
 
     function test_drawdown(
-        uint256 apr, 
-        uint256 index,           
-        uint256 numPayments,       
-        uint256 requestAmount, 
+        uint256 apr,
+        uint256 index,
+        uint256 numPayments,
+        uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
         uint256 drawdownAmount
@@ -232,7 +232,7 @@ contract LoanTest is TestUtil {
         public
     {
         Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
-        address fundingLocker = loan.fundingLocker(); 
+        address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
@@ -280,7 +280,7 @@ contract LoanTest is TestUtil {
         assertEq(uint256(loan.loanState()),                                             1);  // Loan state: Active
 
         withinDiff(usdc.balanceOf(address(bob)), drawdownAmount - (investorFee + treasuryFee), 1); // Borrower liqudityAsset balance
- 
+
         assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());  // Next payment due timestamp calculated from time of drawdown
 
         // Fee related variables post-check.
@@ -298,9 +298,9 @@ contract LoanTest is TestUtil {
     }
 
     function test_makePayment(
-        uint256 apr, 
-        uint256 index,                 
-        uint256 requestAmount, 
+        uint256 apr,
+        uint256 index,
+        uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
         uint256 drawdownAmount
@@ -308,7 +308,7 @@ contract LoanTest is TestUtil {
         public
     {
         Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
-        address fundingLocker = loan.fundingLocker(); 
+        address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
@@ -335,13 +335,13 @@ contract LoanTest is TestUtil {
 
         // Before state
         assertLoanState({
-            loan:              loan, 
-            loanState:         1, 
-            principalOwed:     drawdownAmount, 
-            principalPaid:     0, 
-            interestPaid:      0, 
+            loan:              loan,
+            loanState:         1,
+            principalOwed:     drawdownAmount,
+            principalPaid:     0,
+            interestPaid:      0,
             loanBalance:       loanPreBal,
-            paymentsRemaining: 3, 
+            paymentsRemaining: 3,
             nextPaymentDue:    due
         });
 
@@ -357,13 +357,13 @@ contract LoanTest is TestUtil {
 
         // After state
         assertLoanState({
-            loan:              loan, 
-            loanState:         1, 
-            principalOwed:     drawdownAmount, 
-            principalPaid:     0, 
-            interestPaid:      interest, 
+            loan:              loan,
+            loanState:         1,
+            principalOwed:     drawdownAmount,
+            principalPaid:     0,
+            interestPaid:      interest,
             loanBalance:       loanPreBal + interest,
-            paymentsRemaining: 2, 
+            paymentsRemaining: 2,
             nextPaymentDue:    due
         });
 
@@ -371,21 +371,21 @@ contract LoanTest is TestUtil {
         (total, principal, interest, due,) = loan.getNextPayment();
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
-        
+
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
 
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
-        
+
         // After state
         assertLoanState({
-            loan:              loan, 
-            loanState:         1, 
-            principalOwed:     drawdownAmount, 
-            principalPaid:     0, 
-            interestPaid:      interest * 2, 
+            loan:              loan,
+            loanState:         1,
+            principalOwed:     drawdownAmount,
+            principalPaid:     0,
+            interestPaid:      interest * 2,
             loanBalance:       loanPreBal + interest * 2,
-            paymentsRemaining: 1, 
+            paymentsRemaining: 1,
             nextPaymentDue:    due
         });
 
@@ -393,24 +393,24 @@ contract LoanTest is TestUtil {
         (total, principal, interest, due,) = loan.getNextPayment();
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
-        
+
         // Check collateral locker balance.
         assertEq(weth.balanceOf(loan.collateralLocker()), reqCollateral);
-        
+
         // Make last payment.
         assertTrue(bob.try_makePayment(address(loan)));
 
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
-        
+
         // After state, state variables.
         assertLoanState({
-            loan:              loan, 
-            loanState:         2, 
-            principalOwed:     0, 
-            principalPaid:     principal, 
-            interestPaid:      interest * 3, 
+            loan:              loan,
+            loanState:         2,
+            principalOwed:     0,
+            principalPaid:     principal,
+            interestPaid:      interest * 3,
             loanBalance:       loanPreBal + interest * 3 + principal,
-            paymentsRemaining: 0, 
+            paymentsRemaining: 0,
             nextPaymentDue:    0
         });
 
@@ -418,11 +418,11 @@ contract LoanTest is TestUtil {
         assertEq(weth.balanceOf(loan.collateralLocker()),             0);
         assertEq(weth.balanceOf(address(bob)),            reqCollateral);
     }
-    
+
     function test_makePayment_late(
-        uint256 apr, 
-        uint256 index,                 
-        uint256 requestAmount, 
+        uint256 apr,
+        uint256 index,
+        uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
         uint256 drawdownAmount
@@ -430,7 +430,7 @@ contract LoanTest is TestUtil {
         public
     {
         Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
-        address fundingLocker = loan.fundingLocker(); 
+        address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
@@ -455,13 +455,13 @@ contract LoanTest is TestUtil {
 
         // Before state
         assertLoanState({
-            loan:              loan, 
-            loanState:         1, 
-            principalOwed:     drawdownAmount, 
-            principalPaid:     0, 
-            interestPaid:      0, 
+            loan:              loan,
+            loanState:         1,
+            principalOwed:     drawdownAmount,
+            principalPaid:     0,
+            interestPaid:      0,
             loanBalance:       loanPreBal,
-            paymentsRemaining: 3, 
+            paymentsRemaining: 3,
             nextPaymentDue:    due
         });
 
@@ -472,13 +472,13 @@ contract LoanTest is TestUtil {
 
         // After state
         assertLoanState({
-            loan:              loan, 
-            loanState:         1, 
-            principalOwed:     drawdownAmount, 
-            principalPaid:     0, 
-            interestPaid:      interest, 
+            loan:              loan,
+            loanState:         1,
+            principalOwed:     drawdownAmount,
+            principalPaid:     0,
+            interestPaid:      interest,
             loanBalance:       loanPreBal + interest,
-            paymentsRemaining: 2, 
+            paymentsRemaining: 2,
             nextPaymentDue:    due
         });
 
@@ -491,21 +491,21 @@ contract LoanTest is TestUtil {
         (total, principal, interest_late, due,) = loan.getNextPayment();
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
-        
+
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
 
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
-        
+
         // After state
         assertLoanState({
-            loan:              loan, 
-            loanState:         1, 
-            principalOwed:     drawdownAmount, 
-            principalPaid:     0, 
-            interestPaid:      interest + interest_late, 
+            loan:              loan,
+            loanState:         1,
+            principalOwed:     drawdownAmount,
+            principalPaid:     0,
+            interestPaid:      interest + interest_late,
             loanBalance:       loanPreBal + interest + interest_late,
-            paymentsRemaining: 1, 
+            paymentsRemaining: 1,
             nextPaymentDue:    due
         });
 
@@ -516,24 +516,24 @@ contract LoanTest is TestUtil {
         (total, principal, interest_late, due,) = loan.getNextPayment();
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
-        
+
         // Check collateral locker balance.
         assertEq(weth.balanceOf(loan.collateralLocker()), reqCollateral);
-        
+
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
 
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
-        
+
         // After state, state variables.
         assertLoanState({
-            loan:              loan, 
-            loanState:         2, 
-            principalOwed:     0, 
-            principalPaid:     principal, 
-            interestPaid:      interest + interest_late * 2, 
+            loan:              loan,
+            loanState:         2,
+            principalOwed:     0,
+            principalPaid:     principal,
+            interestPaid:      interest + interest_late * 2,
             loanBalance:       loanPreBal + interest + interest_late * 2 + principal,
-            paymentsRemaining: 0, 
+            paymentsRemaining: 0,
             nextPaymentDue:    0
         });
 
@@ -543,10 +543,10 @@ contract LoanTest is TestUtil {
     }
 
     function test_unwind_loan(
-        uint256 apr, 
-        uint256 index,    
-        uint256 numPayments,             
-        uint256 requestAmount, 
+        uint256 apr,
+        uint256 index,
+        uint256 numPayments,
+        uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
         uint256 drawdownAmount
@@ -559,7 +559,7 @@ contract LoanTest is TestUtil {
         TestObj memory loanState;
 
         Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
-        address fundingLocker = loan.fundingLocker(); 
+        address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
         // Warp to the fundingPeriod, can't call unwind() yet
@@ -612,10 +612,10 @@ contract LoanTest is TestUtil {
     }
 
     function test_trigger_default(
-        uint256 apr, 
+        uint256 apr,
         uint256 index,
-        uint256 numPayments,                 
-        uint256 requestAmount, 
+        uint256 numPayments,
+        uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
         uint256 drawdownAmount
@@ -625,7 +625,7 @@ contract LoanTest is TestUtil {
         gov.setMaxSwapSlippage(10_000);  // Set 100% slippage to account for very large liquidations from fuzzing
 
         Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
-        address fundingLocker = loan.fundingLocker(); 
+        address fundingLocker = loan.fundingLocker();
         fundAmount = IERC20(USDC).balanceOf(fundingLocker);
         uint256 wadAmount = fundAmount * WAD / USD;
 
@@ -658,7 +658,7 @@ contract LoanTest is TestUtil {
 
         // Sid's Pool currently has 100% of LoanFDTs, so he can trigger the loan default.
         // For this test, minLoanEquity is transferred to the commoner to test the minimum loan equity condition.
-        assertEq(loan.totalSupply(),       wadAmount); 
+        assertEq(loan.totalSupply(),       wadAmount);
         assertEq(globals.minLoanEquity(),       2000);  // 20%
 
         uint256 minEquity = loan.totalSupply() * globals.minLoanEquity() / 10_000;
@@ -694,9 +694,9 @@ contract LoanTest is TestUtil {
     }
 
     function test_calc_min_amount(
-        uint256 apr, 
-        uint256 index,                 
-        uint256 requestAmount, 
+        uint256 apr,
+        uint256 index,
+        uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
         uint256 drawdownAmount
@@ -704,7 +704,7 @@ contract LoanTest is TestUtil {
         public
     {
         Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
-        address fundingLocker = loan.fundingLocker(); 
+        address fundingLocker = loan.fundingLocker();
         fundAmount = IERC20(USDC).balanceOf(fundingLocker);
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
@@ -717,9 +717,9 @@ contract LoanTest is TestUtil {
     }
 
     function test_makeFullPayment(
-        uint256 apr, 
-        uint256 index,                 
-        uint256 requestAmount, 
+        uint256 apr,
+        uint256 index,
+        uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
         uint256 drawdownAmount
@@ -727,7 +727,7 @@ contract LoanTest is TestUtil {
         public
     {
         Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
-        address fundingLocker = loan.fundingLocker(); 
+        address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
@@ -750,13 +750,13 @@ contract LoanTest is TestUtil {
 
         // Before state
         assertLoanState({
-            loan:              loan, 
-            loanState:         1, 
-            principalOwed:     drawdownAmount, 
-            principalPaid:     0, 
-            interestPaid:      0, 
-            loanBalance:       loanPreBal, 
-            paymentsRemaining: 3, 
+            loan:              loan,
+            loanState:         1,
+            principalOwed:     drawdownAmount,
+            principalPaid:     0,
+            interestPaid:      0,
+            loanBalance:       loanPreBal,
+            paymentsRemaining: 3,
             nextPaymentDue:    block.timestamp + loan.paymentIntervalSeconds()  // Not relevant to full payment
         });
 
@@ -776,13 +776,13 @@ contract LoanTest is TestUtil {
         assertEq(usdc.balanceOf(address(loan)), loanPreBal + total);
 
         assertLoanState({
-            loan:              loan, 
-            loanState:         2, 
-            principalOwed:     0, 
-            principalPaid:     principal, 
-            interestPaid:      interest, 
+            loan:              loan,
+            loanState:         2,
+            principalOwed:     0,
+            principalPaid:     principal,
+            interestPaid:      interest,
             loanBalance:       loanPreBal + interest + principal,
-            paymentsRemaining: 0, 
+            paymentsRemaining: 0,
             nextPaymentDue:    0
         });
 

@@ -40,7 +40,7 @@ contract MapleGlobals {
     mapping(address => bool) public isValidPoolDelegate;              // Validation data structure for Pool Delegates (prevent invalid addresses from creating pools)
     mapping(address => bool) public isExemptFromTransferRestriction;  // Validation of if address is exempt from FDT transfer restrictions (cooldown + lockup)
     mapping(address => bool) public isValidBalancerPool;              // Validation of if address is a Balancer Pool that Maple has approved for BPT staking
-    
+
     // Determines the liquidation path of various assets in Loans and Treasury.
     // The value provided will determine whether or not to perform a bilateral or triangular swap on Uniswap.
     // For example, defaultUniswapPath[WBTC][USDC] value would indicate what asset to convert WBTC into before
@@ -53,7 +53,7 @@ contract MapleGlobals {
     mapping(address => bool)                     public isValidPoolFactory;  // Mapping of valid pool factories
     mapping(address => bool)                     public isValidLoanFactory;  // Mapping of valid loan factories
     mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories
-    
+
     event              CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event               LiquidityAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event                       OracleSet(address asset, address oracle);
@@ -74,7 +74,7 @@ contract MapleGlobals {
         @dev    Constructor function.
         @param  _governor Address of Governor
         @param  _mpl      Address of the ERC-2222 token for the Maple protocol
-        @param  _admin    Address that takes care of protocol security switch 
+        @param  _admin    Address that takes care of protocol security switch
     */
     constructor(address _governor, address _mpl, address _admin) public {
         governor             = _governor;
@@ -152,9 +152,9 @@ contract MapleGlobals {
         require(!protocolPaused, "MapleGlobals:PROCOTOL_PAUSED");
         admin = newAdmin;
     }
-    
+
     /**
-        @dev Update the allowlist for contracts that will be excempt from transfer restrctions (lockup and cooldown). 
+        @dev Update the allowlist for contracts that will be excempt from transfer restrctions (lockup and cooldown).
         These addresses are reserved for DeFi composability such as yield farming, collateral-based lending on other platforms, etc.
         Only Governor can call.
         @param addr   Address of exempt contract.
@@ -174,7 +174,7 @@ contract MapleGlobals {
         isValidBalancerPool[balancerPool] = valid;
         emit BalancerPoolSet(balancerPool, valid);
     }
-    
+
     /**
       @dev Pause/unpause the protocol. Only admin user can call.
       @param pause Boolean flag to switch externally facing functionality in the protocol on/off
@@ -184,7 +184,7 @@ contract MapleGlobals {
         protocolPaused = pause;
         emit ProtocolPaused(pause);
     }
-    
+
     /**
         @dev Update the valid PoolFactory mapping. Only Governor can call.
         @param poolFactory Address of PoolFactory
@@ -219,7 +219,7 @@ contract MapleGlobals {
         @param from Asset being swapped
         @param to   Final asset to receive **
         @param mid  Middle asset
-        
+
         ** Set to == mid to enable a bilateral swap (single path swap).
            Set to != mid to enable a triangular swap (multi path swap).
     */

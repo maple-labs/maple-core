@@ -35,11 +35,11 @@ contract StakeLockerFactory {
         isLocker[stakeLocker] = true;
 
         emit StakeLockerCreated(
-            msg.sender, 
+            msg.sender,
             stakeLocker,
-            stakeAsset, 
-            liquidityAsset, 
-            StakeLocker(stakeLocker).name(), 
+            stakeAsset,
+            liquidityAsset,
+            StakeLocker(stakeLocker).name(),
             StakeLocker(stakeLocker).symbol()
         );
         return stakeLocker;
