@@ -296,7 +296,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Update staking fee. Only Pool Delegate can call this function.
-        @param newStakingFee.
+        @param newStakingFee New staking fee.
     */
     function setStakingFee(uint256 newStakingFee) external {
         _isValidDelegateAndProtocolNotPaused();
@@ -441,8 +441,8 @@ contract Pool is PoolFDT {
 
     /**
         @dev Transfer any locked funds to the governor.
-        @param token Address of the token that need to reclaimed.
-     */
+        @param token Address of the token to reclaim.
+    */
     function reclaimERC20(address token) external {
         PoolLib.reclaimERC20(token, address(liquidityAsset), _globals(superFactory));
     }
@@ -529,7 +529,7 @@ contract Pool is PoolFDT {
 
     /**
       @dev Checks whether pool state is `Finalized`?
-      @return bool Boolean value to know the status of state.
+      @return bool Boolean value indicating if Pool is in a Finalized state.
      */
     function isPoolFinalized() external view returns(bool) {
         return poolState == State.Finalized;

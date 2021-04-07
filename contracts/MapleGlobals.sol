@@ -135,12 +135,12 @@ contract MapleGlobals {
 
     /**
         @dev Update the allowed Uniswap slippage percentage, in basis points. Only Governor can call.
-        @param newSlippage New slippage percentage (in basis points)
+        @param newMaxSlippage New max slippage percentage (in basis points)
      */
-    function setMaxSwapSlippage(uint256 newSlippage) external isGovernor {
-        _checkPercentageRange(newSlippage);
-        maxSwapSlippage = newSlippage;
-        emit GlobalsParamSet("MAX_SWAP_SLIPPAGE", newSlippage);
+    function setMaxSwapSlippage(uint256 newMaxSlippage) external isGovernor {
+        _checkPercentageRange(newMaxSlippage);
+        maxSwapSlippage = newMaxSlippage;
+        emit GlobalsParamSet("MAX_SWAP_SLIPPAGE", newMaxSlippage);
     }
 
     /**
@@ -154,11 +154,11 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the allowlist for contracts that will be excempt from transfer restrctions (lockup and cooldown).
+        @dev Update the allowlist for contracts that will be excempt from transfer restrictions (lockup and cooldown).
         These addresses are reserved for DeFi composability such as yield farming, collateral-based lending on other platforms, etc.
         Only Governor can call.
-        @param addr   Address of exempt contract.
-        @param valid  The new bool value for validating addr.
+        @param addr  Address of exempt contract.
+        @param valid The new bool value for validating addr.
     */
     function setExemptFromTransferRestriction(address addr, bool valid) external isGovernor {
         isExemptFromTransferRestriction[addr] = valid;
@@ -235,6 +235,7 @@ contract MapleGlobals {
     function setPoolDelegateAllowlist(address delegate, bool valid) external isGovernor {
         isValidPoolDelegate[delegate] = valid;
     }
+
     /**
         @dev Set the validity of an asset for collateral. Only Governor can call.
         @param asset The asset to assign validity to
@@ -374,8 +375,8 @@ contract MapleGlobals {
 
     /**
         @dev Fetch price for asset from Chainlink oracles.
-        @param asset Asset to fetch price
-        @return Price of asset
+        @param asset Asset to fetch price of
+        @return Price of asset in USD
     */
     function getLatestPrice(address asset) external view returns (uint256) {
         return uint256(IOracle(oracleFor[asset]).getLatestPrice());

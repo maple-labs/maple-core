@@ -111,13 +111,13 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Set the lockup period. Only Pool Delegate can call this function.
-        @param _newLockupPeriod New lockup period used to restrict unstaking.
+        @param newLockupPeriod New lockup period used to restrict unstaking.
      */
-    function setLockupPeriod(uint256 _newLockupPeriod) external {
+    function setLockupPeriod(uint256 newLockupPeriod) external {
         _whenProtocolNotPaused();
         _isValidPoolDelegate();
-        require(_newLockupPeriod <= lockupPeriod, "StakeLocker:INVALID_VALUE");
-        lockupPeriod = _newLockupPeriod;
+        require(newLockupPeriod <= lockupPeriod, "StakeLocker:INVALID_VALUE");
+        lockupPeriod = newLockupPeriod;
     }
 
     /**
