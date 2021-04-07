@@ -32,13 +32,13 @@ contract Loan is FDT, Pausable {
     using SafeERC20       for IERC20;
 
     /**
-        Live       = The loan has been initialized and is open for funding (assuming funding period not ended)
+        Ready      = The loan has been initialized and is ready for funding (assuming funding period hasn't ended)
         Active     = The loan has been drawdown and the borrower is making payments
         Matured    = The loan is fully paid off and has "matured"
         Expired    = The loan did not initiate, and all funding was returned to lenders
         Liquidated = The loan has been liquidated
     */
-    enum State { Live, Active, Matured, Expired, Liquidated }
+    enum State { Ready, Active, Matured, Expired, Liquidated }
 
     State public loanState;  // The current state of this loan, as defined in the State enum below
 
@@ -171,7 +171,7 @@ contract Loan is FDT, Pausable {
         // Deploy lockers
         collateralLocker = ICollateralLockerFactory(_clFactory).newLocker(_collateralAsset);
         fundingLocker    = IFundingLockerFactory(_flFactory).newLocker(_liquidityAsset);
-        emit LoanStateChanged(State.Live);
+        emit LoanStateChanged(State.Ready);
     }
 
     /**************************/
@@ -179,13 +179,13 @@ contract Loan is FDT, Pausable {
     /**************************/
 
     /**
-        @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from Funding to Active.
+        @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from Ready to Active.
         @param amt Amount of liquidityAsset borrower draws down, remainder is returned to Loan where it can be claimed back by LoanFDT holders.
     */
     function drawdown(uint256 amt) external {
         _whenProtocolNotPaused();
         _isValidBorrower();
-        _isValidState(State.Live);
+        _isValidState(State.Ready);
         IGlobals globals = _globals(superFactory);
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
@@ -312,7 +312,7 @@ contract Loan is FDT, Pausable {
     */
     function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
         _whenProtocolNotPaused();
-        _isValidState(State.Live);
+        _isValidState(State.Ready);
         _isValidPool();
         _isWithinFundingPeriod();
         liquidityAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
@@ -330,7 +330,7 @@ contract Loan is FDT, Pausable {
     */
     function unwind() external {
         _whenProtocolNotPaused();
-        _isValidState(State.Live);
+        _isValidState(State.Ready);
 
         // Update accounting for claim(), transfer funds from FundingLocker to Loan
         excessReturned = LoanLib.unwind(liquidityAsset, superFactory, fundingLocker, createdAt);
