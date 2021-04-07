@@ -19,3 +19,6 @@ key.json
 
 # HEVM
 hevm*
+
+# Flattened contracts
+flatten/*
