@@ -38,7 +38,7 @@ contract Pool is PoolFDT {
 
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset
     
-    uint256 public immutable stakingFee;   // Fee for stakers   (in basis points)
+    uint256 public           stakingFee;   // Fee for stakers   (in basis points)
     uint256 public immutable delegateFee;  // Fee for delegates (in basis points)
 
     uint256 public principalOut;  // Sum of all outstanding principal on Loans
@@ -61,6 +61,8 @@ contract Pool is PoolFDT {
     event   BalanceUpdated(address indexed who,  address token, uint256 balance);
     event  LPStatusChanged(address indexed user, bool status);
     event  LiquidityCapSet(uint256 newLiquidityCap);
+    event  LockupPeriodSet(uint256 newLockupPeriod);
+    event    StakingFeeSet(uint256 newStakingFee);
     event PoolStateChanged(State state);
     event         Cooldown(address indexed lp, uint256 cooldown);
     event  DefaultSuffered(
@@ -283,12 +285,24 @@ contract Pool is PoolFDT {
 
     /**
         @dev Set the lockup period. Only Pool Delegate can call this function.
-        @param _newLockupPeriod New lockup period used to restrict the withdrawals.
+        @param newLockupPeriod New lockup period used to restrict the withdrawals.
      */
-    function setLockupPeriod(uint256 _newLockupPeriod) external {
+    function setLockupPeriod(uint256 newLockupPeriod) external {
         _isValidDelegateAndProtocolNotPaused();
-        require(_newLockupPeriod <= lockupPeriod, "Pool:INVALID_VALUE");
-        lockupPeriod = _newLockupPeriod;
+        require(newLockupPeriod <= lockupPeriod, "Pool:INVALID_VALUE");
+        lockupPeriod = newLockupPeriod;
+        emit LockupPeriodSet(newLockupPeriod);
+    }
+
+    /**
+        @dev Update staking fee. Only Pool Delegate can call this function.
+        @param newStakingFee.
+    */
+    function setStakingFee(uint256 newStakingFee) external {
+        _isValidDelegateAndProtocolNotPaused();
+        require(newStakingFee.add(delegateFee) <= 10_000, "Pool:INVALID_FEE");
+        stakingFee = newStakingFee;
+        emit StakingFeeSet(newStakingFee);
     }
 
     /**

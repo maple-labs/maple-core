@@ -305,6 +305,25 @@ contract PoolTest is TestUtil {
         assertEq(pool.lockupPeriod(), 180 days - 2);
     }
 
+    function test_setStakingFee() public {
+        assertEq(pool.stakingFee(),  500);
+        assertEq(pool.delegateFee(), 100);
+        assertTrue(!pam.try_setStakingFee(address(pool), 1000));  // Cannot set stakingFee if not pool delegate
+        assertTrue(!pat.try_setStakingFee(address(pool), 9901));  // Cannot set stakingFee if sum of fees is over 100%
+        assertTrue( pat.try_setStakingFee(address(pool), 9900));  // Can set the same stakingFee if pool delegate
+        assertEq(pool.stakingFee(),                      9900);
+
+        // Pause protocol and attempt setLockupPeriod()
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_setStakingFee(address(pool), 2000));  // Cannot set stakingFee if protocol is paused
+        assertEq(pool.stakingFee(),                      9900);
+
+        // Unpause protocol and setLockupPeriod()
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_setStakingFee(address(pool), 2000));
+        assertEq(pool.stakingFee(),                     2000);
+    }
+
     function test_deposit_with_liquidity_cap() public {
     
         address stakeLocker = pool.stakeLocker();

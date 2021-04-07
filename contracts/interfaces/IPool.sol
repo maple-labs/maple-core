@@ -19,6 +19,8 @@ interface IPool {
     function claim(address, address) external returns(uint256[7] memory);
 
     function setLockupPeriod(uint256) external;
+    
+    function setStakingFee(uint256) external;
 
     function setAdmin(address, bool) external;
 
