@@ -8,8 +8,8 @@ contract FundingLocker {
 
     using SafeERC20 for IERC20;
 
-    IERC20  public immutable liquidityAsset;  // Asset the Loan was funded with
-    address public immutable loan;       // Loan this FundingLocker has funded
+    IERC20  public immutable liquidityAsset;  // Asset, the Loan was funded with
+    address public immutable loan;            // Loan, this FundingLocker has funded
 
     constructor(address _liquidityAsset, address _loan) public {
         liquidityAsset = IERC20(_liquidityAsset);

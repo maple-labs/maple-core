@@ -105,9 +105,9 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Constructor for a Loan.
-        @param  _borrower        Will receive the funding when calling drawdown(), is also responsible for repayments
-        @param  _liquidityAsset  The asset _borrower is requesting funding in
-        @param  _collateralAsset The asset provided as collateral by _borrower
+        @param  _borrower        Will receive the funding when calling `drawdown()`, is also responsible for repayments
+        @param  _liquidityAsset  The asset, `_borrower` is requesting funding in
+        @param  _collateralAsset The asset provided as collateral by `_borrower`
         @param  _flFactory       Factory to instantiate FundingLocker with
         @param  _clFactory       Factory to instantiate CollateralLocker with
         @param  specs            Contains specifications for this loan
@@ -179,7 +179,7 @@ contract Loan is FDT, Pausable {
     /**************************/
 
     /**
-        @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from Ready to Active.
+        @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from `Ready` to `Active`.
         @param amt Amount of liquidityAsset borrower draws down, remainder is returned to Loan where it can be claimed back by LoanFDT holders.
     */
     function drawdown(uint256 amt) external {
@@ -208,10 +208,10 @@ contract Loan is FDT, Pausable {
 
         address treasury = globals.mapleTreasury();
 
-        uint256 _feePaid = feePaid = amt.mul(investorFee).div(10_000);  // Update fees paid for claim()
+        uint256 _feePaid = feePaid = amt.mul(investorFee).div(10_000);  // Update fees paid for `claim()`
         uint256 treasuryAmt        = amt.mul(treasuryFee).div(10_000);  // Calculate amt to send to MapleTreasury
 
-        _transferFunds(_fundingLocker, treasury, treasuryAmt);                         // Send treasuryFee directly to MapleTreasury
+        _transferFunds(_fundingLocker, treasury, treasuryAmt);                         // Send `treasuryFee` directly to `MapleTreasury`
         _transferFunds(_fundingLocker, borrower, amt.sub(treasuryAmt).sub(_feePaid));  // Transfer drawdown amount to Borrower
 
         // Update excessReturned for claim()
@@ -244,7 +244,7 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev Make the full payment for this loan, a.k.a. "calling" the loan. This requires the borrower to pay a premium.
+        @dev Make the full payment for this loan, a.k.a. "calling" the loan. This requires the borrower to pay a premium fee.
     */
     function makeFullPayment() public {
         _whenProtocolNotPaused();

@@ -6,7 +6,7 @@ import "./DebtLocker.sol";
 /// @title DebtLockerFactory instantiates DebtLockers.
 contract DebtLockerFactory {
 
-    mapping(address => address) public owner;     // owner[locker] = Owner of the debt locker
+    mapping(address => address) public owner;     // Mapping of locker contract address to its owner i.e owner[locker] = Owner of the debt locker
     mapping(address => bool)    public isLocker;  // True if debt locker was created in this factory, otherwise false
 
     uint8 public constant factoryType = 1;  // i.e LockerFactoryTypes::DEBT_LOCKER_FACTORY

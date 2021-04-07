@@ -6,7 +6,7 @@ import "./LiquidityLocker.sol";
 /// @title LiquidityLockerFactory instantiates LiquidityLockers.
 contract LiquidityLockerFactory {
 
-    mapping(address => address) public owner;     // owner[locker] = Owner of the liquidity locker
+    mapping(address => address) public owner;     // Mapping of locker contract address to its owner i.e owner[locker] = Owner of the liquidity locker
     mapping(address => bool)    public isLocker;  // True if liquidity locker was created by this factory, otherwise false
 
     uint8 public constant factoryType = 3;        // i.e LockerFactoryTypes::LIQUIDITY_LOCKER_FACTORY

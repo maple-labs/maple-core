@@ -8,7 +8,7 @@ import "./interfaces/ILoanFactory.sol";
 /// @title CollateralLockerFactory instantiates CollateralLockers.
 contract CollateralLockerFactory {
 
-    mapping(address => address) public owner;     // owner[locker] = Owner of the collateral locker
+    mapping(address => address) public owner;     // Mapping of locker contract address to its owner i.e owner[locker] = Owner of the collateral locker
     mapping(address => bool)    public isLocker;  // True if collateral locker was created by this factory, otherwise false
 
     uint8 public constant factoryType = 0;  // i.e FactoryType::COLLATERAL_LOCKER_FACTORY

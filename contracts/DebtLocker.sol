@@ -14,8 +14,8 @@ contract DebtLocker {
 
     uint256 constant WAD = 10 ** 18;
 
-    ILoan   public immutable loan;            // The Loan that this locker is holding tokens for
-    IERC20  public immutable liquidityAsset;  // The liquidityAsset that this locker will claim
+    ILoan   public immutable loan;            // The Loan contract, this locker is holding tokens for
+    IERC20  public immutable liquidityAsset;  // The liquidityAsset, this locker can claim
     address public immutable pool;            // The owner of this Locker (the Pool)
 
     uint256 public lastPrincipalPaid;    // Loan total principal   paid at last time claim() was called
