@@ -55,9 +55,9 @@ contract PoolExcessTest is TestUtil {
         uint256 llBalance_a_post = IERC20(pool.liquidityAsset()).balanceOf(pool.liquidityLocker());
         uint256 llBalance_b_post = IERC20(pool2.liquidityAsset()).balanceOf(pool2.liquidityLocker());
 
-        assertEq(principalOut_a_pre - principalOut_a_post, vals_a[4]);   
+        assertEq(principalOut_a_pre - principalOut_a_post, vals_a[4]);
         assertEq(principalOut_b_pre - principalOut_b_post, vals_b[4]);
-        assertEq(llBalance_a_post - llBalance_a_pre, vals_a[4]);   
+        assertEq(llBalance_a_post - llBalance_a_pre, vals_a[4]);
         assertEq(llBalance_b_post - llBalance_b_pre, vals_b[4]);
 
         // pool invested 1mm USD
@@ -65,4 +65,4 @@ contract PoolExcessTest is TestUtil {
         withinDiff(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD, 1);
         withinDiff(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD, 1);
     }
-} 
+}

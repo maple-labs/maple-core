@@ -130,7 +130,7 @@ abstract contract BasicFDT is IFDT, ERC20 {
         pointsCorrection[account] = pointsCorrection[account].sub(
             (pointsPerShare.mul(value)).toInt256Safe()
         );
-        
+
         emit PointsCorrectionUpdated(account, pointsCorrection[account]);
     }
 

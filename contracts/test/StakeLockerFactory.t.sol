@@ -13,7 +13,7 @@ contract StakeLockerFactoryTest is TestUtil {
 
     function test_newLocker() public {
         StakeLocker sl = StakeLocker(slFactory.newLocker(address(mpl), USDC));
-        
+
         // Validate the storage of slfactory.
         assertEq(slFactory.owner(address(sl)), address(this));
         assertTrue(slFactory.isLocker(address(sl)));

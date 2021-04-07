@@ -10,7 +10,7 @@ interface IFDT {
     function withdrawableFundsOf(address owner) external view returns (uint256);
 
     /**
-        @dev Withdraws all available funds for a FDT holder. 
+        @dev Withdraws all available funds for a FDT holder.
     */
     function withdrawFunds() external;
 

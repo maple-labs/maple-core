@@ -33,14 +33,14 @@ contract PoolLiquidationTest is TestUtil {
 
         // Fund the loan
         pat.fundLoan(address(pool), address(loan), address(dlFactory), 80_000_000 * USD + 1);  // Plus 1e-6 to create exact 100m totalSupply
-        pam.fundLoan(address(pool2), address(loan), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1e-6 equity 
+        pam.fundLoan(address(pool2), address(loan), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1e-6 equity
 
         // Drawdown loan
         uint cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
         mint("WETH", address(bob), cReq);
         bob.approve(WETH, address(loan), MAX_UINT);
         bob.drawdown(address(loan), 4_000_000 * USD);  // Draw down less than total amount
-        
+
         // Warp to late payment
         uint256 start = block.timestamp;
         uint256 nextPaymentDue = loan.nextPaymentDue();
@@ -83,7 +83,7 @@ contract PoolLiquidationTest is TestUtil {
         mint("WETH", address(bob), cReq);
         bob.approve(WETH, address(loan), MAX_UINT);
         bob.drawdown(address(loan), 4_000_000 * USD);
-        
+
         // Warp to late payment
         uint256 start = block.timestamp;
         uint256 nextPaymentDue = loan.nextPaymentDue();
@@ -164,7 +164,7 @@ contract PoolLiquidationTest is TestUtil {
 
         principalOut_a.post = pool.principalOut();
         principalOut_b.post = pool2.principalOut();
-        
+
         withinDiff(liquidityLocker_a_bal.post - liquidityLocker_a_bal.pre, 1_000_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
         withinDiff(liquidityLocker_b_bal.post - liquidityLocker_b_bal.pre, 3_000_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
 
@@ -326,7 +326,7 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(bob_usdcBal.post - bob_usdcBal.pre,  0);                                       // Bob's USDC value withdrawn did not increase
         assertEq(bob_poolBal.pre  - bob_poolBal.post, bob_recognizableLosses.pre * WAD / 1E6);  // Bob's FDTs have been burned (doing assertion in WAD precision)
         assertEq(fdtSupply.pre    - fdtSupply.post,   bob_recognizableLosses.pre * WAD / 1E6);  // Bob's FDTs have been burned (doing assertion in WAD precision)
-        assertEq(poolLosses.pre   - poolLosses.post,  bob_recognizableLosses.pre);              // BPT shortfall accounting has been decremented by Bob's recognized losses 
+        assertEq(poolLosses.pre   - poolLosses.post,  bob_recognizableLosses.pre);              // BPT shortfall accounting has been decremented by Bob's recognized losses
 
         assertEq(liquidityLockerBal.pre - liquidityLockerBal.post, 0);  // No USDC was transferred out of LL
 
@@ -370,4 +370,4 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(pool.withdrawCooldown(address(investor)), currentTime, "Incorrect value set");
         hevm.warp(currentTime + globals.lpCooldownPeriod());
     }
-} 
+}

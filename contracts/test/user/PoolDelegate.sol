@@ -16,16 +16,16 @@ contract PoolDelegate {
     /************************/
 
     function createPool(
-        address poolFactory, 
+        address poolFactory,
         address liquidityAsset,
         address stakeAsset,
-        address slFactory, 
+        address slFactory,
         address llFactory,
         uint256 stakingFee,
         uint256 delegateFee,
         uint256 liquidityCap
-    ) 
-        external returns (address liquidityPool) 
+    )
+        external returns (address liquidityPool)
     {
         liquidityPool = IPoolFactory(poolFactory).createPool(
             liquidityAsset,
@@ -55,15 +55,15 @@ contract PoolDelegate {
     }
 
     function fundLoan(address pool, address loan, address dlFactory, uint256 amt) external {
-        IPool(pool).fundLoan(loan, dlFactory, amt);  
+        IPool(pool).fundLoan(loan, dlFactory, amt);
     }
 
     function unwind(address loan) external {
-        ILoan(loan).unwind();  
+        ILoan(loan).unwind();
     }
 
     function claim(address pool, address loan, address dlFactory) external returns(uint256[7] memory) {
-        return IPool(pool).claim(loan, dlFactory);  
+        return IPool(pool).claim(loan, dlFactory);
     }
 
     function deactivate(address pool) external {
@@ -77,7 +77,7 @@ contract PoolDelegate {
     function triggerDefault(address pool, address loan, address dlFactory) external {
         IPool(pool).triggerDefault(loan, dlFactory);
     }
-    
+
     function setAdmin(address pool, address newAdmin, bool status) external {
         IPool(pool).setAdmin(newAdmin, status);
     }
@@ -106,25 +106,25 @@ contract PoolDelegate {
     /*********************/
     /*** TRY FUNCTIONS ***/
     /*********************/
-    
+
     function try_createPool(
-        address poolFactory, 
+        address poolFactory,
         address liquidityAsset,
         address stakeAsset,
-        address slFactory, 
+        address slFactory,
         address llFactory,
         uint256 stakingFee,
         uint256 delegateFee,
         uint256 liquidityCap
-    ) 
-        external returns (bool ok) 
+    )
+        external returns (bool ok)
     {
         string memory sig = "createPool(address,address,address,address,uint256,uint256,uint256)";
         (ok,) = address(poolFactory).call(
             abi.encodeWithSignature(sig, liquidityAsset, stakeAsset, slFactory, llFactory, stakingFee, delegateFee, liquidityCap)
         );
     }
-    
+
     function try_fundLoan(address pool, address loan, address dlFactory, uint256 amt) external returns (bool ok) {
         string memory sig = "fundLoan(address,address,uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory, amt));

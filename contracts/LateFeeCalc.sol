@@ -13,7 +13,7 @@ contract LateFeeCalc {
 
     uint8   public constant calcType = 11;  // "LATEFEE type"
     bytes32 public constant name     = 'FLAT';
-    
+
     uint256 public immutable lateFee;  // The fee in basis points, charged on the payment amount.
 
     constructor(uint256 _lateFee) public {
@@ -28,4 +28,4 @@ contract LateFeeCalc {
     function getLateFee(uint256 interest) view public returns(uint256) {
         return interest.mul(lateFee).div(10_000);
     }
-} 
+}

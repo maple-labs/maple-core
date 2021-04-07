@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "./TestUtil.sol";
 
 contract PoolFactoryTest is TestUtil {
-    
+
     function setUp() public {
         setUpGlobals();
         setUpPoolDelegate();
@@ -27,7 +27,7 @@ contract PoolFactoryTest is TestUtil {
         assertTrue(gov.try_setGlobals(address(poolFactory), address(globals2)));       // Governor can set new globals
         assertEq(address(poolFactory.globals()), address(globals2));                   // Globals is updated
     }
-        
+
     function createPoolFails() internal returns(bool) {
         return !pat.try_createPool(
             address(poolFactory),
@@ -47,27 +47,27 @@ contract PoolFactoryTest is TestUtil {
 
         // PoolFactory:INVALID_LL_FACTORY
         gov.setValidSubFactory(address(poolFactory), address(llFactory), false);
-        assertTrue(createPoolFails());                                                      
+        assertTrue(createPoolFails());
         gov.setValidSubFactory(address(poolFactory), address(llFactory), true);
 
         // PoolFactory:INVALID_SL_FACTORY
         gov.setValidSubFactory(address(poolFactory), address(slFactory), false);
-        assertTrue(createPoolFails()); 
+        assertTrue(createPoolFails());
         gov.setValidSubFactory(address(poolFactory), address(slFactory), true);
 
         // PoolFactory:MSG_SENDER_NOT_ALLOWED
         gov.setPoolDelegateAllowlist(address(pat), false);
-        assertTrue(createPoolFails()); 
+        assertTrue(createPoolFails());
         gov.setPoolDelegateAllowlist(address(pat), true);
 
         // PoolFactory:LIQ_ASSET_NOT_ALLOWED
         gov.setLiquidityAsset(USDC, false);
-        assertTrue(createPoolFails());   
+        assertTrue(createPoolFails());
         gov.setLiquidityAsset(USDC, true);
     }
 
     function test_createPool_bad_stakeAsset() public {
-        
+
         // PoolFactory:STAKE_ASSET_NOT_BPOOL
         assertTrue(!pat.try_createPool(
             address(poolFactory),
@@ -84,7 +84,7 @@ contract PoolFactoryTest is TestUtil {
     function test_createPool_wrong_staking_pair_asset() public {
 
         gov.setLiquidityAsset(DAI, true);
-        
+
         // Pool:Pool:INVALID_STAKING_POOL
         assertTrue(!pat.try_createPool(
             address(poolFactory),
@@ -116,7 +116,7 @@ contract PoolFactoryTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(bPool)), 50_000_000 * 10 ** 6);
         assertEq(IERC20(DAI).balanceOf(address(bPool)),  50_000_000 * WAD);
         bPool.finalize();
-        
+
         assertTrue(!pat.try_createPool(
             address(poolFactory),
             USDC,
@@ -130,7 +130,7 @@ contract PoolFactoryTest is TestUtil {
     }
 
     function test_createPool_invalid_fees() public {
-        
+
         // PoolLib:INVALID_FEES
         assertTrue(!pat.try_createPool(
             address(poolFactory),
@@ -164,7 +164,7 @@ contract PoolFactoryTest is TestUtil {
         mpl.approve(address(bPool),  MAX_UINT);
         bPool.bind(USDC,         50_000_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
         bPool.bind(address(mpl),    100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
-        
+
         // Pool:INVALID_BALANCER_POOL
         assertTrue(!pat.try_createPool(
             address(poolFactory),

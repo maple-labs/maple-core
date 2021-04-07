@@ -1,21 +1,12 @@
-node_modules
-
-#Hardhat files
-cache
-artifacts
-
-package-lock.json
-exports
-yarn.lock
-
-coverage
-coverage.json
-/out
-
 # macOS
 .DS_Store
 key.json
 .env
 
-# HEVM
+# DappTools
 hevm*
+/out
+/cache
+
+# Flattened contracts
+/flatten

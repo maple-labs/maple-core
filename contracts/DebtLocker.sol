@@ -24,7 +24,7 @@ contract DebtLocker {
     uint256 public lastExcessReturned;   // Loan total excess  returned at last time claim() was called
     uint256 public lastDefaultSuffered;  // Loan total default suffered at last time claim() was called
     uint256 public lastAmountRecovered;  // Liquidity asset (a.k.a. loan asset) recovered from liquidation of Loan collateral
-    
+
     modifier isPool() {
         require(msg.sender == pool, "DebtLocker:MSG_SENDER_NOT_POOL");
         _;
@@ -56,7 +56,7 @@ contract DebtLocker {
         // Initialize newDefaultSuffered as zero
         uint256 newDefaultSuffered   = uint256(0);
         uint256 loan_defaultSuffered = loan.defaultSuffered();
-    
+
         // If a default has occurred, update storage variable and update memory variable from zero for return.
         // `newDefaultSuffered` represents the proportional loss that the DebtLocker registers based on its balance
         // of LoanFDTs in comparison to the totalSupply of LoanFDTs.
@@ -64,7 +64,7 @@ contract DebtLocker {
         if (lastDefaultSuffered == uint256(0) && loan_defaultSuffered > uint256(0)) {
             newDefaultSuffered = lastDefaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan_defaultSuffered, loan.totalSupply());
         }
-        
+
         // Account for any transfers into Loan that have occurred since last call
         loan.updateFundsReceived();
 
@@ -73,14 +73,14 @@ contract DebtLocker {
 
             // Calculate payment deltas
             uint256 newInterest  = loan.interestPaid() - lastInterestPaid;    // `loan.interestPaid`  updated in `loan._makePayment()`
-            uint256 newPrincipal = loan.principalPaid() - lastPrincipalPaid;  // `loan.principalPaid` updated in `loan._makePayment()` 
+            uint256 newPrincipal = loan.principalPaid() - lastPrincipalPaid;  // `loan.principalPaid` updated in `loan._makePayment()`
 
             // Update storage variables for next delta calculation
             lastInterestPaid  = loan.interestPaid();
             lastPrincipalPaid = loan.principalPaid();
 
             // Calculate one-time deltas if storage variables have not yet been updated
-            uint256 newFee             = lastFeePaid         == uint256(0) ? loan.feePaid()         : uint256(0);  // `loan.feePaid`          updated in `loan.drawdown()` 
+            uint256 newFee             = lastFeePaid         == uint256(0) ? loan.feePaid()         : uint256(0);  // `loan.feePaid`          updated in `loan.drawdown()`
             uint256 newExcess          = lastExcessReturned  == uint256(0) ? loan.excessReturned()  : uint256(0);  // `loan.excessReturned`   updated in `loan.unwind()` OR `loan.drawdown()` if `amt < fundingLockerBal`
             uint256 newAmountRecovered = lastAmountRecovered == uint256(0) ? loan.amountRecovered() : uint256(0);  // `loan.amountRecovered`  updated in `loan.triggerDefault()`
 
@@ -93,7 +93,7 @@ contract DebtLocker {
             uint256 beforeBal = liquidityAsset.balanceOf(address(this));                 // Current balance of DebtLocker (accounts for direct inflows)
             loan.withdrawFunds();                                                        // Transfer funds from Loan to DebtLocker
             uint256 claimBal  = liquidityAsset.balanceOf(address(this)).sub(beforeBal);  // Amount claimed from Loan using LoanFDT
-            
+
             // Calculate sum of all deltas, to be used to calculate portions for metadata
             uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess).add(newAmountRecovered);
 
@@ -113,7 +113,7 @@ contract DebtLocker {
             //       The dust on the right side of the equation gethers in the pool after transfers are made
             return([claimBal, newInterest, newPrincipal, newFee, newExcess, newAmountRecovered, newDefaultSuffered]);
         }
-        
+
         // Handles case where no claimable funds are present but a default must be registered (zero-collateralized loans defaulting)
         return([0, 0, 0, 0, 0, 0, newDefaultSuffered]);
     }

@@ -11,7 +11,7 @@ contract Lender {
     /************************/
     /*** DIRECT FUNCTIONS ***/
     /************************/
-    
+
     function fundLoan(address loan, uint256 amt, address who) external {
         ILoan(loan).fundLoan(who, amt);
     }

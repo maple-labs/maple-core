@@ -17,7 +17,7 @@ contract LiquidityLocker {
         liquidityAsset = IERC20(_liquidityAsset);
         pool           = _pool;
     }
-    
+
     modifier isPool() {
         require(msg.sender == pool, "LiquidityLocker:MSG_SENDER_NOT_POOL");
         _;
