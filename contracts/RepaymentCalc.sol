@@ -29,7 +29,7 @@ contract RepaymentCalc {
         // Equation = principal * APR * (paymentInterval / year)
         // Principal * APR gives annual interest
         // Multiplying that by (paymentInterval / year) gives portion of annual interest due for each interval
-        uint256 interest = 
+        uint256 interest =
             principalOwed
                 .mul(loan.apr())
                 .mul(loan.paymentIntervalSeconds())
@@ -37,9 +37,9 @@ contract RepaymentCalc {
                 .div(365 days);
 
         if (loan.paymentsRemaining() == 1) {
-            return (interest.add(principalOwed), principalOwed, interest); 
+            return (interest.add(principalOwed), principalOwed, interest);
         } else {
-            return (interest, 0, interest); 
+            return (interest, 0, interest);
         }
     }
-} 
+}

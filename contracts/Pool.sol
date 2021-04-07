@@ -37,7 +37,7 @@ contract Pool is PoolFDT {
     address public immutable superFactory;     // The factory that deployed this Loan
 
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset
-    
+
     uint256 public           stakingFee;   // Fee for stakers   (in basis points)
     uint256 public immutable delegateFee;  // Fee for delegates (in basis points)
 
@@ -66,15 +66,15 @@ contract Pool is PoolFDT {
     event PoolStateChanged(State state);
     event         Cooldown(address indexed lp, uint256 cooldown);
     event  DefaultSuffered(
-        address indexed loan, 
-        uint256 defaultSuffered, 
-        uint256 bptsBurned, 
+        address indexed loan,
+        uint256 defaultSuffered,
+        uint256 bptsBurned,
         uint256 bptsReturned,
         uint256 liquidityAssetRecoveredFromBurn
     );
     event  PoolOpenedToPublic(bool isOpen);
 
-    /** 
+    /**
         Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
                liquidityLockerBal + principalOut = fdtTotalSupply + interestSum - poolLosses
     */
@@ -182,7 +182,7 @@ contract Pool is PoolFDT {
                 [5] = Recovered portion claimed (from liquidations)
                 [6] = Default suffered
     */
-    function claim(address loan, address dlFactory) external returns(uint256[7] memory) { 
+    function claim(address loan, address dlFactory) external returns(uint256[7] memory) {
         _whenProtocolNotPaused();
         _isValidDelegateOrAdmin();
         uint256[7] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
@@ -209,14 +209,14 @@ contract Pool is PoolFDT {
         // Dust will accrue in Pool, but this ensures that state variables are in sync with liquidityLocker balance updates
         // Not using balanceOf in case of external address transferring liquidityAsset directly into Pool
         // Ensures that internal accounting is exactly reflective of balance change.
-        _transferLiquidityAsset(liquidityLocker, principalClaim.add(interestClaim)); 
-        
+        _transferLiquidityAsset(liquidityLocker, principalClaim.add(interestClaim));
+
         // Handle default if defaultSuffered > 0
         if (claimInfo[6] > 0) _handleDefault(loan, claimInfo[6]);
 
         // Update funds received for StakeLockerFDTs
         IStakeLocker(stakeLocker).updateFundsReceived();
-        
+
         // Update funds received for PoolFDTs
         updateFundsReceived();
 
@@ -252,7 +252,7 @@ contract Pool is PoolFDT {
             loan,                            // Which loan defaultSuffered is from
             defaultSuffered,                 // Total default suffered from loan by Pool after liquidation
             bptsBurned,                      // Amount of BPTs burned from stakeLocker
-            postBurnBptBal,                  // Remaining BPTs in stakeLocker post-burn                      
+            postBurnBptBal,                  // Remaining BPTs in stakeLocker post-burn
             liquidityAssetRecoveredFromBurn  // Amount of liquidityAsset recovered from burning BPTs
         );
     }
@@ -296,7 +296,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Update staking fee. Only Pool Delegate can call this function.
-        @param newStakingFee.
+        @param newStakingFee New staking fee.
     */
     function setStakingFee(uint256 newStakingFee) external {
         _isValidDelegateAndProtocolNotPaused();
@@ -397,8 +397,8 @@ contract Pool is PoolFDT {
 
         _burn(msg.sender, wad);  // Burn the corresponding FDT balance
         withdrawFunds();         // Transfer full entitled interest, decrement `interestSum`
-        
-        // Transfer amount that is due after realized losses are accounted for. 
+
+        // Transfer amount that is due after realized losses are accounted for.
         // recognizedLosses are absorbed by the LP.
         _transferLiquidityLockerFunds(msg.sender, amt.sub(recognizeLosses()));
 
@@ -425,7 +425,7 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        if (withdrawableFunds > uint256(0)) { 
+        if (withdrawableFunds > uint256(0)) {
             _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
             _emitBalanceUpdatedEvent();
 
@@ -441,8 +441,8 @@ contract Pool is PoolFDT {
 
     /**
         @dev Transfer any locked funds to the governor.
-        @param token Address of the token that need to reclaimed.
-     */
+        @param token Address of the token to reclaim.
+    */
     function reclaimERC20(address token) external {
         PoolLib.reclaimERC20(token, address(liquidityAsset), _globals(superFactory));
     }
@@ -453,23 +453,23 @@ contract Pool is PoolFDT {
 
     /**
         @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
-        @param lp Liquidity Provider to check claimableFunds for 
+        @param lp Liquidity Provider to check claimableFunds for
         @return total     Total     amount claimable
         @return principal Principal amount claimable
         @return interest  Interest  amount claimable
     */
     function claimableFunds(address lp) public view returns(uint256 total, uint256 principal, uint256 interest) {
-        (total, principal, interest) = 
+        (total, principal, interest) =
             PoolLib.claimableFunds(
-                withdrawableFundsOf(lp), 
-                depositDate[lp], 
-                lockupPeriod, 
-                balanceOf(lp), 
+                withdrawableFundsOf(lp),
+                depositDate[lp],
+                lockupPeriod,
+                balanceOf(lp),
                 liquidityAssetDecimals
             );
     }
 
-    /** 
+    /**
         @dev Calculates the value of BPT in units of liquidityAsset.
         @param _bPool          Address of Balancer pool
         @param _liquidityAsset Asset used by Pool for liquidity to fund loans
@@ -529,7 +529,7 @@ contract Pool is PoolFDT {
 
     /**
       @dev Checks whether pool state is `Finalized`?
-      @return bool Boolean value to know the status of state.
+      @return bool Boolean value indicating if Pool is in a Finalized state.
      */
     function isPoolFinalized() external view returns(bool) {
         return poolState == State.Finalized;
@@ -553,7 +553,7 @@ contract Pool is PoolFDT {
     */
     function _balanceOfLiquidityLocker() internal view returns(uint256) {
         return liquidityAsset.balanceOf(liquidityLocker);
-    } 
+    }
 
     /**
         @dev Utility to check current state of Pool againt provided state.

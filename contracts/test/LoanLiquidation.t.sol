@@ -27,7 +27,7 @@ contract LoanLiquidationTest is TestUtil {
 
         /*** LP deposits USDC into Pool ***/
         leo.approve(USDC, address(pool), MAX_UINT);
-        leo.deposit(address(pool), 5000 * USD); 
+        leo.deposit(address(pool), 5000 * USD);
     }
 
     function createAndFundLoan(address _interestStructure, address _collateral, uint256 collateralRatio) internal returns (Loan loan) {
@@ -36,7 +36,7 @@ contract LoanLiquidationTest is TestUtil {
 
         loan = bob.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
 
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), 1000 * USD); 
+        pat.fundLoan(address(pool), address(loan), address(dlFactory), 1000 * USD);
 
         bob.approve(_collateral, address(loan), MAX_UINT);
         assertTrue(bob.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
@@ -81,7 +81,7 @@ contract LoanLiquidationTest is TestUtil {
                 assertEq(liquidationExcess,              amountRecovered - principalOwed_pre);
                 assertEq(defaultSuffered,                                                  0);
                 assertEq(
-                    amountRecovered,                              
+                    amountRecovered,
                     (liquidityAssetBorr_post - liquidityAssetBorr_pre) + (liquidityAssetLoan_post - liquidityAssetLoan_pre)
                 );
             }
@@ -103,7 +103,7 @@ contract LoanLiquidationTest is TestUtil {
         Loan wethLoan = createAndFundLoan(address(repaymentCalc), WETH, 2000);
         performLiquidationAssertions(wethLoan);
 
-        // collateralAsset == liquidityAsset 
+        // collateralAsset == liquidityAsset
         Loan usdcLoan = createAndFundLoan(address(repaymentCalc), USDC, 2000);
         performLiquidationAssertions(usdcLoan);
 

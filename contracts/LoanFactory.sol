@@ -38,7 +38,7 @@ contract LoanFactory is Pausable {
         string name,
         string symbol
     );
-    
+
     constructor(address _globals) public {
         globals = IGlobals(_globals);
     }
@@ -133,7 +133,7 @@ contract LoanFactory is Pausable {
     /**
         @dev Triggers paused state. Halts functionality for certain functions. Only Governor can call this function.
     */
-    function pause() external { 
+    function pause() external {
         _isValidGovernorOrAdmin();
         super._pause();
     }

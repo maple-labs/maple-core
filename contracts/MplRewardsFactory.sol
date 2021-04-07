@@ -17,6 +17,10 @@ contract MplRewardsFactory {
         globals = IGlobals(_globals);
     }
 
+    /**
+        @dev Update the MapleGlobals contract
+        @param _globals Address of new MapleGlobals contract
+    */
     function setGlobals(address _globals) external {
         require(msg.sender == globals.governor());
         globals = IGlobals(_globals);
