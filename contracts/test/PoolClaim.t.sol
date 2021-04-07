@@ -23,7 +23,7 @@ contract PoolTest is TestUtil {
 
     function test_claim_permissions() public {
         // Finalizing the Pool
-        finalizePool(pool, pat);
+        finalizePool(pool, pat, true);
 
         // Add liquidity into the pool (Dan is an LP, but still won't be able to claim)
         mintFundsAndDepositIntoPool(lex, pool, 10_000 * USD, 10_000 * USD);
@@ -57,7 +57,7 @@ contract PoolTest is TestUtil {
 
     function test_claim_defaulting_for_zero_collateral_loan() public {
         // Finalizing the Pool
-        finalizePool(pool, pat);
+        finalizePool(pool, pat, true);
 
         //  Mint 10000 USDC into this LP account & add liquidity
         mintFundsAndDepositIntoPool(lex, pool, 10_000 * USD, 10_000 * USD);
@@ -110,7 +110,7 @@ contract PoolTest is TestUtil {
         /*** Finalize liquidity pool ***/
         /*******************************/
 
-        finalizePool(pool, pat);
+        finalizePool(pool, pat, true);
 
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
@@ -171,7 +171,7 @@ contract PoolTest is TestUtil {
         /*** Finalize liquidity pool ***/
         /*******************************/
 
-        finalizePool(pool, pat);
+        finalizePool(pool, pat, true);
 
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
@@ -277,8 +277,8 @@ contract PoolTest is TestUtil {
         address stakeLocker1 = pool.stakeLocker();
         address stakeLocker2 = pool2.stakeLocker();
 
-        finalizePool(pool, pat);
-        finalizePool(pool2, pam);
+        finalizePool(pool,  pat, true);
+        finalizePool(pool2, pam, true);
        
         address liqLocker1 = pool.liquidityLocker();
         address liqLocker2 = pool2.liquidityLocker();
@@ -438,7 +438,7 @@ contract PoolTest is TestUtil {
         /*** Finalize liquidity pool ***/
         /*******************************/
 
-        finalizePool(pool, pat);
+        finalizePool(pool, pat, true);
 
         /**********************************************************/
         /*** Mint, deposit funds into liquidity pool, fund loan ***/

@@ -158,7 +158,7 @@ contract PoolTest is TestUtil {
         address fundingLocker = loan.fundingLocker();
 
         // Finalize the Pool
-        finalizePool(pool, pat);
+        finalizePool(pool, pat, true);
 
         // Mint funds and deposit to Pool.
         mintFundsAndDepositIntoPool(leo, pool, 100 * USD, 100 * USD);
@@ -228,41 +228,47 @@ contract PoolTest is TestUtil {
         assertEq(pool.principalOut(),                            55 * USD);  // Outstanding principal in liqiudity pool 1
     }
 
-    //  function test_deactivate() public {
+     function test_deactivate() public {
 
-    //     // setUpWithdraw();
+        gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
 
-    //     address liquidityAsset = address(pool.liquidityAsset());
-    //     uint liquidityAssetDecimals = IERC20Details(liquidityAsset).decimals();
+        /*******************************/
+        /*** Finalize liquidity pool ***/
+        /*******************************/
+        
+        finalizePool(pool, pat, true);
 
-    //     // Pre-state checks.
-    //     assertTrue(pool.principalOut() <= 100 * 10 ** liquidityAssetDecimals);
+        address liquidityAsset = address(pool.liquidityAsset());
+        uint liquidityAssetDecimals = IERC20Details(liquidityAsset).decimals();
 
-    //     // Pause protocol and attempt deactivate()
-    //     assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-    //     assertTrue(!pat.try_deactivate(address(pool)));
+        // Pre-state checks.
+        assertTrue(pool.principalOut() <= 100 * 10 ** liquidityAssetDecimals);
 
-    //     // Unpause protocol and deactivate()
-    //     assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-    //     assertTrue(pat.try_deactivate(address(pool)));
+        // Pause protocol and attempt deactivate()
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_deactivate(address(pool)));
 
-    //     // Post-state checks.
-    //     assertEq(int(pool.poolState()), 2);
+        // Unpause protocol and deactivate()
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_deactivate(address(pool)));
 
-    //     // Deactivation should block the following functionality:
+        // Post-state checks.
+        assertEq(int(pool.poolState()), 2);
 
-    //     // deposit()
-    //     mint("USDC", address(leo), 1_000_000_000 * USD);
-    //     leo.approve(USDC, address(pool), uint(-1));
-    //     assertTrue(!leo.try_deposit(address(pool), 100_000_000 * USD));
+        // Deactivation should block the following functionality:
 
-    //     // fundLoan()
-    //     assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), 1));
+        // deposit()
+        mint("USDC", address(leo), 1_000_000_000 * USD);
+        leo.approve(USDC, address(pool), uint(-1));
+        assertTrue(!leo.try_deposit(address(pool), 100_000_000 * USD));
 
-    //     // deactivate()
-    //     assertTrue(!pat.try_deactivate(address(pool)));
+        // fundLoan()
+        assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), 1));
 
-    // }
+        // deactivate()
+        assertTrue(!pat.try_deactivate(address(pool)));
+
+    }
 
     function test_deactivate_fail() public {
 
@@ -270,7 +276,7 @@ contract PoolTest is TestUtil {
         /*** Finalize liquidity pool ***/
         /*******************************/
         
-        finalizePool(pool, pat);
+        finalizePool(pool, pat, true);
         
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
@@ -307,16 +313,25 @@ contract PoolTest is TestUtil {
     }
 
     function test_view_balance() public {
-        //setUpWithdraw();
+        gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
 
-        // Mint and deposit 1000 USDC
-        mintFundsAndDepositIntoPool(leo, pool, 1_000_000 * USD, 1_000_000 * USD);
+        /*******************************/
+        /*** Finalize liquidity pool ***/
+        /*******************************/
+        
+        finalizePool(pool, pat, true);
+
+        /**************************************************/
+        /*** Mint and deposit funds into liquidity pool ***/
+        /**************************************************/
+
+        mintFundsAndDepositIntoPool(lee, pool, 1_000_000 * USD, 1_000_000 * USD);
 
         // Fund loan, drawdown, make payment and claim so lee can claim interest
         assertTrue(pat.try_fundLoan(address(pool), address(loan3),  address(dlFactory), 1_000_000 * USD), "Fail to fund the loan");
 
         drawdown(loan3, bud, 1_000_000 * USD);
-        doPartialLoanPayment(loan3, bud); 
+        doFullLoanPayment(loan3, bud); 
         pat.claim(address(pool), address(loan3), address(dlFactory));
 
         uint withdrawDate = pool.depositDate(address(lee)).add(pool.lockupPeriod());
@@ -329,7 +344,7 @@ contract PoolTest is TestUtil {
         assertEq(interest_kim, pool.withdrawableFundsOf(address(lee)));
         assertEq(total_kim, principal_kim + interest_kim);
 
-        hevm.warp(withdrawDate);
+        hevm.warp(withdrawDate + 1);
         (total_kim, principal_kim, interest_kim) = pool.claimableFunds(address(lee));
 
         assertGt(principal_kim, 0);
