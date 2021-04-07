@@ -8,7 +8,7 @@ For Borrowers, Maple offers **transparent and efficient financing done entirely 
 
 For Liquidity Providers, Maple offers a **sustainable yield source through professionally managed lending pools.**
 
-* Diversified exposure across premium borrowers with staked MPL tokens providing reserve capital against loan defaults
+* Diversified exposure across premium borrowers with staked MPL-USDC 50-50 Balancer Pool Tokens (BPTs) providing reserve capital against loan defaults
 * Set and forget solution with diligence outsourced to Pool Delegates
 * Interest is accrued and reinvested to enable capital to compound over time
 
