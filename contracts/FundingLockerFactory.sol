@@ -8,7 +8,7 @@ import "./interfaces/ILoanFactory.sol";
 /// @title FundingLockerFactory instantiates FundingLockers.
 contract FundingLockerFactory {
 
-    mapping(address => address) public owner;     // owner[locker] = Owner of the funding locker
+    mapping(address => address) public owner;     // Mapping of locker contract address to its owner i.e owner[locker] = Owner of the funding locker
     mapping(address => bool)    public isLocker;  // True if funding locker was created by this factory, otherwise false
 
     uint8 public constant factoryType = 2;  // i.e FactoryType::FUNDING_LOCKER_FACTORY

@@ -9,7 +9,7 @@ contract CollateralLocker {
     using SafeERC20 for IERC20;
 
     IERC20  public immutable collateralAsset;  // Address the loan is funded with
-    address public immutable loan;             // Loan this CollateralLocker is attached to
+    address public immutable loan;             // Loan contract address this CollateralLocker is attached to
 
     constructor(address _collateralAsset, address _loan) public {
         collateralAsset = IERC20(_collateralAsset);
