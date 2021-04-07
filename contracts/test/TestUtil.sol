@@ -234,10 +234,10 @@ contract TestUtil is DSTest {
 
     function createEmergencyAdmin() public { emergencyAdmin = new EmergencyAdmin(); }
 
-    function setUpPoolDelegate() public { 
-        createPoolDelegate(); 
-        gov.setPoolDelegateAllowlist(address(pat), true); 
-    } 
+    function setUpPoolDelegate() public {
+        createPoolDelegate();
+        gov.setPoolDelegateAllowlist(address(pat), true);
+    }
 
     function setUpPoolDelegates() public {
         createPoolDelegates();
@@ -261,10 +261,10 @@ contract TestUtil is DSTest {
     function createGlobals()           public { globals           = gov.createGlobals(address(mpl)); }
     function createTreasury()          public { treasury          = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); }
     function createBPool()             public { bPool             = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); }
-    
-    function setUpMplRewardsFactory() public { 
-        mplRewardsFactory = gov.createMplRewardsFactory(); 
-        fakeGov.setGovMplRewardsFactory(mplRewardsFactory); 
+
+    function setUpMplRewardsFactory() public {
+        mplRewardsFactory = gov.createMplRewardsFactory();
+        fakeGov.setGovMplRewardsFactory(mplRewardsFactory);
     }
 
     function setUpGlobals() public {
@@ -441,17 +441,17 @@ contract TestUtil is DSTest {
     }
 
     function setUpBalancerPool() public {
-        createBalancerPool(); 
+        createBalancerPool();
         transferBptsToPoolDelegates();
     }
 
     function setUpBalancerPoolForStakers() public {
-        createBalancerPool(); 
+        createBalancerPool();
         transferBptsToPoolDelegateAndStakers();
     }
 
     function setUpBalancerPoolForPools() public {
-        createBalancerPool(); 
+        createBalancerPool();
         transferBptsToPoolDelegatesAndStakers();
     }
 
@@ -494,9 +494,9 @@ contract TestUtil is DSTest {
     /*** Yield Farming Setup Functions ***/
     /*************************************/
     function setUpMplRewards() public {
-        mplRewards = gov.createMplRewards(address(mpl), address(pool)); 
+        mplRewards = gov.createMplRewards(address(mpl), address(pool));
         gov.setExemptFromTransferRestriction(address(mplRewards), true); // Set in globals so that depDate is not affected on stake/unstake
-        fakeGov.setGovMplRewards(mplRewards);                            // Used to assert failures 
+        fakeGov.setGovMplRewards(mplRewards);                            // Used to assert failures
     }
 
     function setUpFarmers() public {

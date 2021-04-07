@@ -12,7 +12,7 @@ abstract contract StakeLockerFDT is ExtendedFDT {
 
     IERC20 public immutable fundsToken;
 
-    uint256 public bptLosses;          // Sum of all unrecognized losses 
+    uint256 public bptLosses;          // Sum of all unrecognized losses
     uint256 public lossesBalance;      // The amount of losses present and accounted for in this contract.
     uint256 public fundsTokenBalance;  // The amount of fundsToken (liquidityAsset) currently present and accounted for in this contract.
 

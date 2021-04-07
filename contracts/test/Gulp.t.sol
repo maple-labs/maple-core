@@ -69,4 +69,4 @@ contract GulpTest is TestUtil {
         assertEq(usdcBal_preGulp,  50_000_000 * USD);
         assertEq(usdcBal_postGulp, usdcBal_preGulp + earnings); // USDC is transferred into balancer pool, increasing value of MPL
     }
-} 
+}

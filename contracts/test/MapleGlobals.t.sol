@@ -58,7 +58,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(clFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(flFactory)));
-        
+
         assertTrue(globals.isValidSubFactory(address(poolFactory), address(slFactory), SL_FACTORY));
         assertTrue(globals.isValidSubFactory(address(poolFactory), address(llFactory), LL_FACTORY));
         assertTrue(globals.isValidSubFactory(address(poolFactory), address(dlFactory), DL_FACTORY));
@@ -96,7 +96,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!globals.validSubFactories(address(poolFactory), address(dlFactory)));
         assertTrue(     gov.try_setValidSubFactory(address(poolFactory), address(dlFactory), true));
         assertTrue( globals.validSubFactories(address(poolFactory), address(dlFactory)));
-        
+
         // setPoolDelegateAllowlist()
         assertTrue(!globals.isValidPoolDelegate(address(bob)));
         assertTrue(!fakeGov.try_setPoolDelegateAllowlist(address(bob), true));  // Non-governor cant set
@@ -114,7 +114,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(   globals.defaultUniswapPath(WETH, USDC), USDC);
         assertEq(   globals.defaultUniswapPath(DAI, USDC), WETH);
 
-        // setLiquidityAsset() 
+        // setLiquidityAsset()
         assertTrue(!globals.isValidLiquidityAsset(WETH));
         assertTrue(!fakeGov.try_setLiquidityAsset(WETH,  true));  // Non-governor cant set
         assertTrue(     gov.try_setLiquidityAsset(WETH,  true));
@@ -213,7 +213,7 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!fakeGov.try_setMapleTreasury(address(this)));
         assertTrue(    !gov.try_setMapleTreasury(address(0)));
         assertTrue(     gov.try_setMapleTreasury(address(this)));
-        assertEq(   globals.mapleTreasury(), address(this)); 
+        assertEq(   globals.mapleTreasury(), address(this));
 
         // setPriceOracle()
         assertTrue(!fakeGov.try_setPriceOracle(WETH, address(1)));
@@ -236,17 +236,17 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!globals.isExemptFromTransferRestriction(address(1)));
         assertTrue(!fakeGov.try_setExemptFromTransferRestriction(address(1), true));
         assertTrue(     gov.try_setExemptFromTransferRestriction(address(1), true));
-        assertTrue( globals.isExemptFromTransferRestriction(address(1))); 
+        assertTrue( globals.isExemptFromTransferRestriction(address(1)));
 
         // setValidBalancerPool()
         assertTrue(!globals.isValidBalancerPool(address(1)));
         assertTrue(!fakeGov.try_setValidBalancerPool(address(1), true));
         assertTrue(     gov.try_setValidBalancerPool(address(1), true));
-        assertTrue( globals.isValidBalancerPool(address(1))); 
+        assertTrue( globals.isValidBalancerPool(address(1)));
 
         // setMinLoanEquity
         assertEq(   globals.minLoanEquity(),      2_000);
-        assertTrue(!fakeGov.try_setMinLoanEquity(10_000)); 
+        assertTrue(!fakeGov.try_setMinLoanEquity(10_000));
         assertTrue(    !gov.try_setMinLoanEquity(10_001));  // 100.01% is outside of bounds
         assertTrue(     gov.try_setMinLoanEquity(10_000));  // 99.99 %
         assertEq(   globals.minLoanEquity(),     10_000);   // 100% is upper bound
@@ -257,7 +257,7 @@ contract MapleGlobalsTest is TestUtil {
         Governor fakeGov2 = new Governor();
         fakeGov.setGovGlobals(globals);  // Point to globals created by gov.
         fakeGov2.setGovGlobals(globals);
-        
+
         // Transfer Governor
         assertTrue( !fakeGov.try_setPendingGovernor(address(fakeGov)));
         assertTrue(     !gov.try_setPendingGovernor(address(0)));       // Cannot set governor to zero

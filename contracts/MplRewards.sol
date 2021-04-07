@@ -9,7 +9,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
 /// @title MplRewards Synthetix farming contract fork for liquidity mining.
 contract MplRewards is Ownable {
-    
+
     using SafeMath  for uint256;
     using SafeERC20 for IERC20;
 
@@ -28,7 +28,7 @@ contract MplRewards is Ownable {
     mapping(address => uint256) public rewards;
 
     uint256 private _totalSupply;
-    
+
     mapping(address => uint256) private _balances;
 
     event RewardAdded(uint256 reward);

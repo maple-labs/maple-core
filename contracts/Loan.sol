@@ -25,7 +25,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 /// @title Loan maintains all accounting and functionality related to Loans.
 contract Loan is FDT, Pausable {
-    
+
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
     using SafeMath        for uint256;
@@ -45,7 +45,7 @@ contract Loan is FDT, Pausable {
     IERC20 public immutable liquidityAsset;     // Asset deposited by lenders into the FundingLocker, when funding this loan
     IERC20 public immutable collateralAsset;    // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan
 
-    address public immutable fundingLocker;     // Funding locker - holds custody of loan funds before drawdown    
+    address public immutable fundingLocker;     // Funding locker - holds custody of loan funds before drawdown
     address public immutable flFactory;         // Funding locker factory
     address public immutable collateralLocker;  // Collateral locker - holds custody of loan collateral
     address public immutable clFactory;         // Collateral locker factory
@@ -60,7 +60,7 @@ contract Loan is FDT, Pausable {
     uint256 public nextPaymentDue;  // The unix timestamp due date of next payment
 
     // Loan specifications
-    uint256 public immutable apr;                     // APR in basis points        
+    uint256 public immutable apr;                     // APR in basis points
     uint256 public           paymentsRemaining;       // Number of payments remaining on the Loan
     uint256 public immutable termDays;                // Total length of the Loan term in days
     uint256 public immutable paymentIntervalSeconds;  // Time between Loan payments in seconds
@@ -76,7 +76,7 @@ contract Loan is FDT, Pausable {
     uint256 public interestPaid;    // Amount of interest   that has been paid by borrower since Loan instantiation
     uint256 public feePaid;         // Amount of fees      that have been paid by borrower since Loan instantiation
     uint256 public excessReturned;  // Amount of excess that has been returned to lenders after Loan drawdown
-    
+
     // Liquidation variables
     uint256 public amountLiquidated;   // Amount of collateral that has been liquidated after default
     uint256 public amountRecovered;    // Amount of liquidityAsset  that has been recovered  after default
@@ -286,15 +286,15 @@ contract Loan is FDT, Pausable {
         liquidityAsset.safeTransferFrom(msg.sender, address(this), total);
 
         // Call updateFundsReceived() update FDT accounting with funds recieved from interest payment
-        updateFundsReceived(); 
+        updateFundsReceived();
 
         emit PaymentMade(
-            total, 
-            principal, 
-            interest, 
-            _paymentsRemaining, 
-            principalOwed, 
-            _paymentsRemaining > 0 ? nextPaymentDue : 0, 
+            total,
+            principal,
+            interest,
+            _paymentsRemaining,
+            principalOwed,
+            _paymentsRemaining > 0 ? nextPaymentDue : 0,
             paymentLate
         );
 
@@ -325,7 +325,7 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev If the borrower has not drawn down on the Loan past the drawdown grace period, return capital to Loan, 
+        @dev If the borrower has not drawn down on the Loan past the drawdown grace period, return capital to Loan,
              where it can be claimed back by LoanFDT holders.
     */
     function unwind() external {
@@ -349,7 +349,7 @@ contract Loan is FDT, Pausable {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
         require(LoanLib.canTriggerDefault(nextPaymentDue, defaultGracePeriod, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
-        
+
         // Pull collateralAsset from CollateralLocker, swap to liquidityAsset, and hold custody of resulting liquidityAsset in Loan
         (amountLiquidated, amountRecovered) = LoanLib.liquidateCollateral(collateralAsset, address(liquidityAsset), superFactory, collateralLocker);
 
@@ -388,7 +388,7 @@ contract Loan is FDT, Pausable {
     /**
         @dev Triggers paused state. Halts functionality for certain functions.
     */
-    function pause() external { 
+    function pause() external {
         _isValidBorrowerOrAdmin();
         super._pause();
     }
@@ -448,10 +448,10 @@ contract Loan is FDT, Pausable {
         uint256 liquidationAmt = _getCollateralLockerBalance();
         return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(liquidityAsset), liquidationAmt);
     }
-    
+
     /**
         @dev Returns information on next payment amount.
-        @return [0] = Entitiled interest to the next payment, Principal + Interest only when the next payment is last payment of the loan 
+        @return [0] = Entitiled interest to the next payment, Principal + Interest only when the next payment is last payment of the loan
                 [1] = Entitiled principal amount needs to pay in the next payment
                 [2] = Entitiled interest amount needs to pay in the next payment
                 [3] = Payment Due Date
@@ -536,21 +536,21 @@ contract Loan is FDT, Pausable {
         @dev Utility to check current state of Loan againt provided state.
         @param _state Enum of desired Loan state
     */
-    function _isValidState(State _state) internal view {	
-        require(loanState == _state, "Loan:INVALID_STATE");	
-    }	
+    function _isValidState(State _state) internal view {
+        require(loanState == _state, "Loan:INVALID_STATE");
+    }
 
     /**
         @dev Utility to return if msg.sender is the Loan borrower.
     */
-    function _isValidBorrower() internal view {	
-        require(msg.sender == borrower, "Loan:INVALID_BORROWER");	
+    function _isValidBorrower() internal view {
+        require(msg.sender == borrower, "Loan:INVALID_BORROWER");
     }
 
     /**
         @dev Utility to return if lender is using an approved Pool to fund the loan.
     */
-    function _isValidPool() internal view {	
+    function _isValidPool() internal view {
         address pool        = ILiquidityLocker(msg.sender).pool();
         address poolFactory = IPool(pool).superFactory();
         require(
@@ -563,7 +563,7 @@ contract Loan is FDT, Pausable {
     /**
         @dev Utility to ensure currently within the funding period.
     */
-    function _isWithinFundingPeriod() internal view {	
+    function _isWithinFundingPeriod() internal view {
         require(block.timestamp <= createdAt.add(fundingPeriod), "Loan:PAST_FUNDING_PERIOD");
     }
 

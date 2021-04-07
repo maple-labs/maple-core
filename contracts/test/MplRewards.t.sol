@@ -32,15 +32,15 @@ contract MplRewardsTest is TestUtil {
         assertTrue(   !gov.try_transferOwnership(address(gov)));
         assertTrue(fakeGov.try_transferOwnership(address(gov)));
 
-        assertEq(mplRewards.owner(), address(gov));        
+        assertEq(mplRewards.owner(), address(gov));
     }
 
     function test_notifyRewardAmount() public {
         assertEq(mplRewards.periodFinish(),              0);
         assertEq(mplRewards.rewardRate(),                0);
         assertEq(mplRewards.rewardsDuration(),      7 days);  // Pre set value
-        assertEq(mplRewards.lastUpdateTime(),            0);  
-        assertEq(mplRewards.rewardPerTokenStored(),      0); 
+        assertEq(mplRewards.lastUpdateTime(),            0);
+        assertEq(mplRewards.rewardPerTokenStored(),      0);
 
         mpl.transfer(address(mplRewards), 25_000 * WAD);
 
@@ -69,9 +69,9 @@ contract MplRewardsTest is TestUtil {
         assertEq(IERC20(USDC).balanceOf(address(mplRewards)),              0);
         assertEq(mplRewards.balanceOf(address(fay)),                       0);
         assertEq(mplRewards.totalSupply(),                                 0);
-        
+
         fay.transfer(USDC, address(mplRewards), 1000 * USD); // Ali transfers USDC directly into Staking rewards accidentally
-        
+
         assertEq(IERC20(USDC).balanceOf(address(fay)),                     0);
         assertEq(IERC20(USDC).balanceOf(address(gov)),                     0);
         assertEq(IERC20(USDC).balanceOf(address(mplRewards)),     1000 * USD);
@@ -127,7 +127,7 @@ contract MplRewardsTest is TestUtil {
 
         // Ali can stake
         fay.approve(address(mplRewards), 100 * WAD);
-        assertTrue(fay.try_stake(100 * WAD));             
+        assertTrue(fay.try_stake(100 * WAD));
 
         // Set to paused
         assertTrue(!fakeGov.try_setPaused(true));
@@ -198,7 +198,7 @@ contract MplRewardsTest is TestUtil {
         assertEq(mplRewards.totalSupply(),                100 * WAD);
 
         assertTrue(!fay.try_withdraw(0));          // Can't withdraw zero
-        assertTrue( fay.try_withdraw(100 * WAD));  // Can withdraw 
+        assertTrue( fay.try_withdraw(100 * WAD));  // Can withdraw
 
         assertEq(pool.balanceOf(address(fay)),           1000 * WAD);
         assertEq(pool.depositDate(address(fay)),              start);  // Does not change
@@ -210,13 +210,13 @@ contract MplRewardsTest is TestUtil {
     function assertRewardsAccounting(
         address user,
         uint256 totalSupply,
-        uint256 rewardPerTokenStored, 
-        uint256 userRewardPerTokenPaid, 
-        uint256 earned, 
-        uint256 rewards, 
+        uint256 rewardPerTokenStored,
+        uint256 userRewardPerTokenPaid,
+        uint256 earned,
+        uint256 rewards,
         uint256 rewardTokenBal
-    ) 
-        public 
+    )
+        public
     {
         assertEq(mplRewards.totalSupply(),                totalSupply);
         assertEq(mplRewards.rewardPerTokenStored(),       rewardPerTokenStored);
@@ -274,7 +274,7 @@ contract MplRewardsTest is TestUtil {
         hevm.warp(start + 1 days);  // Warp to time = (1 days) (dTime = 1 days)
 
         // Reward per token (RPT) that was used before fez entered the pool (accrued over dTime = 1 days)
-        uint256 dTime1_rpt = rewardRate * 1 days * WAD / (10 * WAD);  
+        uint256 dTime1_rpt = rewardRate * 1 days * WAD / (10 * WAD);
 
         /*** Ali time = (1 days) pre-claim ***/
         assertRewardsAccounting({
@@ -287,7 +287,7 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         0                             // Nothing claimed
         });
 
-        fay.getReward();  // Get reward at time = (1 days) 
+        fay.getReward();  // Get reward at time = (1 days)
 
         /*** Ali time = (1 days) post-claim ***/
         assertRewardsAccounting({
@@ -316,7 +316,7 @@ contract MplRewardsTest is TestUtil {
         hevm.warp(start + 2 days);  // Warp to time = (2 days) (dTime = 1 days)
 
         // Reward per token (RPT) that was used after Bob entered the pool (accrued over dTime = 1 days, on second day), smaller since supply increased
-        uint256 dTime2_rpt = rewardRate * 1 days * WAD / (20 * WAD);  
+        uint256 dTime2_rpt = rewardRate * 1 days * WAD / (20 * WAD);
 
         /*** Ali time = (2 days) pre-claim ***/
         assertRewardsAccounting({
@@ -345,7 +345,7 @@ contract MplRewardsTest is TestUtil {
         /*** Bob time = (2 days) post-stake ***/
         assertRewardsAccounting({
             user:                   address(fez),                 // User for accounting
-            totalSupply:            40 * WAD,                     // Ali + Bob stake 
+            totalSupply:            40 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,      // Updated on updateReward to snapshot rewardPerToken up to that point
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,      // Used so Bob can't do claims on past rewards
             earned:                 dTime2_rpt * 10 * WAD / WAD,  // Earned updated to reflect all unclaimed earnings pre stake
@@ -360,7 +360,7 @@ contract MplRewardsTest is TestUtil {
         /*** Ali time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
             user:                   address(fay),                                // User for accounting
-            totalSupply:            40 * WAD,                                    // Ali + Bob stake 
+            totalSupply:            40 * WAD,                                    // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                     // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt,                                  // Used so Ali can't do multiple claims
             earned:                 (dTime2_rpt + dTime3_rpt) * 10 * WAD / WAD,  // Ali has not claimed any rewards that have accrued during dTime2 or dTime3
@@ -371,7 +371,7 @@ contract MplRewardsTest is TestUtil {
         /*** Bob time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
             user:                   address(fez),                                           // User for accounting
-            totalSupply:            40 * WAD,                                               // Ali + Bob stake 
+            totalSupply:            40 * WAD,                                               // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                                // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,                                // Used so Bob can't do claims on past rewards
             earned:                 (dTime2_rpt * 10 * WAD + dTime3_rpt * 30 * WAD) / WAD,  // Bob's earnings since he entered the pool
@@ -384,7 +384,7 @@ contract MplRewardsTest is TestUtil {
         /*** Bob time = (2 days + 1 hours) post-claim ***/
         assertRewardsAccounting({
             user:                   address(fez),                                          // User for accounting
-            totalSupply:            40 * WAD,                                              // Ali + Bob stake 
+            totalSupply:            40 * WAD,                                              // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Used so Bob can't do multiple claims
             earned:                 0,                                                     // Time-based calculation and userRewardPerTokenPaid cancel out
@@ -425,7 +425,7 @@ contract MplRewardsTest is TestUtil {
         /*** Ali time = (3 days + 1 hours) pre-exit ***/
         assertRewardsAccounting({
             user:                   address(fay),                                                         // User for accounting
-            totalSupply:            35 * WAD,                                                             // Ali + Bob stake 
+            totalSupply:            35 * WAD,                                                             // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                                 // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                                 // Used so Ali can't do multiple claims
             earned:                 ((dTime2_rpt + dTime3_rpt) * 10 * WAD + dTime4_rpt * 5 * WAD) / WAD,  // Ali has not claimed any rewards that have accrued during dTime2, dTime3 and dTime4
@@ -436,7 +436,7 @@ contract MplRewardsTest is TestUtil {
         /*** Bob time = (2 days + 1 hours) pre-exit ***/
         assertRewardsAccounting({
             user:                   address(fez),                                          // User for accounting
-            totalSupply:            35 * WAD,                                              // Ali + Bob stake 
+            totalSupply:            35 * WAD,                                              // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Used so Bob can't do multiple claims
             earned:                 dTime4_rpt * 30 * WAD / WAD,                           // Bob has not claimed any rewards that have accrued during dTime4
@@ -483,7 +483,7 @@ contract MplRewardsTest is TestUtil {
 
         gov.setRewardsDuration(30 days);
 
-        mpl.transfer(address(mplRewards), 25_000 * WAD);  
+        mpl.transfer(address(mplRewards), 25_000 * WAD);
 
         gov.notifyRewardAmount(25_000 * WAD);
 
@@ -575,7 +575,7 @@ contract MplRewardsTest is TestUtil {
         /**********************/
 
         assertEq(mpl.balanceOf(address(mplRewards)), 25_000 * WAD - dTime1_rpt * 10 * WAD / WAD);  // Bob's claimabe MPL is still in the contract
-        
+
         gov.setRewardsDuration(15 days);
 
         mpl.transfer(address(mplRewards), 40_000 * WAD);

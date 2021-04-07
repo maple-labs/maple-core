@@ -22,7 +22,7 @@ contract StakeLockerFactory {
 
     /**
         @dev Instantiate a StakeLocker contract.
-        @param stakeAsset     Address of the stakeAsset (generally a balancer pool)
+        @param stakeAsset     Address of the stakeAsset (generally Balancer Pool BPTs)
         @param liquidityAsset Address of the liquidityAsset (as defined in the pool)
         @return Address of the instantiated StakeLocker
     */
@@ -35,11 +35,11 @@ contract StakeLockerFactory {
         isLocker[stakeLocker] = true;
 
         emit StakeLockerCreated(
-            msg.sender, 
+            msg.sender,
             stakeLocker,
-            stakeAsset, 
-            liquidityAsset, 
-            StakeLocker(stakeLocker).name(), 
+            stakeAsset,
+            liquidityAsset,
+            StakeLocker(stakeLocker).name(),
             StakeLocker(stakeLocker).symbol()
         );
         return stakeLocker;
