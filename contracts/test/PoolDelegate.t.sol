@@ -333,15 +333,15 @@ contract PoolTest is TestUtil {
         assertEq(interest_lee,  pool.withdrawableFundsOf(address(lee)));
         assertEq(total_lee,     principal_lee + interest_lee);
 
-        uint256 kim_bal_pre = IERC20(pool.liquidityAsset()).balanceOf(address(lee));
+        uint256 lee_bal_pre = IERC20(pool.liquidityAsset()).balanceOf(address(lee));
         
         make_withdrawable(lee, pool);
 
         assertTrue(lee.try_withdraw(address(pool), principal_lee), "Failed to withdraw claimable_kim");
         
-        uint256 kim_bal_post = IERC20(pool.liquidityAsset()).balanceOf(address(lee));
+        uint256 lee_bal_post = IERC20(pool.liquidityAsset()).balanceOf(address(lee));
 
-        assertEq(kim_bal_post - kim_bal_pre, principal_lee + interest_lee);
+        assertEq(lee_bal_post - lee_bal_pre, principal_lee + interest_lee);
     }
 
     function test_reclaim_erc20() external {
