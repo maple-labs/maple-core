@@ -599,6 +599,52 @@ contract TestUtil is DSTest {
         else                           return val % (max - min) + min;
     }
 
+    /********************/
+    /*** Pool Helpers ***/
+    /********************/
+
+    function finalizePool(Pool pool, PoolDelegate del, bool openToPublic) internal {
+        del.approve(address(bPool), pool.stakeLocker(), MAX_UINT);
+        del.stake(pool.stakeLocker(), bPool.balanceOf(address(del)) / 2);
+
+        del.finalize(address(pool));
+        if (openToPublic) del.setOpenToPublic(address(pool), true);
+    }
+
+    function mintFundsAndDepositIntoPool(LP lp, Pool pool, uint256 mintAmt, uint256 liquidityAmt) internal {
+        if (mintAmt > uint256(0)) mint("USDC", address(lp), mintAmt);
+        lp.approve(USDC, address(pool), MAX_UINT);
+        assertTrue(lp.try_deposit(address(pool), liquidityAmt)); 
+    }
+
+    function drawdown(Loan loan, Borrower bow, uint256 usdDrawdownAmt) internal {
+        uint cReq = loan.collateralRequiredForDrawdown(usdDrawdownAmt); // wETH required for `usdDrawdownAmt` USDC drawdown on loan
+        mint("WETH", address(bow), cReq);
+        bow.approve(WETH, address(loan),  cReq);
+        bow.drawdown(address(loan),  usdDrawdownAmt);
+    }
+
+    function doPartialLoanPayment(Loan loan, Borrower bow) internal {
+        (uint amt,,,,) = loan.getNextPayment(); // USDC required for next payment of loan
+        mint("USDC", address(bow), amt);
+        bow.approve(USDC, address(loan),  amt);
+        bow.makePayment(address(loan));
+    }
+
+    function doFullLoanPayment(Loan loan, Borrower bow) internal {
+        (uint amt,,) = loan.getFullPayment(); // USDC required for full payment of loan
+        mint("USDC", address(bow), amt);
+        bow.approve(USDC, address(loan),  amt);
+        bow.makeFullPayment(address(loan));
+    }
+
+    function make_withdrawable(LP investor, Pool pool) internal {
+        uint256 currentTime = block.timestamp;
+        assertTrue(investor.try_intendToWithdraw(address(pool)));
+        assertEq(      pool.withdrawCooldown(address(investor)), currentTime, "Incorrect value set");
+        hevm.warp(currentTime + globals.lpCooldownPeriod());
+    }
+
     // function test_cheat_code_for_slot() public {
     //     address CDAI = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
 
@@ -616,25 +662,5 @@ contract TestUtil is DSTest {
     //         i += 1;
     //     }
     //     // assertTrue(false);
-    // }
-
-    // // Make payment on any given Loan.
-    // function makePayment(address _vault, address _borrower) public {
-
-    //     // Create loanVault object and ensure it's accepting payments.
-    //     Loan loanVault = Loan(_vault);
-    //     assertEq(uint256(loanVault.loanState()), 1);  // Loan state: (1) Active
-
-    //     // Warp to *300 seconds* before next payment is due
-    //     hevm.warp(loanVault.nextPaymentDue() - 300);
-    //     assertEq(block.timestamp, loanVault.nextPaymentDue() - 300);
-
-    //     // Make payment.
-    //     address _liquidityAsset = loanVault.liquidityAsset();
-    //     (uint _amt,,,) = loanVault.getNextPayment();
-
-    //     User(_borrower).approve(_liquidityAsset, _vault, _amt);
-
-    //     assertTrue(ali.try_makePayment(_vault));
     // }
 }
