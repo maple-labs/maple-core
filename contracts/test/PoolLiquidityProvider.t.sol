@@ -282,6 +282,8 @@ contract PoolTest is TestUtil {
         assertTrue(!leo.try_withdraw(address(pool), amt), "Should fail to withdraw funds because now past withdraw window");
 
         uint256 newStart = block.timestamp;
+        
+        // ** Below is the test of resetting feature of withdrawCooldown after withdrawing funds again and again ** //
 
         // Intend to withdraw
         assertTrue(leo.try_intendToWithdraw(address(pool)), "Failed to intend to withdraw");
