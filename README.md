@@ -8,7 +8,7 @@ For Borrowers, Maple offers **transparent and efficient financing done entirely 
 
 For Liquidity Providers, Maple offers a **sustainable yield source through professionally managed lending pools.**
 
-* Diversified exposure across premium borrowers with staked MPL tokens providing reserve capital against loan defaults
+* Diversified exposure across premium borrowers with staked `MPL-<liquidityAsset>` 50-50 Balancer Pool Tokens (BPTs) providing reserve capital against loan defaults (E.g., MPL-USDC 50-50 BPTs for USDC Pools)
 * Set and forget solution with diligence outsourced to Pool Delegates
 * Interest is accrued and reinvested to enable capital to compound over time
 
@@ -23,7 +23,7 @@ For all technical documentation related to the Maple protocol, please refer to t
 
 ## Toolset
 
-- <a href="https://github.com/dapphub/dapptools">DappTools</a>
+- <a href="https://github.com/dapphub/dapptools">dapptools</a>
 - <a href="https://docs.soliditylang.org/en/v0.6.11/">Solidity 0.6.11</a>
 
 ## Development Setup
