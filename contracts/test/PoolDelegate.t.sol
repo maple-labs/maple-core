@@ -22,7 +22,7 @@ contract PoolTest is TestUtil {
     
     function test_getInitialStakeRequirements() public {
 
-        gov.setSwapOutRequired(1_000_000);  // TODO: Update this to realistic launch param
+        gov.setSwapOutRequired(1_000_000);
 
         uint256 minCover; uint256 minCover2; uint256 curCover;
         uint256 minStake; uint256 minStake2; uint256 curStake;
@@ -169,8 +169,8 @@ contract PoolTest is TestUtil {
 
         gov.setValidLoanFactory(address(loanFactory), true);
 
-        assertEq(IERC20(USDC).balanceOf(liqLocker),               100 * USD);  // Balance of Liquidity Locker
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)),          0);  // Balance of Funding Locker
+        assertEq(usdc.balanceOf(liqLocker),               100 * USD);  // Balance of Liquidity Locker
+        assertEq(usdc.balanceOf(address(fundingLocker)),          0);  // Balance of Funding Locker
         
         /*******************/
         /*** Fund a Loan ***/
@@ -190,9 +190,9 @@ contract PoolTest is TestUtil {
         assertEq(debtLocker.pool(),                    address(pool));
         assertEq(address(debtLocker.liquidityAsset()), USDC);
 
-        assertEq(IERC20(USDC).balanceOf(liqLocker),              80 * USD);  // Balance of Liquidity Locker
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 20 * USD);  // Balance of Funding Locker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker)),    20 * WAD);  // LoanToken balance of LT Locker
+        assertEq(usdc.balanceOf(liqLocker),              80 * USD);  // Balance of Liquidity Locker
+        assertEq(usdc.balanceOf(address(fundingLocker)), 20 * USD);  // Balance of Funding Locker
+        assertEq(IERC20(loan).balanceOf(address(debtLocker)),    20 * WAD);  // LoanFDT balance of DebtLocker
         assertEq(pool.principalOut(),                            20 * USD);  // Outstanding principal in liqiudity pool 1
 
         /****************************************/
@@ -203,9 +203,9 @@ contract PoolTest is TestUtil {
         assertEq(dlFactory.owner(address(debtLocker)), address(pool));
         assertTrue(dlFactory.isLocker(address(debtLocker)));
 
-        assertEq(IERC20(USDC).balanceOf(liqLocker),              55 * USD);  // Balance of Liquidity Locker
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 45 * USD);  // Balance of Funding Locker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker)),    45 * WAD);  // LoanToken balance of LT Locker
+        assertEq(usdc.balanceOf(liqLocker),              55 * USD);  // Balance of Liquidity Locker
+        assertEq(usdc.balanceOf(address(fundingLocker)), 45 * USD);  // Balance of Funding Locker
+        assertEq(IERC20(loan).balanceOf(address(debtLocker)),    45 * WAD);  // LoanFDT balance of DebtLocker
         assertEq(pool.principalOut(),                            45 * USD);  // Outstanding principal in liqiudity pool 1
 
         /*******************************************/
@@ -222,15 +222,13 @@ contract PoolTest is TestUtil {
         assertEq(dlFactory2.owner(address(debtLocker2)), address(pool));
         assertTrue(dlFactory2.isLocker(address(debtLocker2)));
 
-        assertEq(IERC20(USDC).balanceOf(liqLocker),              45 * USD);  // Balance of Liquidity Locker
-        assertEq(IERC20(USDC).balanceOf(address(fundingLocker)), 55 * USD);  // Balance of Funding Locker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker2)),   10 * WAD);  // LoanToken balance of LT Locker 2
+        assertEq(usdc.balanceOf(liqLocker),              45 * USD);  // Balance of Liquidity Locker
+        assertEq(usdc.balanceOf(address(fundingLocker)), 55 * USD);  // Balance of Funding Locker
+        assertEq(IERC20(loan).balanceOf(address(debtLocker2)),   10 * WAD);  // LoanFDT balance of DebtLocker 2
         assertEq(pool.principalOut(),                            55 * USD);  // Outstanding principal in liqiudity pool 1
     }
 
      function test_deactivate() public {
-
-        gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
 
         /*******************************/
         /*** Finalize liquidity pool ***/
@@ -238,8 +236,8 @@ contract PoolTest is TestUtil {
         
         finalizePool(pool, pat, true);
 
-        address liquidityAsset = address(pool.liquidityAsset());
-        uint liquidityAssetDecimals = IERC20Details(liquidityAsset).decimals();
+        address liquidityAsset         = address(pool.liquidityAsset());
+        uint256 liquidityAssetDecimals = IERC20Details(liquidityAsset).decimals();
 
         // Pre-state checks.
         assertTrue(pool.principalOut() <= 100 * 10 ** liquidityAssetDecimals);
@@ -282,30 +280,16 @@ contract PoolTest is TestUtil {
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
 
-        mintFundsAndDepositIntoPool(leo, pool, 1_000_000_000 * USD, 100_000_000 * USD);
         mintFundsAndDepositIntoPool(leo, pool, 1_000_000_000 * USD, 300_000_000 * USD);
-        mintFundsAndDepositIntoPool(leo, pool, 1_000_000_000 * USD, 600_000_000 * USD);
-
-        gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
-
 
         /************************************/
         /*** Fund loan / loan2 (Excess) ***/
         /************************************/
         
-        assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory),  100_000_000 * USD));
-        assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory),  100_000_000 * USD));
-        assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory2), 200_000_000 * USD));
         assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory2), 200_000_000 * USD));
 
-        assertTrue(pat.try_fundLoan(address(pool), address(loan2), address(dlFactory),   50_000_000 * USD));
-        assertTrue(pat.try_fundLoan(address(pool), address(loan2), address(dlFactory),   50_000_000 * USD));
-        assertTrue(pat.try_fundLoan(address(pool), address(loan2), address(dlFactory2), 150_000_000 * USD));
-        assertTrue(pat.try_fundLoan(address(pool), address(loan2), address(dlFactory2), 150_000_000 * USD));
-        
-
-        address liquidityAsset = address(pool.liquidityAsset());
-        uint liquidityAssetDecimals = IERC20Details(liquidityAsset).decimals();
+        address liquidityAsset         = address(pool.liquidityAsset());
+        uint256 liquidityAssetDecimals = IERC20Details(liquidityAsset).decimals();
 
         // Pre-state checks.
         assertTrue(pool.principalOut() >= 100 * 10 ** liquidityAssetDecimals);
@@ -313,8 +297,6 @@ contract PoolTest is TestUtil {
     }
 
     function test_view_balance() public {
-        gov.setValidLoanFactory(address(loanFactory), true); // Don't remove, not done in setUp()
-
         /*******************************/
         /*** Finalize liquidity pool ***/
         /*******************************/
@@ -337,34 +319,34 @@ contract PoolTest is TestUtil {
         uint withdrawDate = pool.depositDate(address(lee)).add(pool.lockupPeriod());
 
         hevm.warp(withdrawDate - 1);
-        (uint total_kim, uint principal_kim, uint interest_kim) = pool.claimableFunds(address(lee));
+        (uint256 total_lee, uint256 principal_lee, uint256 interest_lee) = pool.claimableFunds(address(lee));
 
         // Deposit is still in lock-up
-        assertEq(principal_kim, 0);
-        assertEq(interest_kim, pool.withdrawableFundsOf(address(lee)));
-        assertEq(total_kim, principal_kim + interest_kim);
+        assertEq(principal_lee, 0);
+        assertEq(interest_lee, pool.withdrawableFundsOf(address(lee)));
+        assertEq(total_lee, principal_lee + interest_lee);
 
         hevm.warp(withdrawDate + 1);
-        (total_kim, principal_kim, interest_kim) = pool.claimableFunds(address(lee));
+        (total_lee, principal_lee, interest_lee) = pool.claimableFunds(address(lee));
 
-        assertGt(principal_kim, 0);
-        assertGt(interest_kim, 0);
-        assertGt(total_kim, 0);
-        assertEq(total_kim, principal_kim + interest_kim);
+        assertEq(principal_lee, pool.balanceOf(address(lee)) * USD / WAD); // (might need to use withinDiff for this)
+        assertEq(interest_lee,  pool.withdrawableFundsOf(address(lee)));
+        assertEq(total_lee,     principal_lee + interest_lee);
 
         uint256 kim_bal_pre = IERC20(pool.liquidityAsset()).balanceOf(address(lee));
         
         make_withdrawable(lee, pool);
 
-        assertTrue(lee.try_withdraw(address(pool), principal_kim), "Failed to withdraw claimable_kim");
+        assertTrue(lee.try_withdraw(address(pool), principal_lee), "Failed to withdraw claimable_kim");
         
         uint256 kim_bal_post = IERC20(pool.liquidityAsset()).balanceOf(address(lee));
 
-        assertEq(kim_bal_post - kim_bal_pre, principal_kim + interest_kim);
+        assertEq(kim_bal_post - kim_bal_pre, principal_lee + interest_lee);
     }
 
     function test_reclaim_erc20() external {
-        // Fund the pool with different kind of asset.
+        // Transfer different assets into the Pool
+
         mint("USDC", address(pool), 1000 * USD);
         mint("DAI",  address(pool), 1000 * WAD);
         mint("WETH", address(pool),  100 * WAD);
@@ -375,7 +357,7 @@ contract PoolTest is TestUtil {
         uint256 beforeBalanceWETH = IERC20(WETH).balanceOf(address(gov));
 
         assertTrue(!fakeGov.try_reclaimERC20(address(pool), DAI));
-        assertTrue(    !gov.try_reclaimERC20(address(pool), USDC));
+        assertTrue(    !gov.try_reclaimERC20(address(pool), USDC));  // Can't claim the USDC from the Pool as it is liquidityAsset of the Pool.
         assertTrue(    !gov.try_reclaimERC20(address(pool), address(0)));
         assertTrue(     gov.try_reclaimERC20(address(pool), DAI));
         assertTrue(     gov.try_reclaimERC20(address(pool), WETH));
@@ -428,7 +410,7 @@ contract PoolTest is TestUtil {
         assertEq(pool.delegateFee(), 100);
         assertTrue(!pam.try_setStakingFee(address(pool), 1000));  // Cannot set stakingFee if not pool delegate
         assertTrue(!pat.try_setStakingFee(address(pool), 9901));  // Cannot set stakingFee if sum of fees is over 100%
-        assertTrue( pat.try_setStakingFee(address(pool), 9900));  // Can set the same stakingFee if pool delegate
+        assertTrue( pat.try_setStakingFee(address(pool), 9900));  // Can set stakingFee if pool delegate
         assertEq(pool.stakingFee(),                      9900);
 
         // Pause protocol and attempt setLockupPeriod()
@@ -446,9 +428,9 @@ contract PoolTest is TestUtil {
     /*** Helpers ***/
     /***************/
 
-    function assertBalanceState(address stakeLocker, uint256 patBalanceOfBPool, uint256 stakeLockerBlanceOfBPool, uint256 stakeOfPat) internal {
-        assertEq(bPool.balanceOf(address(pat)),                patBalanceOfBPool);         // PD staked minStake
-        assertEq(bPool.balanceOf(stakeLocker),                 stakeLockerBlanceOfBPool);  // minStake BPTs staked
-        assertEq(IERC20(stakeLocker).balanceOf(address(pat)),  stakeOfPat);                // PD has minStake SL tokens
+    function assertBalanceState(address stakeLocker, uint256 patBptBal, uint256 stakeLockerBptBal, uint256 patStakeAmount) internal {
+        assertEq(bPool.balanceOf(address(pat)),                patBptBal);          // Pool delegate BPT balance
+        assertEq(bPool.balanceOf(stakeLocker),                 stakeLockerBptBal);  // BPT owned by the stakeLocker
+        assertEq(IERC20(stakeLocker).balanceOf(address(pat)),  patStakeAmount);     // Stake amount of Pool delegate in stakeLocker
     }
 }

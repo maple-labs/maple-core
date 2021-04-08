@@ -618,21 +618,21 @@ contract TestUtil is DSTest {
     }
 
     function drawdown(Loan loan, Borrower bow, uint256 usdDrawdownAmt) internal {
-        uint cReq =  loan.collateralRequiredForDrawdown(usdDrawdownAmt); // wETH required for `usdDrawdownAmt` USDC drawdown on loan
+        uint cReq = loan.collateralRequiredForDrawdown(usdDrawdownAmt); // wETH required for `usdDrawdownAmt` USDC drawdown on loan
         mint("WETH", address(bow), cReq);
         bow.approve(WETH, address(loan),  cReq);
         bow.drawdown(address(loan),  usdDrawdownAmt);
     }
 
     function doPartialLoanPayment(Loan loan, Borrower bow) internal {
-        (uint amt,,,,) =  loan.getNextPayment(); // USDC required for next payment of loan
+        (uint amt,,,,) = loan.getNextPayment(); // USDC required for next payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makePayment(address(loan));
     }
 
     function doFullLoanPayment(Loan loan, Borrower bow) internal {
-        (uint amt,,) =  loan.getFullPayment(); // USDC required for full payment of loan
+        (uint amt,,) = loan.getFullPayment(); // USDC required for full payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makeFullPayment(address(loan));
