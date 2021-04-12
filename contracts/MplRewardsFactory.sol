@@ -11,7 +11,7 @@ contract MplRewardsFactory {
 
     mapping(address => bool) public isMplRewards;  // True if MplRewards was created by this factory, otherwise false.
 
-    event MplRewardsCreated(address indexed rewardsToken, address indexed stakingToken, address owner);
+    event MplRewardsCreated(address indexed rewardsToken, address indexed stakingToken, address mplRewards, address owner);
 
     constructor(address _globals) public {
         globals = IGlobals(_globals);
@@ -38,7 +38,7 @@ contract MplRewardsFactory {
         address mplRewards       = address(new MplRewards(rewardsToken, stakingToken, msg.sender));
         isMplRewards[mplRewards] = true;
 
-        emit MplRewardsCreated(rewardsToken, stakingToken, msg.sender);
+        emit MplRewardsCreated(rewardsToken, stakingToken, mplRewards, msg.sender);
         return mplRewards;
     }
 }
