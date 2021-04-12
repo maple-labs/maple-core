@@ -18,27 +18,6 @@ contract LoanTest is TestUtil {
         createLoan();
     }
 
-    function getFuzzedSpecs(
-        uint256 apr,
-        uint256 index,             // Random index for random payment interval
-        uint256 numPayments,       // Used for termDays
-        uint256 requestAmount,
-        uint256 collateralRatio
-    ) internal returns (uint256[5] memory specs) {
-        uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
-
-        uint256 paymentIntervalDays = paymentIntervalArray[index % 10];           // TODO: Consider changing this approach
-        uint256 termDays            = paymentIntervalDays * (numPayments % 100);
-
-        specs = [
-            constrictToRange(apr, 1, 10_000, true),                     // APR between 0.01% and 100% (non-zero for test behaviour)
-            termDays,                                                   // Fuzzed term days
-            paymentIntervalDays,                                        // Payment interval days from array
-            constrictToRange(requestAmount, 1 * USD, 1E10 * USD, true), // 1 USD - 10b USD loans (non-zero)
-            constrictToRange(collateralRatio, 0, 10_000)                // Collateral ratio between 0 and 100%
-        ];
-    }
-
     function assertLoanState(
         Loan loan,
         uint256 loanState,
