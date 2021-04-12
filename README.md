@@ -30,6 +30,7 @@ For all technical documentation related to the Maple protocol, please refer to t
 
 ```sh
 git clone git@github.com:maple-labs/maple-core.git
+git submodule update --init --recursive
 cd maple-core
 dapp update
 ```

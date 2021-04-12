@@ -6,7 +6,7 @@
 	url = https://github.com/Openzeppelin/openzeppelin-contracts
 [submodule "cache/dapp-cache"]
 	path = cache/dapp-cache
-	url = git@github.com:maple-labs/maple-cache
+	url = https://github.com/maple-labs/maple-cache
 [submodule "module/maple-token"]
 	path = module/maple-token
-	url = git@github.com:maple-labs/maple-token.git
+	url = https://github.com/maple-labs/maple-token
