@@ -32,7 +32,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     bool public openToPublic;  // Boolean opening StakeLocker to public for staking BPTs
 
-    event   BalanceUpdated(address stakeLocker, address token, uint256 balance);
+    event   BalanceUpdated(address who, address token, uint256 balance);
     event AllowListUpdated(address staker, bool status);
     event StakeDateUpdated(address staker, uint256 stakeDate);
     event         Cooldown(address indexed staker, uint256 cooldown);
@@ -227,6 +227,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
         if (withdrawableFunds > uint256(0)) {
             fundsToken.safeTransfer(msg.sender, withdrawableFunds);
+            emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
 
             _updateFundsTokenBalance();
         }
