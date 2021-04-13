@@ -562,10 +562,6 @@ contract PoolTest is TestUtil {
         return pool.debtLockers(address(loan),   address(dlFactory));
     }
 
-    function toWad(uint256 amt) internal view returns(uint256) {
-        return amt.mul(10 ** 18).div(10 ** IERC20Details(address(usdc)).decimals());
-    }
-
     function generateLoanAndFundedAmount(
         uint256 apr,
         uint256 index,

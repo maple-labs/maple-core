@@ -51,6 +51,8 @@ interface User {
 
 contract TestUtil is DSTest {
 
+    using SafeMath for uint256;
+
     Hevm hevm;
 
     /***********************/
@@ -473,6 +475,10 @@ contract TestUtil is DSTest {
         bPool.transfer(address(sid), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
     }
 
+    function transferMoreBpts(address to, uint256 amt) public {
+        bPool.transfer(to, amt);
+    }
+
     /****************************/
     /*** Loan Setup Functions ***/
     /****************************/
@@ -664,6 +670,10 @@ contract TestUtil is DSTest {
         assertTrue(investor.try_intendToWithdraw(address(pool)));
         assertEq(      pool.withdrawCooldown(address(investor)), currentTime, "Incorrect value set");
         hevm.warp(currentTime + globals.lpCooldownPeriod());
+    }
+
+    function toWad(uint256 amt) internal view returns(uint256) {
+        return amt.mul(10 ** 18).div(10 ** IERC20Details(address(usdc)).decimals());
     }
 
     // function test_cheat_code_for_slot() public {
