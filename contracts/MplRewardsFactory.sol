@@ -11,7 +11,7 @@ contract MplRewardsFactory {
 
     mapping(address => bool) public isMplRewards;  // True if MplRewards was created by this factory, otherwise false.
 
-    event MplRewardsCreated(address indexed rewardsToken, address indexed stakingToken, address mplRewards, address owner);
+    event MplRewardsCreated(address indexed rewardsToken, address indexed stakingToken, address indexed mplRewards, address owner);
 
     constructor(address _globals) public {
         globals = IGlobals(_globals);
