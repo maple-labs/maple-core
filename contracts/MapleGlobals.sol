@@ -54,6 +54,7 @@ contract MapleGlobals {
     mapping(address => bool)                     public isValidLoanFactory;  // Mapping of valid loan factories
     mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories
 
+    event                     Initialized();
     event              CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event               LiquidityAssetSet(address asset, uint256 decimals, string symbol, bool valid);
     event                       OracleSet(address asset, address oracle);
@@ -91,6 +92,7 @@ contract MapleGlobals {
         lpCooldownPeriod     = 10 days;
         stakerUnstakeWindow  = 2 days;
         lpWithdrawWindow     = 2 days;
+        emit Initialized();
     }
 
     /************************/
