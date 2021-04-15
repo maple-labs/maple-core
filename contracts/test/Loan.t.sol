@@ -665,6 +665,7 @@ contract LoanTest is TestUtil {
     function test_makeFullPayment(
         uint256 apr,
         uint256 index,
+        uint256 numPayments,
         uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
@@ -672,9 +673,8 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
-        address fundingLocker = loan.fundingLocker();
-        fundAmount = usdc.balanceOf(fundingLocker);
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
+        fundAmount = usdc.balanceOf(loan.fundingLocker());
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
 
@@ -684,8 +684,7 @@ contract LoanTest is TestUtil {
 
         // Approve collateral and drawdown loan.
         uint256 reqCollateral = drawdown(loan, drawdownAmount);
-
-        uint256 loanPreBal = usdc.balanceOf(address(loan));
+        uint256 loanPreBal    = usdc.balanceOf(address(loan));
 
         assertTrue(!bob.try_makeFullPayment(address(loan)));  // Can't makePayment with lack of approval
 
@@ -702,7 +701,7 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      0,
             loanBalance:       loanPreBal,
-            paymentsRemaining: 3,
+            paymentsRemaining: loan.paymentsRemaining(),
             nextPaymentDue:    block.timestamp + loan.paymentIntervalSeconds()  // Not relevant to full payment
         });
 
