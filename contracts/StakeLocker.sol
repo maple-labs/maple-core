@@ -32,13 +32,14 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     bool public openToPublic;  // Boolean opening StakeLocker to public for staking BPTs
 
-    event   BalanceUpdated(address stakeLocker, address token, uint256 balance);
-    event AllowListUpdated(address staker, bool status);
-    event StakeDateUpdated(address staker, uint256 stakeDate);
-    event         Cooldown(address indexed staker, uint256 cooldown);
-    event            Stake(uint256 amount, address staker);
-    event          Unstake(uint256 amount, address staker);
-    event StakeLockerOpened();
+    event      BalanceUpdated(address who, address token, uint256 balance);
+    event    AllowListUpdated(address staker, bool status);
+    event    StakeDateUpdated(address staker, uint256 stakeDate);
+    event LockupPeriodUpdated(uint256 lockupPeriod);
+    event            Cooldown(address indexed staker, uint256 cooldown);
+    event               Stake(uint256 amount, address staker);
+    event             Unstake(uint256 amount, address staker);
+    event   StakeLockerOpened();
 
     constructor(
         address _stakeAsset,
@@ -118,6 +119,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _isValidPoolDelegate();
         require(newLockupPeriod <= lockupPeriod, "StakeLocker:INVALID_VALUE");
         lockupPeriod = newLockupPeriod;
+        emit LockupPeriodUpdated(newLockupPeriod);
     }
 
     /**
@@ -227,6 +229,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
         if (withdrawableFunds > uint256(0)) {
             fundsToken.safeTransfer(msg.sender, withdrawableFunds);
+            emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
 
             _updateFundsTokenBalance();
         }
