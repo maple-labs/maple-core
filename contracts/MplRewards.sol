@@ -5,10 +5,12 @@ import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/math/Math.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import "./token/FDT.sol";
+import "./interfaces/IPool.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
 /// @title MplRewards Synthetix farming contract fork for liquidity mining.
-contract MplRewards is Ownable {
+contract MplRewards is Ownable, FDT {
 
     using SafeMath  for uint256;
     using SafeERC20 for IERC20;
@@ -27,9 +29,9 @@ contract MplRewards is Ownable {
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
 
-    uint256 private _totalSupply;
+    uint256 private _totalStake;
 
-    mapping(address => uint256) private _balances;
+    mapping(address => uint256) private _stakes;
 
     event RewardAdded(uint256 reward);
     event Staked(address indexed user, uint256 amount);
@@ -38,8 +40,12 @@ contract MplRewards is Ownable {
     event RewardsDurationUpdated(uint256 newDuration);
     event Recovered(address token, uint256 amount);
     event PauseChanged(bool isPaused);
+    event BalanceUpdated(address indexed who,  address token, uint256 balance);
 
-    constructor(address _rewardsToken, address _stakingToken, address _owner) public {
+    constructor(address _rewardsToken, address _stakingToken, address _owner) 
+    FDT("MPL Rewards", "rMPL", IPool(_stakingToken).liquidityAsset())
+    public 
+    {
         rewardsToken    = IERC20(_rewardsToken);
         stakingToken    = IERC20(_stakingToken);
         rewardsDuration = 7 days;
@@ -59,12 +65,12 @@ contract MplRewards is Ownable {
         require(!paused, "REWARDS:CONTRACT_PAUSED");
     }
 
-    function totalSupply() external view returns (uint256) {
-        return _totalSupply;
+    function totalStake() external view returns (uint256) {
+        return _totalStake;
     }
 
-    function balanceOf(address account) external view returns (uint256) {
-        return _balances[account];
+    function stakeOf(address account) external view returns (uint256) {
+        return _stakes[account];
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
@@ -72,15 +78,19 @@ contract MplRewards is Ownable {
     }
 
     function rewardPerToken() public view returns (uint256) {
-        if (_totalSupply == 0) return rewardPerTokenStored;
+        if (_totalStake == 0) return rewardPerTokenStored;
         return
             rewardPerTokenStored.add(
-                lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply)
+                lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalStake)
             );
     }
 
+    function _transfer(address from, address to, uint256 amount) internal override {
+        revert("MplRewards: Transfers are not allowed");
+    }
+
     function earned(address account) public view returns (uint256) {
-        return _balances[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(1e18).add(rewards[account]);
+        return _stakes[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(1e18).add(rewards[account]);
     }
 
     function getRewardForDuration() external view returns (uint256) {
@@ -91,8 +101,9 @@ contract MplRewards is Ownable {
         _notPaused();
         _updateReward(msg.sender);
         require(amount > 0, "REWARDS:STAKE_EQ_ZERO");
-        _totalSupply = _totalSupply.add(amount);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
+        _totalStake = _totalStake.add(amount);
+        _stakes[msg.sender] = _stakes[msg.sender].add(amount);
+        _mint(msg.sender, amount);
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
     }
@@ -101,10 +112,32 @@ contract MplRewards is Ownable {
         _notPaused();
         _updateReward(msg.sender);
         require(amount > 0, "REWARDS:WITHDRAW_EQ_ZERO");
-        _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = _balances[msg.sender].sub(amount);
+        _totalStake = _totalStake.sub(amount);
+        _stakes[msg.sender] = _stakes[msg.sender].sub(amount);
+        withdrawFunds();
+        _burn(msg.sender, amount);
         stakingToken.safeTransfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
+    }
+
+    function claimFunds() public {
+        IPool(address(stakingToken)).withdrawFunds();
+        updateFundsReceived();
+    }
+
+    function withdrawFunds() public override {
+        // TODO: In Pool we are checking the protocol pause do we want to check here ?
+        uint256 withdrawableFunds = _prepareWithdraw();
+
+        if (withdrawableFunds > uint256(0)) {
+            // Checking whether the this contract has enough funds to withdraw otherwise claim interest (if > 0) and then withdraw.
+            if (fundsTokenBalance < withdrawableFunds && IPool(address(stakingToken)).withdrawableFundsOf(address(this)) > uint256(0)) {
+                claimFunds();
+            }
+            fundsToken.transfer(msg.sender, withdrawableFunds);
+            _updateFundsTokenBalance();
+            emit BalanceUpdated(address(this), address(fundsToken), fundsTokenBalance);
+        }
     }
 
     function getReward() public {
@@ -119,7 +152,7 @@ contract MplRewards is Ownable {
     }
 
     function exit() external {
-        withdraw(_balances[msg.sender]);
+        withdraw(_stakes[msg.sender]);
         getReward();
     }
 

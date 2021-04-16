@@ -4,6 +4,8 @@ pragma solidity 0.6.11;
 interface IPool {
     function poolDelegate() external view returns (address);
 
+    function liquidityAsset() external view returns (address);
+
     function admins(address) external view returns (bool);
 
     function deposit(uint256) external;
@@ -27,6 +29,10 @@ interface IPool {
     function fundLoan(address, address, uint256) external;
 
     function withdraw(uint256) external;
+
+    function withdrawFunds() external;
+
+    function withdrawableFundsOf(address) external returns(uint256);
 
     function superFactory() external view returns (address);
     
