@@ -62,27 +62,28 @@ contract PoolTest is TestUtil {
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         //  Mint 10000 USDC into this LP account & add liquidity
-        uint256 fundedAmount = specs[3];
-        mintFundsAndDepositIntoPool(lex, pool, fundedAmount, fundedAmount);
+        uint256 depositAmt = specs[3];
+        mintFundsAndDepositIntoPool(lex, pool, depositAmt, depositAmt);
 
         Loan zero_loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         // Fund the loan by pool delegate.
-        assertTrue(pat.try_fundLoan(address(pool), address(zero_loan), address(dlFactory), fundedAmount));
+        assertTrue(pat.try_fundLoan(address(pool), address(zero_loan), address(dlFactory), depositAmt));
 
         // Drawdown of the loan
-        uint cReq = zero_loan.collateralRequiredForDrawdown(fundedAmount);
+        uint cReq = zero_loan.collateralRequiredForDrawdown(depositAmt);
         assertEq(cReq, 0); // No collateral required on 0% collateralized loan
-        bob.drawdown(address(zero_loan), fundedAmount);
+        bob.drawdown(address(zero_loan), depositAmt);
 
         // Initial claim to clear out claimable funds from drawdown
         uint256[7] memory claim = pat.claim(address(pool), address(zero_loan), address(dlFactory));
 
+        uint256 beforeBalance = usdc.balanceOf(address(bPool));
         // Time warp to default
         hevm.warp(block.timestamp + zero_loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
         pat.triggerDefault(address(pool), address(zero_loan), address(dlFactory));   // Triggers a "liquidation" that does not perform a swap
 
-        assertEq(pool.principalOut(), fundedAmount);
+        assertEq(pool.principalOut(), depositAmt);
         assertEq(usdc.balanceOf(pool.liquidityLocker()), 0);
 
         uint256[7] memory claim2 = pat.claim(address(pool), address(zero_loan), address(dlFactory));
@@ -92,11 +93,11 @@ contract PoolTest is TestUtil {
         assertEq(claim2[3], 0);
         assertEq(claim2[4], 0);
         assertEq(claim2[5], 0);
-        assertEq(claim2[6], fundedAmount);
+        assertEq(claim2[6], depositAmt);
 
         assertEq(pool.principalOut(), 0);
         // It should be equal to the amount recovered from the BPTs burned.
-        assertTrue(usdc.balanceOf(pool.liquidityLocker()) > 0);
+        assertEq(usdc.balanceOf(pool.liquidityLocker()), beforeBalance - usdc.balanceOf(address(bPool)));
     }
 
     function test_claim_principal_accounting(
@@ -112,15 +113,15 @@ contract PoolTest is TestUtil {
         premiumCalc = new PremiumCalc(0); // Flat 0% premium
         gov.setCalc(address(premiumCalc), true);
 
-        uint256 fundedAmount = generateLoanAndFundedAmount(apr, index, numPayments, requestAmount, collateralRatio);
+        uint256 depositAmt = generateLoanAndDepositAmount(apr, index, numPayments, requestAmount, collateralRatio);
 
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
 
-        mintFundsAndDepositIntoPool(leo, pool, 6E10 * USD, fundedAmount);
-        mintFundsAndDepositIntoPool(liz, pool, 6E10 * USD, 3 * fundedAmount);
-        mintFundsAndDepositIntoPool(lex, pool, 6E10 * USD, 6 * fundedAmount);
+        mintFundsAndDepositIntoPool(leo, pool, 6E10 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(liz, pool, 6E10 * USD, 3 * depositAmt);
+        mintFundsAndDepositIntoPool(lex, pool, 6E10 * USD, 6 * depositAmt);
 
         uint256 CONST_POOL_VALUE = pool.principalOut() + usdc.balanceOf(pool.liquidityLocker());
 
@@ -128,8 +129,8 @@ contract PoolTest is TestUtil {
         /*** Fund loan / loan2 (Excess) ***/
         /**********************************/
 
-        uint256 beforeLLBalance  = usdc.balanceOf(pool.liquidityLocker());
-        (uint256 totalFundedAmount,  uint256[] memory fundedAmounts)  = getLoanFundedAmounts(beforeLLBalance,  8, uint256(4), uint256(4));
+        uint256 beforeLLBalance = usdc.balanceOf(pool.liquidityLocker());
+        (uint256 totalFundedAmount, uint256[] memory fundedAmounts)  = getLoanFundedAmounts(beforeLLBalance,  8, uint256(4), uint256(4));
 
         assertConstFundLoan(pool, address(loan),  address(dlFactory),  fundedAmounts[0], usdc, CONST_POOL_VALUE);
         assertConstFundLoan(pool, address(loan),  address(dlFactory),  fundedAmounts[1], usdc, CONST_POOL_VALUE);
@@ -177,21 +178,21 @@ contract PoolTest is TestUtil {
         uint256 collateralRatio
     ) public {
 
-        uint256 fundedAmount = generateLoanAndFundedAmount(apr, index, numPayments, requestAmount, collateralRatio);
+        uint256 depositAmt = generateLoanAndDepositAmount(apr, index, numPayments, requestAmount, collateralRatio);
 
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
         
-        mintFundsAndDepositIntoPool(leo, pool, 6E10 * USD, fundedAmount);
-        mintFundsAndDepositIntoPool(liz, pool, 6E10 * USD, 3 * fundedAmount);
-        mintFundsAndDepositIntoPool(lex, pool, 6E10 * USD, 6 * fundedAmount);
+        mintFundsAndDepositIntoPool(leo, pool, 6E10 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(liz, pool, 6E10 * USD, 3 * depositAmt);
+        mintFundsAndDepositIntoPool(lex, pool, 6E10 * USD, 6 * depositAmt);
 
         /**********************************/
         /*** Fund loan / loan2 (Excess) ***/
         /**********************************/
 
-        uint256 beforeLLBalance  = usdc.balanceOf(pool.liquidityLocker());
+        uint256 beforeLLBalance = usdc.balanceOf(pool.liquidityLocker());
         (uint256 totalFundedAmount,  uint256[] memory fundedAmounts)  = getLoanFundedAmounts(beforeLLBalance,  8, uint256(4), uint256(4));
         
         assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory),  fundedAmounts[0]));
@@ -285,19 +286,19 @@ contract PoolTest is TestUtil {
         uint256 collateralRatio
     ) public {
        
-        uint256 fundedAmount = generateLoanAndFundedAmount(apr, index, numPayments, requestAmount, collateralRatio);
+        uint256 depositAmt = generateLoanAndDepositAmount(apr, index, numPayments, requestAmount, collateralRatio);
 
         /*************************************************************/
         /*** Mint and deposit funds into liquidity pools (1b each) ***/
         /*************************************************************/
 
-        mintFundsAndDepositIntoPool(leo, pool, 10E10 * USD, fundedAmount);
-        mintFundsAndDepositIntoPool(liz, pool, 10E10 * USD, 3 * fundedAmount);
-        mintFundsAndDepositIntoPool(lex, pool, 10E10 * USD, 6 * fundedAmount);
+        mintFundsAndDepositIntoPool(leo, pool, 10E10 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(liz, pool, 10E10 * USD, 3 * depositAmt);
+        mintFundsAndDepositIntoPool(lex, pool, 10E10 * USD, 6 * depositAmt);
 
-        mintFundsAndDepositIntoPool(leo, pool2, 0, 5 * fundedAmount);
-        mintFundsAndDepositIntoPool(liz, pool2, 0, 4 * fundedAmount);
-        mintFundsAndDepositIntoPool(lex, pool2, 0, fundedAmount);
+        mintFundsAndDepositIntoPool(leo, pool2, 0, 5 * depositAmt);
+        mintFundsAndDepositIntoPool(liz, pool2, 0, 4 * depositAmt);
+        mintFundsAndDepositIntoPool(lex, pool2, 0, depositAmt);
 
         /***************************/
         /*** Fund loan / loan2 ***/
@@ -446,19 +447,19 @@ contract PoolTest is TestUtil {
         /*** Mint, deposit funds into liquidity pool, fund loan ***/
         /**********************************************************/
 
-        uint256 fundedAmount = constrictToRange(depositAmt, loan.requestAmount(), 1_000_000_000 * USD, true);
+        depositAmt = constrictToRange(depositAmt, loan.requestAmount(), 1_000_000_000 * USD, true);
 
-        mintFundsAndDepositIntoPool(leo, pool, 2_000_000_000 * USD, fundedAmount);
+        mintFundsAndDepositIntoPool(leo, pool, 2_000_000_000 * USD, depositAmt);
 
-        pat.fundLoan(address(pool), address(loan),  address(dlFactory), fundedAmount);
+        pat.fundLoan(address(pool), address(loan),  address(dlFactory), depositAmt);
         assertTrue(pool.debtLockers(address(loan),  address(dlFactory)) != address(0));
-        assertEq(pool.principalOut(), fundedAmount);
+        assertEq(pool.principalOut(), depositAmt);
 
         /*****************/
         /*** Draw Down ***/
         /*****************/
 
-        drawdown(loan, bob, fundedAmount);
+        drawdown(loan, bob, depositAmt);
 
         /*****************************/
         /*** Make Interest Payment ***/
@@ -562,36 +563,37 @@ contract PoolTest is TestUtil {
         return pool.debtLockers(address(loan),   address(dlFactory));
     }
 
-    function generateLoanAndFundedAmount(
+    function generateLoanAndDepositAmount(
         uint256 apr,
         uint256 index,
         uint256 numPayments,
         uint256 requestAmount,
         uint256 collateralRatio
-    ) internal returns(uint256 fundedAmount) {
+    ) internal returns(uint256 depositAmt) {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
         loan  = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
-        fundedAmount = constrictToRange(specs[3], 100 * USD, 1E10 * USD, true);  // Fund value should be between 100 USD - 1B USD
-        uint256 estimatedLLBalance = fundedAmount + 3 * fundedAmount + 6 * fundedAmount;
+        depositAmt = constrictToRange(specs[3], 100 * USD, 1E10 * USD, true);  // Fund value should be between 100 USD - 1B USD
+        uint256 estimatedLLBalance = depositAmt + 3 * depositAmt + 6 * depositAmt;
         if (estimatedLLBalance < specs[3] * 2) {
             uint256 delta = 2 * specs[3] - estimatedLLBalance;
-            fundedAmount = (estimatedLLBalance + delta / 10); 
+            depositAmt = (estimatedLLBalance + delta / 10); 
         }
     }
     
     function getLoanFundedAmounts(uint256 beforeLLBalance, uint256 rounds, uint256 loan1FundedCount, uint256 loan2FundedCount) internal returns(uint256 , uint256[] memory) {
-        uint256 maxAmountPerFundLoan         = beforeLLBalance / rounds;
-        uint256 totalFundedAmount            = 0;
-        uint256[] memory fundedCount         = new uint256[](2);
-        uint256[] memory fundedAmounts       = new uint256[](rounds);
-        uint256[] memory amtFundedToLoan     = new uint256[](2);
+        uint256 maxAmountPerFundLoan = beforeLLBalance / rounds;
+        uint256 totalFundedAmount    = 0;
+
+        uint256[] memory fundedCount     = new uint256[](2);
+        uint256[] memory fundedAmounts   = new uint256[](rounds);
+        uint256[] memory amtFundedToLoan = new uint256[](2);
+
         fundedCount[0] = loan1FundedCount;
         fundedCount[1] = loan2FundedCount;
-
 
         for (uint256 i = 0; i < rounds; i++) {
             fundedAmounts[i]   = getFundedAmount(maxAmountPerFundLoan);

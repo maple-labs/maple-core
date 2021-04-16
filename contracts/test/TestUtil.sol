@@ -615,7 +615,7 @@ contract TestUtil is DSTest {
         uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
         numPayments = constrictToRange(numPayments, 5, 100, true);
         uint256 paymentIntervalDays = paymentIntervalArray[index % 10];           // TODO: Consider changing this approach
-        uint256 termDays            = paymentIntervalDays * (numPayments % 100);
+        uint256 termDays            = paymentIntervalDays * numPayments;
 
         specs = [
             constrictToRange(apr, 1, 10_000, true),                     // APR between 0.01% and 100% (non-zero for test behaviour)

@@ -349,7 +349,7 @@ contract LoanTest is TestUtil {
 
         // Approve numPayments - 1.
         for (uint256 i = 2; i <= numPayments - 1; i++) {
-            repetativePayment(loan, numPayments, i, drawdownAmount, loanPreBal, uint256(0));
+            repetitivePayment(loan, numPayments, i, drawdownAmount, loanPreBal, uint256(0));
         }
         
         // Approve last payment.
@@ -450,7 +450,7 @@ contract LoanTest is TestUtil {
         for (uint256 i = 1; i < numPayments - 1; i++) {
             // Warp to 1 second after next payment is due (payment is late)
             hevm.warp(loan.nextPaymentDue() + 1);
-            repetativePayment(loan, numPayments, i, drawdownAmount, loanPreBal, interest);
+            repetitivePayment(loan, numPayments, i, drawdownAmount, loanPreBal, interest);
         }
 
         uint256 interest_late;
@@ -772,11 +772,14 @@ contract LoanTest is TestUtil {
         assertTrue(loan.admins(address(securityAdmin)));
     }
 
-    function repetativePayment(Loan loan, uint256 numPayments, uint256 paymentCount, uint256 drawdownAmount, uint256 loanPreBal, uint256 oldInterest) internal {
+    function repetitivePayment(Loan loan, uint256 numPayments, uint256 paymentCount, uint256 drawdownAmount, uint256 loanPreBal, uint256 oldInterest) internal {
         (uint256 total, , uint256 interest, uint256 due,) = loan.getNextPayment();
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
 
+        // Below is the way of catering two senarios
+        // 1. When there is no late payment so interest paid will be a multiple of `numPayments`.
+        // 2. If there is a late payment then needs to handle the situation where interst paid is `interest (without late fee) + interest (late fee) * numPayments`.
         numPayments = oldInterest == uint256(0) ? numPayments - paymentCount : numPayments - paymentCount - 1;
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));

@@ -23,11 +23,9 @@ contract PoolLiquidationTest is TestUtil {
         gov.setMaxSwapSlippage(2000);  // Set to 20% for the sake of the BPT shortfall test
     }
 
-    function test_triggerDefault_pool_delegate(
-        uint256 totalMintedAmt
-    ) public {
-        uint256 cooldownAmt  = 4_000_000 * USD;
-        totalMintedAmt       = constrictToRange(totalMintedAmt, cooldownAmt, 100_000_000 * USD, true);
+    function test_triggerDefault_pool_delegate(uint256 totalMintedAmt) public {
+        uint256 drawdownAmt  = 4_000_000 * USD;
+        totalMintedAmt       = constrictToRange(totalMintedAmt, drawdownAmt, 100_000_000 * USD, true);
         uint256 poolPortion  = (80 * totalMintedAmt) / 100;
         uint256 pool2Portion = totalMintedAmt - poolPortion;
 
@@ -43,7 +41,7 @@ contract PoolLiquidationTest is TestUtil {
         pam.fundLoan(address(pool2), address(loan), address(dlFactory), pool2Portion - 1);  // 20% minus 1e-6 equity
 
         // Drawdown loan
-        drawdown(loan, bob, cooldownAmt);
+        drawdown(loan, bob, drawdownAmt);
 
         // Warp to late payment
         uint256 start          = block.timestamp;
