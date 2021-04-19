@@ -255,6 +255,17 @@ library PoolLib {
         updateDepositDate(depositDate, toBalance, wad, to);                                      // Update deposit date of recipient
     }
 
+    function beforeTransferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external {
+        require(amount != uint256(0), "Pool:INVALID_AMT");
+        require(custodyAllowance >= amount, "Pool:INSUFFICIENT_ALLOWANCE");
+        require(to == from, "Pool:INVALID_RECEVIER");  // Allowing transfer funds back to original holder.
+    }
+
+    function zeroCheck(address custodian, uint256 amount) external {
+        require(custodian != address(0), "Pool:INVALID_ADDRESS");
+        require(amount    != uint256(0), "Pool:INVALID_AMT");
+    }
+
     /**
         @dev Activates the cooldown period to withdraw. It can't be called if the user is not an LP.
      */

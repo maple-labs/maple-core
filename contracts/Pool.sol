@@ -447,8 +447,7 @@ contract Pool is PoolFDT {
         @param amount    Number of FDTs cusodied by the custodian.
      */
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
-        require(custodian != address(0), "Pool:INVALID_ADDRESS");
-        require(amount    != uint256(0), "Pool:INVALID_AMT");
+        PoolLib.zeroCheck(custodian, amount);
         uint256 oldAllowance = custodyAllowance[msg.sender][custodian];
         custodyAllowance[msg.sender][custodian] = oldAllowance.add(amount);
         totalCustodyAllowance[msg.sender]       = totalCustodyAllowance[msg.sender].add(amount);
@@ -463,9 +462,7 @@ contract Pool is PoolFDT {
         @param amount Number of FDTs transferred.
      */
     function transferByCustodian(address from, address to, uint256 amount) external {
-        require(amount != uint256(0), "Pool:INVALID_AMT");
-        require(custodyAllowance[from][msg.sender] >= amount, "Pool:INSUFFICIENT_ALLOWANCE");
-        require(to == from, "Pool:INVALID_RECEVIER");  // Allowing transfer funds back to original holder.
+        PoolLib.beforeTransferByCustodianChecks(from, to, amount, custodyAllowance[from][msg.sender]);
         custodyAllowance[from][msg.sender] = custodyAllowance[from][msg.sender].sub(amount);
         totalCustodyAllowance[from]        = totalCustodyAllowance[from].sub(amount);
         emit CustodyTransfer(msg.sender, from, to, amount);
