@@ -55,6 +55,8 @@ contract Pool is PoolFDT {
     mapping(address => bool)                        public admins;                     // Admin addresses who have permission to do certain operations in case of disaster mgt.
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
     mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`
+    mapping(address => mapping(address => uint256)) public custodyAllowance;
+    mapping(address => uint256)                     public totalCustodyAllowance;
 
     event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
@@ -73,6 +75,8 @@ contract Pool is PoolFDT {
         uint256 liquidityAssetRecoveredFromBurn
     );
     event  PoolOpenedToPublic(bool isOpen);
+    event  CustodyTransfer(address indexed _custodian, address indexed _from, address indexed _to, uint256 _amount);
+    event  CustodyAllowanceChanged(address indexed _tokenHolder, address indexed _custodian, uint256 _oldAllowance, uint256 _newAllowance);
 
     /**
         Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
@@ -416,7 +420,7 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
-        PoolLib.prepareTransfer(withdrawCooldown, depositDate, from, to, wad, _globals(superFactory), balanceOf(to), recognizableLossesOf(from));
+        PoolLib.prepareTransfer(withdrawCooldown, depositDate, totalCustodyAllowance[from], balanceOf(from), to, wad, _globals(superFactory), balanceOf(to), recognizableLossesOf(from));
         super._transfer(from, to, wad);
     }
 
@@ -435,6 +439,36 @@ contract Pool is PoolFDT {
 
             _updateFundsTokenBalance();
         }
+    }
+
+    /**
+        @dev Increase the custody allowance for a given `custodian` corresponds to `msg.sender`.
+        @param custodian Address which will act as custodian of given `amount` for a tokenHolder.
+        @param amount    Number of FDTs cusodied by the custodian.
+     */
+    function increaseCustodyAllowance(address custodian, uint256 amount) external {
+        require(custodian != address(0), "Pool:INVALID_ADDRESS");
+        require(amount    != uint256(0), "Pool:INVALID_AMT");
+        uint256 oldAllowance = custodyAllowance[msg.sender][custodian];
+        custodyAllowance[msg.sender][custodian] = oldAllowance.add(amount);
+        totalCustodyAllowance[msg.sender]       = totalCustodyAllowance[msg.sender].add(amount);
+        emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, amount);
+    }
+
+    /**
+        @dev Transfer custodied FDTs to `to` address.
+        @notice sender and receiver should always be equal in this implementation.
+        @param from   Address which holds to Pool FDTs.
+        @param to     Address which going to be the new owner of the `amount` FDTs.
+        @param amount Number of FDTs transferred.
+     */
+    function transferByCustodian(address from, address to, uint256 amount) external {
+        require(amount != uint256(0), "Pool:INVALID_AMT");
+        require(custodyAllowance[from][msg.sender] >= amount, "Pool:INSUFFICIENT_ALLOWANCE");
+        require(to == from, "Pool:INVALID_RECEVIER");  // Allowing transfer funds back to original holder.
+        custodyAllowance[from][msg.sender] = custodyAllowance[from][msg.sender].sub(amount);
+        totalCustodyAllowance[from]        = totalCustodyAllowance[from].sub(amount);
+        emit CustodyTransfer(msg.sender, from, to, amount);
     }
 
     /**************************/

@@ -5,6 +5,7 @@ import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/math/Math.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import "./interfaces/IERC2258.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
 /// @title MplRewards Synthetix farming contract fork for liquidity mining.
@@ -13,8 +14,8 @@ contract MplRewards is Ownable {
     using SafeMath  for uint256;
     using SafeERC20 for IERC20;
 
-    IERC20  public immutable rewardsToken;
-    IERC20  public immutable stakingToken;
+    IERC20    public immutable rewardsToken;
+    IERC2258  public immutable stakingToken;
 
     uint256 public periodFinish;
     uint256 public rewardRate;
@@ -41,7 +42,7 @@ contract MplRewards is Ownable {
 
     constructor(address _rewardsToken, address _stakingToken, address _owner) public {
         rewardsToken    = IERC20(_rewardsToken);
-        stakingToken    = IERC20(_stakingToken);
+        stakingToken    = IERC2258(_stakingToken);
         rewardsDuration = 7 days;
         transferOwnership(_owner);
     }
@@ -90,10 +91,11 @@ contract MplRewards is Ownable {
     function stake(uint256 amount) external {
         _notPaused();
         _updateReward(msg.sender);
+        uint256 newBalance = _balances[msg.sender].add(amount);
         require(amount > 0, "REWARDS:STAKE_EQ_ZERO");
-        _totalSupply = _totalSupply.add(amount);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+        require(stakingToken.custodyAllowance(msg.sender, address(this)) >= newBalance, "REWARDS:INSUFFICIENT_ALLOWANCE");
+        _totalSupply          = _totalSupply.add(amount);
+        _balances[msg.sender] = newBalance;
         emit Staked(msg.sender, amount);
     }
 
@@ -103,7 +105,7 @@ contract MplRewards is Ownable {
         require(amount > 0, "REWARDS:WITHDRAW_EQ_ZERO");
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        stakingToken.safeTransfer(msg.sender, amount);
+        stakingToken.transferByCustodian(msg.sender, msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     }
 

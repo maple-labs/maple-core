@@ -241,19 +241,18 @@ library PoolLib {
     function prepareTransfer(
         mapping(address => uint256) storage withdrawCooldown,
         mapping(address => uint256) storage depositDate,
-        address from,
+        uint256 totalCustodyAllowance,
+        uint256 fromBalance,
         address to,
         uint256 wad,
         IGlobals globals,
         uint256 toBalance,
         uint256 recognizableLosses
     ) external {
-        // If transferring in or out of yield farming contract, do not update depositDate or cooldown
-        if (!globals.isExemptFromTransferRestriction(from) && !globals.isExemptFromTransferRestriction(to)) {
-            require(isReceiveAllowed(withdrawCooldown[to], globals), "Pool:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently withdrawing
-            require(recognizableLosses == uint256(0),                "Pool:RECOG_LOSSES");           // If an LP has unrecognized losses, they must recognize losses through withdraw
-            updateDepositDate(depositDate, toBalance, wad, to);                                      // Update deposit date of recipient
-        }
+        require(fromBalance.sub(wad) >= totalCustodyAllowance,   "Pool:INSUFFICENT_TRANSFERABLE_BAL");
+        require(isReceiveAllowed(withdrawCooldown[to], globals), "Pool:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently withdrawing
+        require(recognizableLosses == uint256(0),                "Pool:RECOG_LOSSES");           // If an LP has unrecognized losses, they must recognize losses through withdraw
+        updateDepositDate(depositDate, toBalance, wad, to);                                      // Update deposit date of recipient
     }
 
     /**
