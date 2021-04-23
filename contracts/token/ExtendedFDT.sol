@@ -19,10 +19,10 @@ abstract contract ExtendedFDT is BasicFDT {
     event LossesCorrectionUpdated(address account, int256 lossesCorrection);
 
     /**
-        @dev This event emits when new losses are distributed
+        @dev This event emits when new losses are distributed.
         @param by                The address of the sender who distributed losses
         @param lossesDistributed The amount of losses received for distribution
-     */
+    */
     event LossesDistributed(address indexed by, uint256 lossesDistributed);
 
     /**
@@ -30,7 +30,7 @@ abstract contract ExtendedFDT is BasicFDT {
         @param by                    The address of the receiver of losses
         @param lossesRecognized      The amount of losses that were recognized
         @param totalLossesRecognized The total amount of losses that were recognized
-     */
+    */
     event LossesRecognized(address indexed by, uint256 lossesRecognized, uint256 totalLossesRecognized);
 
     constructor(string memory name, string memory symbol) BasicFDT(name, symbol) public { }
@@ -38,14 +38,14 @@ abstract contract ExtendedFDT is BasicFDT {
     /**
         @dev Distributes losses to token holders.
         @dev It reverts if the total supply of tokens is 0.
-        It emits the `LossesDistributed` event if the amount of received losses is greater than 0.
-        About undistributed losses:
-            In each distribution, there is a small amount of losses which does not get distributed,
-            which is `(value * pointsMultiplier) % totalSupply()`.
-        With a well-chosen `pointsMultiplier`, the amount losses that are not getting distributed
-            in a distribution can be less than 1 (base unit).
-        We can actually keep track of the undistributed losses in a distribution
-            and try to distribute it in the next distribution
+             It emits the `LossesDistributed` event if the amount of received losses is greater than 0.
+             About undistributed losses:
+                In each distribution, there is a small amount of losses which does not get distributed,
+                which is `(value * pointsMultiplier) % totalSupply()`.
+             With a well-chosen `pointsMultiplier`, the amount losses that are not getting distributed
+                in a distribution can be less than 1 (base unit).
+             We can actually keep track of the undistributed losses in a distribution
+                and try to distribute it in the next distribution
     */
     function _distributeLosses(uint256 value) internal {
         require(totalSupply() > 0, "FDT:SUPPLY_EQ_ZERO");
@@ -58,7 +58,7 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev Prepares losses withdrawal
+        @dev Prepares losses withdrawal.
         @dev It emits a `LossesWithdrawn` event if the amount of withdrawn losses is greater than 0.
     */
     function _prepareLossesWithdraw() internal returns (uint256) {

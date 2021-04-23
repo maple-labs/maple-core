@@ -37,7 +37,7 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Update the MapleGlobals contract
+        @dev Update the MapleGlobals contract. Only the Governor can call this function.
         @param newGlobals Address of new MapleGlobals contract
     */
     function setGlobals(address newGlobals) external {
@@ -110,7 +110,7 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Set admin.
+        @dev Set admin. Only the Governor can call this function.
         @param newAdmin New admin address
         @param allowed  Status of an admin
     */
@@ -120,7 +120,7 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Triggers paused state. Halts functionality for certain functions. Only Governor or Pool Factory Admins can call this function.
+        @dev Triggers paused state. Halts functionality for certain functions. Only the Governor or a Pool Factory Admin can call this function.
     */
     function pause() external {
         _isValidGovernorOrAdmin();
@@ -128,7 +128,7 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Triggers unpaused state. Returns functionality for certain functions. Only Governor or Pool Factory Admins can call this function.
+        @dev Triggers unpaused state. Returns functionality for certain functions. Only the Governor or a Pool Factory Admin can call this function.
     */
     function unpause() external {
         _isValidGovernorOrAdmin();
@@ -136,14 +136,14 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Function to determine if msg.sender is Governor.
+        @dev Checks that msg.sender is the Governor.
     */
     function _isValidGovernor() internal view {
         require(msg.sender == globals.governor(), "PF:INVALID_GOVERNOR");
     }
 
     /**
-        @dev Function to determine if msg.sender is Governor or a Pool Factory Admin.
+        @dev Checks that msg.sender is the Governor or a Pool Factory Admin.
     */
     function _isValidGovernorOrAdmin() internal {
         require(msg.sender == globals.governor() || admins[msg.sender], "PF:UNAUTHORIZED");

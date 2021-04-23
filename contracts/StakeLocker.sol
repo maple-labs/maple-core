@@ -58,8 +58,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev canUnstake enables unstaking in the following conditions:
-        1. User is not Pool Delegate and the Pool is in Finalized state.
-        2. The Pool is in Initialized or Deactivated state.
+               1. User is not Pool Delegate and the Pool is in Finalized state.
+               2. The Pool is in Initialized or Deactivated state.
     */
     modifier canUnstake() {
         require(
@@ -71,7 +71,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Modifier to check if msg.sender is Governor.
+        @dev Checks that msg.sender is the Governor.
     */
     modifier isGovernor() {
         require(msg.sender == _globals().governor(), "StakeLocker:MSG_SENDER_NOT_GOVERNOR");
@@ -79,7 +79,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Modifier to check if msg.sender is Pool.
+        @dev Checks that msg.sender is the Pool.
     */
     modifier isPool() {
         require(msg.sender == pool, "StakeLocker:MSG_SENDER_NOT_POOL");
@@ -91,7 +91,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**********************/
 
     /**
-        @dev Update user status on the allowlist. Only Pool can call this.
+        @dev Update user status on the allowlist. Only the Pool can call this function.
         @param user   The address to set status for
         @param status The status of user on allowlist
     */
@@ -101,7 +101,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Set StakerLocker public access. Only Pool Delegate can call this function.
+        @dev Set StakerLocker public access. Only the Pool Delegate can call this function.
     */
     function openStakeLockerToPublic() external {
         _whenProtocolNotPaused();
@@ -111,7 +111,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Set the lockup period. Only Pool Delegate can call this function.
+        @dev Set the lockup period. Only the Pool Delegate can call this function.
         @param newLockupPeriod New lockup period used to restrict unstaking.
      */
     function setLockupPeriod(uint256 newLockupPeriod) external {
@@ -123,7 +123,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Transfers amt of stakeAsset to dst. Only Pool can call this function.
+        @dev Transfers amt of stakeAsset to dst. Only the Pool can call this function.
         @param dst Desintation to transfer stakeAsset to
         @param amt Amount of stakeAsset to transfer
     */
@@ -132,7 +132,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Updates loss accounting for FDTs after BPTs have been burned. Only Pool can call this function.
+        @dev Updates loss accounting for FDTs after BPTs have been burned. Only the Pool can call this function.
         @param bptsBurned Amount of BPTs that have been burned
     */
     function updateLosses(uint256 bptsBurned) isPool external {
@@ -219,7 +219,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
-     /**
+    /**
         @dev Withdraws all available FDT interest earned for a token holder.
     */
     function withdrawFunds() public override {
@@ -256,7 +256,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /***********************/
 
     /**
-        @dev Triggers paused state. Halts functionality for certain functions.
+        @dev Triggers paused state. Halts functionality for certain functions. Only the Pool Delegate or a Pool Admin can call this function.
     */
     function pause() external {
         _isValidAdminOrPoolDelegate();
@@ -264,7 +264,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Triggers unpaused state. Returns functionality for certain functions.
+        @dev Triggers unpaused state. Returns functionality for certain functions. Only the Pool Delegate or a Pool Admin can call this function.
     */
     function unpause() external {
         _isValidAdminOrPoolDelegate();
@@ -276,7 +276,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /************************/
 
     /**
-        @dev View function to indicate if cooldown period has passed for msg.sender and if they are in the unstake window
+        @dev View function to indicate if cooldown period has passed for msg.sender and if they are in the unstake window.
     */
     function isUnstakeAllowed(address from) public view returns (bool) {
         IGlobals globals = _globals();
@@ -293,14 +293,14 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Function to determine if msg.sender is Pool Delegate or a Pool Admin.
+        @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
     */
     function _isValidAdminOrPoolDelegate() internal view {
         require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
     }
 
     /**
-        @dev Function to determine if msg.sender is Pool Delegate.
+        @dev Checks that msg.sender is the Pool Delegate.
     */
     function _isValidPoolDelegate() internal view {
         require(msg.sender == IPool(pool).poolDelegate(), "StakeLocker:UNAUTHORIZED");

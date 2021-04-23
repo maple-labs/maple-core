@@ -134,7 +134,7 @@ contract Pool is PoolFDT {
     /*******************************/
 
     /**
-        @dev Finalize the Pool, enabling deposits. Checks Pool Delegate amount deposited to StakeLocker.
+        @dev Finalize the Pool, enabling deposits. Checks Pool Delegate amount deposited to StakeLocker. Only the Pool Delegate can call this function.
     */
     function finalize() external {
         _isValidDelegateAndProtocolNotPaused();
@@ -146,7 +146,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers.
+        @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers. Only the Pool Delegate can call this function.
         @param  loan      Address of the loan to fund
         @param  dlFactory The DebtLockerFactory to utilize
         @param  amt       Amount to fund the loan
@@ -161,7 +161,8 @@ contract Pool is PoolFDT {
 
     /**
         @dev Liquidate the loan. Pool delegate could liquidate a loan only when loan completes its grace period.
-        Pool delegate can claim its proportion of recovered funds from liquidation using the `claim()` function.
+             Pool delegate can claim its proportion of recovered funds from liquidation using the `claim()` function.
+             Only the Pool Delegate can call this function.
         @param loan      Address of the loan contract to liquidate
         @param dlFactory Address of the debt locker factory that is used to pull corresponding debt locker
      */
@@ -171,7 +172,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Claim available funds for loan through specified DebtLockerFactory.
+        @dev Claim available funds for loan through specified DebtLockerFactory. Only the Pool Delegate or a Pool Admin can call this function.
         @param  loan      Address of the loan to claim from
         @param  dlFactory The DebtLockerFactory (always maps to a single debt locker)
         @return [0] = Total amount claimed
@@ -258,7 +259,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Pool Delegate triggers deactivation, permanently shutting down the pool. Must have less than 100 USD worth of liquidityAsset principalOut.
+        @dev Triggers deactivation, permanently shutting down the pool. Must have less than 100 USD worth of liquidityAsset principalOut.
+             Only the Pool Delegate can call this function.
     */
     function deactivate() external {
         _isValidDelegateAndProtocolNotPaused();
@@ -273,7 +275,7 @@ contract Pool is PoolFDT {
     /**************************************/
 
     /**
-        @dev Set `liquidityCap`, Only allowed by the Pool Delegate or the admin.
+        @dev Set `liquidityCap`. Only the Pool Delegate or a Pool Admin can call this function.
         @param newLiquidityCap New liquidityCap value
     */
     function setLiquidityCap(uint256 newLiquidityCap) external {
@@ -284,7 +286,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Set the lockup period. Only Pool Delegate can call this function.
+        @dev Set the lockup period. Only the Pool Delegate can call this function.
         @param newLockupPeriod New lockup period used to restrict the withdrawals.
      */
     function setLockupPeriod(uint256 newLockupPeriod) external {
@@ -295,7 +297,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Update staking fee. Only Pool Delegate can call this function.
+        @dev Update staking fee. Only the Pool Delegate can call this function.
         @param newStakingFee New staking fee.
     */
     function setStakingFee(uint256 newStakingFee) external {
@@ -306,7 +308,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Update user status on Pool allowlist. Only Pool Delegate can call this function.
+        @dev Update user status on Pool allowlist. Only the Pool Delegate can call this function.
         @param user   The address to set status for.
         @param status The status of user on allowlist.
     */
@@ -317,7 +319,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Update user status on StakeLocker allowlist. Only Pool Delegate can call this function.
+        @dev Update user status on StakeLocker allowlist. Only the Pool Delegate can call this function.
         @param user   The address to set status for.
         @param status The status of user on allowlist.
     */
@@ -327,7 +329,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Set admin. Can only be called by the Pool Delegate.
+        @dev Set admin. Only the Pool Delegate can call this function.
         @param newAdmin new admin address.
         @param allowed Status of an admin.
     */
@@ -337,7 +339,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Set public pool access. Only Pool Delegate can call this function.
+        @dev Set public pool access. Only the Pool Delegate can call this function.
         @param open Public pool access status.
     */
     function setOpenToPublic(bool open) external {
@@ -440,7 +442,7 @@ contract Pool is PoolFDT {
     /**************************/
 
     /**
-        @dev Transfer any locked funds to the governor.
+        @dev Transfer any locked funds to the Governor. Only the Governor can call this function.
         @param token Address of the token to reclaim.
     */
     function reclaimERC20(address token) external {
@@ -564,7 +566,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Utility to return if msg.sender is the Pool Delegate.
+        @dev Checks that msg.sender is the Pool Delegate.
     */
     function _isValidDelegate() internal view {
         require(msg.sender == poolDelegate, "Pool:INVALID_DELEGATE");
@@ -594,7 +596,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Function to determine if msg.sender is Pool Delegate or a Pool Admin.
+        @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
     */
     function _isValidDelegateOrAdmin() internal {
         require(msg.sender == poolDelegate || admins[msg.sender], "Pool:UNAUTHORIZED");
@@ -607,6 +609,9 @@ contract Pool is PoolFDT {
         require(!_globals(superFactory).protocolPaused(), "Pool:PROTOCOL_PAUSED");
     }
 
+    /**
+        @dev Checks that msg.sender is the Pool Delegate and protocol is not in a paused state.
+    */
     function _isValidDelegateAndProtocolNotPaused() internal {
         _isValidDelegate();
         _whenProtocolNotPaused();

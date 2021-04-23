@@ -55,7 +55,7 @@ library LoanLib {
     }
 
     /**
-        @dev Liquidate a Borrower's collateral via Uniswap when a default is triggered.
+        @dev Liquidate a Borrower's collateral via Uniswap when a default is triggered. Only the Loan can call this function.
         @param collateralAsset   IERC20 of the collateralAsset
         @param liquidityAsset         Address of liquidityAsset
         @param superFactory      Factory that instantiated Loan
@@ -122,7 +122,7 @@ library LoanLib {
     /**********************************/
 
     /**
-        @dev Transfer any locked funds to the governor.
+        @dev Transfer any locked funds to the Governor. Only the Governor can call this function.
         @param token Address of the token that need to reclaimed.
         @param liquidityAsset Address of loan asset that is supported by the loan in other words denominated currency in which it taking funds.
         @param globals Instance of the `MapleGlobals` contract.
