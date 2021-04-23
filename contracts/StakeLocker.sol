@@ -101,7 +101,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Set StakerLocker public access. Only PoolDelegate can call this function.
+        @dev Set StakerLocker public access. Only Pool Delegate can call this function.
     */
     function openStakeLockerToPublic() external {
         _whenProtocolNotPaused();
@@ -123,7 +123,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Transfers amt of stakeAsset to dst.
+        @dev Transfers amt of stakeAsset to dst. Only Pool can call this function.
         @param dst Desintation to transfer stakeAsset to
         @param amt Amount of stakeAsset to transfer
     */
@@ -293,14 +293,14 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+        @dev Function to determine if msg.sender is Pool Delegate or a Pool Admin.
     */
     function _isValidAdminOrPoolDelegate() internal view {
         require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
     }
 
     /**
-        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+        @dev Function to determine if msg.sender is Pool Delegate.
     */
     function _isValidPoolDelegate() internal view {
         require(msg.sender == IPool(pool).poolDelegate(), "StakeLocker:UNAUTHORIZED");

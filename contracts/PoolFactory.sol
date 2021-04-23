@@ -120,7 +120,7 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Triggers paused state. Halts functionality for certain functions. Only Governor can call this function.
+        @dev Triggers paused state. Halts functionality for certain functions. Only Governor or Pool Factory Admins can call this function.
     */
     function pause() external {
         _isValidGovernorOrAdmin();
@@ -128,7 +128,7 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Triggers unpaused state. Returns functionality for certain functions. Only Governor can call this function.
+        @dev Triggers unpaused state. Returns functionality for certain functions. Only Governor or Pool Factory Admins can call this function.
     */
     function unpause() external {
         _isValidGovernorOrAdmin();
@@ -136,21 +136,21 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+        @dev Function to determine if msg.sender is Governor.
     */
     function _isValidGovernor() internal view {
         require(msg.sender == globals.governor(), "PF:INVALID_GOVERNOR");
     }
 
     /**
-        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+        @dev Function to determine if msg.sender is Governor or a Pool Factory Admin.
     */
     function _isValidGovernorOrAdmin() internal {
         require(msg.sender == globals.governor() || admins[msg.sender], "PF:UNAUTHORIZED");
     }
 
     /**
-        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+        @dev Function to determine if protocol is paused/unpaused.
     */
     function _whenProtocolNotPaused() internal {
         require(!globals.protocolPaused(), "PF:PROTOCOL_PAUSED");

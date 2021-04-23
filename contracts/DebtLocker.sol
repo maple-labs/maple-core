@@ -42,7 +42,7 @@ contract DebtLocker {
     }
 
     /**
-        @dev    Claim funds distribution for Loan via FDT.
+        @dev    Claim funds distribution for Loan via FDT. Only called by the pool contract.
         @return [0] = Total Claimed
                 [1] = Interest Claimed
                 [2] = Principal Claimed

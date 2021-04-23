@@ -131,7 +131,7 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Triggers paused state. Halts functionality for certain functions. Only Governor can call this function.
+        @dev Triggers paused state. Halts functionality for certain functions. Only Governor or Loan Factory Admins can call this function.
     */
     function pause() external {
         _isValidGovernorOrAdmin();
@@ -147,21 +147,21 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+        @dev Function to determine if msg.sender is Governor.
     */
     function _isValidGovernor() internal view {
         require(msg.sender == globals.governor(), "PoolFactory:INVALID_GOVERNOR");
     }
 
     /**
-        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+        @dev Function to determine if msg.sender is Governor or a Loan Factory Admin.
     */
     function _isValidGovernorOrAdmin() internal {
         require(msg.sender == globals.governor() || admins[msg.sender], "PoolFactory:UNAUTHORIZED");
     }
 
     /**
-        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+        @dev Function to determine if protocol is paused/unpaused.
     */
     function _whenProtocolNotPaused() internal {
         require(!globals.protocolPaused(), "PoolFactory:PROTOCOL_PAUSED");

@@ -327,7 +327,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Set admin
+        @dev Set admin. Can only be called by the Pool Delegate.
         @param newAdmin new admin address.
         @param allowed Status of an admin.
     */
@@ -594,7 +594,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Function to determine if msg.sender is eligible to setLiquidityCap for security reasons.
+        @dev Function to determine if msg.sender is Pool Delegate or a Pool Admin.
     */
     function _isValidDelegateOrAdmin() internal {
         require(msg.sender == poolDelegate || admins[msg.sender], "Pool:UNAUTHORIZED");
