@@ -157,7 +157,7 @@ contract MplRewards is Ownable {
     }
 
     /**
-        @dev Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders.
+        @dev Added to support recovering tokens unintentionally sent to this contract by users.
              Only the contract Owner may call this.
     */
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
