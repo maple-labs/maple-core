@@ -45,14 +45,14 @@ library PoolLib {
         uint256 stakingFee, 
         uint256 delegateFee
     ) external {
-        require(globals.isValidLiquidityAsset(liquidityAsset), "Pool:INVALID_LIQ_ASSET");
-        require(stakingFee.add(delegateFee) <= 10_000,         "Pool:INVALID_FEES");
+        require(globals.isValidLiquidityAsset(liquidityAsset), "P:INVALID_LIQ_ASSET");
+        require(stakingFee.add(delegateFee) <= 10_000,         "P:INVALID_FEES");
         require(
             globals.isValidBalancerPool(address(stakeAsset)) &&
             IBPool(stakeAsset).isBound(globals.mpl())        && 
             IBPool(stakeAsset).isBound(liquidityAsset)       &&
             IBPool(stakeAsset).isFinalized(), 
-            "Pool:INVALID_BALANCER_POOL"
+            "P:INVALID_BALANCER_POOL"
         );
     }
 
@@ -78,9 +78,9 @@ library PoolLib {
         address loanFactory = ILoan(loan).superFactory();
 
         // Auth checks
-        require(globals.isValidLoanFactory(loanFactory),                        "Pool:INVALID_LOAN_FACTORY");
-        require(ILoanFactory(loanFactory).isLoan(loan),                         "Pool:INVALID_LOAN");
-        require(globals.isValidSubFactory(superFactory, dlFactory, DL_FACTORY), "Pool:INVALID_DL_FACTORY");
+        require(globals.isValidLoanFactory(loanFactory),                        "P:INVALID_LOAN_FACTORY");
+        require(ILoanFactory(loanFactory).isLoan(loan),                         "P:INVALID_LOAN");
+        require(globals.isValidSubFactory(superFactory, dlFactory, DL_FACTORY), "P:INVALID_DL_FACTORY");
 
         address _debtLocker = debtLockers[loan][dlFactory];
 
@@ -193,7 +193,7 @@ library PoolLib {
         @param  liquidityAsset Liquidity Asset of the pool 
      */
     function validateDeactivation(IGlobals globals, uint256 principalOut, address liquidityAsset) public view {
-        require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "Pool:PRINCIPAL_OUTSTANDING");
+        require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "P:PRINCIPAL_OUTSTANDING");
     }
 
     /********************************************/
@@ -252,8 +252,8 @@ library PoolLib {
     ) external {
         // If transferring in or out of yield farming contract, do not update depositDate or cooldown
         if (!globals.isExemptFromTransferRestriction(from) && !globals.isExemptFromTransferRestriction(to)) {
-            require(isReceiveAllowed(withdrawCooldown[to], globals), "Pool:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently withdrawing
-            require(recognizableLosses == uint256(0),                "Pool:RECOG_LOSSES");           // If an LP has unrecognized losses, they must recognize losses through withdraw
+            require(isReceiveAllowed(withdrawCooldown[to], globals), "P:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently withdrawing
+            require(recognizableLosses == uint256(0),                "P:RECOG_LOSSES");           // If an LP has unrecognized losses, they must recognize losses through withdraw
             updateDepositDate(depositDate, toBalance, wad, to);                                      // Update deposit date of recipient
         }
     }
@@ -263,7 +263,7 @@ library PoolLib {
         @dev It emits a `Cooldown` event.
      */
     function intendToWithdraw(mapping(address => uint256) storage withdrawCooldown, uint256 balance) external {
-        require(balance != uint256(0), "Pool:ZERO_BALANCE");
+        require(balance != uint256(0), "P:ZERO_BALANCE");
         withdrawCooldown[msg.sender] = block.timestamp;
         emit Cooldown(msg.sender, block.timestamp);
     }
@@ -273,7 +273,7 @@ library PoolLib {
         @dev It emits a `Cooldown` event.
      */
     function cancelWithdraw(mapping(address => uint256) storage withdrawCooldown) external {
-        require(withdrawCooldown[msg.sender] != uint256(0), "Pool:NOT_WITHDRAWING");
+        require(withdrawCooldown[msg.sender] != uint256(0), "P:NOT_WITHDRAWING");
         withdrawCooldown[msg.sender] = uint256(0);
         emit Cooldown(msg.sender, uint256(0));
     }
@@ -289,8 +289,8 @@ library PoolLib {
         @param globals Instance of the `MapleGlobals` contract.
      */
     function reclaimERC20(address token, address liquidityAsset, IGlobals globals) external {
-        require(msg.sender == globals.governor(), "Pool:UNAUTHORIZED");
-        require(token != liquidityAsset && token != address(0), "Pool:INVALID_TOKEN");
+        require(msg.sender == globals.governor(), "P:NOT_GOV");
+        require(token != liquidityAsset && token != address(0), "P:INVALID_TOKEN");
         IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
     }
 
@@ -300,11 +300,11 @@ library PoolLib {
 
     /// @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision
     function bdiv(uint256 a, uint256 b) public pure returns (uint256) {
-        require(b != 0, "ERR_DIV_ZERO");
+        require(b != 0, "P:ERR_DIV_ZERO");
         uint256 c0 = a * WAD;
-        require(a == 0 || c0 / a == WAD, "ERR_DIV_INTERNAL"); // bmul overflow
+        require(a == 0 || c0 / a == WAD, "P:ERR_DIV_INTERNAL"); // bmul overflow
         uint256 c1 = c0 + (b / 2);
-        require(c1 >= c0, "ERR_DIV_INTERNAL"); //  badd require
+        require(c1 >= c0, "P:ERR_DIV_INTERNAL"); //  badd require
         uint256 c2 = c1 / b;
         return c2;
     }

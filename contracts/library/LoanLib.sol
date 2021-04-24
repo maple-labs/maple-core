@@ -43,7 +43,7 @@ library LoanLib {
         IGlobals globals = _globals(superFactory);
 
         // Only callable if time has passed drawdown grace period, set in MapleGlobals
-        require(block.timestamp > createdAt.add(globals.fundingPeriod()), "Loan:FUNDING_PERIOD_NOT_FINISHED");
+        require(block.timestamp > createdAt.add(globals.fundingPeriod()), "L:FUNDING_PERIOD_NOT_FINISHED");
 
         uint256 preBal = liquidityAsset.balanceOf(address(this));  // Account for existing balance in Loan
 
@@ -128,8 +128,8 @@ library LoanLib {
         @param globals Instance of the `MapleGlobals` contract.
      */
     function reclaimERC20(address token, address liquidityAsset, IGlobals globals) external {
-        require(msg.sender == globals.governor(), "Loan:UNAUTHORIZED");
-        require(token != liquidityAsset && token != address(0), "Loan:INVALID_TOKEN");
+        require(msg.sender == globals.governor(), "L:NOT_GOV");
+        require(token != liquidityAsset && token != address(0), "L:INVALID_TOKEN");
         IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
     }
 

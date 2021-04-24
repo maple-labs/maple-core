@@ -56,7 +56,7 @@ contract MplRewards is Ownable {
     }
 
     function _notPaused() internal view {
-        require(!paused, "REWARDS:CONTRACT_PAUSED");
+        require(!paused, "R:CONTRACT_PAUSED");
     }
 
     function totalSupply() external view returns (uint256) {
@@ -93,7 +93,7 @@ contract MplRewards is Ownable {
     function stake(uint256 amount) external {
         _notPaused();
         _updateReward(msg.sender);
-        require(amount > 0, "REWARDS:STAKE_EQ_ZERO");
+        require(amount > 0, "R:STAKE_EQ_ZERO");
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -106,7 +106,7 @@ contract MplRewards is Ownable {
     function withdraw(uint256 amount) public {
         _notPaused();
         _updateReward(msg.sender);
-        require(amount > 0, "REWARDS:WITHDRAW_EQ_ZERO");
+        require(amount > 0, "R:WITHDRAW_EQ_ZERO");
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);
@@ -152,7 +152,7 @@ contract MplRewards is Ownable {
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
         uint balance = rewardsToken.balanceOf(address(this));
-        require(rewardRate <= balance.div(rewardsDuration), "REWARDS:REWARD_TOO_HIGH");
+        require(rewardRate <= balance.div(rewardsDuration), "R:REWARD_TOO_HIGH");
 
         lastUpdateTime = block.timestamp;
         periodFinish   = block.timestamp.add(rewardsDuration);
@@ -173,7 +173,7 @@ contract MplRewards is Ownable {
         @dev It emits a `Recovered` event.
     */
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
-        require(tokenAddress != address(stakingToken), "REWARDS:CANNOT_RECOVER_STAKE_TOKEN");
+        require(tokenAddress != address(stakingToken), "R:CANNOT_RECOVER_STAKE_TOKEN");
         IERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
@@ -183,7 +183,7 @@ contract MplRewards is Ownable {
         @dev It emits a `RewardsDurationUpdated` event.
     */
     function setRewardsDuration(uint256 _rewardsDuration) external onlyOwner {
-        require(block.timestamp > periodFinish, "REWARDS:PERIOD_NOT_FINISHED");
+        require(block.timestamp > periodFinish, "R:PERIOD_NOT_FINISHED");
         rewardsDuration = _rewardsDuration;
         emit RewardsDurationUpdated(rewardsDuration);
     }
@@ -194,7 +194,7 @@ contract MplRewards is Ownable {
     */
     function setPaused(bool _paused) external onlyOwner {
         // Ensure we're actually changing the state before we do anything
-        require(_paused != paused, "MplRewards:ALREADY_IN_SAME_STATE");
+        require(_paused != paused, "R:ALREADY_IN_SAME_STATE");
 
         // Set our paused state.
         paused = _paused;

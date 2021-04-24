@@ -144,12 +144,12 @@ contract Loan is FDT, Pausable {
         IGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks
-        require(globals.isValidLiquidityAsset(_liquidityAsset),   "Loan:INVALID_LIQUIDITY_ASSET");
-        require(globals.isValidCollateralAsset(_collateralAsset), "Loan:INVALID_COLLATERAL_ASSET");
+        require(globals.isValidLiquidityAsset(_liquidityAsset),   "L:INVALID_LIQ_ASSET");
+        require(globals.isValidCollateralAsset(_collateralAsset), "L:INVALID_COLLATERAL_ASSET");
 
-        require(specs[2] != uint256(0),               "Loan:PID_EQ_ZERO");
-        require(specs[1].mod(specs[2]) == uint256(0), "Loan:INVALID_TERM_DAYS");
-        require(specs[3] > uint256(0),                "Loan:REQUEST_AMT_EQ_ZERO");
+        require(specs[2] != uint256(0),               "L:PID_EQ_ZERO");
+        require(specs[1].mod(specs[2]) == uint256(0), "L:INVALID_TERM_DAYS");
+        require(specs[3] > uint256(0),                "L:REQUEST_AMT_EQ_ZERO");
 
         borrower        = _borrower;
         liquidityAsset  = IERC20(_liquidityAsset);
@@ -197,8 +197,8 @@ contract Loan is FDT, Pausable {
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
 
-        require(amt >= requestAmount,              "Loan:AMT_LT_REQUEST_AMT");
-        require(amt <= _getFundingLockerBalance(), "Loan:AMT_GT_FUNDED_AMT");
+        require(amt >= requestAmount,              "L:AMT_LT_REQUEST_AMT");
+        require(amt <= _getFundingLockerBalance(), "L:AMT_GT_FUNDED_AMT");
 
         // Update accounting variables for Loan
         principalOwed  = amt;
@@ -363,7 +363,7 @@ contract Loan is FDT, Pausable {
     function triggerDefault() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-        require(LoanLib.canTriggerDefault(nextPaymentDue, defaultGracePeriod, superFactory, balanceOf(msg.sender), totalSupply()), "Loan:FAILED_TO_LIQUIDATE");
+        require(LoanLib.canTriggerDefault(nextPaymentDue, defaultGracePeriod, superFactory, balanceOf(msg.sender), totalSupply()), "L:FAILED_TO_LIQUIDATE");
 
         // Pull collateralAsset from CollateralLocker, swap to liquidityAsset, and hold custody of resulting liquidityAsset in Loan
         (amountLiquidated, amountRecovered) = LoanLib.liquidateCollateral(collateralAsset, address(liquidityAsset), superFactory, collateralLocker);
@@ -512,14 +512,14 @@ contract Loan is FDT, Pausable {
         @dev Function to block functionality of functions when protocol is in a paused state.
     */
     function _whenProtocolNotPaused() internal {
-        require(!_globals(superFactory).protocolPaused(), "Loan:PROTOCOL_PAUSED");
+        require(!_globals(superFactory).protocolPaused(), "L:PROTOCOL_PAUSED");
     }
 
     /**
         @dev Checks that msg.sender is the Loan Borrower or a Loan Admin.
     */
     function _isValidBorrowerOrAdmin() internal {
-        require(msg.sender == borrower || admins[msg.sender], "Pool:UNAUTHORIZED");
+        require(msg.sender == borrower || admins[msg.sender], "L:NOT_BORROWER_OR_ADMIN");
     }
 
     /**
@@ -555,14 +555,14 @@ contract Loan is FDT, Pausable {
         @param _state Enum of desired Loan state
     */
     function _isValidState(State _state) internal view {
-        require(loanState == _state, "Loan:INVALID_STATE");
+        require(loanState == _state, "L:INVALID_STATE");
     }
 
     /**
         @dev Checks that msg.sender is the Loan Borrower.
     */
     function _isValidBorrower() internal view {
-        require(msg.sender == borrower, "Loan:INVALID_BORROWER");
+        require(msg.sender == borrower, "L:NOT_BORROWER");
     }
 
     /**
@@ -574,7 +574,7 @@ contract Loan is FDT, Pausable {
         require(
             _globals(superFactory).isValidPoolFactory(poolFactory) &&
             IPoolFactory(poolFactory).isPool(pool),
-            "Loan:INVALID_LENDER"
+            "L:INVALID_LENDER"
         );
     }
 
@@ -582,7 +582,7 @@ contract Loan is FDT, Pausable {
         @dev Utility to ensure currently within the funding period.
     */
     function _isWithinFundingPeriod() internal view {
-        require(block.timestamp <= createdAt.add(fundingPeriod), "Loan:PAST_FUNDING_PERIOD");
+        require(block.timestamp <= createdAt.add(fundingPeriod), "L:PAST_FUNDING_PERIOD");
     }
 
     /**

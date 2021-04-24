@@ -49,7 +49,7 @@ contract MapleTreasury {
         @dev Checks that msg.sender is the Governor.
     */
     modifier isGovernor() {
-        require(msg.sender == IGlobals(globals).governor(), "MapleTreasury:MSG_SENDER_NOT_GOVERNOR");
+        require(msg.sender == IGlobals(globals).governor(), "MT:NOT_GOV");
         _;
     }
 
@@ -93,7 +93,7 @@ contract MapleTreasury {
         @param asset The ERC-20 asset to convert to fundsToken
     */
     function convertERC20(address asset) isGovernor public {
-        require(asset != fundsToken, "MapleTreasury:ASSET_EQUALS_FUNDS_TOKEN");
+        require(asset != fundsToken, "MT:ASSET_EQUALS_FUNDS_TOKEN");
 
         IGlobals _globals = IGlobals(globals);
 

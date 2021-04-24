@@ -144,7 +144,7 @@ contract Pool is PoolFDT {
         _isValidDelegateAndProtocolNotPaused();
         _isValidState(State.Initialized);
         (,, bool stakeSufficient,,) = getInitialStakeRequirements();
-        require(stakeSufficient, "Pool:INSUFFICIENT_STAKE");
+        require(stakeSufficient, "P:INSUFFICIENT_STAKE");
         poolState = State.Finalized;
         emit PoolStateChanged(poolState);
     }
@@ -301,7 +301,7 @@ contract Pool is PoolFDT {
      */
     function setLockupPeriod(uint256 newLockupPeriod) external {
         _isValidDelegateAndProtocolNotPaused();
-        require(newLockupPeriod <= lockupPeriod, "Pool:INVALID_VALUE");
+        require(newLockupPeriod <= lockupPeriod, "P:INVALID_VALUE");
         lockupPeriod = newLockupPeriod;
         emit LockupPeriodSet(newLockupPeriod);
     }
@@ -313,7 +313,7 @@ contract Pool is PoolFDT {
     */
     function setStakingFee(uint256 newStakingFee) external {
         _isValidDelegateAndProtocolNotPaused();
-        require(newStakingFee.add(delegateFee) <= 10_000, "Pool:INVALID_FEE");
+        require(newStakingFee.add(delegateFee) <= 10_000, "P:INVALID_FEE");
         stakingFee = newStakingFee;
         emit StakingFeeSet(newStakingFee);
     }
@@ -375,7 +375,7 @@ contract Pool is PoolFDT {
     function deposit(uint256 amt) external {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
-        require(isDepositAllowed(amt), "Pool:NOT_ALLOWED");
+        require(isDepositAllowed(amt), "P:DEPOSIT_NOT_ALLOWED");
 
         withdrawCooldown[msg.sender] = uint256(0);  // Reset withdrawCooldown if LP had previously intended to withdraw
 
@@ -410,8 +410,8 @@ contract Pool is PoolFDT {
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
         uint256 wad = _toWad(amt);
-        require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "Pool:WITHDRAW_NOT_ALLOWED");
-        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "Pool:FUNDS_LOCKED");
+        require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "P:WITHDRAW_NOT_ALLOWED");
+        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "P:FUNDS_LOCKED");
 
         _burn(msg.sender, wad);  // Burn the corresponding FDT balance
         withdrawFunds();         // Transfer full entitled interest, decrement `interestSum`
@@ -577,14 +577,14 @@ contract Pool is PoolFDT {
         @param _state Enum of desired Pool state
     */
     function _isValidState(State _state) internal view {
-        require(poolState == _state, "Pool:INVALID_STATE");
+        require(poolState == _state, "P:INVALID_STATE");
     }
 
     /**
         @dev Checks that msg.sender is the Pool Delegate.
     */
     function _isValidDelegate() internal view {
-        require(msg.sender == poolDelegate, "Pool:INVALID_DELEGATE");
+        require(msg.sender == poolDelegate, "P:NOT_DELEGATE");
     }
 
     /**
@@ -614,14 +614,14 @@ contract Pool is PoolFDT {
         @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
     */
     function _isValidDelegateOrAdmin() internal {
-        require(msg.sender == poolDelegate || admins[msg.sender], "Pool:UNAUTHORIZED");
+        require(msg.sender == poolDelegate || admins[msg.sender], "P:NOT_DELEGATE_OR_ADMIN");
     }
 
     /**
         @dev Function to block functionality of functions when protocol is in a paused state.
     */
     function _whenProtocolNotPaused() internal {
-        require(!_globals(superFactory).protocolPaused(), "Pool:PROTOCOL_PAUSED");
+        require(!_globals(superFactory).protocolPaused(), "P:PROTOCOL_PAUSED");
     }
 
     /**

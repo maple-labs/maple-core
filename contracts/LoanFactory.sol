@@ -151,14 +151,14 @@ contract LoanFactory is Pausable {
         @dev Checks that msg.sender is the Governor.
     */
     function _isValidGovernor() internal view {
-        require(msg.sender == globals.governor(), "LF:INVALID_GOVERNOR");
+        require(msg.sender == globals.governor(), "LF:NOT_GOV");
     }
 
     /**
         @dev Checks that msg.sender is the Governor or a Loan Factory Admin.
     */
     function _isValidGovernorOrAdmin() internal {
-        require(msg.sender == globals.governor() || admins[msg.sender], "LF:UNAUTHORIZED");
+        require(msg.sender == globals.governor() || admins[msg.sender], "LF:NOT_GOV_OR_ADMIN");
     }
 
     /**
