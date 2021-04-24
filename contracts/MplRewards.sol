@@ -56,7 +56,7 @@ contract MplRewards is Ownable {
     }
 
     function _notPaused() internal view {
-        require(!paused, "R:CONTRACT_PAUSED");
+        require(!paused, "R:PAUSED");
     }
 
     function totalSupply() external view returns (uint256) {
@@ -93,7 +93,7 @@ contract MplRewards is Ownable {
     function stake(uint256 amount) external {
         _notPaused();
         _updateReward(msg.sender);
-        require(amount > 0, "R:STAKE_EQ_ZERO");
+        require(amount > 0, "R:ZERO_STAKE");
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -106,7 +106,7 @@ contract MplRewards is Ownable {
     function withdraw(uint256 amount) public {
         _notPaused();
         _updateReward(msg.sender);
-        require(amount > 0, "R:WITHDRAW_EQ_ZERO");
+        require(amount > 0, "R:ZERO_WITHDRAW");
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);
@@ -194,7 +194,7 @@ contract MplRewards is Ownable {
     */
     function setPaused(bool _paused) external onlyOwner {
         // Ensure we're actually changing the state before we do anything
-        require(_paused != paused, "R:ALREADY_IN_SAME_STATE");
+        require(_paused != paused, "R:ALREADY_SET");
 
         // Set our paused state.
         paused = _paused;

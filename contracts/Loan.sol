@@ -145,11 +145,11 @@ contract Loan is FDT, Pausable {
 
         // Perform validity cross-checks
         require(globals.isValidLiquidityAsset(_liquidityAsset),   "L:INVALID_LIQ_ASSET");
-        require(globals.isValidCollateralAsset(_collateralAsset), "L:INVALID_COLLATERAL_ASSET");
+        require(globals.isValidCollateralAsset(_collateralAsset), "L:INVALID_COL_ASSET");
 
-        require(specs[2] != uint256(0),               "L:PID_EQ_ZERO");
+        require(specs[2] != uint256(0),               "L:ZERO_PID");
         require(specs[1].mod(specs[2]) == uint256(0), "L:INVALID_TERM_DAYS");
-        require(specs[3] > uint256(0),                "L:REQUEST_AMT_EQ_ZERO");
+        require(specs[3] > uint256(0),                "L:ZERO_REQUEST_AMT");
 
         borrower        = _borrower;
         liquidityAsset  = IERC20(_liquidityAsset);
@@ -363,7 +363,7 @@ contract Loan is FDT, Pausable {
     function triggerDefault() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
-        require(LoanLib.canTriggerDefault(nextPaymentDue, defaultGracePeriod, superFactory, balanceOf(msg.sender), totalSupply()), "L:FAILED_TO_LIQUIDATE");
+        require(LoanLib.canTriggerDefault(nextPaymentDue, defaultGracePeriod, superFactory, balanceOf(msg.sender), totalSupply()), "L:FAILED_TO_LIQ");
 
         // Pull collateralAsset from CollateralLocker, swap to liquidityAsset, and hold custody of resulting liquidityAsset in Loan
         (amountLiquidated, amountRecovered) = LoanLib.liquidateCollateral(collateralAsset, address(liquidityAsset), superFactory, collateralLocker);
@@ -512,7 +512,7 @@ contract Loan is FDT, Pausable {
         @dev Function to block functionality of functions when protocol is in a paused state.
     */
     function _whenProtocolNotPaused() internal {
-        require(!_globals(superFactory).protocolPaused(), "L:PROTOCOL_PAUSED");
+        require(!_globals(superFactory).protocolPaused(), "L:PROTO_PAUSED");
     }
 
     /**

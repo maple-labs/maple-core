@@ -181,18 +181,19 @@ contract Pool is PoolFDT {
         @dev It emits a `Claim` event.
         @param  loan      Address of the loan to claim from
         @param  dlFactory The DebtLockerFactory (always maps to a single debt locker)
-        @return [0] = Total amount claimed
-                [1] = Interest  portion claimed
-                [2] = Principal portion claimed
-                [3] = Fee       portion claimed
-                [4] = Excess    portion claimed
-                [5] = Recovered portion claimed (from liquidations)
-                [6] = Default suffered
+        @return claimInfo   The claim details.
+                claimInfo [0] = Total amount claimed
+                claimInfo [1] = Interest  portion claimed
+                claimInfo [2] = Principal portion claimed
+                claimInfo [3] = Fee       portion claimed
+                claimInfo [4] = Excess    portion claimed
+                claimInfo [5] = Recovered portion claimed (from liquidations)
+                claimInfo [6] = Default suffered
     */
-    function claim(address loan, address dlFactory) external returns(uint256[7] memory) {
+    function claim(address loan, address dlFactory) external returns(uint256[7] memory claimInfo) {
         _whenProtocolNotPaused();
         _isValidDelegateOrAdmin();
-        uint256[7] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
+        claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
         (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
 
@@ -232,7 +233,7 @@ contract Pool is PoolFDT {
 
         emit Claim(loan, interestClaim, principalClaim, claimInfo[3], stakeLockerPortion, poolDelegatePortion);
 
-        return claimInfo;
+        // TODO: Discuss with offchain team about requirements for return
     }
 
     /**
@@ -442,14 +443,14 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        if (withdrawableFunds > uint256(0)) {
-            _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
-            _emitBalanceUpdatedEvent();
+        if (withdrawableFunds == uint256(0)) return;
 
-            interestSum = interestSum.sub(withdrawableFunds);
+        _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
+        _emitBalanceUpdatedEvent();
 
-            _updateFundsTokenBalance();
-        }
+        interestSum = interestSum.sub(withdrawableFunds);
+
+        _updateFundsTokenBalance();
     }
 
     /**************************/
@@ -476,7 +477,7 @@ contract Pool is PoolFDT {
         @return interest  Interest  amount claimable
     */
     function claimableFunds(address lp) public view returns(uint256 total, uint256 principal, uint256 interest) {
-        (total, principal, interest) =
+        return 
             PoolLib.claimableFunds(
                 withdrawableFundsOf(lp),
                 depositDate[lp],
@@ -508,8 +509,8 @@ contract Pool is PoolFDT {
         @param depositAmt Amount of tokens (i.e liquidityAsset type) user is trying to deposit
     */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
-        bool isValidLP = openToPublic || allowedLiquidityProviders[msg.sender];
-        return _balanceOfLiquidityLocker().add(principalOut).add(depositAmt) <= liquidityCap && isValidLP;
+        return (openToPublic || allowedLiquidityProviders[msg.sender]) &&
+               _balanceOfLiquidityLocker().add(principalOut).add(depositAmt) <= liquidityCap;
     }
 
     /**
@@ -621,7 +622,7 @@ contract Pool is PoolFDT {
         @dev Function to block functionality of functions when protocol is in a paused state.
     */
     function _whenProtocolNotPaused() internal {
-        require(!_globals(superFactory).protocolPaused(), "P:PROTOCOL_PAUSED");
+        require(!_globals(superFactory).protocolPaused(), "P:PROTO_PAUSED");
     }
 
     /**

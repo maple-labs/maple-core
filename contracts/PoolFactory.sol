@@ -68,8 +68,8 @@ contract PoolFactory is Pausable {
         _whenProtocolNotPaused();
         {
             IGlobals _globals = globals;
-            require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PF:INVALID_LL_FACTORY");
-            require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PF:INVALID_SL_FACTORY");
+            require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PF:INVALID_LLF");
+            require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PF:INVALID_SLF");
             require(_globals.isValidPoolDelegate(msg.sender),                         "PF:NOT_DELEGATE");
         }
 
@@ -154,6 +154,6 @@ contract PoolFactory is Pausable {
         @dev Function to determine if protocol is paused/unpaused.
     */
     function _whenProtocolNotPaused() internal {
-        require(!globals.protocolPaused(), "PF:PROTOCOL_PAUSED");
+        require(!globals.protocolPaused(), "PF:PROTO_PAUSED");
     }
 }

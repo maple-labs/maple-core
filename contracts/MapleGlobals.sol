@@ -166,7 +166,7 @@ contract MapleGlobals {
      */
     function setAdmin(address newAdmin) external {
         require(msg.sender == governor && admin != address(0), "MG:NOT_GOV_OR_ADMIN");
-        require(!protocolPaused, "MG:PROCOTOL_PAUSED");
+        require(!protocolPaused, "MG:PROTO_PAUSED");
         admin = newAdmin;
         emit AdminSet(newAdmin);
     }
@@ -231,7 +231,7 @@ contract MapleGlobals {
         @param valid        The validity of subFactory within context of superFactory
     */
     function setValidSubFactory(address superFactory, address subFactory, bool valid) external isGovernor {
-        require(isValidLoanFactory[superFactory] || isValidPoolFactory[superFactory], "MG:SUPER_FACTORY_NOT_VALID");
+        require(isValidLoanFactory[superFactory] || isValidPoolFactory[superFactory], "MG:INVALID_SUPER_F");
         validSubFactories[superFactory][subFactory] = valid;
     }
 
@@ -320,7 +320,7 @@ contract MapleGlobals {
         @param _mapleTreasury New MapleTreasury address
     */
     function setMapleTreasury(address _mapleTreasury) external isGovernor {
-        require(_mapleTreasury != address(0), "MG:ZERO_ADDRESS");
+        require(_mapleTreasury != address(0), "MG:ZERO_ADDR");
         mapleTreasury = _mapleTreasury;
         emit GlobalsAddressSet("MAPLE_TREASURY", _mapleTreasury);
     }
@@ -388,7 +388,7 @@ contract MapleGlobals {
         @param _pendingGovernor Address of new Governor
     */
     function setPendingGovernor(address _pendingGovernor) external isGovernor {
-        require(_pendingGovernor != address(0), "MG:ZERO_ADDRESS_GOVERNOR");
+        require(_pendingGovernor != address(0), "MG:ZERO_ADDR");
         pendingGovernor = _pendingGovernor;
         emit PendingGovernorSet(_pendingGovernor);
     }
@@ -398,7 +398,7 @@ contract MapleGlobals {
         @dev It emits a `GovernorAccepted` event.
     */
     function acceptGovernor() external {
-        require(msg.sender == pendingGovernor, "MG:NOT_PENDING_GOVERNOR");
+        require(msg.sender == pendingGovernor, "MG:NOT_PENDING_GOV");
         governor = pendingGovernor;
         pendingGovernor = address(0);
         emit GovernorAccepted(governor);
@@ -446,6 +446,6 @@ contract MapleGlobals {
     /************************/
 
     function _checkPercentageRange(uint256 percentage) internal {
-        require(percentage >= uint256(0) && percentage <= uint256(10_000), "MG:PCT_BOUND_CHECK");
+        require(percentage <= uint256(10_000), "MG:PCT_OOB");
     }
 }

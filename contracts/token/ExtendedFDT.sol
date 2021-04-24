@@ -49,27 +49,26 @@ abstract contract ExtendedFDT is BasicFDT {
                 and try to distribute it in the next distribution
     */
     function _distributeLosses(uint256 value) internal {
-        require(totalSupply() > 0, "FDT:SUPPLY_EQ_ZERO");
+        require(totalSupply() > 0, "FDT:ZERO_SUPPLY");
 
-        if (value > 0) {
-            lossesPerShare = lossesPerShare.add(value.mul(pointsMultiplier) / totalSupply());
-            emit LossesDistributed(msg.sender, value);
-            emit LossesPerShareUpdated(lossesPerShare);
-        }
+        if (value == 0) return;
+
+        lossesPerShare = lossesPerShare.add(value.mul(pointsMultiplier) / totalSupply());
+        emit LossesDistributed(msg.sender, value);
+        emit LossesPerShareUpdated(lossesPerShare);
     }
 
     /**
         @dev Prepares losses withdrawal.
         @dev It emits a `LossesWithdrawn` event if the amount of withdrawn losses is greater than 0.
+        @return recognizableDividend The amount of diviend losses that can be recognized.
     */
-    function _prepareLossesWithdraw() internal returns (uint256) {
-        uint256 _recognizableDividend = recognizableLossesOf(msg.sender);
+    function _prepareLossesWithdraw() internal returns (uint256 recognizableDividend) {
+        recognizableDividend = recognizableLossesOf(msg.sender);
 
-        recognizedLosses[msg.sender] = recognizedLosses[msg.sender].add(_recognizableDividend);
+        recognizedLosses[msg.sender] = recognizedLosses[msg.sender].add(recognizableDividend);
 
-        emit LossesRecognized(msg.sender, _recognizableDividend, recognizedLosses[msg.sender]);
-
-        return _recognizableDividend;
+        emit LossesRecognized(msg.sender, recognizableDividend, recognizedLosses[msg.sender]);
     }
 
     /**
@@ -168,9 +167,9 @@ abstract contract ExtendedFDT is BasicFDT {
     function updateLossesReceived() public virtual {
         int256 newLosses = _updateLossesBalance();
 
-        if (newLosses > 0) {
-            _distributeLosses(newLosses.toUint256Safe());
-        }
+        if (newLosses <= 0) return;
+
+        _distributeLosses(newLosses.toUint256Safe());
     }
 
     /**

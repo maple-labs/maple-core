@@ -93,7 +93,7 @@ contract MapleTreasury {
         @param asset The ERC-20 asset to convert to fundsToken
     */
     function convertERC20(address asset) isGovernor public {
-        require(asset != fundsToken, "MT:ASSET_EQUALS_FUNDS_TOKEN");
+        require(asset != fundsToken, "MT:ASSET_IS_FUNDS_TOKEN");
 
         IGlobals _globals = IGlobals(globals);
 

@@ -29,7 +29,7 @@ contract DebtLocker {
         @dev Checks that msg.sender is the Pool.
     */
     modifier isPool() {
-        require(msg.sender == pool, "DL:NOT_POOL");
+        require(msg.sender == pool, "DL:NOT_P");
         _;
     }
 

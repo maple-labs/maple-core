@@ -22,7 +22,7 @@ contract LiquidityLocker {
         @dev Checks that msg.sender is the Pool.
     */
     modifier isPool() {
-        require(msg.sender == pool, "LL:NOT_POOL");
+        require(msg.sender == pool, "LL:NOT_P");
         _;
     }
 
@@ -32,7 +32,7 @@ contract LiquidityLocker {
         @param amt Amount of liquidityAsset to transfer
     */
     function transfer(address dst, uint256 amt) external isPool {
-        require(dst != address(0), "LL:NULL_TRANSFER_DST");
+        require(dst != address(0), "LL:NULL_DST");
         liquidityAsset.safeTransfer(dst, amt);
     }
 

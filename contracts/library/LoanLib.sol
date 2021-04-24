@@ -43,7 +43,7 @@ library LoanLib {
         IGlobals globals = _globals(superFactory);
 
         // Only callable if time has passed drawdown grace period, set in MapleGlobals
-        require(block.timestamp > createdAt.add(globals.fundingPeriod()), "L:FUNDING_PERIOD_NOT_FINISHED");
+        require(block.timestamp > createdAt.add(globals.fundingPeriod()), "L:STILL_FUNDING_PERIOD");
 
         uint256 preBal = liquidityAsset.balanceOf(address(this));  // Account for existing balance in Loan
 

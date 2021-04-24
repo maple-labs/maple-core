@@ -65,7 +65,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         require(
             (msg.sender != IPool(pool).poolDelegate() && IPool(pool).isPoolFinalized()) ||
             !IPool(pool).isPoolFinalized(),
-            "SL:ERR_STAKE_LOCKED"
+            "SL:STAKE_LOCKED"
         );
         _;
     }
@@ -82,7 +82,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Checks that msg.sender is the Pool.
     */
     modifier isPool() {
-        require(msg.sender == pool, "SL:NOT_POOL");
+        require(msg.sender == pool, "SL:NOT_P");
         _;
     }
 
@@ -339,7 +339,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Function to block functionality of functions when protocol is in a paused state.
     */
     function _whenProtocolNotPaused() internal {
-        require(!_globals().protocolPaused(), "SL:PROTOCOL_PAUSED");
+        require(!_globals().protocolPaused(), "SL:PROTO_PAUSED");
     }
 
 }
