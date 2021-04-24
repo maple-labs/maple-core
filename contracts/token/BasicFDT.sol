@@ -37,7 +37,7 @@ abstract contract BasicFDT is IFDT, ERC20 {
                 in a distribution can be less than 1 (base unit).
             We can actually keep track of the undistributed ether in a distribution
                 and try to distribute it in the next distribution.
-     */
+    */
     function _distributeFunds(uint256 value) internal {
         require(totalSupply() > 0, "FDT:SUPPLY_EQ_ZERO");
 
@@ -49,7 +49,7 @@ abstract contract BasicFDT is IFDT, ERC20 {
     }
 
     /**
-        @dev Prepares funds withdrawal
+        @dev Prepares funds withdrawal.
         @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
     */
     function _prepareWithdraw() internal returns (uint256) {
@@ -150,13 +150,13 @@ abstract contract BasicFDT is IFDT, ERC20 {
     }
 
     /**
-        @dev Withdraws all available funds for a token holder
+        @dev Withdraws all available funds for a token holder.
     */
     function withdrawFunds() public virtual override {}
 
     /**
         @dev Updates the current funds token balance
-        and returns the difference of new and previous funds token balances
+             and returns the difference of new and previous funds token balances.
         @return A int256 representing the difference of the new and previous funds token balance
     */
     function _updateFundsTokenBalance() internal virtual returns (int256) {}

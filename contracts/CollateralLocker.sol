@@ -16,13 +16,16 @@ contract CollateralLocker {
         loan            = _loan;
     }
 
+    /**
+        @dev Checks that msg.sender is the Loan.
+    */
     modifier isLoan() {
         require(msg.sender == loan, "CollateralLocker:MSG_SENDER_NOT_LOAN");
         _;
     }
 
     /**
-        @dev Transfers amt of collateralAsset to dst. Only Loan can call this function.
+        @dev Transfers amt of collateralAsset to dst. Only the Loan can call this function.
         @param dst Desintation to transfer collateralAsset to
         @param amt Amount of collateralAsset to transfer
     */

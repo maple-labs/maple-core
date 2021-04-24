@@ -179,7 +179,7 @@ contract Loan is FDT, Pausable {
     /**************************/
 
     /**
-        @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from `Ready` to `Active`.
+        @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from `Ready` to `Active`. Only the Loan Borrower can call this function.
         @param amt Amount of liquidityAsset borrower draws down, remainder is returned to Loan where it can be claimed back by LoanFDT holders.
     */
     function drawdown(uint256 amt) external {
@@ -306,7 +306,8 @@ contract Loan is FDT, Pausable {
     /************************/
 
     /**
-        @dev Fund this loan and mint LoanFDTs for mintTo (DebtLocker in the case of Pool funding)
+        @dev Fund this loan and mint LoanFDTs for mintTo (DebtLocker in the case of Pool funding).
+             Only Liquidity Locker using valid/approved Pool can call this function.
         @param  amt    Amount to fund the loan
         @param  mintTo Address that LoanFDTs are minted to
     */
@@ -344,6 +345,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Trigger a default if a Loan is in a condition where a default can be triggered, liquidating all collateral and updating accounting.
+             Only the Loan can call this function.
     */
     function triggerDefault() external {
         _whenProtocolNotPaused();
@@ -386,7 +388,7 @@ contract Loan is FDT, Pausable {
     /***********************/
 
     /**
-        @dev Triggers paused state. Halts functionality for certain functions.
+        @dev Triggers paused state. Halts functionality for certain functions. Only the Loan Borrower or a Loan Admin can call this function.
     */
     function pause() external {
         _isValidBorrowerOrAdmin();
@@ -394,7 +396,7 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev Triggers unpaused state. Returns functionality for certain functions.
+        @dev Triggers unpaused state. Returns functionality for certain functions. Only the Loan Borrower or a Loan Admin can call this function.
     */
     function unpause() external {
         _isValidBorrowerOrAdmin();
@@ -402,7 +404,7 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev Set admin.
+        @dev Set admin. Only the Loan Borrower can call this function.
         @param newAdmin New admin address
         @param allowed  Status of an admin
     */
@@ -417,7 +419,7 @@ contract Loan is FDT, Pausable {
     /**************************/
 
     /**
-        @dev Transfer any locked funds to the governor.
+        @dev Transfer any locked funds to the governor. Only the Governor can call this function.
         @param token Address of the token that need to reclaimed.
      */
     function reclaimERC20(address token) external {
@@ -498,7 +500,7 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev Function to determine if msg.sender is eligible to trigger pause/unpause.
+        @dev Checks that msg.sender is the Loan Borrower or a Loan Admin.
     */
     function _isValidBorrowerOrAdmin() internal {
         require(msg.sender == borrower || admins[msg.sender], "Pool:UNAUTHORIZED");
@@ -541,14 +543,14 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev Utility to return if msg.sender is the Loan borrower.
+        @dev Checks that msg.sender is the Loan Borrower.
     */
     function _isValidBorrower() internal view {
         require(msg.sender == borrower, "Loan:INVALID_BORROWER");
     }
 
     /**
-        @dev Utility to return if lender is using an approved Pool to fund the loan.
+        @dev Checks that msg.sender is a Lender (Liquidity Locker) that is using an approved Pool to fund the loan.
     */
     function _isValidPool() internal view {
         address pool        = ILiquidityLocker(msg.sender).pool();

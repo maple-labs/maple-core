@@ -25,6 +25,9 @@ contract DebtLocker {
     uint256 public lastDefaultSuffered;  // Loan total default suffered at last time claim() was called
     uint256 public lastAmountRecovered;  // Liquidity asset (a.k.a. loan asset) recovered from liquidation of Loan collateral
 
+    /**
+        @dev Checks that msg.sender is the Pool.
+    */
     modifier isPool() {
         require(msg.sender == pool, "DebtLocker:MSG_SENDER_NOT_POOL");
         _;
@@ -42,7 +45,7 @@ contract DebtLocker {
     }
 
     /**
-        @dev    Claim funds distribution for Loan via FDT.
+        @dev    Claim funds distribution for Loan via FDT. Only the Pool can call this function.
         @return [0] = Total Claimed
                 [1] = Interest Claimed
                 [2] = Principal Claimed
@@ -119,7 +122,7 @@ contract DebtLocker {
     }
 
     /**
-        @dev Liquidate a loan that is held by this contract. Only called by the pool contract.
+        @dev Liquidate a loan that is held by this contract. Only the Pool can call this function.
     */
     function triggerDefault() external isPool {
         loan.triggerDefault();
