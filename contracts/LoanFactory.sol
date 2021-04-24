@@ -151,20 +151,20 @@ contract LoanFactory is Pausable {
         @dev Checks that msg.sender is the Governor.
     */
     function _isValidGovernor() internal view {
-        require(msg.sender == globals.governor(), "PoolFactory:INVALID_GOVERNOR");
+        require(msg.sender == globals.governor(), "LF:INVALID_GOVERNOR");
     }
 
     /**
         @dev Checks that msg.sender is the Governor or a Loan Factory Admin.
     */
     function _isValidGovernorOrAdmin() internal {
-        require(msg.sender == globals.governor() || admins[msg.sender], "PoolFactory:UNAUTHORIZED");
+        require(msg.sender == globals.governor() || admins[msg.sender], "LF:UNAUTHORIZED");
     }
 
     /**
         @dev Function to determine if protocol is paused/unpaused.
     */
     function _whenProtocolNotPaused() internal {
-        require(!globals.protocolPaused(), "PoolFactory:PROTOCOL_PAUSED");
+        require(!globals.protocolPaused(), "LF:PROTOCOL_PAUSED");
     }
 }
