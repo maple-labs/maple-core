@@ -15,7 +15,7 @@ interface IFDT {
     function withdrawFunds() external;
 
     /**
-        @dev This event emits when new funds are distributed
+        @dev This event emits when new funds are distributed.
         @param by the address of the sender who distributed funds
         @param fundsDistributed the amount of funds received for distribution
     */

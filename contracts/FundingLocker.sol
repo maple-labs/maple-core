@@ -16,6 +16,9 @@ contract FundingLocker {
         loan           = _loan;
     }
 
+    /**
+        @dev Checks that msg.sender is the Loan.
+    */
     modifier isLoan() {
         require(msg.sender == loan, "FundingLocker:MSG_SENDER_NOT_LOAN");
         _;

@@ -8,7 +8,7 @@ contract UsdOracle {
 
     /**
         @dev Returns the constant USD price.
-     */
+    */
     function getLatestPrice() public pure returns (int256) {
         return USD_PRICE;
     }
