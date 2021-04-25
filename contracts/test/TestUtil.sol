@@ -624,6 +624,46 @@ contract TestUtil is DSTest {
             constrictToRange(collateralRatio, 0, 10_000)                // Collateral ratio between 0 and 100%
         ];
     }
+    
+    function toWad(uint256 usdAmt) internal returns (uint256) {
+        return usdAmt * WAD / USD;
+    }
+
+    function toApy(uint256 yield, uint256 stake, uint256 dTime) internal returns (uint256) {
+
+        emit Debug("yield", yield);
+        emit Debug("stake", stake);
+        emit Debug("dTime", dTime);
+        return yield * 10_000 * 365 days / stake / dTime;
+    }
+
+    // Function used to calculate theoretical allotments (e.g. interest for FDTs)
+    function calcPortion(uint256 amt, uint256 totalClaim, uint256 totalAmt) internal pure returns (uint256) {
+        return amt == uint256(0) ? uint256(0) : amt.mul(totalClaim).div(totalAmt);
+    }
+    /*****************************/
+    /*** Yield Farming Helpers ***/
+    /*****************************/
+    function setUpFarming(uint256 totalMpl, uint256 rewardsDuration) internal {
+        mpl.transfer(address(gov), totalMpl);              // Transfer MPL to MplRewards
+        gov.transfer(mpl, address(mplRewards), totalMpl);  // Transfer MPL to MplRewards
+        gov.setRewardsDuration(rewardsDuration);
+        gov.notifyRewardAmount(totalMpl);
+    }
+
+    function stakeIntoFarm(Farmer farmer, uint256 amt) internal{
+        farmer.increaseCustodyAllowance(address(pool), address(mplRewards), amt);
+        farmer.stake(amt); 
+    }
+
+    function setUpFarmingAndDeposit(uint256 totalMpl, uint256 rewardsDuration, uint256 amt1, uint256 amt2, uint256 amt3) internal {
+        setUpFarming(totalMpl, rewardsDuration);
+
+        stakeIntoFarm(fay, amt1);
+        stakeIntoFarm(fez, amt2);
+        stakeIntoFarm(fox, amt3);
+    }
+    
 
     function toApy(uint256 yield, uint256 stake, uint256 dTime) internal returns (uint256) {
 
