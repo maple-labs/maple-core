@@ -42,9 +42,9 @@ dapp update
 To alter number of fuzz runs, change the `--fuzz-runs` flag in `test.sh`. Note: Number of `--fuzz-runs` in `test.sh` should remain constant on push. Only change for local testing if needed.
 
 ## Audit reports
-|Auditor   | Report link  |
+| Auditor | Report link  |
 |---|---|
-| Pecksheild  |  [Peckshield-Audit-Report-Maple-v1.0](https://gateway.pinata.cloud/ipfs/QmQyijD1Kega8trv5cosxTtuBgevk875ja85fqp6pMr2Em/PeckShield-Audit-Report-Maple-v1.0.pdf) |
+| Peckshield  |  [Peckshield-Audit-Report-Maple-v1.0](https://gateway.pinata.cloud/ipfs/QmQyijD1Kega8trv5cosxTtuBgevk875ja85fqp6pMr2Em/PeckShield-Audit-Report-Maple-v1.0.pdf) |
 
 ## Join us on Discord
 
