@@ -397,36 +397,6 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLocker.balanceOf(address(sam)),     0 * WAD);
     }
 
-    function setUpLoanMakeOnePaymentAndDefault() public returns (uint256 interestPaid) {
-        // Fund the pool
-        mint("USDC", address(leo), 20_000_000 * USD);
-        leo.approve(USDC, address(pool), MAX_UINT);
-        leo.deposit(address(pool), 10_000_000 * USD);
-
-        // Fund the loan
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), 1_000_000 * USD);
-        uint cReq = loan.collateralRequiredForDrawdown(1_000_000 * USD);
-
-        // Drawdown loan
-        mint("WETH", address(bob), cReq);
-        bob.approve(WETH, address(loan), MAX_UINT);
-        bob.approve(USDC, address(loan), MAX_UINT);
-        bob.drawdown(address(loan), 1_000_000 * USD);
-
-        uint256 preBal = IERC20(USDC).balanceOf(address(bob));
-        bob.makePayment(address(loan));  // Make one payment to register interest for Staker
-        interestPaid = preBal.sub(IERC20(USDC).balanceOf(address(bob)));
-
-        // Warp to late payment
-        uint256 start = block.timestamp;
-        uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 defaultGracePeriod = globals.defaultGracePeriod();
-        hevm.warp(start + nextPaymentDue + defaultGracePeriod + 1);
-
-        // Trigger default
-        pat.triggerDefault(address(pool), address(loan), address(dlFactory));
-    }
-
     function test_staker_fdt_accounting(uint256 stakeAmount) public {
         TestObj memory stakeLockerBal;        // StakeLocker total balance of BPTs
         TestObj memory fdtTotalSupply;        // Total Supply of FDTs

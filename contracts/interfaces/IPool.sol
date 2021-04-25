@@ -10,6 +10,8 @@ interface IPool {
 
     function transfer(address, uint256) external;
 
+    function increaseCustodyAllowance(address, uint256) external;
+
     function poolState() external view returns(uint256);
 
     function deactivate() external;
