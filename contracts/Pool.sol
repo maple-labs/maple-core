@@ -455,7 +455,9 @@ contract Pool is PoolFDT {
      // TODO: Check on how much you can allow
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
         PoolLib.zeroCheck(custodian, amount);
-        uint256 oldAllowance = custodyAllowance[msg.sender][custodian];
+        uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
+        uint256 oldTotalAllowance = totalCustodyAllowance[msg.sender];
+        
         custodyAllowance[msg.sender][custodian] = oldAllowance.add(amount);
         totalCustodyAllowance[msg.sender]       = totalCustodyAllowance[msg.sender].add(amount);
         emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, amount);
