@@ -31,7 +31,7 @@ library PoolLib {
     /***************************************/
 
     /** 
-        @dev Conducts sanity checks for Pools in the constructor
+        @dev Conducts sanity checks for Pools in the constructor.
         @param globals        Address of MapleGlobals
         @param liquidityAsset Asset used by Pool for liquidity to fund loans
         @param stakeAsset     Asset escrowed in StakeLocker
@@ -221,7 +221,7 @@ library PoolLib {
     }
 
     /**
-        @dev View function to indicate if msg.sender is within their withdraw window
+        @dev View function to indicate if msg.sender is within their withdraw window.
     */
     function isWithdrawAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
         return block.timestamp - (withdrawCooldown + globals.lpCooldownPeriod()) <= globals.lpWithdrawWindow();
@@ -279,7 +279,7 @@ library PoolLib {
     /**********************************/
 
     /**
-        @dev Transfer any locked funds to the governor.
+        @dev Transfer any locked funds to the governor. Only the Governor can call this function.
         @param token Address of the token that need to reclaimed.
         @param liquidityAsset Address of liquidity asset that is supported by the pool.
         @param globals Instance of the `MapleGlobals` contract.

@@ -45,7 +45,7 @@ contract ChainlinkOracle is Ownable {
 
 
     /**
-        @dev Updates aggregator address.
+        @dev Updates aggregator address. Only the contract Owner can call this fucntion.
         @param aggregator Address of chainlink aggregator
     */
     function changeAggregator(address aggregator) external onlyOwner {
@@ -70,7 +70,8 @@ contract ChainlinkOracle is Ownable {
     }
 
     /**
-        @dev Set a manual price. NOTE: this can only be used if manualOverride == true
+        @dev Set a manual price.  Only the contract Owner can call this fucntion.
+             NOTE: this can only be used if manualOverride == true.
         @param _price Price to set
     */
     function setManualPrice(int256 _price) public onlyOwner {
@@ -79,7 +80,7 @@ contract ChainlinkOracle is Ownable {
     }
 
     /**
-        @dev Set manual override, allowing for manual price setting.
+        @dev Set manual override, allowing for manual price setting. Only the contract Owner can call this fucntion.
         @param _override Whether to use the manual override price or not
     */
     function setManualOverride(bool _override) public onlyOwner {

@@ -22,7 +22,7 @@ abstract contract FDT is BasicFDT {
     }
 
     /**
-        @dev Withdraws all available funds for a token holder
+        @dev Withdraws all available funds for a token holder.
     */
     function withdrawFunds() public virtual override {
         uint256 withdrawableFunds = _prepareWithdraw();
@@ -36,7 +36,7 @@ abstract contract FDT is BasicFDT {
 
     /**
         @dev Updates the current funds token balance
-        and returns the difference of new and previous funds token balances
+             and returns the difference of new and previous funds token balances.
         @return A int256 representing the difference of the new and previous funds token balance
     */
     function _updateFundsTokenBalance() internal virtual override returns (int256) {

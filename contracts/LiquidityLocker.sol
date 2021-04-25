@@ -18,6 +18,9 @@ contract LiquidityLocker {
         pool           = _pool;
     }
 
+    /**
+        @dev Checks that msg.sender is the Pool.
+    */
     modifier isPool() {
         require(msg.sender == pool, "LiquidityLocker:MSG_SENDER_NOT_POOL");
         _;

@@ -123,6 +123,9 @@ contract MplRewards is Ownable {
         getReward();
     }
 
+    /**
+        @dev Only the contract Owner may call this.
+    */
     function notifyRewardAmount(uint256 reward) external onlyOwner {
         _updateReward(address(0));
         if (block.timestamp >= periodFinish) {
@@ -145,19 +148,27 @@ contract MplRewards is Ownable {
         emit RewardAdded(reward);
     }
 
-    // End rewards emission earlier
+    /**
+        @dev End rewards emission earlier. Only the contract Owner may call this.
+    */
     function updatePeriodFinish(uint timestamp) external onlyOwner {
         _updateReward(address(0));
         periodFinish = timestamp;
     }
 
-    // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
+    /**
+        @dev Added to support recovering tokens unintentionally sent to this contract by users.
+             Only the contract Owner may call this.
+    */
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
         require(tokenAddress != address(stakingToken), "REWARDS:CANNOT_RECOVER_STAKE_TOKEN");
         IERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 
+    /**
+        @dev Only the contract Owner may call this.
+    */
     function setRewardsDuration(uint256 _rewardsDuration) external onlyOwner {
         require(block.timestamp > periodFinish, "REWARDS:PERIOD_NOT_FINISHED");
         rewardsDuration = _rewardsDuration;
@@ -165,7 +176,7 @@ contract MplRewards is Ownable {
     }
 
     /**
-        @dev Change the paused state of the contract. Only the contract owner may call this.
+        @dev Change the paused state of the contract. Only the contract Owner may call this.
     */
     function setPaused(bool _paused) external onlyOwner {
         // Ensure we're actually changing the state before we do anything

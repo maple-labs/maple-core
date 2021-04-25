@@ -66,6 +66,9 @@ contract MapleGlobals {
     event               GlobalsAddressSet(bytes32 indexed which, address addr);
     event                  ProtocolPaused(bool pause);
 
+    /**
+        @dev Checks that msg.sender is the Governor.
+    */
     modifier isGovernor() {
         require(msg.sender == governor, "MapleGlobals:MSG_SENDER_NOT_GOVERNOR");
         _;
@@ -101,15 +104,17 @@ contract MapleGlobals {
 
     /**
         @dev Update the `stakerCooldownPeriod` state variable. This change will affect existing cool down period for the stakers who already intended to unstake.
+             Only the Governor can call this function.
         @param newCooldownPeriod New value for the cool down period.
      */
-        function setStakerCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
+    function setStakerCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
         stakerCooldownPeriod = newCooldownPeriod;
         emit GlobalsParamSet("STAKER_COOLDOWN_PERIOD", newCooldownPeriod);
     }
 
     /**
         @dev Update the `lpCooldownPeriod` state variable. This change will affect existing cool down period for the LPs who already intended to withdraw.
+             Only the Governor can call this function.
         @param newCooldownPeriod New value for the cool down period.
      */
     function setLpCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
@@ -119,6 +124,7 @@ contract MapleGlobals {
 
     /**
         @dev Update the `stakerUnstakeWindow` state variable. This change will affect existing window for the stalers who already applied to unstake.
+             Only the Governor can call this function.
         @param newUnstakeWindow New value for the unstake window.
      */
     function setStakerUnstakeWindow(uint256 newUnstakeWindow) external isGovernor {
@@ -128,6 +134,7 @@ contract MapleGlobals {
 
     /**
         @dev Update the `lpWithdrawWindow` state variable. This change will affect existing window for the LPs who already intended to withdraw.
+             Only the Governor can call this function.
         @param newLpWithdrawWindow New value for the withdraw window.
      */
     function setLpWithdrawWindow(uint256 newLpWithdrawWindow) external isGovernor {
@@ -136,7 +143,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the allowed Uniswap slippage percentage, in basis points. Only Governor can call.
+        @dev Update the allowed Uniswap slippage percentage, in basis points. Only the Governor can call this function.
         @param newMaxSlippage New max slippage percentage (in basis points)
      */
     function setMaxSwapSlippage(uint256 newMaxSlippage) external isGovernor {
@@ -146,7 +153,7 @@ contract MapleGlobals {
     }
 
     /**
-      @dev Set admin.
+      @dev Set admin. Only the Governor can call this function.
       @param newAdmin New admin address
      */
     function setAdmin(address newAdmin) external {
@@ -157,8 +164,8 @@ contract MapleGlobals {
 
     /**
         @dev Update the allowlist for contracts that will be excempt from transfer restrictions (lockup and cooldown).
-        These addresses are reserved for DeFi composability such as yield farming, collateral-based lending on other platforms, etc.
-        Only Governor can call.
+             These addresses are reserved for DeFi composability such as yield farming, collateral-based lending on other platforms, etc.
+             Only the Governor can call this function.
         @param addr  Address of exempt contract.
         @param valid The new bool value for validating addr.
     */
@@ -168,7 +175,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the valid Balancer Pool mapping. Only Governor can call.
+        @dev Update the valid Balancer Pool mapping. Only the Governor can call this function.
         @param balancerPool Address of Balancer Pool contract.
         @param valid        The new bool value for validating Balancer Pool.
     */
@@ -178,9 +185,9 @@ contract MapleGlobals {
     }
 
     /**
-      @dev Pause/unpause the protocol. Only admin user can call.
+      @dev Pause/unpause the protocol. Only the Admin user can call.
       @param pause Boolean flag to switch externally facing functionality in the protocol on/off
-     */
+    */
     function setProtocolPause(bool pause) external {
         require(msg.sender == admin, "MapleGlobals:UNAUTHORIZED");
         protocolPaused = pause;
@@ -188,7 +195,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the valid PoolFactory mapping. Only Governor can call.
+        @dev Update the valid PoolFactory mapping. Only the Governor can call this function.
         @param poolFactory Address of PoolFactory
         @param valid       The new bool value for validating poolFactory
     */
@@ -197,7 +204,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update the valid LoanFactory mapping. Only Governor can call.
+        @dev Update the valid LoanFactory mapping. Only the Governor can call this function.
         @param loanFactory Address of LoanFactory
         @param valid       The new bool value for validating loanFactory.
     */
@@ -206,7 +213,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Set the validity of a subFactory as it relates to a superFactory. Only Governor can call.
+        @dev Set the validity of a subFactory as it relates to a superFactory. Only the Governor can call this function.
         @param superFactory The core factory (e.g. PoolFactory, LoanFactory)
         @param subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory)
         @param valid        The validity of subFactory within context of superFactory
@@ -217,7 +224,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Set the path to swap an asset through Uniswap. Only Governor can call.
+        @dev Set the path to swap an asset through Uniswap. Only the Governor can call this function.
         @param from Asset being swapped
         @param to   Final asset to receive **
         @param mid  Middle asset
@@ -230,7 +237,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update validity of Pool Delegate (those allowed to create Pools). Only Governor can call.
+        @dev Update validity of Pool Delegate (those allowed to create Pools). Only the Governor can call this function.
         @param delegate Address to manage permissions for
         @param valid    New permissions of address
     */
@@ -239,7 +246,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Set the validity of an asset for collateral. Only Governor can call.
+        @dev Set the validity of an asset for collateral. Only the Governor can call this function.
         @param asset The asset to assign validity to
         @param valid The new validity of asset as collateral
     */
@@ -249,7 +256,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Set the validity of an asset for loans/liquidity in Pools. Only Governor can call.
+        @dev Set the validity of an asset for loans/liquidity in Pools. Only the Governor can call this function.
         @param asset Address of the valid asset
         @param valid The new validity of asset for loans/liquidity in Pools
     */
@@ -259,7 +266,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Specifiy validity of a calculator contract. Only Governor can call.
+        @dev Specifiy validity of a calculator contract. Only the Governor can call this function.
         @param  calc  Calculator address
         @param  valid Validity of calculator
     */
@@ -268,7 +275,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Adjust investorFee (in basis points). Only Governor can call.
+        @dev Adjust investorFee (in basis points). Only the Governor can call this function.
         @param _fee The fee, e.g., 50 = 0.50%
     */
     function setInvestorFee(uint256 _fee) external isGovernor {
@@ -279,7 +286,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Adjust treasuryFee (in basis points). Only Governor can call.
+        @dev Adjust treasuryFee (in basis points). Only the Governor can call this function.
         @param _fee The fee, e.g., 50 = 0.50%
     */
     function setTreasuryFee(uint256 _fee) external isGovernor {
@@ -290,7 +297,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Set the MapleTreasury contract. Only Governor can call.
+        @dev Set the MapleTreasury contract. Only the Governor can call this function.
         @param _mapleTreasury New MapleTreasury address
     */
     function setMapleTreasury(address _mapleTreasury) external isGovernor {
@@ -300,7 +307,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Adjust defaultGracePeriod. Only Governor can call.
+        @dev Adjust defaultGracePeriod. Only the Governor can call this function.
         @param _defaultGracePeriod Number of seconds to set the grace period to
     */
     function setDefaultGracePeriod(uint256 _defaultGracePeriod) external isGovernor {
@@ -309,7 +316,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Adjust minLoanEquity. Only Governor can call.
+        @dev Adjust minLoanEquity. Only the Governor can call this function.
         @param _minLoanEquity Min percentage of Loan equity an address must have to trigger liquidations.
     */
     function setMinLoanEquity(uint256 _minLoanEquity) external isGovernor {
@@ -319,7 +326,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Adjust fundingPeriod. Only Governor can call.
+        @dev Adjust fundingPeriod. Only the Governor can call this function.
         @param _fundingPeriod Number of seconds to set the drawdown grace period to
     */
     function setFundingPeriod(uint256 _fundingPeriod) external isGovernor {
@@ -328,7 +335,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Adjust the minimum Pool cover required to finalize a Pool. Only Governor can call.
+        @dev Adjust the minimum Pool cover required to finalize a Pool. Only the Governor can call this function.
         @param amt The new minimum swap out required
     */
     function setSwapOutRequired(uint256 amt) external isGovernor {
@@ -338,7 +345,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Update a price feed's oracle.
+        @dev Update a price feed's oracle. Only the Governor can call this function.
         @param asset  Asset to update price for
         @param oracle New oracle to use
     */
@@ -352,7 +359,7 @@ contract MapleGlobals {
     /************************************/
 
     /**
-        @dev Set a new pending Governor. This address can become governor if they accept. Only Governor can call.
+        @dev Set a new pending Governor. This address can become governor if they accept. Only the Governor can call this function.
         @param _pendingGovernor Address of new Governor
     */
     function setPendingGovernor(address _pendingGovernor) external isGovernor {
@@ -362,7 +369,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev Accept the Governor position. Only PendingGovernor can call.
+        @dev Accept the Governor position. Only the Pending Governor can call this function.
     */
     function acceptGovernor() external {
         require(msg.sender == pendingGovernor, "MapleGlobals:NOT_PENDING_GOVERNOR");
