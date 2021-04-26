@@ -451,7 +451,6 @@ contract Pool is PoolFDT {
         @param custodian Address which will act as custodian of given `amount` for a tokenHolder.
         @param amount    Number of FDTs cusodied by the custodian.
      */
-     // TODO: Check on how much you can allow
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
         uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
         uint256 newAllowance      = oldAllowance.add(amount);
