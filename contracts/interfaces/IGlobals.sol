@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 interface IGlobals {
     function governor() external view returns (address);
 
-    function admin() external view returns (address);
+    function globalAdmin() external view returns (address);
 
     function mpl() external view returns (address);
 

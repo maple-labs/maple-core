@@ -760,16 +760,16 @@ contract LoanTest is TestUtil {
         assertEq(afterBalanceWETH - beforeBalanceWETH,  100 * WAD);
     }
 
-    function test_setAdmin() public {
-        // Pause protocol and attempt setAdmin()
+    function test_setLoanAdmin() public {
+        // Pause protocol and attempt setLoanAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!bob.try_setAdmin(address(loan), address(securityAdmin), true));
-        assertTrue(!loan.admins(address(securityAdmin)));
+        assertTrue(!bob.try_setLoanAdmin(address(loan), address(securityAdmin), true));
+        assertTrue(!loan.loanAdmins(address(securityAdmin)));
 
-        // Unpause protocol and setAdmin()
+        // Unpause protocol and setLoanAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(bob.try_setAdmin(address(loan), address(securityAdmin), true));
-        assertTrue(loan.admins(address(securityAdmin)));
+        assertTrue(bob.try_setLoanAdmin(address(loan), address(securityAdmin), true));
+        assertTrue(loan.loanAdmins(address(securityAdmin)));
     }
 
     function repetitivePayment(Loan loan, uint256 numPayments, uint256 paymentCount, uint256 drawdownAmount, uint256 loanPreBal, uint256 oldInterest) internal {

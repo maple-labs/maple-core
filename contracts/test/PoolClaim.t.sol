@@ -35,7 +35,7 @@ contract PoolTest is TestUtil {
         assertTrue(pat.try_claim(address(pool), address(loan), address(dlFactory)));   // Successfully call the `claim()` function
         
         // Admin can claim once added
-        pat.setAdmin(address(pool), address(securityAdmin), true);                                // Add admin to allow to call the `claim()` function
+        pat.setPoolAdmin(address(pool), address(securityAdmin), true);                           // Add admin to allow to call the `claim()` function
         assertTrue(securityAdmin.try_claim(address(pool), address(loan), address(dlFactory)));   // Successfully call the `claim()` function
 
         // Pause protocol and attempt claim()
@@ -47,7 +47,7 @@ contract PoolTest is TestUtil {
         assertTrue(securityAdmin.try_claim(address(pool), address(loan), address(dlFactory)));
 
         // Admin can't claim after removed
-        pat.setAdmin(address(pool), address(securityAdmin), false);                                // Add admin to allow to call the `claim()` function
+        pat.setPoolAdmin(address(pool), address(securityAdmin), false);                           // Add admin to allow to call the `claim()` function
         assertTrue(!securityAdmin.try_claim(address(pool), address(loan), address(dlFactory)));   // Does not have permission to call `claim()` function
     }
 

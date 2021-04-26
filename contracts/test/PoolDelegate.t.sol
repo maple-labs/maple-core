@@ -417,16 +417,16 @@ contract PoolTest is TestUtil {
         assertTrue(IStakeLocker(pool.stakeLocker()).allowed(address(sam)));
     }
 
-    function test_setAdmin() public {
-        // Pause protocol and attempt setAdmin()
+    function test_setPoolAdmin() public {
+        // Pause protocol and attempt setPoolAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!pat.try_setAdmin(address(pool), address(securityAdmin), true));
-        assertTrue(!pool.admins(address(securityAdmin)));
+        assertTrue(!pat.try_setPoolAdmin(address(pool), address(securityAdmin), true));
+        assertTrue(!pool.poolAdmins(address(securityAdmin)));
 
-        // Unpause protocol and setAdmin()
+        // Unpause protocol and setPoolAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(pat.try_setAdmin(address(pool), address(securityAdmin), true));
-        assertTrue(pool.admins(address(securityAdmin)));
+        assertTrue(pat.try_setPoolAdmin(address(pool), address(securityAdmin), true));
+        assertTrue(pool.poolAdmins(address(securityAdmin)));
     }
 
      function test_setStakingFee() public {

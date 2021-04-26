@@ -55,7 +55,7 @@ contract Loan is FDT, Pausable {
     address public immutable premiumCalc;       // The premium calculator for this loan
     address public immutable superFactory;      // The factory that deployed this Loan
 
-    mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
+    mapping(address => bool) public loanAdmins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
 
     uint256 public nextPaymentDue;  // The unix timestamp due date of next payment
 
@@ -87,7 +87,7 @@ contract Loan is FDT, Pausable {
     event   BalanceUpdated(address indexed who, address indexed token, uint256 balance);
     event         Drawdown(uint256 drawdownAmt);
     event LoanStateChanged(State state);
-    event         AdminSet(address admin, bool allowed);
+    event     LoanAdminSet(address loanAdmin,   bool allowed);
     
     event PaymentMade(
         uint totalPaid,
@@ -405,7 +405,7 @@ contract Loan is FDT, Pausable {
         @dev Triggers paused state. Halts functionality for certain functions. Only the Loan Borrower or a Loan Admin can call this function.
     */
     function pause() external {
-        _isValidBorrowerOrAdmin();
+        _isValidBorrowerOrLoanAdmin();
         super._pause();
     }
 
@@ -413,21 +413,21 @@ contract Loan is FDT, Pausable {
         @dev Triggers unpaused state. Returns functionality for certain functions. Only the Loan Borrower or a Loan Admin can call this function.
     */
     function unpause() external {
-        _isValidBorrowerOrAdmin();
+        _isValidBorrowerOrLoanAdmin();
         super._unpause();
     }
 
     /**
-        @dev Set admin. Only the Loan Borrower can call this function.
-        @dev It emits an `AdminSet` event.
-        @param newAdmin New admin address
-        @param allowed  Status of an admin
+        @dev Set loan admin. Only the Loan Borrower can call this function.
+        @dev It emits a `LoanAdminSet` event.
+        @param newLoanAdmin New loan admin address
+        @param allowed  Status of a loan admin
     */
-    function setAdmin(address newAdmin, bool allowed) external {
+    function setLoanAdmin(address newLoanAdmin, bool allowed) external {
         _whenProtocolNotPaused();
         _isValidBorrower();
-        admins[newAdmin] = allowed;
-        emit AdminSet(newAdmin, allowed);
+        loanAdmins[newLoanAdmin] = allowed;
+        emit LoanAdminSet(newLoanAdmin, allowed);
     }
 
     /**************************/
@@ -518,8 +518,8 @@ contract Loan is FDT, Pausable {
     /**
         @dev Checks that msg.sender is the Loan Borrower or a Loan Admin.
     */
-    function _isValidBorrowerOrAdmin() internal {
-        require(msg.sender == borrower || admins[msg.sender], "L:NOT_BORROWER_OR_ADMIN");
+    function _isValidBorrowerOrLoanAdmin() internal {
+        require(msg.sender == borrower || loanAdmins[msg.sender], "L:NOT_BORROWER_OR_ADMIN");
     }
 
     /**

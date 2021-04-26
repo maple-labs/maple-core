@@ -60,7 +60,7 @@ contract Governor {
     function setValidPoolFactory(address factory, bool valid)                  external { globals.setValidPoolFactory(factory, valid); }
     function setValidSubFactory(address fac, address sub, bool valid)          external { globals.setValidSubFactory(fac, sub, valid); }
     function setMapleTreasury(address _treasury)                               external { globals.setMapleTreasury(_treasury); }
-    function setAdmin(address _admin)                                          external { globals.setAdmin(_admin); }
+    function setGlobalAdmin(address _globalAdmin)                              external { globals.setGlobalAdmin(_globalAdmin); }
     function setPoolDelegateAllowlist(address pd, bool valid)                  external { globals.setPoolDelegateAllowlist(pd, valid); }
     function setInvestorFee(uint256 fee)                                       external { globals.setInvestorFee(fee); }
     function setTreasuryFee(uint256 fee)                                       external { globals.setTreasuryFee(fee); }

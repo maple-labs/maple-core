@@ -279,7 +279,7 @@ contract TestUtil is DSTest {
         createBPool();
 
         gov.setMapleTreasury(address(treasury));
-        gov.setAdmin(address(emergencyAdmin));
+        gov.setGlobalAdmin(address(emergencyAdmin));
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
         gov.setGovTreasury(treasury);
         fakeGov.setGovTreasury(treasury);

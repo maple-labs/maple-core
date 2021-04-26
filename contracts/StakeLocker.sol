@@ -271,7 +271,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Triggers paused state. Halts functionality for certain functions. Only the Pool Delegate or a Pool Admin can call this function.
     */
     function pause() external {
-        _isValidAdminOrPoolDelegate();
+        _isValidPoolDelegateOrPoolAdmin();
         super._pause();
     }
 
@@ -279,7 +279,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Triggers unpaused state. Returns functionality for certain functions. Only the Pool Delegate or a Pool Admin can call this function.
     */
     function unpause() external {
-        _isValidAdminOrPoolDelegate();
+        _isValidPoolDelegateOrPoolAdmin();
         super._unpause();
     }
 
@@ -307,8 +307,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**
         @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
     */
-    function _isValidAdminOrPoolDelegate() internal view {
-        require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).admins(msg.sender), "SL:NOT_DELEGATE_OR_ADMIN");
+    function _isValidPoolDelegateOrPoolAdmin() internal view {
+        require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).poolAdmins(msg.sender), "SL:NOT_DELEGATE_OR_ADMIN");
     }
 
     /**

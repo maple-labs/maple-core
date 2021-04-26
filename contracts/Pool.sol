@@ -52,7 +52,7 @@ contract Pool is PoolFDT {
 
     mapping(address => uint256)                     public depositDate;                // Used for withdraw penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;                // Address of the `DebtLocker` contract corresponds to [Loan][DebtLockerFactory].
-    mapping(address => bool)                        public admins;                     // Admin addresses who have permission to do certain operations in case of disaster mgt.
+    mapping(address => bool)                        public poolAdmins;                 // Pool Admin addresses who have permission to do certain operations in case of disaster mgt.
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
     mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`
 
@@ -66,7 +66,7 @@ contract Pool is PoolFDT {
     event   PoolStateChanged(State state);
     event           Cooldown(address indexed lp, uint256 cooldown);
     event PoolOpenedToPublic(bool isOpen);
-    event           AdminSet(address newAdmin, bool allowed);
+    event       PoolAdminSet(address newPoolAdmin,     bool allowed);
     
     event DefaultSuffered(
         address indexed loan,
@@ -192,7 +192,7 @@ contract Pool is PoolFDT {
     */
     function claim(address loan, address dlFactory) external returns(uint256[7] memory claimInfo) {
         _whenProtocolNotPaused();
-        _isValidDelegateOrAdmin();
+        _isValidDelegateOrPoolAdmin();
         claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
         (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
@@ -288,7 +288,7 @@ contract Pool is PoolFDT {
     */
     function setLiquidityCap(uint256 newLiquidityCap) external {
         _whenProtocolNotPaused();
-        _isValidDelegateOrAdmin();
+        _isValidDelegateOrPoolAdmin();
         liquidityCap = newLiquidityCap;
         emit LiquidityCapSet(newLiquidityCap);
     }
@@ -340,15 +340,15 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Set admin. Only the Pool Delegate can call this function.
-        @dev It emits an `AdminSet` event.
-        @param newAdmin new admin address.
-        @param allowed Status of an admin.
+        @dev Set pool admin. Only the Pool Delegate can call this function.
+        @dev It emits a `PoolAdminSet` event.
+        @param newPoolAdmin new pool admin address.
+        @param allowed Status of an pool admin.
     */
-    function setAdmin(address newAdmin, bool allowed) external {
+    function setPoolAdmin(address newPoolAdmin, bool allowed) external {
         _isValidDelegateAndProtocolNotPaused();
-        admins[newAdmin] = allowed;
-        emit AdminSet(newAdmin, allowed);
+        poolAdmins[newPoolAdmin] = allowed;
+        emit PoolAdminSet(newPoolAdmin, allowed);
     }
 
     /**
@@ -612,8 +612,8 @@ contract Pool is PoolFDT {
     /**
         @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
     */
-    function _isValidDelegateOrAdmin() internal {
-        require(msg.sender == poolDelegate || admins[msg.sender], "P:NOT_DELEGATE_OR_ADMIN");
+    function _isValidDelegateOrPoolAdmin() internal {
+        require(msg.sender == poolDelegate || poolAdmins[msg.sender], "P:NOT_DELEGATE_OR_ADMIN");
     }
 
     /**

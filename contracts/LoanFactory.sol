@@ -24,7 +24,7 @@ contract LoanFactory is Pausable {
     mapping(uint256 => address) public loans;   // Loans address mapping
     mapping(address => bool)    public isLoan;  // Used to check if a Loan was instantiated from this contract
 
-    mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
+    mapping(address => bool) public loanFactoryAdmins;  // Loan Factory Admin addresses that have permission to do certain operations in case of disaster mgt
 
     event LoanCreated(
         address loan,
@@ -122,20 +122,20 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Set admin. Only the Governor can call this function.
-        @param newAdmin New admin address
-        @param allowed  Status of an admin
+        @dev Set loan factory admin. Only the Governor can call this function.
+        @param newLoanFactoryAdmin New loan factory admin address
+        @param allowed  Status of a loan factory admin
     */
-    function setAdmin(address newAdmin, bool allowed) external {
+    function setLoanFactoryAdmin(address newLoanFactoryAdmin, bool allowed) external {
         _isValidGovernor();
-        admins[newAdmin] = allowed;
+        loanFactoryAdmins[newLoanFactoryAdmin] = allowed;
     }
 
     /**
         @dev Triggers paused state. Halts functionality for certain functions. Only the Governor or a Loan Factory Admin can call this function.
     */
     function pause() external {
-        _isValidGovernorOrAdmin();
+        _isValidGovernorOrLoanFactoryAdmin();
         super._pause();
     }
 
@@ -143,7 +143,7 @@ contract LoanFactory is Pausable {
         @dev Triggers unpaused state. Returns functionality for certain functions. Only the Governor or a Loan Factory Admin can call this function.
     */
     function unpause() external {
-        _isValidGovernorOrAdmin();
+        _isValidGovernorOrLoanFactoryAdmin();
         super._unpause();
     }
 
@@ -157,8 +157,8 @@ contract LoanFactory is Pausable {
     /**
         @dev Checks that msg.sender is the Governor or a Loan Factory Admin.
     */
-    function _isValidGovernorOrAdmin() internal {
-        require(msg.sender == globals.governor() || admins[msg.sender], "LF:NOT_GOV_OR_ADMIN");
+    function _isValidGovernorOrLoanFactoryAdmin() internal {
+        require(msg.sender == globals.governor() || loanFactoryAdmins[msg.sender], "LF:NOT_GOV_OR_ADMIN");
     }
 
     /**

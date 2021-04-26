@@ -14,9 +14,9 @@ contract PoolFactory is Pausable {
     uint256  public poolsCreated;  // Incrementor for number of Pools created
     IGlobals public globals;       // MapleGlobals contract
 
-    mapping(uint256 => address) public pools;   // Map to keep `Pool` contract corresponds to its index.
-    mapping(address => bool)    public isPool;  // Used to check if a `Pool` was instantiated from this factory.
-    mapping(address => bool)    public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
+    mapping(uint256 => address) public pools;              // Map to keep `Pool` contract corresponds to its index.
+    mapping(address => bool)    public isPool;             // Used to check if a `Pool` was instantiated from this factory.
+    mapping(address => bool)    public poolFactoryAdmins;  // Pool Factory Admin addresses that have permission to do certain operations in case of disaster mgt
 
     event PoolCreated(
         address indexed pool,
@@ -111,20 +111,20 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Set admin. Only the Governor can call this function.
-        @param newAdmin New admin address
-        @param allowed  Status of an admin
+        @dev Set pool factory admin. Only the Governor can call this function.
+        @param newPoolFactoryAdmin New pool factory admin address
+        @param allowed  Status of a pool factory admin
     */
-    function setAdmin(address newAdmin, bool allowed) external {
+    function setPoolFactoryAdmin(address newPoolFactoryAdmin, bool allowed) external {
         _isValidGovernor();
-        admins[newAdmin] = allowed;
+        poolFactoryAdmins[newPoolFactoryAdmin] = allowed;
     }
 
     /**
         @dev Triggers paused state. Halts functionality for certain functions. Only the Governor or a Pool Factory Admin can call this function.
     */
     function pause() external {
-        _isValidGovernorOrAdmin();
+        _isValidGovernorOrPoolFactoryAdmin();
         super._pause();
     }
 
@@ -132,7 +132,7 @@ contract PoolFactory is Pausable {
         @dev Triggers unpaused state. Returns functionality for certain functions. Only the Governor or a Pool Factory Admin can call this function.
     */
     function unpause() external {
-        _isValidGovernorOrAdmin();
+        _isValidGovernorOrPoolFactoryAdmin();
         super._unpause();
     }
 
@@ -146,8 +146,8 @@ contract PoolFactory is Pausable {
     /**
         @dev Checks that msg.sender is the Governor or a Pool Factory Admin.
     */
-    function _isValidGovernorOrAdmin() internal {
-        require(msg.sender == globals.governor() || admins[msg.sender], "PF:NOT_GOV_OR_ADMIN");
+    function _isValidGovernorOrPoolFactoryAdmin() internal {
+        require(msg.sender == globals.governor() || poolFactoryAdmins[msg.sender], "PF:NOT_GOV_OR_ADMIN");
     }
 
     /**
