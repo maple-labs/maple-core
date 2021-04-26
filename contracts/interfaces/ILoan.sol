@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../token/interfaces/IFDT.sol";
 
-interface ILoan is IERC20 {
+interface ILoan is IFDT {
     
     // State Variables
-    function fundsTokenBalance() external view returns (uint256);
-    
     function liquidityAsset() external view returns (address);
     
     function collateralAsset() external view returns (address);
@@ -96,14 +94,6 @@ interface ILoan is IERC20 {
     
     function unwind() external;
     
-
-    // FDT
-    function updateFundsReceived() external;
-    
-    function withdrawFunds() external;
-
-    function withdrawableFundsOf(address) external view returns(uint256);
-
 
     // Security 
     function pause() external;

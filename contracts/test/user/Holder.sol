@@ -2,10 +2,10 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../token/IFDT.sol";
+import "../../token/interfaces/IBaseFDT.sol";
 
 contract Holder {
     function withdrawFunds(address token) external {
-        IFDT(token).withdrawFunds();
+        IBaseFDT(token).withdrawFunds();
     }
 }

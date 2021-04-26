@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-interface IPool {
+import "../token/interfaces/IPoolFDT.sol";
+
+interface IPool is IPoolFDT {
     function poolDelegate() external view returns (address);
 
     function poolAdmins(address) external view returns (bool);
 
     function deposit(uint256) external;
-
-    function transfer(address, uint256) external;
 
     function poolState() external view returns(uint256);
 
@@ -77,8 +77,6 @@ interface IPool {
     function setLiquidityCap(uint256) external;
 
     function cancelWithdraw() external;
-
-    function withdrawFunds() external;
 
     function reclaimERC20(address) external;
 
