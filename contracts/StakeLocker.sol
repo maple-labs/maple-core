@@ -49,7 +49,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         liquidityAsset = _liquidityAsset;
         stakeAsset     = IERC20(_stakeAsset);
         pool           = _pool;
-        lockupPeriod   = 180 days; // TODO: Confirm default
+        lockupPeriod   = 180 days;
     }
 
     /*****************/

@@ -483,7 +483,6 @@ library PoolLib {
         @return principal Principal amount claimable
         @return interest  Interest  amount claimable
     */
-    // TODO: Consider renaming this - could be mistaken for Pool claimable funds, not LP claimable
     function claimableFunds(
         uint256 withdrawableFundsOfLp,
         uint256 depositDateForLp,
