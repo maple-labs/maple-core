@@ -20,7 +20,7 @@ contract LiquidityLockerFactory {
         @return liquidityLocker Address of the instantiated liquidity locker.
     */
     function newLocker(address liquidityAsset) external returns (address liquidityLocker) {
-        liquidityLocker   = address(new LiquidityLocker(liquidityAsset, msg.sender));
+        liquidityLocker           = address(new LiquidityLocker(liquidityAsset, msg.sender));
         owner[liquidityLocker]    = msg.sender;
         isLocker[liquidityLocker] = true;
 

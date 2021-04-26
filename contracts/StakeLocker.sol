@@ -159,20 +159,18 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @param amt Amount of stakeAsset (BPTs) to deposit
     */
     function stake(uint256 amt) whenNotPaused external {
-        address msgSender = msg.sender;
-
         _whenProtocolNotPaused();
-        _isAllowed(msgSender);
+        _isAllowed(msg.sender);
 
-        unstakeCooldown[msgSender] = uint256(0);  // Reset unstakeCooldown if staker had previously intended to unstake
+        unstakeCooldown[msg.sender] = uint256(0);  // Reset unstakeCooldown if staker had previously intended to unstake
 
-        _updateStakeDate(msgSender, amt);
+        _updateStakeDate(msg.sender, amt);
 
-        stakeAsset.safeTransferFrom(msgSender, address(this), amt);
-        _mint(msgSender, amt);
+        stakeAsset.safeTransferFrom(msg.sender, address(this), amt);
+        _mint(msg.sender, amt);
 
-        emit Stake(amt, msgSender);
-        emit Cooldown(msgSender, uint256(0));
+        emit Stake(amt, msg.sender);
+        emit Cooldown(msg.sender, uint256(0));
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
@@ -225,16 +223,16 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function unstake(uint256 amt) external canUnstake(msg.sender) {
         _whenProtocolNotPaused();
 
-        require(isUnstakeAllowed(msgSender),                               "SL:OUTSIDE_COOLDOWN");
-        require(stakeDate[msgSender].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");
+        require(isUnstakeAllowed(msg.sender),                               "SL:OUTSIDE_COOLDOWN");
+        require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");
 
         updateFundsReceived();   // Account for any funds transferred into contract since last call
-        _burn(msgSender, amt);  // Burn the corresponding FDT balance.
+        _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
         withdrawFunds();         // Transfer full entitled liquidityAsset interest
 
-        stakeAsset.safeTransfer(msgSender, amt.sub(recognizeLosses()));  // Unstake amt minus losses
+        stakeAsset.safeTransfer(msg.sender, amt.sub(recognizeLosses()));  // Unstake amt minus losses
 
-        emit Unstake(amt, msgSender);
+        emit Unstake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 

@@ -22,7 +22,7 @@ contract FundingLockerFactory {
         @return fundingLocker Address of the instantiated funding locker.
     */
     function newLocker(address liquidityAsset) external returns (address fundingLocker) {
-        fundingLocker   = address(new FundingLocker(liquidityAsset, msg.sender));
+        fundingLocker           = address(new FundingLocker(liquidityAsset, msg.sender));
         owner[fundingLocker]    = msg.sender;
         isLocker[fundingLocker] = true;
 

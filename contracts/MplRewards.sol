@@ -77,8 +77,8 @@ contract MplRewards is Ownable {
         return _totalSupply == 0
             ? rewardPerTokenStored
             : rewardPerTokenStored.add(
-                   lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply)
-              );
+                lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply)
+            );
     }
 
     function earned(address account) public view returns (uint256) {
@@ -142,12 +142,10 @@ contract MplRewards is Ownable {
     function notifyRewardAmount(uint256 reward) external onlyOwner {
         _updateReward(address(0));
 
-        uint256 blockTimestamp = block.timestamp;
-
-        uint256 _rewardRate = blockTimestamp >= periodFinish
+        uint256 _rewardRate = block.timestamp >= periodFinish
             ? reward.div(rewardsDuration)
             : reward.add(
-                  periodFinish.sub(blockTimestamp).mul(rewardRate)
+                  periodFinish.sub(block.timestamp).mul(rewardRate)
               ).div(rewardsDuration);
 
         rewardRate = _rewardRate;
@@ -159,8 +157,8 @@ contract MplRewards is Ownable {
         uint256 balance = rewardsToken.balanceOf(address(this));
         require(_rewardRate <= balance.div(rewardsDuration), "R:REWARD_TOO_HIGH");
 
-        lastUpdateTime = blockTimestamp;
-        periodFinish   = blockTimestamp.add(rewardsDuration);
+        lastUpdateTime = block.timestamp;
+        periodFinish   = block.timestamp.add(rewardsDuration);
         emit RewardAdded(reward);
     }
 

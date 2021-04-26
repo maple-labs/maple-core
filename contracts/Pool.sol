@@ -366,17 +366,16 @@ contract Pool is PoolFDT {
         _isValidState(State.Finalized);
         require(isDepositAllowed(amt), "P:DEPOSIT_NOT_ALLOWED");
 
-        address msgSender           = msg.sender;
-        withdrawCooldown[msgSender] = uint256(0);  // Reset withdrawCooldown if LP had previously intended to withdraw
+        withdrawCooldown[msg.sender] = uint256(0);  // Reset withdrawCooldown if LP had previously intended to withdraw
 
         uint256 wad = _toWad(amt);
-        PoolLib.updateDepositDate(depositDate, balanceOf(msgSender), wad, msgSender);
+        PoolLib.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
 
-        liquidityAsset.safeTransferFrom(msgSender, liquidityLocker, amt);
-        _mint(msgSender, wad);
+        liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
+        _mint(msg.sender, wad);
 
         _emitBalanceUpdatedEvent();
-        emit Cooldown(msgSender, uint256(0));
+        emit Cooldown(msg.sender, uint256(0));
     }
 
     /**
@@ -399,18 +398,17 @@ contract Pool is PoolFDT {
     */
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
-        uint256 wad       = _toWad(amt);
-        address msgSender = msg.sender; 
+        uint256 wad = _toWad(amt);
 
-        require(PoolLib.isWithdrawAllowed(withdrawCooldown[msgSender], _globals(superFactory)), "P:WITHDRAW_NOT_ALLOWED");
-        require(depositDate[msgSender].add(lockupPeriod) <= block.timestamp,                    "P:FUNDS_LOCKED");
+        require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "P:WITHDRAW_NOT_ALLOWED");
+        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "P:FUNDS_LOCKED");
 
-        _burn(msgSender, wad);  // Burn the corresponding FDT balance
+        _burn(msg.sender, wad);  // Burn the corresponding FDT balance
         withdrawFunds();         // Transfer full entitled interest, decrement `interestSum`
 
         // Transfer amount that is due after realized losses are accounted for.
         // recognizedLosses are absorbed by the LP.
-        _transferLiquidityLockerFunds(msgSender, amt.sub(recognizeLosses()));
+        _transferLiquidityLockerFunds(msg.sender, amt.sub(recognizeLosses()));
 
         _emitBalanceUpdatedEvent();
     }

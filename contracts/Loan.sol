@@ -133,14 +133,7 @@ contract Loan is FDT, Pausable {
         address _clFactory,
         uint256[5] memory specs,
         address[3] memory calcs
-    )
-        FDT(
-            "Maple Loan Token",
-            "MPL-LOAN",
-            _liquidityAsset
-        )
-        public
-    {
+    ) FDT("Maple Loan Token", "MPL-LOAN", _liquidityAsset) public {
         IMapleGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks
