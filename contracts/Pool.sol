@@ -452,14 +452,14 @@ contract Pool is PoolFDT {
         @param custodian Address which will act as custodian of given `amount` for a tokenHolder.
         @param amount    Number of FDTs cusodied by the custodian.
      */
-     // TODO: Check on how much you can allow
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
         PoolLib.zeroCheck(custodian, amount);
         uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
         uint256 oldTotalAllowance = totalCustodyAllowance[msg.sender];
+        require(oldTotalAllowance.add(amount) <= balanceOf(msg.sender), "Pool:INSUFFICIENT_BALANCE");
         
         custodyAllowance[msg.sender][custodian] = oldAllowance.add(amount);
-        totalCustodyAllowance[msg.sender]       = totalCustodyAllowance[msg.sender].add(amount);
+        totalCustodyAllowance[msg.sender]       = totalCustodyAllowance[msg.sender] + amount;
         emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, amount);
     }
 
