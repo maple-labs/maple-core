@@ -23,30 +23,27 @@ contract PoolLiquidationTest is TestUtil {
         gov.setMaxSwapSlippage(2000);  // Set to 20% for the sake of the BPT shortfall test
     }
 
-    function test_triggerDefault_pool_delegate(uint256 totalMintedAmt) public {
+    function test_triggerDefault_pool_delegate() public {
         uint256 drawdownAmt  = 4_000_000 * USD;
-        totalMintedAmt       = constrictToRange(totalMintedAmt, drawdownAmt, 100_000_000 * USD, true);
-        uint256 poolPortion  = (80 * totalMintedAmt) / 100;
-        uint256 pool2Portion = totalMintedAmt - poolPortion;
 
         // Fund the pool
-        mint("USDC", address(leo), totalMintedAmt);
+        mint("USDC", address(leo), 100_000_000 * USD);
         leo.approve(USDC, address(pool), MAX_UINT);
         leo.approve(USDC, address(pool2), MAX_UINT);
-        leo.deposit(address(pool),  poolPortion  + 1);
-        leo.deposit(address(pool2), pool2Portion - 1);
+        leo.deposit(address(pool), 80_000_000 * USD + 1);
+        leo.deposit(address(pool2), 20_000_000 * USD - 1);
 
         // Fund the loan
-        pat.fundLoan(address(pool),  address(loan), address(dlFactory), poolPortion  + 1);  // Plus 1e-6 to create exact 100m totalSupply
-        pam.fundLoan(address(pool2), address(loan), address(dlFactory), pool2Portion - 1);  // 20% minus 1e-6 equity
+        pat.fundLoan(address(pool), address(loan), address(dlFactory), 80_000_000 * USD + 1);   // Plus 1e-6 to create exact 100m totalSupply
+        pam.fundLoan(address(pool2), address(loan), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1e-6 equity
 
         // Drawdown loan
         drawdown(loan, bob, drawdownAmt);
 
         // Warp to late payment
-        uint256 start          = block.timestamp;
+        uint256 start = block.timestamp;
         uint256 nextPaymentDue = loan.nextPaymentDue();
-        uint256 gracePeriod    = globals.defaultGracePeriod();
+        uint256 gracePeriod = globals.defaultGracePeriod();
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
         // Attempt to trigger default as PD holding less than minimum LoanFDTs required (MapleGlobals.minLoanEquity)
@@ -56,7 +53,7 @@ contract PoolLiquidationTest is TestUtil {
         hevm.store(
             address(loan),
             keccak256(abi.encode(address(pool2.debtLockers(address(loan), address(dlFactory))), 0)), // Overwrite balance to have exact 20% equity
-            bytes32(uint256(toWad(pool2Portion)))
+            bytes32(uint256(20_000_000 * WAD))
         );
 
         // Pause protocol and attempt triggerDefault()

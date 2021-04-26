@@ -61,7 +61,6 @@ contract PoolTest is TestUtil {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, 0);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        //  Mint 10000 USDC into this LP account & add liquidity
         uint256 depositAmt = specs[3];
         mintFundsAndDepositIntoPool(lex, pool, depositAmt, depositAmt);
 
@@ -119,7 +118,7 @@ contract PoolTest is TestUtil {
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
 
-        mintFundsAndDepositIntoPool(leo, pool, 6E10 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(leo, pool, 6E10 * USD,     depositAmt);
         mintFundsAndDepositIntoPool(liz, pool, 6E10 * USD, 3 * depositAmt);
         mintFundsAndDepositIntoPool(lex, pool, 6E10 * USD, 6 * depositAmt);
 
@@ -130,7 +129,7 @@ contract PoolTest is TestUtil {
         /**********************************/
 
         uint256 beforeLLBalance = usdc.balanceOf(pool.liquidityLocker());
-        (uint256 totalFundedAmount, uint256[] memory fundedAmounts)  = getLoanFundedAmounts(beforeLLBalance,  8, uint256(4), uint256(4));
+        (uint256 totalFundedAmount, uint256[] memory fundedAmounts) = getLoanFundedAmounts(beforeLLBalance, 8, uint256(4), uint256(4));
 
         assertConstFundLoan(pool, address(loan),  address(dlFactory),  fundedAmounts[0], usdc, CONST_POOL_VALUE);
         assertConstFundLoan(pool, address(loan),  address(dlFactory),  fundedAmounts[1], usdc, CONST_POOL_VALUE);
@@ -184,7 +183,7 @@ contract PoolTest is TestUtil {
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
         
-        mintFundsAndDepositIntoPool(leo, pool, 6E10 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(leo, pool, 6E10 * USD,     depositAmt);
         mintFundsAndDepositIntoPool(liz, pool, 6E10 * USD, 3 * depositAmt);
         mintFundsAndDepositIntoPool(lex, pool, 6E10 * USD, 6 * depositAmt);
 
@@ -292,13 +291,13 @@ contract PoolTest is TestUtil {
         /*** Mint and deposit funds into liquidity pools (1b each) ***/
         /*************************************************************/
 
-        mintFundsAndDepositIntoPool(leo, pool, 10E10 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(leo, pool, 10E10 * USD,     depositAmt);
         mintFundsAndDepositIntoPool(liz, pool, 10E10 * USD, 3 * depositAmt);
         mintFundsAndDepositIntoPool(lex, pool, 10E10 * USD, 6 * depositAmt);
 
+        mintFundsAndDepositIntoPool(lex, pool2, 0,     depositAmt);
         mintFundsAndDepositIntoPool(leo, pool2, 0, 5 * depositAmt);
         mintFundsAndDepositIntoPool(liz, pool2, 0, 4 * depositAmt);
-        mintFundsAndDepositIntoPool(lex, pool2, 0, depositAmt);
 
         /***************************/
         /*** Fund loan / loan2 ***/
@@ -336,12 +335,12 @@ contract PoolTest is TestUtil {
             assertEq(usdc.balanceOf(pool2.liquidityLocker()),            beforeLLBalance2 - totalFundedAmount2);
             assertEq(usdc.balanceOf(address(loan.fundingLocker())),      fundedAmounts[0] + fundedAmounts[1] + fundedAmounts[2] + fundedAmounts[3] + fundedAmounts2[0] + fundedAmounts2[1]);   // Balance of loan fl 
             assertEq(usdc.balanceOf(address(loan2.fundingLocker())),     fundedAmounts[4] + fundedAmounts[5] + fundedAmounts[6] + fundedAmounts[7] + fundedAmounts2[2] + fundedAmounts2[3] + fundedAmounts2[4] + fundedAmounts2[5]);  // Balance of loan2 fl
-            assertEq(loan.balanceOf( getDL(pool,  loan,  dlFactory)),    toWad(fundedAmounts[0]) + toWad(fundedAmounts[1]));  // Balance of debtLocker1 for pool with dlFactory
-            assertEq(loan.balanceOf( getDL(pool,  loan,  dlFactory2)),   toWad(fundedAmounts[2]) + toWad(fundedAmounts[3]));  // Balance of debtLocker2 for pool with dlFactory2
-            assertEq(loan2.balanceOf(getDL(pool,  loan2, dlFactory)),    toWad(fundedAmounts[4]) + toWad(fundedAmounts[5]));  // Balance of debtLocker3 for pool with dlFactory
-            assertEq(loan2.balanceOf(getDL(pool,  loan2, dlFactory2)),   toWad(fundedAmounts[6]) + toWad(fundedAmounts[7]));  // Balance of debtLocker4 for pool with dlFactory2
-            assertEq(loan.balanceOf( getDL(pool2, loan,  dlFactory)),    toWad(fundedAmounts2[0]));  // Balance of debtLocker1 for pool2 with dlFactory
-            assertEq(loan.balanceOf( getDL(pool2, loan,  dlFactory2)),   toWad(fundedAmounts2[1]));  // Balance of debtLocker2 for pool2 with dlFactory2
+            assertEq(loan.balanceOf( getDL(pool,  loan,  dlFactory)),    toWad(fundedAmounts[0]) + toWad(fundedAmounts[1]));    // Balance of debtLocker1 for pool with dlFactory
+            assertEq(loan.balanceOf( getDL(pool,  loan,  dlFactory2)),   toWad(fundedAmounts[2]) + toWad(fundedAmounts[3]));    // Balance of debtLocker2 for pool with dlFactory2
+            assertEq(loan2.balanceOf(getDL(pool,  loan2, dlFactory)),    toWad(fundedAmounts[4]) + toWad(fundedAmounts[5]));    // Balance of debtLocker3 for pool with dlFactory
+            assertEq(loan2.balanceOf(getDL(pool,  loan2, dlFactory2)),   toWad(fundedAmounts[6]) + toWad(fundedAmounts[7]));    // Balance of debtLocker4 for pool with dlFactory2
+            assertEq(loan.balanceOf( getDL(pool2, loan,  dlFactory)),    toWad(fundedAmounts2[0]));                             // Balance of debtLocker1 for pool2 with dlFactory
+            assertEq(loan.balanceOf( getDL(pool2, loan,  dlFactory2)),   toWad(fundedAmounts2[1]));                             // Balance of debtLocker2 for pool2 with dlFactory2
             assertEq(loan2.balanceOf(getDL(pool2, loan2, dlFactory)),    toWad(fundedAmounts2[2]) + toWad(fundedAmounts2[3]));  // Balance of debtLocker3 for pool2 with dlFactory
             assertEq(loan2.balanceOf(getDL(pool2, loan2, dlFactory2)),   toWad(fundedAmounts2[4]) + toWad(fundedAmounts2[5]));  // Balance of debtLocker4 for pool2 with dlFactory2
         }
@@ -555,12 +554,8 @@ contract PoolTest is TestUtil {
         return newAmt == uint256(0) ? uint256(0) : newAmt.mul(totalClaim).div(totalNewAmt);
     }
 
-    function getFundedAmount(uint256 val) internal pure returns(uint256) {
-        return constrictToRange(val, 100 * USD,  val);
-    }
-
     function getDL(Pool pool, Loan loan, DebtLockerFactory dlFactory) internal view returns(address) {
-        return pool.debtLockers(address(loan),   address(dlFactory));
+        return pool.debtLockers(address(loan), address(dlFactory));
     }
 
     function generateLoanAndDepositAmount(
@@ -577,14 +572,14 @@ contract PoolTest is TestUtil {
         loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         depositAmt = constrictToRange(specs[3], 100 * USD, 1E10 * USD, true);  // Fund value should be between 100 USD - 1B USD
-        uint256 estimatedLLBalance = depositAmt + 3 * depositAmt + 6 * depositAmt;
+        uint256 estimatedLLBalance = 10 * depositAmt;
         if (estimatedLLBalance < specs[3] * 2) {
-            uint256 delta = 2 * specs[3] - estimatedLLBalance;
+            uint256 delta = specs[3] * 2 - estimatedLLBalance;
             depositAmt = (estimatedLLBalance + delta / 10); 
         }
     }
     
-    function getLoanFundedAmounts(uint256 beforeLLBalance, uint256 rounds, uint256 loan1FundedCount, uint256 loan2FundedCount) internal returns(uint256 , uint256[] memory) {
+    function getLoanFundedAmounts(uint256 beforeLLBalance, uint256 rounds, uint256 loan1FundedCount, uint256 loan2FundedCount) internal returns(uint256, uint256[] memory) {
         uint256 maxAmountPerFundLoan = beforeLLBalance / rounds;
         uint256 totalFundedAmount    = 0;
 
@@ -596,7 +591,9 @@ contract PoolTest is TestUtil {
         fundedCount[1] = loan2FundedCount;
 
         for (uint256 i = 0; i < rounds; i++) {
-            fundedAmounts[i]   = getFundedAmount(maxAmountPerFundLoan);
+            uint256 minAmt     = i == 0 ? 100 * USD : fundedAmounts[i - 1];
+            uint256 fundAmt    = i == 0 ? maxAmountPerFundLoan : i * fundedAmounts[i - 1];
+            fundedAmounts[i]   = constrictToRange(fundAmt, minAmt, maxAmountPerFundLoan, true);
             totalFundedAmount += fundedAmounts[i];
         }
 

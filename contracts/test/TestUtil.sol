@@ -673,7 +673,7 @@ contract TestUtil is DSTest {
     }
 
     function toWad(uint256 amt) internal view returns(uint256) {
-        return amt.mul(10 ** 18).div(10 ** IERC20Details(address(usdc)).decimals());
+        return amt.mul(WAD).div(USD);
     }
 
     // function test_cheat_code_for_slot() public {

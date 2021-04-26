@@ -107,15 +107,15 @@ contract PoolTest is TestUtil {
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(pat.try_setLiquidityCap(address(pool), MAX_UINT));
 
-        assertTrue(pat.try_setOpenToPublic(address(pool), false));  // Close pool to public
-        assertTrue(!lex.try_deposit(address(pool),    depositAmt));  // Fail to deposit as pool no longer public
+        assertTrue( pat.try_setOpenToPublic(address(pool),      false));  // Close pool to public
+        assertTrue(!lex.try_deposit(address(pool),         depositAmt));  // Fail to deposit as pool no longer public
     }
 
     function test_deposit_with_liquidity_cap(uint256 newLiquidityCap) public {
 
         finalizePool(pool, pat, true);
 
-        // Mint 1000 USDC into this LP account
+        // Mint 10_000 USDC into this LP account
         mint("USDC", address(leo), 10_000 * USD);
         leo.approve(USDC, address(pool), MAX_UINT);
 
@@ -133,9 +133,9 @@ contract PoolTest is TestUtil {
         assertTrue(pool.isDepositAllowed(newLiquidityCap - 1),                  "Deposit should be allowed because liquidityCap > depositAmt");
         assertTrue( leo.try_deposit(address(pool), newLiquidityCap - 1),        "Fail to deposit depositAmt");
 
-        // Bob tried again with 600 USDC it fails again.
+        // leo tried again with 6 USDC it fails again.
         assertTrue(!pool.isDepositAllowed(2),                         "Deposit should not be allowed because liquidityCap < newLiquidityCap - 1 + 2");
-        assertTrue( !leo.try_deposit(address(pool), 2),               "Should not able to deposit 600 USD");
+        assertTrue( !leo.try_deposit(address(pool), 2),               "Should not able to deposit 2 USD");
 
         // Set liquidityCap to zero and withdraw
         assertTrue(pat.try_setLiquidityCap(address(pool), 0),         "Failed to set liquidity cap");
@@ -156,12 +156,12 @@ contract PoolTest is TestUtil {
         
         // Mint 100 USDC into this LP account
         uint256 startDate  = block.timestamp;
-        uint256 depositAmt = constrictToRange(depositAmt, 100 * USD, 200 * USD, true);
-        mintFundsAndDepositIntoPool(leo, pool, 500 * USD, depositAmt);
+        uint256 depositAmt = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
+        mintFundsAndDepositIntoPool(leo, pool, 20_000_000 * USD, depositAmt);
     
         assertEq(pool.depositDate(address(leo)), startDate);
 
-        uint256 newAmt = constrictToRange(depositAmt, 1 * USD, 200 * USD, true);
+        uint256 newAmt = constrictToRange(depositAmt, 1 * USD, 100_000 * USD, true);
 
         hevm.warp(startDate + 30 days);
         leo.deposit(address(pool), newAmt);
@@ -181,11 +181,11 @@ contract PoolTest is TestUtil {
 
         // Deposit 100 USDC on first day
         uint256 startDate = block.timestamp;
-        uint256 depositAmt = constrictToRange(depositAmt, 100 * USD, 1_000 * USD, true);
+        uint256 depositAmt = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
 
         // Mint 200 USDC into this LP account
-        mintFundsAndDepositIntoPool(leo, pool, 2_000 * USD, depositAmt);
-        mintFundsAndDepositIntoPool(liz, pool, 2_000 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(leo, pool, 20_000_000 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(liz, pool, 20_000_000 * USD, depositAmt);
         
         assertEq(pool.depositDate(address(leo)), startDate);
         assertEq(pool.depositDate(address(liz)), startDate);
@@ -219,11 +219,11 @@ contract PoolTest is TestUtil {
 
         // Deposit 100 USDC on first day
         uint256 start = block.timestamp;
-        depositAmt    = constrictToRange(depositAmt, 100 * USD, 1_000 * USD, true);
+        depositAmt    = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
 
         // Mint 200 USDC into this LP account
-        mintFundsAndDepositIntoPool(leo, pool, 5_000 * USD, depositAmt);
-        mintFundsAndDepositIntoPool(liz, pool, 5_000 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(leo, pool, 10_000_000 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(liz, pool, 10_000_000 * USD, depositAmt);
 
         assertEq(pool.balanceOf(address(leo)), toWad(depositAmt));
         assertEq(pool.balanceOf(address(liz)), toWad(depositAmt));
@@ -259,10 +259,10 @@ contract PoolTest is TestUtil {
         finalizePool(pool, pat, true);
         pat.setLockupPeriod(address(pool), 0);
 
-        depositAmt = constrictToRange(depositAmt, 100 * USD, 10_000 * USD, true);
+        depositAmt = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
 
         // Mint 1000 USDC into this LP account
-        mintFundsAndDepositIntoPool(leo, pool, 10_000 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(leo, pool, 10_000_000 * USD, depositAmt);
 
         uint256 amt   = depositAmt / 3; // 1/3 of deposit so withdraw can happen thrice
         uint256 start = block.timestamp;
@@ -328,10 +328,10 @@ contract PoolTest is TestUtil {
         gov.setLpWithdrawWindow(MAX_UINT);
 
         uint256 start = block.timestamp;
-        depositAmt    = constrictToRange(depositAmt, 1000 * USD, 5_000 * USD, true);
+        depositAmt    = constrictToRange(depositAmt, 1000 * USD, 10_000_000 * USD, true);
         // Mint USDC to lee
-        mintFundsAndDepositIntoPool(lee, pool, 5_000 * USD, depositAmt);
-        uint256 bal0 = 5_000 * USD;
+        mintFundsAndDepositIntoPool(lee, pool, 10_000_000 * USD, depositAmt);
+        uint256 bal0 = 10_000_000 * USD;
         
         // Check depositDate
         assertEq(pool.depositDate(address(lee)), start);
@@ -363,11 +363,11 @@ contract PoolTest is TestUtil {
         gov.setLpWithdrawWindow(MAX_UINT);
 
         uint256 start = block.timestamp;
-        depositAmt    = constrictToRange(depositAmt, 1000 * USD, 5_000 * USD, true);
+        depositAmt    = constrictToRange(depositAmt, 1000 * USD, 10_000_000 * USD, true);
 
         // Mint USDC to lee
-        mintFundsAndDepositIntoPool(lee, pool, 10_000 * USD, depositAmt);
-        uint256 bal0 = 10_000 * USD;
+        mintFundsAndDepositIntoPool(lee, pool, 20_000_000 * USD, depositAmt);
+        uint256 bal0 = 20_000_000 * USD;
 
         // Check depositDate
         assertEq(pool.depositDate(address(lee)), start);
@@ -383,7 +383,7 @@ contract PoolTest is TestUtil {
         assertEq(block.timestamp - pool.depositDate(address(lee)), pool.lockupPeriod());  // Can withdraw at this point
         
         // Deposit more USDC into pool, increasing deposit date and locking up funds again
-        uint256 newDepositAmt = constrictToRange(depositAmt, 1000 * USD, 5_000 * USD, true);
+        uint256 newDepositAmt = constrictToRange(depositAmt, 1000 * USD, 10_000_000 * USD, true);
         assertTrue(lee.try_deposit(address(pool), newDepositAmt));
         assertEq( pool.depositDate(address(lee)) - start, (block.timestamp - start) * (toWad(newDepositAmt)) / (toWad(newDepositAmt) + toWad(depositAmt)));  // Deposit date updating using weighting
         assertTrue( lee.try_intendToWithdraw(address(pool)));

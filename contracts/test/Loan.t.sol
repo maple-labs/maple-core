@@ -673,7 +673,7 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
         fundAmount = usdc.balanceOf(loan.fundingLocker());
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
@@ -773,7 +773,7 @@ contract LoanTest is TestUtil {
     }
 
     function repetitivePayment(Loan loan, uint256 numPayments, uint256 paymentCount, uint256 drawdownAmount, uint256 loanPreBal, uint256 oldInterest) internal {
-        (uint256 total, , uint256 interest, uint256 due,) = loan.getNextPayment();
+        (uint256 total,, uint256 interest, uint256 due,) = loan.getNextPayment();
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
 

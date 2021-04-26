@@ -20,10 +20,7 @@ contract PoolTest is TestUtil {
         createLoans();
     }
     
-    function test_getInitialStakeRequirements(
-        uint256 newSwapOutRequired
-    ) public {
-
+    function test_getInitialStakeRequirements(uint256 newSwapOutRequired) public {
         newSwapOutRequired = constrictToRange(newSwapOutRequired, 10_000, 1_000_000, true);
         gov.setSwapOutRequired(newSwapOutRequired);
 
@@ -41,8 +38,7 @@ contract PoolTest is TestUtil {
         // Pre-state checks.
         assertBalanceState(pool.stakeLocker(), patBptBalance, 0, 0);
         
-        (, , , minStake,) = pool.getInitialStakeRequirements();
-        log_named_uint("Minimum stake", minStake);
+        (,,, minStake,) = pool.getInitialStakeRequirements();
         // Mint the minStake to PD
         if (minStake > patBptBalance) { 
             transferMoreBpts(address(pat), minStake - patBptBalance);
@@ -50,10 +46,6 @@ contract PoolTest is TestUtil {
         }
 
         (minCover, curCover, covered, minStake, curStake) = pool.getInitialStakeRequirements();
-        log_named_uint("Minimum stake", minStake);
-        log_named_uint("Current stake", curStake);
-        log_named_uint("Expected stake", IERC20(pool.stakeLocker()).balanceOf(address(pat)));
-
         {
             (uint256 calc_minStake, uint256 calc_stakerBal) = pool.getPoolSharesRequired(address(bPool), USDC, address(pat), pool.stakeLocker(), minCover);
 
@@ -74,17 +66,14 @@ contract PoolTest is TestUtil {
         assertBalanceState(pool.stakeLocker(), patBptBalance - (minStake - 1), (minStake - 1), (minStake - 1));
 
         (minCover2, curCover, covered, minStake2, curStake) = pool.getInitialStakeRequirements();
-        log_named_uint("Current cover", curCover);
-        log_named_uint("Min cover", minCover);
-
         {
             (, uint256 calc_stakerBal) = pool.getPoolSharesRequired(address(bPool), USDC, address(pat), pool.stakeLocker(), minCover);
 
-            assertEq(minCover2, minCover);                                    // Doesn't change
-            assertTrue(curCover <= minCover);                                  // Not enough cover
-            assertTrue(!covered);                                             // Not covered
-            assertEq(minStake2, minStake);                                    // Doesn't change
-            assertEq(curStake, calc_stakerBal);                               // Current stake equals calculated stake
+            assertEq(minCover2, minCover);                                           // Doesn't change
+            assertTrue(curCover <= minCover);                                        // Not enough cover
+            assertTrue(!covered);                                                    // Not covered
+            assertEq(minStake2, minStake);                                           // Doesn't change
+            assertEq(curStake, calc_stakerBal);                                      // Current stake equals calculated stake
             assertEq(curStake, IERC20(pool.stakeLocker()).balanceOf(address(pat)));  // Current stake equals balance of stakeLocker FDTs
         }
 
@@ -100,11 +89,11 @@ contract PoolTest is TestUtil {
 
         (, uint256 calc_stakerBal) = pool.getPoolSharesRequired(address(bPool), USDC, address(pat), pool.stakeLocker(), minCover);
 
-        assertEq(minCover2, minCover);                                    // Doesn't change
-        withinPrecision(curCover, minCover, 6);                           // Roughly enough
-        assertTrue(covered);                                              // Covered
-        assertEq(minStake2, minStake);                                    // Doesn't change
-        assertEq(curStake, calc_stakerBal);                               // Current stake equals calculated stake
+        assertEq(minCover2, minCover);                                           // Doesn't change
+        withinPrecision(curCover, minCover, 6);                                  // Roughly enough
+        assertTrue(covered);                                                     // Covered
+        assertEq(minStake2, minStake);                                           // Doesn't change
+        assertEq(curStake, calc_stakerBal);                                      // Current stake equals calculated stake
         assertEq(curStake, IERC20(pool.stakeLocker()).balanceOf(address(pat)));  // Current stake equals balance of stakeLocker FDTs
     }
 
@@ -172,10 +161,7 @@ contract PoolTest is TestUtil {
         assertEq(pool.lockupPeriod(), 180 days - 2);
     }
 
-    function test_fundLoan(
-        uint256 depositAmt,
-        uint256 fundAmt
-    ) public {
+    function test_fundLoan(uint256 depositAmt, uint256 fundAmt) public {
         address stakeLocker   = pool.stakeLocker();
         address liqLocker     = pool.liquidityLocker();
         address fundingLocker = loan.fundingLocker();
@@ -196,7 +182,7 @@ contract PoolTest is TestUtil {
         gov.setValidLoanFactory(address(loanFactory), true);
 
         assertEq(usdc.balanceOf(liqLocker),               depositAmt);  // Balance of Liquidity Locker
-        assertEq(usdc.balanceOf(address(fundingLocker)),          0);  // Balance of Funding Locker
+        assertEq(usdc.balanceOf(address(fundingLocker)),           0);  // Balance of Funding Locker
         
         /*******************/
         /*** Fund a Loan ***/
@@ -216,10 +202,10 @@ contract PoolTest is TestUtil {
         assertEq(debtLocker.pool(),                    address(pool));
         assertEq(address(debtLocker.liquidityAsset()), USDC);
 
-        assertEq(usdc.balanceOf(liqLocker),                      depositAmt - fundAmt);  // Balance of Liquidity Locker
-        assertEq(usdc.balanceOf(address(fundingLocker)),         fundAmt);  // Balance of Funding Locker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker)),    toWad(fundAmt));  // LoanFDT balance of DebtLocker
-        assertEq(pool.principalOut(),                            fundAmt);  // Outstanding principal in liqiudity pool 1
+        assertEq(usdc.balanceOf(liqLocker),                    depositAmt - fundAmt);  // Balance of Liquidity Locker
+        assertEq(usdc.balanceOf(address(fundingLocker)),                    fundAmt);  // Balance of Funding Locker
+        assertEq(IERC20(loan).balanceOf(address(debtLocker)),        toWad(fundAmt));  // LoanFDT balance of DebtLocker
+        assertEq(pool.principalOut(),                                       fundAmt);  // Outstanding principal in liqiudity pool 1
 
         /****************************************/
         /*** Fund same loan with the same DL ***/
@@ -230,10 +216,10 @@ contract PoolTest is TestUtil {
         assertEq(dlFactory.owner(address(debtLocker)), address(pool));
         assertTrue(dlFactory.isLocker(address(debtLocker)));
 
-        assertEq(usdc.balanceOf(liqLocker),                      depositAmt - fundAmt - newFundAmt);  // Balance of Liquidity Locker
-        assertEq(usdc.balanceOf(address(fundingLocker)),         fundAmt + newFundAmt);  // Balance of Funding Locker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker)),    toWad(fundAmt + newFundAmt));  // LoanFDT balance of DebtLocker
-        assertEq(pool.principalOut(),                            fundAmt + newFundAmt);  // Outstanding principal in liqiudity pool 1
+        assertEq(usdc.balanceOf(liqLocker),                    depositAmt - fundAmt - newFundAmt);  // Balance of Liquidity Locker
+        assertEq(usdc.balanceOf(address(fundingLocker)),                    fundAmt + newFundAmt);  // Balance of Funding Locker
+        assertEq(IERC20(loan).balanceOf(address(debtLocker)),        toWad(fundAmt + newFundAmt));  // LoanFDT balance of DebtLocker
+        assertEq(pool.principalOut(),                                       fundAmt + newFundAmt);  // Outstanding principal in liqiudity pool 1
 
         /*******************************************/
         /*** Fund same loan with a different DL ***/
@@ -250,10 +236,10 @@ contract PoolTest is TestUtil {
         assertEq(dlFactory2.owner(address(debtLocker2)), address(pool));
         assertTrue(dlFactory2.isLocker(address(debtLocker2)));
 
-        assertEq(usdc.balanceOf(liqLocker),                      depositAmt - fundAmt - newFundAmt - newFundAmt2);  // Balance of Liquidity Locker
-        assertEq(usdc.balanceOf(address(fundingLocker)),         fundAmt + newFundAmt + newFundAmt2);  // Balance of Funding Locker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker2)),   toWad(newFundAmt2));  // LoanFDT balance of DebtLocker 2
-        assertEq(pool.principalOut(),                            fundAmt + newFundAmt + newFundAmt2);  // Outstanding principal in liqiudity pool 1
+        assertEq(usdc.balanceOf(liqLocker),                    depositAmt - fundAmt - newFundAmt - newFundAmt2);  // Balance of Liquidity Locker
+        assertEq(usdc.balanceOf(address(fundingLocker)),                    fundAmt + newFundAmt + newFundAmt2);  // Balance of Funding Locker
+        assertEq(IERC20(loan).balanceOf(address(debtLocker2)),                              toWad(newFundAmt2));  // LoanFDT balance of DebtLocker 2
+        assertEq(pool.principalOut(),                                       fundAmt + newFundAmt + newFundAmt2);  // Outstanding principal in liqiudity pool 1
     }
 
      function test_deactivate() public {
@@ -296,10 +282,7 @@ contract PoolTest is TestUtil {
 
     }
 
-    function test_deactivate_fail(
-        uint256 depositAmt,
-        uint256 fundAmt
-    ) public {
+    function test_deactivate_fail(uint256 depositAmt, uint256 fundAmt) public {
 
         /*******************************/
         /*** Finalize liquidity pool ***/
@@ -330,9 +313,8 @@ contract PoolTest is TestUtil {
         assertTrue(!pat.try_deactivate(address(pool)));
     }
 
-    function test_view_balance(
-        uint256 depositAmt
-    ) public {
+    // TODO: Test with losses.
+    function test_view_balance(uint256 depositAmt) public {
         /*******************************/
         /*** Finalize liquidity pool ***/
         /*******************************/
@@ -348,7 +330,7 @@ contract PoolTest is TestUtil {
         mintFundsAndDepositIntoPool(lee, pool, loan.requestAmount() + 1_000_000 * USD, depositAmt);
 
         // Fund loan, drawdown, make payment and claim so lee can claim interest
-        assertTrue(pat.try_fundLoan(address(pool), address(loan3),  address(dlFactory),depositAmt), "Fail to fund the loan");
+        assertTrue(pat.try_fundLoan(address(pool), address(loan3), address(dlFactory), depositAmt), "Fail to fund the loan");
 
         drawdown(loan3, bud, depositAmt);
         doFullLoanPayment(loan3, bud); 
@@ -382,11 +364,7 @@ contract PoolTest is TestUtil {
         assertEq(lee_bal_post - lee_bal_pre, principal_lee + interest_lee);
     }
 
-    function test_reclaim_erc20(
-        uint256 mintedUsdc,
-        uint256 mintedDai,
-        uint256 mintedWeth
-    ) external {
+    function test_reclaim_erc20(uint256 mintedUsdc, uint256 mintedDai, uint256 mintedWeth) external {
         // Transfer different assets into the Pool
 
         mintedUsdc = constrictToRange(mintedUsdc, 500 * USD, 1_000_000 * USD, true);
