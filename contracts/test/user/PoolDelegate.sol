@@ -78,8 +78,8 @@ contract PoolDelegate {
         IPool(pool).triggerDefault(loan, dlFactory);
     }
 
-    function setAdmin(address pool, address newAdmin, bool status) external {
-        IPool(pool).setAdmin(newAdmin, status);
+    function setPoolAdmin(address pool, address newPoolAdmin, bool status) external {
+        IPool(pool).setPoolAdmin(newPoolAdmin, status);
     }
 
     function setOpenToPublic(address pool, bool open) external {
@@ -190,9 +190,9 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, user, status));
     }
 
-    function try_setAdmin(address pool, address newAdmin, bool status) external returns(bool ok) {
-        string memory sig = "setAdmin(address,bool)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, newAdmin, status));
+    function try_setPoolAdmin(address pool, address newPoolAdmin, bool status) external returns(bool ok) {
+        string memory sig = "setPoolAdmin(address,bool)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, newPoolAdmin, status));
     }
 
     function try_pause(address target) external returns(bool ok) {

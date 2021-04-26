@@ -185,7 +185,7 @@ contract TestUtil is DSTest {
     uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
 
-    uint256 constant MAX_UINT = uint(-1);
+    uint256 constant MAX_UINT = uint256(-1);
 
     /*****************/
     /*** Utilities ***/
@@ -279,7 +279,7 @@ contract TestUtil is DSTest {
         createBPool();
 
         gov.setMapleTreasury(address(treasury));
-        gov.setAdmin(address(emergencyAdmin));
+        gov.setGlobalAdmin(address(emergencyAdmin));
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
         gov.setGovTreasury(treasury);
         fakeGov.setGovTreasury(treasury);
@@ -368,7 +368,7 @@ contract TestUtil is DSTest {
     function setUpLiquidityPool() public {
         createLiquidityPool();
         stakeLocker = IStakeLocker(pool.stakeLocker());
-        pat.approve(address(bPool), pool.stakeLocker(), uint(-1));
+        pat.approve(address(bPool), pool.stakeLocker(), uint256(-1));
         pat.stake(pool.stakeLocker(), bPool.balanceOf(address(pat)));
         pat.finalize(address(pool));
         pat.setOpenToPublic(address(pool), true);
@@ -376,7 +376,7 @@ contract TestUtil is DSTest {
 
     function stakeAndFinalizePool(uint256 stakeAmt) public {
         stakeLocker = IStakeLocker(pool.stakeLocker());
-        pat.approve(address(bPool), pool.stakeLocker(), uint(-1));
+        pat.approve(address(bPool), pool.stakeLocker(), uint256(-1));
         pat.stake(pool.stakeLocker(), stakeAmt);
         pat.finalize(address(pool));
         pat.setOpenToPublic(address(pool), true);
@@ -386,7 +386,7 @@ contract TestUtil is DSTest {
         stakeAndFinalizePool(stakeAmt);
 
         stakeLocker2 = IStakeLocker(pool2.stakeLocker());
-        pam.approve(address(bPool), pool2.stakeLocker(), uint(-1));
+        pam.approve(address(bPool), pool2.stakeLocker(), uint256(-1));
         pam.stake(pool2.stakeLocker(), stakeAmt2);
         pam.finalize(address(pool2));
         pam.setOpenToPublic(address(pool2), true);
@@ -584,7 +584,7 @@ contract TestUtil is DSTest {
 
     // Verify equality within difference
     function withinDiff(uint256 val0, uint256 val1, uint256 expectedDiff) public {
-        uint actualDiff = val0 > val1 ? val0 - val1 : val1 - val0;
+        uint256 actualDiff = val0 > val1 ? val0 - val1 : val1 - val0;
         bool check = actualDiff <= expectedDiff;
 
         if (!check) {
@@ -645,21 +645,21 @@ contract TestUtil is DSTest {
     }
 
     function drawdown(Loan loan, Borrower bow, uint256 usdDrawdownAmt) internal {
-        uint cReq = loan.collateralRequiredForDrawdown(usdDrawdownAmt); // wETH required for `usdDrawdownAmt` USDC drawdown on loan
+        uint256 cReq = loan.collateralRequiredForDrawdown(usdDrawdownAmt); // wETH required for `usdDrawdownAmt` USDC drawdown on loan
         mint("WETH", address(bow), cReq);
         bow.approve(WETH, address(loan),  cReq);
         bow.drawdown(address(loan),  usdDrawdownAmt);
     }
 
     function doPartialLoanPayment(Loan loan, Borrower bow) internal {
-        (uint amt,,,,) = loan.getNextPayment(); // USDC required for next payment of loan
+        (uint256 amt,,,,) = loan.getNextPayment(); // USDC required for next payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makePayment(address(loan));
     }
 
     function doFullLoanPayment(Loan loan, Borrower bow) internal {
-        (uint amt,,) = loan.getFullPayment(); // USDC required for full payment of loan
+        (uint256 amt,,) = loan.getFullPayment(); // USDC required for full payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makeFullPayment(address(loan));

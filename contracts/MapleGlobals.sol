@@ -3,7 +3,6 @@ pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "./interfaces/IERC20Details.sol";
-import "./interfaces/IPriceFeed.sol";
 import "./interfaces/IOracle.sol";
 import "./interfaces/ISubFactory.sol";
 
@@ -17,7 +16,7 @@ contract MapleGlobals {
     address public pendingGovernor;       // Governor that is declared for transfer, must be accepted for transfer to take effect
     address public governor;              // Governor is responsible for management of global Maple variables
     address public mapleTreasury;         // Maple Treasury is the Treasury which all fees pass through for conversion, prior to distribution
-    address public admin;                 // Admin of the whole network, has the power to switch off/on the functionality of entire protocol
+    address public globalAdmin;           // Global Admin of the whole network, has the power to switch off/on the functionality of entire protocol
 
     uint256 public defaultGracePeriod;    // Represents the amount of time a borrower has to make a missed payment before a default can be triggered
     uint256 public swapOutRequired;       // Represents minimum amount of Pool cover that a Pool Delegate has to provide before they can finalize a Pool
@@ -64,7 +63,7 @@ contract MapleGlobals {
     event                 GlobalsParamSet(bytes32 indexed which, uint256 value);
     event               GlobalsAddressSet(bytes32 indexed which, address addr);
     event                  ProtocolPaused(bool pause);
-    event                        AdminSet(address newAdmin);
+    event                  GlobalAdminSet(address newGlobalAdmin);
     event             PoolDelegateAllowed(address delegate, bool valid);
 
     /**
@@ -78,11 +77,11 @@ contract MapleGlobals {
     /**
         @dev Constructor function.
         @dev It emits an `Initialized` event.
-        @param  _governor Address of Governor
-        @param  _mpl      Address of the ERC-2222 token for the Maple protocol
-        @param  _admin    Address that takes care of protocol security switch
+        @param _governor    Address of Governor
+        @param _mpl         Address of the ERC-2222 token for the Maple protocol
+        @param _globalAdmin Address that takes care of protocol security switch
     */
-    constructor(address _governor, address _mpl, address _admin) public {
+    constructor(address _governor, address _mpl, address _globalAdmin) public {
         governor             = _governor;
         mpl                  = _mpl;
         swapOutRequired      = 10_000;     // $10,000 of Pool cover
@@ -92,7 +91,7 @@ contract MapleGlobals {
         treasuryFee          = 50;         // 0.5%
         maxSwapSlippage      = 1000;       // 10 %
         minLoanEquity        = 2000;       // 20 %
-        admin                = _admin;
+        globalAdmin          = _globalAdmin;
         stakerCooldownPeriod = 10 days;
         lpCooldownPeriod     = 10 days;
         stakerUnstakeWindow  = 2 days;
@@ -160,15 +159,15 @@ contract MapleGlobals {
     }
 
     /**
-      @dev Set admin. Only the Governor can call this function.
-      @dev It emits an `AdminSet` event.
-      @param newAdmin New admin address
+      @dev Set global admin. Only the Governor can call this function.
+      @dev It emits a `GlobalAdminSet` event.
+      @param newGlobalAdmin New global admin address.
      */
-    function setAdmin(address newAdmin) external {
-        require(msg.sender == governor && admin != address(0), "MG:NOT_GOV_OR_ADMIN");
+    function setGlobalAdmin(address newGlobalAdmin) external {
+        require(msg.sender == governor && newGlobalAdmin != address(0), "MG:NOT_GOV_OR_ADMIN");
         require(!protocolPaused, "MG:PROTO_PAUSED");
-        admin = newAdmin;
-        emit AdminSet(newAdmin);
+        globalAdmin = newGlobalAdmin;
+        emit GlobalAdminSet(newGlobalAdmin);
     }
 
     /**
@@ -196,12 +195,12 @@ contract MapleGlobals {
     }
 
     /**
-      @dev Pause/unpause the protocol. Only the Admin user can call.
+      @dev Pause/unpause the protocol. Only the Global Admin user can call.
       @dev It emits a `ProtocolPaused` event.
       @param pause Boolean flag to switch externally facing functionality in the protocol on/off
     */
     function setProtocolPause(bool pause) external {
-        require(msg.sender == admin, "MG:NOT_ADMIN");
+        require(msg.sender == globalAdmin, "MG:NOT_ADMIN");
         protocolPaused = pause;
         emit ProtocolPaused(pause);
     }
@@ -445,7 +444,7 @@ contract MapleGlobals {
     /*** Helper Functions ***/
     /************************/
 
-    function _checkPercentageRange(uint256 percentage) internal {
+    function _checkPercentageRange(uint256 percentage) internal pure {
         require(percentage <= uint256(10_000), "MG:PCT_OOB");
     }
 }

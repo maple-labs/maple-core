@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 
 import "./library/Util.sol";
-import "./interfaces/IGlobals.sol";
+import "./interfaces/IMapleGlobals.sol";
 import "./interfaces/IMapleToken.sol";
 import "./interfaces/IERC20Details.sol";
 import "./interfaces/IUniswapRouter.sol";
@@ -49,7 +49,7 @@ contract MapleTreasury {
         @dev Checks that msg.sender is the Governor.
     */
     modifier isGovernor() {
-        require(msg.sender == IGlobals(globals).governor(), "MT:NOT_GOV");
+        require(msg.sender == IMapleGlobals(globals).governor(), "MT:NOT_GOV");
         _;
     }
 
@@ -95,7 +95,7 @@ contract MapleTreasury {
     function convertERC20(address asset) isGovernor public {
         require(asset != fundsToken, "MT:ASSET_IS_FUNDS_TOKEN");
 
-        IGlobals _globals = IGlobals(globals);
+        IMapleGlobals _globals = IMapleGlobals(globals);
 
         uint256 assetBalance = IERC20(asset).balanceOf(address(this));
         uint256 minAmount    = Util.calcMinAmount(_globals, asset, fundsToken, assetBalance);

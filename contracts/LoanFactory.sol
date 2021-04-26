@@ -17,14 +17,16 @@ contract LoanFactory is Pausable {
     uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`
     uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`
 
-    IGlobals public globals;  // Interface of MapleGlobals
+    IMapleGlobals public globals;  // Interface of MapleGlobals
 
     uint256 public loansCreated;  // Incrementor for number of loan vaults created.
 
     mapping(uint256 => address) public loans;   // Loans address mapping
     mapping(address => bool)    public isLoan;  // Used to check if a Loan was instantiated from this contract
 
-    mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
+    mapping(address => bool) public loanFactoryAdmins;  // Loan Factory Admin addresses that have permission to do certain operations in case of disaster mgt
+
+    event LoanFactoryAdminSet(address loanFactoryAdmin, bool allowed);
 
     event LoanCreated(
         address loan,
@@ -40,7 +42,7 @@ contract LoanFactory is Pausable {
     );
 
     constructor(address _globals) public {
-        globals = IGlobals(_globals);
+        globals = IMapleGlobals(_globals);
     }
 
     /**
@@ -49,7 +51,7 @@ contract LoanFactory is Pausable {
     */
     function setGlobals(address newGlobals) external {
         _isValidGovernor();
-        globals = IGlobals(newGlobals);
+        globals = IMapleGlobals(newGlobals);
     }
 
     /**
@@ -80,7 +82,7 @@ contract LoanFactory is Pausable {
         address[3] memory calcs
     ) external whenNotPaused returns (address loanAddress) {
         _whenProtocolNotPaused();
-        IGlobals _globals = globals;
+        IMapleGlobals _globals = globals;
 
         // Validity checks
         require(_globals.isValidSubFactory(address(this), flFactory, FL_FACTORY), "LF:INVALID_FLF");
@@ -122,20 +124,22 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Set admin. Only the Governor can call this function.
-        @param newAdmin New admin address
-        @param allowed  Status of an admin
+        @dev Set loan factory admin. Only the Governor can call this function.
+        @dev It emits a `LoanFactoryAdminSet` event.
+        @param loanFactoryAdmin An address being allowed or disallowed as a Loan Factory Admin.
+        @param allowed  Status of a loan factory admin.
     */
-    function setAdmin(address newAdmin, bool allowed) external {
+    function setLoanFactoryAdmin(address loanFactoryAdmin, bool allowed) external {
         _isValidGovernor();
-        admins[newAdmin] = allowed;
+        loanFactoryAdmins[loanFactoryAdmin] = allowed;
+        emit LoanFactoryAdminSet(loanFactoryAdmin, allowed);
     }
 
     /**
         @dev Triggers paused state. Halts functionality for certain functions. Only the Governor or a Loan Factory Admin can call this function.
     */
     function pause() external {
-        _isValidGovernorOrAdmin();
+        _isValidGovernorOrLoanFactoryAdmin();
         super._pause();
     }
 
@@ -143,7 +147,7 @@ contract LoanFactory is Pausable {
         @dev Triggers unpaused state. Returns functionality for certain functions. Only the Governor or a Loan Factory Admin can call this function.
     */
     function unpause() external {
-        _isValidGovernorOrAdmin();
+        _isValidGovernorOrLoanFactoryAdmin();
         super._unpause();
     }
 
@@ -157,14 +161,14 @@ contract LoanFactory is Pausable {
     /**
         @dev Checks that msg.sender is the Governor or a Loan Factory Admin.
     */
-    function _isValidGovernorOrAdmin() internal {
-        require(msg.sender == globals.governor() || admins[msg.sender], "LF:NOT_GOV_OR_ADMIN");
+    function _isValidGovernorOrLoanFactoryAdmin() internal view {
+        require(msg.sender == globals.governor() || loanFactoryAdmins[msg.sender], "LF:NOT_GOV_OR_ADMIN");
     }
 
     /**
         @dev Function to determine if protocol is paused/unpaused.
     */
-    function _whenProtocolNotPaused() internal {
+    function _whenProtocolNotPaused() internal view {
         require(!globals.protocolPaused(), "LF:PROTO_PAUSED");
     }
 }

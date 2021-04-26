@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../token/interfaces/IFDT.sol";
 
-interface ILoan is IERC20 {
+interface ILoan is IFDT {
     
     // State Variables
-    function fundsTokenBalance() external view returns (uint256);
-    
     function liquidityAsset() external view returns (address);
     
     function collateralAsset() external view returns (address);
@@ -29,8 +27,6 @@ interface ILoan is IERC20 {
     function premiumCalc() external view returns (address);
     
     function loanState() external view returns (uint256);
-    
-    function globals() external view returns (address);
     
     function collateralRequiredForDrawdown(uint256) external view returns(uint256);
     
@@ -69,14 +65,20 @@ interface ILoan is IERC20 {
     function termDays() external view returns (uint256);
     
     function nextPaymentDue() external view returns (uint256);
+
+    function getFullPayment() external view returns (uint256, uint256, uint256);
     
 
     // Liquidations
+    function amountLiquidated() external view returns (uint256);
+
     function defaultSuffered() external view returns (uint256);
     
     function amountRecovered() external view returns (uint256);
     
     function getExpectedAmountRecovered() external view returns(uint256);
+
+    function liquidationExcess() external view returns(uint256);
     
 
     // Functions
@@ -93,15 +95,16 @@ interface ILoan is IERC20 {
     function unwind() external;
     
 
-    // FDT
-    function updateFundsReceived() external;
-    
-    function withdrawFunds() external;
-
-    function withdrawableFundsOf(address) external view returns(uint256);
-
     // Security 
     function pause() external;
 
     function unpause() external;
+
+    function loanAdmins(address) external view returns (address);
+
+    function setLoanAdmin(address, bool) external;
+
+
+    // Misc
+    function reclaimERC20(address) external;
 }

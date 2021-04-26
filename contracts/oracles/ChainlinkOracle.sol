@@ -2,14 +2,14 @@
 pragma solidity 0.6.11;
 
 import "./IChainlinkAggregatorV3.sol";
-import "../interfaces/IGlobals.sol";
+import "../interfaces/IMapleGlobals.sol";
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /// @title ChainlinkOracle is a wrapper contract for Chainlink oracle price feeds that allows for manual price feed overrides.
 contract ChainlinkOracle is Ownable {
 
     IChainlinkAggregatorV3 public priceFeed;
-    IGlobals public globals;
+    IMapleGlobals public globals;
 
     address public immutable assetAddress;
 
@@ -65,7 +65,7 @@ contract ChainlinkOracle is Ownable {
     /**
        @dev Returns denomination of price.
     */
-    function getDenomination() external view returns(bytes32) {
+    function getDenomination() external pure returns(bytes32) {
         // All Chainlink oracles are denominated in USD
         return bytes32("USD");
     }

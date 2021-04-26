@@ -57,8 +57,8 @@ interface IBPool {
 
     function exitswapExternAmountOut(
         address tokenOut,
-        uint tokenAmountOut,
-        uint maxPoolAmountIn
-    ) external returns (uint poolAmountIn);
+        uint256 tokenAmountOut,
+        uint256 maxPoolAmountIn
+    ) external returns (uint256 poolAmountIn);
 
 }

@@ -12,11 +12,13 @@ contract PoolFactory is Pausable {
     uint8 public constant SL_FACTORY = 4;  // Factory type of `StakeLockerFactory`
 
     uint256  public poolsCreated;  // Incrementor for number of Pools created
-    IGlobals public globals;       // MapleGlobals contract
+    IMapleGlobals public globals;       // MapleGlobals contract
 
-    mapping(uint256 => address) public pools;   // Map to keep `Pool` contract corresponds to its index.
-    mapping(address => bool)    public isPool;  // Used to check if a `Pool` was instantiated from this factory.
-    mapping(address => bool)    public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
+    mapping(uint256 => address) public pools;              // Map to keep `Pool` contract corresponds to its index.
+    mapping(address => bool)    public isPool;             // Used to check if a `Pool` was instantiated from this factory.
+    mapping(address => bool)    public poolFactoryAdmins;  // Pool Factory Admin addresses that have permission to do certain operations in case of disaster mgt
+
+    event PoolFactoryAdminSet(address poolFactoryAdmin, bool allowed);
 
     event PoolCreated(
         address indexed pool,
@@ -33,7 +35,7 @@ contract PoolFactory is Pausable {
     );
 
     constructor(address _globals) public {
-        globals = IGlobals(_globals);
+        globals = IMapleGlobals(_globals);
     }
 
     /**
@@ -42,7 +44,7 @@ contract PoolFactory is Pausable {
     */
     function setGlobals(address newGlobals) external {
         _isValidGovernor();
-        globals = IGlobals(newGlobals);
+        globals = IMapleGlobals(newGlobals);
     }
 
     /**
@@ -67,7 +69,7 @@ contract PoolFactory is Pausable {
     ) public whenNotPaused returns (address) {
         _whenProtocolNotPaused();
         {
-            IGlobals _globals = globals;
+            IMapleGlobals _globals = globals;
             require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PF:INVALID_LLF");
             require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PF:INVALID_SLF");
             require(_globals.isValidPoolDelegate(msg.sender),                         "PF:NOT_DELEGATE");
@@ -111,20 +113,22 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Set admin. Only the Governor can call this function.
-        @param newAdmin New admin address
-        @param allowed  Status of an admin
+        @dev Set pool factory admin. Only the Governor can call this function.
+        @dev It emits a `PoolFactoryAdminSet` event.
+        @param poolFactoryAdmin An address being allowed or disallowed as a Pool Factory Admin.
+        @param allowed  Status of a pool factory admin.
     */
-    function setAdmin(address newAdmin, bool allowed) external {
+    function setPoolFactoryAdmin(address poolFactoryAdmin, bool allowed) external {
         _isValidGovernor();
-        admins[newAdmin] = allowed;
+        poolFactoryAdmins[poolFactoryAdmin] = allowed;
+        emit PoolFactoryAdminSet(poolFactoryAdmin, allowed);
     }
 
     /**
         @dev Triggers paused state. Halts functionality for certain functions. Only the Governor or a Pool Factory Admin can call this function.
     */
     function pause() external {
-        _isValidGovernorOrAdmin();
+        _isValidGovernorOrPoolFactoryAdmin();
         super._pause();
     }
 
@@ -132,7 +136,7 @@ contract PoolFactory is Pausable {
         @dev Triggers unpaused state. Returns functionality for certain functions. Only the Governor or a Pool Factory Admin can call this function.
     */
     function unpause() external {
-        _isValidGovernorOrAdmin();
+        _isValidGovernorOrPoolFactoryAdmin();
         super._unpause();
     }
 
@@ -146,14 +150,14 @@ contract PoolFactory is Pausable {
     /**
         @dev Checks that msg.sender is the Governor or a Pool Factory Admin.
     */
-    function _isValidGovernorOrAdmin() internal {
-        require(msg.sender == globals.governor() || admins[msg.sender], "PF:NOT_GOV_OR_ADMIN");
+    function _isValidGovernorOrPoolFactoryAdmin() internal view {
+        require(msg.sender == globals.governor() || poolFactoryAdmins[msg.sender], "PF:NOT_GOV_OR_ADMIN");
     }
 
     /**
         @dev Function to determine if protocol is paused/unpaused.
     */
-    function _whenProtocolNotPaused() internal {
+    function _whenProtocolNotPaused() internal view {
         require(!globals.protocolPaused(), "PF:PROTO_PAUSED");
     }
 }

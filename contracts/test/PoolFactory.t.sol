@@ -107,8 +107,8 @@ contract PoolFactoryTest is TestUtil {
         // Initialize USDC/USDC Balancer pool (Doesn't include mpl)
         bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
 
-        IERC20(DAI).approve(address(bPool), uint(-1));
-        IERC20(USDC).approve(address(bPool), uint(-1));
+        IERC20(DAI).approve(address(bPool), uint256(-1));
+        IERC20(USDC).approve(address(bPool), uint256(-1));
 
         bPool.bind(USDC, 50_000_000 * 10 ** 6, 5 * WAD);  // Bind 50m   DAI with 5 denormalization weight
         bPool.bind(DAI,  50_000_000 * WAD,     5 * WAD);  // Bind 100k USDC with 5 denormalization weight

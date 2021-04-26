@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 
 import "../interfaces/IERC20Details.sol";
-import "../interfaces/IGlobals.sol";
+import "../interfaces/IMapleGlobals.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 /// @title Util is a library that contains utility functions.
@@ -18,7 +18,7 @@ library Util {
         @param swapAmt   Amount of fromAsset to be swapped
         @return Expected amount of toAsset to receive from swap based on current oracle prices
     */
-    function calcMinAmount(IGlobals globals, address fromAsset, address toAsset, uint256 swapAmt) public view returns(uint256) {
+    function calcMinAmount(IMapleGlobals globals, address fromAsset, address toAsset, uint256 swapAmt) public view returns(uint256) {
         return 
             swapAmt
                 .mul(globals.getLatestPrice(fromAsset))           // Convert from "from" asset value

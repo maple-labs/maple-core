@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "./interfaces/IGlobals.sol";
+import "./interfaces/IMapleGlobals.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IPoolFactory.sol";
 
@@ -271,7 +271,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Triggers paused state. Halts functionality for certain functions. Only the Pool Delegate or a Pool Admin can call this function.
     */
     function pause() external {
-        _isValidAdminOrPoolDelegate();
+        _isValidPoolDelegateOrPoolAdmin();
         super._pause();
     }
 
@@ -279,7 +279,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Triggers unpaused state. Returns functionality for certain functions. Only the Pool Delegate or a Pool Admin can call this function.
     */
     function unpause() external {
-        _isValidAdminOrPoolDelegate();
+        _isValidPoolDelegateOrPoolAdmin();
         super._unpause();
     }
 
@@ -291,7 +291,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev View function to indicate if cooldown period has passed for msg.sender and if they are in the unstake window.
     */
     function isUnstakeAllowed(address from) public view returns (bool) {
-        IGlobals globals = _globals();
+        IMapleGlobals globals = _globals();
         return block.timestamp - (unstakeCooldown[from] + globals.stakerCooldownPeriod()) <= globals.stakerUnstakeWindow();
     }
 
@@ -299,16 +299,16 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev View function to indicate if recipient is allowed to receive a transfer.
         This is only possible if they have zero cooldown or they are past their unstake window.
     */
-    function isReceiveAllowed(uint256 unstakeCooldown) public view returns (bool) {
-        IGlobals globals = _globals();
-        return block.timestamp > unstakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow();
+    function isReceiveAllowed(uint256 _unstakeCooldown) public view returns (bool) {
+        IMapleGlobals globals = _globals();
+        return block.timestamp > _unstakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow();
     }
 
     /**
         @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
     */
-    function _isValidAdminOrPoolDelegate() internal view {
-        require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).admins(msg.sender), "SL:NOT_DELEGATE_OR_ADMIN");
+    function _isValidPoolDelegateOrPoolAdmin() internal view {
+        require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).poolAdmins(msg.sender), "SL:NOT_DELEGATE_OR_ADMIN");
     }
 
     /**
@@ -331,14 +331,14 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**
         @dev Helper function to return interface of MapleGlobals.
     */
-    function _globals() internal view returns(IGlobals) {
-        return IGlobals(IPoolFactory(IPool(pool).superFactory()).globals());
+    function _globals() internal view returns(IMapleGlobals) {
+        return IMapleGlobals(IPoolFactory(IPool(pool).superFactory()).globals());
     }
 
     /**
         @dev Function to block functionality of functions when protocol is in a paused state.
     */
-    function _whenProtocolNotPaused() internal {
+    function _whenProtocolNotPaused() internal view {
         require(!_globals().protocolPaused(), "SL:PROTO_PAUSED");
     }
 

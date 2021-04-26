@@ -35,7 +35,7 @@ contract PoolTest is TestUtil {
         assertTrue(pat.try_claim(address(pool), address(loan), address(dlFactory)));   // Successfully call the `claim()` function
         
         // Admin can claim once added
-        pat.setAdmin(address(pool), address(securityAdmin), true);                                // Add admin to allow to call the `claim()` function
+        pat.setPoolAdmin(address(pool), address(securityAdmin), true);                           // Add admin to allow to call the `claim()` function
         assertTrue(securityAdmin.try_claim(address(pool), address(loan), address(dlFactory)));   // Successfully call the `claim()` function
 
         // Pause protocol and attempt claim()
@@ -47,7 +47,7 @@ contract PoolTest is TestUtil {
         assertTrue(securityAdmin.try_claim(address(pool), address(loan), address(dlFactory)));
 
         // Admin can't claim after removed
-        pat.setAdmin(address(pool), address(securityAdmin), false);                                // Add admin to allow to call the `claim()` function
+        pat.setPoolAdmin(address(pool), address(securityAdmin), false);                           // Add admin to allow to call the `claim()` function
         assertTrue(!securityAdmin.try_claim(address(pool), address(loan), address(dlFactory)));   // Does not have permission to call `claim()` function
     }
 
@@ -70,7 +70,7 @@ contract PoolTest is TestUtil {
         assertTrue(pat.try_fundLoan(address(pool), address(zero_loan), address(dlFactory), depositAmt));
 
         // Drawdown of the loan
-        uint cReq = zero_loan.collateralRequiredForDrawdown(depositAmt);
+        uint256 cReq = zero_loan.collateralRequiredForDrawdown(depositAmt);
         assertEq(cReq, 0); // No collateral required on 0% collateralized loan
         bob.drawdown(address(zero_loan), depositAmt);
 
@@ -659,9 +659,9 @@ contract PoolTest is TestUtil {
         uint256 sumTransfer;
         uint256 sumNetNew;
 
-        for (uint i = 0; i < 4; i++) sumNetNew += (loanData[i] - debtLockerData[i]);
+        for (uint256 i = 0; i < 4; i++) sumNetNew += (loanData[i] - debtLockerData[i]);
 
-        for (uint i = 0; i < 4; i++) {
+        for (uint256 i = 0; i < 4; i++) {
             assertEq(debtLockerData[i + 4], loanData[i]);  // DL updated to reflect loan state
             // Category portion of claim * DL asset balance 
             // Eg. (interestClaimed / totalClaimed) * balance = Portion of total claim balance that is interest

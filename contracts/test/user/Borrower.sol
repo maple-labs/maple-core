@@ -107,9 +107,9 @@ contract Borrower {
         (ok,) = address(locker).call(abi.encodeWithSignature(sig, dst, amt));
     }
 
-    function try_setAdmin(address loan, address newAdmin, bool status) external returns(bool ok) {
-        string memory sig = "setAdmin(address,bool)";
-        (ok,) = address(loan).call(abi.encodeWithSignature(sig, newAdmin, status));
+    function try_setLoanAdmin(address loan, address newLoanAdmin, bool status) external returns(bool ok) {
+        string memory sig = "setLoanAdmin(address,bool)";
+        (ok,) = address(loan).call(abi.encodeWithSignature(sig, newLoanAdmin, status));
     }
 
     function try_pause(address target) external returns(bool ok) {

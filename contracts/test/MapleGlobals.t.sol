@@ -28,7 +28,7 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.treasuryFee(),                50);
         assertEq(globals.maxSwapSlippage(),          1000);
         assertEq(globals.minLoanEquity(),            2000);
-        assertEq(globals.admin(),              address(1));
+        assertEq(globals.globalAdmin(),        address(1));
     }
 
     function test_setup() public {

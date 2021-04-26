@@ -6,7 +6,7 @@ import "../interfaces/ICollateralLockerFactory.sol";
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/IFundingLocker.sol";
 import "../interfaces/IFundingLockerFactory.sol";
-import "../interfaces/IGlobals.sol";
+import "../interfaces/IMapleGlobals.sol";
 import "../interfaces/ILateFeeCalc.sol";
 import "../interfaces/ILoanFactory.sol";
 import "../interfaces/IPremiumCalc.sol";
@@ -40,7 +40,7 @@ library LoanLib {
         @return excessReturned Amount of liquidityAsset that was returned to the Loan from the FundingLocker
     */
     function unwind(IERC20 liquidityAsset, address superFactory, address fundingLocker, uint256 createdAt) external returns(uint256 excessReturned) {
-        IGlobals globals = _globals(superFactory);
+        IMapleGlobals globals = _globals(superFactory);
 
         // Only callable if time has passed drawdown grace period, set in MapleGlobals
         require(block.timestamp > createdAt.add(globals.fundingPeriod()), "L:STILL_FUNDING_PERIOD");
@@ -85,7 +85,7 @@ library LoanLib {
             collateralAsset.safeApprove(UNISWAP_ROUTER, uint256(0));
             collateralAsset.safeApprove(UNISWAP_ROUTER, liquidationAmt);
 
-            IGlobals globals = _globals(superFactory);
+            IMapleGlobals globals = _globals(superFactory);
 
             uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), liquidityAsset, liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset
 
@@ -127,7 +127,7 @@ library LoanLib {
         @param liquidityAsset Address of loan asset that is supported by the loan in other words denominated currency in which it taking funds.
         @param globals Instance of the `MapleGlobals` contract.
      */
-    function reclaimERC20(address token, address liquidityAsset, IGlobals globals) external {
+    function reclaimERC20(address token, address liquidityAsset, IMapleGlobals globals) external {
         require(msg.sender == globals.governor(),               "L:NOT_GOV");
         require(token != liquidityAsset && token != address(0), "L:INVALID_TOKEN");
         IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
@@ -157,7 +157,6 @@ library LoanLib {
 
     /**
         @dev Returns information on next payment amount.
-        @param superFactory     Factory that instantiated Loan
         @param repaymentCalc    Address of RepaymentCalc
         @param nextPaymentDue   Timestamp of when payment is due
         @param lateFeeCalc      Address of LateFeeCalc
@@ -168,7 +167,6 @@ library LoanLib {
         @return paymentLate     Boolean if payment is late
     */
     function getNextPayment(
-        address superFactory,
         address repaymentCalc,
         uint256 nextPaymentDue,
         address lateFeeCalc
@@ -183,7 +181,6 @@ library LoanLib {
             bool    paymentLate
         ) 
     {
-        IGlobals globals = _globals(superFactory);
         _nextPaymentDue  = nextPaymentDue;
 
         // Get next payment amounts from repayment calc
@@ -220,7 +217,7 @@ library LoanLib {
         view
         returns (uint256) 
     {
-        IGlobals globals = _globals(superFactory);
+        IMapleGlobals globals = _globals(superFactory);
 
         uint256 wad = _toWad(amt, liquidityAsset);  // Convert to WAD precision
 
@@ -239,8 +236,8 @@ library LoanLib {
     /*** Helper Functions ***/
     /************************/
 
-    function _globals(address loanFactory) internal view returns (IGlobals) {
-        return IGlobals(ILoanFactory(loanFactory).globals());
+    function _globals(address loanFactory) internal view returns (IMapleGlobals) {
+        return IMapleGlobals(ILoanFactory(loanFactory).globals());
     }
 
     function _toWad(uint256 amt, IERC20Details liquidityAsset) internal view returns(uint256) {

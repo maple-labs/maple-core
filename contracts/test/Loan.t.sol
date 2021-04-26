@@ -226,7 +226,7 @@ contract LoanTest is TestUtil {
         assertTrue(!bob.try_drawdown(address(loan), loan.requestAmount() - 1));  // Can't drawdown less than requestAmount
         assertTrue(!bob.try_drawdown(address(loan),           fundAmount + 1));  // Can't drawdown more than fundingLocker balance
 
-        uint pre = usdc.balanceOf(address(bob));
+        uint256 pre = usdc.balanceOf(address(bob));
 
         assertEq(weth.balanceOf(address(bob)),  reqCollateral);  // Borrower collateral balance
         assertEq(usdc.balanceOf(fundingLocker),    fundAmount);  // Funding locker liquidityAsset balance
@@ -305,7 +305,7 @@ contract LoanTest is TestUtil {
 
         uint256 numPayments = loan.paymentsRemaining();
         // Approve 1st of 3 payments.
-        (uint total, uint principal, uint interest, uint due,) = loan.getNextPayment();
+        (uint256 total, uint256 principal, uint256 interest, uint256 due,) = loan.getNextPayment();
         if(total == 0 && interest == 0) return;  // If fuzz params cause payments to be so small they round to zero, skip fuzz iteration
 
         assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
@@ -689,7 +689,7 @@ contract LoanTest is TestUtil {
         assertTrue(!bob.try_makeFullPayment(address(loan)));  // Can't makePayment with lack of approval
 
         // Approve full payment.
-        (uint total, uint principal, uint interest) = loan.getFullPayment();
+        (uint256 total, uint256 principal, uint256 interest) = loan.getFullPayment();
         mint("USDC", address(bob), total);
         bob.approve(USDC, address(loan), total);
 
@@ -760,16 +760,16 @@ contract LoanTest is TestUtil {
         assertEq(afterBalanceWETH - beforeBalanceWETH,  100 * WAD);
     }
 
-    function test_setAdmin() public {
-        // Pause protocol and attempt setAdmin()
+    function test_setLoanAdmin() public {
+        // Pause protocol and attempt setLoanAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!bob.try_setAdmin(address(loan), address(securityAdmin), true));
-        assertTrue(!loan.admins(address(securityAdmin)));
+        assertTrue(!bob.try_setLoanAdmin(address(loan), address(securityAdmin), true));
+        assertTrue(!loan.loanAdmins(address(securityAdmin)));
 
-        // Unpause protocol and setAdmin()
+        // Unpause protocol and setLoanAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(bob.try_setAdmin(address(loan), address(securityAdmin), true));
-        assertTrue(loan.admins(address(securityAdmin)));
+        assertTrue(bob.try_setLoanAdmin(address(loan), address(securityAdmin), true));
+        assertTrue(loan.loanAdmins(address(securityAdmin)));
     }
 
     function repetitivePayment(Loan loan, uint256 numPayments, uint256 paymentCount, uint256 drawdownAmount, uint256 loanPreBal, uint256 oldInterest) internal {

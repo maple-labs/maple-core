@@ -6,7 +6,7 @@ import "./interfaces/ICollateralLockerFactory.sol";
 import "./interfaces/IERC20Details.sol";
 import "./interfaces/IFundingLocker.sol";
 import "./interfaces/IFundingLockerFactory.sol";
-import "./interfaces/IGlobals.sol";
+import "./interfaces/IMapleGlobals.sol";
 import "./interfaces/ILateFeeCalc.sol";
 import "./interfaces/ILiquidityLocker.sol";
 import "./interfaces/ILoanFactory.sol";
@@ -55,7 +55,7 @@ contract Loan is FDT, Pausable {
     address public immutable premiumCalc;       // The premium calculator for this loan
     address public immutable superFactory;      // The factory that deployed this Loan
 
-    mapping(address => bool) public admins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
+    mapping(address => bool) public loanAdmins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
 
     uint256 public nextPaymentDue;  // The unix timestamp due date of next payment
 
@@ -87,23 +87,23 @@ contract Loan is FDT, Pausable {
     event   BalanceUpdated(address indexed who, address indexed token, uint256 balance);
     event         Drawdown(uint256 drawdownAmt);
     event LoanStateChanged(State state);
-    event         AdminSet(address admin, bool allowed);
+    event     LoanAdminSet(address loanAdmin, bool allowed);
     
     event PaymentMade(
-        uint totalPaid,
-        uint principalPaid,
-        uint interestPaid,
-        uint paymentsRemaining,
-        uint principalOwed,
-        uint nextPaymentDue,
+        uint256 totalPaid,
+        uint256 principalPaid,
+        uint256 interestPaid,
+        uint256 paymentsRemaining,
+        uint256 principalOwed,
+        uint256 nextPaymentDue,
         bool latePayment
     );
     
     event Liquidation(
-        uint collateralSwapped,
-        uint liquidityAssetReturned,
-        uint liquidationExcess,
-        uint defaultSuffered
+        uint256 collateralSwapped,
+        uint256 liquidityAssetReturned,
+        uint256 liquidationExcess,
+        uint256 defaultSuffered
     );
 
     /**
@@ -141,7 +141,7 @@ contract Loan is FDT, Pausable {
         )
         public
     {
-        IGlobals globals = _globals(msg.sender);
+        IMapleGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks
         require(globals.isValidLiquidityAsset(_liquidityAsset),   "L:INVALID_LIQ_ASSET");
@@ -193,7 +193,7 @@ contract Loan is FDT, Pausable {
         _whenProtocolNotPaused();
         _isValidBorrower();
         _isValidState(State.Ready);
-        IGlobals globals = _globals(superFactory);
+        IMapleGlobals globals = _globals(superFactory);
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
 
@@ -253,7 +253,7 @@ contract Loan is FDT, Pausable {
     /**
         @dev Make the full payment for this loan, a.k.a. "calling" the loan. This requires the borrower to pay a premium fee.
     */
-    function makeFullPayment() public {
+    function makeFullPayment() external {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
         (uint256 total, uint256 principal, uint256 interest) = getFullPayment();
@@ -405,7 +405,7 @@ contract Loan is FDT, Pausable {
         @dev Triggers paused state. Halts functionality for certain functions. Only the Loan Borrower or a Loan Admin can call this function.
     */
     function pause() external {
-        _isValidBorrowerOrAdmin();
+        _isValidBorrowerOrLoanAdmin();
         super._pause();
     }
 
@@ -413,21 +413,21 @@ contract Loan is FDT, Pausable {
         @dev Triggers unpaused state. Returns functionality for certain functions. Only the Loan Borrower or a Loan Admin can call this function.
     */
     function unpause() external {
-        _isValidBorrowerOrAdmin();
+        _isValidBorrowerOrLoanAdmin();
         super._unpause();
     }
 
     /**
-        @dev Set admin. Only the Loan Borrower can call this function.
-        @dev It emits an `AdminSet` event.
-        @param newAdmin New admin address
-        @param allowed  Status of an admin
+        @dev Set loan admin. Only the Loan Borrower can call this function.
+        @dev It emits a `LoanAdminSet` event.
+        @param loanAdmin A address being allowed or disallowed as a Loan Admin.
+        @param allowed  Status of a loan admin.
     */
-    function setAdmin(address newAdmin, bool allowed) external {
+    function setLoanAdmin(address loanAdmin, bool allowed) external {
         _whenProtocolNotPaused();
         _isValidBorrower();
-        admins[newAdmin] = allowed;
-        emit AdminSet(newAdmin, allowed);
+        loanAdmins[loanAdmin] = allowed;
+        emit LoanAdminSet(loanAdmin, allowed);
     }
 
     /**************************/
@@ -476,7 +476,7 @@ contract Loan is FDT, Pausable {
                 [4] = Is Payment Late
     */
     function getNextPayment() public view returns(uint256, uint256, uint256, uint256, bool) {
-        return LoanLib.getNextPayment(superFactory, repaymentCalc, nextPaymentDue, lateFeeCalc);
+        return LoanLib.getNextPayment(repaymentCalc, nextPaymentDue, lateFeeCalc);
     }
 
     /**
@@ -511,15 +511,15 @@ contract Loan is FDT, Pausable {
     /**
         @dev Function to block functionality of functions when protocol is in a paused state.
     */
-    function _whenProtocolNotPaused() internal {
+    function _whenProtocolNotPaused() internal view {
         require(!_globals(superFactory).protocolPaused(), "L:PROTO_PAUSED");
     }
 
     /**
         @dev Checks that msg.sender is the Loan Borrower or a Loan Admin.
     */
-    function _isValidBorrowerOrAdmin() internal {
-        require(msg.sender == borrower || admins[msg.sender], "L:NOT_BORROWER_OR_ADMIN");
+    function _isValidBorrowerOrLoanAdmin() internal view {
+        require(msg.sender == borrower || loanAdmins[msg.sender], "L:NOT_BORROWER_OR_ADMIN");
     }
 
     /**
@@ -532,8 +532,8 @@ contract Loan is FDT, Pausable {
     /**
         @dev Utility to return MapleGlobals interface.
     */
-    function _globals(address loanFactory) internal view returns (IGlobals) {
-        return IGlobals(ILoanFactory(loanFactory).globals());
+    function _globals(address loanFactory) internal view returns (IMapleGlobals) {
+        return IMapleGlobals(ILoanFactory(loanFactory).globals());
     }
 
     /**
