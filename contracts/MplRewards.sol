@@ -159,8 +159,8 @@ contract MplRewards is Ownable {
         uint256 balance = rewardsToken.balanceOf(address(this));
         require(_rewardRate <= balance.div(rewardsDuration), "R:REWARD_TOO_HIGH");
 
-        lastUpdateTime = block.timestamp;
-        periodFinish   = block.timestamp.add(rewardsDuration);
+        lastUpdateTime = blockTimestamp;
+        periodFinish   = blockTimestamp.add(rewardsDuration);
         emit RewardAdded(reward);
     }
 

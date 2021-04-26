@@ -159,18 +159,20 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @param amt Amount of stakeAsset (BPTs) to deposit
     */
     function stake(uint256 amt) whenNotPaused external {
+        address msgSender = msg.sender;
+
         _whenProtocolNotPaused();
-        _isAllowed(msg.sender);
+        _isAllowed(msgSender);
 
-        unstakeCooldown[msg.sender] = uint256(0);  // Reset unstakeCooldown if staker had previously intended to unstake
+        unstakeCooldown[msgSender] = uint256(0);  // Reset unstakeCooldown if staker had previously intended to unstake
 
-        _updateStakeDate(msg.sender, amt);
+        _updateStakeDate(msgSender, amt);
 
-        stakeAsset.safeTransferFrom(msg.sender, address(this), amt);
-        _mint(msg.sender, amt);
+        stakeAsset.safeTransferFrom(msgSender, address(this), amt);
+        _mint(msgSender, amt);
 
-        emit Stake(amt, msg.sender);
-        emit Cooldown(msg.sender, uint256(0));
+        emit Stake(amt, msgSender);
+        emit Cooldown(msgSender, uint256(0));
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
@@ -227,12 +229,12 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");
 
         updateFundsReceived();   // Account for any funds transferred into contract since last call
-        _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
+        _burn(msgSender, amt);  // Burn the corresponding FDT balance.
         withdrawFunds();         // Transfer full entitled liquidityAsset interest
 
-        stakeAsset.safeTransfer(msg.sender, amt.sub(recognizeLosses()));  // Unstake amt minus losses
+        stakeAsset.safeTransfer(msgSender, amt.sub(recognizeLosses()));  // Unstake amt minus losses
 
-        emit Unstake(amt, msg.sender);
+        emit Unstake(amt, msgSender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
