@@ -58,7 +58,7 @@ contract MapleTreasury {
         @dev It emits a `GlobalsSet` event.
         @param newGlobals Address of new MapleGlobals contract
     */
-    function setGlobals(address newGlobals) external isGovernor {
+    function setGlobals(address newGlobals) isGovernor external {
         globals = newGlobals;
         emit GlobalsSet(newGlobals);
     }
@@ -104,7 +104,7 @@ contract MapleTreasury {
         IERC20(asset).safeApprove(uniswapRouter, assetBalance);
 
         address uniswapAssetForPath = _globals.defaultUniswapPath(asset, fundsToken);
-        bool middleAsset = uniswapAssetForPath != fundsToken && uniswapAssetForPath != address(0);
+        bool middleAsset            = uniswapAssetForPath != fundsToken && uniswapAssetForPath != address(0);
 
         address[] memory path = new address[](middleAsset ? 3 : 2);
 

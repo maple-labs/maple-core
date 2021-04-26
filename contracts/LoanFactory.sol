@@ -107,7 +107,7 @@ contract LoanFactory is Pausable {
         loanAddress         = address(loan);
         loans[loansCreated] = loanAddress;
         isLoan[loanAddress] = true;
-        loansCreated++;
+        ++loansCreated;
 
         emit LoanCreated(
             loanAddress,

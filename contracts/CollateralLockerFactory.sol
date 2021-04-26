@@ -18,15 +18,14 @@ contract CollateralLockerFactory {
     /**
         @dev Instantiate a CollateralLocker contract.
         @dev It emits a `CollateralLockerCreated` event.
-        @param collateralAsset The asset this collateral locker will escrow
-        @return Address of the instantiated collateral locker
+        @param collateralAsset The asset this collateral locker will escrow.
+        @return collateralLocker Address of the instantiated collateral locker.
     */
-    function newLocker(address collateralAsset) external returns (address) {
-        address collateralLocker   = address(new CollateralLocker(collateralAsset, msg.sender));
+    function newLocker(address collateralAsset) external returns (address collateralLocker) {
+        collateralLocker           = address(new CollateralLocker(collateralAsset, msg.sender));
         owner[collateralLocker]    = msg.sender;
         isLocker[collateralLocker] = true;
 
         emit CollateralLockerCreated(msg.sender, collateralLocker, collateralAsset);
-        return collateralLocker;
     }
 }

@@ -47,11 +47,13 @@ contract MplRewards is Ownable {
     }
 
     function _updateReward(address account) internal {
-        rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime       = lastTimeRewardApplicable();
+        uint256 _rewardPerTokenStored = rewardPerToken();
+        rewardPerTokenStored          = _rewardPerTokenStored;
+        lastUpdateTime                = lastTimeRewardApplicable();
+
         if (account != address(0)) {
             rewards[account] = earned(account);
-            userRewardPerTokenPaid[account] = rewardPerTokenStored;
+            userRewardPerTokenPaid[account] = _rewardPerTokenStored;
         }
     }
 
@@ -72,11 +74,11 @@ contract MplRewards is Ownable {
     }
 
     function rewardPerToken() public view returns (uint256) {
-        if (_totalSupply == 0) return rewardPerTokenStored;
-        return
-            rewardPerTokenStored.add(
-                lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply)
-            );
+        return _totalSupply == 0
+            ? rewardPerTokenStored
+            : rewardPerTokenStored.add(
+                   lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply)
+              );
     }
 
     function earned(address account) public view returns (uint256) {
@@ -121,11 +123,11 @@ contract MplRewards is Ownable {
         _updateReward(msg.sender);
         uint256 reward = rewards[msg.sender];
 
-        if (reward > 0) {
-            rewards[msg.sender] = 0;
-            rewardsToken.safeTransfer(msg.sender, reward);
-            emit RewardPaid(msg.sender, reward);
-        }
+        if (reward == 0) return;
+
+        rewards[msg.sender] = 0;
+        rewardsToken.safeTransfer(msg.sender, reward);
+        emit RewardPaid(msg.sender, reward);
     }
 
     function exit() external {
@@ -139,23 +141,26 @@ contract MplRewards is Ownable {
     */
     function notifyRewardAmount(uint256 reward) external onlyOwner {
         _updateReward(address(0));
-        if (block.timestamp >= periodFinish) {
-            rewardRate = reward.div(rewardsDuration);
-        } else {
-            uint256 remaining = periodFinish.sub(block.timestamp);
-            uint256 leftover  = remaining.mul(rewardRate);
-            rewardRate        = reward.add(leftover).div(rewardsDuration);
-        }
+
+        uint256 blockTimestamp = block.timestamp;
+
+        uint256 _rewardRate = blockTimestamp >= periodFinish
+            ? reward.div(rewardsDuration)
+            : reward.add(
+                  periodFinish.sub(blockTimestamp).mul(rewardRate)
+              ).div(rewardsDuration);
+
+        rewardRate = _rewardRate;
 
         // Ensure the provided reward amount is not more than the balance in the contract.
         // This keeps the reward rate in the right range, preventing overflows due to
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
         uint256 balance = rewardsToken.balanceOf(address(this));
-        require(rewardRate <= balance.div(rewardsDuration), "R:REWARD_TOO_HIGH");
+        require(_rewardRate <= balance.div(rewardsDuration), "R:REWARD_TOO_HIGH");
 
-        lastUpdateTime = block.timestamp;
-        periodFinish   = block.timestamp.add(rewardsDuration);
+        lastUpdateTime = blockTimestamp;
+        periodFinish   = blockTimestamp.add(rewardsDuration);
         emit RewardAdded(reward);
     }
 

@@ -21,15 +21,15 @@ contract PremiumCalc {
 
     /**
         @dev    Calculates the premium payment for a Loan, when making a full payment.
-        @param  _loan Loan to calculate a premium payment for
-        @return [0] = Principal + Interest
-                [1] = Principal
-                [2] = Interest
+        @param  _loan         Loan to calculate a premium payment for.
+        @return total         Principal + Interest
+        @return principalOwed Principal
+        @return interest      Interest
     */
-    function getPremiumPayment(address _loan) external view returns(uint256, uint256, uint256) {
-        ILoan   loan          = ILoan(_loan);
-        uint256 principalOwed = loan.principalOwed();
-        uint256 interest      = principalOwed.mul(premiumFee).div(10_000);
-        return (interest.add(principalOwed), principalOwed, interest);
+    function getPremiumPayment(address _loan) external view returns(uint256 total, uint256 principalOwed, uint256 interest) {
+        ILoan   loan  = ILoan(_loan);
+        principalOwed = loan.principalOwed();
+        interest      = principalOwed.mul(premiumFee).div(10_000);
+        total         = interest.add(principalOwed);
     }
 }

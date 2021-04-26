@@ -50,13 +50,14 @@ contract PoolFactory is Pausable {
     /**
         @dev Instantiates a Pool contract.
         @dev It emits a `PoolCreated` event.
-        @param  liquidityAsset The asset escrowed in LiquidityLocker
-        @param  stakeAsset     The asset escrowed in StakeLocker
-        @param  slFactory      The factory to instantiate a StakeLocker from
-        @param  llFactory      The factory to instantiate a LiquidityLocker from
-        @param  stakingFee     Fee that stakers earn on interest, in basis points
-        @param  delegateFee    Fee that pool delegate earns on interest, in basis points
-        @param  liquidityCap   Amount of liquidityAsset accepted by the pool
+        @param  liquidityAsset The asset escrowed in LiquidityLocker.
+        @param  stakeAsset     The asset escrowed in StakeLocker.
+        @param  slFactory      The factory to instantiate a StakeLocker from.
+        @param  llFactory      The factory to instantiate a LiquidityLocker from.
+        @param  stakingFee     Fee that stakers earn on interest, in basis points.
+        @param  delegateFee    Fee that pool delegate earns on interest, in basis points.
+        @param  liquidityCap   Amount of liquidityAsset accepted by the pool.
+        @return poolAddress    Address of the instantiated pool.
     */
     function createPool(
         address liquidityAsset,
@@ -66,7 +67,7 @@ contract PoolFactory is Pausable {
         uint256 stakingFee,
         uint256 delegateFee,
         uint256 liquidityCap
-    ) public whenNotPaused returns (address) {
+    ) external whenNotPaused returns (address poolAddress) {
         _whenProtocolNotPaused();
         {
             IMapleGlobals _globals = globals;
@@ -92,12 +93,13 @@ contract PoolFactory is Pausable {
                 symbol
             );
 
-        pools[poolsCreated]   = address(pool);
-        isPool[address(pool)] = true;
-        poolsCreated++;
+        poolAddress           = address(pool);
+        pools[poolsCreated]   = poolAddress;
+        isPool[poolAddress] = true;
+        ++poolsCreated;
 
         emit PoolCreated(
-            address(pool),
+            poolAddress,
             msg.sender,
             liquidityAsset,
             stakeAsset,
@@ -109,7 +111,6 @@ contract PoolFactory is Pausable {
             name,
             symbol
         );
-        return address(pool);
     }
 
     /**

@@ -62,9 +62,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
                2. The Pool is in Initialized or Deactivated state.
     */
     modifier canUnstake(address from) {
+        IPool _pool = IPool(pool);
+
         require(
-            (from != IPool(pool).poolDelegate() && IPool(pool).isPoolFinalized()) ||
-            !IPool(pool).isPoolFinalized(),
+            (from != _pool.poolDelegate() && _pool.isPoolFinalized()) ||
+            !_pool.isPoolFinalized(),
             "SL:STAKE_LOCKED"
         );
         _;
@@ -157,18 +159,20 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @param amt Amount of stakeAsset (BPTs) to deposit
     */
     function stake(uint256 amt) whenNotPaused external {
+        address msgSender = msg.sender;
+
         _whenProtocolNotPaused();
-        _isAllowed(msg.sender);
+        _isAllowed(msgSender);
 
-        unstakeCooldown[msg.sender] = uint256(0);  // Reset unstakeCooldown if staker had previously intended to unstake
+        unstakeCooldown[msgSender] = uint256(0);  // Reset unstakeCooldown if staker had previously intended to unstake
 
-        _updateStakeDate(msg.sender, amt);
+        _updateStakeDate(msgSender, amt);
 
-        stakeAsset.safeTransferFrom(msg.sender, address(this), amt);
-        _mint(msg.sender, amt);
+        stakeAsset.safeTransferFrom(msgSender, address(this), amt);
+        _mint(msgSender, amt);
 
-        emit Stake(amt, msg.sender);
-        emit Cooldown(msg.sender, uint256(0));
+        emit Stake(amt, msgSender);
+        emit Cooldown(msgSender, uint256(0));
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
@@ -220,16 +224,17 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function unstake(uint256 amt) external canUnstake(msg.sender) {
         _whenProtocolNotPaused();
-        require(isUnstakeAllowed(msg.sender),                               "SL:OUTSIDE_COOLDOWN");
-        require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");
+
+        require(isUnstakeAllowed(msgSender),                               "SL:OUTSIDE_COOLDOWN");
+        require(stakeDate[msgSender].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");
 
         updateFundsReceived();   // Account for any funds transferred into contract since last call
-        _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
+        _burn(msgSender, amt);  // Burn the corresponding FDT balance.
         withdrawFunds();         // Transfer full entitled liquidityAsset interest
 
-        stakeAsset.safeTransfer(msg.sender, amt.sub(recognizeLosses()));  // Unstake amt minus losses
+        stakeAsset.safeTransfer(msgSender, amt.sub(recognizeLosses()));  // Unstake amt minus losses
 
-        emit Unstake(amt, msg.sender);
+        emit Unstake(amt, msgSender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
@@ -242,12 +247,12 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        if (withdrawableFunds > uint256(0)) {
-            fundsToken.safeTransfer(msg.sender, withdrawableFunds);
-            emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
+        if (withdrawableFunds == uint256(0)) return;
 
-            _updateFundsTokenBalance();
-        }
+        fundsToken.safeTransfer(msg.sender, withdrawableFunds);
+        emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
+
+        _updateFundsTokenBalance();
     }
 
     /**

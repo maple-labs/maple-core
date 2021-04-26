@@ -324,13 +324,12 @@ library PoolLib {
     ) external view returns (uint256) {
 
         // Create interfaces for the balancerPool as a Pool and as an ERC-20 token
-        IBPool bPool      = IBPool(_bPool);
-        IERC20 bPoolERC20 = IERC20(_bPool);
+        IBPool bPool = IBPool(_bPool);
 
         // FDTs are minted 1:1 (in wei) in the StakeLocker when staking BPTs, thus representing stake amount.
         // These are burned when withdrawing staked BPTs, thus representing the current stake amount.
         uint256 amountStakedBPT       = IERC20(stakeLocker).balanceOf(staker);
-        uint256 totalSupplyBPT        = bPoolERC20.totalSupply();
+        uint256 totalSupplyBPT        = IERC20(_bPool).totalSupply();
         uint256 liquidityAssetBalance = bPool.getBalance(liquidityAsset);
         uint256 liquidityAssetWeight  = bPool.getNormalizedWeight(liquidityAsset);
 
@@ -418,7 +417,7 @@ library PoolLib {
         address stakeLocker,
         uint256 liquidityAssetAmountRequired
     ) public view returns (uint256 poolAmountInRequired, uint256 stakerBalance) {
-
+        // Fetch balancer pool token information
         IBPool bPool = IBPool(_bPool);
 
         uint256 tokenBalanceOut = bPool.getBalance(liquidityAsset);

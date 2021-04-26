@@ -80,40 +80,36 @@ library LoanLib {
         // Pull collateralAsset from collateralLocker
         ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt);
 
-        if (address(collateralAsset) != liquidityAsset && liquidationAmt > uint256(0)) {
-            collateralAsset.safeApprove(UNISWAP_ROUTER, uint256(0));
-            collateralAsset.safeApprove(UNISWAP_ROUTER, liquidationAmt);
+        if (address(collateralAsset) == liquidityAsset || liquidationAmt == uint256(0)) return (liquidationAmt, liquidationAmt);
 
-            IMapleGlobals globals = _globals(superFactory);
+        collateralAsset.safeApprove(UNISWAP_ROUTER, uint256(0));
+        collateralAsset.safeApprove(UNISWAP_ROUTER, liquidationAmt);
 
-            uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), liquidityAsset, liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset
+        IMapleGlobals globals = _globals(superFactory);
 
-            // Generate path
-            address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), liquidityAsset);
-            bool middleAsset = uniswapAssetForPath != liquidityAsset && uniswapAssetForPath != address(0);
+        uint256 minAmount = Util.calcMinAmount(globals, address(collateralAsset), liquidityAsset, liquidationAmt);  // Minimum amount of loan asset get after swapping collateral asset
 
-            address[] memory path = new address[](middleAsset ? 3 : 2);
+        // Generate path
+        address uniswapAssetForPath = globals.defaultUniswapPath(address(collateralAsset), liquidityAsset);
+        bool middleAsset = uniswapAssetForPath != liquidityAsset && uniswapAssetForPath != address(0);
 
-            path[0] = address(collateralAsset);
-            path[1] = middleAsset ? uniswapAssetForPath : liquidityAsset;
+        address[] memory path = new address[](middleAsset ? 3 : 2);
 
-            if (middleAsset) path[2] = liquidityAsset;
+        path[0] = address(collateralAsset);
+        path[1] = middleAsset ? uniswapAssetForPath : liquidityAsset;
 
-            // Swap collateralAsset for liquidityAsset
-            uint256[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
-                liquidationAmt,
-                minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10_000)),
-                path,
-                address(this),
-                block.timestamp
-            );
+        if (middleAsset) path[2] = liquidityAsset;
 
-            amountLiquidated = returnAmounts[0];
-            amountRecovered  = returnAmounts[path.length - 1];
-        } else {
-            amountLiquidated = liquidationAmt;
-            amountRecovered  = liquidationAmt;
-        }
+        // Swap collateralAsset for liquidityAsset
+        uint256[] memory returnAmounts = IUniswapRouter(UNISWAP_ROUTER).swapExactTokensForTokens(
+            liquidationAmt,
+            minAmount.sub(minAmount.mul(globals.maxSwapSlippage()).div(10_000)),
+            path,
+            address(this),
+            block.timestamp
+        );
+
+        return(returnAmounts[0], returnAmounts[path.length - 1]);
     }
 
     /**********************************/
@@ -146,7 +142,6 @@ library LoanLib {
         @return boolean indicating if default can be triggered
     */
     function canTriggerDefault(uint256 nextPaymentDue, uint256 defaultGracePeriod, address superFactory, uint256 balance, uint256 totalSupply) external view returns(bool) {
-
         bool pastDefaultGracePeriod = block.timestamp > nextPaymentDue.add(defaultGracePeriod);
 
         // Check if the loan is past the defaultGracePeriod and that msg.sender has a percentage of total LoanFDTs that is greater

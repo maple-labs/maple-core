@@ -29,17 +29,16 @@ contract MplRewardsFactory {
     /**
         @dev Instantiate a MplRewards contract. Only the Governor can call this function.
         @dev It emits a `MplRewardsCreated` event.
-        @param rewardsToken Address of the rewardsToken (will always be MPL)
-        @param stakingToken Address of the stakingToken (token used to stake to earn rewards)
-                            (i.e., Pool address for PoolFDT mining, StakeLocker address for staked BPT mining)
-        @return Address of the instantiated MplRewards
+        @param rewardsToken Address of the rewardsToken (will always be MPL).
+        @param stakingToken Address of the stakingToken (token used to stake to earn rewards).
+                            (i.e., Pool address for PoolFDT mining, StakeLocker address for staked BPT mining.)
+        @return mplRewards Address of the instantiated MplRewards.
     */
-    function createMplRewards(address rewardsToken, address stakingToken) external returns (address) {
+    function createMplRewards(address rewardsToken, address stakingToken) external returns (address mplRewards) {
         require(msg.sender == globals.governor(), "RF:NOT_GOV");
-        address mplRewards       = address(new MplRewards(rewardsToken, stakingToken, msg.sender));
+        mplRewards               = address(new MplRewards(rewardsToken, stakingToken, msg.sender));
         isMplRewards[mplRewards] = true;
 
         emit MplRewardsCreated(rewardsToken, stakingToken, mplRewards, msg.sender);
-        return mplRewards;
     }
 }
