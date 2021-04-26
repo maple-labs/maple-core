@@ -53,18 +53,18 @@ contract MapleGlobals {
     mapping(address => mapping(address => bool)) public validSubFactories;   // Mapping of valid sub factories
 
     event                     Initialized();
-    event              CollateralAssetSet(address asset,                    uint256 decimals, string symbol, bool valid);
-    event               LiquidityAssetSet(address asset,                    uint256 decimals, string symbol, bool valid);
-    event                       OracleSet(address asset,                    address oracle);
+    event              CollateralAssetSet(address asset, uint256 decimals, string symbol, bool valid);
+    event               LiquidityAssetSet(address asset, uint256 decimals, string symbol, bool valid);
+    event                       OracleSet(address asset, address oracle);
     event TransferRestrictionExemptionSet(address indexed exemptedContract, bool valid);
     event                 BalancerPoolSet(address balancerPool, bool valid);
     event              PendingGovernorSet(address pendingGovernor);
     event                GovernorAccepted(address governor);
-    event                 GlobalsParamSet(bytes32 indexed which,            uint256 value);
-    event               GlobalsAddressSet(bytes32 indexed which,            address addr);
+    event                 GlobalsParamSet(bytes32 indexed which, uint256 value);
+    event               GlobalsAddressSet(bytes32 indexed which, address addr);
     event                  ProtocolPaused(bool pause);
     event                  GlobalAdminSet(address newGlobalAdmin);
-    event             PoolDelegateAllowed(address delegate,                 bool valid);
+    event             PoolDelegateAllowed(address delegate, bool valid);
 
     /**
         @dev Checks that msg.sender is the Governor.

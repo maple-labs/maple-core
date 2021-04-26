@@ -87,7 +87,7 @@ contract Loan is FDT, Pausable {
     event   BalanceUpdated(address indexed who, address indexed token, uint256 balance);
     event         Drawdown(uint256 drawdownAmt);
     event LoanStateChanged(State state);
-    event     LoanAdminSet(address loanAdmin,   bool allowed);
+    event     LoanAdminSet(address loanAdmin, bool allowed);
     
     event PaymentMade(
         uint256 totalPaid,

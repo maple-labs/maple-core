@@ -66,7 +66,7 @@ contract Pool is PoolFDT {
     event   PoolStateChanged(State state);
     event           Cooldown(address indexed lp, uint256 cooldown);
     event PoolOpenedToPublic(bool isOpen);
-    event       PoolAdminSet(address newPoolAdmin,     bool allowed);
+    event       PoolAdminSet(address newPoolAdmin, bool allowed);
     
     event DefaultSuffered(
         address indexed loan,

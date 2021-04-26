@@ -22,9 +22,9 @@ library PoolLib {
     uint256 public constant WAD         = 10 ** 18;
     uint8   public constant DL_FACTORY  = 1;         // Factory type of `DebtLockerFactory`
 
-    event         LoanFunded(address indexed loan, address debtLocker,   uint256 amountFunded);
-    event DepositDateUpdated(address indexed lp,   uint256 depositDate);
-    event           Cooldown(address indexed lp,   uint256 cooldown);
+    event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
+    event DepositDateUpdated(address indexed lp, uint256 depositDate);
+    event           Cooldown(address indexed lp, uint256 cooldown);
 
     /***************************************/
     /*** Pool Delegate Utility Functions ***/
