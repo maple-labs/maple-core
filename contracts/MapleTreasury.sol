@@ -69,7 +69,7 @@ contract MapleTreasury {
         @param asset  Address of the token that need to be reclaimed from the treasury contract
         @param amount Amount to withdraw
     */
-    function reclaimERC20(address asset, uint256 amount) isGovernor public {
+    function reclaimERC20(address asset, uint256 amount) isGovernor external {
         IERC20(asset).safeTransfer(msg.sender, amount);
         emit ERC20Reclaimed(asset, amount);
     }
@@ -79,7 +79,7 @@ contract MapleTreasury {
              Only the Governor can call this function.
         @dev It emits a `DistributedToHolders` event.
     */
-    function distributeToHolders() isGovernor public {
+    function distributeToHolders() isGovernor external {
         IERC20 _fundsToken = IERC20(fundsToken);
         uint256 distributeAmount = _fundsToken.balanceOf(address(this));
         _fundsToken.safeTransfer(mpl, distributeAmount);
@@ -92,7 +92,7 @@ contract MapleTreasury {
         @dev It emits a `ERC20Conversion` event.
         @param asset The ERC-20 asset to convert to fundsToken
     */
-    function convertERC20(address asset) isGovernor public {
+    function convertERC20(address asset) isGovernor external {
         require(asset != fundsToken, "MT:ASSET_IS_FUNDS_TOKEN");
 
         IMapleGlobals _globals = IMapleGlobals(globals);

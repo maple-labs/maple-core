@@ -76,7 +76,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
         @param _owner The address of a token holder.
         @return The amount of funds that `_owner` has withdrawn.
     */
-    function withdrawnFundsOf(address _owner) public view returns (uint256) {
+    function withdrawnFundsOf(address _owner) external view returns (uint256) {
         return withdrawnFunds[_owner];
     }
 

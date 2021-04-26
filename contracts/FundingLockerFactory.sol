@@ -21,7 +21,7 @@ contract FundingLockerFactory {
         @param liquidityAsset The asset this funding locker will escrow
         @return Address of the instantiated funding locker
     */
-    function newLocker(address liquidityAsset) public returns (address) {
+    function newLocker(address liquidityAsset) external returns (address) {
         address fundingLocker   = address(new FundingLocker(liquidityAsset, msg.sender));
         owner[fundingLocker]    = msg.sender;
         isLocker[fundingLocker] = true;

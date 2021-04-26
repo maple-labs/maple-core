@@ -135,8 +135,8 @@ contract Loan is FDT, Pausable {
         address[3] memory calcs
     )
         FDT(
-            string(abi.encodePacked("Maple Loan Token")),
-            string(abi.encodePacked("MPL-LOAN")),
+            "Maple Loan Token",
+            "MPL-LOAN",
             _liquidityAsset
         )
         public

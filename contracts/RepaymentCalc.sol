@@ -20,7 +20,7 @@ contract RepaymentCalc {
                 [1] = Entitiled principal amount needs to pay in the next payment
                 [2] = Entitiled interest amount needs to pay in the next payment
     */
-    function getNextPayment(address _loan) public view returns(uint256, uint256, uint256) {
+    function getNextPayment(address _loan) external view returns(uint256, uint256, uint256) {
 
         ILoan loan = ILoan(_loan);
 

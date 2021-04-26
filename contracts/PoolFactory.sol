@@ -75,8 +75,8 @@ contract PoolFactory is Pausable {
             require(_globals.isValidPoolDelegate(msg.sender),                         "PF:NOT_DELEGATE");
         }
 
-        string memory name   = string(abi.encodePacked("Maple Pool Token"));
-        string memory symbol = string(abi.encodePacked("MPL-LP"));
+        string memory name   = "Maple Pool Token";
+        string memory symbol = "MPL-LP";
 
         Pool pool =
             new Pool(

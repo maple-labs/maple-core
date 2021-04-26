@@ -242,7 +242,7 @@ contract Pool is PoolFDT {
     */
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
-        (uint256 bptsBurned, uint256 postBurnBptBal, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
+        (uint256 bptsBurned, uint256 postBurnBptBal, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, defaultSuffered);
 
         // If BPT burn is not enough to cover full default amount, pass on losses to LPs with PoolFDT loss accounting
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
@@ -464,7 +464,7 @@ contract Pool is PoolFDT {
         @return principal Principal amount claimable
         @return interest  Interest  amount claimable
     */
-    function claimableFunds(address lp) public view returns(uint256 total, uint256 principal, uint256 interest) {
+    function claimableFunds(address lp) external view returns(uint256 total, uint256 principal, uint256 interest) {
         return 
             PoolLib.claimableFunds(
                 withdrawableFundsOf(lp),
@@ -488,7 +488,7 @@ contract Pool is PoolFDT {
         address _liquidityAsset,
         address _staker,
         address _stakeLocker
-    ) public view returns (uint256) {
+    ) external view returns (uint256) {
         return PoolLib.BPTVal(_bPool, _liquidityAsset, _staker, _stakeLocker);
     }
 

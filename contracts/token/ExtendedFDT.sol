@@ -85,7 +85,7 @@ abstract contract ExtendedFDT is BasicFDT {
         @param _owner The address of a token holder
         @return The amount of losses that `_owner` has recognized
     */
-    function recognizedLossesOf(address _owner) public view returns (uint256) {
+    function recognizedLossesOf(address _owner) external view returns (uint256) {
         return recognizedLosses[_owner];
     }
 
