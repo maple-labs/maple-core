@@ -420,7 +420,6 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
-        require(depositDate[from] + block.timestamp > lockupPeriod, "Pool:FUNDS_LOCKED");
         PoolLib.prepareTransfer(withdrawCooldown, depositDate, totalCustodyAllowance[from], balanceOf(from), to, wad, _globals(superFactory), balanceOf(to), recognizableLossesOf(from));
         super._transfer(from, to, wad);
     }
