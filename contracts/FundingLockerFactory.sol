@@ -13,8 +13,11 @@ contract FundingLockerFactory {
 
     uint8 public constant factoryType = 2;  // i.e FactoryType::FUNDING_LOCKER_FACTORY
 
+    event FundingLockerCreated(address indexed owner, address fundingLocker, address liquidityAsset);
+
     /**
         @dev Instantiate a FundingLocker contract.
+        @dev It emits a `FundingLockerCreated` event.
         @param liquidityAsset The asset this funding locker will escrow
         @return Address of the instantiated funding locker
     */
@@ -22,6 +25,8 @@ contract FundingLockerFactory {
         address fundingLocker   = address(new FundingLocker(liquidityAsset, msg.sender));
         owner[fundingLocker]    = msg.sender;
         isLocker[fundingLocker] = true;
+
+        emit FundingLockerCreated(msg.sender, fundingLocker, liquidityAsset);
         return fundingLocker;
     }
 }

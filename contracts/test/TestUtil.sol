@@ -205,7 +205,7 @@ contract TestUtil is DSTest {
 
     event Debug(string, uint256);
     event Debug(string, address);
-    event Debug(string,    bool);
+    event Debug(string, bool);
 
     constructor() public { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
 

@@ -21,22 +21,23 @@ abstract contract BasicFDT is IFDT, ERC20 {
     mapping(address => int256)  internal pointsCorrection;
     mapping(address => uint256) internal withdrawnFunds;
 
-    event PointsPerShareUpdated(uint256 pointsPerShare);
-    event PointsCorrectionUpdated(address account, int256 pointsCorrection);
+    event   PointsPerShareUpdated(uint256 pointsPerShare);
+    event PointsCorrectionUpdated(address indexed account, int256 pointsCorrection);
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) public { }
 
     /**
         @dev Distributes funds to token holders.
         @dev It reverts if the total supply of tokens is 0.
-        It emits the `FundsDistributed` event if the amount of received ether is greater than 0.
-        About undistributed funds:
-            In each distribution, there is a small amount of funds which does not get distributed,
-                which is `(value  pointsMultiplier) % totalSupply()`.
-            With a well-chosen `pointsMultiplier`, the amount funds that are not getting distributed
-                in a distribution can be less than 1 (base unit).
-            We can actually keep track of the undistributed ether in a distribution
-                and try to distribute it in the next distribution.
+        @dev It emits a `FundsDistributed` event if the amount of received ether is greater than 0.
+        @dev It emits a `PointsPerShareUpdated` event if the amount of received ether is greater than 0.
+             About undistributed funds:
+                In each distribution, there is a small amount of funds which does not get distributed,
+                   which is `(value  pointsMultiplier) % totalSupply()`.
+                With a well-chosen `pointsMultiplier`, the amount funds that are not getting distributed
+                   in a distribution can be less than 1 (base unit).
+                We can actually keep track of the undistributed ether in a distribution
+                   and try to distribute it in the next distribution.
     */
     function _distributeFunds(uint256 value) internal {
         require(totalSupply() > 0, "FDT:SUPPLY_EQ_ZERO");
@@ -50,7 +51,7 @@ abstract contract BasicFDT is IFDT, ERC20 {
 
     /**
         @dev Prepares funds withdrawal.
-        @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
+        @dev It emits a `FundsWithdrawn` event.
     */
     function _prepareWithdraw() internal returns (uint256) {
         uint256 _withdrawableDividend = withdrawableFundsOf(msg.sender);
@@ -97,8 +98,8 @@ abstract contract BasicFDT is IFDT, ERC20 {
     }
 
     /**
-        @dev Internal function that transfer tokens from one address to another.
-        Update pointsCorrection to keep funds unchanged.
+        @dev Internal function that transfer tokens from one address to another. Update pointsCorrection to keep funds unchanged.
+        @dev It emits a `PointsCorrectionUpdated` event for the sender and receiver.
         @param from  The address to transfer from.
         @param to    The address to transfer to.
         @param value The amount to be transferred.
@@ -119,8 +120,7 @@ abstract contract BasicFDT is IFDT, ERC20 {
     }
 
     /**
-        @dev Internal function that mints tokens to an account.
-        Update pointsCorrection to keep funds unchanged.
+        @dev Internal function that mints tokens to an account. Update pointsCorrection to keep funds unchanged.
         @param account The account that will receive the created tokens.
         @param value   The amount that will be created.
     */
@@ -135,8 +135,8 @@ abstract contract BasicFDT is IFDT, ERC20 {
     }
 
     /**
-        @dev Internal function that burns an amount of the token of a given account.
-        Update pointsCorrection to keep funds unchanged.
+        @dev Internal function that burns an amount of the token of a given account. Update pointsCorrection to keep funds unchanged.
+        @dev It emits a `PointsCorrectionUpdated` event.
         @param account The account whose tokens will be burnt.
         @param value   The amount that will be burnt.
     */

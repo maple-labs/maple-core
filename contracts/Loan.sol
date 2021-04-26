@@ -83,10 +83,12 @@ contract Loan is FDT, Pausable {
     uint256 public defaultSuffered;    // Difference between `amountRecovered` and `principalOwed` after liquidation
     uint256 public liquidationExcess;  // If `amountRecovered > principalOwed`, amount of liquidityAsset that is to be returned to borrower
 
-    event LoanFunded(uint256 amtFunded, address indexed _fundedBy);
-    event BalanceUpdated(address who, address token, uint256 balance);
-    event Drawdown(uint256 drawdownAmt);
+    event       LoanFunded(uint256 amtFunded, address indexed _fundedBy);
+    event   BalanceUpdated(address indexed who, address indexed token, uint256 balance);
+    event         Drawdown(uint256 drawdownAmt);
     event LoanStateChanged(State state);
+    event         AdminSet(address admin, bool allowed);
+    
     event PaymentMade(
         uint totalPaid,
         uint principalPaid,
@@ -96,6 +98,7 @@ contract Loan is FDT, Pausable {
         uint nextPaymentDue,
         bool latePayment
     );
+    
     event Liquidation(
         uint collateralSwapped,
         uint liquidityAssetReturned,
@@ -105,6 +108,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Constructor for a Loan.
+        @dev It emits a `LoanStateChanged` event.
         @param  _borrower        Will receive the funding when calling `drawdown()`, is also responsible for repayments
         @param  _liquidityAsset  The asset, `borrower` is requesting funding in
         @param  _collateralAsset The asset provided as collateral by `borrower`
@@ -180,6 +184,9 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Drawdown funding from FundingLocker, post collateral, and transition loanState from `Ready` to `Active`. Only the Loan Borrower can call this function.
+        @dev It emits a `BalanceUpdated` event.
+        @dev It emits a `LoanStateChanged` event.
+        @dev It emits a `Drawdown` event.
         @param amt Amount of liquidityAsset borrower draws down, remainder is returned to Loan where it can be claimed back by LoanFDT holders.
     */
     function drawdown(uint256 amt) external {
@@ -256,6 +263,8 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Internal function to update the payment variables and transfer funds from the borrower into the Loan.
+        @dev It emits a `LoanStateChanged` event if no payments remaining.
+        @dev It emits a `PaymentMade` event.
     */
     function _makePayment(uint256 total, uint256 principal, uint256 interest, bool paymentLate) internal {
 
@@ -308,6 +317,7 @@ contract Loan is FDT, Pausable {
     /**
         @dev Fund this loan and mint LoanFDTs for mintTo (DebtLocker in the case of Pool funding).
              Only Liquidity Locker using valid/approved Pool can call this function.
+        @dev It emits a `LoanFunded` event.
         @param  amt    Amount to fund the loan
         @param  mintTo Address that LoanFDTs are minted to
     */
@@ -328,6 +338,7 @@ contract Loan is FDT, Pausable {
     /**
         @dev If the borrower has not drawn down on the Loan past the drawdown grace period, return capital to Loan,
              where it can be claimed back by LoanFDT holders.
+        @dev It emits a `LoanStateChanged` event.
     */
     function unwind() external {
         _whenProtocolNotPaused();
@@ -346,6 +357,8 @@ contract Loan is FDT, Pausable {
     /**
         @dev Trigger a default if a Loan is in a condition where a default can be triggered, liquidating all collateral and updating accounting.
              Only the Loan can call this function.
+        @dev It emits a `Liquidation` event.
+        @dev It emits a `LoanStateChanged` event.
     */
     function triggerDefault() external {
         _whenProtocolNotPaused();
@@ -354,6 +367,7 @@ contract Loan is FDT, Pausable {
 
         // Pull collateralAsset from CollateralLocker, swap to liquidityAsset, and hold custody of resulting liquidityAsset in Loan
         (amountLiquidated, amountRecovered) = LoanLib.liquidateCollateral(collateralAsset, address(liquidityAsset), superFactory, collateralLocker);
+        _emitBalanceUpdateEventForCollateralLocker();
 
         // Decrement principalOwed by amountRecovered, set defaultSuffered to the difference (shortfall from liquidation)
         if (amountRecovered <= principalOwed) {
@@ -405,6 +419,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Set admin. Only the Loan Borrower can call this function.
+        @dev It emits an `AdminSet` event.
         @param newAdmin New admin address
         @param allowed  Status of an admin
     */
@@ -412,6 +427,7 @@ contract Loan is FDT, Pausable {
         _whenProtocolNotPaused();
         _isValidBorrower();
         admins[newAdmin] = allowed;
+        emit AdminSet(newAdmin, allowed);
     }
 
     /**************************/

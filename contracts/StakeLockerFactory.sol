@@ -12,7 +12,7 @@ contract StakeLockerFactory {
     uint8 public constant factoryType = 4;  // i.e FactoryType::STAKE_LOCKER_FACTORY.
 
     event StakeLockerCreated(
-        address owner,
+        address indexed owner,
         address stakeLocker,
         address stakeAsset,
         address liquidityAsset,
@@ -22,6 +22,7 @@ contract StakeLockerFactory {
 
     /**
         @dev Instantiate a StakeLocker contract.
+        @dev It emits a `StakeLockerCreated` event.
         @param stakeAsset     Address of the stakeAsset (generally Balancer Pool BPTs)
         @param liquidityAsset Address of the liquidityAsset (as defined in the pool)
         @return Address of the instantiated StakeLocker

@@ -54,6 +54,7 @@ contract LoanFactory is Pausable {
 
     /**
         @dev Create a new Loan.
+        @dev It emits a `LoanCreated` event.
         @param  liquidityAsset  Asset the loan will raise funding in
         @param  collateralAsset Asset the loan will use as collateral
         @param  flFactory       The factory to instantiate a FundingLocker from

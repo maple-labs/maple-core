@@ -31,13 +31,13 @@ contract MplRewards is Ownable {
 
     mapping(address => uint256) private _balances;
 
-    event RewardAdded(uint256 reward);
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
-    event RewardPaid(address indexed user, uint256 reward);
+    event            RewardAdded(uint256 reward);
+    event                 Staked(address indexed user, uint256 amount);
+    event              Withdrawn(address indexed user, uint256 amount);
+    event             RewardPaid(address indexed user, uint256 reward);
     event RewardsDurationUpdated(uint256 newDuration);
-    event Recovered(address token, uint256 amount);
-    event PauseChanged(bool isPaused);
+    event              Recovered(address token, uint256 amount);
+    event           PauseChanged(bool isPaused);
 
     constructor(address _rewardsToken, address _stakingToken, address _owner) public {
         rewardsToken    = IERC20(_rewardsToken);
@@ -87,6 +87,9 @@ contract MplRewards is Ownable {
         return rewardRate.mul(rewardsDuration);
     }
 
+    /**
+        @dev It emits a `Staked` event.
+    */
     function stake(uint256 amount) external {
         _notPaused();
         _updateReward(msg.sender);
@@ -97,6 +100,9 @@ contract MplRewards is Ownable {
         emit Staked(msg.sender, amount);
     }
 
+    /**
+        @dev It emits a `Withdrawn` event.
+    */
     function withdraw(uint256 amount) public {
         _notPaused();
         _updateReward(msg.sender);
@@ -107,10 +113,14 @@ contract MplRewards is Ownable {
         emit Withdrawn(msg.sender, amount);
     }
 
+    /**
+        @dev It emits a `RewardPaid` event if any rewards are received.
+    */
     function getReward() public {
         _notPaused();
         _updateReward(msg.sender);
         uint256 reward = rewards[msg.sender];
+
         if (reward > 0) {
             rewards[msg.sender] = 0;
             rewardsToken.safeTransfer(msg.sender, reward);
@@ -125,6 +135,7 @@ contract MplRewards is Ownable {
 
     /**
         @dev Only the contract Owner may call this.
+        @dev It emits a `RewardAdded` event.
     */
     function notifyRewardAmount(uint256 reward) external onlyOwner {
         _updateReward(address(0));
@@ -159,6 +170,7 @@ contract MplRewards is Ownable {
     /**
         @dev Added to support recovering tokens unintentionally sent to this contract by users.
              Only the contract Owner may call this.
+        @dev It emits a `Recovered` event.
     */
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
         require(tokenAddress != address(stakingToken), "REWARDS:CANNOT_RECOVER_STAKE_TOKEN");
@@ -168,6 +180,7 @@ contract MplRewards is Ownable {
 
     /**
         @dev Only the contract Owner may call this.
+        @dev It emits a `RewardsDurationUpdated` event.
     */
     function setRewardsDuration(uint256 _rewardsDuration) external onlyOwner {
         require(block.timestamp > periodFinish, "REWARDS:PERIOD_NOT_FINISHED");
@@ -177,6 +190,7 @@ contract MplRewards is Ownable {
 
     /**
         @dev Change the paused state of the contract. Only the contract Owner may call this.
+        @dev It emits a `PauseChanged` event.
     */
     function setPaused(bool _paused) external onlyOwner {
         // Ensure we're actually changing the state before we do anything

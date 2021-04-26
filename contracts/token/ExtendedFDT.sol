@@ -16,7 +16,7 @@ abstract contract ExtendedFDT is BasicFDT {
     mapping(address => uint256) internal recognizedLosses;
 
     event   LossesPerShareUpdated(uint256 lossesPerShare);
-    event LossesCorrectionUpdated(address account, int256 lossesCorrection);
+    event LossesCorrectionUpdated(address indexed account, int256 lossesCorrection);
 
     /**
         @dev This event emits when new losses are distributed.
@@ -38,7 +38,8 @@ abstract contract ExtendedFDT is BasicFDT {
     /**
         @dev Distributes losses to token holders.
         @dev It reverts if the total supply of tokens is 0.
-             It emits the `LossesDistributed` event if the amount of received losses is greater than 0.
+        @dev It emits a `LossesDistributed` event if the amount of received losses is greater than 0.
+        @dev It emits a `LossesPerShareUpdated` event if the amount of received losses is greater than 0.
              About undistributed losses:
                 In each distribution, there is a small amount of losses which does not get distributed,
                 which is `(value * pointsMultiplier) % totalSupply()`.
@@ -106,8 +107,8 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev Internal function that transfer tokens from one address to another.
-        Update pointsCorrection to keep funds unchanged.
+        @dev Internal function that transfer tokens from one address to another. Update pointsCorrection to keep funds unchanged.
+        @dev It emits a `LossesCorrectionUpdated` event for the sender and receiver.
         @param from  The address to transfer from
         @param to    The address to transfer to
         @param value The amount to be transferred
@@ -128,8 +129,8 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev Internal function that mints tokens to an account.
-        Update lossesCorrection to keep losses unchanged.
+        @dev Internal function that mints tokens to an account. Update lossesCorrection to keep losses unchanged.
+        @dev It emits a `LossesCorrectionUpdated` event.
         @param account The account that will receive the created tokens.
         @param value   The amount that will be created.
     */
@@ -144,8 +145,8 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev Internal function that burns an amount of the token of a given account.
-        Update lossesCorrection to keep losses unchanged.
+        @dev Internal function that burns an amount of the token of a given account. Update lossesCorrection to keep losses unchanged.
+        @dev It emits a `LossesCorrectionUpdated` event.
         @param account The account whose tokens will be burnt.
         @param value   The amount that will be burnt.
     */

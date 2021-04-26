@@ -47,6 +47,7 @@ contract PoolFactory is Pausable {
 
     /**
         @dev Instantiates a Pool contract.
+        @dev It emits a `PoolCreated` event.
         @param  liquidityAsset The asset escrowed in LiquidityLocker
         @param  stakeAsset     The asset escrowed in StakeLocker
         @param  slFactory      The factory to instantiate a StakeLocker from
