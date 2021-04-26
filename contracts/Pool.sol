@@ -57,7 +57,7 @@ contract Pool is PoolFDT {
     mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`
 
     event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
-    event              Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
+    event              Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee, uint256 stakeLockerfee, uint256 poolDelegateFee);
     event     BalanceUpdated(address indexed who, address indexed token, uint256 balance);
     event    LPStatusChanged(address indexed user, bool status);
     event    LiquidityCapSet(uint256 newLiquidityCap);
@@ -230,9 +230,9 @@ contract Pool is PoolFDT {
         _emitBalanceUpdatedEvent();
         emit BalanceUpdated(stakeLocker, address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
-        emit Claim(loan, interestClaim, principalClaim, claimInfo[3]);  // TODO: Discuss with offchain team about requirements for event
+        emit Claim(loan, interestClaim, principalClaim, claimInfo[3], stakeLockerPortion, poolDelegatePortion);
 
-        return claimInfo;  // TODO: Discuss with offchain team about requirements for return
+        return claimInfo;
     }
 
     /**
@@ -420,7 +420,6 @@ contract Pool is PoolFDT {
         // recognizedLosses are absorbed by the LP.
         _transferLiquidityLockerFunds(msg.sender, amt.sub(recognizeLosses()));
 
-        // TODO: Do we need PoolFDT BalanceUpdated events?
         _emitBalanceUpdatedEvent();
     }
 
