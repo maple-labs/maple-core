@@ -309,6 +309,8 @@ library PoolLib {
 
     /** 
         @dev Calculates the value of BPT in units of liquidityAsset.
+        @dev Vulnerable to flash-loan attacks where the attacker can artificially inflate the BPT price by swapping a large amount
+             of liquidityAsset into the pool and swapping back after this function is called.
         @param _bPool         Address of Balancer pool
         @param liquidityAsset Asset used by Pool for liquidity to fund loans
         @param staker         Address that deposited BPTs to stakeLocker
@@ -400,6 +402,8 @@ library PoolLib {
 
     /**
         @dev Calculates BPTs required if burning BPTs for liquidityAsset, given supplied tokenAmountOutRequired.
+        @dev Vulnerable to flash-loan attacks where the attacker can artificially inflate the BPT price by swapping a large amount
+             of liquidityAsset into the pool and swapping back after this function is called.
         @param  _bPool                       Balancer pool that issues the BPTs
         @param  liquidityAsset               Swap out asset (e.g. USDC) to receive when burning BPTs
         @param  staker                       Address that deposited BPTs to stakeLocker
