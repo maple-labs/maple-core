@@ -105,7 +105,6 @@ contract Loan is FDT, Pausable {
         uint liquidationExcess,
         uint defaultSuffered
     );
-    event AdminSet(address admin, bool allowed);
 
     /**
         @dev Constructor for a Loan.
