@@ -16,7 +16,7 @@ contract LiquidityLockerFactory {
     /**
         @dev Instantiate a LiquidityLocker contract.
         @dev It emits a `LiquidityLockerCreated` event.
-        @param liquidityAsset The asset this liquidity locker will escrow.
+        @param liquidityAsset   The asset this liquidity locker will escrow.
         @return liquidityLocker Address of the instantiated liquidity locker.
     */
     function newLocker(address liquidityAsset) external returns (address liquidityLocker) {

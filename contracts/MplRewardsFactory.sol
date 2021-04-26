@@ -32,7 +32,7 @@ contract MplRewardsFactory {
         @param rewardsToken Address of the rewardsToken (will always be MPL).
         @param stakingToken Address of the stakingToken (token used to stake to earn rewards).
                             (i.e., Pool address for PoolFDT mining, StakeLocker address for staked BPT mining.)
-        @return mplRewards Address of the instantiated MplRewards.
+        @return mplRewards  Address of the instantiated MplRewards.
     */
     function createMplRewards(address rewardsToken, address stakingToken) external returns (address mplRewards) {
         require(msg.sender == globals.governor(), "RF:NOT_GOV");

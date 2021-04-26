@@ -93,8 +93,8 @@ contract PoolFactory is Pausable {
                 symbol
             );
 
-        poolAddress           = address(pool);
-        pools[poolsCreated]   = poolAddress;
+        poolAddress         = address(pool);
+        pools[poolsCreated] = poolAddress;
         isPool[poolAddress] = true;
         ++poolsCreated;
 

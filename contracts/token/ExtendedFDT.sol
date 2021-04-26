@@ -94,8 +94,8 @@ abstract contract ExtendedFDT is BasicFDT {
 
     /**
         @dev View the amount of losses that an address has earned in total.
-        @dev accumulativeLossesOf(_owner) = withdrawableLossesOf(_owner) + withdrawnLossesOf(_owner)
-        = (pointsPerShare * balanceOf(_owner) + pointsCorrection[_owner]) / pointsMultiplier
+        @dev accumulativeLossesOf(_owner) = recognizableLossesOf(_owner) + recognizedLossesOf(_owner)
+             = (lossesPerShare * balanceOf(_owner) + lossesCorrection[_owner]) / pointsMultiplier
         @param _owner The address of a token holder
         @return The amount of losses that `_owner` has earned in total
     */
@@ -125,7 +125,7 @@ abstract contract ExtendedFDT is BasicFDT {
         int256 _lossesCorrection    = lossesPerShare.mul(value).toInt256Safe();
         int256 lossesCorrectionFrom = lossesCorrection[from].add(_lossesCorrection);
         lossesCorrection[from]      = lossesCorrectionFrom;
-        uint256 lossesCorrectionTo  = lossesCorrection[to].sub(_lossesCorrection);
+        int256 lossesCorrectionTo   = lossesCorrection[to].sub(_lossesCorrection);
         lossesCorrection[to]        = lossesCorrectionTo;
 
         emit LossesCorrectionUpdated(from, lossesCorrectionFrom);
