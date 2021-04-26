@@ -18,27 +18,6 @@ contract LoanTest is TestUtil {
         createLoan();
     }
 
-    function getFuzzedSpecs(
-        uint256 apr,
-        uint256 index,             // Random index for random payment interval
-        uint256 numPayments,       // Used for termDays
-        uint256 requestAmount,
-        uint256 collateralRatio
-    ) internal returns (uint256[5] memory specs) {
-        uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
-
-        uint256 paymentIntervalDays = paymentIntervalArray[index % 10];           // TODO: Consider changing this approach
-        uint256 termDays            = paymentIntervalDays * (numPayments % 100);
-
-        specs = [
-            constrictToRange(apr, 1, 10_000, true),                     // APR between 0.01% and 100% (non-zero for test behaviour)
-            termDays,                                                   // Fuzzed term days
-            paymentIntervalDays,                                        // Payment interval days from array
-            constrictToRange(requestAmount, 1 * USD, 1E10 * USD, true), // 1 USD - 10b USD loans (non-zero)
-            constrictToRange(collateralRatio, 0, 10_000)                // Collateral ratio between 0 and 100%
-        ];
-    }
-
     function assertLoanState(
         Loan loan,
         uint256 loanState,
@@ -300,6 +279,7 @@ contract LoanTest is TestUtil {
     function test_makePayment(
         uint256 apr,
         uint256 index,
+        uint256 numPayments,
         uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
@@ -307,7 +287,7 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
@@ -319,16 +299,16 @@ contract LoanTest is TestUtil {
 
         // Approve collateral and drawdown loan.
         uint256 reqCollateral = drawdown(loan, drawdownAmount);
-
-        uint256 loanPreBal = usdc.balanceOf(address(loan));  // Accounts for excess and fees from drawdown
+        uint256 loanPreBal    = usdc.balanceOf(address(loan));  // Accounts for excess and fees from drawdown
 
         // NOTE: Do not need to hevm.warp in this test because payments can be made whenever as long as they are before the nextPaymentDue
 
-        assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
-
+        uint256 numPayments = loan.paymentsRemaining();
         // Approve 1st of 3 payments.
         (uint total, uint principal, uint interest, uint due,) = loan.getNextPayment();
         if(total == 0 && interest == 0) return;  // If fuzz params cause payments to be so small they round to zero, skip fuzz iteration
+
+        assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
 
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
@@ -341,7 +321,7 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      0,
             loanBalance:       loanPreBal,
-            paymentsRemaining: 3,
+            paymentsRemaining: numPayments,
             nextPaymentDue:    due
         });
 
@@ -363,33 +343,16 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      interest,
             loanBalance:       loanPreBal + interest,
-            paymentsRemaining: 2,
+            paymentsRemaining: numPayments - 1,
             nextPaymentDue:    due
         });
 
-        // Approve 2nd of 3 payments.
-        (total, principal, interest, due,) = loan.getNextPayment();
-        mint("USDC", address(bob),       total);
-        bob.approve(USDC, address(loan), total);
-
-        // Make payment.
-        assertTrue(bob.try_makePayment(address(loan)));
-
-        due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
-
-        // After state
-        assertLoanState({
-            loan:              loan,
-            loanState:         1,
-            principalOwed:     drawdownAmount,
-            principalPaid:     0,
-            interestPaid:      interest * 2,
-            loanBalance:       loanPreBal + interest * 2,
-            paymentsRemaining: 1,
-            nextPaymentDue:    due
-        });
-
-        // Approve 3nd of 3 payments.
+        // Approve numPayments - 1.
+        for (uint256 i = 2; i <= numPayments - 1; i++) {
+            repetitivePayment(loan, numPayments, i, drawdownAmount, loanPreBal, uint256(0));
+        }
+        
+        // Approve last payment.
         (total, principal, interest, due,) = loan.getNextPayment();
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
@@ -408,8 +371,8 @@ contract LoanTest is TestUtil {
             loanState:         2,
             principalOwed:     0,
             principalPaid:     principal,
-            interestPaid:      interest * 3,
-            loanBalance:       loanPreBal + interest * 3 + principal,
+            interestPaid:      interest * numPayments,
+            loanBalance:       loanPreBal + interest * numPayments + principal,
             paymentsRemaining: 0,
             nextPaymentDue:    0
         });
@@ -422,6 +385,7 @@ contract LoanTest is TestUtil {
     function test_makePayment_late(
         uint256 apr,
         uint256 index,
+        uint256 numPayments,
         uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
@@ -429,7 +393,7 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
@@ -441,14 +405,14 @@ contract LoanTest is TestUtil {
 
         // Approve collateral and drawdown loan.
         uint256 reqCollateral = drawdown(loan, drawdownAmount);
-
-        uint256 loanPreBal = usdc.balanceOf(address(loan));  // Accounts for excess and fees from drawdown
-
-        assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
+        uint256 loanPreBal    = usdc.balanceOf(address(loan));  // Accounts for excess and fees from drawdown
+        uint256 numPayments   = loan.paymentsRemaining();
 
         // Approve 1st of 3 payments.
         (uint256 total, uint256 principal, uint256 interest, uint256 due,) = loan.getNextPayment();
         if(total == 0 && interest == 0) return;  // If fuzz params cause payments to be so small they round to zero, skip fuzz iteration
+
+        assertTrue(!bob.try_makePayment(address(loan)));  // Can't makePayment with lack of approval
 
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
@@ -461,7 +425,7 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      0,
             loanBalance:       loanPreBal,
-            paymentsRemaining: 3,
+            paymentsRemaining: numPayments,
             nextPaymentDue:    due
         });
 
@@ -478,36 +442,18 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      interest,
             loanBalance:       loanPreBal + interest,
-            paymentsRemaining: 2,
+            paymentsRemaining: numPayments - 1,
             nextPaymentDue:    due
         });
 
-        // Warp to 1 second after next payment is due (payment is late)
-        hevm.warp(loan.nextPaymentDue() + 1);
+        // Approve numPayments - 1.
+        for (uint256 i = 1; i < numPayments - 1; i++) {
+            // Warp to 1 second after next payment is due (payment is late)
+            hevm.warp(loan.nextPaymentDue() + 1);
+            repetitivePayment(loan, numPayments, i, drawdownAmount, loanPreBal, interest);
+        }
 
         uint256 interest_late;
-
-        // Approve 2nd of 3 payments.
-        (total, principal, interest_late, due,) = loan.getNextPayment();
-        mint("USDC", address(bob),       total);
-        bob.approve(USDC, address(loan), total);
-
-        // Make payment.
-        assertTrue(bob.try_makePayment(address(loan)));
-
-        due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
-
-        // After state
-        assertLoanState({
-            loan:              loan,
-            loanState:         1,
-            principalOwed:     drawdownAmount,
-            principalPaid:     0,
-            interestPaid:      interest + interest_late,
-            loanBalance:       loanPreBal + interest + interest_late,
-            paymentsRemaining: 1,
-            nextPaymentDue:    due
-        });
 
         // Warp to 1 second after next payment is due (payment is late)
         hevm.warp(loan.nextPaymentDue() + 1);
@@ -531,8 +477,8 @@ contract LoanTest is TestUtil {
             loanState:         2,
             principalOwed:     0,
             principalPaid:     principal,
-            interestPaid:      interest + interest_late * 2,
-            loanBalance:       loanPreBal + interest + interest_late * 2 + principal,
+            interestPaid:      interest + interest_late * (numPayments - 1),
+            loanBalance:       loanPreBal + interest + interest_late * (numPayments - 1) + principal,
             paymentsRemaining: 0,
             nextPaymentDue:    0
         });
@@ -719,6 +665,7 @@ contract LoanTest is TestUtil {
     function test_makeFullPayment(
         uint256 apr,
         uint256 index,
+        uint256 numPayments,
         uint256 requestAmount,
         uint256 collateralRatio,
         uint256 fundAmount,
@@ -726,9 +673,8 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
-        address fundingLocker = loan.fundingLocker();
-        fundAmount = usdc.balanceOf(fundingLocker);
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
+        fundAmount = usdc.balanceOf(loan.fundingLocker());
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
 
@@ -738,8 +684,7 @@ contract LoanTest is TestUtil {
 
         // Approve collateral and drawdown loan.
         uint256 reqCollateral = drawdown(loan, drawdownAmount);
-
-        uint256 loanPreBal = usdc.balanceOf(address(loan));
+        uint256 loanPreBal    = usdc.balanceOf(address(loan));
 
         assertTrue(!bob.try_makeFullPayment(address(loan)));  // Can't makePayment with lack of approval
 
@@ -756,7 +701,7 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      0,
             loanBalance:       loanPreBal,
-            paymentsRemaining: 3,
+            paymentsRemaining: loan.paymentsRemaining(),
             nextPaymentDue:    block.timestamp + loan.paymentIntervalSeconds()  // Not relevant to full payment
         });
 
@@ -825,5 +770,32 @@ contract LoanTest is TestUtil {
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(bob.try_setAdmin(address(loan), address(securityAdmin), true));
         assertTrue(loan.admins(address(securityAdmin)));
+    }
+
+    function repetitivePayment(Loan loan, uint256 numPayments, uint256 paymentCount, uint256 drawdownAmount, uint256 loanPreBal, uint256 oldInterest) internal {
+        (uint256 total,, uint256 interest, uint256 due,) = loan.getNextPayment();
+        mint("USDC", address(bob),       total);
+        bob.approve(USDC, address(loan), total);
+
+        // Below is the way of catering two senarios
+        // 1. When there is no late payment so interest paid will be a multiple of `numPayments`.
+        // 2. If there is a late payment then needs to handle the situation where interst paid is `interest (without late fee) + interest (late fee) * numPayments`.
+        numPayments = oldInterest == uint256(0) ? numPayments - paymentCount : numPayments - paymentCount - 1;
+        // Make payment.
+        assertTrue(bob.try_makePayment(address(loan)));
+
+        due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
+
+        // After state
+        assertLoanState({
+            loan:              loan,
+            loanState:         1,
+            principalOwed:     drawdownAmount,
+            principalPaid:     0,
+            interestPaid:      oldInterest + (interest * paymentCount),
+            loanBalance:       loanPreBal  + oldInterest + (interest * paymentCount),
+            paymentsRemaining: numPayments,
+            nextPaymentDue:    due
+        });
     }
 }

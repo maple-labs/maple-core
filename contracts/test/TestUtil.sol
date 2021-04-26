@@ -51,6 +51,8 @@ interface User {
 
 contract TestUtil is DSTest {
 
+    using SafeMath for uint256;
+
     Hevm hevm;
 
     /***********************/
@@ -473,6 +475,10 @@ contract TestUtil is DSTest {
         bPool.transfer(address(sid), 25 * WAD);  // Give staker a balance of BPTs to stake against finalized pool
     }
 
+    function transferMoreBpts(address to, uint256 amt) public {
+        bPool.transfer(to, amt);
+    }
+
     /****************************/
     /*** Loan Setup Functions ***/
     /****************************/
@@ -599,6 +605,27 @@ contract TestUtil is DSTest {
         else                           return val % (max - min) + min;
     }
 
+    function getFuzzedSpecs(
+        uint256 apr,
+        uint256 index,             // Random index for random payment interval
+        uint256 numPayments,       // Used for termDays
+        uint256 requestAmount,
+        uint256 collateralRatio
+    ) public returns (uint256[5] memory specs) {
+        uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
+        numPayments = constrictToRange(numPayments, 5, 100, true);
+        uint256 paymentIntervalDays = paymentIntervalArray[index % 10];           // TODO: Consider changing this approach
+        uint256 termDays            = paymentIntervalDays * numPayments;
+
+        specs = [
+            constrictToRange(apr, 1, 10_000, true),                     // APR between 0.01% and 100% (non-zero for test behaviour)
+            termDays,                                                   // Fuzzed term days
+            paymentIntervalDays,                                        // Payment interval days from array
+            constrictToRange(requestAmount, 1 * USD, 1E10 * USD, true), // 1 USD - 10b USD loans (non-zero)
+            constrictToRange(collateralRatio, 0, 10_000)                // Collateral ratio between 0 and 100%
+        ];
+    }
+
     /********************/
     /*** Pool Helpers ***/
     /********************/
@@ -643,6 +670,10 @@ contract TestUtil is DSTest {
         assertTrue(investor.try_intendToWithdraw(address(pool)));
         assertEq(      pool.withdrawCooldown(address(investor)), currentTime, "Incorrect value set");
         hevm.warp(currentTime + globals.lpCooldownPeriod());
+    }
+
+    function toWad(uint256 amt) internal view returns(uint256) {
+        return amt.mul(WAD).div(USD);
     }
 
     // function test_cheat_code_for_slot() public {

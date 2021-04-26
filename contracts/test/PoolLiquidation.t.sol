@@ -24,6 +24,8 @@ contract PoolLiquidationTest is TestUtil {
     }
 
     function test_triggerDefault_pool_delegate() public {
+        uint256 drawdownAmt  = 4_000_000 * USD;
+
         // Fund the pool
         mint("USDC", address(leo), 100_000_000 * USD);
         leo.approve(USDC, address(pool), MAX_UINT);
@@ -32,14 +34,11 @@ contract PoolLiquidationTest is TestUtil {
         leo.deposit(address(pool2), 20_000_000 * USD - 1);
 
         // Fund the loan
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), 80_000_000 * USD + 1);  // Plus 1e-6 to create exact 100m totalSupply
+        pat.fundLoan(address(pool), address(loan), address(dlFactory), 80_000_000 * USD + 1);   // Plus 1e-6 to create exact 100m totalSupply
         pam.fundLoan(address(pool2), address(loan), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1e-6 equity
 
         // Drawdown loan
-        uint cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
-        mint("WETH", address(bob), cReq);
-        bob.approve(WETH, address(loan), MAX_UINT);
-        bob.drawdown(address(loan), 4_000_000 * USD);  // Draw down less than total amount
+        drawdown(loan, bob, drawdownAmt);
 
         // Warp to late payment
         uint256 start = block.timestamp;
@@ -58,7 +57,7 @@ contract PoolLiquidationTest is TestUtil {
         );
 
         // Pause protocol and attempt triggerDefault()
-        assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(!pam.try_triggerDefault(address(pool2), address(loan), address(dlFactory)));
 
         // Unpause protocol and triggerDefault()
