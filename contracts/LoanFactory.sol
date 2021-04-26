@@ -26,6 +26,8 @@ contract LoanFactory is Pausable {
 
     mapping(address => bool) public loanFactoryAdmins;  // Loan Factory Admin addresses that have permission to do certain operations in case of disaster mgt
 
+    event LoanFactoryAdminSet(address loanFactoryAdmin, bool allowed);
+
     event LoanCreated(
         address loan,
         address indexed borrower,
@@ -123,12 +125,14 @@ contract LoanFactory is Pausable {
 
     /**
         @dev Set loan factory admin. Only the Governor can call this function.
-        @param newLoanFactoryAdmin New loan factory admin address
-        @param allowed  Status of a loan factory admin
+        @dev It emits a `LoanFactoryAdminSet` event.
+        @param loanFactoryAdmin An address being allowed or disallowed as a Loan Factory Admin.
+        @param allowed  Status of a loan factory admin.
     */
-    function setLoanFactoryAdmin(address newLoanFactoryAdmin, bool allowed) external {
+    function setLoanFactoryAdmin(address loanFactoryAdmin, bool allowed) external {
         _isValidGovernor();
-        loanFactoryAdmins[newLoanFactoryAdmin] = allowed;
+        loanFactoryAdmins[loanFactoryAdmin] = allowed;
+        emit LoanFactoryAdminSet(loanFactoryAdmin, allowed);
     }
 
     /**

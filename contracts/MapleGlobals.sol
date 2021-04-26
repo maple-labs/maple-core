@@ -161,7 +161,7 @@ contract MapleGlobals {
     /**
       @dev Set global admin. Only the Governor can call this function.
       @dev It emits a `GlobalAdminSet` event.
-      @param newGlobalAdmin New global admin address
+      @param newGlobalAdmin New global admin address.
      */
     function setGlobalAdmin(address newGlobalAdmin) external {
         require(msg.sender == governor && newGlobalAdmin != address(0), "MG:NOT_GOV_OR_ADMIN");

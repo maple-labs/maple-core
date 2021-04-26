@@ -420,14 +420,14 @@ contract Loan is FDT, Pausable {
     /**
         @dev Set loan admin. Only the Loan Borrower can call this function.
         @dev It emits a `LoanAdminSet` event.
-        @param newLoanAdmin New loan admin address
-        @param allowed  Status of a loan admin
+        @param loanAdmin A address being allowed or disallowed as a Loan Admin.
+        @param allowed  Status of a loan admin.
     */
-    function setLoanAdmin(address newLoanAdmin, bool allowed) external {
+    function setLoanAdmin(address loanAdmin, bool allowed) external {
         _whenProtocolNotPaused();
         _isValidBorrower();
-        loanAdmins[newLoanAdmin] = allowed;
-        emit LoanAdminSet(newLoanAdmin, allowed);
+        loanAdmins[loanAdmin] = allowed;
+        emit LoanAdminSet(loanAdmin, allowed);
     }
 
     /**************************/

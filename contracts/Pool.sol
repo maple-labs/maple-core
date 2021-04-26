@@ -66,7 +66,7 @@ contract Pool is PoolFDT {
     event   PoolStateChanged(State state);
     event           Cooldown(address indexed lp, uint256 cooldown);
     event PoolOpenedToPublic(bool isOpen);
-    event       PoolAdminSet(address newPoolAdmin, bool allowed);
+    event       PoolAdminSet(address poolAdmin, bool allowed);
     
     event DefaultSuffered(
         address indexed loan,
@@ -342,13 +342,13 @@ contract Pool is PoolFDT {
     /**
         @dev Set pool admin. Only the Pool Delegate can call this function.
         @dev It emits a `PoolAdminSet` event.
-        @param newPoolAdmin new pool admin address.
+        @param poolAdmin An address being allowed or disallowed as a Pool Admin.
         @param allowed Status of an pool admin.
     */
-    function setPoolAdmin(address newPoolAdmin, bool allowed) external {
+    function setPoolAdmin(address poolAdmin, bool allowed) external {
         _isValidDelegateAndProtocolNotPaused();
-        poolAdmins[newPoolAdmin] = allowed;
-        emit PoolAdminSet(newPoolAdmin, allowed);
+        poolAdmins[poolAdmin] = allowed;
+        emit PoolAdminSet(poolAdmin, allowed);
     }
 
     /**

@@ -18,6 +18,8 @@ contract PoolFactory is Pausable {
     mapping(address => bool)    public isPool;             // Used to check if a `Pool` was instantiated from this factory.
     mapping(address => bool)    public poolFactoryAdmins;  // Pool Factory Admin addresses that have permission to do certain operations in case of disaster mgt
 
+    event PoolFactoryAdminSet(address poolFactoryAdmin, bool allowed);
+
     event PoolCreated(
         address indexed pool,
         address indexed delegate,
@@ -112,12 +114,14 @@ contract PoolFactory is Pausable {
 
     /**
         @dev Set pool factory admin. Only the Governor can call this function.
-        @param newPoolFactoryAdmin New pool factory admin address
-        @param allowed  Status of a pool factory admin
+        @dev It emits a `PoolFactoryAdminSet` event.
+        @param poolFactoryAdmin An address being allowed or disallowed as a Pool Factory Admin.
+        @param allowed  Status of a pool factory admin.
     */
-    function setPoolFactoryAdmin(address newPoolFactoryAdmin, bool allowed) external {
+    function setPoolFactoryAdmin(address poolFactoryAdmin, bool allowed) external {
         _isValidGovernor();
-        poolFactoryAdmins[newPoolFactoryAdmin] = allowed;
+        poolFactoryAdmins[poolFactoryAdmin] = allowed;
+        emit PoolFactoryAdminSet(poolFactoryAdmin, allowed);
     }
 
     /**
