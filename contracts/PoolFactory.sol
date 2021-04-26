@@ -39,8 +39,8 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Update the MapleGlobals contract. Only the Governor can call this function.
-        @param newGlobals Address of new MapleGlobals contract
+        @dev   Update the MapleGlobals contract. Only the Governor can call this function.
+        @param newGlobals Address of new MapleGlobals contract.
     */
     function setGlobals(address newGlobals) external {
         _isValidGovernor();
@@ -48,8 +48,8 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Instantiates a Pool contract.
-        @dev It emits a `PoolCreated` event.
+        @dev    Instantiates a Pool contract.
+        @dev    It emits a `PoolCreated` event.
         @param  liquidityAsset The asset escrowed in LiquidityLocker.
         @param  stakeAsset     The asset escrowed in StakeLocker.
         @param  slFactory      The factory to instantiate a StakeLocker from.
@@ -114,8 +114,8 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Set pool factory admin. Only the Governor can call this function.
-        @dev It emits a `PoolFactoryAdminSet` event.
+        @dev   Set pool factory admin. Only the Governor can call this function.
+        @dev   It emits a `PoolFactoryAdminSet` event.
         @param poolFactoryAdmin An address being allowed or disallowed as a Pool Factory Admin.
         @param allowed  Status of a pool factory admin.
     */

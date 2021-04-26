@@ -50,9 +50,9 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev Prepares funds withdrawal
-        @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
-        @return withdrawableDividend The amount of diviend funds that can be withdrawn.
+        @dev    Prepares funds withdrawal
+        @dev    It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
+        @return withdrawableDividend The amount of dividend funds that can be withdrawn.
     */
     function _prepareWithdraw() internal returns (uint256 withdrawableDividend) {
         withdrawableDividend       = withdrawableFundsOf(msg.sender);
@@ -63,8 +63,8 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev View the amount of funds that an address can withdraw.
-        @param _owner The address of a token holder.
+        @dev    View the amount of funds that an address can withdraw.
+        @param  _owner The address of a token holder.
         @return The amount funds that `_owner` can withdraw.
     */
     function withdrawableFundsOf(address _owner) public view override returns (uint256) {
@@ -72,8 +72,8 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev View the amount of funds that an address has withdrawn.
-        @param _owner The address of a token holder.
+        @dev    View the amount of funds that an address has withdrawn.
+        @param  _owner The address of a token holder.
         @return The amount of funds that `_owner` has withdrawn.
     */
     function withdrawnFundsOf(address _owner) external view returns (uint256) {
@@ -81,10 +81,10 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev View the amount of funds that an address has earned in total.
-        @dev accumulativeFundsOf(_owner) = withdrawableFundsOf(_owner) + withdrawnFundsOf(_owner)
-        = (pointsPerShare * balanceOf(_owner) + pointsCorrection[_owner]) / pointsMultiplier
-        @param _owner The address of a token holder.
+        @dev    View the amount of funds that an address has earned in total.
+        @dev    accumulativeFundsOf(_owner) = withdrawableFundsOf(_owner) + withdrawnFundsOf(_owner)
+                                         = (pointsPerShare * balanceOf(_owner) + pointsCorrection[_owner]) / pointsMultiplier
+        @param  _owner The address of a token holder.
         @return The amount of funds that `_owner` has earned in total.
     */
     function accumulativeFundsOf(address _owner) public view returns (uint256) {
@@ -97,8 +97,8 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev Internal function that transfer tokens from one address to another. Update pointsCorrection to keep funds unchanged.
-        @dev It emits a `PointsCorrectionUpdated` event for the sender and receiver.
+        @dev   Internal function that transfer tokens from one address to another. Update pointsCorrection to keep funds unchanged.
+        @dev   It emits a `PointsCorrectionUpdated` event for the sender and receiver.
         @param from  The address to transfer from.
         @param to    The address to transfer to.
         @param value The amount to be transferred.
@@ -121,7 +121,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev Internal function that mints tokens to an account. Update pointsCorrection to keep funds unchanged.
+        @dev   Internal function that mints tokens to an account. Update pointsCorrection to keep funds unchanged.
         @param account The account that will receive the created tokens.
         @param value   The amount that will be created.
     */
@@ -138,8 +138,8 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev Internal function that burns an amount of the token of a given account. Update pointsCorrection to keep funds unchanged.
-        @dev It emits a `PointsCorrectionUpdated` event.
+        @dev   Internal function that burns an amount of the token of a given account. Update pointsCorrection to keep funds unchanged.
+        @dev   It emits a `PointsCorrectionUpdated` event.
         @param account The account whose tokens will be burnt.
         @param value   The amount that will be burnt.
     */
@@ -161,8 +161,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     function withdrawFunds() public virtual override {}
 
     /**
-        @dev Updates the current funds token balance
-             and returns the difference of new and previous funds token balances.
+        @dev    Updates the current funds token balance and returns the difference of new and previous funds token balances.
         @return A int256 representing the difference of the new and previous funds token balance
     */
     function _updateFundsTokenBalance() internal virtual returns (int256) {}
@@ -170,7 +169,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     /**
         @dev Register a payment of funds in tokens. May be called directly after a deposit is made.
         @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the new and the previous
-        funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
+             funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
     */
     function updateFundsReceived() public virtual {
         int256 newFunds = _updateFundsTokenBalance();

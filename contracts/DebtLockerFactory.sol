@@ -14,8 +14,8 @@ contract DebtLockerFactory {
     event DebtLockerCreated(address indexed owner, address debtLocker, address loan);
 
     /**
-        @dev Instantiate a DebtLocker contract.
-        @dev It emits a `DebtLockerCreated` event.
+        @dev    Instantiate a DebtLocker contract.
+        @dev    It emits a `DebtLockerCreated` event.
         @param  loan       The loan this debt locker will escrow tokens for.
         @return debtLocker Address of the instantiated debt locker.
     */

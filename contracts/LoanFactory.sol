@@ -17,7 +17,7 @@ contract LoanFactory is Pausable {
     uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`
     uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`
 
-    IMapleGlobals public globals;  // Interface of MapleGlobals
+    IMapleGlobals public globals; // Interface of MapleGlobals
 
     uint256 public loansCreated;  // Incrementor for number of loan vaults created.
 
@@ -46,8 +46,8 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Update the MapleGlobals contract. Only the Governor can call this function.
-        @param newGlobals Address of new MapleGlobals contract
+        @dev   Update the MapleGlobals contract. Only the Governor can call this function.
+        @param newGlobals Address of new MapleGlobals contract.
     */
     function setGlobals(address newGlobals) external {
         _isValidGovernor();
@@ -55,18 +55,18 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Create a new Loan.
-        @dev It emits a `LoanCreated` event.
+        @dev    Create a new Loan.
+        @dev    It emits a `LoanCreated` event.
         @param  liquidityAsset  Asset the loan will raise funding in
         @param  collateralAsset Asset the loan will use as collateral
         @param  flFactory       The factory to instantiate a FundingLocker from
         @param  clFactory       The factory to instantiate a CollateralLocker from
         @param  specs           Contains specifications for this loan
-                specs[0] = apr
-                specs[1] = termDays
-                specs[2] = paymentIntervalDays
-                specs[3] = requestAmount
-                specs[4] = collateralRatio
+                                    specs[0] = apr
+                                    specs[1] = termDays
+                                    specs[2] = paymentIntervalDays
+                                    specs[3] = requestAmount
+                                    specs[4] = collateralRatio
         @param  calcs           The calculators used for the loan.
                                     calcs[0] = repaymentCalc
                                     calcs[1] = lateFeeCalc
@@ -124,10 +124,10 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Set loan factory admin. Only the Governor can call this function.
-        @dev It emits a `LoanFactoryAdminSet` event.
+        @dev   Set loan factory admin. Only the Governor can call this function.
+        @dev   It emits a `LoanFactoryAdminSet` event.
         @param loanFactoryAdmin An address being allowed or disallowed as a Loan Factory Admin.
-        @param allowed  Status of a loan factory admin.
+        @param allowed          Status of a loan factory admin.
     */
     function setLoanFactoryAdmin(address loanFactoryAdmin, bool allowed) external {
         _isValidGovernor();

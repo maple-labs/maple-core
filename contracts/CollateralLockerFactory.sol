@@ -16,9 +16,9 @@ contract CollateralLockerFactory {
     event CollateralLockerCreated(address indexed owner, address collateralLocker, address collateralAsset);
 
     /**
-        @dev Instantiate a CollateralLocker contract.
-        @dev It emits a `CollateralLockerCreated` event.
-        @param collateralAsset   The asset this collateral locker will escrow.
+        @dev    Instantiate a CollateralLocker contract.
+        @dev    It emits a `CollateralLockerCreated` event.
+        @param  collateralAsset  The asset this collateral locker will escrow.
         @return collateralLocker Address of the instantiated collateral locker.
     */
     function newLocker(address collateralAsset) external returns (address collateralLocker) {

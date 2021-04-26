@@ -58,8 +58,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev canUnstake enables unstaking in the following conditions:
-               1. User is not Pool Delegate and the Pool is in Finalized state.
-               2. The Pool is in Initialized or Deactivated state.
+                 1. User is not Pool Delegate and the Pool is in Finalized state.
+                2. The Pool is in Initialized or Deactivated state.
     */
     modifier canUnstake(address from) {
         IPool _pool = IPool(pool);
@@ -93,10 +93,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**********************/
 
     /**
-        @dev Update staker status on the allowlist. Only the Pool Delegate can call this function.
-        @dev It emits an `AllowListUpdated` event.
-        @param staker   The address to set status for
-        @param status The status of staker on allowlist
+        @dev   Update staker status on the allowlist. Only the Pool Delegate can call this function.
+        @dev   It emits an `AllowListUpdated` event.
+        @param staker The address to set status for.
+        @param status The status of staker on allowlist.
     */
     function setAllowlist(address staker, bool status) public {
         _whenProtocolNotPaused();
@@ -131,16 +131,16 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Transfers amt of stakeAsset to dst. Only the Pool can call this function.
-        @param dst Desintation to transfer stakeAsset to
-        @param amt Amount of stakeAsset to transfer
+        @param dst Destination to transfer stakeAsset to.
+        @param amt Amount of stakeAsset to transfer.
     */
     function pull(address dst, uint256 amt) isPool external {
         stakeAsset.safeTransfer(dst, amt);
     }
 
     /**
-        @dev Updates loss accounting for FDTs after BPTs have been burned. Only the Pool can call this function.
-        @param bptsBurned Amount of BPTs that have been burned
+        @dev   Updates loss accounting for FDTs after BPTs have been burned. Only the Pool can call this function.
+        @param bptsBurned Amount of BPTs that have been burned.
     */
     function updateLosses(uint256 bptsBurned) isPool external {
         bptLosses = bptLosses.add(bptsBurned);
@@ -152,10 +152,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /************************/
 
     /**
-        @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
-        @dev It emits a `Stake` event.
-        @dev It emits a `Cooldown` event.
-        @dev It emits a `BalanceUpdated` event.
+        @dev   Deposit amt of stakeAsset, mint FDTs to msg.sender.
+        @dev   It emits a `Stake` event.
+        @dev   It emits a `Cooldown` event.
+        @dev   It emits a `BalanceUpdated` event.
         @param amt Amount of stakeAsset (BPTs) to deposit
     */
     function stake(uint256 amt) whenNotPaused external {
@@ -175,10 +175,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Updates information used to calculate unstake delay.
-        @dev It emits a `StakeDateUpdated` event.
-        @param who Staker who deposited BPTs
-        @param amt Amount of BPTs staker has deposited
+        @dev   Updates information used to calculate unstake delay.
+        @dev   It emits a `StakeDateUpdated` event.
+        @param who Staker who deposited BPTs.
+        @param amt Amount of BPTs staker has deposited.
     */
     function _updateStakeDate(address who, uint256 amt) internal {
         uint256 prevDate = stakeDate[who];
@@ -215,10 +215,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Withdraw amt of stakeAsset minus any losses, claim interest, burn FDTs for msg.sender.
-        @dev It emits an `Unstake` event.
-        @dev It emits a `BalanceUpdated` event.
-        @param amt Amount of stakeAsset (BPTs) to withdraw
+        @dev   Withdraw amt of stakeAsset minus any losses, claim interest, burn FDTs for msg.sender.
+        @dev   It emits an `Unstake` event.
+        @dev   It emits a `BalanceUpdated` event.
+        @param amt Amount of stakeAsset (BPTs) to withdraw.
     */
     function unstake(uint256 amt) external canUnstake(msg.sender) {
         _whenProtocolNotPaused();
@@ -254,10 +254,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Transfer StakerLockerFDTs.
-        @param from Address sending   StakeLockerFDTs
-        @param to   Address receiving StakeLockerFDTs
-        @param wad  Amount of FDTs to transfer
+        @dev   Transfer StakerLockerFDTs.
+        @param from Address sending   StakeLockerFDTs.
+        @param to   Address receiving StakeLockerFDTs.
+        @param wad  Amount of FDTs to transfer.
     */
     function _transfer(address from, address to, uint256 wad) internal override canUnstake(from) {
         _whenProtocolNotPaused();
@@ -304,7 +304,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev View function to indicate if recipient is allowed to receive a transfer.
-        This is only possible if they have zero cooldown or they are past their unstake window.
+             This is only possible if they have zero cooldown or they are past their unstake window.
     */
     function isReceiveAllowed(uint256 _unstakeCooldown) public view returns (bool) {
         IMapleGlobals globals = _globals();

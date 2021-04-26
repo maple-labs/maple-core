@@ -25,9 +25,9 @@ contract FundingLocker {
     }
 
     /**
-        @dev Transfers amt of liquidityAsset to dst. Only the Loan can call this function.
-        @param dst Desintation to transfer liquidityAsset to
-        @param amt Amount of liquidityAsset to transfer
+        @dev   Transfers amt of liquidityAsset to dst. Only the Loan can call this function.
+        @param dst Destination to transfer liquidityAsset to.
+        @param amt Amount of liquidityAsset to transfer.
     */
     function pull(address dst, uint256 amt) isLoan external {
         liquidityAsset.safeTransfer(dst, amt);

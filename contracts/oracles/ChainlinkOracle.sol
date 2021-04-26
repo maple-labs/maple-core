@@ -21,7 +21,7 @@ contract ChainlinkOracle is Ownable {
     event    SetManualOverride(bool _override);
 
     /**
-        @dev Creates a new Chainlink based oracle.
+        @dev   Creates a new Chainlink based oracle.
         @param _aggregator   Address of Chainlink aggregator
         @param _assetAddress Address of currency (0x0 for ETH)
         @param _owner        Address of the owner of the contract
@@ -34,7 +34,7 @@ contract ChainlinkOracle is Ownable {
     }
 
     /**
-        @dev Returns the latest price.
+        @dev    Returns the latest price.
         @return price The latest price.
      */
     function getLatestPrice() public view returns (int256) {
@@ -49,8 +49,8 @@ contract ChainlinkOracle is Ownable {
 
 
     /**
-        @dev Updates aggregator address. Only the contract Owner can call this fucntion.
-        @dev It emits a `ChangeAggregatorFeed` event.
+        @dev   Updates aggregator address. Only the contract Owner can call this function.
+        @dev   It emits a `ChangeAggregatorFeed` event.
         @param aggregator Address of chainlink aggregator
     */
     function changeAggregator(address aggregator) external onlyOwner {
@@ -75,9 +75,9 @@ contract ChainlinkOracle is Ownable {
     }
 
     /**
-        @dev Set a manual price.  Only the contract Owner can call this fucntion.
-             NOTE: this can only be used if manualOverride == true.
-        @dev It emits a `SetManualPrice` event.
+        @dev   Set a manual price.  Only the contract Owner can call this function.
+               NOTE: this can only be used if manualOverride == true.
+        @dev   It emits a `SetManualPrice` event.
         @param _price Price to set
     */
     function setManualPrice(int256 _price) public onlyOwner {
@@ -87,8 +87,8 @@ contract ChainlinkOracle is Ownable {
     }
 
     /**
-        @dev Set manual override, allowing for manual price setting. Only the contract Owner can call this fucntion.
-        @dev It emits a `SetManualOverride` event.
+        @dev   Set manual override, allowing for manual price setting. Only the contract Owner can call this function.
+        @dev   It emits a `SetManualOverride` event.
         @param _override Whether to use the manual override price or not
     */
     function setManualOverride(bool _override) public onlyOwner {

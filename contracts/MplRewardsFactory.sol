@@ -18,8 +18,8 @@ contract MplRewardsFactory {
     }
 
     /**
-        @dev Update the MapleGlobals contract. Only the Governor can call this function.
-        @param _globals Address of new MapleGlobals contract
+        @dev   Update the MapleGlobals contract. Only the Governor can call this function.
+        @param _globals Address of new MapleGlobals contract.
     */
     function setGlobals(address _globals) external {
         require(msg.sender == globals.governor(), "RF:NOT_GOV");
@@ -27,8 +27,8 @@ contract MplRewardsFactory {
     }
 
     /**
-        @dev Instantiate a MplRewards contract. Only the Governor can call this function.
-        @dev It emits a `MplRewardsCreated` event.
+        @dev   Instantiate a MplRewards contract. Only the Governor can call this function.
+        @dev   It emits a `MplRewardsCreated` event.
         @param rewardsToken Address of the rewardsToken (will always be MPL).
         @param stakingToken Address of the stakingToken (token used to stake to earn rewards).
                             (i.e., Pool address for PoolFDT mining, StakeLocker address for staked BPT mining.)

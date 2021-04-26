@@ -11,12 +11,12 @@ library Util {
     using SafeMath for uint256;
 
     /**
-        @dev Helper function for calculating min amount from a swap (adjustable for price slippage).
-        @param globals   Interface of MapleGlobals
-        @param fromAsset Address of ERC-20 that will be swapped
-        @param toAsset   Address of ERC-20 that will returned from swap
-        @param swapAmt   Amount of fromAsset to be swapped
-        @return Expected amount of toAsset to receive from swap based on current oracle prices
+        @dev    Helper function for calculating min amount from a swap (adjustable for price slippage).
+        @param  globals   Interface of MapleGlobals.
+        @param  fromAsset Address of ERC-20 that will be swapped.
+        @param  toAsset   Address of ERC-20 that will returned from swap.
+        @param  swapAmt   Amount of fromAsset to be swapped.
+        @return Expected amount of toAsset to receive from swap based on current oracle prices.
     */
     function calcMinAmount(IMapleGlobals globals, address fromAsset, address toAsset, uint256 swapAmt) external view returns(uint256) {
         return 
