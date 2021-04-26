@@ -17,7 +17,7 @@ contract ChainlinkOracle is Ownable {
     int256 public manualPrice;
 
     event ChangeAggregatorFeed(address _newMedianizer, address _oldMedianizer);
-    event       SetManualPrice(int256 _oldPrice,       int256 _newPrice);
+    event       SetManualPrice(int256 _oldPrice, int256 _newPrice);
     event    SetManualOverride(bool _override);
 
     /**

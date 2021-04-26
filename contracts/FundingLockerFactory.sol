@@ -13,7 +13,7 @@ contract FundingLockerFactory {
 
     uint8 public constant factoryType = 2;  // i.e FactoryType::FUNDING_LOCKER_FACTORY
 
-    event FundingLockerCreated(address owner, address fundingLocker, address liquidityAsset);
+    event FundingLockerCreated(address indexed owner, address fundingLocker, address liquidityAsset);
 
     /**
         @dev Instantiate a FundingLocker contract.

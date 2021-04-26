@@ -36,7 +36,7 @@ contract MplRewards is Ownable {
     event              Withdrawn(address indexed user, uint256 amount);
     event             RewardPaid(address indexed user, uint256 reward);
     event RewardsDurationUpdated(uint256 newDuration);
-    event              Recovered(address token,        uint256 amount);
+    event              Recovered(address token, uint256 amount);
     event           PauseChanged(bool isPaused);
 
     constructor(address _rewardsToken, address _stakingToken, address _owner) public {

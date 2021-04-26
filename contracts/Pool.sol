@@ -56,17 +56,17 @@ contract Pool is PoolFDT {
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
     mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`
 
-    event         LoanFunded(address indexed loan,     address debtLocker,    uint256 amountFunded);
-    event              Claim(address indexed loan,     uint256 interest,      uint256 principal, uint256 fee);
-    event     BalanceUpdated(address indexed who,      address indexed token, uint256 balance);
-    event    LPStatusChanged(address indexed user,     bool status);
+    event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
+    event              Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
+    event     BalanceUpdated(address indexed who, address indexed token, uint256 balance);
+    event    LPStatusChanged(address indexed user, bool status);
     event    LiquidityCapSet(uint256 newLiquidityCap);
     event    LockupPeriodSet(uint256 newLockupPeriod);
     event      StakingFeeSet(uint256 newStakingFee);
     event   PoolStateChanged(State state);
-    event           Cooldown(address indexed lp,       uint256 cooldown);
+    event           Cooldown(address indexed lp, uint256 cooldown);
     event PoolOpenedToPublic(bool isOpen);
-    event           AdminSet(address newAdmin,         bool allowed);
+    event           AdminSet(address newAdmin, bool allowed);
     
     event DefaultSuffered(
         address indexed loan,

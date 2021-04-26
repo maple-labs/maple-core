@@ -32,13 +32,13 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     bool public openToPublic;  // Boolean opening StakeLocker to public for staking BPTs
 
-    event      BalanceUpdated(address indexed who,    address indexed token,   uint256 balance);
+    event      BalanceUpdated(address indexed who, address indexed token, uint256 balance);
     event    AllowListUpdated(address indexed staker, bool status);
     event    StakeDateUpdated(address indexed staker, uint256 stakeDate);
     event LockupPeriodUpdated(uint256 lockupPeriod);
     event            Cooldown(address indexed staker, uint256 cooldown);
-    event               Stake(uint256 amount,         address indexed staker);
-    event             Unstake(uint256 amount,         address indexed staker);
+    event               Stake(uint256 amount, address indexed staker);
+    event             Unstake(uint256 amount, address indexed staker);
     event   StakeLockerOpened();
 
     constructor(

@@ -13,7 +13,7 @@ contract CollateralLockerFactory {
 
     uint8 public constant factoryType = 0;  // i.e FactoryType::COLLATERAL_LOCKER_FACTORY
 
-    event CollateralLockerCreated(address owner, address collateralLocker, address collateralAsset);
+    event CollateralLockerCreated(address indexed owner, address collateralLocker, address collateralAsset);
 
     /**
         @dev Instantiate a CollateralLocker contract.

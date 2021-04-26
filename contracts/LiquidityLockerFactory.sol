@@ -11,7 +11,7 @@ contract LiquidityLockerFactory {
 
     uint8 public constant factoryType = 3;        // i.e LockerFactoryTypes::LIQUIDITY_LOCKER_FACTORY
 
-    event LiquidityLockerCreated(address owner, address liquidityLocker, address liquidityAsset);
+    event LiquidityLockerCreated(address indexed owner, address liquidityLocker, address liquidityAsset);
 
     /**
         @dev Instantiate a LiquidityLocker contract.

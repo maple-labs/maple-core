@@ -83,11 +83,11 @@ contract Loan is FDT, Pausable {
     uint256 public defaultSuffered;    // Difference between `amountRecovered` and `principalOwed` after liquidation
     uint256 public liquidationExcess;  // If `amountRecovered > principalOwed`, amount of liquidityAsset that is to be returned to borrower
 
-    event       LoanFunded(uint256 amtFunded,   address indexed _fundedBy);
-    event   BalanceUpdated(address indexed who, address indexed token,      uint256 balance);
+    event       LoanFunded(uint256 amtFunded, address indexed _fundedBy);
+    event   BalanceUpdated(address indexed who, address indexed token, uint256 balance);
     event         Drawdown(uint256 drawdownAmt);
     event LoanStateChanged(State state);
-    event         AdminSet(address admin,       bool allowed);
+    event         AdminSet(address admin, bool allowed);
     
     event PaymentMade(
         uint totalPaid,

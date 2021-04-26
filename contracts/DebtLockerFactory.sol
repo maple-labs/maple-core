@@ -11,7 +11,7 @@ contract DebtLockerFactory {
 
     uint8 public constant factoryType = 1;  // i.e LockerFactoryTypes::DEBT_LOCKER_FACTORY
 
-    event DebtLockerCreated(address owner, address debtLocker, address loan);
+    event DebtLockerCreated(address indexed owner, address debtLocker, address loan);
 
     /**
         @dev Instantiate a DebtLocker contract.

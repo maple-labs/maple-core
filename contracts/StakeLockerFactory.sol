@@ -12,7 +12,7 @@ contract StakeLockerFactory {
     uint8 public constant factoryType = 4;  // i.e FactoryType::STAKE_LOCKER_FACTORY.
 
     event StakeLockerCreated(
-        address owner,
+        address indexed owner,
         address stakeLocker,
         address stakeAsset,
         address liquidityAsset,
