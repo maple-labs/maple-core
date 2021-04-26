@@ -232,8 +232,6 @@ contract Pool is PoolFDT {
         emit BalanceUpdated(stakeLocker, address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
         emit Claim(loan, interestClaim, principalClaim, claimInfo[3], stakeLockerPortion, poolDelegatePortion);
-
-        // TODO: Discuss with offchain team about requirements for return
     }
 
     /**
