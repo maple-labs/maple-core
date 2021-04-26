@@ -28,6 +28,7 @@ contract MplRewardsFactory {
 
     /**
         @dev Instantiate a MplRewards contract. Only the Governor can call this function.
+        @dev It emits a `MplRewardsCreated` event.
         @param rewardsToken Address of the rewardsToken (will always be MPL)
         @param stakingToken Address of the stakingToken (token used to stake to earn rewards)
                             (i.e., Pool address for PoolFDT mining, StakeLocker address for staked BPT mining)

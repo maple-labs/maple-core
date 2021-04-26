@@ -22,9 +22,9 @@ library PoolLib {
     uint256 public constant WAD         = 10 ** 18;
     uint8   public constant DL_FACTORY  = 1;         // Factory type of `DebtLockerFactory`
 
-    event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
-    event DepositDateUpdated(address indexed lp, uint256 depositDate);
-    event           Cooldown(address indexed lp, uint256 cooldown);
+    event         LoanFunded(address indexed loan, address debtLocker,   uint256 amountFunded);
+    event DepositDateUpdated(address indexed lp,   uint256 depositDate);
+    event           Cooldown(address indexed lp,   uint256 cooldown);
 
     /***************************************/
     /*** Pool Delegate Utility Functions ***/
@@ -58,6 +58,7 @@ library PoolLib {
 
     /**
         @dev Fund a loan for amt, utilize the supplied debtLockerFactory for debt lockers.
+        @dev It emits a `LoanFunded` event.
         @param  debtLockers     Mapping contains the `debtLocker` contract address corresponds to the `dlFactory` and `loan`.
         @param  superFactory    Address of the `PoolFactory`
         @param  liquidityLocker Address of the `liquidityLocker` contract attached with this Pool
@@ -202,6 +203,7 @@ library PoolLib {
     /**
         @dev Update the effective deposit date based on how much new capital has been added.
              If more capital is added, the depositDate moves closer to the current timestamp.
+        @dev It emits a `DepositDateUpdated` event.
         @param  depositDate Weighted timestamp representing effective deposit date
         @param  balance     Balance of PoolFDT tokens of user
         @param  amt         Total deposit amount
@@ -258,6 +260,7 @@ library PoolLib {
 
     /**
         @dev Activates the cooldown period to withdraw. It can't be called if the user is not an LP.
+        @dev It emits a `Cooldown` event.
      */
     function intendToWithdraw(mapping(address => uint256) storage withdrawCooldown, uint256 balance) external {
         require(balance != uint256(0), "Pool:ZERO_BALANCE");
@@ -267,6 +270,7 @@ library PoolLib {
 
     /**
         @dev Cancel an initiated withdrawal.
+        @dev It emits a `Cooldown` event.
      */
     function cancelWithdraw(mapping(address => uint256) storage withdrawCooldown) external {
         require(withdrawCooldown[msg.sender] != uint256(0), "Pool:NOT_WITHDRAWING");

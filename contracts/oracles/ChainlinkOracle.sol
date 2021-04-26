@@ -17,8 +17,8 @@ contract ChainlinkOracle is Ownable {
     int256 public manualPrice;
 
     event ChangeAggregatorFeed(address _newMedianizer, address _oldMedianizer);
-    event SetManualPrice(int256 _oldPrice, int256 _newPrice);
-    event SetManualOverride(bool _override);
+    event       SetManualPrice(int256 _oldPrice,       int256 _newPrice);
+    event    SetManualOverride(bool _override);
 
     /**
         @dev Creates a new Chainlink based oracle.
@@ -46,6 +46,7 @@ contract ChainlinkOracle is Ownable {
 
     /**
         @dev Updates aggregator address. Only the contract Owner can call this fucntion.
+        @dev It emits a `ChangeAggregatorFeed` event.
         @param aggregator Address of chainlink aggregator
     */
     function changeAggregator(address aggregator) external onlyOwner {
@@ -72,6 +73,7 @@ contract ChainlinkOracle is Ownable {
     /**
         @dev Set a manual price.  Only the contract Owner can call this fucntion.
              NOTE: this can only be used if manualOverride == true.
+        @dev It emits a `SetManualPrice` event.
         @param _price Price to set
     */
     function setManualPrice(int256 _price) public onlyOwner {
@@ -81,6 +83,7 @@ contract ChainlinkOracle is Ownable {
 
     /**
         @dev Set manual override, allowing for manual price setting. Only the contract Owner can call this fucntion.
+        @dev It emits a `SetManualOverride` event.
         @param _override Whether to use the manual override price or not
     */
     function setManualOverride(bool _override) public onlyOwner {

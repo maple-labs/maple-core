@@ -40,10 +40,10 @@ contract MapleTreasury {
         globals       = _globals;
     }
 
-    event ERC20Conversion(address indexed asset, uint256 amountIn, uint256 amountOut);
+    event      ERC20Conversion(address indexed asset, uint256 amountIn, uint256 amountOut);
     event DistributedToHolders(uint256 amount);
-    event ERC20Reclaimed(address indexed asset, uint256 amount);
-    event GlobalsSet(address newGlobals);
+    event       ERC20Reclaimed(address indexed asset, uint256 amount);
+    event           GlobalsSet(address newGlobals);
 
     /**
         @dev Checks that msg.sender is the Governor.
@@ -65,6 +65,7 @@ contract MapleTreasury {
 
     /**
         @dev Reclaim treasury funds to the MapleDAO address. Only the Governor can call this function.
+        @dev It emits a `ERC20Reclaimed` event.
         @param asset  Address of the token that need to be reclaimed from the treasury contract
         @param amount Amount to withdraw
     */
@@ -76,6 +77,7 @@ contract MapleTreasury {
     /**
         @dev Passes through the current fundsToken balance of the treasury to MapleToken, where it can be claimed by MPL holders.
              Only the Governor can call this function.
+        @dev It emits a `DistributedToHolders` event.
     */
     function distributeToHolders() isGovernor public {
         IERC20 _fundsToken = IERC20(fundsToken);
@@ -87,6 +89,7 @@ contract MapleTreasury {
 
     /**
         @dev Convert an ERC-20 asset through Uniswap to fundsToken. Only the Governor can call this function.
+        @dev It emits a `ERC20Conversion` event.
         @param asset The ERC-20 asset to convert to fundsToken
     */
     function convertERC20(address asset) isGovernor public {

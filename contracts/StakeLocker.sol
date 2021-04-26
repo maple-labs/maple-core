@@ -32,13 +32,13 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     bool public openToPublic;  // Boolean opening StakeLocker to public for staking BPTs
 
-    event      BalanceUpdated(address who, address token, uint256 balance);
-    event    AllowListUpdated(address staker, bool status);
+    event      BalanceUpdated(address indexed who,    address indexed token,   uint256 balance);
+    event    AllowListUpdated(address indexed staker, bool status);
     event    StakeDateUpdated(address indexed staker, uint256 stakeDate);
     event LockupPeriodUpdated(uint256 lockupPeriod);
     event            Cooldown(address indexed staker, uint256 cooldown);
-    event               Stake(uint256 amount, address staker);
-    event             Unstake(uint256 amount, address staker);
+    event               Stake(uint256 amount,         address indexed staker);
+    event             Unstake(uint256 amount,         address indexed staker);
     event   StakeLockerOpened();
 
     constructor(
@@ -92,6 +92,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Update user status on the allowlist. Only the Pool can call this function.
+        @dev It emits an `AllowListUpdated` event.
         @param user   The address to set status for
         @param status The status of user on allowlist
     */
@@ -102,6 +103,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Set StakerLocker public access. Only the Pool Delegate can call this function.
+        @dev It emits a `StakeLockerOpened` event.
     */
     function openStakeLockerToPublic() external {
         _whenProtocolNotPaused();
@@ -112,6 +114,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Set the lockup period. Only the Pool Delegate can call this function.
+        @dev It emits a `LockupPeriodUpdated` event.
         @param newLockupPeriod New lockup period used to restrict unstaking.
      */
     function setLockupPeriod(uint256 newLockupPeriod) external {
@@ -146,6 +149,9 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Deposit amt of stakeAsset, mint FDTs to msg.sender.
+        @dev It emits a `Stake` event.
+        @dev It emits a `Cooldown` event.
+        @dev It emits a `BalanceUpdated` event.
         @param amt Amount of stakeAsset (BPTs) to deposit
     */
     function stake(uint256 amt) whenNotPaused external {
@@ -166,6 +172,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Updates information used to calculate unstake delay.
+        @dev It emits a `StakeDateUpdated` event.
         @param who Staker who deposited BPTs
         @param amt Amount of BPTs staker has deposited
     */
@@ -184,6 +191,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Activates the cooldown period to unstake. It can't be called if the user is not staking.
+        @dev It emits a `Cooldown` event.
     **/
     function intendToUnstake() external {
         require(balanceOf(msg.sender) != uint256(0), "StakeLocker:ZERO_BALANCE");
@@ -193,6 +201,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Cancels an initiated unstake by resetting unstakeCooldown.
+        @dev It emits a `Cooldown` event.
      */
     function cancelUnstake() external {
         require(unstakeCooldown[msg.sender] != uint256(0), "StakeLocker:NOT_UNSTAKING");
@@ -202,6 +211,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Withdraw amt of stakeAsset minus any losses, claim interest, burn FDTs for msg.sender.
+        @dev It emits an `Unstake` event.
+        @dev It emits a `BalanceUpdated` event.
         @param amt Amount of stakeAsset (BPTs) to withdraw
     */
     function unstake(uint256 amt) external canUnstake {
@@ -221,6 +232,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Withdraws all available FDT interest earned for a token holder.
+        @dev It emits a `BalanceUpdated` event if there are withdrawable funds.
     */
     function withdrawFunds() public override {
         _whenProtocolNotPaused();

@@ -56,24 +56,25 @@ contract Pool is PoolFDT {
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
     mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`
 
-    event       LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
-    event            Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee);
-    event   BalanceUpdated(address indexed who,  address token, uint256 balance);
-    event  LPStatusChanged(address indexed user, bool status);
-    event  LiquidityCapSet(uint256 newLiquidityCap);
-    event  LockupPeriodSet(uint256 newLockupPeriod);
-    event    StakingFeeSet(uint256 newStakingFee);
-    event PoolStateChanged(State state);
-    event         Cooldown(address indexed lp, uint256 cooldown);
-    event  DefaultSuffered(
+    event         LoanFunded(address indexed loan,     address debtLocker,    uint256 amountFunded);
+    event              Claim(address indexed loan,     uint256 interest,      uint256 principal, uint256 fee);
+    event     BalanceUpdated(address indexed who,      address indexed token, uint256 balance);
+    event    LPStatusChanged(address indexed user,     bool status);
+    event    LiquidityCapSet(uint256 newLiquidityCap);
+    event    LockupPeriodSet(uint256 newLockupPeriod);
+    event      StakingFeeSet(uint256 newStakingFee);
+    event   PoolStateChanged(State state);
+    event           Cooldown(address indexed lp,       uint256 cooldown);
+    event PoolOpenedToPublic(bool isOpen);
+    event           AdminSet(address newAdmin,         bool allowed);
+    
+    event DefaultSuffered(
         address indexed loan,
         uint256 defaultSuffered,
         uint256 bptsBurned,
         uint256 bptsReturned,
         uint256 liquidityAssetRecoveredFromBurn
     );
-    event  PoolOpenedToPublic(bool isOpen);
-    event            AdminSet(address newAdmin, bool allowed);
 
     /**
         Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
@@ -82,6 +83,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Constructor for a Pool.
+        @dev It emits a `PoolStateChanged` event.
         @param  _poolDelegate   Address that has manager privileges of the Pool
         @param  _liquidityAsset Asset used to fund the Pool, It gets escrowed in `LiquidityLocker`
         @param  _stakeAsset     Asset escrowed in StakeLocker
@@ -136,6 +138,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Finalize the Pool, enabling deposits. Checks Pool Delegate amount deposited to StakeLocker. Only the Pool Delegate can call this function.
+        @dev It emits a `PoolStateChanged` event.
     */
     function finalize() external {
         _isValidDelegateAndProtocolNotPaused();
@@ -174,6 +177,8 @@ contract Pool is PoolFDT {
 
     /**
         @dev Claim available funds for loan through specified DebtLockerFactory. Only the Pool Delegate or a Pool Admin can call this function.
+        @dev It emits a `BalanceUpdated` event.
+        @dev It emits a `Claim` event.
         @param  loan      Address of the loan to claim from
         @param  dlFactory The DebtLockerFactory (always maps to a single debt locker)
         @return [0] = Total amount claimed
@@ -232,6 +237,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Helper function if a claim has been made and there is a non-zero defaultSuffered amount.
+        @dev It emits a `DefaultSuffered` event.
         @param loan            Address of loan that has defaulted
         @param defaultSuffered Losses suffered from default after liquidation
     */
@@ -262,6 +268,7 @@ contract Pool is PoolFDT {
     /**
         @dev Triggers deactivation, permanently shutting down the pool. Must have less than 100 USD worth of liquidityAsset principalOut.
              Only the Pool Delegate can call this function.
+        @dev It emits a `PoolStateChanged` event.
     */
     function deactivate() external {
         _isValidDelegateAndProtocolNotPaused();
@@ -277,6 +284,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Set `liquidityCap`. Only the Pool Delegate or a Pool Admin can call this function.
+        @dev It emits a `LiquidityCapSet` event.
         @param newLiquidityCap New liquidityCap value
     */
     function setLiquidityCap(uint256 newLiquidityCap) external {
@@ -288,6 +296,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Set the lockup period. Only the Pool Delegate can call this function.
+        @dev It emits a `LockupPeriodSet` event.
         @param newLockupPeriod New lockup period used to restrict the withdrawals.
      */
     function setLockupPeriod(uint256 newLockupPeriod) external {
@@ -299,6 +308,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Update staking fee. Only the Pool Delegate can call this function.
+        @dev It emits a `StakingFeeSet` event.
         @param newStakingFee New staking fee.
     */
     function setStakingFee(uint256 newStakingFee) external {
@@ -310,6 +320,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Update user status on Pool allowlist. Only the Pool Delegate can call this function.
+        @dev It emits an `LPStatusChanged` event.
         @param user   The address to set status for.
         @param status The status of user on allowlist.
     */
@@ -343,6 +354,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Set public pool access. Only the Pool Delegate can call this function.
+        @dev It emits a `PoolOpenedToPublic` event.
         @param open Public pool access status.
     */
     function setOpenToPublic(bool open) external {
@@ -357,6 +369,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Liquidity providers can deposit liquidityAsset into the LiquidityLocker, minting FDTs.
+        @dev It emits a `Cooldown` event.
         @param amt Amount of liquidityAsset to deposit
     */
     function deposit(uint256 amt) external {

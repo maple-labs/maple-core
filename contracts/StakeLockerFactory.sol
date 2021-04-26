@@ -22,6 +22,7 @@ contract StakeLockerFactory {
 
     /**
         @dev Instantiate a StakeLocker contract.
+        @dev It emits a `StakeLockerCreated` event.
         @param stakeAsset     Address of the stakeAsset (generally Balancer Pool BPTs)
         @param liquidityAsset Address of the liquidityAsset (as defined in the pool)
         @return Address of the instantiated StakeLocker
