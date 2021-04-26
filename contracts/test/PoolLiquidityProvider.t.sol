@@ -20,44 +20,48 @@ contract PoolTest is TestUtil {
         createLoans();
     }
 
-    function test_deposit() public {
+    function test_deposit(uint256 depositAmt) public {
         address stakeLocker = pool.stakeLocker();
         address liqLocker   = pool.liquidityLocker();
 
-        assertTrue(!leo.try_deposit(address(pool), 100 * USD)); // Not finalized
+        depositAmt = constrictToRange(depositAmt, 1 * USD, 100 * USD, true);
+
+        assertTrue(!leo.try_deposit(address(pool), depositAmt)); // Not finalized
 
         finalizePool(pool, pat, false);
 
         // Mint 100 USDC into this LP account
-        mint("USDC", address(leo), 100 * USD);
+        mint("USDC", address(leo), depositAmt);
 
         assertTrue(!pool.openToPublic());
         assertTrue(!pool.allowedLiquidityProviders(address(leo)));
-        assertTrue( !leo.try_deposit(address(pool), 100 * USD)); // Not in the LP allow list neither the pool is open to public.
+        assertTrue( !leo.try_deposit(address(pool), depositAmt)); // Not in the LP allow list neither the pool is open to public.
 
         assertTrue( !pam.try_setAllowList(address(pool), address(leo), true)); // It will fail as `pam` is not the right PD.
         assertTrue(  pat.try_setAllowList(address(pool), address(leo), true));
         assertTrue( pool.allowedLiquidityProviders(address(leo)));
         
-        assertTrue(!leo.try_deposit(address(pool), 100 * USD)); // Not Approved
+        assertTrue(!leo.try_deposit(address(pool), depositAmt)); // Not Approved
 
         leo.approve(USDC, address(pool), MAX_UINT);
 
-        assertLiquidity(pool, leo, liqLocker, 100 * USD, 0, 0);
+        assertLiquidity(pool, leo, liqLocker, depositAmt, 0, 0);
 
-        assertTrue(leo.try_deposit(address(pool), 100 * USD));
+        assertTrue(leo.try_deposit(address(pool), depositAmt));
 
-        assertLiquidity(pool, leo, liqLocker, 0, 100 * USD, 100 * WAD);
+        assertLiquidity(pool, leo, liqLocker, 0, depositAmt, toWad(depositAmt));
 
         // Remove leo from the allowed list
         assertTrue(pat.try_setAllowList(address(pool), address(leo), false));
-        mint("USDC", address(leo), 100 * USD);
-        assertTrue(!leo.try_deposit(address(pool), 100 * USD));
+        mint("USDC", address(leo), depositAmt);
+        assertTrue(!leo.try_deposit(address(pool), depositAmt));
 
-        mint("USDC", address(lex), 200 * USD);
+        uint256 newDepositAmt = constrictToRange(depositAmt, 100 * USD, 200 * USD, true);
+
+        mint("USDC", address(lex), newDepositAmt);
         lex.approve(USDC, address(pool), MAX_UINT);
         
-        assertLiquidity(pool, lex, liqLocker, 200 * USD, 100 * USD, 0);
+        assertLiquidity(pool, lex, liqLocker, newDepositAmt, depositAmt, 0);
 
         assertTrue(!pool.allowedLiquidityProviders(address(lex)));
         assertTrue(  !lex.try_deposit(address(pool), 100 * USD)); // Fail to invest as lex is not in the allowed list.
@@ -73,9 +77,9 @@ contract PoolTest is TestUtil {
 
         assertTrue(lex.try_deposit(address(pool), 100 * USD));
 
-        assertLiquidity(pool, lex, liqLocker, 100 * USD, 200 * USD, 100 * WAD);
+        assertLiquidity(pool, lex, liqLocker, newDepositAmt - 100 * USD, depositAmt + 100 * USD, toWad(100 * USD));
 
-        mint("USDC", address(leo), 200 * USD);
+        mint("USDC", address(leo), depositAmt);
 
         // Pool-specific pause by Pool Delegate via setLiquidityCap(0)
         assertEq(  pool.liquidityCap(), MAX_UINT);
@@ -85,15 +89,15 @@ contract PoolTest is TestUtil {
         assertTrue(!leo.try_deposit(address(pool), 1 * USD));
         assertTrue( pat.try_setLiquidityCap(address(pool), MAX_UINT));
         assertEq(  pool.liquidityCap(), MAX_UINT);
-        assertTrue( leo.try_deposit(address(pool), 100 * USD));
-        assertEq(  pool.balanceOf(address(leo)), 200 * WAD);
+        assertTrue( leo.try_deposit(address(pool), depositAmt));
+        assertEq(  pool.balanceOf(address(leo)), toWad(2 * depositAmt));
  
         // Protocol-wide pause by Emergency Admin
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(!leo.try_deposit(address(pool), 1 * USD));
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(leo.try_deposit(address(pool),100 * USD));
-        assertEq( pool.balanceOf(address(leo)), 300 * WAD);
+        assertTrue(leo.try_deposit(address(pool), depositAmt));
+        assertEq( pool.balanceOf(address(leo)), toWad(3 * depositAmt));
 
         // Pause protocol and attempt setLiquidityCap()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
@@ -103,33 +107,35 @@ contract PoolTest is TestUtil {
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(pat.try_setLiquidityCap(address(pool), MAX_UINT));
 
-        assertTrue(pat.try_setOpenToPublic(address(pool), false));  // Close pool to public
-        assertTrue(!lex.try_deposit(address(pool),    100 * USD));  // Fail to deposit as pool no longer public
+        assertTrue( pat.try_setOpenToPublic(address(pool),      false));  // Close pool to public
+        assertTrue(!lex.try_deposit(address(pool),         depositAmt));  // Fail to deposit as pool no longer public
     }
 
-    function test_deposit_with_liquidity_cap() public {
+    function test_deposit_with_liquidity_cap(uint256 newLiquidityCap) public {
 
         finalizePool(pool, pat, true);
 
-        // Mint 1000 USDC into this LP account
+        // Mint 10_000 USDC into this LP account
         mint("USDC", address(leo), 10_000 * USD);
         leo.approve(USDC, address(pool), MAX_UINT);
 
+        newLiquidityCap = constrictToRange(newLiquidityCap, 10 * USD, 1000 * USD, true);
+
         // Changes the `liquidityCap`.
-        assertTrue(pat.try_setLiquidityCap(address(pool), 900 * USD), "Failed to set liquidity cap");
-        assertEq( pool.liquidityCap(), 900 * USD,                     "Incorrect value set for liquidity cap");
+        assertTrue(pat.try_setLiquidityCap(address(pool), newLiquidityCap), "Failed to set liquidity cap");
+        assertEq( pool.liquidityCap(), newLiquidityCap,                     "Incorrect value set for liquidity cap");
 
         // Not able to deposit as cap is lower than the deposit amount.
-        assertTrue(!pool.isDepositAllowed(1000 * USD),                "Deposit should not be allowed because 900 USD < 1000 USD");
-        assertTrue( !leo.try_deposit(address(pool), 1000 * USD),      "Should not able to deposit 1000 USD");
+        assertTrue(!pool.isDepositAllowed(newLiquidityCap + 1),                "Deposit should not be allowed because liquidityCap < depositAmt");
+        assertTrue( !leo.try_deposit(address(pool), newLiquidityCap + 1),      "Should not able to deposit depositAmt");
 
         // Tries with lower amount it will pass.
-        assertTrue(pool.isDepositAllowed(500 * USD),                  "Deposit should be allowed because 900 USD > 500 USD");
-        assertTrue( leo.try_deposit(address(pool), 500 * USD),        "Fail to deposit 500 USD");
+        assertTrue(pool.isDepositAllowed(newLiquidityCap - 1),                  "Deposit should be allowed because liquidityCap > depositAmt");
+        assertTrue( leo.try_deposit(address(pool), newLiquidityCap - 1),        "Fail to deposit depositAmt");
 
-        // Bob tried again with 600 USDC it fails again.
-        assertTrue(!pool.isDepositAllowed(600 * USD),                 "Deposit should not be allowed because 900 USD < 500 + 600 USD");
-        assertTrue( !leo.try_deposit(address(pool), 600 * USD),       "Should not able to deposit 600 USD");
+        // leo tried again with 6 USDC it fails again.
+        assertTrue(!pool.isDepositAllowed(2),                         "Deposit should not be allowed because liquidityCap < newLiquidityCap - 1 + 2");
+        assertTrue( !leo.try_deposit(address(pool), 2),               "Should not able to deposit 2 USD");
 
         // Set liquidityCap to zero and withdraw
         assertTrue(pat.try_setLiquidityCap(address(pool), 0),         "Failed to set liquidity cap");
@@ -144,23 +150,23 @@ contract PoolTest is TestUtil {
         assertTrue(leo.try_withdraw(address(pool), claimable),        "Should pass to withdraw the funds from the pool");
     }
 
-    function test_deposit_depositDate() public {
+    function test_deposit_depositDate(uint256 depositAmt) public {
        
         finalizePool(pool, pat, true);
         
         // Mint 100 USDC into this LP account
-        uint256 startDate  = block.timestamp;  // Deposit 100 USDC on first day
-        uint256 initialAmt = 100 * USD;
-        mintFundsAndDepositIntoPool(leo, pool, 200 * USD, initialAmt);
+        uint256 startDate  = block.timestamp;
+        uint256 depositAmt = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
+        mintFundsAndDepositIntoPool(leo, pool, 20_000_000 * USD, depositAmt);
     
         assertEq(pool.depositDate(address(leo)), startDate);
 
-        uint256 newAmt = 20 * USD;
+        uint256 newAmt = constrictToRange(depositAmt, 1 * USD, 100_000 * USD, true);
 
         hevm.warp(startDate + 30 days);
         leo.deposit(address(pool), newAmt);
 
-        uint256 newDepDate = startDate + (block.timestamp - startDate) * newAmt / (newAmt + initialAmt);
+        uint256 newDepDate = startDate + (block.timestamp - startDate) * newAmt / (newAmt + depositAmt);
         assertEq(pool.depositDate(address(leo)), newDepDate);  // Gets updated
 
         assertTrue(pat.try_setLockupPeriod(address(pool), uint256(0)));  // Sets 0 as lockup period to allow withdraw. 
@@ -170,57 +176,57 @@ contract PoolTest is TestUtil {
         assertEq(pool.depositDate(address(leo)), newDepDate);  // Doesn't change
     }
 
-    function test_transfer_depositDate() public {
+    function test_transfer_depositDate(uint256 depositAmt) public {
         finalizePool(pool, pat, true);
 
         // Deposit 100 USDC on first day
         uint256 startDate = block.timestamp;
-        uint256 deposit   = 100;
+        uint256 depositAmt = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
 
         // Mint 200 USDC into this LP account
-        mintFundsAndDepositIntoPool(leo, pool, 200 * USD, deposit * USD);
-        mintFundsAndDepositIntoPool(liz, pool, 200 * USD, deposit * USD);
+        mintFundsAndDepositIntoPool(leo, pool, 20_000_000 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(liz, pool, 20_000_000 * USD, depositAmt);
         
         assertEq(pool.depositDate(address(leo)), startDate);
         assertEq(pool.depositDate(address(liz)), startDate);
 
-        uint256 newDeposit  = 20;  // Amount of FDT transferred
+        uint256 newDeposit  = constrictToRange(depositAmt, 50 * USD, depositAmt, true);  // Amount of FDT transferred
 
         hevm.warp(startDate + 30 days);
 
-        assertEq(pool.balanceOf(address(leo)), deposit * WAD);
-        assertEq(pool.balanceOf(address(liz)), deposit * WAD);
+        assertEq(pool.balanceOf(address(leo)), toWad(depositAmt));
+        assertEq(pool.balanceOf(address(liz)), toWad(depositAmt));
 
         // Pause protocol and attempt to transfer FDTs
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!liz.try_transfer(address(pool), address(leo), newDeposit * WAD));
+        assertTrue(!liz.try_transfer(address(pool), address(leo), toWad(newDeposit)));
 
         // Unpause protocol and transfer FDTs
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(liz.try_transfer(address(pool), address(leo), newDeposit * WAD));  // Pool.transfer()
+        assertTrue(liz.try_transfer(address(pool), address(leo), toWad(newDeposit)));  // Pool.transfer()
 
-        assertEq(pool.balanceOf(address(leo)), deposit * WAD + newDeposit * WAD);
-        assertEq(pool.balanceOf(address(liz)), deposit * WAD - newDeposit * WAD);
+        assertEq(pool.balanceOf(address(leo)), toWad(depositAmt) + toWad(newDeposit));
+        assertEq(pool.balanceOf(address(liz)), toWad(depositAmt) - toWad(newDeposit));
 
-        uint256 newDepDate = startDate + (block.timestamp - startDate) * newDeposit * WAD / (newDeposit * WAD + deposit * WAD);
+        uint256 newDepDate = startDate + (block.timestamp - startDate) * toWad(newDeposit) / (toWad(newDeposit) + toWad(depositAmt));
 
         assertEq(pool.depositDate(address(leo)), newDepDate);  // Gets updated
         assertEq(pool.depositDate(address(liz)),  startDate);  // Stays the same
     }
 
-    function test_transfer_recipient_withdrawing() public {
+    function test_transfer_recipient_withdrawing(uint256 depositAmt) public {
         finalizePool(pool, pat, true);
 
         // Deposit 100 USDC on first day
-        uint256 start   = block.timestamp;
-        uint256 deposit = 100;
+        uint256 start = block.timestamp;
+        depositAmt    = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
 
         // Mint 200 USDC into this LP account
-        mintFundsAndDepositIntoPool(leo, pool, deposit * USD, deposit * USD);
-        mintFundsAndDepositIntoPool(liz, pool, deposit * USD, deposit * USD);
+        mintFundsAndDepositIntoPool(leo, pool, 10_000_000 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(liz, pool, 10_000_000 * USD, depositAmt);
 
-        assertEq(pool.balanceOf(address(leo)), deposit * WAD);
-        assertEq(pool.balanceOf(address(liz)), deposit * WAD);
+        assertEq(pool.balanceOf(address(leo)), toWad(depositAmt));
+        assertEq(pool.balanceOf(address(liz)), toWad(depositAmt));
         assertEq(pool.depositDate(address(leo)), start);
         assertEq(pool.depositDate(address(liz)), start);
 
@@ -229,34 +235,36 @@ contract PoolTest is TestUtil {
         assertEq( pool.withdrawCooldown(address(liz)), start);
 
         // LP (Leo) fails to transfer to LP (liz) who is currently withdrawing
-        assertTrue(!leo.try_transfer(address(pool), address(liz), deposit * WAD));
+        assertTrue(!leo.try_transfer(address(pool), address(liz), toWad(depositAmt)));
         hevm.warp(start + globals.lpCooldownPeriod() + globals.lpWithdrawWindow());  // Very end of LP withdrawal window
-        assertTrue(!leo.try_transfer(address(pool), address(liz), deposit * WAD));
+        assertTrue(!leo.try_transfer(address(pool), address(liz), toWad(depositAmt)));
 
         // LP (leo) successfully transfers to LP (liz) who is outside withdraw window
         hevm.warp(start + globals.lpCooldownPeriod() + globals.lpWithdrawWindow() + 1);  // Second after LP withdrawal window ends
-        assertTrue( leo.try_transfer(address(pool), address(liz), deposit * WAD));
-        assertTrue(!liz.try_withdraw(address(pool), deposit * WAD));
+        assertTrue( leo.try_transfer(address(pool), address(liz), toWad(depositAmt)));
+        assertTrue(!liz.try_withdraw(address(pool), toWad(depositAmt)));
 
         // Check balances and deposit dates are correct
         assertEq(pool.balanceOf(address(leo)), 0);
-        assertEq(pool.balanceOf(address(liz)), deposit * WAD * 2);
-        uint256 newDepDate = start + (block.timestamp - start) * (deposit * WAD) / ((deposit * WAD) + (deposit * WAD));
+        assertEq(pool.balanceOf(address(liz)), toWad(depositAmt) * 2);
+        uint256 newDepDate = start + (block.timestamp - start) * (toWad(depositAmt)) / ((toWad(depositAmt)) + (toWad(depositAmt)));
         assertEq(pool.depositDate(address(leo)), start);       // Stays the same
         assertEq(pool.depositDate(address(liz)), newDepDate);  // Gets updated
     }
 
-    function test_withdraw_cooldown() public {
+    function test_withdraw_cooldown(uint256 depositAmt) public {
 
         gov.setLpCooldownPeriod(10 days);
 
         finalizePool(pool, pat, true);
         pat.setLockupPeriod(address(pool), 0);
 
-        // Mint 1000 USDC into this LP account
-        mintFundsAndDepositIntoPool(leo, pool, 10000 * USD, 1500 * USD);
+        depositAmt = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
 
-        uint256 amt   = 500 * USD; // 1/3 of deposit so withdraw can happen thrice
+        // Mint 1000 USDC into this LP account
+        mintFundsAndDepositIntoPool(leo, pool, 10_000_000 * USD, depositAmt);
+
+        uint256 amt   = depositAmt / 3; // 1/3 of deposit so withdraw can happen thrice
         uint256 start = block.timestamp;
 
         assertTrue(!leo.try_withdraw(address(pool), amt),     "Should fail to withdraw 500 USD because user has to intendToWithdraw");
@@ -312,7 +320,7 @@ contract PoolTest is TestUtil {
         assertEq(pool.withdrawCooldown(address(lee)), 0);
     }
 
-    function test_withdraw_under_lockup_period() public {
+    function test_withdraw_under_lockup_period(uint256 depositAmt) public {
         finalizePool(pool, pat, true);
         gov.setValidLoanFactory(address(loanFactory), true);
 
@@ -320,17 +328,17 @@ contract PoolTest is TestUtil {
         gov.setLpWithdrawWindow(MAX_UINT);
 
         uint256 start = block.timestamp;
-
+        depositAmt    = constrictToRange(depositAmt, 1000 * USD, 10_000_000 * USD, true);
         // Mint USDC to lee
-        mintFundsAndDepositIntoPool(lee, pool, 5000 * USD, 1000 * USD);
-        uint256 bal0 = 5000 * USD;
+        mintFundsAndDepositIntoPool(lee, pool, 10_000_000 * USD, depositAmt);
+        uint256 bal0 = 10_000_000 * USD;
         
         // Check depositDate
         assertEq(pool.depositDate(address(lee)), start);
 
         // Fund loan, drawdown, make payment and claim so lee can claim interest
-        assertTrue(pat.try_fundLoan(address(pool), address(loan3),  address(dlFactory), 1000 * USD), "Fail to fund the loan");
-        drawdown(loan3, bud, 1000 * USD);
+        assertTrue(pat.try_fundLoan(address(pool), address(loan3),  address(dlFactory), depositAmt), "Fail to fund the loan");
+        drawdown(loan3, bud, depositAmt);
         doFullLoanPayment(loan3, bud); 
         pat.claim(address(pool), address(loan3), address(dlFactory));
 
@@ -339,33 +347,34 @@ contract PoolTest is TestUtil {
         assertTrue(lee.try_intendToWithdraw(address(pool)));
         // Warp to exact time that lee can withdraw with weighted deposit date
         hevm.warp( pool.depositDate(address(lee)) + pool.lockupPeriod() - 1);
-        assertTrue(!lee.try_withdraw(address(pool), 1000 * USD), "Withdraw failure didn't trigger");
+        assertTrue(!lee.try_withdraw(address(pool), depositAmt), "Withdraw failure didn't trigger");
         hevm.warp( pool.depositDate(address(lee)) + pool.lockupPeriod());
-        assertEq(pool.balanceOf(address(lee)), 1000 * WAD);
-        assertTrue( lee.try_withdraw(address(pool), 1000 * USD), "Failed to withdraw funds");
+        assertEq(pool.balanceOf(address(lee)), toWad(depositAmt));
+        assertTrue( lee.try_withdraw(address(pool), depositAmt), "Failed to withdraw funds");
 
         assertEq(IERC20(USDC).balanceOf(address(lee)) - bal0, interest);
     }
 
-    function test_withdraw_under_weighted_lockup_period() public {
+    function test_withdraw_under_weighted_lockup_period(uint256 depositAmt) public {
         finalizePool(pool, pat, true);
         gov.setValidLoanFactory(address(loanFactory), true);
 
         // Ignore cooldown for this test
         gov.setLpWithdrawWindow(MAX_UINT);
 
-        uint start = block.timestamp;
+        uint256 start = block.timestamp;
+        depositAmt    = constrictToRange(depositAmt, 1000 * USD, 10_000_000 * USD, true);
 
         // Mint USDC to lee
-        mintFundsAndDepositIntoPool(lee, pool, 5000 * USD, 1000 * USD);
-        uint256 bal0 = 5000 * USD;
+        mintFundsAndDepositIntoPool(lee, pool, 20_000_000 * USD, depositAmt);
+        uint256 bal0 = 20_000_000 * USD;
 
         // Check depositDate
         assertEq(pool.depositDate(address(lee)), start);
 
         // Fund loan, drawdown, make payment and claim so lee can claim interest
-        assertTrue(pat.try_fundLoan(address(pool), address(loan3),  address(dlFactory), 1000 * USD), "Fail to fund the loan");
-        drawdown(loan3, bud, 1000 * USD);
+        assertTrue(pat.try_fundLoan(address(pool), address(loan3),  address(dlFactory), depositAmt), "Fail to fund the loan");
+        drawdown(loan3, bud, depositAmt);
         doFullLoanPayment(loan3, bud); 
         pat.claim(address(pool), address(loan3), address(dlFactory));
 
@@ -374,18 +383,18 @@ contract PoolTest is TestUtil {
         assertEq(block.timestamp - pool.depositDate(address(lee)), pool.lockupPeriod());  // Can withdraw at this point
         
         // Deposit more USDC into pool, increasing deposit date and locking up funds again
-        assertTrue(lee.try_deposit(address(pool), 3000 * USD));
-        assertEq( pool.depositDate(address(lee)) - start, (block.timestamp - start) * (3000 * WAD) / (4000 * WAD));  // Deposit date updating using weighting
+        uint256 newDepositAmt = constrictToRange(depositAmt, 1000 * USD, 10_000_000 * USD, true);
+        assertTrue(lee.try_deposit(address(pool), newDepositAmt));
+        assertEq( pool.depositDate(address(lee)) - start, (block.timestamp - start) * (toWad(newDepositAmt)) / (toWad(newDepositAmt) + toWad(depositAmt)));  // Deposit date updating using weighting
         assertTrue( lee.try_intendToWithdraw(address(pool)));
-        assertTrue(!lee.try_withdraw(address(pool), 4000 * USD), "Withdraw failure didn't trigger");                // Not able to withdraw the funds as deposit date was updated
+        assertTrue(!lee.try_withdraw(address(pool), newDepositAmt + depositAmt), "Withdraw failure didn't trigger");                // Not able to withdraw the funds as deposit date was updated
 
         uint256 interest = pool.withdrawableFundsOf(address(lee));  // Get kims withdrawable funds
 
         // Warp to exact time that lee can withdraw with weighted deposit date
-        hevm.warp(pool.depositDate(address(lee)) + pool.lockupPeriod() - 1);
-        assertTrue(!lee.try_withdraw(address(pool), 4000 * USD), "Withdraw failure didn't trigger");
+        assertTrue(!lee.try_withdraw(address(pool), newDepositAmt + depositAmt), "Withdraw failure didn't trigger");
         hevm.warp(pool.depositDate(address(lee)) + pool.lockupPeriod());
-        assertTrue( lee.try_withdraw(address(pool), 4000 * USD), "Failed to withdraw funds");
+        assertTrue( lee.try_withdraw(address(pool), newDepositAmt + depositAmt), "Failed to withdraw funds");
 
         assertEq(IERC20(USDC).balanceOf(address(lee)) - bal0, interest);
     }
