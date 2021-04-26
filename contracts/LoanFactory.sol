@@ -65,11 +65,11 @@ contract LoanFactory is Pausable {
                 specs[2] = paymentIntervalDays
                 specs[3] = requestAmount
                 specs[4] = collateralRatio
-        @param  calcs The calculators used for the loan.
-                calcs[0] = repaymentCalc
-                calcs[1] = lateFeeCalc
-                calcs[2] = premiumCalc
-        @return Address of the instantiated Loan.
+        @param  calcs           The calculators used for the loan.
+                                    calcs[0] = repaymentCalc
+                                    calcs[1] = lateFeeCalc
+                                    calcs[2] = premiumCalc
+        @return loanAddress     Address of the instantiated Loan.
     */
     function createLoan(
         address liquidityAsset,
@@ -78,17 +78,17 @@ contract LoanFactory is Pausable {
         address clFactory,
         uint256[5] memory specs,
         address[3] memory calcs
-    ) external whenNotPaused returns (address) {
+    ) external whenNotPaused returns (address loanAddress) {
         _whenProtocolNotPaused();
         IGlobals _globals = globals;
 
         // Validity checks
-        require(_globals.isValidSubFactory(address(this), flFactory, FL_FACTORY), "LF:INVALID_FL_FACTORY");
-        require(_globals.isValidSubFactory(address(this), clFactory, CL_FACTORY), "LF:INVALID_CL_FACTORY");
+        require(_globals.isValidSubFactory(address(this), flFactory, FL_FACTORY), "LF:INVALID_FLF");
+        require(_globals.isValidSubFactory(address(this), clFactory, CL_FACTORY), "LF:INVALID_CLF");
 
-        require(_globals.isValidCalc(calcs[0], INTEREST_CALC_TYPE), "LF:INVALID_INTEREST_CALC");
-        require(_globals.isValidCalc(calcs[1],  LATEFEE_CALC_TYPE), "LF:INVALID_LATE_FEE_CALC");
-        require(_globals.isValidCalc(calcs[2],  PREMIUM_CALC_TYPE), "LF:INVALID_PREMIUM_CALC");
+        require(_globals.isValidCalc(calcs[0], INTEREST_CALC_TYPE), "LF:INVALID_INT_C");
+        require(_globals.isValidCalc(calcs[1],  LATEFEE_CALC_TYPE), "LF:INVALID_LATE_FEE_C");
+        require(_globals.isValidCalc(calcs[2],  PREMIUM_CALC_TYPE), "LF:INVALID_PREM_C");
 
         // Deploy new Loan
         Loan loan = new Loan(
@@ -102,12 +102,13 @@ contract LoanFactory is Pausable {
         );
 
         // Update LoanFactory identification mappings
-        loans[loansCreated]   = address(loan);
-        isLoan[address(loan)] = true;
+        loanAddress         = address(loan);
+        loans[loansCreated] = loanAddress;
+        isLoan[loanAddress] = true;
         loansCreated++;
 
         emit LoanCreated(
-            address(loan),
+            loanAddress,
             msg.sender,
             liquidityAsset,
             collateralAsset,
@@ -118,7 +119,6 @@ contract LoanFactory is Pausable {
             loan.name(),
             loan.symbol()
         );
-        return address(loan);
     }
 
     /**
@@ -151,20 +151,20 @@ contract LoanFactory is Pausable {
         @dev Checks that msg.sender is the Governor.
     */
     function _isValidGovernor() internal view {
-        require(msg.sender == globals.governor(), "PoolFactory:INVALID_GOVERNOR");
+        require(msg.sender == globals.governor(), "LF:NOT_GOV");
     }
 
     /**
         @dev Checks that msg.sender is the Governor or a Loan Factory Admin.
     */
     function _isValidGovernorOrAdmin() internal {
-        require(msg.sender == globals.governor() || admins[msg.sender], "PoolFactory:UNAUTHORIZED");
+        require(msg.sender == globals.governor() || admins[msg.sender], "LF:NOT_GOV_OR_ADMIN");
     }
 
     /**
         @dev Function to determine if protocol is paused/unpaused.
     */
     function _whenProtocolNotPaused() internal {
-        require(!globals.protocolPaused(), "PoolFactory:PROTOCOL_PAUSED");
+        require(!globals.protocolPaused(), "LF:PROTO_PAUSED");
     }
 }

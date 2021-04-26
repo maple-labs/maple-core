@@ -45,14 +45,14 @@ library PoolLib {
         uint256 stakingFee, 
         uint256 delegateFee
     ) external {
-        require(globals.isValidLiquidityAsset(liquidityAsset), "Pool:INVALID_LIQ_ASSET");
-        require(stakingFee.add(delegateFee) <= 10_000,         "Pool:INVALID_FEES");
+        require(globals.isValidLiquidityAsset(liquidityAsset), "P:INVALID_LIQ_ASSET");
+        require(stakingFee.add(delegateFee) <= 10_000,         "P:INVALID_FEES");
         require(
             globals.isValidBalancerPool(address(stakeAsset)) &&
             IBPool(stakeAsset).isBound(globals.mpl())        && 
             IBPool(stakeAsset).isBound(liquidityAsset)       &&
             IBPool(stakeAsset).isFinalized(), 
-            "Pool:INVALID_BALANCER_POOL"
+            "P:INVALID_BALANCER_POOL"
         );
     }
 
@@ -78,23 +78,22 @@ library PoolLib {
         address loanFactory = ILoan(loan).superFactory();
 
         // Auth checks
-        require(globals.isValidLoanFactory(loanFactory),                        "Pool:INVALID_LOAN_FACTORY");
-        require(ILoanFactory(loanFactory).isLoan(loan),                         "Pool:INVALID_LOAN");
-        require(globals.isValidSubFactory(superFactory, dlFactory, DL_FACTORY), "Pool:INVALID_DL_FACTORY");
+        require(globals.isValidLoanFactory(loanFactory),                        "P:INVALID_LF");
+        require(ILoanFactory(loanFactory).isLoan(loan),                         "P:INVALID_L");
+        require(globals.isValidSubFactory(superFactory, dlFactory, DL_FACTORY), "P:INVALID_DLF");
 
-        address _debtLocker = debtLockers[loan][dlFactory];
+        address debtLocker = debtLockers[loan][dlFactory];
 
         // Instantiate locker if it doesn't exist with this factory type
-        if (_debtLocker == address(0)) {
-            address debtLocker = IDebtLockerFactory(dlFactory).newLocker(loan);
+        if (debtLocker == address(0)) {
+            debtLocker = IDebtLockerFactory(dlFactory).newLocker(loan);
             debtLockers[loan][dlFactory] = debtLocker;
-            _debtLocker = debtLocker;
         }
     
         // Fund loan
-        ILiquidityLocker(liquidityLocker).fundLoan(loan, _debtLocker, amt);
+        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLocker, amt);
         
-        emit LoanFunded(loan, _debtLocker, amt);
+        emit LoanFunded(loan, debtLocker, amt);
     }
 
     /**
@@ -193,7 +192,7 @@ library PoolLib {
         @param  liquidityAsset Liquidity Asset of the pool 
      */
     function validateDeactivation(IGlobals globals, uint256 principalOut, address liquidityAsset) public view {
-        require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "Pool:PRINCIPAL_OUTSTANDING");
+        require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "P:PRINCIPAL_OUTSTANDING");
     }
 
     /********************************************/
@@ -219,6 +218,7 @@ library PoolLib {
             newDate          = prevDate.add(dTime.mul(amt).div(balance + amt));  // prevDate + (now - prevDate) * (amt / (balance + amt))
             depositDate[who] = newDate;
         }
+
         emit DepositDateUpdated(who, newDate);
     }
 
@@ -251,11 +251,11 @@ library PoolLib {
         uint256 recognizableLosses
     ) external {
         // If transferring in or out of yield farming contract, do not update depositDate or cooldown
-        if (!globals.isExemptFromTransferRestriction(from) && !globals.isExemptFromTransferRestriction(to)) {
-            require(isReceiveAllowed(withdrawCooldown[to], globals), "Pool:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently withdrawing
-            require(recognizableLosses == uint256(0),                "Pool:RECOG_LOSSES");           // If an LP has unrecognized losses, they must recognize losses through withdraw
-            updateDepositDate(depositDate, toBalance, wad, to);                                      // Update deposit date of recipient
-        }
+        if (globals.isExemptFromTransferRestriction(from) || globals.isExemptFromTransferRestriction(to)) return;
+
+        require(isReceiveAllowed(withdrawCooldown[to], globals), "P:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently withdrawing
+        require(recognizableLosses == uint256(0),                "P:RECOG_LOSSES");           // If an LP has unrecognized losses, they must recognize losses through withdraw
+        updateDepositDate(depositDate, toBalance, wad, to);                                   // Update deposit date of recipient
     }
 
     /**
@@ -263,7 +263,7 @@ library PoolLib {
         @dev It emits a `Cooldown` event.
      */
     function intendToWithdraw(mapping(address => uint256) storage withdrawCooldown, uint256 balance) external {
-        require(balance != uint256(0), "Pool:ZERO_BALANCE");
+        require(balance != uint256(0), "P:ZERO_BALANCE");
         withdrawCooldown[msg.sender] = block.timestamp;
         emit Cooldown(msg.sender, block.timestamp);
     }
@@ -273,7 +273,7 @@ library PoolLib {
         @dev It emits a `Cooldown` event.
      */
     function cancelWithdraw(mapping(address => uint256) storage withdrawCooldown) external {
-        require(withdrawCooldown[msg.sender] != uint256(0), "Pool:NOT_WITHDRAWING");
+        require(withdrawCooldown[msg.sender] != uint256(0), "P:NOT_WITHDRAWING");
         withdrawCooldown[msg.sender] = uint256(0);
         emit Cooldown(msg.sender, uint256(0));
     }
@@ -289,8 +289,8 @@ library PoolLib {
         @param globals Instance of the `MapleGlobals` contract.
      */
     function reclaimERC20(address token, address liquidityAsset, IGlobals globals) external {
-        require(msg.sender == globals.governor(), "Pool:UNAUTHORIZED");
-        require(token != liquidityAsset && token != address(0), "Pool:INVALID_TOKEN");
+        require(msg.sender == globals.governor(), "P:NOT_GOV");
+        require(token != liquidityAsset && token != address(0), "P:INVALID_TOKEN");
         IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
     }
 
@@ -300,13 +300,12 @@ library PoolLib {
 
     /// @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision
     function bdiv(uint256 a, uint256 b) public pure returns (uint256) {
-        require(b != 0, "ERR_DIV_ZERO");
+        require(b != 0, "P:DIV_ZERO");
         uint256 c0 = a * WAD;
-        require(a == 0 || c0 / a == WAD, "ERR_DIV_INTERNAL"); // bmul overflow
+        require(a == 0 || c0 / a == WAD, "P:DIV_INTERNAL"); // bmul overflow
         uint256 c1 = c0 + (b / 2);
-        require(c1 >= c0, "ERR_DIV_INTERNAL"); //  badd require
-        uint256 c2 = c1 / b;
-        return c2;
+        require(c1 >= c0, "P:DIV_INTERNAL"); //  badd require
+        return c1 / b;
     }
 
     /** 
@@ -407,8 +406,8 @@ library PoolLib {
         @param  staker                       Address that deposited BPTs to stakeLocker
         @param  stakeLocker                  Escrows BPTs deposited by staker
         @param  liquidityAssetAmountRequired Amount of liquidityAsset required to recover
-        @return [0] = poolAmountIn required
-                [1] = poolAmountIn currently staked
+        @return poolAmountInRequired poolAmountIn required
+        @return stakerBalance poolAmountIn currently staked
     */
     function getPoolSharesRequired(
         address _bPool,
@@ -416,7 +415,7 @@ library PoolLib {
         address staker,
         address stakeLocker,
         uint256 liquidityAssetAmountRequired
-    ) public view returns (uint256, uint256) {
+    ) public view returns (uint256 poolAmountInRequired, uint256 stakerBalance) {
 
         IBPool bPool = IBPool(_bPool);
 
@@ -427,7 +426,7 @@ library PoolLib {
         uint256 swapFee         = bPool.getSwapFee();
 
         // Fetch amount of BPTs required to burn to receive liquidityAssetAmountRequired
-        uint256 poolAmountInRequired = bPool.calcPoolInGivenSingleOut(
+        poolAmountInRequired = bPool.calcPoolInGivenSingleOut(
             tokenBalanceOut,
             tokenWeightOut,
             poolSupply,
@@ -437,9 +436,7 @@ library PoolLib {
         );
 
         // Fetch amount staked in stakeLocker by staker
-        uint256 stakerBalance = IERC20(stakeLocker).balanceOf(staker);
-
-        return (poolAmountInRequired, stakerBalance);
+        stakerBalance = IERC20(stakeLocker).balanceOf(staker);
     }
 
     /**

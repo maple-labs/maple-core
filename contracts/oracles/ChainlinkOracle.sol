@@ -27,7 +27,7 @@ contract ChainlinkOracle is Ownable {
         @param _owner        Address of the owner of the contract
       */
     constructor(address _aggregator, address _assetAddress, address _owner) public {
-        require(_aggregator != address(0), "ChainlinkOracle:INVALID_AGGREGATOR_ADDRESS");
+        require(_aggregator != address(0), "CO:ZERO_AGGREGATOR_ADDR");
         priceFeed       = IChainlinkAggregatorV3(_aggregator);
         assetAddress    = _assetAddress;
         transferOwnership(_owner);
@@ -39,7 +39,7 @@ contract ChainlinkOracle is Ownable {
     function getLatestPrice() public view returns (int256) {
         if (manualOverride) return manualPrice;
         (, int256 price,,,) = priceFeed.latestRoundData();
-        require(price != int256(0), "ChainlinkOracle:ZERO_PRICE");
+        require(price != int256(0), "CO:ZERO_PRICE");
         return price;
     }
 
@@ -50,7 +50,7 @@ contract ChainlinkOracle is Ownable {
         @param aggregator Address of chainlink aggregator
     */
     function changeAggregator(address aggregator) external onlyOwner {
-        require(aggregator != address(0), "ChainlinkOracle:INVALID_AGGREGATOR_ADDRESS");
+        require(aggregator != address(0), "CO:ZERO_AGGREGATOR_ADDR");
         emit ChangeAggregatorFeed(aggregator, address(priceFeed));
         priceFeed = IChainlinkAggregatorV3(aggregator);
     }

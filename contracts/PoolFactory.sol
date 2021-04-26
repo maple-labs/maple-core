@@ -68,9 +68,9 @@ contract PoolFactory is Pausable {
         _whenProtocolNotPaused();
         {
             IGlobals _globals = globals;
-            require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PF:INVALID_LL_FACTORY");
-            require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PF:INVALID_SL_FACTORY");
-            require(_globals.isValidPoolDelegate(msg.sender),                         "PF:INVALID_DELEGATE");
+            require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PF:INVALID_LLF");
+            require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PF:INVALID_SLF");
+            require(_globals.isValidPoolDelegate(msg.sender),                         "PF:NOT_DELEGATE");
         }
 
         string memory name   = string(abi.encodePacked("Maple Pool Token"));
@@ -140,20 +140,20 @@ contract PoolFactory is Pausable {
         @dev Checks that msg.sender is the Governor.
     */
     function _isValidGovernor() internal view {
-        require(msg.sender == globals.governor(), "PF:INVALID_GOVERNOR");
+        require(msg.sender == globals.governor(), "PF:NOT_GOV");
     }
 
     /**
         @dev Checks that msg.sender is the Governor or a Pool Factory Admin.
     */
     function _isValidGovernorOrAdmin() internal {
-        require(msg.sender == globals.governor() || admins[msg.sender], "PF:UNAUTHORIZED");
+        require(msg.sender == globals.governor() || admins[msg.sender], "PF:NOT_GOV_OR_ADMIN");
     }
 
     /**
         @dev Function to determine if protocol is paused/unpaused.
     */
     function _whenProtocolNotPaused() internal {
-        require(!globals.protocolPaused(), "PF:PROTOCOL_PAUSED");
+        require(!globals.protocolPaused(), "PF:PROTO_PAUSED");
     }
 }

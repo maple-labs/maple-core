@@ -144,7 +144,7 @@ contract Pool is PoolFDT {
         _isValidDelegateAndProtocolNotPaused();
         _isValidState(State.Initialized);
         (,, bool stakeSufficient,,) = getInitialStakeRequirements();
-        require(stakeSufficient, "Pool:INSUFFICIENT_STAKE");
+        require(stakeSufficient, "P:INSUFFICIENT_STAKE");
         poolState = State.Finalized;
         emit PoolStateChanged(poolState);
     }
@@ -181,18 +181,19 @@ contract Pool is PoolFDT {
         @dev It emits a `Claim` event.
         @param  loan      Address of the loan to claim from
         @param  dlFactory The DebtLockerFactory (always maps to a single debt locker)
-        @return [0] = Total amount claimed
-                [1] = Interest  portion claimed
-                [2] = Principal portion claimed
-                [3] = Fee       portion claimed
-                [4] = Excess    portion claimed
-                [5] = Recovered portion claimed (from liquidations)
-                [6] = Default suffered
+        @return claimInfo   The claim details.
+                claimInfo [0] = Total amount claimed
+                claimInfo [1] = Interest  portion claimed
+                claimInfo [2] = Principal portion claimed
+                claimInfo [3] = Fee       portion claimed
+                claimInfo [4] = Excess    portion claimed
+                claimInfo [5] = Recovered portion claimed (from liquidations)
+                claimInfo [6] = Default suffered
     */
-    function claim(address loan, address dlFactory) external returns(uint256[7] memory) {
+    function claim(address loan, address dlFactory) external returns(uint256[7] memory claimInfo) {
         _whenProtocolNotPaused();
         _isValidDelegateOrAdmin();
-        uint256[7] memory claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
+        claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
 
         (uint256 poolDelegatePortion, uint256 stakeLockerPortion, uint256 principalClaim, uint256 interestClaim) = PoolLib.calculateClaimAndPortions(claimInfo, delegateFee, stakingFee);
 
@@ -231,8 +232,6 @@ contract Pool is PoolFDT {
         emit BalanceUpdated(stakeLocker, address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
         emit Claim(loan, interestClaim, principalClaim, claimInfo[3], stakeLockerPortion, poolDelegatePortion);
-
-        return claimInfo;
     }
 
     /**
@@ -301,7 +300,7 @@ contract Pool is PoolFDT {
      */
     function setLockupPeriod(uint256 newLockupPeriod) external {
         _isValidDelegateAndProtocolNotPaused();
-        require(newLockupPeriod <= lockupPeriod, "Pool:INVALID_VALUE");
+        require(newLockupPeriod <= lockupPeriod, "P:INVALID_VALUE");
         lockupPeriod = newLockupPeriod;
         emit LockupPeriodSet(newLockupPeriod);
     }
@@ -313,7 +312,7 @@ contract Pool is PoolFDT {
     */
     function setStakingFee(uint256 newStakingFee) external {
         _isValidDelegateAndProtocolNotPaused();
-        require(newStakingFee.add(delegateFee) <= 10_000, "Pool:INVALID_FEE");
+        require(newStakingFee.add(delegateFee) <= 10_000, "P:INVALID_FEE");
         stakingFee = newStakingFee;
         emit StakingFeeSet(newStakingFee);
     }
@@ -375,7 +374,7 @@ contract Pool is PoolFDT {
     function deposit(uint256 amt) external {
         _whenProtocolNotPaused();
         _isValidState(State.Finalized);
-        require(isDepositAllowed(amt), "Pool:NOT_ALLOWED");
+        require(isDepositAllowed(amt), "P:DEPOSIT_NOT_ALLOWED");
 
         withdrawCooldown[msg.sender] = uint256(0);  // Reset withdrawCooldown if LP had previously intended to withdraw
 
@@ -410,8 +409,8 @@ contract Pool is PoolFDT {
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
         uint256 wad = _toWad(amt);
-        require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "Pool:WITHDRAW_NOT_ALLOWED");
-        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "Pool:FUNDS_LOCKED");
+        require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "P:WITHDRAW_NOT_ALLOWED");
+        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "P:FUNDS_LOCKED");
 
         _burn(msg.sender, wad);  // Burn the corresponding FDT balance
         withdrawFunds();         // Transfer full entitled interest, decrement `interestSum`
@@ -442,14 +441,14 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        if (withdrawableFunds > uint256(0)) {
-            _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
-            _emitBalanceUpdatedEvent();
+        if (withdrawableFunds == uint256(0)) return;
 
-            interestSum = interestSum.sub(withdrawableFunds);
+        _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
+        _emitBalanceUpdatedEvent();
 
-            _updateFundsTokenBalance();
-        }
+        interestSum = interestSum.sub(withdrawableFunds);
+
+        _updateFundsTokenBalance();
     }
 
     /**************************/
@@ -476,7 +475,7 @@ contract Pool is PoolFDT {
         @return interest  Interest  amount claimable
     */
     function claimableFunds(address lp) public view returns(uint256 total, uint256 principal, uint256 interest) {
-        (total, principal, interest) =
+        return 
             PoolLib.claimableFunds(
                 withdrawableFundsOf(lp),
                 depositDate[lp],
@@ -508,8 +507,8 @@ contract Pool is PoolFDT {
         @param depositAmt Amount of tokens (i.e liquidityAsset type) user is trying to deposit
     */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
-        bool isValidLP = openToPublic || allowedLiquidityProviders[msg.sender];
-        return _balanceOfLiquidityLocker().add(principalOut).add(depositAmt) <= liquidityCap && isValidLP;
+        return (openToPublic || allowedLiquidityProviders[msg.sender]) &&
+               _balanceOfLiquidityLocker().add(principalOut).add(depositAmt) <= liquidityCap;
     }
 
     /**
@@ -577,14 +576,14 @@ contract Pool is PoolFDT {
         @param _state Enum of desired Pool state
     */
     function _isValidState(State _state) internal view {
-        require(poolState == _state, "Pool:INVALID_STATE");
+        require(poolState == _state, "P:INVALID_STATE");
     }
 
     /**
         @dev Checks that msg.sender is the Pool Delegate.
     */
     function _isValidDelegate() internal view {
-        require(msg.sender == poolDelegate, "Pool:INVALID_DELEGATE");
+        require(msg.sender == poolDelegate, "P:NOT_DELEGATE");
     }
 
     /**
@@ -614,14 +613,14 @@ contract Pool is PoolFDT {
         @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
     */
     function _isValidDelegateOrAdmin() internal {
-        require(msg.sender == poolDelegate || admins[msg.sender], "Pool:UNAUTHORIZED");
+        require(msg.sender == poolDelegate || admins[msg.sender], "P:NOT_DELEGATE_OR_ADMIN");
     }
 
     /**
         @dev Function to block functionality of functions when protocol is in a paused state.
     */
     function _whenProtocolNotPaused() internal {
-        require(!_globals(superFactory).protocolPaused(), "Pool:PROTOCOL_PAUSED");
+        require(!_globals(superFactory).protocolPaused(), "P:PROTO_PAUSED");
     }
 
     /**

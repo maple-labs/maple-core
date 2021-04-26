@@ -22,7 +22,7 @@ contract MplRewardsFactory {
         @param _globals Address of new MapleGlobals contract
     */
     function setGlobals(address _globals) external {
-        require(msg.sender == globals.governor());
+        require(msg.sender == globals.governor(), "RF:NOT_GOV");
         globals = IGlobals(_globals);
     }
 
@@ -35,7 +35,7 @@ contract MplRewardsFactory {
         @return Address of the instantiated MplRewards
     */
     function createMplRewards(address rewardsToken, address stakingToken) external returns (address) {
-        require(msg.sender == globals.governor(), "MplRewardsFactory:UNAUTHORIZED");
+        require(msg.sender == globals.governor(), "RF:NOT_GOV");
         address mplRewards       = address(new MplRewards(rewardsToken, stakingToken, msg.sender));
         isMplRewards[mplRewards] = true;
 

@@ -40,27 +40,26 @@ abstract contract BasicFDT is IFDT, ERC20 {
                    and try to distribute it in the next distribution.
     */
     function _distributeFunds(uint256 value) internal {
-        require(totalSupply() > 0, "FDT:SUPPLY_EQ_ZERO");
+        require(totalSupply() > 0, "FDT:ZERO_SUPPLY");
 
-        if (value > 0) {
-            pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier) / totalSupply());
-            emit FundsDistributed(msg.sender, value);
-            emit PointsPerShareUpdated(pointsPerShare);
-        }
+        if (value == 0) return;
+
+        pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier) / totalSupply());
+        emit FundsDistributed(msg.sender, value);
+        emit PointsPerShareUpdated(pointsPerShare);
     }
 
     /**
-        @dev Prepares funds withdrawal.
-        @dev It emits a `FundsWithdrawn` event.
+        @dev Prepares funds withdrawal
+        @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
+        @return withdrawableDividend The amount of diviend funds that can be withdrawn.
     */
-    function _prepareWithdraw() internal returns (uint256) {
-        uint256 _withdrawableDividend = withdrawableFundsOf(msg.sender);
+    function _prepareWithdraw() internal returns (uint256 withdrawableDividend) {
+        withdrawableDividend = withdrawableFundsOf(msg.sender);
 
-        withdrawnFunds[msg.sender] = withdrawnFunds[msg.sender].add(_withdrawableDividend);
+        withdrawnFunds[msg.sender] = withdrawnFunds[msg.sender].add(withdrawableDividend);
 
-        emit FundsWithdrawn(msg.sender, _withdrawableDividend, withdrawnFunds[msg.sender]);
-
-        return _withdrawableDividend;
+        emit FundsWithdrawn(msg.sender, withdrawableDividend, withdrawnFunds[msg.sender]);
     }
 
     /**
@@ -169,8 +168,8 @@ abstract contract BasicFDT is IFDT, ERC20 {
     function updateFundsReceived() public virtual {
         int256 newFunds = _updateFundsTokenBalance();
 
-        if (newFunds > 0) {
-            _distributeFunds(newFunds.toUint256Safe());
-        }
+        if (newFunds <= 0) return;
+
+        _distributeFunds(newFunds.toUint256Safe());
     }
 }

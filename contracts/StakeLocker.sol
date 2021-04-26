@@ -65,7 +65,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         require(
             (msg.sender != IPool(pool).poolDelegate() && IPool(pool).isPoolFinalized()) ||
             !IPool(pool).isPoolFinalized(),
-            "StakeLocker:ERR_STAKE_LOCKED"
+            "SL:STAKE_LOCKED"
         );
         _;
     }
@@ -74,7 +74,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Checks that msg.sender is the Governor.
     */
     modifier isGovernor() {
-        require(msg.sender == _globals().governor(), "StakeLocker:MSG_SENDER_NOT_GOVERNOR");
+        require(msg.sender == _globals().governor(), "SL:NOT_GOV");
         _;
     }
 
@@ -82,7 +82,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Checks that msg.sender is the Pool.
     */
     modifier isPool() {
-        require(msg.sender == pool, "StakeLocker:MSG_SENDER_NOT_POOL");
+        require(msg.sender == pool, "SL:NOT_P");
         _;
     }
 
@@ -120,7 +120,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function setLockupPeriod(uint256 newLockupPeriod) external {
         _whenProtocolNotPaused();
         _isValidPoolDelegate();
-        require(newLockupPeriod <= lockupPeriod, "StakeLocker:INVALID_VALUE");
+        require(newLockupPeriod <= lockupPeriod, "SL:INVALID_VALUE");
         lockupPeriod = newLockupPeriod;
         emit LockupPeriodUpdated(newLockupPeriod);
     }
@@ -194,7 +194,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev It emits a `Cooldown` event.
     **/
     function intendToUnstake() external {
-        require(balanceOf(msg.sender) != uint256(0), "StakeLocker:ZERO_BALANCE");
+        require(balanceOf(msg.sender) != uint256(0), "SL:ZERO_BALANCE");
         unstakeCooldown[msg.sender] = block.timestamp;
         emit Cooldown(msg.sender, block.timestamp);
     }
@@ -204,7 +204,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev It emits a `Cooldown` event.
      */
     function cancelUnstake() external {
-        require(unstakeCooldown[msg.sender] != uint256(0), "StakeLocker:NOT_UNSTAKING");
+        require(unstakeCooldown[msg.sender] != uint256(0), "SL:NOT_UNSTAKING");
         unstakeCooldown[msg.sender] = 0;
         emit Cooldown(msg.sender, uint256(0));
     }
@@ -217,8 +217,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function unstake(uint256 amt) external canUnstake {
         _whenProtocolNotPaused();
-        require(isUnstakeAllowed(msg.sender),                               "StakeLocker:OUTSIDE_COOLDOWN");
-        require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "StakeLocker:FUNDS_LOCKED");
+        require(isUnstakeAllowed(msg.sender),                               "SL:OUTSIDE_COOLDOWN");
+        require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");
 
         updateFundsReceived();   // Account for any funds transferred into contract since last call
         _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
@@ -256,8 +256,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function _transfer(address from, address to, uint256 wad) internal override canUnstake {
         _whenProtocolNotPaused();
         if (!_globals().isExemptFromTransferRestriction(from) && !_globals().isExemptFromTransferRestriction(to)) {
-            require(isReceiveAllowed(unstakeCooldown[to]),    "StakeLocker:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently unstaking
-            require(recognizableLossesOf(from) == uint256(0), "StakeLocker:RECOG_LOSSES");           // If a staker has unrecognized losses, they must recognize losses through unstake
+            require(isReceiveAllowed(unstakeCooldown[to]),    "SL:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently unstaking
+            require(recognizableLossesOf(from) == uint256(0), "SL:RECOG_LOSSES");           // If a staker has unrecognized losses, they must recognize losses through unstake
             _updateStakeDate(to, wad);                                                               // Update stake date of recipient
         }
         super._transfer(from, to, wad);
@@ -308,14 +308,14 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
     */
     function _isValidAdminOrPoolDelegate() internal view {
-        require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).admins(msg.sender), "StakeLocker:UNAUTHORIZED");
+        require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).admins(msg.sender), "SL:NOT_DELEGATE_OR_ADMIN");
     }
 
     /**
         @dev Checks that msg.sender is the Pool Delegate.
     */
     function _isValidPoolDelegate() internal view {
-        require(msg.sender == IPool(pool).poolDelegate(), "StakeLocker:UNAUTHORIZED");
+        require(msg.sender == IPool(pool).poolDelegate(), "SL:NOT_DELEGATE");
     }
 
     /**
@@ -324,7 +324,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function _isAllowed(address user) internal view {
         require(
             openToPublic || allowed[user] || user == IPool(pool).poolDelegate(),
-            "StakeLocker:MSG_SENDER_NOT_ALLOWED"
+            "SL:NOT_ALLOWED"
         );
     }
 
@@ -339,7 +339,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev Function to block functionality of functions when protocol is in a paused state.
     */
     function _whenProtocolNotPaused() internal {
-        require(!_globals().protocolPaused(), "StakeLocker:PROTOCOL_PAUSED");
+        require(!_globals().protocolPaused(), "SL:PROTO_PAUSED");
     }
 
 }
