@@ -102,8 +102,8 @@ contract LoanFactory is Pausable {
         );
 
         // Update LoanFactory identification mappings
-        loanAddress = address(loan);
-        loans[loansCreated]   = loanAddress;
+        loanAddress         = address(loan);
+        loans[loansCreated] = loanAddress;
         isLoan[loanAddress] = true;
         loansCreated++;
 

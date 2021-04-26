@@ -213,7 +213,9 @@ library PoolLib {
 
         // prevDate + (now - prevDate) * (amt / (balance + amt))
         // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now
-        uint256 newDate = prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt));  
+        uint256 newDate = balance + amt > 0
+            ? prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt))
+            : prevDate;
 
         depositDate[who] = newDate;
 
