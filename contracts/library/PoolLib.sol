@@ -74,8 +74,8 @@ library PoolLib {
         address dlFactory,
         uint256 amt
     ) external {
-        IMapleGlobals globals    = _globals(superFactory);
-        address loanFactory = ILoan(loan).superFactory();
+        IMapleGlobals globals = _globals(superFactory);
+        address loanFactory   = ILoan(loan).superFactory();
 
         // Auth checks
         require(globals.isValidLoanFactory(loanFactory),                        "P:INVALID_LF");
@@ -101,6 +101,7 @@ library PoolLib {
         @param  liquidityAsset  IERC20 of liquidityAsset
         @param  stakeLocker     Address of stakeLocker
         @param  stakeAsset      Address of BPTs
+        @param  loan            Address of loan
         @param  defaultSuffered Amount of shortfall in defaulted loan after liquidation
         @return bptsBurned                      Amount of BPTs burned to cover shortfall
         @return postBurnBptBal                  Amount of BPTs returned to stakeLocker after burn
@@ -110,6 +111,7 @@ library PoolLib {
         IERC20  liquidityAsset,
         address stakeLocker,
         address stakeAsset,
+        address loan,
         uint256 defaultSuffered
     ) 
         external

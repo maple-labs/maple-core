@@ -242,7 +242,7 @@ contract Pool is PoolFDT {
     */
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
-        (uint256 bptsBurned, uint256 postBurnBptBal, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, defaultSuffered);
+        (uint256 bptsBurned, uint256 postBurnBptBal, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
 
         // If BPT burn is not enough to cover full default amount, pass on losses to LPs with PoolFDT loss accounting
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
