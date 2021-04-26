@@ -624,10 +624,6 @@ contract TestUtil is DSTest {
             constrictToRange(collateralRatio, 0, 10_000)                // Collateral ratio between 0 and 100%
         ];
     }
-    
-    function toWad(uint256 usdAmt) internal returns (uint256) {
-        return usdAmt * WAD / USD;
-    }
 
     function toApy(uint256 yield, uint256 stake, uint256 dTime) internal returns (uint256) {
 
