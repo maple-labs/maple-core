@@ -43,7 +43,7 @@ contract MapleTreasury {
     event ERC20Conversion(address indexed asset, uint256 amountIn, uint256 amountOut);
     event DistributedToHolders(uint256 amount);
     event ERC20Reclaimed(address indexed asset, uint256 amount);
-    event FundsTokenModified(address by, address newFundsToken);
+    event GlobalsSet(address newGlobals);
 
     /**
         @dev Checks that msg.sender is the Governor.
@@ -55,10 +55,12 @@ contract MapleTreasury {
 
     /**
         @dev Update the MapleGlobals contract. Only the Governor can call this function.
+        @dev It emits a `GlobalsSet` event.
         @param newGlobals Address of new MapleGlobals contract
     */
     function setGlobals(address newGlobals) external isGovernor {
         globals = newGlobals;
+        emit GlobalsSet(newGlobals);
     }
 
     /**

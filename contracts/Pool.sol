@@ -73,6 +73,7 @@ contract Pool is PoolFDT {
         uint256 liquidityAssetRecoveredFromBurn
     );
     event  PoolOpenedToPublic(bool isOpen);
+    event            AdminSet(address newAdmin, bool allowed);
 
     /**
         Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
@@ -330,12 +331,14 @@ contract Pool is PoolFDT {
 
     /**
         @dev Set admin. Only the Pool Delegate can call this function.
+        @dev It emits an `AdminSet` event.
         @param newAdmin new admin address.
         @param allowed Status of an admin.
     */
     function setAdmin(address newAdmin, bool allowed) external {
         _isValidDelegateAndProtocolNotPaused();
         admins[newAdmin] = allowed;
+        emit AdminSet(newAdmin, allowed);
     }
 
     /**

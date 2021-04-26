@@ -11,8 +11,11 @@ contract DebtLockerFactory {
 
     uint8 public constant factoryType = 1;  // i.e LockerFactoryTypes::DEBT_LOCKER_FACTORY
 
+    event DebtLockerCreated(address owner, address debtLocker, address loan);
+
     /**
         @dev Instantiate a DebtLocker contract.
+        @dev It emits a `DebtLockerCreated` event.
         @param  loan The loan this debt locker will escrow tokens for
         @return Address of the instantiated debt locker
     */
@@ -20,6 +23,8 @@ contract DebtLockerFactory {
         address debtLocker   = address(new DebtLocker(loan, msg.sender));
         owner[debtLocker]    = msg.sender;
         isLocker[debtLocker] = true;
+
+        emit DebtLockerCreated(msg.sender, debtLocker, loan);
         return debtLocker;
     }
 }

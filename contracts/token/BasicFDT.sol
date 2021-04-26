@@ -22,7 +22,7 @@ abstract contract BasicFDT is IFDT, ERC20 {
     mapping(address => uint256) internal withdrawnFunds;
 
     event PointsPerShareUpdated(uint256 pointsPerShare);
-    event PointsCorrectionUpdated(address account, int256 pointsCorrection);
+    event PointsCorrectionUpdated(address indexed account, int256 pointsCorrection);
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) public { }
 
@@ -50,7 +50,7 @@ abstract contract BasicFDT is IFDT, ERC20 {
 
     /**
         @dev Prepares funds withdrawal.
-        @dev It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
+        @dev It emits a `FundsWithdrawn` event.
     */
     function _prepareWithdraw() internal returns (uint256) {
         uint256 _withdrawableDividend = withdrawableFundsOf(msg.sender);

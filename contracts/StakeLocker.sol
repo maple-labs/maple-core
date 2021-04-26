@@ -34,7 +34,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     event      BalanceUpdated(address who, address token, uint256 balance);
     event    AllowListUpdated(address staker, bool status);
-    event    StakeDateUpdated(address staker, uint256 stakeDate);
+    event    StakeDateUpdated(address indexed staker, uint256 stakeDate);
     event LockupPeriodUpdated(uint256 lockupPeriod);
     event            Cooldown(address indexed staker, uint256 cooldown);
     event               Stake(uint256 amount, address staker);

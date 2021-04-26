@@ -11,8 +11,11 @@ contract LiquidityLockerFactory {
 
     uint8 public constant factoryType = 3;        // i.e LockerFactoryTypes::LIQUIDITY_LOCKER_FACTORY
 
+    event LiquidityLockerCreated(address owner, address liquidityLocker, address liquidityAsset);
+
     /**
         @dev Instantiate a LiquidityLocker contract.
+        @dev It emits a `LiquidityLockerCreated` event.
         @param  liquidityAsset The asset this liquidity locker will escrow
         @return Address of the instantiated liquidity locker
     */
@@ -20,6 +23,8 @@ contract LiquidityLockerFactory {
         address liquidityLocker   = address(new LiquidityLocker(liquidityAsset, msg.sender));
         owner[liquidityLocker]    = msg.sender;
         isLocker[liquidityLocker] = true;
+
+        emit LiquidityLockerCreated(msg.sender, liquidityLocker, liquidityAsset);
         return liquidityLocker;
     }
 }

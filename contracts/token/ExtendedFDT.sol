@@ -16,7 +16,7 @@ abstract contract ExtendedFDT is BasicFDT {
     mapping(address => uint256) internal recognizedLosses;
 
     event   LossesPerShareUpdated(uint256 lossesPerShare);
-    event LossesCorrectionUpdated(address account, int256 lossesCorrection);
+    event LossesCorrectionUpdated(address indexed account, int256 lossesCorrection);
 
     /**
         @dev This event emits when new losses are distributed.

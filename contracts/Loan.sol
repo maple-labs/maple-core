@@ -102,6 +102,7 @@ contract Loan is FDT, Pausable {
         uint liquidationExcess,
         uint defaultSuffered
     );
+    event AdminSet(address admin, bool allowed);
 
     /**
         @dev Constructor for a Loan.
@@ -354,6 +355,7 @@ contract Loan is FDT, Pausable {
 
         // Pull collateralAsset from CollateralLocker, swap to liquidityAsset, and hold custody of resulting liquidityAsset in Loan
         (amountLiquidated, amountRecovered) = LoanLib.liquidateCollateral(collateralAsset, address(liquidityAsset), superFactory, collateralLocker);
+        _emitBalanceUpdateEventForCollateralLocker();
 
         // Decrement principalOwed by amountRecovered, set defaultSuffered to the difference (shortfall from liquidation)
         if (amountRecovered <= principalOwed) {
@@ -405,6 +407,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Set admin. Only the Loan Borrower can call this function.
+        @dev It emits an `AdminSet` event.
         @param newAdmin New admin address
         @param allowed  Status of an admin
     */
@@ -412,6 +415,7 @@ contract Loan is FDT, Pausable {
         _whenProtocolNotPaused();
         _isValidBorrower();
         admins[newAdmin] = allowed;
+        emit AdminSet(newAdmin, allowed);
     }
 
     /**************************/

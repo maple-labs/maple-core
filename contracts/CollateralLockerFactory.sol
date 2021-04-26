@@ -13,8 +13,11 @@ contract CollateralLockerFactory {
 
     uint8 public constant factoryType = 0;  // i.e FactoryType::COLLATERAL_LOCKER_FACTORY
 
+    event CollateralLockerCreated(address owner, address collateralLocker, address collateralAsset);
+
     /**
         @dev Instantiate a CollateralLocker contract.
+        @dev It emits a `CollateralLockerCreated` event.
         @param collateralAsset The asset this collateral locker will escrow
         @return Address of the instantiated collateral locker
     */
@@ -22,6 +25,8 @@ contract CollateralLockerFactory {
         address collateralLocker   = address(new CollateralLocker(collateralAsset, msg.sender));
         owner[collateralLocker]    = msg.sender;
         isLocker[collateralLocker] = true;
+
+        emit CollateralLockerCreated(msg.sender, collateralLocker, collateralAsset);
         return collateralLocker;
     }
 }

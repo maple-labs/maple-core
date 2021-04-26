@@ -65,6 +65,8 @@ contract MapleGlobals {
     event                 GlobalsParamSet(bytes32 indexed which, uint256 value);
     event               GlobalsAddressSet(bytes32 indexed which, address addr);
     event                  ProtocolPaused(bool pause);
+    event                        AdminSet(address newAdmin);
+    event             PoolDelegateAllowed(address delegate, bool valid);
 
     /**
         @dev Checks that msg.sender is the Governor.
@@ -154,12 +156,14 @@ contract MapleGlobals {
 
     /**
       @dev Set admin. Only the Governor can call this function.
+      @dev It emits an `AdminSet` event.
       @param newAdmin New admin address
      */
     function setAdmin(address newAdmin) external {
         require(msg.sender == governor && admin != address(0), "MapleGlobals:UNAUTHORIZED");
         require(!protocolPaused, "MapleGlobals:PROCOTOL_PAUSED");
         admin = newAdmin;
+        emit AdminSet(newAdmin);
     }
 
     /**
@@ -238,11 +242,13 @@ contract MapleGlobals {
 
     /**
         @dev Update validity of Pool Delegate (those allowed to create Pools). Only the Governor can call this function.
+        @dev It emits a `PoolDelegateAllowed` event.
         @param delegate Address to manage permissions for
         @param valid    New permissions of address
     */
     function setPoolDelegateAllowlist(address delegate, bool valid) external isGovernor {
         isValidPoolDelegate[delegate] = valid;
+        emit PoolDelegateAllowed(delegate, valid);
     }
 
     /**
