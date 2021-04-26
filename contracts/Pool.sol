@@ -61,7 +61,6 @@ contract Pool is PoolFDT {
     event              LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event                   Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee, uint256 stakeLockerfee, uint256 poolDelegateFee);
     event          BalanceUpdated(address indexed who, address indexed token, uint256 balance);
-    event      PoolOpenedToPublic(bool isOpen);
     event         CustodyTransfer(address indexed custodian, address indexed from, address indexed to, uint256 amount);
     event CustodyAllowanceChanged(address indexed tokenHolder, address indexed custodian, uint256 oldAllowance, uint256 newAllowance);
     event         LPStatusChanged(address indexed user, bool status);
