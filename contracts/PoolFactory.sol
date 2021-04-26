@@ -12,7 +12,7 @@ contract PoolFactory is Pausable {
     uint8 public constant SL_FACTORY = 4;  // Factory type of `StakeLockerFactory`
 
     uint256  public poolsCreated;  // Incrementor for number of Pools created
-    IGlobals public globals;       // MapleGlobals contract
+    IMapleGlobals public globals;       // MapleGlobals contract
 
     mapping(uint256 => address) public pools;              // Map to keep `Pool` contract corresponds to its index.
     mapping(address => bool)    public isPool;             // Used to check if a `Pool` was instantiated from this factory.
@@ -33,7 +33,7 @@ contract PoolFactory is Pausable {
     );
 
     constructor(address _globals) public {
-        globals = IGlobals(_globals);
+        globals = IMapleGlobals(_globals);
     }
 
     /**
@@ -42,7 +42,7 @@ contract PoolFactory is Pausable {
     */
     function setGlobals(address newGlobals) external {
         _isValidGovernor();
-        globals = IGlobals(newGlobals);
+        globals = IMapleGlobals(newGlobals);
     }
 
     /**
@@ -67,7 +67,7 @@ contract PoolFactory is Pausable {
     ) public whenNotPaused returns (address) {
         _whenProtocolNotPaused();
         {
-            IGlobals _globals = globals;
+            IMapleGlobals _globals = globals;
             require(_globals.isValidSubFactory(address(this), llFactory, LL_FACTORY), "PF:INVALID_LLF");
             require(_globals.isValidSubFactory(address(this), slFactory, SL_FACTORY), "PF:INVALID_SLF");
             require(_globals.isValidPoolDelegate(msg.sender),                         "PF:NOT_DELEGATE");
@@ -146,14 +146,14 @@ contract PoolFactory is Pausable {
     /**
         @dev Checks that msg.sender is the Governor or a Pool Factory Admin.
     */
-    function _isValidGovernorOrPoolFactoryAdmin() internal {
+    function _isValidGovernorOrPoolFactoryAdmin() internal view {
         require(msg.sender == globals.governor() || poolFactoryAdmins[msg.sender], "PF:NOT_GOV_OR_ADMIN");
     }
 
     /**
         @dev Function to determine if protocol is paused/unpaused.
     */
-    function _whenProtocolNotPaused() internal {
+    function _whenProtocolNotPaused() internal view {
         require(!globals.protocolPaused(), "PF:PROTO_PAUSED");
     }
 }

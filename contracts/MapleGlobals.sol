@@ -3,7 +3,6 @@ pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "./interfaces/IERC20Details.sol";
-import "./interfaces/IPriceFeed.sol";
 import "./interfaces/IOracle.sol";
 import "./interfaces/ISubFactory.sol";
 
@@ -445,7 +444,7 @@ contract MapleGlobals {
     /*** Helper Functions ***/
     /************************/
 
-    function _checkPercentageRange(uint256 percentage) internal {
+    function _checkPercentageRange(uint256 percentage) internal pure {
         require(percentage <= uint256(10_000), "MG:PCT_OOB");
     }
 }

@@ -27,7 +27,7 @@ contract GulpTest is TestUtil {
         leo.deposit(address(pool), 10_000_000 * USD);                                      // LP deposits 10m USDC to Pool
         pat.fundLoan(address(pool), address(loan), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
 
-        uint cReq = loan.collateralRequiredForDrawdown(10_000_000 * USD);  // WETH required for 100_000_000 USDC drawdown on loan
+        uint256 cReq = loan.collateralRequiredForDrawdown(10_000_000 * USD);  // WETH required for 100_000_000 USDC drawdown on loan
         mint("WETH", address(bob), cReq);                                  // Mint WETH to borrower
         bob.approve(WETH, address(loan), MAX_UINT);                        // Borrower approves WETH
         bob.drawdown(address(loan), 10_000_000 * USD);                     // Borrower draws down 10m USDC

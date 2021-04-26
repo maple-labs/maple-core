@@ -81,7 +81,7 @@ contract MapleTreasuryTest is TestUtil {
 
     function test_convertERC20() public {
 
-        IGlobals _globals = IGlobals(address(globals));
+        IMapleGlobals _globals = IMapleGlobals(address(globals));
 
         assertEq(IERC20(WBTC).balanceOf(address(treasury)), 0);
         assertEq(IERC20(WETH).balanceOf(address(treasury)), 0);

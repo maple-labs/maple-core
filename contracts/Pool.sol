@@ -5,7 +5,7 @@ import "./token/PoolFDT.sol";
 
 import "./interfaces/IBPool.sol";
 import "./interfaces/IDebtLocker.sol";
-import "./interfaces/IGlobals.sol";
+import "./interfaces/IMapleGlobals.sol";
 import "./interfaces/ILiquidityLocker.sol";
 import "./interfaces/ILiquidityLockerFactory.sol";
 import "./interfaces/ILoan.sol";
@@ -242,7 +242,7 @@ contract Pool is PoolFDT {
     */
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
-        (uint256 bptsBurned, uint256 postBurnBptBal, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, loan, defaultSuffered);
+        (uint256 bptsBurned, uint256 postBurnBptBal, uint256 liquidityAssetRecoveredFromBurn) = PoolLib.handleDefault(liquidityAsset, stakeLocker, stakeAsset, defaultSuffered);
 
         // If BPT burn is not enough to cover full default amount, pass on losses to LPs with PoolFDT loss accounting
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
@@ -589,8 +589,8 @@ contract Pool is PoolFDT {
     /**
         @dev Utility to return MapleGlobals interface.
     */
-    function _globals(address poolFactory) internal view returns (IGlobals) {
-        return IGlobals(IPoolFactory(poolFactory).globals());
+    function _globals(address poolFactory) internal view returns (IMapleGlobals) {
+        return IMapleGlobals(IPoolFactory(poolFactory).globals());
     }
 
     /**
@@ -612,21 +612,21 @@ contract Pool is PoolFDT {
     /**
         @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
     */
-    function _isValidDelegateOrPoolAdmin() internal {
+    function _isValidDelegateOrPoolAdmin() internal view {
         require(msg.sender == poolDelegate || poolAdmins[msg.sender], "P:NOT_DELEGATE_OR_ADMIN");
     }
 
     /**
         @dev Function to block functionality of functions when protocol is in a paused state.
     */
-    function _whenProtocolNotPaused() internal {
+    function _whenProtocolNotPaused() internal view {
         require(!_globals(superFactory).protocolPaused(), "P:PROTO_PAUSED");
     }
 
     /**
         @dev Checks that msg.sender is the Pool Delegate and protocol is not in a paused state.
     */
-    function _isValidDelegateAndProtocolNotPaused() internal {
+    function _isValidDelegateAndProtocolNotPaused() internal view {
         _isValidDelegate();
         _whenProtocolNotPaused();
     }

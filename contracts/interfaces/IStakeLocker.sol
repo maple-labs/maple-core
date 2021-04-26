@@ -4,16 +4,11 @@ pragma solidity 0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 interface IStakeLocker is IERC20 {
-
     function stakeDate(address) external returns (uint256);
 
     function stake(uint256) external;
 
     function unstake(uint256) external;
-
-    function withdrawUnstaked(uint256) external returns (uint256);
-
-    function withdrawInterest() external returns (uint256);
 
     function updateFundsReceived() external;
 
@@ -41,4 +36,23 @@ interface IStakeLocker is IERC20 {
 
     function lockupPeriod() external view returns(uint256);
 
+    function stakeAsset() external view returns (address);
+
+    function liquidityAsset() external view returns (address);
+
+    function pool() external view returns (address);
+
+    function setLockupPeriod(uint256) external;
+    
+    function cancelUnstake() external;
+
+    function withdrawFunds() external;
+
+    function pause() external;
+
+    function unpause() external;
+
+    function isUnstakeAllowed(address) external view returns (bool);
+
+    function isReceiveAllowed(uint256) external view returns (bool);
 }

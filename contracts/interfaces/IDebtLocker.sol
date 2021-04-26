@@ -2,9 +2,23 @@
 pragma solidity 0.6.11;
 
 interface IDebtLocker {
-    function pool() external returns (address);
+    function loan() external view returns (address);
 
-    function liquidityAsset() external returns (address);
+    function liquidityAsset() external view returns (address);
+
+    function pool() external view returns (address);
+
+    function lastPrincipalPaid() external view returns (uint256);
+
+    function lastInterestPaid() external view returns (uint256);
+
+    function lastFeePaid() external view returns (uint256);
+
+    function lastExcessReturned() external view returns (uint256);
+
+    function lastDefaultSuffered() external view returns (uint256);
+
+    function lastAmountRecovered() external view returns (uint256);
 
     function claim() external returns(uint256[7] memory);
     

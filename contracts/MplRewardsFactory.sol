@@ -2,19 +2,19 @@
 pragma solidity 0.6.11;
 
 import "./MplRewards.sol";
-import "./interfaces/IGlobals.sol";
+import "./interfaces/IMapleGlobals.sol";
 
 /// @title MplRewardsFactory instantiates MplRewards contracts.
 contract MplRewardsFactory {
 
-    IGlobals public globals;  // Address of globals contract used to retrieve current governor
+    IMapleGlobals public globals;  // Address of globals contract used to retrieve current governor
 
     mapping(address => bool) public isMplRewards;  // True if MplRewards was created by this factory, otherwise false.
 
     event MplRewardsCreated(address indexed rewardsToken, address indexed stakingToken, address indexed mplRewards, address owner);
 
     constructor(address _globals) public {
-        globals = IGlobals(_globals);
+        globals = IMapleGlobals(_globals);
     }
 
     /**
@@ -23,7 +23,7 @@ contract MplRewardsFactory {
     */
     function setGlobals(address _globals) external {
         require(msg.sender == globals.governor(), "RF:NOT_GOV");
-        globals = IGlobals(_globals);
+        globals = IMapleGlobals(_globals);
     }
 
     /**

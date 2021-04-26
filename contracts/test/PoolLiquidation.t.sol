@@ -76,7 +76,7 @@ contract PoolLiquidationTest is TestUtil {
         // Fund the loan
         pat.fundLoan(address(pool), address(loan), address(dlFactory), 1_000_000 * USD);
         pam.fundLoan(address(pool2), address(loan), address(dlFactory), 3_000_000 * USD);
-        uint cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
+        uint256 cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
 
         // Drawdown loan
         mint("WETH", address(bob), cReq);
@@ -212,7 +212,7 @@ contract PoolLiquidationTest is TestUtil {
 
         // Fund the loan
         pat.fundLoan(address(pool), address(loan), address(dlFactory), 100_000_000 * USD);
-        uint cReq = loan.collateralRequiredForDrawdown(100_000_000 * USD);
+        uint256 cReq = loan.collateralRequiredForDrawdown(100_000_000 * USD);
 
         assertPoolAccounting(pool);
 

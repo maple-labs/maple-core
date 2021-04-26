@@ -29,7 +29,7 @@ contract CalcsTest is TestUtil {
         {
             // Mint "infinite" amount of USDC and deposit into pool
             mint("USDC", address(this), loanAmt);
-            IERC20(USDC).approve(address(pool), uint(-1));
+            IERC20(USDC).approve(address(pool), uint256(-1));
             pool.deposit(loanAmt);
 
             // Create loan, fund loan, draw down on loan
@@ -41,7 +41,7 @@ contract CalcsTest is TestUtil {
         assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory), loanAmt));
 
         {
-            uint cReq = loan.collateralRequiredForDrawdown(loanAmt); // wETH required for 1_000 USDC drawdown on loan
+            uint256 cReq = loan.collateralRequiredForDrawdown(loanAmt); // wETH required for 1_000 USDC drawdown on loan
             mint("WETH", address(bob), cReq);
             bob.approve(WETH, address(loan), cReq);
             bob.drawdown(address(loan), loanAmt);

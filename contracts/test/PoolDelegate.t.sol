@@ -103,7 +103,7 @@ contract PoolTest is TestUtil {
         /*** Approve Stake Locker To Take BPTs ***/
         /*****************************************/
         address stakeLocker = pool.stakeLocker();
-        pat.approve(address(bPool), stakeLocker, uint(-1));
+        pat.approve(address(bPool), stakeLocker, uint256(-1));
 
         // Pre-state checks.
         assertBalanceState(stakeLocker, 50 * WAD, 0, 0);
@@ -271,7 +271,7 @@ contract PoolTest is TestUtil {
 
         // deposit()
         mint("USDC", address(leo), 1_000_000_000 * USD);
-        leo.approve(USDC, address(pool), uint(-1));
+        leo.approve(USDC, address(pool), uint256(-1));
         assertTrue(!leo.try_deposit(address(pool), 100_000_000 * USD));
 
         // fundLoan()
@@ -336,7 +336,7 @@ contract PoolTest is TestUtil {
         doFullLoanPayment(loan3, bud); 
         pat.claim(address(pool), address(loan3), address(dlFactory));
 
-        uint withdrawDate = pool.depositDate(address(lee)).add(pool.lockupPeriod());
+        uint256 withdrawDate = pool.depositDate(address(lee)).add(pool.lockupPeriod());
 
         hevm.warp(withdrawDate - 1);
         (uint256 total_lee, uint256 principal_lee, uint256 interest_lee) = pool.claimableFunds(address(lee));

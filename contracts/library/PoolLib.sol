@@ -5,7 +5,7 @@ import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "../interfaces/ILoan.sol";
 import "../interfaces/IBPool.sol";
-import "../interfaces/IGlobals.sol";
+import "../interfaces/IMapleGlobals.sol";
 import "../interfaces/ILiquidityLocker.sol";
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/ILoanFactory.sol";
@@ -39,12 +39,12 @@ library PoolLib {
         @param delegateFee    Fee that `_poolDelegate` earns on interest, in basis points
     */
     function poolSanityChecks(
-        IGlobals globals, 
+        IMapleGlobals globals, 
         address liquidityAsset, 
         address stakeAsset, 
         uint256 stakingFee, 
         uint256 delegateFee
-    ) external {
+    ) external view {
         require(globals.isValidLiquidityAsset(liquidityAsset), "P:INVALID_LIQ_ASSET");
         require(stakingFee.add(delegateFee) <= 10_000,         "P:INVALID_FEES");
         require(
@@ -74,7 +74,7 @@ library PoolLib {
         address dlFactory,
         uint256 amt
     ) external {
-        IGlobals globals    = _globals(superFactory);
+        IMapleGlobals globals    = _globals(superFactory);
         address loanFactory = ILoan(loan).superFactory();
 
         // Auth checks
@@ -101,7 +101,6 @@ library PoolLib {
         @param  liquidityAsset  IERC20 of liquidityAsset
         @param  stakeLocker     Address of stakeLocker
         @param  stakeAsset      Address of BPTs
-        @param  loan            Address of loan
         @param  defaultSuffered Amount of shortfall in defaulted loan after liquidation
         @return bptsBurned                      Amount of BPTs burned to cover shortfall
         @return postBurnBptBal                  Amount of BPTs returned to stakeLocker after burn
@@ -111,7 +110,6 @@ library PoolLib {
         IERC20  liquidityAsset,
         address stakeLocker,
         address stakeAsset,
-        address loan,
         uint256 defaultSuffered
     ) 
         external
@@ -171,6 +169,7 @@ library PoolLib {
         uint256 stakingFee
     ) 
         external
+        pure
         returns (
             uint256 poolDelegatePortion,
             uint256 stakeLockerPortion,
@@ -191,7 +190,7 @@ library PoolLib {
         @param  principalOut   Amount of funds that is already funded to loans.
         @param  liquidityAsset Liquidity Asset of the pool 
      */
-    function validateDeactivation(IGlobals globals, uint256 principalOut, address liquidityAsset) public view {
+    function validateDeactivation(IMapleGlobals globals, uint256 principalOut, address liquidityAsset) public view {
         require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "P:PRINCIPAL_OUTSTANDING");
     }
 
@@ -225,7 +224,7 @@ library PoolLib {
     /**
         @dev View function to indicate if msg.sender is within their withdraw window.
     */
-    function isWithdrawAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
+    function isWithdrawAllowed(uint256 withdrawCooldown, IMapleGlobals globals) public view returns (bool) {
         return block.timestamp - (withdrawCooldown + globals.lpCooldownPeriod()) <= globals.lpWithdrawWindow();
     }
 
@@ -233,7 +232,7 @@ library PoolLib {
         @dev View function to indicate if recipient is allowed to receive a transfer.
         This is only possible if they have zero cooldown or they are passed their withdraw window.
     */
-    function isReceiveAllowed(uint256 withdrawCooldown, IGlobals globals) public view returns (bool) {
+    function isReceiveAllowed(uint256 withdrawCooldown, IMapleGlobals globals) public view returns (bool) {
         return block.timestamp > withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow();
     }
 
@@ -246,7 +245,7 @@ library PoolLib {
         address from,
         address to,
         uint256 wad,
-        IGlobals globals,
+        IMapleGlobals globals,
         uint256 toBalance,
         uint256 recognizableLosses
     ) external {
@@ -288,7 +287,7 @@ library PoolLib {
         @param liquidityAsset Address of liquidity asset that is supported by the pool.
         @param globals Instance of the `MapleGlobals` contract.
      */
-    function reclaimERC20(address token, address liquidityAsset, IGlobals globals) external {
+    function reclaimERC20(address token, address liquidityAsset, IMapleGlobals globals) external {
         require(msg.sender == globals.governor(), "P:NOT_GOV");
         require(token != liquidityAsset && token != address(0), "P:INVALID_TOKEN");
         IERC20(token).safeTransfer(msg.sender, IERC20(token).balanceOf(address(this)));
@@ -452,7 +451,7 @@ library PoolLib {
         @return poolAmountInRequired       BPTs required for minimum liquidityAsset coverage
         @return poolAmountPresent          Current staked BPTs
     */
-    function getInitialStakeRequirements(IGlobals globals, address balancerPool, address liquidityAsset, address poolDelegate, address stakeLocker) public view returns (
+    function getInitialStakeRequirements(IMapleGlobals globals, address balancerPool, address liquidityAsset, address poolDelegate, address stakeLocker) public view returns (
         uint256 swapOutAmountRequired,
         uint256 currentPoolDelegateCover,
         bool    enoughStakeForFinalization,
@@ -513,7 +512,7 @@ library PoolLib {
         @param amt Amount to convert
         @param liquidityAssetDecimals Liquidity asset decimal
     */
-    function fromWad(uint256 amt, uint256 liquidityAssetDecimals) public view returns(uint256) {
+    function fromWad(uint256 amt, uint256 liquidityAssetDecimals) public pure returns(uint256) {
         return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 
@@ -522,8 +521,8 @@ library PoolLib {
         @param  poolFactory Factory that deployed the Pool,  stores MapleGlobals
         @return Interface of MapleGlobals
     */
-    function _globals(address poolFactory) internal view returns (IGlobals) {
-        return IGlobals(ILoanFactory(poolFactory).globals());
+    function _globals(address poolFactory) internal view returns (IMapleGlobals) {
+        return IMapleGlobals(ILoanFactory(poolFactory).globals());
     }
 
     /** 
@@ -533,7 +532,7 @@ library PoolLib {
         @param  usdAmount      USD amount to convert, in integer units (e.g., $100 = 100)
         @return usdAmount worth of liquidityAsset, in liquidityAsset units
     */
-    function convertFromUsd(IGlobals globals, address liquidityAsset, uint256 usdAmount) internal view returns (uint256) {
+    function convertFromUsd(IMapleGlobals globals, address liquidityAsset, uint256 usdAmount) internal view returns (uint256) {
         return usdAmount
             .mul(10 ** 8)                                         // Cancel out 10 ** 8 decimals from oracle
             .mul(10 ** IERC20Details(liquidityAsset).decimals())  // Convert to liquidityAsset precision

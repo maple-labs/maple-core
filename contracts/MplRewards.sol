@@ -151,7 +151,7 @@ contract MplRewards is Ownable {
         // This keeps the reward rate in the right range, preventing overflows due to
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
-        uint balance = rewardsToken.balanceOf(address(this));
+        uint256 balance = rewardsToken.balanceOf(address(this));
         require(rewardRate <= balance.div(rewardsDuration), "R:REWARD_TOO_HIGH");
 
         lastUpdateTime = block.timestamp;
@@ -162,7 +162,7 @@ contract MplRewards is Ownable {
     /**
         @dev End rewards emission earlier. Only the contract Owner may call this.
     */
-    function updatePeriodFinish(uint timestamp) external onlyOwner {
+    function updatePeriodFinish(uint256 timestamp) external onlyOwner {
         _updateReward(address(0));
         periodFinish = timestamp;
     }

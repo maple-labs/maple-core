@@ -40,11 +40,53 @@ interface IPool {
 
     function setOpenToPublic(bool) external;
 
-    function setAllowList(address user, bool status) external;
+    function setAllowList(address, bool) external;
 
-    function allowedLiquidityProviders(address user) external view returns(bool);
+    function allowedLiquidityProviders(address) external view returns(bool);
 
     function openToPublic() external view returns(bool);
 
     function intendToWithdraw() external;
+
+    function DL_FACTORY() external view returns(uint8);
+
+    function liquidityAsset() external view returns(address);
+
+    function liquidityLocker() external view returns(address);
+
+    function stakeAsset() external view returns(address);
+
+    function stakeLocker() external view returns(address);
+
+    function stakingFee() external view returns(uint256);
+
+    function delegateFee() external view returns(uint256);
+
+    function principalOut() external view returns(uint256);
+
+    function liquidityCap() external view returns(uint256);
+
+    function lockupPeriod() external view returns(uint256);
+
+    function depositDate(address) external view returns(uint256);
+
+    function debtLockers(address, address) external view returns(address);
+
+    function withdrawCooldown(address) external view returns(uint256);
+
+    function setLiquidityCap(uint256) external;
+
+    function cancelWithdraw() external;
+
+    function withdrawFunds() external;
+
+    function reclaimERC20(address) external;
+
+    function BPTVal(address, address, address, address) external view returns (uint256);
+
+    function isDepositAllowed(uint256) external view returns(bool);
+
+    function getInitialStakeRequirements() external view returns(uint256, uint256, bool, uint256, uint256);
+
+    function getInitialStakeRequirements(address, address, address, address, uint256) external view returns(uint256, uint256);
 }

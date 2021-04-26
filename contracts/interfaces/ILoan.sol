@@ -30,8 +30,6 @@ interface ILoan is IERC20 {
     
     function loanState() external view returns (uint256);
     
-    function globals() external view returns (address);
-    
     function collateralRequiredForDrawdown(uint256) external view returns(uint256);
     
 
@@ -69,14 +67,20 @@ interface ILoan is IERC20 {
     function termDays() external view returns (uint256);
     
     function nextPaymentDue() external view returns (uint256);
+
+    function getFullPayment() external view returns (uint256, uint256, uint256);
     
 
     // Liquidations
+    function amountLiquidated() external view returns (uint256);
+
     function defaultSuffered() external view returns (uint256);
     
     function amountRecovered() external view returns (uint256);
     
     function getExpectedAmountRecovered() external view returns(uint256);
+
+    function liquidationExcess() external view returns(uint256);
     
 
     // Functions
@@ -100,8 +104,17 @@ interface ILoan is IERC20 {
 
     function withdrawableFundsOf(address) external view returns(uint256);
 
+
     // Security 
     function pause() external;
 
     function unpause() external;
+
+    function loanAdmins(address) external view returns (address);
+
+    function setLoanAdmin(address, bool) external;
+
+
+    // Misc
+    function reclaimERC20(address) external;
 }

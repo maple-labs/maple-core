@@ -17,7 +17,7 @@ contract LoanFactory is Pausable {
     uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`
     uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`
 
-    IGlobals public globals;  // Interface of MapleGlobals
+    IMapleGlobals public globals;  // Interface of MapleGlobals
 
     uint256 public loansCreated;  // Incrementor for number of loan vaults created.
 
@@ -40,7 +40,7 @@ contract LoanFactory is Pausable {
     );
 
     constructor(address _globals) public {
-        globals = IGlobals(_globals);
+        globals = IMapleGlobals(_globals);
     }
 
     /**
@@ -49,7 +49,7 @@ contract LoanFactory is Pausable {
     */
     function setGlobals(address newGlobals) external {
         _isValidGovernor();
-        globals = IGlobals(newGlobals);
+        globals = IMapleGlobals(newGlobals);
     }
 
     /**
@@ -80,7 +80,7 @@ contract LoanFactory is Pausable {
         address[3] memory calcs
     ) external whenNotPaused returns (address loanAddress) {
         _whenProtocolNotPaused();
-        IGlobals _globals = globals;
+        IMapleGlobals _globals = globals;
 
         // Validity checks
         require(_globals.isValidSubFactory(address(this), flFactory, FL_FACTORY), "LF:INVALID_FLF");
@@ -157,14 +157,14 @@ contract LoanFactory is Pausable {
     /**
         @dev Checks that msg.sender is the Governor or a Loan Factory Admin.
     */
-    function _isValidGovernorOrLoanFactoryAdmin() internal {
+    function _isValidGovernorOrLoanFactoryAdmin() internal view {
         require(msg.sender == globals.governor() || loanFactoryAdmins[msg.sender], "LF:NOT_GOV_OR_ADMIN");
     }
 
     /**
         @dev Function to determine if protocol is paused/unpaused.
     */
-    function _whenProtocolNotPaused() internal {
+    function _whenProtocolNotPaused() internal view {
         require(!globals.protocolPaused(), "LF:PROTO_PAUSED");
     }
 }
