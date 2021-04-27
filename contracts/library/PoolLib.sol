@@ -251,11 +251,11 @@ library PoolLib {
         uint256 recognizableLosses,
         uint256 lockupPeriod
     ) external {
-        require(depositDate[from].add(lockupPeriod) <= block.timestamp,           "P:FUNDS_LOCKED");                  // Sender must be past lockup period
-        require(fromBalance.sub(wad) >= totalCustodyAllowance,                    "P:INSUFFICENT_TRANSFERABLE_BAL");  // User can only transfer tokens that aren't custodied
-        require(isReceiveAllowed(withdrawCooldown[to], globals),                  "P:RECIPIENT_NOT_ALLOWED");         // Recipient must not be currently withdrawing
-        require(recognizableLosses == uint256(0),                                 "P:RECOG_LOSSES");                  // If an LP has unrecognized losses, they must recognize losses through withdraw
-        updateDepositDate(depositDate, toBalance, wad, to);                                                           // Update deposit date of recipient
+        require(depositDate[from].add(lockupPeriod) <= block.timestamp, "P:FUNDS_LOCKED");                  // Restrict transfer during lockup period
+        require(fromBalance.sub(wad) >= totalCustodyAllowance,          "P:INSUFFICENT_TRANSFERABLE_BAL");  // User can only transfer tokens that aren't custodied
+        require(isReceiveAllowed(withdrawCooldown[to], globals),        "P:RECIPIENT_NOT_ALLOWED");         // Recipient must not be currently withdrawing
+        require(recognizableLosses == uint256(0),                       "P:RECOG_LOSSES");                  // If an LP has unrecognized losses, they must recognize losses through withdraw
+        updateDepositDate(depositDate, toBalance, wad, to);                                                 // Update deposit date of recipient
     }
 
     /**

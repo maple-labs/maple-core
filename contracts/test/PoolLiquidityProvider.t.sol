@@ -195,6 +195,10 @@ contract PoolTest is TestUtil {
         // Will fail because lockup period hasn't passed yet
         assertTrue(!liz.try_transfer(address(pool), address(leo), toWad(newDeposit)));
 
+        // Warp to just before lockup period ends
+        hevm.warp(startDate + pool.lockupPeriod() - 1);
+        assertTrue(!liz.try_transfer(address(pool), address(leo), toWad(newDeposit)));
+
         // Warp to after lockup period
         hevm.warp(startDate + pool.lockupPeriod());
 

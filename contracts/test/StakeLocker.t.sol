@@ -288,7 +288,7 @@ contract StakeLockerTest is TestUtil {
     }
 
     function test_stake_transfer_lockup_period(uint256 stakeAmount) public {
-        uint256 start = block.timestamp;
+        uint256 startDate = block.timestamp;
         stakeAmount = constrictToRange(stakeAmount, 1 wei, bPool.balanceOf(address(sam)), true);
 
         makePublicAndStake(stakeAmount);
@@ -296,15 +296,19 @@ contract StakeLockerTest is TestUtil {
         // Will fail because lockup period hasn't passed yet
         assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
 
+        // Warp to just before lockup period ends
+        hevm.warp(startDate + pool.lockupPeriod() - 1);
+        assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
+
         // Warp to after lockup period and transfer
-        hevm.warp(start + stakeLocker.lockupPeriod());
+        hevm.warp(startDate + stakeLocker.lockupPeriod());
         uint256 newStakeDate = getNewStakeDate(address(sid), stakeAmount);
         assertTrue(sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
 
         // Check balances and deposit dates are correct
         assertEq(stakeLocker.balanceOf(address(sam)), 0);
         assertEq(stakeLocker.balanceOf(address(sid)), stakeAmount);
-        assertEq(stakeLocker.stakeDate(address(sam)), start);         // Stays the same
+        assertEq(stakeLocker.stakeDate(address(sam)), startDate);     // Stays the same
         assertEq(stakeLocker.stakeDate(address(sid)), newStakeDate);  // Gets updated
     }
 
