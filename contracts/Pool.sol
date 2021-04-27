@@ -169,7 +169,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev   Liquidate the loan. Pool delegate could liquidate a loan only when loan completes its grace period.
+        @dev   Liquidate a loan. Pool delegate could liquidate a loan only when loan completes its grace period.
                Pool delegate can claim its proportion of recovered funds from liquidation using the `claim()` function.
                Only the Pool Delegate can call this function.
         @param loan      Address of the loan contract to liquidate.
