@@ -167,6 +167,11 @@ contract StakeLockerTest is TestUtil {
 
         pat.setAllowlistStakeLocker(address(pool), address(sam), true);
 
+        // Check whether PD is allowed to transferFrom or not.
+        assertEq(stakeLocker.balanceOf(address(pat)), 50 * WAD);
+        pat.approve(address(stakeLocker), address(sam), 50 * WAD);
+        assertTrue(!sam.try_transferFrom(address(stakeLocker), address(pat), address(sam), 50 * WAD));
+
         assertEq(bPool.balanceOf(address(sam)),         25 * WAD);
         assertEq(bPool.balanceOf(address(stakeLocker)), 50 * WAD);  // PD stake
         assertEq(stakeLocker.totalSupply(),             50 * WAD);
