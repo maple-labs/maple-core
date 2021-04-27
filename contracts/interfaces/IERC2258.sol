@@ -16,5 +16,4 @@ interface IERC2258 {
     // Custody Events
     event CustodyTransfer(address custodian, address from, address to, uint256 amount);
     event CustodyAllowanceChanged(address tokenHolder, address custodian, uint256 oldAllowance, uint256 newAllowance);
-
 }

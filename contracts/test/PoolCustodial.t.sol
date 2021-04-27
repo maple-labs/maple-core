@@ -197,6 +197,8 @@ contract PoolCustodialTest is TestUtil {
         mintFundsAndDepositIntoPool(fay, pool, depositAmt * USD, depositAmt * USD);
         mintFundsAndDepositIntoPool(fez, pool, depositAmt * USD, depositAmt * USD);
 
+        pat.setLockupPeriod(address(pool), 0);
+
         // Convert all amounts to WAD, USD not needed for the rest of the test
         depositAmt  *= WAD; 
         custodyAmt1 *= WAD;

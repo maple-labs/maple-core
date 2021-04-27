@@ -262,9 +262,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function _transfer(address from, address to, uint256 wad) internal override canUnstake(from) {
         _whenProtocolNotPaused();
         if (!_globals().isExemptFromTransferRestriction(from) && !_globals().isExemptFromTransferRestriction(to)) {
-            require(isReceiveAllowed(unstakeCooldown[to]),    "SL:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently unstaking
-            require(recognizableLossesOf(from) == uint256(0), "SL:RECOG_LOSSES");           // If a staker has unrecognized losses, they must recognize losses through unstake
-            _updateStakeDate(to, wad);                                                               // Update stake date of recipient
+            require(stakeDate[from].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");           // Restrict transfer during lockup period
+            require(isReceiveAllowed(unstakeCooldown[to]),                "SL:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently unstaking
+            require(recognizableLossesOf(from) == uint256(0),             "SL:RECOG_LOSSES");           // If a staker has unrecognized losses, they must recognize losses through unstake
+            _updateStakeDate(to, wad);                                                                  // Update stake date of recipient
         }
         super._transfer(from, to, wad);
     }

@@ -89,6 +89,7 @@ contract StakeLockerTest is TestUtil {
         pat.setAllowlist(address(stakeLocker), address(sid), true);
         sam.approve(address(bPool), address(stakeLocker), uint256(-1));
         sid.approve(address(bPool), address(stakeLocker), uint256(-1));
+        pat.setStakeLockerLockupPeriod(address(stakeLocker), 0);
 
         uint256 startDate = block.timestamp;
 
@@ -275,6 +276,7 @@ contract StakeLockerTest is TestUtil {
 
     function test_stake_transfer_paused() public {
         makePublicAndStake(25 * WAD);
+        pat.setStakeLockerLockupPeriod(address(stakeLocker), 0);
 
         // Pause protocol and attempt to transfer FDTs
         assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
@@ -285,11 +287,37 @@ contract StakeLockerTest is TestUtil {
         assertTrue(sam.try_transfer(address(stakeLocker), address(leo), 1 * WAD));
     }
 
+    function test_stake_transfer_lockup_period(uint256 stakeAmount) public {
+        uint256 startDate = block.timestamp;
+        stakeAmount = constrictToRange(stakeAmount, 1 wei, bPool.balanceOf(address(sam)), true);
+
+        makePublicAndStake(stakeAmount);
+
+        // Will fail because lockup period hasn't passed yet
+        assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
+
+        // Warp to just before lockup period ends
+        hevm.warp(startDate + pool.lockupPeriod() - 1);
+        assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
+
+        // Warp to after lockup period and transfer
+        hevm.warp(startDate + stakeLocker.lockupPeriod());
+        uint256 newStakeDate = getNewStakeDate(address(sid), stakeAmount);
+        assertTrue(sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
+
+        // Check balances and deposit dates are correct
+        assertEq(stakeLocker.balanceOf(address(sam)), 0);
+        assertEq(stakeLocker.balanceOf(address(sid)), stakeAmount);
+        assertEq(stakeLocker.stakeDate(address(sam)), startDate);     // Stays the same
+        assertEq(stakeLocker.stakeDate(address(sid)), newStakeDate);  // Gets updated
+    }
+
     function test_stake_transfer_recipient_withdrawing() public {
         uint256 start = block.timestamp;
         uint256 stakeAmount = 25 * WAD;
 
         makePublicAndStake(stakeAmount);
+        pat.setStakeLockerLockupPeriod(address(stakeLocker), 0);
 
         sid.approve(address(bPool), address(stakeLocker), stakeAmount);
         sid.stake(address(stakeLocker), stakeAmount);
@@ -305,12 +333,12 @@ contract StakeLockerTest is TestUtil {
 
         // Staker 2 successfully transfers to Staker 1 who is now outside unstake window
         hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow() + 1);  // Second after Staker unstake window ends
+        uint256 newStakeDate = getNewStakeDate(address(sid), stakeAmount);
         assertTrue(sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
 
         // Check balances and stake dates are correct
         assertEq(stakeLocker.balanceOf(address(sam)), 0);
         assertEq(stakeLocker.balanceOf(address(sid)), stakeAmount * 2);
-        uint256 newStakeDate = start + (block.timestamp - start) * (stakeAmount) / ((stakeAmount) + (stakeAmount));
         assertEq(stakeLocker.stakeDate(address(sam)), start);         // Stays the same
         assertEq(stakeLocker.stakeDate(address(sid)), newStakeDate);  // Gets updated
     }

@@ -626,10 +626,6 @@ contract TestUtil is DSTest {
     }
 
     function toApy(uint256 yield, uint256 stake, uint256 dTime) internal returns (uint256) {
-
-        emit Debug("yield", yield);
-        emit Debug("stake", stake);
-        emit Debug("dTime", dTime);
         return yield * 10_000 * 365 days / stake / dTime;
     }
 
