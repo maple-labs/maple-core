@@ -70,10 +70,6 @@ contract PoolDelegate {
         IPool(pool).deactivate();
     }
 
-    function setAllowlistStakeLocker(address pool, address user, bool status) external {
-        IPool(pool).setAllowlistStakeLocker(user, status);
-    }
-
     function triggerDefault(address pool, address loan, address dlFactory) external {
         IPool(pool).triggerDefault(loan, dlFactory);
     }
@@ -94,14 +90,17 @@ contract PoolDelegate {
         IPool(pool).setStakingFee(stakingFee);
     }
 
-    function openStakeLockerToPublic(address stakeLocker) external {
-        IStakeLocker(stakeLocker).openStakeLockerToPublic();
-    }
-
     function setAllowList(address pool, address user, bool status) external {
         IPool(pool).setAllowList(user, status);
     }
 
+    function openStakeLockerToPublic(address stakeLocker) external {
+        IStakeLocker(stakeLocker).openStakeLockerToPublic();
+    }
+
+    function setAllowlist(address stakeLocker, address user, bool status) external {
+        IStakeLocker(stakeLocker).setAllowlist(user, status);
+    }
 
     /*********************/
     /*** TRY FUNCTIONS ***/
@@ -185,9 +184,9 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, user, status));
     }
 
-    function try_setAllowlistStakeLocker(address pool, address user, bool status) external returns(bool ok) {
-        string memory sig = "setAllowlistStakeLocker(address,bool)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, user, status));
+    function try_setAllowlist(address stakeLocker, address user, bool status) external returns(bool ok) {
+        string memory sig = "setAllowlist(address,bool)";
+        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, user, status));
     }
 
     function try_setPoolAdmin(address pool, address newPoolAdmin, bool status) external returns(bool ok) {
