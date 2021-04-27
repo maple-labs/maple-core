@@ -61,9 +61,9 @@ contract StakeLocker is StakeLockerFDT, Pausable {
                1. User is not Pool Delegate and the Pool is in Finalized state.
                2. The Pool is in Initialized or Deactivated state.
     */
-    modifier canUnstake() {
+    modifier canUnstake(address from) {
         require(
-            (msg.sender != IPool(pool).poolDelegate() && IPool(pool).isPoolFinalized()) ||
+            (from != IPool(pool).poolDelegate() && IPool(pool).isPoolFinalized()) ||
             !IPool(pool).isPoolFinalized(),
             "SL:STAKE_LOCKED"
         );
@@ -216,7 +216,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev It emits a `BalanceUpdated` event.
         @param amt Amount of stakeAsset (BPTs) to withdraw
     */
-    function unstake(uint256 amt) external canUnstake {
+    function unstake(uint256 amt) external canUnstake(msg.sender) {
         _whenProtocolNotPaused();
         require(isUnstakeAllowed(msg.sender),                               "SL:OUTSIDE_COOLDOWN");
         require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");
@@ -254,7 +254,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @param to   Address receiving StakeLockerFDTs
         @param wad  Amount of FDTs to transfer
     */
-    function _transfer(address from, address to, uint256 wad) internal override canUnstake {
+    function _transfer(address from, address to, uint256 wad) internal override canUnstake(from) {
         _whenProtocolNotPaused();
         if (!_globals().isExemptFromTransferRestriction(from) && !_globals().isExemptFromTransferRestriction(to)) {
             require(isReceiveAllowed(unstakeCooldown[to]),    "SL:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently unstaking
