@@ -52,6 +52,10 @@ contract Governor {
         treasury = _treasury;
     }
 
+    function transfer(IERC20 token, address who, uint256 amt) external {
+        token.transfer(who, amt);
+    }
+
     /*** MapleGlobals Setters ***/
     function setCalc(address calc, bool valid)                                 external { globals.setCalc(calc, valid); }
     function setCollateralAsset(address asset, bool valid)                     external { globals.setCollateralAsset(asset, valid); }

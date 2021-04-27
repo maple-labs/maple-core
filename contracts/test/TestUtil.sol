@@ -259,10 +259,10 @@ contract TestUtil is DSTest {
     /**************************************/
     /*** Maple Contract Setup Functions ***/
     /**************************************/
-    function createMpl()               public { mpl               = new MapleToken("MapleToken", "MAPL", USDC); }
-    function createGlobals()           public { globals           = gov.createGlobals(address(mpl)); }
-    function createTreasury()          public { treasury          = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); }
-    function createBPool()             public { bPool             = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); }
+    function createMpl()      public { mpl      = new MapleToken("MapleToken", "MPL", USDC); }
+    function createGlobals()  public { globals  = gov.createGlobals(address(mpl)); }
+    function createTreasury() public { treasury = new MapleTreasury(address(mpl), USDC, UNISWAP_V2_ROUTER_02, address(globals)); }
+    function createBPool()    public { bPool    = IBPool(IBFactory(BPOOL_FACTORY).newBPool()); }
 
     function setUpMplRewardsFactory() public {
         mplRewardsFactory = gov.createMplRewardsFactory();
@@ -428,18 +428,22 @@ contract TestUtil is DSTest {
     /*************************************/
     /*** Balancer Pool Setup Functions ***/
     /*************************************/
-    function createBalancerPool() public {
-        // Mint 50m USDC into this account
-        mint("USDC", address(this), 50_000_000 * USD);
+    function createBalancerPool(uint256 usdcAmount, uint256 mplAmount) public {
+        // Mint USDC into this account
+        mint("USDC", address(this), usdcAmount);
 
         // Initialize MPL/USDC Balancer Pool and whitelist
         bPool = IBPool(IBFactory(BPOOL_FACTORY).newBPool());
         usdc.approve(address(bPool), MAX_UINT);
         mpl.approve(address(bPool),  MAX_UINT);
-        bPool.bind(USDC,         50_000_000 * USD, 5 ether);  // Bind 50m USDC with 5 denormalization weight
-        bPool.bind(address(mpl),    100_000 * WAD, 5 ether);  // Bind 100k MPL with 5 denormalization weight
+        bPool.bind(USDC,         usdcAmount, 5 ether);  // Bind USDC with 5 denormalization weight
+        bPool.bind(address(mpl),  mplAmount, 5 ether);  // Bind  MPL with 5 denormalization weight
         bPool.finalize();
         gov.setValidBalancerPool(address(bPool), true);
+    }
+    // TODO: Update this and update tests to use realistic launch pool (waiting for pool fuzz merge)
+    function createBalancerPool() public {
+        createBalancerPool(50_000_000 * USD, 100_000 * WAD);
     }
 
     function setUpBalancerPool() public {
@@ -505,28 +509,23 @@ contract TestUtil is DSTest {
         fakeGov.setGovMplRewards(mplRewards);                            // Used to assert failures
     }
 
-    function setUpFarmers() public {
+    function createFarmers() public {
         fay = new Farmer(mplRewards, pool);
         fez = new Farmer(mplRewards, pool);
         fox = new Farmer(mplRewards, pool);
+    }
 
-        mint("USDC", address(fay), 1000 * USD);
-        mint("USDC", address(fez), 1000 * USD);
-        mint("USDC", address(fox), 1000 * USD);
+    function setUpFarmers(uint256 amt1, uint256 amt2, uint256 amt3) public {
+        createFarmers();
 
-        fay.approve(USDC, address(pool), MAX_UINT);
-        fez.approve(USDC, address(pool), MAX_UINT);
-        fox.approve(USDC, address(pool), MAX_UINT);
-
-        fay.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
-        fez.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
-        fox.deposit(address(pool), 1000 * USD);  // Mints 1000 * WAD of Pool FDT tokens
+        mintFundsAndDepositIntoPool(fay, pool, amt1, amt1);
+        mintFundsAndDepositIntoPool(fez, pool, amt2, amt2);
+        mintFundsAndDepositIntoPool(fox, pool, amt3, amt3);
     }
 
     /******************************/
     /*** Test Utility Functions ***/
     /******************************/
-
     function setUpTokens() public {
         gov.setLiquidityAsset(DAI,   true);
         gov.setLiquidityAsset(USDC,  true);
@@ -626,10 +625,44 @@ contract TestUtil is DSTest {
         ];
     }
 
+    function toApy(uint256 yield, uint256 stake, uint256 dTime) internal returns (uint256) {
+
+        emit Debug("yield", yield);
+        emit Debug("stake", stake);
+        emit Debug("dTime", dTime);
+        return yield * 10_000 * 365 days / stake / dTime;
+    }
+
+    // Function used to calculate theoretical allotments (e.g. interest for FDTs)
+    function calcPortion(uint256 amt, uint256 totalClaim, uint256 totalAmt) internal pure returns (uint256) {
+        return amt == uint256(0) ? uint256(0) : amt.mul(totalClaim).div(totalAmt);
+    }
+    /*****************************/
+    /*** Yield Farming Helpers ***/
+    /*****************************/
+    function setUpFarming(uint256 totalMpl, uint256 rewardsDuration) internal {
+        mpl.transfer(address(gov), totalMpl);              // Transfer MPL to MplRewards
+        gov.transfer(mpl, address(mplRewards), totalMpl);  // Transfer MPL to MplRewards
+        gov.setRewardsDuration(rewardsDuration);
+        gov.notifyRewardAmount(totalMpl);
+    }
+
+    function stakeIntoFarm(Farmer farmer, uint256 amt) internal{
+        farmer.increaseCustodyAllowance(address(pool), address(mplRewards), amt);
+        farmer.stake(amt); 
+    }
+
+    function setUpFarmingAndDeposit(uint256 totalMpl, uint256 rewardsDuration, uint256 amt1, uint256 amt2, uint256 amt3) internal {
+        setUpFarming(totalMpl, rewardsDuration);
+
+        stakeIntoFarm(fay, amt1);
+        stakeIntoFarm(fez, amt2);
+        stakeIntoFarm(fox, amt3);
+    }
+
     /********************/
     /*** Pool Helpers ***/
     /********************/
-
     function finalizePool(Pool pool, PoolDelegate del, bool openToPublic) internal {
         del.approve(address(bPool), pool.stakeLocker(), MAX_UINT);
         del.stake(pool.stakeLocker(), bPool.balanceOf(address(del)) / 2);
@@ -651,8 +684,8 @@ contract TestUtil is DSTest {
         bow.drawdown(address(loan),  usdDrawdownAmt);
     }
 
-    function doPartialLoanPayment(Loan loan, Borrower bow) internal {
-        (uint256 amt,,,,) = loan.getNextPayment(); // USDC required for next payment of loan
+    function doPartialLoanPayment(Loan loan, Borrower bow) internal returns(uint256 amt) {
+        (amt,,,,) = loan.getNextPayment(); // USDC required for next payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makePayment(address(loan));
@@ -663,6 +696,36 @@ contract TestUtil is DSTest {
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makeFullPayment(address(loan));
+    }
+
+    function setUpLoanMakeOnePaymentAndDefault() public returns (uint256 interestPaid) {
+        // Fund the pool
+        mint("USDC", address(leo), 20_000_000 * USD);
+        leo.approve(USDC, address(pool), MAX_UINT);
+        leo.deposit(address(pool), 10_000_000 * USD);
+
+        // Fund the loan
+        pat.fundLoan(address(pool), address(loan), address(dlFactory), 1_000_000 * USD);
+        uint cReq = loan.collateralRequiredForDrawdown(1_000_000 * USD);
+
+        // Drawdown loan
+        mint("WETH", address(bob), cReq);
+        bob.approve(WETH, address(loan), MAX_UINT);
+        bob.approve(USDC, address(loan), MAX_UINT);
+        bob.drawdown(address(loan), 1_000_000 * USD);
+
+        uint256 preBal = IERC20(USDC).balanceOf(address(bob));
+        bob.makePayment(address(loan));  // Make one payment to register interest for Staker
+        interestPaid = preBal.sub(IERC20(USDC).balanceOf(address(bob)));
+
+        // Warp to late payment
+        uint256 start = block.timestamp;
+        uint256 nextPaymentDue = loan.nextPaymentDue();
+        uint256 defaultGracePeriod = globals.defaultGracePeriod();
+        hevm.warp(start + nextPaymentDue + defaultGracePeriod + 1);
+
+        // Trigger default
+        pat.triggerDefault(address(pool), address(loan), address(dlFactory));
     }
 
     function make_withdrawable(LP investor, Pool pool) internal {

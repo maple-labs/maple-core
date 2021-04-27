@@ -236,24 +236,42 @@ library PoolLib {
     }
 
     /**
-        @dev Performing some checks before doing actual transfers.
+        @dev Performs all necessary checks for a `transfer` call.
     */
     function prepareTransfer(
         mapping(address => uint256) storage withdrawCooldown,
         mapping(address => uint256) storage depositDate,
-        address from,
+        uint256 totalCustodyAllowance,
+        uint256 fromBalance,
         address to,
         uint256 wad,
         IMapleGlobals globals,
         uint256 toBalance,
         uint256 recognizableLosses
     ) external {
-        // If transferring in or out of yield farming contract, do not update depositDate or cooldown
-        if (globals.isExemptFromTransferRestriction(from) || globals.isExemptFromTransferRestriction(to)) return;
+        require(fromBalance.sub(wad) >= totalCustodyAllowance,   "P:INSUFFICENT_TRANSFERABLE_BAL");  // User can only transfer tokens that aren't custodied
+        require(isReceiveAllowed(withdrawCooldown[to], globals), "P:RECIPIENT_NOT_ALLOWED");         // Recipient must not be currently withdrawing
+        require(recognizableLosses == uint256(0),                "P:RECOG_LOSSES");                  // If an LP has unrecognized losses, they must recognize losses through withdraw
+        updateDepositDate(depositDate, toBalance, wad, to);                                          // Update deposit date of recipient
+    }
 
-        require(isReceiveAllowed(withdrawCooldown[to], globals), "P:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently withdrawing
-        require(recognizableLosses == uint256(0),                "P:RECOG_LOSSES");           // If an LP has unrecognized losses, they must recognize losses through withdraw
-        updateDepositDate(depositDate, toBalance, wad, to);                                   // Update deposit date of recipient
+    /**
+        @dev Performs all necessary checks for a `transferByCustodian` call.
+        @dev From and to must always be equal. (TODO: Should we do this?)
+     */
+    function transferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external {
+        require(to == from,                 "P:INVALID_RECEIVER");
+        require(amount != uint256(0),       "P:INVALID_AMT");
+        require(custodyAllowance >= amount, "P:INSUFFICIENT_ALLOWANCE");
+    }
+
+    /**
+        @dev Performs all necessary checks for a `increaseCustodyAllowance` call
+     */
+    function increaseCustodyAllowanceChecks(address custodian, uint256 amount, uint256 newTotalAllowance, uint256 fdtBal) external {
+        require(custodian != address(0),     "P:INVALID_CUSTODIAN");
+        require(amount    != uint256(0),     "P:INVALID_AMT");
+        require(newTotalAllowance <= fdtBal, "P:INSUFFICIENT_BALANCE");
     }
 
     /**
@@ -468,41 +486,6 @@ library PoolLib {
 
         currentPoolDelegateCover   = getSwapOutValue(balancerPool, liquidityAsset, poolDelegate, stakeLocker);
         enoughStakeForFinalization = poolAmountPresent >= poolAmountInRequired;
-    }
-
-    /**
-        @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
-        @param  withdrawableFundsOfLp  FDT withdrawableFundsOf LP
-        @param  depositDateForLp       LP deposit date
-        @param  lockupPeriod           Pool lockup period
-        @param  balanceOfLp            LP FDT balance
-        @param  liquidityAssetDecimals Decimals of liquidityAsset
-        @return total     Total     amount claimable
-        @return principal Principal amount claimable
-        @return interest  Interest  amount claimable
-    */
-    function claimableFunds(
-        uint256 withdrawableFundsOfLp,
-        uint256 depositDateForLp,
-        uint256 lockupPeriod,
-        uint256 balanceOfLp,
-        uint256 liquidityAssetDecimals
-    ) 
-        external
-        view
-        returns(
-            uint256 total,
-            uint256 principal,
-            uint256 interest
-        ) 
-    {
-        interest = withdrawableFundsOfLp;
-        // Deposit is still within lockupPeriod, user has 0 claimable principal under this condition.
-        if (depositDateForLp.add(lockupPeriod) > block.timestamp) total = interest; 
-        else {
-            principal = fromWad(balanceOfLp, liquidityAssetDecimals);
-            total     = principal.add(interest);
-        }
     }
 
     /************************/
