@@ -690,8 +690,6 @@ contract PoolTest is TestUtil {
                 11
             );  
             // principalOut decremented by principal paid plus excess
-            log_named_uint("PrincipalClaim value from contract:", beforePrincipalOut - pool.principalOut());
-            log_named_uint("PrincipalClaim after adding claim values: ", claim[2] + claim[4] + claim[5]);
             assertTrue(beforePrincipalOut - pool.principalOut() == claim[2] + claim[4] + claim[5]);
         } 
         // Edge case, attacker transfers funds into Loan to make principalClaim overflow
