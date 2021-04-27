@@ -81,8 +81,9 @@ contract Pool is PoolFDT {
     );
 
     /**
-        Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
-                                  liquidityLockerBal + principalOut = fdtTotalSupply + interestSum - poolLosses
+        Universal accounting law:
+                                       fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
+            fdtTotalSupply + interestSum - poolLosses = liquidityLockerBal + principalOut
     */
 
     /**

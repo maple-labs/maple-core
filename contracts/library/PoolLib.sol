@@ -323,9 +323,9 @@ library PoolLib {
     function bdiv(uint256 a, uint256 b) public pure returns (uint256) {
         require(b != 0, "P:DIV_ZERO");
         uint256 c0 = a * WAD;
-        require(a == 0 || c0 / a == WAD, "P:DIV_INTERNAL"); // bmul overflow
+        require(a == 0 || c0 / a == WAD, "P:DIV_INTERNAL");  // bmul overflow
         uint256 c1 = c0 + (b / 2);
-        require(c1 >= c0, "P:DIV_INTERNAL"); //  badd require
+        require(c1 >= c0, "P:DIV_INTERNAL");  //  badd require
         return c1 / b;
     }
 

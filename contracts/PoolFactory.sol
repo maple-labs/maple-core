@@ -12,7 +12,7 @@ contract PoolFactory is Pausable {
     uint8 public constant SL_FACTORY = 4;  // Factory type of `StakeLockerFactory`
 
     uint256  public poolsCreated;  // Incrementor for number of Pools created
-    IMapleGlobals public globals;       // MapleGlobals contract
+    IMapleGlobals public globals;  // MapleGlobals contract
 
     mapping(uint256 => address) public pools;              // Map to keep `Pool` contract corresponds to its index.
     mapping(address => bool)    public isPool;             // Used to check if a `Pool` was instantiated from this factory.

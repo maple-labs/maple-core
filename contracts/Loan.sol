@@ -42,18 +42,18 @@ contract Loan is FDT, Pausable {
 
     State public loanState;  // The current state of this loan, as defined in the State enum below
 
-    IERC20 public immutable liquidityAsset;     // Asset deposited by lenders into the FundingLocker, when funding this loan
-    IERC20 public immutable collateralAsset;    // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan
+    IERC20 public immutable liquidityAsset;      // Asset deposited by lenders into the FundingLocker, when funding this loan
+    IERC20 public immutable collateralAsset;     // Asset deposited by borrower into the CollateralLocker, for collateralizing this loan
 
-    address public immutable fundingLocker;     // Funding locker - holds custody of loan funds before drawdown
-    address public immutable flFactory;         // Funding locker factory
-    address public immutable collateralLocker;  // Collateral locker - holds custody of loan collateral
-    address public immutable clFactory;         // Collateral locker factory
-    address public immutable borrower;          // Borrower of this loan, responsible for repayments
-    address public immutable repaymentCalc;     // The repayment calculator for this loan
-    address public immutable lateFeeCalc;       // The late fee calculator for this loan
-    address public immutable premiumCalc;       // The premium calculator for this loan
-    address public immutable superFactory;      // The factory that deployed this Loan
+    address public immutable fundingLocker;      // Funding locker - holds custody of loan funds before drawdown
+    address public immutable flFactory;          // Funding locker factory
+    address public immutable collateralLocker;   // Collateral locker - holds custody of loan collateral
+    address public immutable clFactory;          // Collateral locker factory
+    address public immutable borrower;           // Borrower of this loan, responsible for repayments
+    address public immutable repaymentCalc;      // The repayment calculator for this loan
+    address public immutable lateFeeCalc;        // The late fee calculator for this loan
+    address public immutable premiumCalc;        // The premium calculator for this loan
+    address public immutable superFactory;       // The factory that deployed this Loan
 
     mapping(address => bool) public loanAdmins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
 
@@ -371,7 +371,7 @@ contract Loan is FDT, Pausable {
         else {
             liquidationExcess = amountRecovered.sub(principalOwed);
             principalOwed = 0;
-            liquidityAsset.safeTransfer(borrower, liquidationExcess); // Send excess to Borrower
+            liquidityAsset.safeTransfer(borrower, liquidationExcess);  // Send excess to Borrower
         }
 
         // Call updateFundsReceived() update FDT accounting with funds received from liquidation

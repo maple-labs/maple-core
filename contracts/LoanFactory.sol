@@ -17,9 +17,9 @@ contract LoanFactory is Pausable {
     uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`
     uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`
 
-    IMapleGlobals public globals; // Interface of MapleGlobals
+    IMapleGlobals public globals;  // Interface of MapleGlobals
 
-    uint256 public loansCreated;  // Incrementor for number of loan vaults created.
+    uint256 public loansCreated;   // Incrementor for number of loan vaults created.
 
     mapping(uint256 => address) public loans;   // Loans address mapping
     mapping(address => bool)    public isLoan;  // Used to check if a Loan was instantiated from this contract
