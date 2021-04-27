@@ -22,11 +22,11 @@ contract MapleTreasury {
     address public           globals;        // MapleGlobals contract
 
     /**
-        @dev    Instantiates the MapleTreasury contract.
-        @param  _mpl           MapleToken contract.
-        @param  _fundsToken    fundsToken of MapleToken contract.
-        @param  _uniswapRouter Official UniswapV2 router contract.
-        @param  _globals       MapleGlobals contract.
+        @dev   Instantiates the MapleTreasury contract.
+        @param _mpl           MapleToken contract.
+        @param _fundsToken    fundsToken of MapleToken contract.
+        @param _uniswapRouter Official UniswapV2 router contract.
+        @param _globals       MapleGlobals contract.
     */
     constructor(
         address _mpl,

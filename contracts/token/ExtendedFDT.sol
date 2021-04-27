@@ -171,7 +171,7 @@ abstract contract ExtendedFDT is BasicFDT {
     /**
         @dev Register a loss. May be called directly after a shortfall after BPT burning occurs.
         @dev Calls _updateLossesTokenBalance(), whereby the contract computes the delta of the new and the previous
-        losses and increments the total losses (cumulative) by delta by calling _distributeLosses()
+             losses and increments the total losses (cumulative) by delta by calling _distributeLosses()
     */
     function updateLossesReceived() public virtual {
         int256 newLosses = _updateLossesBalance();

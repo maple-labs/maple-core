@@ -55,7 +55,7 @@ interface IBPool {
         uint256 swapFee
     ) external pure returns (uint256);
 
-    function exitSwapExternAmountOut(
+    function exitswapExternAmountOut(
         address tokenOut,
         uint256 tokenAmountOut,
         uint256 maxPoolAmountIn

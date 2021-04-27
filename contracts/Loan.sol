@@ -308,11 +308,11 @@ contract Loan is FDT, Pausable {
     /************************/
 
     /**
-        @dev    Fund this loan and mint LoanFDTs for mintTo (DebtLocker in the case of Pool funding).
-                Only Liquidity Locker using valid/approved Pool can call this function.
-        @dev    It emits a `LoanFunded` event.
-        @param  amt    Amount to fund the loan
-        @param  mintTo Address that LoanFDTs are minted to.
+        @dev   Fund this loan and mint LoanFDTs for mintTo (DebtLocker in the case of Pool funding).
+               Only Liquidity Locker using valid/approved Pool can call this function.
+        @dev   It emits a `LoanFunded` event.
+        @param amt    Amount to fund the loan
+        @param mintTo Address that LoanFDTs are minted to.
     */
     function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
         _whenProtocolNotPaused();

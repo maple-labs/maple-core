@@ -57,14 +57,14 @@ library PoolLib {
     }
 
     /**
-        @dev    Fund a loan for amt, utilize the supplied debtLockerFactory for debt lockers.
-        @dev    It emits a `LoanFunded` event.
-        @param  debtLockers     Mapping contains the `debtLocker` contract address corresponds to the `dlFactory` and `loan`.
-        @param  superFactory    Address of the `PoolFactory`.
-        @param  liquidityLocker Address of the `liquidityLocker` contract attached with this Pool.
-        @param  loan            Address of the loan to fund.
-        @param  dlFactory       The debt locker factory to utilize.
-        @param  amt             Amount to fund the loan.
+        @dev   Fund a loan for amt, utilize the supplied debtLockerFactory for debt lockers.
+        @dev   It emits a `LoanFunded` event.
+        @param debtLockers     Mapping contains the `debtLocker` contract address corresponds to the `dlFactory` and `loan`.
+        @param superFactory    Address of the `PoolFactory`.
+        @param liquidityLocker Address of the `liquidityLocker` contract attached with this Pool.
+        @param loan            Address of the loan to fund.
+        @param dlFactory       The debt locker factory to utilize.
+        @param amt             Amount to fund the loan.
     */
     function fundLoan(
         mapping(address => mapping(address => address)) storage debtLockers,
@@ -133,7 +133,7 @@ library PoolLib {
         uint256 preBurnBptBal            = bPool.balanceOf(address(this));
 
         // Burn enough BPTs for liquidityAsset to cover defaultSuffered
-        bPool.exitSwapExternAmountOut(
+        bPool.exitswapExternAmountOut(
             address(liquidityAsset), 
             availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut,  // Burn BPTs up to defaultSuffered amount
             preBurnBptBal
@@ -185,11 +185,11 @@ library PoolLib {
     }
 
     /**
-        @dev    Check whether the deactivation is allowed or not.
-        @param  globals        Globals contract interface.
-        @param  principalOut   Amount of funds that is already funded to loans.
-        @param  liquidityAsset Liquidity Asset of the pool.
-     */
+        @dev   Check whether the deactivation is allowed or not.
+        @param globals        Globals contract interface.
+        @param principalOut   Amount of funds that is already funded to loans.
+        @param liquidityAsset Liquidity Asset of the pool.
+    */
     function validateDeactivation(IMapleGlobals globals, uint256 principalOut, address liquidityAsset) external view {
         require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "P:PRINCIPAL_OUTSTANDING");
     }

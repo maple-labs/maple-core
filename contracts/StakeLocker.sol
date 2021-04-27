@@ -59,7 +59,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**
         @dev canUnstake enables unstaking in the following conditions:
                  1. User is not Pool Delegate and the Pool is in Finalized state.
-                2. The Pool is in Initialized or Deactivated state.
+                 2. The Pool is in Initialized or Deactivated state.
     */
     modifier canUnstake(address from) {
         IPool _pool = IPool(pool);
@@ -117,8 +117,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Set the lockup period. Only the Pool Delegate can call this function.
-        @dev It emits a `LockupPeriodUpdated` event.
+        @dev   Set the lockup period. Only the Pool Delegate can call this function.
+        @dev   It emits a `LockupPeriodUpdated` event.
         @param newLockupPeriod New lockup period used to restrict unstaking.
      */
     function setLockupPeriod(uint256 newLockupPeriod) external {
@@ -130,7 +130,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Transfers amt of stakeAsset to dst. Only the Pool can call this function.
+        @dev   Transfers amt of stakeAsset to dst. Only the Pool can call this function.
         @param dst Destination to transfer stakeAsset to.
         @param amt Amount of stakeAsset to transfer.
     */

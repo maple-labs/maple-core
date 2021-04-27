@@ -86,18 +86,18 @@ contract Pool is PoolFDT {
     */
 
     /**
-        @dev    Constructor for a Pool.
-        @dev    It emits a `PoolStateChanged` event.
-        @param  _poolDelegate   Address that has manager privileges of the Pool.
-        @param  _liquidityAsset Asset used to fund the Pool, It gets escrowed in `LiquidityLocker`.
-        @param  _stakeAsset     Asset escrowed in StakeLocker.
-        @param  _slFactory      Factory used to instantiate StakeLocker.
-        @param  _llFactory      Factory used to instantiate LiquidityLocker.
-        @param  _stakingFee     Fee that `stakers` earn on interest, in basis points.
-        @param  _delegateFee    Fee that `_poolDelegate` earns on interest, in basis points.
-        @param  _liquidityCap   Max amount of liquidityAsset accepted by the Pool.
-        @param  name            Name of Pool token.
-        @param  symbol          Symbol of Pool token.
+        @dev   Constructor for a Pool.
+        @dev   It emits a `PoolStateChanged` event.
+        @param _poolDelegate   Address that has manager privileges of the Pool.
+        @param _liquidityAsset Asset used to fund the Pool, It gets escrowed in `LiquidityLocker`.
+        @param _stakeAsset     Asset escrowed in StakeLocker.
+        @param _slFactory      Factory used to instantiate StakeLocker.
+        @param _llFactory      Factory used to instantiate LiquidityLocker.
+        @param _stakingFee     Fee that `stakers` earn on interest, in basis points.
+        @param _delegateFee    Fee that `_poolDelegate` earns on interest, in basis points.
+        @param _liquidityCap   Max amount of liquidityAsset accepted by the Pool.
+        @param name            Name of Pool token.
+        @param symbol          Symbol of Pool token.
     */
     constructor(
         address _poolDelegate,
@@ -331,16 +331,6 @@ contract Pool is PoolFDT {
         _isValidDelegateAndProtocolNotPaused();
         allowedLiquidityProviders[user] = status;
         emit LPStatusChanged(user, status);
-    }
-
-    /**
-        @dev   Update user status on StakeLocker allowlist. Only the Pool Delegate can call this function.
-        @param user   The address to set status for.
-        @param status The status of user on allowlist.
-    */
-    function setAllowlistStakeLocker(address user, bool status) external {
-        _isValidDelegateAndProtocolNotPaused();
-        IStakeLocker(stakeLocker).setAllowlist(user, status);
     }
 
     /**
