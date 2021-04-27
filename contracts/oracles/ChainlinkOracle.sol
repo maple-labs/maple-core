@@ -35,6 +35,7 @@ contract ChainlinkOracle is Ownable {
 
     /**
         @dev Returns the latest price.
+        @return price The latest price.
      */
     function getLatestPrice() public view returns (int256) {
         if (manualOverride) return manualPrice;

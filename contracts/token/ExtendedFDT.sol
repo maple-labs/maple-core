@@ -53,9 +53,11 @@ abstract contract ExtendedFDT is BasicFDT {
 
         if (value == 0) return;
 
-        lossesPerShare = lossesPerShare.add(value.mul(pointsMultiplier) / totalSupply());
+        uint256 _lossesPerShare = lossesPerShare.add(value.mul(pointsMultiplier) / totalSupply());
+        lossesPerShare          = _lossesPerShare;
+
         emit LossesDistributed(msg.sender, value);
-        emit LossesPerShareUpdated(lossesPerShare);
+        emit LossesPerShareUpdated(_lossesPerShare);
     }
 
     /**
@@ -66,9 +68,10 @@ abstract contract ExtendedFDT is BasicFDT {
     function _prepareLossesWithdraw() internal returns (uint256 recognizableDividend) {
         recognizableDividend = recognizableLossesOf(msg.sender);
 
-        recognizedLosses[msg.sender] = recognizedLosses[msg.sender].add(recognizableDividend);
+        uint256 _recognizedLosses    = recognizedLosses[msg.sender].add(recognizableDividend);
+        recognizedLosses[msg.sender] = _recognizedLosses;
 
-        emit LossesRecognized(msg.sender, recognizableDividend, recognizedLosses[msg.sender]);
+        emit LossesRecognized(msg.sender, recognizableDividend, _recognizedLosses);
     }
 
     /**
@@ -85,14 +88,14 @@ abstract contract ExtendedFDT is BasicFDT {
         @param _owner The address of a token holder
         @return The amount of losses that `_owner` has recognized
     */
-    function recognizedLossesOf(address _owner) public view returns (uint256) {
+    function recognizedLossesOf(address _owner) external view returns (uint256) {
         return recognizedLosses[_owner];
     }
 
     /**
         @dev View the amount of losses that an address has earned in total.
-        @dev accumulativeLossesOf(_owner) = withdrawableLossesOf(_owner) + withdrawnLossesOf(_owner)
-        = (pointsPerShare * balanceOf(_owner) + pointsCorrection[_owner]) / pointsMultiplier
+        @dev accumulativeLossesOf(_owner) = recognizableLossesOf(_owner) + recognizedLossesOf(_owner)
+             = (lossesPerShare * balanceOf(_owner) + lossesCorrection[_owner]) / pointsMultiplier
         @param _owner The address of a token holder
         @return The amount of losses that `_owner` has earned in total
     */
@@ -119,12 +122,14 @@ abstract contract ExtendedFDT is BasicFDT {
     ) internal virtual override {
         super._transfer(from, to, value);
 
-        int256 _lossesCorrection = lossesPerShare.mul(value).toInt256Safe();
-        lossesCorrection[from]   = lossesCorrection[from].add(_lossesCorrection);
-        lossesCorrection[to]     = lossesCorrection[to].sub(_lossesCorrection);
+        int256 _lossesCorrection    = lossesPerShare.mul(value).toInt256Safe();
+        int256 lossesCorrectionFrom = lossesCorrection[from].add(_lossesCorrection);
+        lossesCorrection[from]      = lossesCorrectionFrom;
+        int256 lossesCorrectionTo   = lossesCorrection[to].sub(_lossesCorrection);
+        lossesCorrection[to]        = lossesCorrectionTo;
 
-        emit LossesCorrectionUpdated(from, lossesCorrection[from]);
-        emit LossesCorrectionUpdated(to,   lossesCorrection[to]);
+        emit LossesCorrectionUpdated(from, lossesCorrectionFrom);
+        emit LossesCorrectionUpdated(to,   lossesCorrectionTo);
     }
 
     /**
@@ -136,11 +141,13 @@ abstract contract ExtendedFDT is BasicFDT {
     function _mint(address account, uint256 value) internal virtual override {
         super._mint(account, value);
 
-        lossesCorrection[account] = lossesCorrection[account].sub(
+        int256 _lossesCorrection = lossesCorrection[account].sub(
             (lossesPerShare.mul(value)).toInt256Safe()
         );
 
-        emit LossesCorrectionUpdated(account, lossesCorrection[account]);
+        lossesCorrection[account] = _lossesCorrection;
+
+        emit LossesCorrectionUpdated(account, _lossesCorrection);
     }
 
     /**
@@ -152,11 +159,13 @@ abstract contract ExtendedFDT is BasicFDT {
     function _burn(address account, uint256 value) internal virtual override {
         super._burn(account, value);
 
-        lossesCorrection[account] = lossesCorrection[account].add(
+        int256 _lossesCorrection = lossesCorrection[account].add(
             (lossesPerShare.mul(value)).toInt256Safe()
         );
 
-        emit LossesCorrectionUpdated(account, lossesCorrection[account]);
+        lossesCorrection[account] = _lossesCorrection;
+
+        emit LossesCorrectionUpdated(account, _lossesCorrection);
     }
 
     /**

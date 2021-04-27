@@ -62,9 +62,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
                2. The Pool is in Initialized or Deactivated state.
     */
     modifier canUnstake(address from) {
+        IPool _pool = IPool(pool);
+
         require(
-            (from != IPool(pool).poolDelegate() && IPool(pool).isPoolFinalized()) ||
-            !IPool(pool).isPoolFinalized(),
+            (from != _pool.poolDelegate() && _pool.isPoolFinalized()) ||
+            !_pool.isPoolFinalized(),
             "SL:STAKE_LOCKED"
         );
         _;
@@ -220,6 +222,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function unstake(uint256 amt) external canUnstake(msg.sender) {
         _whenProtocolNotPaused();
+
         require(isUnstakeAllowed(msg.sender),                               "SL:OUTSIDE_COOLDOWN");
         require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");
 
@@ -242,12 +245,12 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
         uint256 withdrawableFunds = _prepareWithdraw();
 
-        if (withdrawableFunds > uint256(0)) {
-            fundsToken.safeTransfer(msg.sender, withdrawableFunds);
-            emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
+        if (withdrawableFunds == uint256(0)) return;
 
-            _updateFundsTokenBalance();
-        }
+        fundsToken.safeTransfer(msg.sender, withdrawableFunds);
+        emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
+
+        _updateFundsTokenBalance();
     }
 
     /**

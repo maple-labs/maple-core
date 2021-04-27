@@ -101,7 +101,6 @@ library PoolLib {
         @param  liquidityAsset  IERC20 of liquidityAsset
         @param  stakeLocker     Address of stakeLocker
         @param  stakeAsset      Address of BPTs
-        @param  loan            Address of loan
         @param  defaultSuffered Amount of shortfall in defaulted loan after liquidation
         @return bptsBurned                      Amount of BPTs burned to cover shortfall
         @return postBurnBptBal                  Amount of BPTs returned to stakeLocker after burn
@@ -111,7 +110,6 @@ library PoolLib {
         IERC20  liquidityAsset,
         address stakeLocker,
         address stakeAsset,
-        address loan,
         uint256 defaultSuffered
     ) 
         external
@@ -192,7 +190,7 @@ library PoolLib {
         @param  principalOut   Amount of funds that is already funded to loans.
         @param  liquidityAsset Liquidity Asset of the pool 
      */
-    function validateDeactivation(IMapleGlobals globals, uint256 principalOut, address liquidityAsset) public view {
+    function validateDeactivation(IMapleGlobals globals, uint256 principalOut, address liquidityAsset) external view {
         require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "P:PRINCIPAL_OUTSTANDING");
     }
 
@@ -225,7 +223,7 @@ library PoolLib {
     /**
         @dev View function to indicate if msg.sender is within their withdraw window.
     */
-    function isWithdrawAllowed(uint256 withdrawCooldown, IMapleGlobals globals) public view returns (bool) {
+    function isWithdrawAllowed(uint256 withdrawCooldown, IMapleGlobals globals) external view returns (bool) {
         return block.timestamp - (withdrawCooldown + globals.lpCooldownPeriod()) <= globals.lpWithdrawWindow();
     }
 
@@ -323,16 +321,15 @@ library PoolLib {
         address liquidityAsset,
         address staker,
         address stakeLocker
-    ) public view returns (uint256) {
+    ) external view returns (uint256) {
 
         // Create interfaces for the balancerPool as a Pool and as an ERC-20 token
-        IBPool bPool      = IBPool(_bPool);
-        IERC20 bPoolERC20 = IERC20(_bPool);
+        IBPool bPool = IBPool(_bPool);
 
         // FDTs are minted 1:1 (in wei) in the StakeLocker when staking BPTs, thus representing stake amount.
         // These are burned when withdrawing staked BPTs, thus representing the current stake amount.
         uint256 amountStakedBPT       = IERC20(stakeLocker).balanceOf(staker);
-        uint256 totalSupplyBPT        = bPoolERC20.totalSupply();
+        uint256 totalSupplyBPT        = IERC20(_bPool).totalSupply();
         uint256 liquidityAssetBalance = bPool.getBalance(liquidityAsset);
         uint256 liquidityAssetWeight  = bPool.getNormalizedWeight(liquidityAsset);
 
@@ -420,7 +417,7 @@ library PoolLib {
         address stakeLocker,
         uint256 liquidityAssetAmountRequired
     ) public view returns (uint256 poolAmountInRequired, uint256 stakerBalance) {
-
+        // Fetch balancer pool token information
         IBPool bPool = IBPool(_bPool);
 
         uint256 tokenBalanceOut = bPool.getBalance(liquidityAsset);
@@ -456,7 +453,7 @@ library PoolLib {
         @return poolAmountInRequired       BPTs required for minimum liquidityAsset coverage
         @return poolAmountPresent          Current staked BPTs
     */
-    function getInitialStakeRequirements(IMapleGlobals globals, address balancerPool, address liquidityAsset, address poolDelegate, address stakeLocker) public view returns (
+    function getInitialStakeRequirements(IMapleGlobals globals, address balancerPool, address liquidityAsset, address poolDelegate, address stakeLocker) external view returns (
         uint256 swapOutAmountRequired,
         uint256 currentPoolDelegateCover,
         bool    enoughStakeForFinalization,
@@ -491,7 +488,7 @@ library PoolLib {
         uint256 balanceOfLp,
         uint256 liquidityAssetDecimals
     ) 
-        public
+        external
         view
         returns(
             uint256 total,

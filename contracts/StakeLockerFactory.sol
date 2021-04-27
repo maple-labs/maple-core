@@ -23,15 +23,15 @@ contract StakeLockerFactory {
     /**
         @dev Instantiate a StakeLocker contract.
         @dev It emits a `StakeLockerCreated` event.
-        @param stakeAsset     Address of the stakeAsset (generally Balancer Pool BPTs)
-        @param liquidityAsset Address of the liquidityAsset (as defined in the pool)
-        @return Address of the instantiated StakeLocker
+        @param stakeAsset     Address of the stakeAsset (generally Balancer Pool BPTs).
+        @param liquidityAsset Address of the liquidityAsset (as defined in the pool).
+        @return stakeLocker   Address of the instantiated StakeLocker.
     */
     function newLocker(
         address stakeAsset,
         address liquidityAsset
-    ) external returns (address) {
-        address stakeLocker   = address(new StakeLocker(stakeAsset, liquidityAsset, msg.sender));
+    ) external returns (address stakeLocker) {
+        stakeLocker           = address(new StakeLocker(stakeAsset, liquidityAsset, msg.sender));
         owner[stakeLocker]    = msg.sender;
         isLocker[stakeLocker] = true;
 
@@ -43,6 +43,5 @@ contract StakeLockerFactory {
             StakeLocker(stakeLocker).name(),
             StakeLocker(stakeLocker).symbol()
         );
-        return stakeLocker;
     }
 }

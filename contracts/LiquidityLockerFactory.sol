@@ -16,15 +16,14 @@ contract LiquidityLockerFactory {
     /**
         @dev Instantiate a LiquidityLocker contract.
         @dev It emits a `LiquidityLockerCreated` event.
-        @param  liquidityAsset The asset this liquidity locker will escrow
-        @return Address of the instantiated liquidity locker
+        @param liquidityAsset   The asset this liquidity locker will escrow.
+        @return liquidityLocker Address of the instantiated liquidity locker.
     */
-    function newLocker(address liquidityAsset) external returns (address) {
-        address liquidityLocker   = address(new LiquidityLocker(liquidityAsset, msg.sender));
+    function newLocker(address liquidityAsset) external returns (address liquidityLocker) {
+        liquidityLocker           = address(new LiquidityLocker(liquidityAsset, msg.sender));
         owner[liquidityLocker]    = msg.sender;
         isLocker[liquidityLocker] = true;
 
         emit LiquidityLockerCreated(msg.sender, liquidityLocker, liquidityAsset);
-        return liquidityLocker;
     }
 }

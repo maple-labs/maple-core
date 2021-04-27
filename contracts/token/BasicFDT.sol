@@ -55,11 +55,11 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
         @return withdrawableDividend The amount of diviend funds that can be withdrawn.
     */
     function _prepareWithdraw() internal returns (uint256 withdrawableDividend) {
-        withdrawableDividend = withdrawableFundsOf(msg.sender);
+        withdrawableDividend       = withdrawableFundsOf(msg.sender);
+        uint256 _withdrawnFunds    = withdrawnFunds[msg.sender].add(withdrawableDividend);
+        withdrawnFunds[msg.sender] = _withdrawnFunds;
 
-        withdrawnFunds[msg.sender] = withdrawnFunds[msg.sender].add(withdrawableDividend);
-
-        emit FundsWithdrawn(msg.sender, withdrawableDividend, withdrawnFunds[msg.sender]);
+        emit FundsWithdrawn(msg.sender, withdrawableDividend, _withdrawnFunds);
     }
 
     /**
@@ -76,7 +76,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
         @param _owner The address of a token holder.
         @return The amount of funds that `_owner` has withdrawn.
     */
-    function withdrawnFundsOf(address _owner) public view returns (uint256) {
+    function withdrawnFundsOf(address _owner) external view returns (uint256) {
         return withdrawnFunds[_owner];
     }
 
@@ -110,12 +110,14 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     ) internal virtual override {
         super._transfer(from, to, value);
 
-        int256 _magCorrection = pointsPerShare.mul(value).toInt256Safe();
-        pointsCorrection[from] = pointsCorrection[from].add(_magCorrection);
-        pointsCorrection[to] = pointsCorrection[to].sub(_magCorrection);
+        int256 _magCorrection       = pointsPerShare.mul(value).toInt256Safe();
+        int256 pointsCorrectionFrom = pointsCorrection[from].add(_magCorrection);
+        pointsCorrection[from]      = pointsCorrectionFrom;
+        int256 pointsCorrectionTo   = pointsCorrection[to].sub(_magCorrection);
+        pointsCorrection[to]        = pointsCorrectionTo;
 
-        emit PointsCorrectionUpdated(from, pointsCorrection[from]);
-        emit PointsCorrectionUpdated(to,   pointsCorrection[to]);
+        emit PointsCorrectionUpdated(from, pointsCorrectionFrom);
+        emit PointsCorrectionUpdated(to,   pointsCorrectionTo);
     }
 
     /**
@@ -126,11 +128,13 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     function _mint(address account, uint256 value) internal virtual override {
         super._mint(account, value);
 
-        pointsCorrection[account] = pointsCorrection[account].sub(
+        int256 _pointsCorrection = pointsCorrection[account].sub(
             (pointsPerShare.mul(value)).toInt256Safe()
         );
 
-        emit PointsCorrectionUpdated(account, pointsCorrection[account]);
+        pointsCorrection[account] = _pointsCorrection;
+
+        emit PointsCorrectionUpdated(account, _pointsCorrection);
     }
 
     /**
@@ -142,10 +146,13 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     function _burn(address account, uint256 value) internal virtual override {
         super._burn(account, value);
 
-        pointsCorrection[account] = pointsCorrection[account].add(
+        int256 _pointsCorrection = pointsCorrection[account].add(
             (pointsPerShare.mul(value)).toInt256Safe()
         );
-        emit PointsCorrectionUpdated(account, pointsCorrection[account]);
+
+        pointsCorrection[account] = _pointsCorrection;
+
+        emit PointsCorrectionUpdated(account, _pointsCorrection);
     }
 
     /**

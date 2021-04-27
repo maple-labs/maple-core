@@ -400,7 +400,7 @@ contract MapleGlobals {
         require(msg.sender == pendingGovernor, "MG:NOT_PENDING_GOV");
         governor = pendingGovernor;
         pendingGovernor = address(0);
-        emit GovernorAccepted(governor);
+        emit GovernorAccepted(msg.sender);
     }
 
     /************************/

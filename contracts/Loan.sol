@@ -133,14 +133,7 @@ contract Loan is FDT, Pausable {
         address _clFactory,
         uint256[5] memory specs,
         address[3] memory calcs
-    )
-        FDT(
-            string(abi.encodePacked("Maple Loan Token")),
-            string(abi.encodePacked("MPL-LOAN")),
-            _liquidityAsset
-        )
-        public
-    {
+    ) FDT("Maple Loan Token", "MPL-LOAN", _liquidityAsset) public {
         IMapleGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks
@@ -246,7 +239,7 @@ contract Loan is FDT, Pausable {
         _whenProtocolNotPaused();
         _isValidState(State.Active);
         (uint256 total, uint256 principal, uint256 interest,, bool paymentLate) = getNextPayment();
-        paymentsRemaining--;
+        --paymentsRemaining;
         _makePayment(total, principal, interest, paymentLate);
     }
 
@@ -462,7 +455,7 @@ contract Loan is FDT, Pausable {
         @dev Public getter to know how much minimum amount of loan asset will get by swapping collateral asset.
         @return Expected amount of liquidityAsset to be recovered from liquidation based on current oracle prices
     */
-    function getExpectedAmountRecovered() public view returns(uint256) {
+    function getExpectedAmountRecovered() external view returns(uint256) {
         uint256 liquidationAmt = _getCollateralLockerBalance();
         return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(liquidityAsset), liquidationAmt);
     }

@@ -15,31 +15,29 @@ contract RepaymentCalc {
 
     /**
         @dev    Calculates the next payment for a Loan.
-        @param  _loan Loan to calculate a payment for
-        @return [0] = Entitiled interest to the next payment, Principal + Interest only when the next payment is last payment of the loan
-                [1] = Entitiled principal amount needs to pay in the next payment
-                [2] = Entitiled interest amount needs to pay in the next payment
+        @param  _loan         Loan to calculate a payment for
+        @return total         Entitiled interest to the next payment, Principal + Interest only when the next payment is last payment of the loan.
+        @return principalOwed Entitiled principal amount needs to pay in the next payment.
+        @return interest      Entitiled interest amount needs to pay in the next payment.
     */
-    function getNextPayment(address _loan) public view returns(uint256, uint256, uint256) {
+    function getNextPayment(address _loan) external view returns(uint256 total, uint256 principalOwed, uint256 interest) {
 
         ILoan loan = ILoan(_loan);
 
-        uint256 principalOwed = loan.principalOwed();
+        principalOwed = loan.principalOwed();
 
         // Equation = principal * APR * (paymentInterval / year)
         // Principal * APR gives annual interest
         // Multiplying that by (paymentInterval / year) gives portion of annual interest due for each interval
-        uint256 interest =
+        interest =
             principalOwed
                 .mul(loan.apr())
                 .mul(loan.paymentIntervalSeconds())
                 .div(10_000)
                 .div(365 days);
 
-        if (loan.paymentsRemaining() == 1) {
-            return (interest.add(principalOwed), principalOwed, interest);
-        } else {
-            return (interest, 0, interest);
-        }
+        return loan.paymentsRemaining() == 1
+            ? (interest.add(principalOwed), principalOwed, interest)
+            : (interest, 0, interest);
     }
 }
