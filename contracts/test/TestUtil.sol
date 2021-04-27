@@ -659,7 +659,6 @@ contract TestUtil is DSTest {
         stakeIntoFarm(fez, amt2);
         stakeIntoFarm(fox, amt3);
     }
-    
 
     function toApy(uint256 yield, uint256 stake, uint256 dTime) internal returns (uint256) {
 
