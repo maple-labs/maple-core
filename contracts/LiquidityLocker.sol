@@ -19,7 +19,7 @@ contract LiquidityLocker {
     }
 
     /**
-        @dev Checks that msg.sender is the Pool.
+        @dev Checks that `msg.sender` is the Pool.
     */
     modifier isPool() {
         require(msg.sender == pool, "LL:NOT_P");
@@ -27,9 +27,9 @@ contract LiquidityLocker {
     }
 
     /**
-        @dev Transfers amt of liquidityAsset to dst. Only the Pool can call this function.
-        @param dst Desintation to transfer liquidityAsset to
-        @param amt Amount of liquidityAsset to transfer
+        @dev   Transfers amt of liquidityAsset to dst. Only the Pool can call this function.
+        @param dst Destination to transfer liquidityAsset to.
+        @param amt Amount of liquidityAsset to transfer.
     */
     function transfer(address dst, uint256 amt) external isPool {
         require(dst != address(0), "LL:NULL_DST");
@@ -37,10 +37,10 @@ contract LiquidityLocker {
     }
 
     /**
-        @dev Fund a loan using available assets in this liquidity locker. Only the Pool can call this function.
-        @param  loan       The loan to fund
-        @param  debtLocker The locker that will escrow debt tokens
-        @param  amt        Amount of liquidityAsset to fund the loan for
+        @dev   Fund a loan using available assets in this liquidity locker. Only the Pool can call this function.
+        @param loan       The loan to fund.
+        @param debtLocker The locker that will escrow debt tokens.
+        @param amt        Amount of liquidityAsset to fund the loan for.
     */
     function fundLoan(address loan, address debtLocker, uint256 amt) external isPool {
         liquidityAsset.safeApprove(loan, amt);

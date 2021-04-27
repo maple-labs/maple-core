@@ -16,10 +16,10 @@ contract FundingLockerFactory {
     event FundingLockerCreated(address indexed owner, address fundingLocker, address liquidityAsset);
 
     /**
-        @dev Instantiate a FundingLocker contract.
-        @dev It emits a `FundingLockerCreated` event.
-        @param liquidityAsset The asset this funding locker will escrow.
-        @return fundingLocker Address of the instantiated funding locker.
+        @dev    Instantiate a FundingLocker contract.
+        @dev    It emits a `FundingLockerCreated` event.
+        @param  liquidityAsset The asset this funding locker will escrow.
+        @return fundingLocker  Address of the instantiated funding locker.
     */
     function newLocker(address liquidityAsset) external returns (address fundingLocker) {
         fundingLocker           = address(new FundingLocker(liquidityAsset, msg.sender));

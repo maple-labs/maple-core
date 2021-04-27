@@ -59,7 +59,7 @@ contract Pool is PoolFDT {
     mapping(address => uint256)                     public totalCustodyAllowance;      // Total amount of PoolFDTs that are "locked" for a given user, cannot be greater than balance
 
     event              LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
-    event                   Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee, uint256 stakeLockerfee, uint256 poolDelegateFee);
+    event                   Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee, uint256 stakeLockerFee, uint256 poolDelegateFee);
     event          BalanceUpdated(address indexed who, address indexed token, uint256 balance);
     event         CustodyTransfer(address indexed custodian, address indexed from, address indexed to, uint256 amount);
     event CustodyAllowanceChanged(address indexed tokenHolder, address indexed custodian, uint256 oldAllowance, uint256 newAllowance);
@@ -81,23 +81,24 @@ contract Pool is PoolFDT {
     );
 
     /**
-        Universal accounting law: fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
-               liquidityLockerBal + principalOut = fdtTotalSupply + interestSum - poolLosses
+        Universal accounting law:
+                                       fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
+            fdtTotalSupply + interestSum - poolLosses = liquidityLockerBal + principalOut
     */
 
     /**
-        @dev Constructor for a Pool.
-        @dev It emits a `PoolStateChanged` event.
-        @param  _poolDelegate   Address that has manager privileges of the Pool
-        @param  _liquidityAsset Asset used to fund the Pool, It gets escrowed in `LiquidityLocker`
-        @param  _stakeAsset     Asset escrowed in StakeLocker
-        @param  _slFactory      Factory used to instantiate StakeLocker
-        @param  _llFactory      Factory used to instantiate LiquidityLocker
-        @param  _stakingFee     Fee that `stakers` earn on interest, in basis points
-        @param  _delegateFee    Fee that `_poolDelegate` earns on interest, in basis points
-        @param  _liquidityCap   Max amount of liquidityAsset accepted by the Pool
-        @param  name            Name of Pool token
-        @param  symbol          Symbol of Pool token
+        @dev   Constructor for a Pool.
+        @dev   It emits a `PoolStateChanged` event.
+        @param _poolDelegate   Address that has manager privileges of the Pool.
+        @param _liquidityAsset Asset used to fund the Pool, It gets escrowed in `LiquidityLocker`.
+        @param _stakeAsset     Asset escrowed in StakeLocker.
+        @param _slFactory      Factory used to instantiate StakeLocker.
+        @param _llFactory      Factory used to instantiate LiquidityLocker.
+        @param _stakingFee     Fee that `stakers` earn on interest, in basis points.
+        @param _delegateFee    Fee that `_poolDelegate` earns on interest, in basis points.
+        @param _liquidityCap   Max amount of liquidityAsset accepted by the Pool.
+        @param name            Name of Pool token.
+        @param symbol          Symbol of Pool token.
     */
     constructor(
         address _poolDelegate,
@@ -154,10 +155,10 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Fund a loan for amt, utilize the supplied dlFactory for debt lockers. Only the Pool Delegate can call this function.
-        @param  loan      Address of the loan to fund
-        @param  dlFactory The DebtLockerFactory to utilize
-        @param  amt       Amount to fund the loan
+        @dev   Fund a loan for amt, utilize the supplied dlFactory for debt lockers. Only the Pool Delegate can call this function.
+        @param loan      Address of the loan to fund.
+        @param dlFactory The DebtLockerFactory to utilize.
+        @param amt       Amount to fund the loan.
     */
     function fundLoan(address loan, address dlFactory, uint256 amt) external {
         _isValidDelegateAndProtocolNotPaused();
@@ -168,11 +169,11 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Liquidate the loan. Pool delegate could liquidate a loan only when loan completes its grace period.
-             Pool delegate can claim its proportion of recovered funds from liquidation using the `claim()` function.
-             Only the Pool Delegate can call this function.
-        @param loan      Address of the loan contract to liquidate
-        @param dlFactory Address of the debt locker factory that is used to pull corresponding debt locker
+        @dev   Liquidate the loan. Pool delegate could liquidate a loan only when loan completes its grace period.
+               Pool delegate can claim its proportion of recovered funds from liquidation using the `claim()` function.
+               Only the Pool Delegate can call this function.
+        @param loan      Address of the loan contract to liquidate.
+        @param dlFactory Address of the debt locker factory that is used to pull corresponding debt locker.
      */
     function triggerDefault(address loan, address dlFactory) external {
         _isValidDelegateAndProtocolNotPaused();
@@ -180,19 +181,19 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Claim available funds for loan through specified DebtLockerFactory. Only the Pool Delegate or a Pool Admin can call this function.
-        @dev It emits a `BalanceUpdated` event.
-        @dev It emits a `Claim` event.
-        @param  loan      Address of the loan to claim from
-        @param  dlFactory The DebtLockerFactory (always maps to a single debt locker)
-        @return claimInfo   The claim details.
-                claimInfo [0] = Total amount claimed
-                claimInfo [1] = Interest  portion claimed
-                claimInfo [2] = Principal portion claimed
-                claimInfo [3] = Fee       portion claimed
-                claimInfo [4] = Excess    portion claimed
-                claimInfo [5] = Recovered portion claimed (from liquidations)
-                claimInfo [6] = Default suffered
+        @dev    Claim available funds for loan through specified DebtLockerFactory. Only the Pool Delegate or a Pool Admin can call this function.
+        @dev    It emits a `BalanceUpdated` event.
+        @dev    It emits a `Claim` event.
+        @param  loan      Address of the loan to claim from.
+        @param  dlFactory The DebtLockerFactory (always maps to a single debt locker).
+        @return claimInfo The claim details.
+                    claimInfo [0] = Total amount claimed
+                    claimInfo [1] = Interest  portion claimed
+                    claimInfo [2] = Principal portion claimed
+                    claimInfo [3] = Fee       portion claimed
+                    claimInfo [4] = Excess    portion claimed
+                    claimInfo [5] = Recovered portion claimed (from liquidations)
+                    claimInfo [6] = Default suffered
     */
     function claim(address loan, address dlFactory) external returns(uint256[7] memory claimInfo) {
         _whenProtocolNotPaused();
@@ -239,10 +240,10 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Helper function if a claim has been made and there is a non-zero defaultSuffered amount.
-        @dev It emits a `DefaultSuffered` event.
-        @param loan            Address of loan that has defaulted
-        @param defaultSuffered Losses suffered from default after liquidation
+        @dev   Helper function if a claim has been made and there is a non-zero defaultSuffered amount.
+        @dev   It emits a `DefaultSuffered` event.
+        @param loan            Address of loan that has defaulted.
+        @param defaultSuffered Losses suffered from default after liquidation.
     */
     function _handleDefault(address loan, uint256 defaultSuffered) internal {
 
@@ -286,9 +287,9 @@ contract Pool is PoolFDT {
     /**************************************/
 
     /**
-        @dev Set `liquidityCap`. Only the Pool Delegate or a Pool Admin can call this function.
-        @dev It emits a `LiquidityCapSet` event.
-        @param newLiquidityCap New liquidityCap value
+        @dev   Set `liquidityCap`. Only the Pool Delegate or a Pool Admin can call this function.
+        @dev   It emits a `LiquidityCapSet` event.
+        @param newLiquidityCap New liquidityCap value.
     */
     function setLiquidityCap(uint256 newLiquidityCap) external {
         _whenProtocolNotPaused();
@@ -298,8 +299,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Set the lockup period. Only the Pool Delegate can call this function.
-        @dev It emits a `LockupPeriodSet` event.
+        @dev   Set the lockup period. Only the Pool Delegate can call this function.
+        @dev   It emits a `LockupPeriodSet` event.
         @param newLockupPeriod New lockup period used to restrict the withdrawals.
      */
     function setLockupPeriod(uint256 newLockupPeriod) external {
@@ -310,8 +311,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Update staking fee. Only the Pool Delegate can call this function.
-        @dev It emits a `StakingFeeSet` event.
+        @dev   Update staking fee. Only the Pool Delegate can call this function.
+        @dev   It emits a `StakingFeeSet` event.
         @param newStakingFee New staking fee.
     */
     function setStakingFee(uint256 newStakingFee) external {
@@ -322,8 +323,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Update user status on Pool allowlist. Only the Pool Delegate can call this function.
-        @dev It emits an `LPStatusChanged` event.
+        @dev   Update user status on Pool allowlist. Only the Pool Delegate can call this function.
+        @dev   It emits an `LPStatusChanged` event.
         @param user   The address to set status for.
         @param status The status of user on allowlist.
     */
@@ -334,8 +335,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Set pool admin. Only the Pool Delegate can call this function.
-        @dev It emits a `PoolAdminSet` event.
+        @dev   Set pool admin. Only the Pool Delegate can call this function.
+        @dev   It emits a `PoolAdminSet` event.
         @param poolAdmin An address being allowed or disallowed as a Pool Admin.
         @param allowed Status of an pool admin.
     */
@@ -346,8 +347,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Set public pool access. Only the Pool Delegate can call this function.
-        @dev It emits a `PoolOpenedToPublic` event.
+        @dev   Set public pool access. Only the Pool Delegate can call this function.
+        @dev   It emits a `PoolOpenedToPublic` event.
         @param open Public pool access status.
     */
     function setOpenToPublic(bool open) external {
@@ -361,8 +362,8 @@ contract Pool is PoolFDT {
     /************************************/
 
     /**
-        @dev Liquidity providers can deposit liquidityAsset into the LiquidityLocker, minting FDTs.
-        @dev It emits a `Cooldown` event.
+        @dev   Liquidity providers can deposit liquidityAsset into the LiquidityLocker, minting FDTs.
+        @dev   It emits a `Cooldown` event.
         @param amt Amount of liquidityAsset to deposit
     */
     function deposit(uint256 amt) external {
@@ -397,8 +398,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Liquidity providers can withdraw liquidityAsset from the LiquidityLocker, burning PoolFDTs.
-        @param amt Amount of liquidityAsset to withdraw
+        @dev   Liquidity providers can withdraw liquidityAsset from the LiquidityLocker, burning PoolFDTs.
+        @param amt Amount of liquidityAsset to withdraw.
     */
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
@@ -418,10 +419,10 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Transfer PoolFDTs.
-        @param from Address sending   PoolFDTs
-        @param to   Address receiving PoolFDTs
-        @param wad  Amount of PoolFDTs to transfer
+        @dev   Transfer PoolFDTs.
+        @param from Address sending   PoolFDTs.
+        @param to   Address receiving PoolFDTs.
+        @param wad  Amount of PoolFDTs to transfer.
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
@@ -459,9 +460,9 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Increase the custody allowance for a given `custodian` corresponds to `msg.sender`.
+        @dev   Increase the custody allowance for a given `custodian` corresponds to `msg.sender`.
         @param custodian Address which will act as custodian of given `amount` for a tokenHolder.
-        @param amount    Number of FDTs cusodied by the custodian.
+        @param amount    Number of FDTs custodied by the custodian.
      */
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
         uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
@@ -476,8 +477,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev `from` and `to` should always be equal in this implementation.
-        @dev This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
+        @dev   `from` and `to` should always be equal in this implementation.
+        @dev   This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
         @param from   Address which holds to Pool FDTs.
         @param to     Address which going to be the new owner of the `amount` FDTs.
         @param amount Number of FDTs transferred.
@@ -499,7 +500,7 @@ contract Pool is PoolFDT {
     /**************************/
 
     /**
-        @dev Transfer any locked funds to the Governor. Only the Governor can call this function.
+        @dev   Transfer any locked funds to the Governor. Only the Governor can call this function.
         @param token Address of the token to reclaim.
     */
     function reclaimERC20(address token) external {
@@ -511,11 +512,11 @@ contract Pool is PoolFDT {
     /*************************/
 
     /**
-        @dev Calculates the value of BPT in units of liquidityAsset.
-        @param _bPool          Address of Balancer pool
-        @param _liquidityAsset Asset used by Pool for liquidity to fund loans
-        @param _staker         Address that deposited BPTs to stakeLocker
-        @param _stakeLocker    Escrows BPTs deposited by staker
+        @dev    Calculates the value of BPT in units of liquidityAsset.
+        @param  _bPool          Address of Balancer pool
+        @param  _liquidityAsset Asset used by Pool for liquidity to fund loans
+        @param  _staker         Address that deposited BPTs to stakeLocker
+        @param  _stakeLocker    Escrows BPTs deposited by staker
         @return USDC value of staker BPTs
     */
     function BPTVal(
@@ -528,8 +529,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Check whether the given `depositAmt` is acceptable based on current liquidityCap.
-        @param depositAmt Amount of tokens (i.e liquidityAsset type) user is trying to deposit
+        @dev   Checks that the given `depositAmt` is acceptable based on current liquidityCap.
+        @param depositAmt Amount of tokens (i.e liquidityAsset type) user is trying to deposit.
     */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
         return (openToPublic || allowedLiquidityProviders[msg.sender]) &&
@@ -537,26 +538,26 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Returns information on the stake requirements.
-        @return [0] = Min amount of liquidityAsset coverage from staking required
-                [1] = Present amount of liquidityAsset coverage from Pool Delegate stake
-                [2] = If enough stake is present from Pool Delegate for finalization
-                [3] = Staked BPTs required for minimum liquidityAsset coverage
-                [4] = Current staked BPTs
+        @dev    Returns information on the stake requirements.
+        @return [0] = Min amount of liquidityAsset coverage from staking required.
+                [1] = Present amount of liquidityAsset coverage from Pool Delegate stake.
+                [2] = If enough stake is present from Pool Delegate for finalization.
+                [3] = Staked BPTs required for minimum liquidityAsset coverage.
+                [4] = Current staked BPTs.
     */
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
         return PoolLib.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
     }
 
     /**
-        @dev Calculates BPTs required if burning BPTs for liquidityAsset, given supplied tokenAmountOutRequired.
-        @param  _bPool                        Balancer pool that issues the BPTs
-        @param  _liquidityAsset               Swap out asset (e.g. USDC) to receive when burning BPTs
-        @param  _staker                       Address that deposited BPTs to stakeLocker
-        @param  _stakeLocker                  Escrows BPTs deposited by staker
-        @param  _liquidityAssetAmountRequired Amount of liquidityAsset required to recover
-        @return [0] = poolAmountIn required
-                [1] = poolAmountIn currently staked
+        @dev    Calculates BPTs required if burning BPTs for liquidityAsset, given supplied tokenAmountOutRequired.
+        @param  _bPool                        Balancer pool that issues the BPTs.
+        @param  _liquidityAsset               Swap out asset (e.g. USDC) to receive when burning BPTs.
+        @param  _staker                       Address that deposited BPTs to stakeLocker.
+        @param  _stakeLocker                  Escrows BPTs deposited by staker.
+        @param  _liquidityAssetAmountRequired Amount of liquidityAsset required to recover.
+        @return [0] = poolAmountIn required.
+                [1] = poolAmountIn currently staked.
     */
     function getPoolSharesRequired(
         address _bPool,
@@ -569,7 +570,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-      @dev Checks whether pool state is `Finalized`?
+      @dev    Checks that the Pool state is `Finalized`.
       @return bool Boolean value indicating if Pool is in a Finalized state.
      */
     function isPoolFinalized() external view returns(bool) {
@@ -581,31 +582,31 @@ contract Pool is PoolFDT {
     /************************/
 
     /**
-        @dev Utility to convert to WAD precision.
-        @param amt Amount to convert
+        @dev   Utility to convert to WAD precision.
+        @param amt Amount to convert.
     */
     function _toWad(uint256 amt) internal view returns(uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
     }
 
     /**
-        @dev Fetch the balance of this Pool's LiquidityLocker.
-        @return Balance of LiquidityLocker
+        @dev   Fetch the balance of this Pool's LiquidityLocker.
+        @return Balance of LiquidityLocker.
     */
     function _balanceOfLiquidityLocker() internal view returns(uint256) {
         return liquidityAsset.balanceOf(liquidityLocker);
     }
 
     /**
-        @dev Utility to check current state of Pool againt provided state.
-        @param _state Enum of desired Pool state
+        @dev   Checks that the current state of Pool matches the provided state.
+        @param _state Enum of desired Pool state.
     */
     function _isValidState(State _state) internal view {
         require(poolState == _state, "P:INVALID_STATE");
     }
 
     /**
-        @dev Checks that msg.sender is the Pool Delegate.
+        @dev Checks that `msg.sender` is the Pool Delegate.
     */
     function _isValidDelegate() internal view {
         require(msg.sender == poolDelegate, "P:NOT_DELEGATE");
@@ -626,30 +627,30 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Transfers liquidity asset from address(this) to given `to` address.
-        @param to    Address to transfer liquidityAsset
-        @param value Amount of liquidity asset that gets transferred
+        @dev   Transfers liquidity asset from address(this) to given `to` address.
+        @param to    Address to transfer liquidityAsset.
+        @param value Amount of liquidity asset that gets transferred.
     */
     function _transferLiquidityAsset(address to, uint256 value) internal {
         liquidityAsset.safeTransfer(to, value);
     }
 
     /**
-        @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
+        @dev Checks that `msg.sender` is the Pool Delegate or a Pool Admin.
     */
     function _isValidDelegateOrPoolAdmin() internal view {
         require(msg.sender == poolDelegate || poolAdmins[msg.sender], "P:NOT_DELEGATE_OR_ADMIN");
     }
 
     /**
-        @dev Function to block functionality of functions when protocol is in a paused state.
+        @dev Checks that the protocol is not in a paused state.
     */
     function _whenProtocolNotPaused() internal view {
         require(!_globals(superFactory).protocolPaused(), "P:PROTO_PAUSED");
     }
 
     /**
-        @dev Checks that msg.sender is the Pool Delegate and protocol is not in a paused state.
+        @dev Checks that `msg.sender` is the Pool Delegate and that the protocol is not in a paused state.
     */
     function _isValidDelegateAndProtocolNotPaused() internal view {
         _isValidDelegate();

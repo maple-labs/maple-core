@@ -22,11 +22,11 @@ contract MapleTreasury {
     address public           globals;        // MapleGlobals contract
 
     /**
-        @dev Instantiates the MapleTreasury contract.
-        @param  _mpl           MapleToken contract
-        @param  _fundsToken    fundsToken of MapleToken contract
-        @param  _uniswapRouter Official UniswapV2 router contract
-        @param  _globals       MapleGlobals contract
+        @dev   Instantiates the MapleTreasury contract.
+        @param _mpl           MapleToken contract.
+        @param _fundsToken    fundsToken of MapleToken contract.
+        @param _uniswapRouter Official UniswapV2 router contract.
+        @param _globals       MapleGlobals contract.
     */
     constructor(
         address _mpl,
@@ -46,7 +46,7 @@ contract MapleTreasury {
     event           GlobalsSet(address newGlobals);
 
     /**
-        @dev Checks that msg.sender is the Governor.
+        @dev Checks that `msg.sender` is the Governor.
     */
     modifier isGovernor() {
         require(msg.sender == IMapleGlobals(globals).governor(), "MT:NOT_GOV");
@@ -54,9 +54,9 @@ contract MapleTreasury {
     }
 
     /**
-        @dev Update the MapleGlobals contract. Only the Governor can call this function.
-        @dev It emits a `GlobalsSet` event.
-        @param newGlobals Address of new MapleGlobals contract
+        @dev   Update the MapleGlobals contract. Only the Governor can call this function.
+        @dev   It emits a `GlobalsSet` event.
+        @param newGlobals Address of new MapleGlobals contract.
     */
     function setGlobals(address newGlobals) isGovernor external {
         globals = newGlobals;
@@ -64,10 +64,10 @@ contract MapleTreasury {
     }
 
     /**
-        @dev Reclaim treasury funds to the MapleDAO address. Only the Governor can call this function.
-        @dev It emits a `ERC20Reclaimed` event.
-        @param asset  Address of the token that need to be reclaimed from the treasury contract
-        @param amount Amount to withdraw
+        @dev   Reclaim treasury funds to the MapleDAO address. Only the Governor can call this function.
+        @dev   It emits a `ERC20Reclaimed` event.
+        @param asset  Address of the token that need to be reclaimed from the treasury contract,
+        @param amount Amount to withdraw,
     */
     function reclaimERC20(address asset, uint256 amount) isGovernor external {
         IERC20(asset).safeTransfer(msg.sender, amount);
@@ -88,9 +88,9 @@ contract MapleTreasury {
     }
 
     /**
-        @dev Convert an ERC-20 asset through Uniswap to fundsToken. Only the Governor can call this function.
-        @dev It emits a `ERC20Conversion` event.
-        @param asset The ERC-20 asset to convert to fundsToken
+        @dev   Convert an ERC-20 asset through Uniswap to fundsToken. Only the Governor can call this function.
+        @dev   It emits a `ERC20Conversion` event.
+        @param asset The ERC-20 asset to convert to fundsToken.
     */
     function convertERC20(address asset) isGovernor external {
         require(asset != fundsToken, "MT:ASSET_IS_FUNDS_TOKEN");

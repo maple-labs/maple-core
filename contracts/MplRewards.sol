@@ -78,8 +78,8 @@ contract MplRewards is Ownable {
         return _totalSupply == 0
             ? rewardPerTokenStored
             : rewardPerTokenStored.add(
-                lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply)
-            );
+                  lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply)
+              );
     }
 
     function earned(address account) public view returns (uint256) {

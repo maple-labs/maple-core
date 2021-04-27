@@ -12,7 +12,7 @@ contract PoolFactory is Pausable {
     uint8 public constant SL_FACTORY = 4;  // Factory type of `StakeLockerFactory`
 
     uint256  public poolsCreated;  // Incrementor for number of Pools created
-    IMapleGlobals public globals;       // MapleGlobals contract
+    IMapleGlobals public globals;  // MapleGlobals contract
 
     mapping(uint256 => address) public pools;              // Map to keep `Pool` contract corresponds to its index.
     mapping(address => bool)    public isPool;             // Used to check if a `Pool` was instantiated from this factory.
@@ -39,8 +39,8 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Update the MapleGlobals contract. Only the Governor can call this function.
-        @param newGlobals Address of new MapleGlobals contract
+        @dev   Update the MapleGlobals contract. Only the Governor can call this function.
+        @param newGlobals Address of new MapleGlobals contract.
     */
     function setGlobals(address newGlobals) external {
         _isValidGovernor();
@@ -48,8 +48,8 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Instantiates a Pool contract.
-        @dev It emits a `PoolCreated` event.
+        @dev    Instantiates a Pool contract.
+        @dev    It emits a `PoolCreated` event.
         @param  liquidityAsset The asset escrowed in LiquidityLocker.
         @param  stakeAsset     The asset escrowed in StakeLocker.
         @param  slFactory      The factory to instantiate a StakeLocker from.
@@ -114,8 +114,8 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Set pool factory admin. Only the Governor can call this function.
-        @dev It emits a `PoolFactoryAdminSet` event.
+        @dev   Set pool factory admin. Only the Governor can call this function.
+        @dev   It emits a `PoolFactoryAdminSet` event.
         @param poolFactoryAdmin An address being allowed or disallowed as a Pool Factory Admin.
         @param allowed  Status of a pool factory admin.
     */
@@ -142,21 +142,21 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Checks that msg.sender is the Governor.
+        @dev Checks that `msg.sender` is the Governor.
     */
     function _isValidGovernor() internal view {
         require(msg.sender == globals.governor(), "PF:NOT_GOV");
     }
 
     /**
-        @dev Checks that msg.sender is the Governor or a Pool Factory Admin.
+        @dev Checks that `msg.sender` is the Governor or a Pool Factory Admin.
     */
     function _isValidGovernorOrPoolFactoryAdmin() internal view {
         require(msg.sender == globals.governor() || poolFactoryAdmins[msg.sender], "PF:NOT_GOV_OR_ADMIN");
     }
 
     /**
-        @dev Function to determine if protocol is paused/unpaused.
+        @dev Checks that the protocol is not in a paused state.
     */
     function _whenProtocolNotPaused() internal view {
         require(!globals.protocolPaused(), "PF:PROTO_PAUSED");

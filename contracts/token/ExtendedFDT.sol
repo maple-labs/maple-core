@@ -19,17 +19,17 @@ abstract contract ExtendedFDT is BasicFDT {
     event LossesCorrectionUpdated(address indexed account, int256 lossesCorrection);
 
     /**
-        @dev This event emits when new losses are distributed.
-        @param by                The address of the sender who distributed losses
-        @param lossesDistributed The amount of losses received for distribution
+        @dev   This event emits when new losses are distributed.
+        @param by                The address of the sender who distributed losses.
+        @param lossesDistributed The amount of losses received for distribution.
     */
     event LossesDistributed(address indexed by, uint256 lossesDistributed);
 
     /**
-        @dev This event emits when distributed losses are recognized by a token holder.
-        @param by                    The address of the receiver of losses
-        @param lossesRecognized      The amount of losses that were recognized
-        @param totalLossesRecognized The total amount of losses that were recognized
+        @dev   This event emits when distributed losses are recognized by a token holder.
+        @param by                    The address of the receiver of losses.
+        @param lossesRecognized      The amount of losses that were recognized.
+        @param totalLossesRecognized The total amount of losses that were recognized.
     */
     event LossesRecognized(address indexed by, uint256 lossesRecognized, uint256 totalLossesRecognized);
 
@@ -61,9 +61,9 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev Prepares losses withdrawal.
-        @dev It emits a `LossesWithdrawn` event if the amount of withdrawn losses is greater than 0.
-        @return recognizableDividend The amount of diviend losses that can be recognized.
+        @dev    Prepares losses withdrawal.
+        @dev    It emits a `LossesWithdrawn` event if the amount of withdrawn losses is greater than 0.
+        @return recognizableDividend The amount of dividend losses that can be recognized.
     */
     function _prepareLossesWithdraw() internal returns (uint256 recognizableDividend) {
         recognizableDividend = recognizableLossesOf(msg.sender);
@@ -75,17 +75,17 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev View the amount of losses that an address can withdraw.
-        @param _owner The address of a token holder
-        @return The amount of losses that `_owner` can withdraw
+        @dev    View the amount of losses that an address can withdraw.
+        @param  _owner The address of a token holder.
+        @return The amount of losses that `_owner` can withdraw.
     */
     function recognizableLossesOf(address _owner) public view returns (uint256) {
         return accumulativeLossesOf(_owner).sub(recognizedLosses[_owner]);
     }
 
     /**
-        @dev View the amount of losses that an address has recognized.
-        @param _owner The address of a token holder
+        @dev    View the amount of losses that an address has recognized.
+        @param  _owner The address of a token holder
         @return The amount of losses that `_owner` has recognized
     */
     function recognizedLossesOf(address _owner) external view returns (uint256) {
@@ -93,10 +93,10 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev View the amount of losses that an address has earned in total.
-        @dev accumulativeLossesOf(_owner) = recognizableLossesOf(_owner) + recognizedLossesOf(_owner)
-             = (lossesPerShare * balanceOf(_owner) + lossesCorrection[_owner]) / pointsMultiplier
-        @param _owner The address of a token holder
+        @dev    View the amount of losses that an address has earned in total.
+        @dev    accumulativeLossesOf(_owner) = recognizableLossesOf(_owner) + recognizedLossesOf(_owner)
+                = (lossesPerShare * balanceOf(_owner) + lossesCorrection[_owner]) / pointsMultiplier
+        @param  _owner The address of a token holder
         @return The amount of losses that `_owner` has earned in total
     */
     function accumulativeLossesOf(address _owner) public view returns (uint256) {
@@ -109,8 +109,8 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev Internal function that transfer tokens from one address to another. Update pointsCorrection to keep funds unchanged.
-        @dev It emits a `LossesCorrectionUpdated` event for the sender and receiver.
+        @dev   Internal function that transfer tokens from one address to another. Update pointsCorrection to keep funds unchanged.
+        @dev         It emits a `LossesCorrectionUpdated` event for the sender and receiver.
         @param from  The address to transfer from
         @param to    The address to transfer to
         @param value The amount to be transferred
@@ -133,8 +133,8 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev Internal function that mints tokens to an account. Update lossesCorrection to keep losses unchanged.
-        @dev It emits a `LossesCorrectionUpdated` event.
+        @dev   Internal function that mints tokens to an account. Update lossesCorrection to keep losses unchanged.
+        @dev   It emits a `LossesCorrectionUpdated` event.
         @param account The account that will receive the created tokens.
         @param value   The amount that will be created.
     */
@@ -151,8 +151,8 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev Internal function that burns an amount of the token of a given account. Update lossesCorrection to keep losses unchanged.
-        @dev It emits a `LossesCorrectionUpdated` event.
+        @dev   Internal function that burns an amount of the token of a given account. Update lossesCorrection to keep losses unchanged.
+        @dev   It emits a `LossesCorrectionUpdated` event.
         @param account The account whose tokens will be burnt.
         @param value   The amount that will be burnt.
     */
@@ -171,7 +171,7 @@ abstract contract ExtendedFDT is BasicFDT {
     /**
         @dev Register a loss. May be called directly after a shortfall after BPT burning occurs.
         @dev Calls _updateLossesTokenBalance(), whereby the contract computes the delta of the new and the previous
-        losses and increments the total losses (cumulative) by delta by calling _distributeLosses()
+             losses and increments the total losses (cumulative) by delta by calling _distributeLosses()
     */
     function updateLossesReceived() public virtual {
         int256 newLosses = _updateLossesBalance();
@@ -187,7 +187,7 @@ abstract contract ExtendedFDT is BasicFDT {
     function recognizeLosses() internal virtual returns (uint256 losses) { }
 
     /**
-        @dev Updates the current losses balance and returns the difference of new and previous losses balances.
+        @dev    Updates the current losses balance and returns the difference of new and previous losses balances.
         @return A int256 representing the difference of the new and previous losses balance.
     */
     function _updateLossesBalance() internal virtual returns (int256) { }

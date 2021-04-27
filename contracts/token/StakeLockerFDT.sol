@@ -21,8 +21,8 @@ abstract contract StakeLockerFDT is ExtendedFDT {
     }
 
     /**
-        @dev Updates loss accounting for msg.sender, recognizing losses.
-        @return losses - amount to be subtracted from given withdraw amount
+        @dev    Updates loss accounting for msg.sender, recognizing losses.
+        @return losses Amount to be subtracted from given withdraw amount.
     */
     function recognizeLosses() internal override returns (uint256 losses) {
         losses = _prepareLossesWithdraw();
@@ -33,8 +33,8 @@ abstract contract StakeLockerFDT is ExtendedFDT {
     }
 
     /**
-        @dev Updates the current lossess balance and returns the difference of new and previous lossess balances.
-        @return A int256 representing the difference of the new and previous lossess balance.
+        @dev    Updates the current losses balance and returns the difference of new and previous losses balances.
+        @return A int256 representing the difference of the new and previous losses balance.
     */
     function _updateLossesBalance() internal override returns (int256) {
         uint256 _prevLossesTokenBalance = lossesBalance;
@@ -45,8 +45,8 @@ abstract contract StakeLockerFDT is ExtendedFDT {
     }
 
     /**
-        @dev Updates the current interest balance and returns the difference of new and previous interest balances.
-        @return A int256 representing the difference of the new and previous interest balance
+        @dev    Updates the current interest balance and returns the difference of new and previous interest balances.
+        @return A int256 representing the difference of the new and previous interest balance.
     */
     function _updateFundsTokenBalance() internal virtual override returns (int256) {
         uint256 _prevFundsTokenBalance = fundsTokenBalance;

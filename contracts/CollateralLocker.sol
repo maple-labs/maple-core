@@ -17,7 +17,7 @@ contract CollateralLocker {
     }
 
     /**
-        @dev Checks that msg.sender is the Loan.
+        @dev Checks that `msg.sender` is the Loan.
     */
     modifier isLoan() {
         require(msg.sender == loan, "CL:NOT_L");
@@ -25,9 +25,9 @@ contract CollateralLocker {
     }
 
     /**
-        @dev Transfers amt of collateralAsset to dst. Only the Loan can call this function.
-        @param dst Desintation to transfer collateralAsset to
-        @param amt Amount of collateralAsset to transfer
+        @dev   Transfers amt of collateralAsset to dst. Only the Loan can call this function.
+        @param dst Destination to transfer collateralAsset to.
+        @param amt Amount of collateralAsset to transfer.
     */
     function pull(address dst, uint256 amt) isLoan external {
         collateralAsset.safeTransfer(dst, amt);

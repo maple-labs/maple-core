@@ -26,7 +26,7 @@ contract DebtLocker {
     uint256 public lastAmountRecovered;  // Liquidity asset (a.k.a. loan asset) recovered from liquidation of Loan collateral
 
     /**
-        @dev Checks that msg.sender is the Pool.
+        @dev Checks that `msg.sender` is the Pool.
     */
     modifier isPool() {
         require(msg.sender == pool, "DL:NOT_P");
@@ -115,7 +115,7 @@ contract DebtLocker {
 
         // Return claim amount plus all relevant metadata, to be used by Pool for further claim logic
         // Note: newInterest + newPrincipal + newFee + newExcess + newAmountRecovered = claimBal - dust
-        //       The dust on the right side of the equation gethers in the pool after transfers are made
+        //       The dust on the right side of the equation gathers in the pool after transfers are made
         return([claimBal, newInterest, newPrincipal, newFee, newExcess, newAmountRecovered, newDefaultSuffered]);
     }
 
