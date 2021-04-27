@@ -55,8 +55,8 @@ contract Pool is PoolFDT {
     mapping(address => bool)                        public poolAdmins;                 // Pool Admin addresses who have permission to do certain operations in case of disaster mgt.
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
     mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`
-    mapping(address => mapping(address => uint256)) public custodyAllowance;
-    mapping(address => uint256)                     public totalCustodyAllowance;
+    mapping(address => mapping(address => uint256)) public custodyAllowance;           // Amount of PoolFDTs that are "locked" at a certain address
+    mapping(address => uint256)                     public totalCustodyAllowance;      // Total amount of PoolFDTs that are "locked" for a given user, cannot be greater than balance
 
     event              LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event                   Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee, uint256 stakeLockerfee, uint256 poolDelegateFee);
