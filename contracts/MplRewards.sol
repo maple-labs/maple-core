@@ -98,7 +98,7 @@ contract MplRewards is Ownable {
         _updateReward(msg.sender);
         uint256 newBalance = _balances[msg.sender].add(amount);
         require(amount > 0, "R:ZERO_STAKE");
-        require(stakingToken.custodyAllowance(msg.sender, address(this)) >= newBalance, "R:INSUFFICIENT_ALLOWANCE");
+        require(stakingToken.custodyAllowance(msg.sender, address(this)) >= newBalance, "R:INSUF_CUST_ALLOWANCE");
         _totalSupply          = _totalSupply.add(amount);
         _balances[msg.sender] = newBalance;
         emit Staked(msg.sender, amount);
@@ -178,7 +178,6 @@ contract MplRewards is Ownable {
         @dev It emits a `Recovered` event.
     */
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
-        require(tokenAddress != address(stakingToken), "R:CANNOT_RECOVER_STAKE_TOKEN");
         IERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }

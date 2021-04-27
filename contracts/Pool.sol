@@ -465,7 +465,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev Transfer custodied FDTs to `to` address.
-        @notice sender and receiver should always be equal in this implementation.
+        @notice from and to should always be equal in this implementation.
         @param from   Address which holds to Pool FDTs.
         @param to     Address which going to be the new owner of the `amount` FDTs.
         @param amount Number of FDTs transferred.
