@@ -212,7 +212,7 @@ library PoolLib {
 
         // prevDate + (now - prevDate) * (amt / (balance + amt))
         // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now
-        uint256 newDate = balance + amt > 0
+        uint256 newDate = (balance + amt) > 0
             ? prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt))
             : prevDate;
 
@@ -224,7 +224,7 @@ library PoolLib {
         @dev View function to indicate if `msg.sender` is within their withdraw window.
     */
     function isWithdrawAllowed(uint256 withdrawCooldown, IMapleGlobals globals) external view returns (bool) {
-        return block.timestamp - (withdrawCooldown + globals.lpCooldownPeriod()) <= globals.lpWithdrawWindow();
+        return (block.timestamp - (withdrawCooldown + globals.lpCooldownPeriod())) <= globals.lpWithdrawWindow();
     }
 
     /**
@@ -232,7 +232,7 @@ library PoolLib {
              This is only possible if they have zero cooldown or they are passed their withdraw window.
     */
     function isReceiveAllowed(uint256 withdrawCooldown, IMapleGlobals globals) public view returns (bool) {
-        return block.timestamp > withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow();
+        return block.timestamp > (withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow());
     }
 
     /**
@@ -260,7 +260,7 @@ library PoolLib {
 
     /**
         @dev Performs all necessary checks for a `transferByCustodian` call.
-        @dev From and to must always be equal. (TODO: Should we do this?)
+        @dev From and to must always be equal.
      */
     function transferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external {
         require(to == from,                 "P:INVALID_RECEIVER");
