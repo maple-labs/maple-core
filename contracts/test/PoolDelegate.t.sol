@@ -405,18 +405,6 @@ contract PoolTest is TestUtil {
         assertTrue(pool.allowedLiquidityProviders(address(leo)));
     }
 
-    function test_setAllowlistStakeLocker() public {
-        // Pause protocol and attempt setAllowlistStakeLocker()
-        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!pat.try_setAllowlistStakeLocker(address(pool), address(sam), true));
-        assertTrue(!IStakeLocker(pool.stakeLocker()).allowed(address(sam)));
-
-        // Unpause protocol and setAllowlistStakeLocker()
-        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(pat.try_setAllowlistStakeLocker(address(pool), address(sam), true));
-        assertTrue(IStakeLocker(pool.stakeLocker()).allowed(address(sam)));
-    }
-
     function test_setPoolAdmin() public {
         // Pause protocol and attempt setPoolAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));

@@ -330,16 +330,6 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Update user status on StakeLocker allowlist. Only the Pool Delegate can call this function.
-        @param user   The address to set status for.
-        @param status The status of user on allowlist.
-    */
-    function setAllowlistStakeLocker(address user, bool status) external {
-        _isValidDelegateAndProtocolNotPaused();
-        IStakeLocker(stakeLocker).setAllowlist(user, status);
-    }
-
-    /**
         @dev Set pool admin. Only the Pool Delegate can call this function.
         @dev It emits a `PoolAdminSet` event.
         @param poolAdmin An address being allowed or disallowed as a Pool Admin.

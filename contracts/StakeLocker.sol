@@ -91,14 +91,16 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**********************/
 
     /**
-        @dev Update user status on the allowlist. Only the Pool can call this function.
+        @dev Update staker status on the allowlist. Only the Pool Delegate can call this function.
         @dev It emits an `AllowListUpdated` event.
-        @param user   The address to set status for
-        @param status The status of user on allowlist
+        @param staker   The address to set status for
+        @param status The status of staker on allowlist
     */
-    function setAllowlist(address user, bool status) isPool public {
-        allowed[user] = status;
-        emit AllowListUpdated(user, status);
+    function setAllowlist(address staker, bool status) public {
+        _whenProtocolNotPaused();
+        _isValidPoolDelegate();
+        allowed[staker] = status;
+        emit AllowListUpdated(staker, status);
     }
 
     /**

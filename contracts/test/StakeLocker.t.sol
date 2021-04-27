@@ -85,8 +85,8 @@ contract StakeLockerTest is TestUtil {
         transferStake   = constrictToRange(transferStake, bptMin, bPool.balanceOf(address(sid)), true);
         warpTime        = constrictToRange(warpTime, 1 days, 365 days, true);
 
-        pat.setAllowlistStakeLocker(address(pool), address(sam), true);
-        pat.setAllowlistStakeLocker(address(pool), address(sid), true);
+        pat.setAllowlist(address(stakeLocker), address(sam), true);
+        pat.setAllowlist(address(stakeLocker), address(sid), true);
         sam.approve(address(bPool), address(stakeLocker), uint256(-1));
         sid.approve(address(bPool), address(stakeLocker), uint256(-1));
 
@@ -133,7 +133,7 @@ contract StakeLockerTest is TestUtil {
     }
 
     function test_stake_paused() public {
-        pat.setAllowlistStakeLocker(address(pool), address(sam), true);
+        pat.setAllowlist(address(stakeLocker), address(sam), true);
         sam.approve(address(bPool), address(stakeLocker), 20 * WAD);
 
         // Pause StakeLocker and attempt stake()
@@ -165,7 +165,7 @@ contract StakeLockerTest is TestUtil {
 
         assertTrue(!sam.try_stake(address(stakeLocker),   25 * WAD));  // Isn't yet allowlisted
 
-        pat.setAllowlistStakeLocker(address(pool), address(sam), true);
+        pat.setAllowlist(address(stakeLocker), address(sam), true);
 
         assertEq(bPool.balanceOf(address(sam)),         25 * WAD);
         assertEq(bPool.balanceOf(address(stakeLocker)), 50 * WAD);  // PD stake
@@ -441,9 +441,9 @@ contract StakeLockerTest is TestUtil {
 
         stakeAmount = constrictToRange(stakeAmount,  bptMin, bPool.balanceOf(address(sam)), true);  // 25 WAD max, 1/10m WAD min, or zero (min is roughly equal to 10 cents) (non-zero)
 
-        pat.setAllowlistStakeLocker(address(pool), address(sam), true);
-        pat.setAllowlistStakeLocker(address(pool), address(sid), true);
-        pat.setAllowlistStakeLocker(address(pool), address(sue), true);
+        pat.setAllowlist(address(stakeLocker), address(sam), true);
+        pat.setAllowlist(address(stakeLocker), address(sid), true);
+        pat.setAllowlist(address(stakeLocker), address(sue), true);
 
         sam.approve(address(bPool), address(stakeLocker), MAX_UINT);
         sid.approve(address(bPool), address(stakeLocker), MAX_UINT);
@@ -644,5 +644,17 @@ contract StakeLockerTest is TestUtil {
 
         assertEq(bPool.balanceOf(address(sue)),        eliStakeAmount);  // Sue recovered full stake
         assertEq(IERC20(USDC).balanceOf(address(sue)),              0);  // USDC balance from interest (none)
+    }
+
+    function test_setAllowlist() public {
+        // Pause protocol and attempt setAllowlist()
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
+        assertTrue(!pat.try_setAllowlist(address(stakeLocker), address(sam), true));
+        assertTrue(!stakeLocker.allowed(address(sam)));
+
+        // Unpause protocol and setAllowlist()
+        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        assertTrue(pat.try_setAllowlist(address(stakeLocker), address(sam), true));
+        assertTrue(stakeLocker.allowed(address(sam)));
     }
 }
