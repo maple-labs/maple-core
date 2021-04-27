@@ -19,6 +19,9 @@ contract ChainlinkOracleTest is TestUtil {
         assertTrue(!wethOracle.manualOverride());
         assertEq(   wethOracle.manualPrice(), int256(0));
 
+        // Try to set manual price before setting the manual override.
+        assertTrue(!securityAdmin.try_setManualPrice(address(wethOracle), int256(45000)));
+
         // Enable oracle manual override
         assertTrue(         !cam.try_setManualOverride(address(wethOracle), true));
         assertTrue(securityAdmin.try_setManualOverride(address(wethOracle), true));
