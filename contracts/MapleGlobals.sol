@@ -296,7 +296,7 @@ contract MapleGlobals {
     */
     function setInvestorFee(uint256 _fee) external isGovernor {
         _checkPercentageRange(_fee);
-        require(_fee + treasuryFee <= 10_000, "MG:INVALID_INVESTOR_FEE");
+        require((_fee + treasuryFee) <= 10_000, "MG:INVALID_INVESTOR_FEE");
         investorFee = _fee;
         emit GlobalsParamSet("INVESTOR_FEE", _fee);
     }
@@ -308,7 +308,7 @@ contract MapleGlobals {
     */
     function setTreasuryFee(uint256 _fee) external isGovernor {
         _checkPercentageRange(_fee);
-        require(_fee + investorFee <= 10_000, "MG:INVALID_TREASURY_FEE");
+        require((_fee + investorFee) <= 10_000, "MG:INVALID_TREASURY_FEE");
         treasuryFee = _fee;
         emit GlobalsParamSet("TREASURY_FEE", _fee);
     }

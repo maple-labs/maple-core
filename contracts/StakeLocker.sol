@@ -186,7 +186,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
         // stakeDate + (now - stakeDate) * (amt / (balance + amt))
         // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now
-        uint256 newDate = balance + amt > 0
+        uint256 newDate = (balance + amt) > 0
             ? prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt))
             : prevDate;
 
@@ -299,7 +299,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function isUnstakeAllowed(address from) public view returns (bool) {
         IMapleGlobals globals = _globals();
-        return block.timestamp - (unstakeCooldown[from] + globals.stakerCooldownPeriod()) <= globals.stakerUnstakeWindow();
+        return (block.timestamp - (unstakeCooldown[from] + globals.stakerCooldownPeriod())) <= globals.stakerUnstakeWindow();
     }
 
     /**
@@ -308,7 +308,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function isReceiveAllowed(uint256 _unstakeCooldown) public view returns (bool) {
         IMapleGlobals globals = _globals();
-        return block.timestamp > _unstakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow();
+        return block.timestamp > (_unstakeCooldown + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow());
     }
 
     /**
