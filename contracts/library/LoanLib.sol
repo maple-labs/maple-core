@@ -146,7 +146,7 @@ library LoanLib {
 
         // Check if the loan is past the defaultGracePeriod and that `msg.sender` has a percentage of total LoanFDTs that is greater
         // than the minimum equity needed (specified in globals)
-        return pastDefaultGracePeriod && balance >= (totalSupply * _globals(superFactory).minLoanEquity() / 10_000);
+        return pastDefaultGracePeriod && balance >= ((totalSupply * _globals(superFactory).minLoanEquity()) / 10_000);
     }
 
     /**
