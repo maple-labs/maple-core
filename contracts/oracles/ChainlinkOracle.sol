@@ -40,9 +40,9 @@ contract ChainlinkOracle is Ownable {
         if (manualOverride) return manualPrice;
         (uint80 roundID, int256 price,,uint256 timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
 
-        require(timeStamp != 0, "CO:ROUND_NOT_COMPLETE");
-        require(answeredInRound >= roundID, "CO:STALE_DATA");
-        require(price != int256(0), "CO:ZERO_PRICE");
+        require(timeStamp != 0,             "CO:ROUND_NOT_COMPLETE");
+        require(answeredInRound >= roundID,         "CO:STALE_DATA");
+        require(price != int256(0),                 "CO:ZERO_PRICE");
         return price;
     }
 
