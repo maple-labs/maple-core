@@ -143,11 +143,9 @@ contract PoolTest is TestUtil {
         assertEq( pool.lockupPeriod(), uint256(0),                    "Failed to update the lockup period");
 
         assertTrue(leo.try_intendToWithdraw(address(pool)),           "Failed to intend to withdraw");
-        
-        (uint256 claimable,,) = pool.claimableFunds(address(leo));
 
         hevm.warp(block.timestamp + globals.lpCooldownPeriod() + 1);
-        assertTrue(leo.try_withdraw(address(pool), claimable),        "Should pass to withdraw the funds from the pool");
+        assertTrue(leo.try_withdraw(address(pool), 1 * USD),        "Should pass to withdraw the funds from the pool");
     }
 
     function test_deposit_depositDate(uint256 depositAmt) public {

@@ -313,57 +313,6 @@ contract PoolTest is TestUtil {
         assertTrue(!pat.try_deactivate(address(pool)));
     }
 
-    // TODO: Test with losses.
-    function test_view_balance(uint256 depositAmt) public {
-        /*******************************/
-        /*** Finalize liquidity pool ***/
-        /*******************************/
-        
-        finalizePool(pool, pat, true);
-
-        /**************************************************/
-        /*** Mint and deposit funds into liquidity pool ***/
-        /**************************************************/
-
-        depositAmt = constrictToRange(depositAmt, loan.requestAmount(), loan.requestAmount() + 1_000_000 * USD, true);
-
-        mintFundsAndDepositIntoPool(lee, pool, loan.requestAmount() + 1_000_000 * USD, depositAmt);
-
-        // Fund loan, drawdown, make payment and claim so lee can claim interest
-        assertTrue(pat.try_fundLoan(address(pool), address(loan3), address(dlFactory), depositAmt), "Fail to fund the loan");
-
-        drawdown(loan3, bud, depositAmt);
-        doFullLoanPayment(loan3, bud); 
-        pat.claim(address(pool), address(loan3), address(dlFactory));
-
-        uint256 withdrawDate = pool.depositDate(address(lee)).add(pool.lockupPeriod());
-
-        hevm.warp(withdrawDate - 1);
-        (uint256 total_lee, uint256 principal_lee, uint256 interest_lee) = pool.claimableFunds(address(lee));
-
-        // Deposit is still in lock-up
-        assertEq(principal_lee, 0);
-        assertEq(interest_lee, pool.withdrawableFundsOf(address(lee)));
-        assertEq(total_lee, principal_lee + interest_lee);
-
-        hevm.warp(withdrawDate + 1);
-        (total_lee, principal_lee, interest_lee) = pool.claimableFunds(address(lee));
-
-        assertEq(principal_lee, pool.balanceOf(address(lee)) * USD / WAD); // (might need to use withinDiff for this)
-        assertEq(interest_lee,  pool.withdrawableFundsOf(address(lee)));
-        assertEq(total_lee,     principal_lee + interest_lee);
-
-        uint256 lee_bal_pre = IERC20(pool.liquidityAsset()).balanceOf(address(lee));
-        
-        make_withdrawable(lee, pool);
-
-        assertTrue(lee.try_withdraw(address(pool), principal_lee), "Failed to withdraw claimable_kim");
-        
-        uint256 lee_bal_post = IERC20(pool.liquidityAsset()).balanceOf(address(lee));
-
-        assertEq(lee_bal_post - lee_bal_pre, principal_lee + interest_lee);
-    }
-
     function test_reclaim_erc20(uint256 mintedUsdc, uint256 mintedDai, uint256 mintedWeth) external {
         // Transfer different assets into the Pool
 
