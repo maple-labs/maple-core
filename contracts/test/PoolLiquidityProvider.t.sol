@@ -174,7 +174,7 @@ contract PoolTest is TestUtil {
         assertEq(pool.depositDate(address(leo)), newDepDate);  // Doesn't change
     }
 
-    function test_transfer_depositDate(uint256 depositAmt) public {
+    function test_transfer_lockup_period(uint256 depositAmt) public {
         finalizePool(pool, pat, true);
 
         // Deposit 100 USDC on first day
@@ -184,16 +184,19 @@ contract PoolTest is TestUtil {
         // Mint 200 USDC into this LP account
         mintFundsAndDepositIntoPool(leo, pool, 20_000_000 * USD, depositAmt);
         mintFundsAndDepositIntoPool(liz, pool, 20_000_000 * USD, depositAmt);
-        
+
         assertEq(pool.depositDate(address(leo)), startDate);
         assertEq(pool.depositDate(address(liz)), startDate);
-
-        uint256 newDeposit  = constrictToRange(depositAmt, 50 * USD, depositAmt, true);  // Amount of FDT transferred
-
-        hevm.warp(startDate + 30 days);
-
         assertEq(pool.balanceOf(address(leo)), toWad(depositAmt));
         assertEq(pool.balanceOf(address(liz)), toWad(depositAmt));
+
+        uint256 newDeposit = constrictToRange(depositAmt, 50 * USD, depositAmt, true);  // Amount of FDT transferred
+
+        // Will fail because lockup period hasn't passed yet
+        assertTrue(!liz.try_transfer(address(pool), address(leo), toWad(newDeposit)));
+
+        // Warp to after lockup period
+        hevm.warp(startDate + pool.lockupPeriod());
 
         // Pause protocol and attempt to transfer FDTs
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
@@ -203,17 +206,17 @@ contract PoolTest is TestUtil {
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(liz.try_transfer(address(pool), address(leo), toWad(newDeposit)));  // Pool.transfer()
 
+        // Check balances and deposit dates are correct
         assertEq(pool.balanceOf(address(leo)), toWad(depositAmt) + toWad(newDeposit));
         assertEq(pool.balanceOf(address(liz)), toWad(depositAmt) - toWad(newDeposit));
-
         uint256 newDepDate = startDate + (block.timestamp - startDate) * toWad(newDeposit) / (toWad(newDeposit) + toWad(depositAmt));
-
         assertEq(pool.depositDate(address(leo)), newDepDate);  // Gets updated
-        assertEq(pool.depositDate(address(liz)),  startDate);  // Stays the same
+        assertEq(pool.depositDate(address(liz)), startDate);   // Stays the same
     }
 
     function test_transfer_recipient_withdrawing(uint256 depositAmt) public {
         finalizePool(pool, pat, true);
+        pat.setLockupPeriod(address(pool), 0);
 
         // Deposit 100 USDC on first day
         uint256 start = block.timestamp;

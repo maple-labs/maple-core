@@ -86,6 +86,10 @@ contract PoolDelegate {
         IPool(pool).setLockupPeriod(lockupPeriod);
     }
 
+    function setStakeLockerLockupPeriod(address stakeLocker, uint256 lockupPeriod) external {
+        IStakeLocker(stakeLocker).setLockupPeriod(lockupPeriod);
+    }
+
     function setStakingFee(address pool, uint256 stakingFee) external {
         IPool(pool).setStakingFee(stakingFee);
     }
