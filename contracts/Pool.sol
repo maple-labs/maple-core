@@ -499,24 +499,6 @@ contract Pool is PoolFDT {
     /*************************/
 
     /**
-        @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
-        @param lp Liquidity Provider to check claimableFunds for
-        @return total     Total     amount claimable
-        @return principal Principal amount claimable
-        @return interest  Interest  amount claimable
-    */
-    function claimableFunds(address lp) external view returns(uint256 total, uint256 principal, uint256 interest) {
-        return 
-            PoolLib.claimableFunds(
-                withdrawableFundsOf(lp),
-                depositDate[lp],
-                lockupPeriod,
-                balanceOf(lp),
-                liquidityAssetDecimals
-            );
-    }
-
-    /**
         @dev Calculates the value of BPT in units of liquidityAsset.
         @param _bPool          Address of Balancer pool
         @param _liquidityAsset Asset used by Pool for liquidity to fund loans

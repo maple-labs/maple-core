@@ -191,8 +191,8 @@ contract PoolCustodialTest is TestUtil {
         Custodian custodian2 = new Custodian();  // Custodial contract for PoolFDTs - will start out as liquidity mining but could be broader DeFi eventually
 
         depositAmt  = constrictToRange(depositAmt,  100, 1E9,            true);  // $1 - $1b
-        custodyAmt1 = constrictToRange(custodyAmt1, 100, depositAmt / 2, true);  // $1 - half of deposit
-        custodyAmt2 = constrictToRange(custodyAmt2, 100, depositAmt / 2, true);  // $1 - half of deposit
+        custodyAmt1 = constrictToRange(custodyAmt1,  40, depositAmt / 2, true);  // $1 - half of deposit
+        custodyAmt2 = constrictToRange(custodyAmt2,  40, depositAmt / 2, true);  // $1 - half of deposit
 
         mintFundsAndDepositIntoPool(fay, pool, depositAmt * USD, depositAmt * USD);
         mintFundsAndDepositIntoPool(fez, pool, depositAmt * USD, depositAmt * USD);

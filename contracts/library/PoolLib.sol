@@ -488,41 +488,6 @@ library PoolLib {
         enoughStakeForFinalization = poolAmountPresent >= poolAmountInRequired;
     }
 
-    /**
-        @dev View claimable balance from LiqudityLocker (reflecting deposit + gain/loss).
-        @param  withdrawableFundsOfLp  FDT withdrawableFundsOf LP
-        @param  depositDateForLp       LP deposit date
-        @param  lockupPeriod           Pool lockup period
-        @param  balanceOfLp            LP FDT balance
-        @param  liquidityAssetDecimals Decimals of liquidityAsset
-        @return total     Total     amount claimable
-        @return principal Principal amount claimable
-        @return interest  Interest  amount claimable
-    */
-    function claimableFunds(
-        uint256 withdrawableFundsOfLp,
-        uint256 depositDateForLp,
-        uint256 lockupPeriod,
-        uint256 balanceOfLp,
-        uint256 liquidityAssetDecimals
-    ) 
-        external
-        view
-        returns(
-            uint256 total,
-            uint256 principal,
-            uint256 interest
-        ) 
-    {
-        interest = withdrawableFundsOfLp;
-        // Deposit is still within lockupPeriod, user has 0 claimable principal under this condition.
-        if (depositDateForLp.add(lockupPeriod) > block.timestamp) total = interest; 
-        else {
-            principal = fromWad(balanceOfLp, liquidityAssetDecimals);
-            total     = principal.add(interest);
-        }
-    }
-
     /************************/
     /*** Helper Functions ***/
     /************************/

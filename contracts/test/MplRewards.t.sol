@@ -125,7 +125,7 @@ contract MplRewardsTest is TestUtil {
     function test_setPaused() public {
         assertTrue(!mplRewards.paused());
 
-        // Ali can stake
+        // Fay can stake
         fay.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
         assertTrue(fay.try_stake(100 * WAD));
 
@@ -135,11 +135,11 @@ contract MplRewardsTest is TestUtil {
 
         assertTrue(mplRewards.paused());
 
-        // Bob can't stake
+        // Fez can't stake
         fez.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
         assertTrue(!fez.try_stake(100 * WAD));
 
-        // Ali can't withdraw
+        // Fay can't withdraw
         fay.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
         assertTrue(!fay.try_withdraw(100 * WAD));
 
@@ -150,7 +150,7 @@ contract MplRewardsTest is TestUtil {
         assertTrue(!mplRewards.paused());
         assertTrue(fay.try_withdraw(100 * WAD));
 
-        // Bob can stake
+        // Fez can stake
         fez.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
         assertTrue(fez.try_stake(100 * WAD));
     }

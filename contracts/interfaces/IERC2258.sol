@@ -5,7 +5,6 @@ interface IERC2258 {
 
     // Increase the custody limit of a custodian either directly or via signed authorisation
     function increaseCustodyAllowance(address custodian, uint256 amount) external;
-    function increaseCustodyAllowanceOf(address tokenHolder, address custodian, uint256 amount, uint256 nonce, bytes calldata sig) external;
 
     // Query individual custody limit and total custody limit across all custodians
     function custodyAllowance(address tokenHolder, address custodian) external view returns (uint256);
