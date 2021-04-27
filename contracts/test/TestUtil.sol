@@ -526,7 +526,6 @@ contract TestUtil is DSTest {
     /******************************/
     /*** Test Utility Functions ***/
     /******************************/
-
     function setUpTokens() public {
         gov.setLiquidityAsset(DAI,   true);
         gov.setLiquidityAsset(USDC,  true);
@@ -660,12 +659,10 @@ contract TestUtil is DSTest {
         stakeIntoFarm(fez, amt2);
         stakeIntoFarm(fox, amt3);
     }
-    
 
     /********************/
     /*** Pool Helpers ***/
     /********************/
-
     function finalizePool(Pool pool, PoolDelegate del, bool openToPublic) internal {
         del.approve(address(bPool), pool.stakeLocker(), MAX_UINT);
         del.stake(pool.stakeLocker(), bPool.balanceOf(address(del)) / 2);

@@ -4,7 +4,9 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-contract PoolLiquidityProviderTest is TestUtil {
+import "./user/Custodian.sol";
+
+contract PoolCustodialTest is TestUtil {
 
     using SafeMath for uint256;
 
@@ -17,10 +19,6 @@ contract PoolLiquidityProviderTest is TestUtil {
     TestObj withdrawableFundsOf_fay;  // FDT accounting of interest
     TestObj withdrawableFundsOf_fez;  // FDT accounting of interest
     TestObj withdrawableFundsOf_fox;  // FDT accounting of interest
-
-    TestObj recognizableLossesOf_fay;  // FDT accounting of losses after burning
-    TestObj recognizableLossesOf_fez;  // FDT accounting of losses after burning
-    TestObj recognizableLossesOf_fox;  // FDT accounting of losses after burning
 
     TestObj mplEarnings_fay;  // MPL earnings from yield farming
     TestObj mplEarnings_fez;  // MPL earnings from yield farming
@@ -47,10 +45,6 @@ contract PoolLiquidityProviderTest is TestUtil {
         withdrawableFundsOf_fez.pre = withdrawableFundsOf_fez.post;
         withdrawableFundsOf_fox.pre = withdrawableFundsOf_fox.post;
 
-        recognizableLossesOf_fay.pre = recognizableLossesOf_fay.post;
-        recognizableLossesOf_fez.pre = recognizableLossesOf_fez.post;
-        recognizableLossesOf_fox.pre = recognizableLossesOf_fox.post;
-
         mplEarnings_fay.pre = mplEarnings_fay.post;
         mplEarnings_fez.pre = mplEarnings_fez.post;
         mplEarnings_fox.pre = mplEarnings_fox.post;
@@ -65,10 +59,6 @@ contract PoolLiquidityProviderTest is TestUtil {
         withdrawableFundsOf_fay.post = pool.withdrawableFundsOf(address(fay));
         withdrawableFundsOf_fez.post = pool.withdrawableFundsOf(address(fez));
         withdrawableFundsOf_fox.post = pool.withdrawableFundsOf(address(fox));
-
-        recognizableLossesOf_fay.post = pool.recognizableLossesOf(address(fay));
-        recognizableLossesOf_fez.post = pool.recognizableLossesOf(address(fez));
-        recognizableLossesOf_fox.post = pool.recognizableLossesOf(address(fox));
 
         mplEarnings_fay.post = mplRewards.earned(address(fay));
         mplEarnings_fez.post = mplRewards.earned(address(fez));
@@ -105,10 +95,6 @@ contract PoolLiquidityProviderTest is TestUtil {
         assertEq(withdrawableFundsOf_fez.post, 0);
         assertEq(withdrawableFundsOf_fox.post, 0);
 
-        assertEq(recognizableLossesOf_fay.post, 0);
-        assertEq(recognizableLossesOf_fez.post, 0);
-        assertEq(recognizableLossesOf_fox.post, 0);
-
         assertEq(mplEarnings_fay.post, 0);
         assertEq(mplEarnings_fez.post, 0);
         assertEq(mplEarnings_fox.post, 0);
@@ -144,17 +130,10 @@ contract PoolLiquidityProviderTest is TestUtil {
 
         assertEq(withdrawableFundsOf_fox.post, 0);
 
-        assertEq(recognizableLossesOf_fay.post, 0);
-        assertEq(recognizableLossesOf_fez.post, 0);
-        assertEq(recognizableLossesOf_fox.post, 0);
-
         withinPrecision(mplEarnings_fay.post, calcPortion(depositAmt1, totalMplDisbursed, totalDeposits), 10);
         withinPrecision(mplEarnings_fez.post, calcPortion(depositAmt2, totalMplDisbursed, totalDeposits), 10);
 
         assertEq(mplEarnings_fox.post, 0);
-
-        emit Debug("poolApy", poolApy);
-        emit Debug("mplApy", mplApy);
 
         withinDiff(toApy(withdrawableFundsOf_fay.post, depositAmt1, dTime), poolApy, 1);
         withinDiff(toApy(withdrawableFundsOf_fez.post, depositAmt2, dTime), poolApy, 1);
@@ -194,16 +173,9 @@ contract PoolLiquidityProviderTest is TestUtil {
         withinPrecision(withdrawableFundsOf_fez.post, withdrawableFundsOf_fez.pre + calcPortion(depositAmt2, interest, totalDeposits), 6);
         withinPrecision(withdrawableFundsOf_fox.post,                               calcPortion(depositAmt3, interest, totalDeposits), 6);
 
-        assertEq(recognizableLossesOf_fay.post, 0);
-        assertEq(recognizableLossesOf_fez.post, 0);
-        assertEq(recognizableLossesOf_fox.post, 0);
-
         withinPrecision(mplEarnings_fay.post, mplEarnings_fay.pre + calcPortion(depositAmt1, totalMplDisbursed, totalDeposits), 10);
         withinPrecision(mplEarnings_fez.post, mplEarnings_fez.pre + calcPortion(depositAmt2, totalMplDisbursed, totalDeposits), 10);
         withinPrecision(mplEarnings_fox.post,                       calcPortion(depositAmt3, totalMplDisbursed, totalDeposits), 10);
-
-        emit Debug("poolApy", poolApy);
-        emit Debug("mplApy", mplApy);
 
         withinDiff(toApy(withdrawableFundsOf_fay.post - withdrawableFundsOf_fay.pre, depositAmt1, dTime), poolApy, 1);
         withinDiff(toApy(withdrawableFundsOf_fez.post - withdrawableFundsOf_fez.pre, depositAmt2, dTime), poolApy, 1);
@@ -212,5 +184,78 @@ contract PoolLiquidityProviderTest is TestUtil {
         withinDiff(toApy(mplEarnings_fay.post - mplEarnings_fay.pre, toWad(depositAmt1), dTime), mplApy, 1);
         withinDiff(toApy(mplEarnings_fez.post - mplEarnings_fez.pre, toWad(depositAmt2), dTime), mplApy, 1);
         withinDiff(toApy(mplEarnings_fox.post,                       toWad(depositAmt3), dTime), mplApy, 1);
+    }
+
+    function test_custody_and_transfer(uint256 depositAmt, uint256 custodyAmt1, uint256 custodyAmt2) public {
+        Custodian custodian1 = new Custodian();  // Custodial contract for PoolFDTs - will start out as liquidity mining but could be broader DeFi eventually
+        Custodian custodian2 = new Custodian();  // Custodial contract for PoolFDTs - will start out as liquidity mining but could be broader DeFi eventually
+
+        depositAmt  = constrictToRange(depositAmt,  100, 1E9,            true);  // $1 - $1b
+        custodyAmt1 = constrictToRange(custodyAmt1, 100, depositAmt / 2, true);  // $1 - half of deposit
+        custodyAmt2 = constrictToRange(custodyAmt2, 100, depositAmt / 2, true);  // $1 - half of deposit
+
+        mintFundsAndDepositIntoPool(fay, pool, depositAmt * USD, depositAmt * USD);
+        mintFundsAndDepositIntoPool(fez, pool, depositAmt * USD, depositAmt * USD);
+
+        // Convert all amounts to WAD, USD not needed for the rest of the test
+        depositAmt  *= WAD; 
+        custodyAmt1 *= WAD;
+        custodyAmt2 *= WAD;
+
+        // Testing failure modes with Fay
+        assertTrue(!fay.try_increaseCustodyAllowance(address(pool), address(0),              depositAmt));  // P:INVALID_ADDRESS
+        assertTrue(!fay.try_increaseCustodyAllowance(address(pool), address(custodian1),              0));  // P:INVALID_AMT
+        assertTrue(!fay.try_increaseCustodyAllowance(address(pool), address(custodian1), depositAmt + 1));  // P:INSUFFICIENT_BALANCE
+        assertTrue( fay.try_increaseCustodyAllowance(address(pool), address(custodian1),     depositAmt));  // Fay can custody entire balance
+
+        // Testing state transition and transfers with Fez
+        assertEq(pool.custodyAllowance(address(fez), address(custodian1)), 0);
+        assertEq(pool.totalCustodyAllowance(address(fez)),                 0);
+
+        fez.increaseCustodyAllowance(address(pool), address(custodian1), custodyAmt1);
+
+        assertEq(pool.custodyAllowance(address(fez), address(custodian1)), custodyAmt1);  // Fez gives custody to custodian 1
+        assertEq(pool.totalCustodyAllowance(address(fez)),                 custodyAmt1);  // Total custody allowance goes up
+
+        fez.increaseCustodyAllowance(address(pool), address(custodian2), custodyAmt2);
+
+        assertEq(pool.custodyAllowance(address(fez), address(custodian2)),               custodyAmt2);  // Fez gives custody to custodian 2
+        assertEq(pool.totalCustodyAllowance(address(fez)),                 custodyAmt1 + custodyAmt2);  // Total custody allowance goes up
+        
+        uint256 transferableAmt = depositAmt - custodyAmt1 - custodyAmt2;
+
+        assertEq(pool.balanceOf(address(fez)), depositAmt);
+        assertEq(pool.balanceOf(address(fox)),          0);
+
+        assertTrue(!fez.try_transfer(address(pool), address(fox), transferableAmt + 1));  // Fez cannot transfer more than balance - totalCustodyAllowance
+        assertTrue( fez.try_transfer(address(pool), address(fox),     transferableAmt));  // Fez can transfer transferableAmt
+
+        assertEq(pool.balanceOf(address(fez)), depositAmt - transferableAmt);
+        assertEq(pool.balanceOf(address(fox)), transferableAmt);
+    }
+
+    function test_transferByCustodian(uint256 depositAmt, uint256 custodyAmt) public {
+        Custodian custodian = new Custodian();  // Custodial contract for PoolFDTs - will start out as liquidity mining but could be broader DeFi eventually
+
+        depositAmt  = constrictToRange(depositAmt, 1, 1E9,        true);  // $1 - $1b
+        custodyAmt  = constrictToRange(custodyAmt, 1, depositAmt, true);  // $1 - deposit
+
+        mintFundsAndDepositIntoPool(fay, pool, depositAmt * USD, depositAmt * USD);
+
+        depositAmt  *= WAD; 
+        custodyAmt  *= WAD;
+
+        fay.increaseCustodyAllowance(address(pool), address(custodian), custodyAmt);
+
+        assertEq(pool.custodyAllowance(address(fay), address(custodian)), custodyAmt);  // Fay gives custody to custodian
+        assertEq(pool.totalCustodyAllowance(address(fay)),                custodyAmt);  // Total custody allowance goes up
+
+        assertTrue(!custodian.try_transferByCustodian(address(pool), address(fay), address(fox),     custodyAmt));  // P:INVALID_RECEIVER
+        assertTrue(!custodian.try_transferByCustodian(address(pool), address(fay), address(fay),              0));  // P:INVALID_AMT
+        assertTrue(!custodian.try_transferByCustodian(address(pool), address(fay), address(fay), custodyAmt + 1));  // P:INSUFFICIENT_ALLOWANCE
+        assertTrue( custodian.try_transferByCustodian(address(pool), address(fay), address(fay),     custodyAmt));  // Able to transfer custody amount back
+
+        assertEq(pool.custodyAllowance(address(fay), address(custodian)), 0);  // Fay gives custody to custodian
+        assertEq(pool.totalCustodyAllowance(address(fay)),                0);  // Total custody allowance goes up
     }
 }

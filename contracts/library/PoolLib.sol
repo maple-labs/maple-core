@@ -236,7 +236,7 @@ library PoolLib {
     }
 
     /**
-        @dev Performing some checks before doing actual transfers.
+        @dev Performs all necessary checks for a `transfer` call.
     */
     function prepareTransfer(
         mapping(address => uint256) storage withdrawCooldown,
@@ -255,15 +255,23 @@ library PoolLib {
         updateDepositDate(depositDate, toBalance, wad, to);                                          // Update deposit date of recipient
     }
 
-    function beforeTransferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external {
-        require(amount != uint256(0), "Pool:INVALID_AMT");
-        require(custodyAllowance >= amount, "Pool:INSUFFICIENT_ALLOWANCE");
-        require(to == from, "Pool:INVALID_RECEVIER");  // Allowing transfer funds back to original holder.
+    /**
+        @dev Performs all necessary checks for a `transferByCustodian` call.
+        @dev From and to must always be equal. (TODO: Should we do this?)
+     */
+    function transferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external {
+        require(to == from,                 "P:INVALID_RECEIVER");
+        require(amount != uint256(0),       "P:INVALID_AMT");
+        require(custodyAllowance >= amount, "P:INSUFFICIENT_ALLOWANCE");
     }
 
-    function zeroCheck(address custodian, uint256 amount) external {
-        require(custodian != address(0), "Pool:INVALID_ADDRESS");
-        require(amount    != uint256(0), "Pool:INVALID_AMT");
+    /**
+        @dev Performs all necessary checks for a `increaseCustodyAllowance` call
+     */
+    function increaseCustodyAllowanceChecks(address custodian, uint256 amount, uint256 newTotalAllowance, uint256 fdtBal) external {
+        require(custodian != address(0),     "P:INVALID_CUSTODIAN");
+        require(amount    != uint256(0),     "P:INVALID_AMT");
+        require(newTotalAllowance <= fdtBal, "P:INSUFFICIENT_BALANCE");
     }
 
     /**

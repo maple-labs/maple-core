@@ -62,4 +62,9 @@ contract Farmer is LP {
         string memory sig = "withdraw(uint256)";
         (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, amt));
     }
+
+    function try_increaseCustodyAllowance(address pool, address who, uint256 amt) external returns (bool ok) {
+        string memory sig = "increaseCustodyAllowance(address,uint256)";
+        (ok,) = pool.call(abi.encodeWithSignature(sig, who, amt));
+    }
 }

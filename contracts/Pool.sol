@@ -452,14 +452,15 @@ contract Pool is PoolFDT {
         @param amount    Number of FDTs cusodied by the custodian.
      */
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
-        PoolLib.zeroCheck(custodian, amount);
         uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
-        uint256 oldTotalAllowance = totalCustodyAllowance[msg.sender];
-        require(oldTotalAllowance.add(amount) <= balanceOf(msg.sender), "Pool:INSUFFICIENT_BALANCE");
+        uint256 newAllowance      = oldAllowance.add(amount);
+        uint256 newTotalAllowance = totalCustodyAllowance[msg.sender].add(amount);
+
+        PoolLib.increaseCustodyAllowanceChecks(custodian, amount, newTotalAllowance, balanceOf(msg.sender));
         
-        custodyAllowance[msg.sender][custodian] = oldAllowance.add(amount);
-        totalCustodyAllowance[msg.sender]       = totalCustodyAllowance[msg.sender] + amount;
-        emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, amount);
+        custodyAllowance[msg.sender][custodian] = newAllowance;
+        totalCustodyAllowance[msg.sender]       = newTotalAllowance;
+        emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, newAllowance);
     }
 
     /**
@@ -470,10 +471,15 @@ contract Pool is PoolFDT {
         @param amount Number of FDTs transferred.
      */
     function transferByCustodian(address from, address to, uint256 amount) external {
-        PoolLib.beforeTransferByCustodianChecks(from, to, amount, custodyAllowance[from][msg.sender]);
-        custodyAllowance[from][msg.sender] = custodyAllowance[from][msg.sender].sub(amount);
+        uint256 oldAllowance = custodyAllowance[from][msg.sender];
+        uint256 newAllowance = oldAllowance.sub(amount);
+
+        PoolLib.transferByCustodianChecks(from, to, amount, oldAllowance);
+
+        custodyAllowance[from][msg.sender] = newAllowance;
         totalCustodyAllowance[from]        = totalCustodyAllowance[from].sub(amount);
         emit CustodyTransfer(msg.sender, from, to, amount);
+        emit CustodyAllowanceChanged(msg.sender, to, oldAllowance, newAllowance);
     }
 
     /**************************/
