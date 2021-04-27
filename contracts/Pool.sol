@@ -464,8 +464,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Transfer custodied FDTs to `to` address.
-        @notice from and to should always be equal in this implementation.
+        @dev `from` and `to` should always be equal in this implementation.
+        @dev This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
         @param from   Address which holds to Pool FDTs.
         @param to     Address which going to be the new owner of the `amount` FDTs.
         @param amount Number of FDTs transferred.
