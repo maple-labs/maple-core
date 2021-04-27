@@ -502,7 +502,7 @@ contract Loan is FDT, Pausable {
     /************************/
 
     /**
-        @dev Function to block functionality of functions when protocol is in a paused state.
+        @dev Checks that the protocol is not in a paused state.
     */
     function _whenProtocolNotPaused() internal view {
         require(!_globals(superFactory).protocolPaused(), "L:PROTO_PAUSED");
@@ -572,7 +572,7 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev Utility to ensure currently within the funding period.
+        @dev Checks that "now" is currently within the funding period.
     */
     function _isWithinFundingPeriod() internal view {
         require(block.timestamp <= createdAt.add(fundingPeriod), "L:PAST_FUNDING_PERIOD");

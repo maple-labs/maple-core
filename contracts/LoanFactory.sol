@@ -166,7 +166,7 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Function to determine if protocol is paused/unpaused.
+        @dev Checks that the protocol is not in a paused state.
     */
     function _whenProtocolNotPaused() internal view {
         require(!globals.protocolPaused(), "LF:PROTO_PAUSED");

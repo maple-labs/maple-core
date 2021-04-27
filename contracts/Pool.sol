@@ -528,7 +528,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev   Check that the given `depositAmt` is acceptable based on current liquidityCap.
+        @dev   Checks that the given `depositAmt` is acceptable based on current liquidityCap.
         @param depositAmt Amount of tokens (i.e liquidityAsset type) user is trying to deposit.
     */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
@@ -642,14 +642,14 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Function to block functionality of functions when protocol is in a paused state.
+        @dev Checks that the protocol is not in a paused state.
     */
     function _whenProtocolNotPaused() internal view {
         require(!_globals(superFactory).protocolPaused(), "P:PROTO_PAUSED");
     }
 
     /**
-        @dev Checks that `msg.sender` is the Pool Delegate and protocol is not in a paused state.
+        @dev Checks that `msg.sender` is the Pool Delegate and that the protocol is not in a paused state.
     */
     function _isValidDelegateAndProtocolNotPaused() internal view {
         _isValidDelegate();

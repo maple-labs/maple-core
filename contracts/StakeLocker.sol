@@ -57,7 +57,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /*****************/
 
     /**
-        @dev canUnstake enables unstaking in the following conditions:
+        @dev Checks that a user can unstake given the following conditions:
                  1. User is not Pool Delegate and the Pool is in Finalized state.
                  2. The Pool is in Initialized or Deactivated state.
     */
@@ -343,7 +343,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Function to block functionality of functions when protocol is in a paused state.
+        @dev Checks that the protocol is not in a paused state.
     */
     function _whenProtocolNotPaused() internal view {
         require(!_globals().protocolPaused(), "SL:PROTO_PAUSED");

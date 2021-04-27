@@ -432,7 +432,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Check that a calculator is valid.
+        @dev   Checks that a calculator is valid.
         @param calc     Calculator address.
         @param calcType Calculator type.
     */
@@ -444,6 +444,9 @@ contract MapleGlobals {
     /*** Helper Functions ***/
     /************************/
 
+    /**
+        @dev Checks that percentage is less than 100%.
+    */
     function _checkPercentageRange(uint256 percentage) internal pure {
         require(percentage <= uint256(10_000), "MG:PCT_OOB");
     }
