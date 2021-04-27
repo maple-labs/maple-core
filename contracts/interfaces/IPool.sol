@@ -29,8 +29,6 @@ interface IPool is IPoolFDT {
     function withdraw(uint256) external;
 
     function superFactory() external view returns (address);
-    
-    function setAllowlistStakeLocker(address, bool) external;
 
     function claimableFunds(address) external view returns(uint256, uint256, uint256);
 
