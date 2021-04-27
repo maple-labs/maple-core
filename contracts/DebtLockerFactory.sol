@@ -20,7 +20,7 @@ contract DebtLockerFactory {
         @return debtLocker Address of the instantiated debt locker.
     */
     function newLocker(address loan) external returns (address debtLocker) {
-        debtLocker   = address(new DebtLocker(loan, msg.sender));
+        debtLocker           = address(new DebtLocker(loan, msg.sender));
         owner[debtLocker]    = msg.sender;
         isLocker[debtLocker] = true;
 

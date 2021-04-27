@@ -27,8 +27,7 @@ contract PremiumCalc {
         @return interest      Interest
     */
     function getPremiumPayment(address _loan) external view returns(uint256 total, uint256 principalOwed, uint256 interest) {
-        ILoan loan    = ILoan(_loan);
-        principalOwed = loan.principalOwed();
+        principalOwed = ILoan(_loan).principalOwed();
         interest      = principalOwed.mul(premiumFee).div(10_000);
         total         = interest.add(principalOwed);
     }

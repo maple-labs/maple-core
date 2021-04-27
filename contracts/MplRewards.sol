@@ -123,9 +123,9 @@ contract MplRewards is Ownable {
         _updateReward(msg.sender);
         uint256 reward = rewards[msg.sender];
 
-        if (reward == 0) return;
+        if (reward == uint256(0)) return;
 
-        rewards[msg.sender] = 0;
+        rewards[msg.sender] = uint256(0);
         rewardsToken.safeTransfer(msg.sender, reward);
         emit RewardPaid(msg.sender, reward);
     }
