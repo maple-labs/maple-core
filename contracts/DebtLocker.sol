@@ -26,7 +26,7 @@ contract DebtLocker {
     uint256 public lastAmountRecovered;  // Liquidity asset (a.k.a. loan asset) recovered from liquidation of Loan collateral
 
     /**
-        @dev Checks that msg.sender is the Pool.
+        @dev Checks that `msg.sender` is the Pool.
     */
     modifier isPool() {
         require(msg.sender == pool, "DL:NOT_P");

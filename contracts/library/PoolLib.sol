@@ -185,7 +185,7 @@ library PoolLib {
     }
 
     /**
-        @dev   Check whether the deactivation is allowed or not.
+        @dev   Checks that the deactivation is allowed.
         @param globals        Globals contract interface.
         @param principalOut   Amount of funds that is already funded to loans.
         @param liquidityAsset Liquidity Asset of the pool.
@@ -221,7 +221,7 @@ library PoolLib {
     }
 
     /**
-        @dev View function to indicate if msg.sender is within their withdraw window.
+        @dev View function to indicate if `msg.sender` is within their withdraw window.
     */
     function isWithdrawAllowed(uint256 withdrawCooldown, IMapleGlobals globals) external view returns (bool) {
         return block.timestamp - (withdrawCooldown + globals.lpCooldownPeriod()) <= globals.lpWithdrawWindow();
@@ -251,11 +251,11 @@ library PoolLib {
         uint256 recognizableLosses,
         uint256 lockupPeriod
     ) external {
-        require(depositDate[from].add(lockupPeriod) <= block.timestamp, "P:FUNDS_LOCKED");                  // Restrict transfer during lockup period
-        require(fromBalance.sub(wad) >= totalCustodyAllowance,          "P:INSUFFICENT_TRANSFERABLE_BAL");  // User can only transfer tokens that aren't custodied
-        require(isReceiveAllowed(withdrawCooldown[to], globals),        "P:RECIPIENT_NOT_ALLOWED");         // Recipient must not be currently withdrawing
-        require(recognizableLosses == uint256(0),                       "P:RECOG_LOSSES");                  // If an LP has unrecognized losses, they must recognize losses through withdraw
-        updateDepositDate(depositDate, toBalance, wad, to);                                                 // Update deposit date of recipient
+        require(depositDate[from].add(lockupPeriod) <= block.timestamp, "P:FUNDS_LOCKED");              // Restrict transfer during lockup period
+        require(fromBalance.sub(wad) >= totalCustodyAllowance,          "P:INSUF_TRANSFERABLE_BAL");    // User can only transfer tokens that aren't custodied
+        require(isReceiveAllowed(withdrawCooldown[to], globals),        "P:RECIPIENT_NOT_ALLOWED");     // Recipient must not be currently withdrawing
+        require(recognizableLosses == uint256(0),                       "P:RECOG_LOSSES");              // If an LP has unrecognized losses, they must recognize losses through withdraw
+        updateDepositDate(depositDate, toBalance, wad, to);                                             // Update deposit date of recipient
     }
 
     /**

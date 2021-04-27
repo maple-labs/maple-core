@@ -142,14 +142,14 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Checks that msg.sender is the Governor.
+        @dev Checks that `msg.sender` is the Governor.
     */
     function _isValidGovernor() internal view {
         require(msg.sender == globals.governor(), "PF:NOT_GOV");
     }
 
     /**
-        @dev Checks that msg.sender is the Governor or a Pool Factory Admin.
+        @dev Checks that `msg.sender` is the Governor or a Pool Factory Admin.
     */
     function _isValidGovernorOrPoolFactoryAdmin() internal view {
         require(msg.sender == globals.governor() || poolFactoryAdmins[msg.sender], "PF:NOT_GOV_OR_ADMIN");

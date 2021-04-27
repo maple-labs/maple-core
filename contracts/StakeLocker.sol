@@ -73,7 +73,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Checks that msg.sender is the Governor.
+        @dev Checks that `msg.sender` is the Governor.
     */
     modifier isGovernor() {
         require(msg.sender == _globals().governor(), "SL:NOT_GOV");
@@ -81,7 +81,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Checks that msg.sender is the Pool.
+        @dev Checks that `msg.sender` is the Pool.
     */
     modifier isPool() {
         require(msg.sender == pool, "SL:NOT_P");
@@ -295,7 +295,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /************************/
 
     /**
-        @dev View function to indicate if cooldown period has passed for msg.sender and if they are in the unstake window.
+        @dev View function to indicate if cooldown period has passed for `msg.sender` and if they are in the unstake window.
     */
     function isUnstakeAllowed(address from) public view returns (bool) {
         IMapleGlobals globals = _globals();
@@ -312,21 +312,21 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
+        @dev Checks that `msg.sender` is the Pool Delegate or a Pool Admin.
     */
     function _isValidPoolDelegateOrPoolAdmin() internal view {
         require(msg.sender == IPool(pool).poolDelegate() || IPool(pool).poolAdmins(msg.sender), "SL:NOT_DELEGATE_OR_ADMIN");
     }
 
     /**
-        @dev Checks that msg.sender is the Pool Delegate.
+        @dev Checks that `msg.sender` is the Pool Delegate.
     */
     function _isValidPoolDelegate() internal view {
         require(msg.sender == IPool(pool).poolDelegate(), "SL:NOT_DELEGATE");
     }
 
     /**
-        @dev Internal function to check whether `msg.sender` is allowed to stake.
+        @dev Checks that `msg.sender` is allowed to stake.
     */
     function _isAllowed(address user) internal view {
         require(

@@ -46,7 +46,7 @@ contract MapleTreasury {
     event           GlobalsSet(address newGlobals);
 
     /**
-        @dev Checks that msg.sender is the Governor.
+        @dev Checks that `msg.sender` is the Governor.
     */
     modifier isGovernor() {
         require(msg.sender == IMapleGlobals(globals).governor(), "MT:NOT_GOV");

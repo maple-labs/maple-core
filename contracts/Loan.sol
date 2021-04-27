@@ -509,7 +509,7 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev Checks that msg.sender is the Loan Borrower or a Loan Admin.
+        @dev Checks that `msg.sender` is the Loan Borrower or a Loan Admin.
     */
     function _isValidBorrowerOrLoanAdmin() internal view {
         require(msg.sender == borrower || loanAdmins[msg.sender], "L:NOT_BORROWER_OR_ADMIN");
@@ -544,7 +544,7 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev   Utility to check current state of Loan against provided state.
+        @dev   Checks that the current state of the Loan matches the provided state.
         @param _state Enum of desired Loan state
     */
     function _isValidState(State _state) internal view {
@@ -552,14 +552,14 @@ contract Loan is FDT, Pausable {
     }
 
     /**
-        @dev Checks that msg.sender is the Loan Borrower.
+        @dev Checks that `msg.sender` is the Loan Borrower.
     */
     function _isValidBorrower() internal view {
         require(msg.sender == borrower, "L:NOT_BORROWER");
     }
 
     /**
-        @dev Checks that msg.sender is a Lender (Liquidity Locker) that is using an approved Pool to fund the loan.
+        @dev Checks that `msg.sender` is a Lender (Liquidity Locker) that is using an approved Pool to fund the loan.
     */
     function _isValidPool() internal view {
         address pool        = ILiquidityLocker(msg.sender).pool();

@@ -67,7 +67,7 @@ contract MapleGlobals {
     event             PoolDelegateAllowed(address delegate, bool valid);
 
     /**
-        @dev Checks that msg.sender is the Governor.
+        @dev Checks that `msg.sender` is the Governor.
     */
     modifier isGovernor() {
         require(msg.sender == governor, "MG:NOT_GOV");
@@ -281,9 +281,9 @@ contract MapleGlobals {
     }
 
     /**
-        @dev    Specify validity of a calculator contract. Only the Governor can call this function.
-        @param  calc  Calculator address.
-        @param  valid Validity of calculator.
+        @dev   Specify validity of a calculator contract. Only the Governor can call this function.
+        @param calc  Calculator address.
+        @param valid Validity of calculator.
     */
     function setCalc(address calc, bool valid) external isGovernor {
         validCalcs[calc] = valid;
@@ -417,7 +417,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Check the validity of a subFactory as it relates to a superFactory.
+        @dev   Checks that a subFactory is valid as it relates to a superFactory.
         @param superFactory The core factory (e.g. PoolFactory, LoanFactory).
         @param subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory).
         @param factoryType  The type expected for the subFactory. References listed below.
@@ -432,7 +432,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Check the validity of a calculator.
+        @dev   Check that a calculator is valid.
         @param calc     Calculator address.
         @param calcType Calculator type.
     */

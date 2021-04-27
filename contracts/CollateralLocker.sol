@@ -17,7 +17,7 @@ contract CollateralLocker {
     }
 
     /**
-        @dev Checks that msg.sender is the Loan.
+        @dev Checks that `msg.sender` is the Loan.
     */
     modifier isLoan() {
         require(msg.sender == loan, "CL:NOT_L");

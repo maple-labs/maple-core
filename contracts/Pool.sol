@@ -459,9 +459,9 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Increase the custody allowance for a given `custodian` corresponds to `msg.sender`.
+        @dev   Increase the custody allowance for a given `custodian` corresponds to `msg.sender`.
         @param custodian Address which will act as custodian of given `amount` for a tokenHolder.
-        @param amount    Number of additional FDTs to be put in the custodian's custody.
+        @param amount    Number of FDTs custodied by the custodian.
      */
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
         uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
@@ -476,8 +476,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev `from` and `to` should always be equal in this implementation.
-        @dev This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
+        @dev   `from` and `to` should always be equal in this implementation.
+        @dev   This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
         @param from   Address which holds to Pool FDTs.
         @param to     Address which going to be the new owner of the `amount` FDTs.
         @param amount Number of FDTs transferred.
@@ -528,7 +528,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev   Check whether the given `depositAmt` is acceptable based on current liquidityCap.
+        @dev   Check that the given `depositAmt` is acceptable based on current liquidityCap.
         @param depositAmt Amount of tokens (i.e liquidityAsset type) user is trying to deposit.
     */
     function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
@@ -569,7 +569,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-      @dev    Checks whether pool state is `Finalized`.
+      @dev    Checks that the Pool state is `Finalized`.
       @return bool Boolean value indicating if Pool is in a Finalized state.
      */
     function isPoolFinalized() external view returns(bool) {
@@ -597,7 +597,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev   Utility to check current state of Pool against provided state.
+        @dev   Checks that the current state of Pool matches the provided state.
         @param _state Enum of desired Pool state.
     */
     function _isValidState(State _state) internal view {
@@ -605,7 +605,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Checks that msg.sender is the Pool Delegate.
+        @dev Checks that `msg.sender` is the Pool Delegate.
     */
     function _isValidDelegate() internal view {
         require(msg.sender == poolDelegate, "P:NOT_DELEGATE");
@@ -635,7 +635,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Checks that msg.sender is the Pool Delegate or a Pool Admin.
+        @dev Checks that `msg.sender` is the Pool Delegate or a Pool Admin.
     */
     function _isValidDelegateOrPoolAdmin() internal view {
         require(msg.sender == poolDelegate || poolAdmins[msg.sender], "P:NOT_DELEGATE_OR_ADMIN");
@@ -649,7 +649,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Checks that msg.sender is the Pool Delegate and protocol is not in a paused state.
+        @dev Checks that `msg.sender` is the Pool Delegate and protocol is not in a paused state.
     */
     function _isValidDelegateAndProtocolNotPaused() internal view {
         _isValidDelegate();
