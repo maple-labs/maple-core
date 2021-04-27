@@ -53,11 +53,11 @@ abstract contract ExtendedFDT is BasicFDT {
 
         if (value == 0) return;
 
-        uint256 perShareLosses = lossesPerShare.add(value.mul(pointsMultiplier) / totalSupply());
-        lossesPerShare         = perShareLosses;
+        uint256 _lossesPerShare = lossesPerShare.add(value.mul(pointsMultiplier) / totalSupply());
+        lossesPerShare          = _lossesPerShare;
 
         emit LossesDistributed(msg.sender, value);
-        emit LossesPerShareUpdated(perShareLosses);
+        emit LossesPerShareUpdated(_lossesPerShare);
     }
 
     /**
@@ -68,8 +68,8 @@ abstract contract ExtendedFDT is BasicFDT {
     function _prepareLossesWithdraw() internal returns (uint256 recognizableDividend) {
         recognizableDividend = recognizableLossesOf(msg.sender);
 
-        uint256 _recognizedLosses = recognizedLosses[msg.sender].add(recognizableDividend);
-        recognizedLosses[msg.sender]   = _recognizedLosses;
+        uint256 _recognizedLosses    = recognizedLosses[msg.sender].add(recognizableDividend);
+        recognizedLosses[msg.sender] = _recognizedLosses;
 
         emit LossesRecognized(msg.sender, recognizableDividend, _recognizedLosses);
     }
