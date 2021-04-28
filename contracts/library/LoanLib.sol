@@ -30,6 +30,22 @@ library LoanLib {
     /********************************/
 
     /**
+        @dev    Perform sanity checks on the data passed in Loan constructor.
+        @param  globals         MapleGlobals contract instance.
+        @param  liquidityAsset  Contract address of the liquidity asset.
+        @param  collateralAsset Contract address of the collateral asset.
+        @param  specs           Contains specifications for this loan.
+     */
+    function loanSanityChecks(IMapleGlobals globals, address liquidityAsset, address collateralAsset, uint256[5] calldata specs) external view {
+        require(globals.isValidLiquidityAsset(liquidityAsset),   "L:INVALID_LIQ_ASSET");
+        require(globals.isValidCollateralAsset(collateralAsset), "L:INVALID_COL_ASSET");
+
+        require(specs[2] != uint256(0),               "L:ZERO_PID");
+        require(specs[1].mod(specs[2]) == uint256(0), "L:INVALID_TERM_DAYS");
+        require(specs[3] > uint256(0),                "L:ZERO_REQUEST_AMT");
+    }
+
+    /**
         @dev    If the borrower has not drawn down loan past grace period, return capital to lenders.
         @param  liquidityAsset IERC20 of the liquidityAsset.
         @param  fundingLocker  Address of FundingLocker.
@@ -186,6 +202,43 @@ library LoanLib {
             total    = total.add(lateFee);
             interest = interest.add(lateFee);
         }
+    }
+
+    /**
+        @dev    Returns information on full payment amount.
+        @param  repaymentCalc   Address of RepaymentCalc.
+        @param  nextPaymentDue  Timestamp of when payment is due.
+        @param  lateFeeCalc     Address of LateFeeCalc.
+        @param  premiumCalc     Address of PremiumCalc.
+        @return total           Principal + Interest for the full payment.
+        @return principal       Entitled principal amount needs to pay in the full payment.
+        @return interest        Entitled interest amount needs to pay in the full payment.
+    */
+    function getFullPayment(
+        address repaymentCalc,
+        uint256 nextPaymentDue,
+        address lateFeeCalc,
+        address premiumCalc
+    )
+        external
+        view
+        returns (
+            uint256 total,
+            uint256 principal,
+            uint256 interest
+        ) 
+    {
+        (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
+
+        if (block.timestamp <= nextPaymentDue) return (total, principal, interest);
+
+        // If payment is late, calculate and add late fees using interest amount from regular payment
+        (,, uint256 regInterest) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
+
+        uint256 lateFee = ILateFeeCalc(lateFeeCalc).getLateFee(regInterest);
+        
+        total    = total.add(lateFee);
+        interest = interest.add(lateFee);
     }
 
     /**
