@@ -186,4 +186,39 @@ contract CalcsTest is TestUtil {
 
         assertEq(beforeBal - afterBal, total);
     }
+
+    function test_late_premium(uint56 _loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee, uint256 premiumFee) public {
+        uint256 loanAmt = constrictToRange(_loanAmt, 10_000 * USD, 100 * 1E9 * USD, true);  // $10k to $100b, non zero
+
+        apr     = apr     % 10_000;
+        lateFee = lateFee % 10_000;
+
+        setUpRepayments(loanAmt, apr, index, numPayments, lateFee, 100);
+
+        mint("USDC",      address(bob),  loanAmt * 1000); // Mint enough to pay interest
+        bob.approve(USDC, address(loan), loanAmt * 1000);
+
+        uint256 beforeBal = IERC20(USDC).balanceOf(address(bob));
+
+        hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
+
+        (uint256 total,         uint256 principal,         uint256 interest)         = loan.getFullPayment();                         // USDC required for payment on loan
+        (uint256 total_premium, uint256 principal_premium, uint256 interest_premium) = premiumCalc.getPremiumPayment(address(loan));  // USDC required for payment on loan
+
+        // Get late fee from regular interest payment
+        (,, uint256 interest_calc) = repaymentCalc.getNextPayment(address(loan)); 
+        uint256 interest_late = lateFeeCalc.getLateFee(interest_calc);  // USDC required for payment on loan
+
+        assertEq(total,        total_premium + interest_late);
+        assertEq(principal,                principal_premium);
+        assertEq(interest,  interest_premium + interest_late);
+
+        assertEq(interest, principal * premiumCalc.premiumFee() / 10_000 + interest_late);
+
+        bob.makeFullPayment(address(loan));
+
+        uint256 afterBal = IERC20(USDC).balanceOf(address(bob));
+
+        assertEq(beforeBal - afterBal, total);
+    }
 }

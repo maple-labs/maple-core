@@ -137,12 +137,7 @@ contract Loan is FDT, Pausable {
         IMapleGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks
-        require(globals.isValidLiquidityAsset(_liquidityAsset),   "L:INVALID_LIQ_ASSET");
-        require(globals.isValidCollateralAsset(_collateralAsset), "L:INVALID_COL_ASSET");
-
-        require(specs[2] != uint256(0),               "L:ZERO_PID");
-        require(specs[1].mod(specs[2]) == uint256(0), "L:INVALID_TERM_DAYS");
-        require(specs[3] > uint256(0),                "L:ZERO_REQUEST_AMT");
+        LoanLib.loanSanityChecks(globals, _liquidityAsset, _collateralAsset, specs);
 
         borrower        = _borrower;
         liquidityAsset  = IERC20(_liquidityAsset);
@@ -479,7 +474,7 @@ contract Loan is FDT, Pausable {
         @return interest  Interest owed.
     */
     function getFullPayment() public view returns (uint256 total, uint256 principal, uint256 interest) {
-        (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
+        (total, principal, interest) = LoanLib.getFullPayment(repaymentCalc, nextPaymentDue, lateFeeCalc, premiumCalc);
     }
 
     /**
