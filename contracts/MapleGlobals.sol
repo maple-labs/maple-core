@@ -426,6 +426,14 @@ contract MapleGlobals {
         return validCalcs[calc] && ICalc(calc).calcType() == calcType;
     }
 
+    /**
+        @dev    Returns the lpCooldownPeriod and lpWithdrawWindow.
+        @return lpCooldownPeriod and lpWithdrawWindow.
+    */
+    function getLpCooldownParams() external view returns (uint256, uint256) {
+        return (lpCooldownPeriod, lpWithdrawWindow);
+    }
+
     /************************/
     /*** Helper Functions ***/
     /************************/
