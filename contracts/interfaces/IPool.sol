@@ -85,6 +85,4 @@ interface IPool is IPoolFDT {
     function isDepositAllowed(uint256) external view returns (bool);
 
     function getInitialStakeRequirements() external view returns (uint256, uint256, bool, uint256, uint256);
-
-    function getInitialStakeRequirements(address, address, address, address, uint256) external view returns (uint256, uint256);
 }

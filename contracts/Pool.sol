@@ -590,7 +590,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev   Fetch the balance of this Pool's LiquidityLocker.
+        @dev    Fetch the balance of this Pool's LiquidityLocker.
         @return Balance of LiquidityLocker.
     */
     function _balanceOfLiquidityLocker() internal view returns (uint256) {
