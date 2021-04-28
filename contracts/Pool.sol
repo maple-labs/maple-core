@@ -36,8 +36,6 @@ contract Pool is PoolFDT {
     address public immutable stakeLocker;      // Address of the StakeLocker, escrowing stakeAsset
     address public immutable superFactory;     // The factory that deployed this Loan
 
-    IMapleGlobals private immutable globals;
-
     uint256 private immutable liquidityAssetDecimals;  // decimals() precision for the liquidityAsset
 
     uint256 public           stakingFee;   // Fee for stakers   (in basis points)
@@ -115,10 +113,9 @@ contract Pool is PoolFDT {
         string memory name,
         string memory symbol
     ) PoolFDT(name, symbol) public {
-        IMapleGlobals _globals = IMapleGlobals(IPoolFactory(msg.sender).globals());
 
         // Conduct sanity checks on Pool params
-        PoolLib.poolSanityChecks(_globals, _liquidityAsset, _stakeAsset, _stakingFee, _delegateFee);
+        PoolLib.poolSanityChecks(_globals(msg.sender), _liquidityAsset, _stakeAsset, _stakingFee, _delegateFee);
 
         // Assign variables relating to liquidityAsset
         liquidityAsset         = IERC20(_liquidityAsset);
@@ -130,7 +127,6 @@ contract Pool is PoolFDT {
         stakingFee   = _stakingFee;
         delegateFee  = _delegateFee;
         superFactory = msg.sender;
-        globals      = _globals;
         liquidityCap = _liquidityCap;
 
         // Initialize the LiquidityLocker and StakeLocker
@@ -283,7 +279,7 @@ contract Pool is PoolFDT {
     function deactivate() external {
         _isValidDelegateAndProtocolNotPaused();
         _isValidState(State.Finalized);
-        PoolLib.validateDeactivation(globals, principalOut, address(liquidityAsset));
+        PoolLib.validateDeactivation(_globals(superFactory), principalOut, address(liquidityAsset));
         poolState = State.Deactivated;
         emit PoolStateChanged(poolState);
     }
@@ -439,7 +435,7 @@ contract Pool is PoolFDT {
     function withdraw(uint256 amt) external {
         _whenProtocolNotPaused();
         uint256 wad = _toWad(amt);
-        (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = globals.getLpParameters();
+        (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = _globals(superFactory).getLpCooldownParams();
 
         require(balanceOf(msg.sender).sub(wad) >= totalCustodyAllowance[msg.sender],                       "P:INSUF_WITHDRAWABLE_BAL");  // User can only withdraw tokens that aren't custodied
         require((block.timestamp - (withdrawCooldown[msg.sender] + lpCooldownPeriod)) <= lpWithdrawWindow, "P:WITHDRAW_NOT_ALLOWED");
@@ -456,25 +452,6 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev View function to indicate if recipient is allowed to receive a transfer.
-             This is only possible if they have zero cooldown or they are passed their withdraw window.
-    */
-    function isReceiveAllowed(address to) public view returns (bool) {
-        (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = globals.getLpParameters();
-        return block.timestamp > (withdrawCooldown[to] + lpCooldownPeriod + lpWithdrawWindow);
-    }
-
-    /**
-        @dev Performs all necessary checks for a `transfer` call.
-    */
-    function _checkTransfer(address to, address from, uint256 wad ) internal view {
-        require(depositDate[from].add(lockupPeriod) <= block.timestamp,  "P:FUNDS_LOCKED");            // Restrict transfer during lockup period
-        require(balanceOf(from).sub(wad) >= totalCustodyAllowance[from], "P:INSUF_TRANSFERABLE_BAL");  // User can only transfer tokens that aren't custodied
-        require(isReceiveAllowed(to),                                    "P:RECIPIENT_NOT_ALLOWED");   // Recipient must not be currently withdrawing
-        require(recognizableLossesOf(from) == uint256(0),                "P:RECOG_LOSSES");            // If an LP has unrecognized losses, they must recognize losses through withdraw                                          // Update deposit date of recipient
-    }
-
-    /**
         @dev   Transfer PoolFDTs.
         @param from Address sending   PoolFDTs.
         @param to   Address receiving PoolFDTs.
@@ -482,8 +459,15 @@ contract Pool is PoolFDT {
     */
     function _transfer(address from, address to, uint256 wad) internal override {
         _whenProtocolNotPaused();
-        _checkTransfer(to, from, wad);
-        _updateDepositDate(wad, to);   
+
+        (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = _globals(superFactory).getLpCooldownParams();
+
+        require(depositDate[from].add(lockupPeriod) <= block.timestamp,  "P:FUNDS_LOCKED");                                   // Restrict transfer during lockup period
+        require(balanceOf(from).sub(wad) >= totalCustodyAllowance[from], "P:INSUF_TRANSFERABLE_BAL");                         // User can only transfer tokens that aren't custodied
+        require(block.timestamp > (withdrawCooldown[to] + lpCooldownPeriod + lpWithdrawWindow), "P:RECIPIENT_NOT_ALLOWED");   // Recipient must not be currently withdrawing
+        require(recognizableLossesOf(from) == uint256(0),                "P:RECOG_LOSSES");                                   // If an LP has unrecognized losses, they must recognize losses through withdraw
+
+        _updateDepositDate(wad, to);  // Update deposit date of recipient
         super._transfer(from, to, wad);
     }
 
@@ -553,7 +537,7 @@ contract Pool is PoolFDT {
         @param token Address of the token to reclaim.
     */
     function reclaimERC20(address token) external {
-        PoolLib.reclaimERC20(token, address(liquidityAsset), globals);
+        PoolLib.reclaimERC20(token, address(liquidityAsset), _globals(superFactory));
     }
 
     /*************************/
@@ -595,7 +579,7 @@ contract Pool is PoolFDT {
                 [4] = Current staked BPTs.
     */
     function getInitialStakeRequirements() public view returns (uint256, uint256, bool, uint256, uint256) {
-        return PoolLib.getInitialStakeRequirements(globals, stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
+        return PoolLib.getInitialStakeRequirements(_globals(superFactory), stakeAsset, address(liquidityAsset), poolDelegate, stakeLocker);
     }
 
     /**
@@ -662,6 +646,13 @@ contract Pool is PoolFDT {
     }
 
     /**
+        @dev Utility to return MapleGlobals interface.
+    */
+    function _globals(address poolFactory) internal view returns (IMapleGlobals) {
+        return IMapleGlobals(IPoolFactory(poolFactory).globals());
+    }
+
+    /**
         @dev Utility to emit BalanceUpdated event for LiquidityLocker.
         @dev It emits a `BalanceUpdated` event.
     */
@@ -689,7 +680,7 @@ contract Pool is PoolFDT {
         @dev Checks that the protocol is not in a paused state.
     */
     function _whenProtocolNotPaused() internal view {
-        require(!globals.protocolPaused(), "P:PROTO_PAUSED");
+        require(!_globals(superFactory).protocolPaused(), "P:PROTO_PAUSED");
     }
 
     /**

@@ -430,7 +430,7 @@ contract MapleGlobals {
         @dev    Returns the lpCooldownPeriod and lpWithdrawWindow.
         @return lpCooldownPeriod and lpWithdrawWindow.
     */
-    function getLpParameters() external view returns (uint256, uint256) {
+    function getLpCooldownParams() external view returns (uint256, uint256) {
         return (lpCooldownPeriod, lpWithdrawWindow);
     }
 
