@@ -221,7 +221,7 @@ library PoolLib {
         @dev Performs all necessary checks for a `transferByCustodian` call.
         @dev From and to must always be equal.
     */
-    function transferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external pure {
+    function transferByCustodianChecks(address from, address to, uint256 amount) external pure {
         require(to == from,                 "P:INVALID_RECEIVER");
         require(amount != uint256(0),       "P:INVALID_AMT");
     }
