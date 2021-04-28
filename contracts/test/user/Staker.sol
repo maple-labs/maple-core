@@ -16,6 +16,10 @@ contract Staker {
         IERC20(token).approve(who, amt);
     }
 
+    function increaseCustodyAllowance(address stakeLocker, address who, uint256 amt) public {
+        IStakeLocker(stakeLocker).increaseCustodyAllowance(who, amt);
+    }
+
     function stake(address stakeLocker, uint256 amt) external {
         IStakeLocker(stakeLocker).stake(amt);
     }
@@ -68,5 +72,10 @@ contract Staker {
     function try_withdrawFunds(address stakeLocker) external returns (bool ok) {
         string memory sig = "withdrawFunds()";
         (ok,) = stakeLocker.call(abi.encodeWithSignature(sig));
+    }
+
+    function try_increaseCustodyAllowance(address stakeLocker, address who, uint256 amt) external returns (bool ok) {
+        string memory sig = "increaseCustodyAllowance(address,uint256)";
+        (ok,) = stakeLocker.call(abi.encodeWithSignature(sig, who, amt));
     }
 }

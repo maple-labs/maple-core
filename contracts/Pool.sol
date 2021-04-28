@@ -71,7 +71,7 @@ contract Pool is PoolFDT {
     event                Cooldown(address indexed lp, uint256 cooldown);
     event      PoolOpenedToPublic(bool isOpen);
     event            PoolAdminSet(address poolAdmin, bool allowed);
-    
+
     event DefaultSuffered(
         address indexed loan,
         uint256 defaultSuffered,
@@ -405,6 +405,7 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         uint256 wad = _toWad(amt);
 
+        require(balanceOf(msg.sender).sub(wad) >= totalCustodyAllowance[msg.sender],             "P:INSUF_WITHDRAWABLE_BAL");  // User can only withdraw tokens that aren't custodied
         require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "P:WITHDRAW_NOT_ALLOWED");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "P:FUNDS_LOCKED");
 
@@ -460,8 +461,8 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev   Increase the custody allowance for a given `custodian` corresponds to `msg.sender`.
-        @param custodian Address which will act as custodian of given `amount` for a tokenHolder.
+        @dev   Increase the custody allowance for a given `custodian` corresponding to `msg.sender`.
+        @param custodian Address which will act as custodian of a given `amount` for a tokenHolder.
         @param amount    Number of FDTs custodied by the custodian.
     */
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
@@ -470,7 +471,7 @@ contract Pool is PoolFDT {
         uint256 newTotalAllowance = totalCustodyAllowance[msg.sender].add(amount);
 
         PoolLib.increaseCustodyAllowanceChecks(custodian, amount, newTotalAllowance, balanceOf(msg.sender));
-        
+
         custodyAllowance[msg.sender][custodian] = newAllowance;
         totalCustodyAllowance[msg.sender]       = newTotalAllowance;
         emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, newAllowance);
@@ -479,8 +480,8 @@ contract Pool is PoolFDT {
     /**
         @dev   `from` and `to` should always be equal in this implementation.
         @dev   This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
-        @param from   Address which holds to Pool FDTs.
-        @param to     Address which going to be the new owner of the `amount` FDTs.
+        @param from   Address which holds the Pool FDTs.
+        @param to     Address which will be the new owner of the `amount` of FDTs.
         @param amount Number of FDTs transferred.
     */
     function transferByCustodian(address from, address to, uint256 amount) external {

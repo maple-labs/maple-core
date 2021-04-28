@@ -35,7 +35,6 @@ import "../oracles/UsdOracle.sol";
 
 import "../interfaces/IBPool.sol";
 import "../interfaces/IBFactory.sol";
-import "../interfaces/IStakeLocker.sol";
 
 import "lib/ds-test/contracts/test.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -147,8 +146,8 @@ contract TestUtil is DSTest {
     /***************/
     /*** Lockers ***/
     /***************/
-    IStakeLocker stakeLocker;
-    IStakeLocker stakeLocker2;
+    StakeLocker stakeLocker;
+    StakeLocker stakeLocker2;
 
     /**********************************/
     /*** Mainnet Contract Addresses ***/
@@ -367,7 +366,7 @@ contract TestUtil is DSTest {
 
     function setUpLiquidityPool() public {
         createLiquidityPool();
-        stakeLocker = IStakeLocker(pool.stakeLocker());
+        stakeLocker = StakeLocker(pool.stakeLocker());
         pat.approve(address(bPool), pool.stakeLocker(), uint256(-1));
         pat.stake(pool.stakeLocker(), bPool.balanceOf(address(pat)));
         pat.finalize(address(pool));
@@ -375,7 +374,7 @@ contract TestUtil is DSTest {
     }
 
     function stakeAndFinalizePool(uint256 stakeAmt) public {
-        stakeLocker = IStakeLocker(pool.stakeLocker());
+        stakeLocker = StakeLocker(pool.stakeLocker());
         pat.approve(address(bPool), pool.stakeLocker(), uint256(-1));
         pat.stake(pool.stakeLocker(), stakeAmt);
         pat.finalize(address(pool));
@@ -385,7 +384,7 @@ contract TestUtil is DSTest {
     function stakeAndFinalizePools(uint256 stakeAmt, uint256 stakeAmt2) public {
         stakeAndFinalizePool(stakeAmt);
 
-        stakeLocker2 = IStakeLocker(pool2.stakeLocker());
+        stakeLocker2 = StakeLocker(pool2.stakeLocker());
         pam.approve(address(bPool), pool2.stakeLocker(), uint256(-1));
         pam.stake(pool2.stakeLocker(), stakeAmt2);
         pam.finalize(address(pool2));
@@ -505,7 +504,6 @@ contract TestUtil is DSTest {
     /*************************************/
     function setUpMplRewards() public {
         mplRewards = gov.createMplRewards(address(mpl), address(pool));
-        gov.setExemptFromTransferRestriction(address(mplRewards), true); // Set in globals so that depDate is not affected on stake/unstake
         fakeGov.setGovMplRewards(mplRewards);                            // Used to assert failures
     }
 
@@ -727,8 +725,18 @@ contract TestUtil is DSTest {
     function make_withdrawable(LP investor, Pool pool) internal {
         uint256 currentTime = block.timestamp;
         assertTrue(investor.try_intendToWithdraw(address(pool)));
-        assertEq(      pool.withdrawCooldown(address(investor)), currentTime, "Incorrect value set");
+        assertEq(pool.withdrawCooldown(address(investor)), currentTime, "Incorrect value set");
         hevm.warp(currentTime + globals.lpCooldownPeriod());
+    }
+
+    /***********************/
+    /*** Staking Helpers ***/
+    /***********************/
+    function make_unstakable(Staker staker, StakeLocker stakeLocker) internal {
+        uint256 currentTime = block.timestamp;
+        assertTrue(staker.try_intendToUnstake(address(stakeLocker)));
+        assertEq(stakeLocker.unstakeCooldown(address(staker)), currentTime, "Incorrect value set");
+        hevm.warp(currentTime + globals.stakerCooldownPeriod());
     }
 
     function toWad(uint256 amt) internal view returns (uint256) {
