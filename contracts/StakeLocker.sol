@@ -224,7 +224,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function unstake(uint256 amt) external canUnstake(msg.sender) {
         _whenProtocolNotPaused();
 
-        require(balanceOf(msg.sender).sub(amt) >= totalCustodyAllowance[msg.sender], "SL:INSUF_TRANSFERABLE_BAL");  // User can only unstake tokens that aren't custodied
+        require(balanceOf(msg.sender).sub(amt) >= totalCustodyAllowance[msg.sender], "SL:INSUF_UNSTAKEABLE_BAL");  // User can only unstake tokens that aren't custodied
         require(isUnstakeAllowed(msg.sender),                                        "SL:OUTSIDE_COOLDOWN");
         require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp,          "SL:FUNDS_LOCKED");
 
@@ -256,8 +256,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev   Increase the custody allowance for a given `custodian` corresponds to `msg.sender`.
-        @param custodian Address which will act as custodian of given `amount` for a tokenHolder.
+        @dev   Increase the custody allowance for a given `custodian` corresponding to `msg.sender`.
+        @param custodian Address which will act as custodian of a given `amount` for a tokenHolder.
         @param amount    Number of FDTs custodied by the custodian.
      */
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
@@ -278,7 +278,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev   `from` and `to` should always be equal in this implementation.
         @dev   This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
         @param from   Address which holds the StakeLocker FDTs.
-        @param to     Address which going to be the new owner of the `amount` FDTs.
+        @param to     Address which will be the new owner of the `amount` of FDTs.
         @param amount Number of FDTs transferred.
      */
     function transferByCustodian(address from, address to, uint256 amount) external {
@@ -287,12 +287,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
         require(to == from,             "SL:INVALID_RECEIVER");
         require(amount != uint256(0),   "SL:INVALID_AMT");
-        require(oldAllowance >= amount, "SL:INSUFFICIENT_ALLOWANCE");
 
         custodyAllowance[from][msg.sender] = newAllowance;
         totalCustodyAllowance[from]        = totalCustodyAllowance[from].sub(amount);
         emit CustodyTransfer(msg.sender, from, to, amount);
-        emit CustodyAllowanceChanged(msg.sender, to, oldAllowance, newAllowance);
+        emit CustodyAllowanceChanged(from, msg.sender, oldAllowance, newAllowance);
     }
 
     /**

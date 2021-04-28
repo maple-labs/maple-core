@@ -73,4 +73,9 @@ contract Staker {
         string memory sig = "withdrawFunds()";
         (ok,) = stakeLocker.call(abi.encodeWithSignature(sig));
     }
+
+    function try_increaseCustodyAllowance(address stakeLocker, address who, uint256 amt) external returns (bool ok) {
+        string memory sig = "increaseCustodyAllowance(address,uint256)";
+        (ok,) = stakeLocker.call(abi.encodeWithSignature(sig, who, amt));
+    }
 }

@@ -729,6 +729,9 @@ contract TestUtil is DSTest {
         hevm.warp(currentTime + globals.lpCooldownPeriod());
     }
 
+    /***********************/
+    /*** Staking Helpers ***/
+    /***********************/
     function make_unstakable(Staker staker, StakeLocker stakeLocker) internal {
         uint256 currentTime = block.timestamp;
         assertTrue(staker.try_intendToUnstake(address(stakeLocker)));

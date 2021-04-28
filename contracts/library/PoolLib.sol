@@ -265,7 +265,6 @@ library PoolLib {
     function transferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external pure {
         require(to == from,                 "P:INVALID_RECEIVER");
         require(amount != uint256(0),       "P:INVALID_AMT");
-        require(custodyAllowance >= amount, "P:INSUFFICIENT_ALLOWANCE");
     }
 
     /**
