@@ -44,13 +44,15 @@ library PoolLib {
         uint256 stakingFee, 
         uint256 delegateFee
     ) external view {
+        IBPool stakePool = IBPool(stakeAsset);
+
         require(globals.isValidLiquidityAsset(liquidityAsset), "P:INVALID_LIQ_ASSET");
         require(stakingFee.add(delegateFee) <= 10_000,         "P:INVALID_FEES");
         require(
             globals.isValidBalancerPool(address(stakeAsset)) &&
-            IBPool(stakeAsset).isBound(globals.mpl())        && 
-            IBPool(stakeAsset).isBound(liquidityAsset)       &&
-            IBPool(stakeAsset).isFinalized(), 
+            stakePool.isBound(globals.mpl())                 && 
+            stakePool.isBound(liquidityAsset)                &&
+            stakePool.isFinalized(), 
             "P:INVALID_BALANCER_POOL"
         );
     }
@@ -440,7 +442,7 @@ library PoolLib {
         @param amt                    Amount to convert.
         @param liquidityAssetDecimals Liquidity asset decimal.
     */
-    function fromWad(uint256 amt, uint256 liquidityAssetDecimals) public pure returns (uint256) {
+    function fromWad(uint256 amt, uint256 liquidityAssetDecimals) external pure returns (uint256) {
         return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 
