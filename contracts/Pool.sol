@@ -71,7 +71,7 @@ contract Pool is PoolFDT {
     event                Cooldown(address indexed lp, uint256 cooldown);
     event      PoolOpenedToPublic(bool isOpen);
     event            PoolAdminSet(address poolAdmin, bool allowed);
-    
+
     event DefaultSuffered(
         address indexed loan,
         uint256 defaultSuffered,
@@ -405,6 +405,7 @@ contract Pool is PoolFDT {
         _whenProtocolNotPaused();
         uint256 wad = _toWad(amt);
 
+        require(balanceOf(msg.sender).sub(wad) >= totalCustodyAllowance[msg.sender],             "P:INSUF_TRANSFERABLE_BAL");  // User can only withdraw tokens that aren't custodied
         require(PoolLib.isWithdrawAllowed(withdrawCooldown[msg.sender], _globals(superFactory)), "P:WITHDRAW_NOT_ALLOWED");
         require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                    "P:FUNDS_LOCKED");
 
@@ -470,7 +471,7 @@ contract Pool is PoolFDT {
         uint256 newTotalAllowance = totalCustodyAllowance[msg.sender].add(amount);
 
         PoolLib.increaseCustodyAllowanceChecks(custodian, amount, newTotalAllowance, balanceOf(msg.sender));
-        
+
         custodyAllowance[msg.sender][custodian] = newAllowance;
         totalCustodyAllowance[msg.sender]       = newTotalAllowance;
         emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, newAllowance);
