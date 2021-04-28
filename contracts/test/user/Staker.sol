@@ -35,22 +35,22 @@ contract Staker {
     /*** TRY FUNCTIONS ***/
     /*********************/
 
-    function try_stake(address stakeLocker, uint256 amt) external returns(bool ok) {
+    function try_stake(address stakeLocker, uint256 amt) external returns (bool ok) {
         string memory sig = "stake(uint256)";
         (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, amt));
     }
 
-    function try_unstake(address stakeLocker, uint256 amt) external returns(bool ok) {
+    function try_unstake(address stakeLocker, uint256 amt) external returns (bool ok) {
         string memory sig = "unstake(uint256)";
         (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, amt));
     }
 
-    function try_transfer(address token, address dst, uint256 amt) external returns(bool ok) {
+    function try_transfer(address token, address dst, uint256 amt) external returns (bool ok) {
         string memory sig = "transfer(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, dst, amt));
     }
 
-    function try_transferFrom(address token, address from, address to, uint256 amt) external returns(bool ok) {
+    function try_transferFrom(address token, address from, address to, uint256 amt) external returns (bool ok) {
         string memory sig = "transferFrom(address,address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, from, to, amt));
     }
@@ -65,7 +65,7 @@ contract Staker {
         (ok,) = stakeLocker.call(abi.encodeWithSignature(sig));
     }
 
-    function try_withdrawFunds(address stakeLocker) external returns(bool ok) {
+    function try_withdrawFunds(address stakeLocker) external returns (bool ok) {
         string memory sig = "withdrawFunds()";
         (ok,) = stakeLocker.call(abi.encodeWithSignature(sig));
     }

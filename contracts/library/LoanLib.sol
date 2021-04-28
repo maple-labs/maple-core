@@ -32,15 +32,12 @@ library LoanLib {
     /**
         @dev    If the borrower has not drawn down loan past grace period, return capital to lenders.
         @param  liquidityAsset IERC20 of the liquidityAsset.
-        @param  superFactory   Factory that instantiated Loan.
         @param  fundingLocker  Address of FundingLocker.
         @param  createdAt      Timestamp of Loan instantiation.
         @param  fundingPeriod  Duration of funding period, after which funds can be reclaimed.
         @return excessReturned Amount of liquidityAsset that was returned to the Loan from the FundingLocker.
     */
-    function unwind(IERC20 liquidityAsset, address superFactory, address fundingLocker, uint256 createdAt, uint256 fundingPeriod) external returns(uint256 excessReturned) {
-        IMapleGlobals globals = _globals(superFactory);
-
+    function unwind(IERC20 liquidityAsset, address fundingLocker, uint256 createdAt, uint256 fundingPeriod) external returns (uint256 excessReturned) {
         // Only callable if time has passed drawdown grace period, set in MapleGlobals
         require(block.timestamp > createdAt.add(fundingPeriod), "L:STILL_FUNDING_PERIOD");
 
@@ -121,7 +118,7 @@ library LoanLib {
         @param token          Address of the token that need to reclaimed.
         @param liquidityAsset Address of loan asset that is supported by the loan in other words denominated currency in which it taking funds.
         @param globals        Instance of the `MapleGlobals` contract.
-     */
+    */
     function reclaimERC20(address token, address liquidityAsset, IMapleGlobals globals) external {
         require(msg.sender == globals.governor(),               "L:NOT_GOV");
         require(token != liquidityAsset && token != address(0), "L:INVALID_TOKEN");
@@ -141,7 +138,7 @@ library LoanLib {
         @param  totalSupply        LoanFDT totalSupply.
         @return boolean indicating if default can be triggered.
     */
-    function canTriggerDefault(uint256 nextPaymentDue, uint256 defaultGracePeriod, address superFactory, uint256 balance, uint256 totalSupply) external view returns(bool) {
+    function canTriggerDefault(uint256 nextPaymentDue, uint256 defaultGracePeriod, address superFactory, uint256 balance, uint256 totalSupply) external view returns (bool) {
         bool pastDefaultGracePeriod = block.timestamp > nextPaymentDue.add(defaultGracePeriod);
 
         // Check if the loan is past the defaultGracePeriod and that `msg.sender` has a percentage of total LoanFDTs that is greater
@@ -234,7 +231,7 @@ library LoanLib {
         return IMapleGlobals(ILoanFactory(loanFactory).globals());
     }
 
-    function _toWad(uint256 amt, IERC20Details liquidityAsset) internal view returns(uint256) {
+    function _toWad(uint256 amt, IERC20Details liquidityAsset) internal view returns (uint256) {
         return amt.mul(10 ** 18).div(10 ** liquidityAsset.decimals());
     }
 }

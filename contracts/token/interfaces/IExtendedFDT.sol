@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 import "./IBasicFDT.sol";
 
 interface IExtendedFDT is IBasicFDT {
-    function lossesPerShare() external view returns(uint256);
+    function lossesPerShare() external view returns (uint256);
 
     event LossesPerShareUpdated(uint256);
 

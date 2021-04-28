@@ -28,7 +28,7 @@ contract PoolFactoryTest is TestUtil {
         assertEq(address(poolFactory.globals()), address(globals2));                   // Globals is updated
     }
 
-    function createPoolFails() internal returns(bool) {
+    function createPoolFails() internal returns (bool) {
         return !pat.try_createPool(
             address(poolFactory),
             USDC,

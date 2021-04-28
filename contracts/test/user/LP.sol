@@ -41,12 +41,12 @@ contract LP {
         (ok,) = address(pool1).call(abi.encodeWithSignature(sig, amt));
     }
 
-    function try_withdraw(address pool, uint256 amt) external returns(bool ok) {
+    function try_withdraw(address pool, uint256 amt) external returns (bool ok) {
         string memory sig = "withdraw(uint256)";
         (ok,) = pool.call(abi.encodeWithSignature(sig, amt));
     }
 
-    function try_withdrawFunds(address pool) external returns(bool ok) {
+    function try_withdrawFunds(address pool) external returns (bool ok) {
         string memory sig = "withdrawFunds()";
         (ok,) = pool.call(abi.encodeWithSignature(sig));
     }

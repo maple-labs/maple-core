@@ -22,7 +22,7 @@ contract StakeLockerTest is TestUtil {
         createLoan();
     }
 
-    function getNewStakeDate(address who, uint256 amt) public returns(uint256 newStakeDate) {
+    function getNewStakeDate(address who, uint256 amt) public returns (uint256 newStakeDate) {
         // Keeping original test logic different from counterpart code to ensure continued expected behaviour (for now)
         uint256 prevDate = stakeLocker.stakeDate(who);
         if (prevDate == uint256(0)) {

@@ -105,7 +105,7 @@ library PoolLib {
         @return bptsBurned                      Amount of BPTs burned to cover shortfall.
         @return postBurnBptBal                  Amount of BPTs returned to stakeLocker after burn.
         @return liquidityAssetRecoveredFromBurn Amount of liquidityAsset recovered from burn.
-     */
+    */
     function handleDefault(
         IERC20  liquidityAsset,
         address stakeLocker,
@@ -191,7 +191,7 @@ library PoolLib {
         @param liquidityAsset Liquidity Asset of the pool.
     */
     function validateDeactivation(IMapleGlobals globals, uint256 principalOut, address liquidityAsset) external view {
-        require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "P:PRINCIPAL_OUTSTANDING");
+        require(principalOut <= _convertFromUsd(globals, liquidityAsset, 100), "P:PRINCIPAL_OUTSTANDING");
     }
 
     /********************************************/
@@ -261,8 +261,8 @@ library PoolLib {
     /**
         @dev Performs all necessary checks for a `transferByCustodian` call.
         @dev From and to must always be equal.
-     */
-    function transferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external {
+    */
+    function transferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external pure {
         require(to == from,                 "P:INVALID_RECEIVER");
         require(amount != uint256(0),       "P:INVALID_AMT");
         require(custodyAllowance >= amount, "P:INSUFFICIENT_ALLOWANCE");
@@ -270,8 +270,8 @@ library PoolLib {
 
     /**
         @dev Performs all necessary checks for a `increaseCustodyAllowance` call
-     */
-    function increaseCustodyAllowanceChecks(address custodian, uint256 amount, uint256 newTotalAllowance, uint256 fdtBal) external {
+    */
+    function increaseCustodyAllowanceChecks(address custodian, uint256 amount, uint256 newTotalAllowance, uint256 fdtBal) external pure {
         require(custodian != address(0),     "P:INVALID_CUSTODIAN");
         require(amount    != uint256(0),     "P:INVALID_AMT");
         require(newTotalAllowance <= fdtBal, "P:INSUFFICIENT_BALANCE");
@@ -280,7 +280,7 @@ library PoolLib {
     /**
         @dev Activates the cooldown period to withdraw. It can't be called if the user is not an LP.
         @dev It emits a `Cooldown` event.
-     */
+    */
     function intendToWithdraw(mapping(address => uint256) storage withdrawCooldown, uint256 balance) external {
         require(balance != uint256(0), "P:ZERO_BALANCE");
         withdrawCooldown[msg.sender] = block.timestamp;
@@ -290,7 +290,7 @@ library PoolLib {
     /**
         @dev Cancel an initiated withdrawal.
         @dev It emits a `Cooldown` event.
-     */
+    */
     function cancelWithdraw(mapping(address => uint256) storage withdrawCooldown) external {
         require(withdrawCooldown[msg.sender] != uint256(0), "P:NOT_WITHDRAWING");
         withdrawCooldown[msg.sender] = uint256(0);
@@ -306,7 +306,7 @@ library PoolLib {
         @param token          Address of the token that need to reclaimed.
         @param liquidityAsset Address of liquidity asset that is supported by the pool.
         @param globals        Instance of the `MapleGlobals` contract.
-     */
+    */
     function reclaimERC20(address token, address liquidityAsset, IMapleGlobals globals) external {
         require(msg.sender == globals.governor(), "P:NOT_GOV");
         require(token != liquidityAsset && token != address(0), "P:INVALID_TOKEN");
@@ -483,7 +483,7 @@ library PoolLib {
         uint256 poolAmountInRequired,
         uint256 poolAmountPresent
     ) {
-        swapOutAmountRequired = convertFromUsd(globals, liquidityAsset, globals.swapOutRequired());
+        swapOutAmountRequired = _convertFromUsd(globals, liquidityAsset, globals.swapOutRequired());
         (
             poolAmountInRequired,
             poolAmountPresent
@@ -502,7 +502,7 @@ library PoolLib {
         @param amt                    Amount to convert.
         @param liquidityAssetDecimals Liquidity asset decimal.
     */
-    function fromWad(uint256 amt, uint256 liquidityAssetDecimals) public pure returns(uint256) {
+    function fromWad(uint256 amt, uint256 liquidityAssetDecimals) public pure returns (uint256) {
         return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 
@@ -522,7 +522,7 @@ library PoolLib {
         @param  usdAmount      USD amount to convert, in integer units (e.g., $100 = 100).
         @return usdAmount worth of liquidityAsset, in liquidityAsset units.
     */
-    function convertFromUsd(IMapleGlobals globals, address liquidityAsset, uint256 usdAmount) internal view returns (uint256) {
+    function _convertFromUsd(IMapleGlobals globals, address liquidityAsset, uint256 usdAmount) internal view returns (uint256) {
         return usdAmount
             .mul(10 ** 8)                                         // Cancel out 10 ** 8 decimals from oracle
             .mul(10 ** IERC20Details(liquidityAsset).decimals())  // Convert to liquidityAsset precision

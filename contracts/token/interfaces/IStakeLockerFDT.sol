@@ -5,7 +5,7 @@ import "./IExtendedFDT.sol";
 import "./IFDT.sol";
 
 interface IStakeLockerFDT is IExtendedFDT, IFDT {
-    function bptLosses() external view returns(uint256);
+    function bptLosses() external view returns (uint256);
 
-    function lossesBalance() external view returns(uint256);
+    function lossesBalance() external view returns (uint256);
 }

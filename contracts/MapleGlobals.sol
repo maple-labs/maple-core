@@ -108,7 +108,7 @@ contract MapleGlobals {
               Only the Governor can call this function.
         @dev  It emits a `GlobalsParamSet` event.
         @param newCooldownPeriod New value for the cool down period.
-     */
+    */
     function setStakerCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
         stakerCooldownPeriod = newCooldownPeriod;
         emit GlobalsParamSet("STAKER_COOLDOWN_PERIOD", newCooldownPeriod);
@@ -119,7 +119,7 @@ contract MapleGlobals {
                Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newCooldownPeriod New value for the cool down period.
-     */
+    */
     function setLpCooldownPeriod(uint256 newCooldownPeriod) external isGovernor {
         lpCooldownPeriod = newCooldownPeriod;
         emit GlobalsParamSet("LP_COOLDOWN_PERIOD", newCooldownPeriod);
@@ -130,7 +130,7 @@ contract MapleGlobals {
                Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newUnstakeWindow New value for the unstake window.
-     */
+    */
     function setStakerUnstakeWindow(uint256 newUnstakeWindow) external isGovernor {
         stakerUnstakeWindow = newUnstakeWindow;
         emit GlobalsParamSet("STAKER_UNSTAKE_WINDOW", newUnstakeWindow);
@@ -141,7 +141,7 @@ contract MapleGlobals {
                Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newLpWithdrawWindow New value for the withdraw window.
-     */
+    */
     function setLpWithdrawWindow(uint256 newLpWithdrawWindow) external isGovernor {
         lpWithdrawWindow = newLpWithdrawWindow;
         emit GlobalsParamSet("LP_WITHDRAW_WINDOW", newLpWithdrawWindow);
@@ -151,7 +151,7 @@ contract MapleGlobals {
         @dev   Update the allowed Uniswap slippage percentage, in basis points. Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newMaxSlippage New max slippage percentage (in basis points)
-     */
+    */
     function setMaxSwapSlippage(uint256 newMaxSlippage) external isGovernor {
         _checkPercentageRange(newMaxSlippage);
         maxSwapSlippage = newMaxSlippage;
@@ -162,7 +162,7 @@ contract MapleGlobals {
       @dev   Set global admin. Only the Governor can call this function.
       @dev   It emits a `GlobalAdminSet` event.
       @param newGlobalAdmin New global admin address.
-     */
+    */
     function setGlobalAdmin(address newGlobalAdmin) external {
         require(msg.sender == governor && newGlobalAdmin != address(0), "MG:NOT_GOV_OR_ADMIN");
         require(!protocolPaused, "MG:PROTO_PAUSED");
@@ -427,7 +427,7 @@ contract MapleGlobals {
                                 3 = LIQUIDITY_LOCKER_FACTORY
                                 4 = STAKE_LOCKER_FACTORY
     */
-    function isValidSubFactory(address superFactory, address subFactory, uint8 factoryType) external view returns(bool) {
+    function isValidSubFactory(address superFactory, address subFactory, uint8 factoryType) external view returns (bool) {
         return validSubFactories[superFactory][subFactory] && ISubFactory(subFactory).factoryType() == factoryType;
     }
 
@@ -436,7 +436,7 @@ contract MapleGlobals {
         @param calc     Calculator address.
         @param calcType Calculator type.
     */
-    function isValidCalc(address calc, uint8 calcType) external view returns(bool) {
+    function isValidCalc(address calc, uint8 calcType) external view returns (bool) {
         return validCalcs[calc] && ICalc(calc).calcType() == calcType;
     }
 

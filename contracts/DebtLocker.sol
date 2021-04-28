@@ -40,7 +40,7 @@ contract DebtLocker {
     }
 
     // Note: If newAmt > 0, totalNewAmt will always be greater than zero.
-    function calcAllotment(uint256 newAmt, uint256 totalClaim, uint256 totalNewAmt) internal pure returns (uint256) {
+    function _calcAllotment(uint256 newAmt, uint256 totalClaim, uint256 totalNewAmt) internal pure returns (uint256) {
         return newAmt == uint256(0) ? uint256(0) : newAmt.mul(totalClaim).div(totalNewAmt);
     }
 
@@ -54,7 +54,7 @@ contract DebtLocker {
                 [5] = Amount Recovered (from Liquidation)
                 [6] = Default Suffered
     */
-    function claim() external isPool returns(uint256[7] memory) {
+    function claim() external isPool returns (uint256[7] memory) {
 
         // Initialize newDefaultSuffered as zero
         uint256 newDefaultSuffered   = uint256(0);
@@ -65,7 +65,7 @@ contract DebtLocker {
         // of LoanFDTs in comparison to the totalSupply of LoanFDTs.
         // Default will occur only once so below statement will only be `true` once.
         if (lastDefaultSuffered == uint256(0) && loan_defaultSuffered > uint256(0)) {
-            newDefaultSuffered = lastDefaultSuffered = calcAllotment(loan.balanceOf(address(this)), loan_defaultSuffered, loan.totalSupply());
+            newDefaultSuffered = lastDefaultSuffered = _calcAllotment(loan.balanceOf(address(this)), loan_defaultSuffered, loan.totalSupply());
         }
 
         // Account for any transfers into Loan that have occurred since last call
@@ -103,13 +103,13 @@ contract DebtLocker {
         uint256 sum = newInterest.add(newPrincipal).add(newFee).add(newExcess).add(newAmountRecovered);
 
         // Calculate payment portions based on LoanFDT claim
-        newInterest  = calcAllotment(newInterest,  claimBal, sum);
-        newPrincipal = calcAllotment(newPrincipal, claimBal, sum);
+        newInterest  = _calcAllotment(newInterest,  claimBal, sum);
+        newPrincipal = _calcAllotment(newPrincipal, claimBal, sum);
 
         // Calculate one-time portions based on LoanFDT claim
-        newFee             = calcAllotment(newFee,             claimBal, sum);
-        newExcess          = calcAllotment(newExcess,          claimBal, sum);
-        newAmountRecovered = calcAllotment(newAmountRecovered, claimBal, sum);
+        newFee             = _calcAllotment(newFee,             claimBal, sum);
+        newExcess          = _calcAllotment(newExcess,          claimBal, sum);
+        newAmountRecovered = _calcAllotment(newAmountRecovered, claimBal, sum);
 
         liquidityAsset.safeTransfer(pool, claimBal);  // Transfer entire amount claimed using LoanFDT
 

@@ -20,7 +20,7 @@ contract RepaymentCalc {
         @return principalOwed Entitled principal amount needs to pay in the next payment.
         @return interest      Entitled interest amount needs to pay in the next payment.
     */
-    function getNextPayment(address _loan) external view returns(uint256 total, uint256 principalOwed, uint256 interest) {
+    function getNextPayment(address _loan) external view returns (uint256 total, uint256 principalOwed, uint256 interest) {
 
         ILoan loan = ILoan(_loan);
 
@@ -36,8 +36,8 @@ contract RepaymentCalc {
                 .div(10_000)
                 .div(365 days);
 
-        return loan.paymentsRemaining() == 1
-            ? (interest.add(principalOwed), principalOwed, interest)
-            : (interest, 0, interest);
+        (total, principalOwed) = loan.paymentsRemaining() == 1
+            ? (interest.add(principalOwed), principalOwed)
+            : (interest, 0);
     }
 }
