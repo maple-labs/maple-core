@@ -35,8 +35,12 @@ interface IStakeLocker is IStakeLockerFDT {
     function pool() external view returns (address);
 
     function setLockupPeriod(uint256) external;
-    
+
     function cancelUnstake() external;
+
+    function increaseCustodyAllowance(address, uint256) external;
+
+    function transferByCustodian(address, address, uint256) external;
 
     function pause() external;
 

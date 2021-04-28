@@ -26,20 +26,24 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     uint256 public lockupPeriod;  // Number of seconds for which unstaking is not allowed.
 
-    mapping(address => uint256) public stakeDate;        // Map address to effective stake date value
-    mapping(address => uint256) public unstakeCooldown;  // Timestamp of when staker called cooldown()
-    mapping(address => bool)    public allowed;          // Map address to allowed status
+    mapping(address => uint256)                     public stakeDate;              // Map address to effective stake date value
+    mapping(address => uint256)                     public unstakeCooldown;        // Timestamp of when staker called cooldown()
+    mapping(address => bool)                        public allowed;                // Map address to allowed status
+    mapping(address => mapping(address => uint256)) public custodyAllowance;       // Amount of StakeLockerFDTs that are "locked" at a certain address
+    mapping(address => uint256)                     public totalCustodyAllowance;  // Total amount of StakeLockerFDTs that are "locked" for a given user, cannot be greater than balance
 
     bool public openToPublic;  // Boolean opening StakeLocker to public for staking BPTs
 
-    event      BalanceUpdated(address indexed who, address indexed token, uint256 balance);
-    event    AllowListUpdated(address indexed staker, bool status);
-    event    StakeDateUpdated(address indexed staker, uint256 stakeDate);
-    event LockupPeriodUpdated(uint256 lockupPeriod);
-    event            Cooldown(address indexed staker, uint256 cooldown);
-    event               Stake(uint256 amount, address indexed staker);
-    event             Unstake(uint256 amount, address indexed staker);
-    event   StakeLockerOpened();
+    event       StakeLockerOpened();
+    event          BalanceUpdated(address indexed who, address indexed token, uint256 balance);
+    event        AllowListUpdated(address indexed staker, bool status);
+    event        StakeDateUpdated(address indexed staker, uint256 stakeDate);
+    event     LockupPeriodUpdated(uint256 lockupPeriod);
+    event                Cooldown(address indexed staker, uint256 cooldown);
+    event                   Stake(uint256 amount, address indexed staker);
+    event                 Unstake(uint256 amount, address indexed staker);
+    event         CustodyTransfer(address indexed custodian, address indexed from, address indexed to, uint256 amount);
+    event CustodyAllowanceChanged(address indexed tokenHolder, address indexed custodian, uint256 oldAllowance, uint256 newAllowance);
 
     constructor(
         address _stakeAsset,
@@ -220,8 +224,9 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     function unstake(uint256 amt) external canUnstake(msg.sender) {
         _whenProtocolNotPaused();
 
-        require(isUnstakeAllowed(msg.sender),                               "SL:OUTSIDE_COOLDOWN");
-        require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");
+        require(balanceOf(msg.sender).sub(amt) >= totalCustodyAllowance[msg.sender], "SL:INSUF_TRANSFERABLE_BAL");  // User can only unstake tokens that aren't custodied
+        require(isUnstakeAllowed(msg.sender),                                        "SL:OUTSIDE_COOLDOWN");
+        require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp,          "SL:FUNDS_LOCKED");
 
         updateFundsReceived();   // Account for any funds transferred into contract since last call
         _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
@@ -251,6 +256,46 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
+        @dev   Increase the custody allowance for a given `custodian` corresponds to `msg.sender`.
+        @param custodian Address which will act as custodian of given `amount` for a tokenHolder.
+        @param amount    Number of FDTs custodied by the custodian.
+     */
+    function increaseCustodyAllowance(address custodian, uint256 amount) external {
+        uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
+        uint256 newAllowance      = oldAllowance.add(amount);
+        uint256 newTotalAllowance = totalCustodyAllowance[msg.sender].add(amount);
+
+        require(custodian != address(0),                    "SL:INVALID_CUSTODIAN");
+        require(amount    != uint256(0),                    "SL:INVALID_AMT");
+        require(newTotalAllowance <= balanceOf(msg.sender), "SL:INSUFFICIENT_BALANCE");
+
+        custodyAllowance[msg.sender][custodian] = newAllowance;
+        totalCustodyAllowance[msg.sender]       = newTotalAllowance;
+        emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, newAllowance);
+    }
+
+    /**
+        @dev   `from` and `to` should always be equal in this implementation.
+        @dev   This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
+        @param from   Address which holds the StakeLocker FDTs.
+        @param to     Address which going to be the new owner of the `amount` FDTs.
+        @param amount Number of FDTs transferred.
+     */
+    function transferByCustodian(address from, address to, uint256 amount) external {
+        uint256 oldAllowance = custodyAllowance[from][msg.sender];
+        uint256 newAllowance = oldAllowance.sub(amount);
+
+        require(to == from,             "SL:INVALID_RECEIVER");
+        require(amount != uint256(0),   "SL:INVALID_AMT");
+        require(oldAllowance >= amount, "SL:INSUFFICIENT_ALLOWANCE");
+
+        custodyAllowance[from][msg.sender] = newAllowance;
+        totalCustodyAllowance[from]        = totalCustodyAllowance[from].sub(amount);
+        emit CustodyTransfer(msg.sender, from, to, amount);
+        emit CustodyAllowanceChanged(msg.sender, to, oldAllowance, newAllowance);
+    }
+
+    /**
         @dev   Transfer StakerLockerFDTs.
         @param from Address sending   StakeLockerFDTs.
         @param to   Address receiving StakeLockerFDTs.
@@ -258,12 +303,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function _transfer(address from, address to, uint256 wad) internal override canUnstake(from) {
         _whenProtocolNotPaused();
-        if (!_globals().isExemptFromTransferRestriction(from) && !_globals().isExemptFromTransferRestriction(to)) {
-            require(stakeDate[from].add(lockupPeriod) <= block.timestamp, "SL:FUNDS_LOCKED");           // Restrict transfer during lockup period
-            require(isReceiveAllowed(unstakeCooldown[to]),                "SL:RECIPIENT_NOT_ALLOWED");  // Recipient must not be currently unstaking
-            require(recognizableLossesOf(from) == uint256(0),             "SL:RECOG_LOSSES");           // If a staker has unrecognized losses, they must recognize losses through unstake
-            _updateStakeDate(to, wad);                                                                  // Update stake date of recipient
-        }
+        require(stakeDate[from].add(lockupPeriod) <= block.timestamp,    "SL:FUNDS_LOCKED");                  // Restrict transfer during lockup period
+        require(balanceOf(from).sub(wad) >= totalCustodyAllowance[from], "SL:INSUFFICENT_TRANSFERABLE_BAL");  // User can only transfer tokens that aren't custodied
+        require(isReceiveAllowed(unstakeCooldown[to]),                   "SL:RECIPIENT_NOT_ALLOWED");         // Recipient must not be currently unstaking
+        require(recognizableLossesOf(from) == uint256(0),                "SL:RECOG_LOSSES");                  // If a staker has unrecognized losses, they must recognize losses through unstake
+        _updateStakeDate(to, wad);                                                                            // Update stake date of recipient
         super._transfer(from, to, wad);
     }
 

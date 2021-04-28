@@ -16,6 +16,10 @@ contract Staker {
         IERC20(token).approve(who, amt);
     }
 
+    function increaseCustodyAllowance(address stakeLocker, address who, uint256 amt) public {
+        IStakeLocker(stakeLocker).increaseCustodyAllowance(who, amt);
+    }
+
     function stake(address stakeLocker, uint256 amt) external {
         IStakeLocker(stakeLocker).stake(amt);
     }

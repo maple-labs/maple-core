@@ -121,7 +121,7 @@ contract PoolCustodialTest is TestUtil {
 
         uint256 poolApy = toApy(interest,          totalDeposits, dTime);
         uint256 mplApy  = toApy(totalMplDisbursed, toWad(totalDeposits), dTime);
-    
+
         /***********************************/
         /*** Post One Loan Payment State ***/
         /***********************************/
@@ -155,7 +155,7 @@ contract PoolCustodialTest is TestUtil {
         hevm.warp(loan.nextPaymentDue() - 6 hours);  // Will affect yield farming (using a different timestamp just for the sake of yield farming assertions)
         doPartialLoanPayment(loan, bob);
         pat.claim(address(pool), address(loan), address(dlFactory));
-    
+
         // Update variables to reflect change in accounting from last dTime
         updateState();
         dTime = block.timestamp - start - dTime;
@@ -200,7 +200,7 @@ contract PoolCustodialTest is TestUtil {
         pat.setLockupPeriod(address(pool), 0);
 
         // Convert all amounts to WAD, USD not needed for the rest of the test
-        depositAmt  *= WAD; 
+        depositAmt  *= WAD;
         custodyAmt1 *= WAD;
         custodyAmt2 *= WAD;
 
@@ -223,7 +223,7 @@ contract PoolCustodialTest is TestUtil {
 
         assertEq(pool.custodyAllowance(address(fez), address(custodian2)),               custodyAmt2);  // Fez gives custody to custodian 2
         assertEq(pool.totalCustodyAllowance(address(fez)),                 custodyAmt1 + custodyAmt2);  // Total custody allowance goes up
-        
+
         uint256 transferableAmt = depositAmt - custodyAmt1 - custodyAmt2;
 
         assertEq(pool.balanceOf(address(fez)), depositAmt);
@@ -236,6 +236,39 @@ contract PoolCustodialTest is TestUtil {
         assertEq(pool.balanceOf(address(fox)), transferableAmt);
     }
 
+    function test_custody_and_withdraw(uint256 depositAmt, uint256 custodyAmt) public {
+        Custodian custodian = new Custodian();
+
+        depositAmt = constrictToRange(depositAmt, 100, 1E9,            true);  // $1 - $1b
+        custodyAmt = constrictToRange(custodyAmt,  40, depositAmt / 2, true);  // $1 - half of deposit
+
+        mintFundsAndDepositIntoPool(fez, pool, depositAmt * USD, depositAmt * USD);
+
+        pat.setLockupPeriod(address(pool), 0);
+
+        // Convert all amounts to WAD, USD not needed for the rest of the test
+        depositAmt *= WAD;
+        custodyAmt *= WAD;
+
+        assertEq(pool.custodyAllowance(address(fez), address(custodian)), 0);
+        assertEq(pool.totalCustodyAllowance(address(fez)),                0);
+
+        fez.increaseCustodyAllowance(address(pool), address(custodian), custodyAmt);
+
+        assertEq(pool.custodyAllowance(address(fez), address(custodian)), custodyAmt, "Fez gives custody to custodian");
+        assertEq(pool.totalCustodyAllowance(address(fez)), custodyAmt, "Total custody allowance goes up");
+
+        uint256 withdrawableAmt = (depositAmt - custodyAmt) / WAD * USD;
+
+        assertEq(pool.balanceOf(address(fez)), depositAmt);
+
+        make_withdrawable(fez, pool);
+        assertTrue(!fez.try_withdraw(address(pool), withdrawableAmt + 1), "Fez cannot withdraw more than balance - totalCustodyAllowance");
+
+        assertTrue(fez.try_withdraw(address(pool), withdrawableAmt), "Fez can withdraw withdrawableAmt");
+        assertEq(pool.balanceOf(address(fez)), custodyAmt);
+    }
+
     function test_transferByCustodian(uint256 depositAmt, uint256 custodyAmt) public {
         Custodian custodian = new Custodian();  // Custodial contract for PoolFDTs - will start out as liquidity mining but could be broader DeFi eventually
 
@@ -244,7 +277,7 @@ contract PoolCustodialTest is TestUtil {
 
         mintFundsAndDepositIntoPool(fay, pool, depositAmt * USD, depositAmt * USD);
 
-        depositAmt  *= WAD; 
+        depositAmt  *= WAD;
         custodyAmt  *= WAD;
 
         fay.increaseCustodyAllowance(address(pool), address(custodian), custodyAmt);
