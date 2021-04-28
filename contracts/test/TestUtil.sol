@@ -505,7 +505,6 @@ contract TestUtil is DSTest {
     /*************************************/
     function setUpMplRewards() public {
         mplRewards = gov.createMplRewards(address(mpl), address(pool));
-        gov.setExemptFromTransferRestriction(address(mplRewards), true); // Set in globals so that depDate is not affected on stake/unstake
         fakeGov.setGovMplRewards(mplRewards);                            // Used to assert failures
     }
 

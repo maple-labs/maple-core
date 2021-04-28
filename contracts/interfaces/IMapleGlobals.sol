@@ -12,8 +12,6 @@ interface IMapleGlobals {
 
     function mapleTreasury() external view returns (address);
 
-    function isExemptFromTransferRestriction(address) external view returns (bool);
-
     function isValidBalancerPool(address) external view returns (bool);
 
     function treasuryFee() external view returns (uint256);
@@ -75,8 +73,6 @@ interface IMapleGlobals {
     function setMaxSwapSlippage(uint256) external;
 
     function setGlobalAdmin(address) external;
-
-    function setExemptFromTransferRestriction(address, bool) external;
 
     function setValidBalancerPool(address, bool) external;
 

@@ -76,7 +76,6 @@ contract Governor {
     function setPriceOracle(address asset, address oracle)                     external { globals.setPriceOracle(asset, oracle); }
     function setMaxSwapSlippage(uint256 newSlippage)                           external { globals.setMaxSwapSlippage(newSlippage); }
     function setDefaultUniswapPath(address from, address to, address mid)      external { globals.setDefaultUniswapPath(from, to, mid); }
-    function setExemptFromTransferRestriction(address _mplRewards, bool valid) external { globals.setExemptFromTransferRestriction(_mplRewards, valid); }
     function setValidBalancerPool(address balancerPool, bool valid)            external { globals.setValidBalancerPool(balancerPool, valid); }
     function setLpCooldownPeriod(uint256 period)                               external { globals.setLpCooldownPeriod(period); }
     function setStakerCooldownPeriod(uint256 period)                           external { globals.setStakerCooldownPeriod(period); }
@@ -182,10 +181,6 @@ contract Governor {
     function try_setMaxSwapSlippage(uint256 newSlippage) external returns (bool ok) {
         string memory sig = "setMaxSwapSlippage(uint256)";
         (ok,) = address(globals).call(abi.encodeWithSignature(sig, newSlippage));
-    }
-    function try_setExemptFromTransferRestriction(address _mplRewards, bool valid) external returns (bool ok) {
-        string memory sig = "setExemptFromTransferRestriction(address,bool)";
-        (ok,) = address(globals).call(abi.encodeWithSignature(sig, _mplRewards, valid));
     }
     function try_setValidBalancerPool(address balancerPool, bool valid) external returns (bool ok) {
         string memory sig = "setValidBalancerPool(address,bool)";

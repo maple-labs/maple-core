@@ -232,12 +232,6 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setMaxSwapSlippage(10_000));  // 100% is upper bound
         assertEq(   globals.maxSwapSlippage(),     10_000);
 
-        // setExemptFromTransferRestriction()
-        assertTrue(!globals.isExemptFromTransferRestriction(address(1)));
-        assertTrue(!fakeGov.try_setExemptFromTransferRestriction(address(1), true));
-        assertTrue(     gov.try_setExemptFromTransferRestriction(address(1), true));
-        assertTrue( globals.isExemptFromTransferRestriction(address(1)));
-
         // setValidBalancerPool()
         assertTrue(!globals.isValidBalancerPool(address(1)));
         assertTrue(!fakeGov.try_setValidBalancerPool(address(1), true));

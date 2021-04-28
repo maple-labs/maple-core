@@ -36,7 +36,6 @@ contract MapleGlobals {
     mapping(address => bool) public isValidCollateralAsset;           // Mapping of valid collateralAssets
     mapping(address => bool) public validCalcs;                       // Mapping of valid calculator contracts
     mapping(address => bool) public isValidPoolDelegate;              // Validation data structure for Pool Delegates (prevent invalid addresses from creating pools)
-    mapping(address => bool) public isExemptFromTransferRestriction;  // Validation of if address is exempt from FDT transfer restrictions (cooldown + lockup)
     mapping(address => bool) public isValidBalancerPool;              // Validation of if address is a Balancer Pool that Maple has approved for BPT staking
 
     // Determines the liquidation path of various assets in Loans and Treasury.
@@ -168,19 +167,6 @@ contract MapleGlobals {
         require(!protocolPaused, "MG:PROTO_PAUSED");
         globalAdmin = newGlobalAdmin;
         emit GlobalAdminSet(newGlobalAdmin);
-    }
-
-    /**
-        @dev   Update the allowlist for contracts that will be exempt from transfer restrictions (lockup and cooldown).
-               These addresses are reserved for DeFi composability such as yield farming, collateral-based lending on other platforms, etc.
-               Only the Governor can call this function.
-        @dev   It emits a `TransferRestrictionExemptionSet` event.
-        @param addr  Address of exempt contract.
-        @param valid The new bool value for validating addr.
-    */
-    function setExemptFromTransferRestriction(address addr, bool valid) external isGovernor {
-        isExemptFromTransferRestriction[addr] = valid;
-        emit TransferRestrictionExemptionSet(addr, valid);
     }
 
     /**
