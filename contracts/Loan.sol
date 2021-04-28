@@ -479,7 +479,7 @@ contract Loan is FDT, Pausable {
         @return interest  Interest owed.
     */
     function getFullPayment() public view returns (uint256 total, uint256 principal, uint256 interest) {
-        (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
+        (total, principal, interest) = LoanLib.getFullPayment(repaymentCalc, nextPaymentDue, lateFeeCalc, premiumCalc);
     }
 
     /**

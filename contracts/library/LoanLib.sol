@@ -189,6 +189,43 @@ library LoanLib {
     }
 
     /**
+        @dev    Returns information on full payment amount.
+        @param  repaymentCalc   Address of RepaymentCalc.
+        @param  nextPaymentDue  Timestamp of when payment is due.
+        @param  lateFeeCalc     Address of LateFeeCalc.
+        @param  premiumCalc     Address of PremiumCalc.
+        @return total           Principal + Interest for the full payment.
+        @return principal       Entitled principal amount needs to pay in the full payment.
+        @return interest        Entitled interest amount needs to pay in the full payment.
+    */
+    function getFullPayment(
+        address repaymentCalc,
+        uint256 nextPaymentDue,
+        address lateFeeCalc,
+        address premiumCalc
+    )
+        external
+        view
+        returns (
+            uint256 total,
+            uint256 principal,
+            uint256 interest
+        ) 
+    {
+        (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
+
+        if(block.timestamp <= nextPaymentDue) return (total, principal, interest);
+
+        // If payment is late, calculate and add late fees using interest amount from regular payment
+        (,, uint256 regInterest) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
+
+        uint256 lateFee = ILateFeeCalc(lateFeeCalc).getLateFee(regInterest);
+        
+        total    = total.add(lateFee);
+        interest = interest.add(lateFee);
+    }
+
+    /**
         @dev    Helper for calculating collateral required to drawdown amt.
         @param  collateralAsset IERC20 of the collateralAsset.
         @param  liquidityAsset  IERC20 of the liquidityAsset.
