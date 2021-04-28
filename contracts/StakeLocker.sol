@@ -29,21 +29,17 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     mapping(address => uint256)                     public stakeDate;              // Map address to effective stake date value
     mapping(address => uint256)                     public unstakeCooldown;        // Timestamp of when staker called cooldown()
     mapping(address => bool)                        public allowed;                // Map address to allowed status
-    mapping(address => mapping(address => uint256)) public custodyAllowance;       // Amount of StakeLockerFDTs that are "locked" at a certain address
-    mapping(address => uint256)                     public totalCustodyAllowance;  // Total amount of StakeLockerFDTs that are "locked" for a given user, cannot be greater than balance
 
     bool public openToPublic;  // Boolean opening StakeLocker to public for staking BPTs
 
-    event       StakeLockerOpened();
-    event          BalanceUpdated(address indexed who, address indexed token, uint256 balance);
-    event        AllowListUpdated(address indexed staker, bool status);
-    event        StakeDateUpdated(address indexed staker, uint256 stakeDate);
-    event     LockupPeriodUpdated(uint256 lockupPeriod);
-    event                Cooldown(address indexed staker, uint256 cooldown);
-    event                   Stake(uint256 amount, address indexed staker);
-    event                 Unstake(uint256 amount, address indexed staker);
-    event         CustodyTransfer(address indexed custodian, address indexed from, address indexed to, uint256 amount);
-    event CustodyAllowanceChanged(address indexed tokenHolder, address indexed custodian, uint256 oldAllowance, uint256 newAllowance);
+    event    AllowListUpdated(address indexed staker, bool status);
+    event      BalanceUpdated(address indexed who, address indexed token, uint256 balance);
+    event            Cooldown(address indexed staker, uint256 cooldown);
+    event LockupPeriodUpdated(uint256 lockupPeriod);
+    event               Stake(uint256 amount, address indexed staker);
+    event    StakeDateUpdated(address indexed staker, uint256 stakeDate);
+    event   StakeLockerOpened();
+    event             Unstake(uint256 amount, address indexed staker);
 
     constructor(
         address _stakeAsset,
@@ -144,7 +140,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @param bptsBurned Amount of BPTs that have been burned.
     */
     function updateLosses(uint256 bptsBurned) isPool external {
-        bptLosses = bptLosses.add(bptsBurned);
+        lossesSum = lossesSum.add(bptsBurned);
         updateLossesReceived();
     }
 
@@ -244,54 +240,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     */
     function withdrawFunds() public override {
         _whenProtocolNotPaused();
-
-        uint256 withdrawableFunds = _prepareWithdraw();
-
-        if (withdrawableFunds == uint256(0)) return;
-
-        fundsToken.safeTransfer(msg.sender, withdrawableFunds);
+        super.withdrawFunds();
         emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
-
-        _updateFundsTokenBalance();
-    }
-
-    /**
-        @dev   Increase the custody allowance for a given `custodian` corresponding to `msg.sender`.
-        @param custodian Address which will act as custodian of a given `amount` for a tokenHolder.
-        @param amount    Number of FDTs custodied by the custodian.
-     */
-    function increaseCustodyAllowance(address custodian, uint256 amount) external {
-        uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
-        uint256 newAllowance      = oldAllowance.add(amount);
-        uint256 newTotalAllowance = totalCustodyAllowance[msg.sender].add(amount);
-
-        require(custodian != address(0),                    "SL:INVALID_CUSTODIAN");
-        require(amount    != uint256(0),                    "SL:INVALID_AMT");
-        require(newTotalAllowance <= balanceOf(msg.sender), "SL:INSUFFICIENT_BALANCE");
-
-        custodyAllowance[msg.sender][custodian] = newAllowance;
-        totalCustodyAllowance[msg.sender]       = newTotalAllowance;
-        emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, newAllowance);
-    }
-
-    /**
-        @dev   `from` and `to` should always be equal in this implementation.
-        @dev   This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
-        @param from   Address which holds the StakeLocker FDTs.
-        @param to     Address which will be the new owner of the `amount` of FDTs.
-        @param amount Number of FDTs transferred.
-     */
-    function transferByCustodian(address from, address to, uint256 amount) external {
-        uint256 oldAllowance = custodyAllowance[from][msg.sender];
-        uint256 newAllowance = oldAllowance.sub(amount);
-
-        require(to == from,             "SL:INVALID_RECEIVER");
-        require(amount != uint256(0),   "SL:INVALID_AMT");
-
-        custodyAllowance[from][msg.sender] = newAllowance;
-        totalCustodyAllowance[from]        = totalCustodyAllowance[from].sub(amount);
-        emit CustodyTransfer(msg.sender, from, to, amount);
-        emit CustodyAllowanceChanged(from, msg.sender, oldAllowance, newAllowance);
     }
 
     /**

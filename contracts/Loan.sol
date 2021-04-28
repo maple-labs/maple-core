@@ -18,13 +18,13 @@ import "./interfaces/IUniswapRouter.sol";
 import "./library/Util.sol";
 import "./library/LoanLib.sol";
 
-import "./token/FDT.sol";
+import "./token/LoanFDT.sol";
 
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 /// @title Loan maintains all accounting and functionality related to Loans.
-contract Loan is FDT, Pausable {
+contract Loan is LoanFDT, Pausable {
 
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
@@ -83,11 +83,12 @@ contract Loan is FDT, Pausable {
     uint256 public defaultSuffered;    // Difference between `amountRecovered` and `principalOwed` after liquidation
     uint256 public liquidationExcess;  // If `amountRecovered > principalOwed`, amount of liquidityAsset that is to be returned to borrower
 
-    event       LoanFunded(uint256 amtFunded, address indexed _fundedBy);
-    event   BalanceUpdated(address indexed who, address indexed token, uint256 balance);
     event         Drawdown(uint256 drawdownAmt);
-    event LoanStateChanged(State state);
+    event   BalanceUpdated(address indexed who, address indexed token, uint256 balance);
+    event      Liquidation(uint256 collateralSwapped, uint256 liquidityAssetReturned, uint256 liquidationExcess, uint256 defaultSuffered);
     event     LoanAdminSet(address loanAdmin, bool allowed);
+    event       LoanFunded(uint256 amtFunded, address indexed _fundedBy);
+    event LoanStateChanged(State state);
     
     event PaymentMade(
         uint256 totalPaid,
@@ -97,13 +98,6 @@ contract Loan is FDT, Pausable {
         uint256 principalOwed,
         uint256 nextPaymentDue,
         bool latePayment
-    );
-    
-    event Liquidation(
-        uint256 collateralSwapped,
-        uint256 liquidityAssetReturned,
-        uint256 liquidationExcess,
-        uint256 defaultSuffered
     );
 
     /**
@@ -133,7 +127,7 @@ contract Loan is FDT, Pausable {
         address _clFactory,
         uint256[5] memory specs,
         address[3] memory calcs
-    ) FDT("Maple Loan Token", "MPL-LOAN", _liquidityAsset) public {
+    ) LoanFDT("Maple Loan Token", "MPL-LOAN", _liquidityAsset) public {
         IMapleGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks
@@ -440,6 +434,7 @@ contract Loan is FDT, Pausable {
     function withdrawFunds() public override {
         _whenProtocolNotPaused();
         super.withdrawFunds();
+        emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
     }
 
     /************************/

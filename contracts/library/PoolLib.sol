@@ -75,7 +75,7 @@ library PoolLib {
         address dlFactory,
         uint256 amt
     ) external {
-        IMapleGlobals globals = _globals(superFactory);
+        IMapleGlobals globals = IMapleGlobals(ILoanFactory(superFactory).globals());
         address loanFactory   = ILoan(loan).superFactory();
 
         // Auth checks
@@ -219,24 +219,6 @@ library PoolLib {
         emit DepositDateUpdated(who, newDate);
     }
 
-    /**
-        @dev Performs all necessary checks for a `transferByCustodian` call.
-        @dev From and to must always be equal.
-    */
-    function transferByCustodianChecks(address from, address to, uint256 amount) external pure {
-        require(to == from,                 "P:INVALID_RECEIVER");
-        require(amount != uint256(0),       "P:INVALID_AMT");
-    }
-
-    /**
-        @dev Performs all necessary checks for a `increaseCustodyAllowance` call
-    */
-    function increaseCustodyAllowanceChecks(address custodian, uint256 amount, uint256 newTotalAllowance, uint256 fdtBal) external pure {
-        require(custodian != address(0),     "P:INVALID_CUSTODIAN");
-        require(amount    != uint256(0),     "P:INVALID_AMT");
-        require(newTotalAllowance <= fdtBal, "P:INSUFFICIENT_BALANCE");
-    }
-
     /**********************************/
     /*** Governor Utility Functions ***/
     /**********************************/
@@ -260,7 +242,7 @@ library PoolLib {
     /**
         @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision
     */
-    function bdiv(uint256 a, uint256 b) public pure returns (uint256) {
+    function bdiv(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, "P:DIV_ZERO");
         uint256 c0 = a * WAD;
         require(a == 0 || c0 / a == WAD, "P:DIV_INTERNAL");  // bmul overflow
@@ -444,15 +426,6 @@ library PoolLib {
     */
     function fromWad(uint256 amt, uint256 liquidityAssetDecimals) external pure returns (uint256) {
         return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
-    }
-
-    /** 
-        @dev    Internal helper function to return an interface of MapleGlobals.
-        @param  poolFactory Factory that deployed the Pool, stores MapleGlobals.
-        @return Interface of MapleGlobals.
-    */
-    function _globals(address poolFactory) internal view returns (IMapleGlobals) {
-        return IMapleGlobals(ILoanFactory(poolFactory).globals());
     }
 
     /** 

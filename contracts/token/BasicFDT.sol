@@ -10,6 +10,7 @@ import "../math/SafeMathInt.sol";
 
 /// @title BasicFDT implements base level FDT functionality for accounting for revenues
 abstract contract BasicFDT is IBaseFDT, ERC20 {
+    
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;

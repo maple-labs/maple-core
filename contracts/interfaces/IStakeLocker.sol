@@ -38,10 +38,6 @@ interface IStakeLocker is IStakeLockerFDT {
 
     function cancelUnstake() external;
 
-    function increaseCustodyAllowance(address, uint256) external;
-
-    function transferByCustodian(address, address, uint256) external;
-
     function pause() external;
 
     function unpause() external;

@@ -5,6 +5,7 @@ import "./BasicFDT.sol";
 
 /// @title ExtendedFDT implements FDT functionality for accounting for losses
 abstract contract ExtendedFDT is BasicFDT {
+    
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;

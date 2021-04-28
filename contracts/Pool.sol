@@ -55,23 +55,19 @@ contract Pool is PoolFDT {
     mapping(address => bool)                        public poolAdmins;                 // Pool Admin addresses who have permission to do certain operations in case of disaster mgt.
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
     mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`
-    mapping(address => mapping(address => uint256)) public custodyAllowance;           // Amount of PoolFDTs that are "locked" at a certain address
-    mapping(address => uint256)                     public totalCustodyAllowance;      // Total amount of PoolFDTs that are "locked" for a given user, cannot be greater than balance
-
-    event              LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
-    event                   Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee, uint256 stakeLockerFee, uint256 poolDelegateFee);
-    event          BalanceUpdated(address indexed who, address indexed token, uint256 balance);
-    event         CustodyTransfer(address indexed custodian, address indexed from, address indexed to, uint256 amount);
-    event CustodyAllowanceChanged(address indexed tokenHolder, address indexed custodian, uint256 oldAllowance, uint256 newAllowance);
-    event         LPStatusChanged(address indexed user, bool status);
-    event         LiquidityCapSet(uint256 newLiquidityCap);
-    event         LockupPeriodSet(uint256 newLockupPeriod);
-    event           StakingFeeSet(uint256 newStakingFee);
-    event        PoolStateChanged(State state);
-    event                Cooldown(address indexed lp, uint256 cooldown);
-    event      PoolOpenedToPublic(bool isOpen);
-    event            PoolAdminSet(address poolAdmin, bool allowed);
-    event      DepositDateUpdated(address indexed lp, uint256 depositDate);
+    
+    event     BalanceUpdated(address indexed who, address indexed token, uint256 balance);
+    event              Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee, uint256 stakeLockerFee, uint256 poolDelegateFee);
+    event           Cooldown(address indexed lp, uint256 cooldown);
+    event DepositDateUpdated(address indexed lp, uint256 depositDate);
+    event    LiquidityCapSet(uint256 newLiquidityCap);
+    event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
+    event    LockupPeriodSet(uint256 newLockupPeriod);
+    event    LPStatusChanged(address indexed user, bool status);
+    event       PoolAdminSet(address poolAdmin, bool allowed);
+    event PoolOpenedToPublic(bool isOpen);
+    event   PoolStateChanged(State state);
+    event      StakingFeeSet(uint256 newStakingFee);
     
     event DefaultSuffered(
         address indexed loan,
@@ -83,8 +79,8 @@ contract Pool is PoolFDT {
 
     /**
         Universal accounting law:
-                                       fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + poolLosses
-            fdtTotalSupply + interestSum - poolLosses = liquidityLockerBal + principalOut
+                                       fdtTotalSupply = liquidityLockerBal + principalOut - interestSum + lossesSum
+            fdtTotalSupply + interestSum - lossesSum = liquidityLockerBal + principalOut
     */
 
     /**
@@ -130,8 +126,10 @@ contract Pool is PoolFDT {
         liquidityCap = _liquidityCap;
 
         // Initialize the LiquidityLocker and StakeLocker
-        stakeLocker     = address(IStakeLockerFactory(_slFactory).newLocker(_stakeAsset, _liquidityAsset));
-        liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
+        stakeLocker              = address(IStakeLockerFactory(_slFactory).newLocker(_stakeAsset, _liquidityAsset));
+        address _liquidityLocker = address(ILiquidityLockerFactory(_llFactory).newLocker(_liquidityAsset));
+        liquidityLocker          = _liquidityLocker;
+        fundsToken               = IERC20(_liquidityLocker);
 
         lockupPeriod = 180 days;
 
@@ -236,6 +234,7 @@ contract Pool is PoolFDT {
         updateFundsReceived();
 
         _emitBalanceUpdatedEvent();
+
         emit BalanceUpdated(stakeLocker, address(liquidityAsset), liquidityAsset.balanceOf(stakeLocker));
 
         emit Claim(loan, interestClaim, principalClaim, claimInfo[3], stakeLockerPortion, poolDelegatePortion);
@@ -253,12 +252,12 @@ contract Pool is PoolFDT {
 
         // If BPT burn is not enough to cover full default amount, pass on losses to LPs with PoolFDT loss accounting
         if (defaultSuffered > liquidityAssetRecoveredFromBurn) {
-            poolLosses = poolLosses.add(defaultSuffered - liquidityAssetRecoveredFromBurn);
+            lossesSum = lossesSum.add(defaultSuffered - liquidityAssetRecoveredFromBurn);
             updateLossesReceived();
         }
 
         // Transfer liquidityAsset from burn to liquidityLocker
-        liquidityAsset.safeTransfer(liquidityLocker, liquidityAssetRecoveredFromBurn);
+        _transferLiquidityAsset(liquidityLocker, liquidityAssetRecoveredFromBurn);
 
         principalOut = principalOut.sub(defaultSuffered);  // Subtract rest of Loan's principal from principalOut
 
@@ -307,7 +306,7 @@ contract Pool is PoolFDT {
     */
     function setLockupPeriod(uint256 newLockupPeriod) external {
         _isValidDelegateAndProtocolNotPaused();
-        require(newLockupPeriod <= lockupPeriod, "P:BAD_VALUE");
+        require(newLockupPeriod <= lockupPeriod, "P:BAD_VAL");
         lockupPeriod = newLockupPeriod;
         emit LockupPeriodSet(newLockupPeriod);
     }
@@ -407,6 +406,16 @@ contract Pool is PoolFDT {
     }
 
     /**
+        @dev   Checks that the user can withdraw an amount.
+        @param user The address of the user.
+        @param wad  The amount to withdraw.
+    */
+    function _canWithdraw(address user, uint256 wad) internal view {
+        require(depositDate[user].add(lockupPeriod) <= block.timestamp,  "P:FUNDS_LOCKED");     // Restrict transfer during lockup period
+        require(balanceOf(user).sub(wad) >= totalCustodyAllowance[user], "P:INSUF_TRANS_BAL");  // User can only withdraw tokens that aren't custodied
+    }
+
+    /**
         @dev   Liquidity providers can withdraw liquidityAsset from the LiquidityLocker, burning PoolFDTs.
         @dev   It emits a `BalanceUpdated` event.
         @param amt Amount of liquidityAsset to withdraw.
@@ -416,16 +425,15 @@ contract Pool is PoolFDT {
         uint256 wad = _toWad(amt);
         (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = _globals(superFactory).getLpCooldownParams();
 
-        require(balanceOf(msg.sender).sub(wad) >= totalCustodyAllowance[msg.sender],                       "P:INSUF_WITHDRAWABLE_BAL");  // User can only withdraw tokens that aren't custodied
-        require((block.timestamp - (withdrawCooldown[msg.sender] + lpCooldownPeriod)) <= lpWithdrawWindow, "P:WITHDRAW_NOT_ALLOWED");
-        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                              "P:FUNDS_LOCKED");
+        _canWithdraw(msg.sender, wad);
+        require((block.timestamp - (withdrawCooldown[msg.sender] + lpCooldownPeriod)) <= lpWithdrawWindow, "P:WITH_NOT_ALLOWED");
 
         _burn(msg.sender, wad);  // Burn the corresponding FDT balance
         withdrawFunds();         // Transfer full entitled interest, decrement `interestSum`
 
         // Transfer amount that is due after realized losses are accounted for.
         // recognizedLosses are absorbed by the LP.
-        _transferLiquidityLockerFunds(msg.sender, amt.sub(_recognizeLosses()));
+        fundsToken.safeTransfer(msg.sender, amt.sub(_recognizeLosses()));
 
         _emitBalanceUpdatedEvent();
     }
@@ -441,10 +449,9 @@ contract Pool is PoolFDT {
 
         (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = _globals(superFactory).getLpCooldownParams();
 
-        require(depositDate[from].add(lockupPeriod) <= block.timestamp,                         "P:FUNDS_LOCKED");            // Restrict transfer during lockup period
-        require(balanceOf(from).sub(wad) >= totalCustodyAllowance[from],                        "P:INSUF_TRANSFERABLE_BAL");  // User can only transfer tokens that aren't custodied
-        require(block.timestamp > (withdrawCooldown[to] + lpCooldownPeriod + lpWithdrawWindow), "P:TO_NOT_ALLOWED");          // Recipient must not be currently withdrawing
-        require(recognizableLossesOf(from) == uint256(0),                                       "P:RECOG_LOSSES");            // If an LP has unrecognized losses, they must recognize losses through withdraw
+        _canWithdraw(from, wad);
+        require(block.timestamp > (withdrawCooldown[to] + lpCooldownPeriod + lpWithdrawWindow), "P:TO_NOT_ALLOWED");   // Recipient must not be currently withdrawing
+        require(recognizableLossesOf(from) == uint256(0),                                       "P:RECOG_LOSSES");     // If an LP has unrecognized losses, they must recognize losses through withdraw
 
         PoolLib.updateDepositDate(depositDate, balanceOf(to), wad, to);
         super._transfer(from, to, wad);
@@ -456,55 +463,8 @@ contract Pool is PoolFDT {
     */
     function withdrawFunds() public override {
         _whenProtocolNotPaused();
-        uint256 withdrawableFunds = _prepareWithdraw();
-
-        if (withdrawableFunds == uint256(0)) return;
-
-        _transferLiquidityLockerFunds(msg.sender, withdrawableFunds);
+        super.withdrawFunds();
         _emitBalanceUpdatedEvent();
-
-        interestSum = interestSum.sub(withdrawableFunds);
-
-        _updateFundsTokenBalance();
-    }
-
-    /**
-        @dev   Increase the custody allowance for a given `custodian` corresponding to `msg.sender`.
-        @dev   It emits a `CustodyAllowanceChanged` event.
-        @param custodian Address which will act as custodian of a given `amount` for a tokenHolder.
-        @param amount    Number of FDTs custodied by the custodian.
-    */
-    function increaseCustodyAllowance(address custodian, uint256 amount) external {
-        uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
-        uint256 newAllowance      = oldAllowance.add(amount);
-        uint256 newTotalAllowance = totalCustodyAllowance[msg.sender].add(amount);
-
-        PoolLib.increaseCustodyAllowanceChecks(custodian, amount, newTotalAllowance, balanceOf(msg.sender));
-
-        custodyAllowance[msg.sender][custodian] = newAllowance;
-        totalCustodyAllowance[msg.sender]       = newTotalAllowance;
-        emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, newAllowance);
-    }
-
-    /**
-        @dev   `from` and `to` should always be equal in this implementation.
-        @dev   This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
-        @dev   It emits a `CustodyTransfer` event.
-        @dev   It emits a `CustodyAllowanceChanged` event.
-        @param from   Address which holds to Pool FDTs.
-        @param to     Address which will be the new owner of the `amount` of FDTs.
-        @param amount Number of FDTs transferred.
-    */
-    function transferByCustodian(address from, address to, uint256 amount) external {
-        uint256 oldAllowance = custodyAllowance[from][msg.sender];
-        uint256 newAllowance = oldAllowance.sub(amount);
-
-        PoolLib.transferByCustodianChecks(from, to, amount);
-
-        custodyAllowance[from][msg.sender] = newAllowance;
-        totalCustodyAllowance[from]        = totalCustodyAllowance[from].sub(amount);
-        emit CustodyTransfer(msg.sender, from, to, amount);
-        emit CustodyAllowanceChanged(from, msg.sender, oldAllowance, newAllowance);
     }
 
     /**************************/
@@ -668,9 +628,5 @@ contract Pool is PoolFDT {
     function _isValidDelegateAndProtocolNotPaused() internal view {
         _isValidDelegate();
         _whenProtocolNotPaused();
-    }
-
-    function _transferLiquidityLockerFunds(address to, uint256 value) internal {
-        ILiquidityLocker(liquidityLocker).transfer(to, value);
     }
 }

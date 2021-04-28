@@ -10,10 +10,6 @@ interface IPool is IPoolFDT {
 
     function deposit(uint256) external;
 
-    function increaseCustodyAllowance(address, uint256) external;
-
-    function transferByCustodian(address, address, uint256) external;
-
     function poolState() external view returns (uint256);
 
     function deactivate() external;

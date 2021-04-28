@@ -437,7 +437,7 @@ contract StakeLockerTest is TestUtil {
         TestObj memory stakerFDTBal;          // Staker FDT balance
         TestObj memory fundsTokenBal;         // FDT accounting of interst earned
         TestObj memory withdrawableFundsOf;   // Interest earned by Staker
-        TestObj memory bptLosses;             // FDT accounting of losses from burning
+        TestObj memory lossesSum;             // FDT accounting of losses from burning
         TestObj memory recognizableLossesOf;  // Recognizable losses of Staker
 
         uint256 bptMin = WAD / 10_000_000;
@@ -467,7 +467,7 @@ contract StakeLockerTest is TestUtil {
         stakerFDTBal.pre         = stakeLocker.balanceOf(address(sam));
         fundsTokenBal.pre        = IERC20(USDC).balanceOf(address(stakeLocker));
         withdrawableFundsOf.pre  = stakeLocker.withdrawableFundsOf(address(sam));
-        bptLosses.pre            = stakeLocker.bptLosses();
+        lossesSum.pre            = stakeLocker.lossesSum();
         recognizableLossesOf.pre = stakeLocker.recognizableLossesOf(address(sam));
 
         assertEq(stakeLockerBal.pre,      stakeAmount + 75 * WAD);  // PD + Sam + Sid stake
@@ -475,7 +475,7 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakerFDTBal.pre,                   stakeAmount);  // Sam FDT balance == amount staked
         assertEq(fundsTokenBal.pre,                            0);  // Claim hasnt been made yet - interest not realized
         assertEq(withdrawableFundsOf.pre,                      0);  // Claim hasnt been made yet - interest not realized
-        assertEq(bptLosses.pre,                                0);  // Claim hasnt been made yet - losses   not realized
+        assertEq(lossesSum.pre,                                0);  // Claim hasnt been made yet - losses   not realized
         assertEq(recognizableLossesOf.pre,                     0);  // Claim hasnt been made yet - losses   not realized
 
         pat.claim(address(pool), address(loan),  address(dlFactory));  // Pool Delegate claims funds, updating accounting for interest and losses from Loan
@@ -486,7 +486,7 @@ contract StakeLockerTest is TestUtil {
         stakerFDTBal.post         = stakeLocker.balanceOf(address(sam));
         fundsTokenBal.post        = IERC20(USDC).balanceOf(address(stakeLocker));
         withdrawableFundsOf.post  = stakeLocker.withdrawableFundsOf(address(sam));
-        bptLosses.post            = stakeLocker.bptLosses();
+        lossesSum.post            = stakeLocker.lossesSum();
         recognizableLossesOf.post = stakeLocker.recognizableLossesOf(address(sam));
 
         uint256 stakingRevenue = interestPaid * pool.stakingFee() / 10_000;  // Portion of interest that goes to the StakeLocker
@@ -497,8 +497,8 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakerFDTBal.post,                                                stakeAmount);  // Sam FDT balance == amount staked
         assertEq(fundsTokenBal.post,                                            stakingRevenue);  // Interest claimed
         assertEq(withdrawableFundsOf.post,  stakingRevenue * stakeAmount / fdtTotalSupply.post);  // Sam claim on interest
-        assertEq(bptLosses.post,                      stakeLockerBal.pre - stakeLockerBal.post);  // Losses registered in StakeLocker
-        assertEq(recognizableLossesOf.post, bptLosses.post * stakeAmount / fdtTotalSupply.post);  // Sam's recognizable losses
+        assertEq(lossesSum.post,                      stakeLockerBal.pre - stakeLockerBal.post);  // Losses registered in StakeLocker
+        assertEq(recognizableLossesOf.post, lossesSum.post * stakeAmount / fdtTotalSupply.post);  // Sam's recognizable losses
 
         /**************************************************************/
         /*** Staker Post-Loss Minimum Unstake Accounting (Sam Only) ***/
@@ -510,14 +510,14 @@ contract StakeLockerTest is TestUtil {
         stakerFDTBal.pre         = stakerFDTBal.post;
         fundsTokenBal.pre        = fundsTokenBal.post;
         withdrawableFundsOf.pre  = withdrawableFundsOf.post;
-        bptLosses.pre            = bptLosses.post;
+        lossesSum.pre            = lossesSum.post;
         recognizableLossesOf.pre = recognizableLossesOf.post;
 
         assertEq(bPool.balanceOf(address(sam)),        25 * WAD - stakeAmount);  // Starting balance minus staked amount
         assertEq(IERC20(USDC).balanceOf(address(sam)),                      0);  // USDC balance
 
         assertEq(withdrawableFundsOf.pre,  fundsTokenBal.pre * stakeAmount / fdtTotalSupply.pre);  // Assert FDT interest accounting
-        assertEq(recognizableLossesOf.pre,     bptLosses.pre * stakeAmount / fdtTotalSupply.pre);  // Assert FDT loss     accounting
+        assertEq(recognizableLossesOf.pre,     lossesSum.pre * stakeAmount / fdtTotalSupply.pre);  // Assert FDT loss     accounting
 
         // re-using the variable to avoid stack too deep issue.
         interestPaid = block.timestamp;
@@ -536,15 +536,15 @@ contract StakeLockerTest is TestUtil {
         stakerFDTBal.post         = stakeLocker.balanceOf(address(sam));
         fundsTokenBal.post        = IERC20(USDC).balanceOf(address(stakeLocker));
         withdrawableFundsOf.post  = stakeLocker.withdrawableFundsOf(address(sam));
-        bptLosses.post            = stakeLocker.bptLosses();
+        lossesSum.post            = stakeLocker.lossesSum();
         recognizableLossesOf.post = stakeLocker.recognizableLossesOf(address(sam));
 
-        assertEq(stakeLockerBal.post,                  stakeAmount + 75 * WAD - bptLosses.pre);  // Sam + Sid + Sid stake minus burned BPTs
+        assertEq(stakeLockerBal.post,                  stakeAmount + 75 * WAD - lossesSum.pre);  // Sam + Sid + Sid stake minus burned BPTs
         assertEq(fdtTotalSupply.post,       stakeAmount + 75 * WAD - recognizableLossesOf.pre);  // FDT Supply == amount staked
         assertEq(stakerFDTBal.post,                    stakeAmount - recognizableLossesOf.pre);  // Sam FDT balance burned on withdraw
         assertEq(fundsTokenBal.post,                 stakingRevenue - withdrawableFundsOf.pre);  // Interest has been claimed
         assertEq(withdrawableFundsOf.post,                                                  0);  // Interest cannot be claimed twice
-        assertEq(bptLosses.post,                     bptLosses.pre - recognizableLossesOf.pre);  // Losses accounting has been updated
+        assertEq(lossesSum.post,                     lossesSum.pre - recognizableLossesOf.pre);  // Losses accounting has been updated
         assertEq(recognizableLossesOf.post,                                                 0);  // Losses have been recognized
 
         assertEq(bPool.balanceOf(address(sam)),         25 * WAD - stakeAmount);  // Starting balance minus staked amount (same as before unstake, meaning no BPTs were returned to Sam)
@@ -555,7 +555,7 @@ contract StakeLockerTest is TestUtil {
         /******************************************************/
 
         uint256 initialFundsTokenBal = fundsTokenBal.pre;  // Need this for asserting pre-unstake FDT
-        uint256 initialLosses        = bptLosses.pre;      // Need this for asserting pre-unstake FDT
+        uint256 initialLosses        = lossesSum.pre;      // Need this for asserting pre-unstake FDT
 
         // Pre-unstake FDT and StakeLocker checks (update variables)
         stakeLockerBal.pre       = stakeLockerBal.post;
@@ -563,7 +563,7 @@ contract StakeLockerTest is TestUtil {
         stakerFDTBal.pre         = stakeLocker.balanceOf(address(sid));
         fundsTokenBal.pre        = fundsTokenBal.post;
         withdrawableFundsOf.pre  = stakeLocker.withdrawableFundsOf(address(sid));
-        bptLosses.pre            = bptLosses.post;
+        lossesSum.pre            = lossesSum.post;
         recognizableLossesOf.pre = stakeLocker.recognizableLossesOf(address(sid));
 
         assertEq(bPool.balanceOf(address(sid)),        0);  // Staked entire balance
@@ -585,7 +585,7 @@ contract StakeLockerTest is TestUtil {
         stakerFDTBal.post         = stakeLocker.balanceOf(address(sid));
         fundsTokenBal.post        = IERC20(USDC).balanceOf(address(stakeLocker));
         withdrawableFundsOf.post  = stakeLocker.withdrawableFundsOf(address(sid));
-        bptLosses.post            = stakeLocker.bptLosses();
+        lossesSum.post            = stakeLocker.lossesSum();
         recognizableLossesOf.post = stakeLocker.recognizableLossesOf(address(sid));
 
         assertEq(stakeLockerBal.post,      stakeLockerBal.pre - (25 * WAD - recognizableLossesOf.pre));  // Sid's unstake amount minus his losses
@@ -593,7 +593,7 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakerFDTBal.post,                                                                 0);  // Sid's entire FDT balance burned on withdraw
         assertEq(fundsTokenBal.post,                      fundsTokenBal.pre - withdrawableFundsOf.pre);  // Interest has been claimed
         assertEq(withdrawableFundsOf.post,                                                          0);  // Interest cannot be claimed twice
-        assertEq(bptLosses.post,                             bptLosses.pre - recognizableLossesOf.pre);  // Losses accounting has been updated
+        assertEq(lossesSum.post,                             lossesSum.pre - recognizableLossesOf.pre);  // Losses accounting has been updated
         assertEq(recognizableLossesOf.post,                                                         0);  // Losses have been recognized
 
         assertEq(bPool.balanceOf(address(sid)),        25 * WAD - recognizableLossesOf.pre);  // Starting balance minus losses
@@ -614,7 +614,7 @@ contract StakeLockerTest is TestUtil {
         stakerFDTBal.pre         = stakeLocker.balanceOf(address(sue));
         fundsTokenBal.pre        = IERC20(USDC).balanceOf(address(stakeLocker));
         withdrawableFundsOf.pre  = stakeLocker.withdrawableFundsOf(address(sue));
-        bptLosses.pre            = stakeLocker.bptLosses();
+        lossesSum.pre            = stakeLocker.lossesSum();
         recognizableLossesOf.pre = stakeLocker.recognizableLossesOf(address(sue));
 
         assertEq(bPool.balanceOf(address(sue)),        0);  // Staked entire balance
@@ -634,7 +634,7 @@ contract StakeLockerTest is TestUtil {
         stakerFDTBal.post         = stakeLocker.balanceOf(address(sue));
         fundsTokenBal.post        = IERC20(USDC).balanceOf(address(stakeLocker));
         withdrawableFundsOf.post  = stakeLocker.withdrawableFundsOf(address(sue));
-        bptLosses.post            = stakeLocker.bptLosses();
+        lossesSum.post            = stakeLocker.lossesSum();
         recognizableLossesOf.post = stakeLocker.recognizableLossesOf(address(sue));
 
         assertEq(stakeLockerBal.post,      stakeLockerBal.pre - eliStakeAmount);  // Sue recovered full stake
@@ -642,7 +642,7 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakerFDTBal.post,                                          0);  // Sue FDT balance burned on withdraw
         assertEq(fundsTokenBal.post,                         fundsTokenBal.pre);  // No interest has been claimed
         assertEq(withdrawableFundsOf.post,                                   0);  // Interest cannot be claimed twice
-        assertEq(bptLosses.post,                                 bptLosses.pre);  // Losses accounting has not changed
+        assertEq(lossesSum.post,                                 lossesSum.pre);  // Losses accounting has not changed
         assertEq(recognizableLossesOf.post,                                  0);  // Losses have been "recognized" (there were none)
 
         assertEq(bPool.balanceOf(address(sue)),        eliStakeAmount);  // Sue recovered full stake

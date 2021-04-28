@@ -14,7 +14,7 @@ contract PoolCustodialTest is TestUtil {
     uint256 liquidityLockerBal;  // Total liquidityAsset balance of LiquidityLocker
     uint256 fdtTotalSupply;      // PoolFDT total supply
     uint256 interestSum;         // FDT accounting of interst earned
-    uint256 poolLosses;          // FDT accounting of recognizable losses
+    uint256 lossesSum;           // FDT accounting of recognizable losses
 
     TestObj withdrawableFundsOf_fay;  // FDT accounting of interest
     TestObj withdrawableFundsOf_fez;  // FDT accounting of interest
@@ -54,7 +54,7 @@ contract PoolCustodialTest is TestUtil {
         liquidityLockerBal = usdc.balanceOf(pool.liquidityLocker());
         fdtTotalSupply     = pool.totalSupply();
         interestSum        = pool.interestSum();
-        poolLosses         = pool.poolLosses();
+        lossesSum          = pool.lossesSum();
 
         withdrawableFundsOf_fay.post = pool.withdrawableFundsOf(address(fay));
         withdrawableFundsOf_fez.post = pool.withdrawableFundsOf(address(fez));

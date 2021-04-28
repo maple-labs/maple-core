@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-interface IERC2258 {
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-    // Increase the custody limit of a custodian either directly or via signed authorisation
+interface IERC2258 is IERC20 {
+
+    // Increase the custody limit of a custodian directly 
     function increaseCustodyAllowance(address custodian, uint256 amount) external;
 
     // Query individual custody limit and total custody limit across all custodians
