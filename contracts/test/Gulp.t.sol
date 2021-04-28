@@ -54,7 +54,7 @@ contract GulpTest is TestUtil {
         uint256 earnings        = mpl.withdrawableFundsOf(address(bPool));
 
         assertEq(totalFundsToken, loan.principalOwed() * globals.treasuryFee() / 10_000);
-        assertEq(mplBal,          100_000 * WAD);
+        assertEq(mplBal,          155_000 * WAD);
         withinDiff(earnings, totalFundsToken * mplBal / mpl.totalSupply(), 1);
 
         // MPL is held by Balancer Pool, claim on behalf of BPool.
@@ -66,7 +66,7 @@ contract GulpTest is TestUtil {
 
         uint256 usdcBal_postGulp = bPool.getBalance(USDC);
 
-        assertEq(usdcBal_preGulp,  50_000_000 * USD);
+        assertEq(usdcBal_preGulp,  1_550_000 * USD);
         assertEq(usdcBal_postGulp, usdcBal_preGulp + earnings); // USDC is transferred into balancer pool, increasing value of MPL
     }
 }
