@@ -413,7 +413,7 @@ contract Pool is PoolFDT {
 
         // Transfer amount that is due after realized losses are accounted for.
         // recognizedLosses are absorbed by the LP.
-        _transferLiquidityLockerFunds(msg.sender, amt.sub(recognizeLosses()));
+        _transferLiquidityLockerFunds(msg.sender, amt.sub(_recognizeLosses()));
 
         _emitBalanceUpdatedEvent();
     }

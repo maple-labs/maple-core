@@ -32,15 +32,12 @@ library LoanLib {
     /**
         @dev    If the borrower has not drawn down loan past grace period, return capital to lenders.
         @param  liquidityAsset IERC20 of the liquidityAsset.
-        @param  superFactory   Factory that instantiated Loan.
         @param  fundingLocker  Address of FundingLocker.
         @param  createdAt      Timestamp of Loan instantiation.
         @param  fundingPeriod  Duration of funding period, after which funds can be reclaimed.
         @return excessReturned Amount of liquidityAsset that was returned to the Loan from the FundingLocker.
     */
-    function unwind(IERC20 liquidityAsset, address superFactory, address fundingLocker, uint256 createdAt, uint256 fundingPeriod) external returns(uint256 excessReturned) {
-        IMapleGlobals globals = _globals(superFactory);
-
+    function unwind(IERC20 liquidityAsset, address fundingLocker, uint256 createdAt, uint256 fundingPeriod) external returns(uint256 excessReturned) {
         // Only callable if time has passed drawdown grace period, set in MapleGlobals
         require(block.timestamp > createdAt.add(fundingPeriod), "L:STILL_FUNDING_PERIOD");
 

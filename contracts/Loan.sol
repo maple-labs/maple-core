@@ -338,7 +338,7 @@ contract Loan is FDT, Pausable {
         _isValidState(State.Ready);
 
         // Update accounting for claim(), transfer funds from FundingLocker to Loan
-        excessReturned = LoanLib.unwind(liquidityAsset, superFactory, fundingLocker, createdAt, fundingPeriod);
+        excessReturned = LoanLib.unwind(liquidityAsset, fundingLocker, createdAt, fundingPeriod);
 
         updateFundsReceived();
 

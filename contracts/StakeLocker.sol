@@ -227,7 +227,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
         withdrawFunds();         // Transfer full entitled liquidityAsset interest
 
-        stakeAsset.safeTransfer(msg.sender, amt.sub(recognizeLosses()));  // Unstake amt minus losses
+        stakeAsset.safeTransfer(msg.sender, amt.sub(_recognizeLosses()));  // Unstake amt minus losses
 
         emit Unstake(amt, msg.sender);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));

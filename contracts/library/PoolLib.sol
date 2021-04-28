@@ -191,7 +191,7 @@ library PoolLib {
         @param liquidityAsset Liquidity Asset of the pool.
     */
     function validateDeactivation(IMapleGlobals globals, uint256 principalOut, address liquidityAsset) external view {
-        require(principalOut <= convertFromUsd(globals, liquidityAsset, 100), "P:PRINCIPAL_OUTSTANDING");
+        require(principalOut <= _convertFromUsd(globals, liquidityAsset, 100), "P:PRINCIPAL_OUTSTANDING");
     }
 
     /********************************************/
@@ -262,7 +262,7 @@ library PoolLib {
         @dev Performs all necessary checks for a `transferByCustodian` call.
         @dev From and to must always be equal.
     */
-    function transferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external {
+    function transferByCustodianChecks(address from, address to, uint256 amount, uint256 custodyAllowance) external pure {
         require(to == from,                 "P:INVALID_RECEIVER");
         require(amount != uint256(0),       "P:INVALID_AMT");
         require(custodyAllowance >= amount, "P:INSUFFICIENT_ALLOWANCE");
@@ -271,7 +271,7 @@ library PoolLib {
     /**
         @dev Performs all necessary checks for a `increaseCustodyAllowance` call
     */
-    function increaseCustodyAllowanceChecks(address custodian, uint256 amount, uint256 newTotalAllowance, uint256 fdtBal) external {
+    function increaseCustodyAllowanceChecks(address custodian, uint256 amount, uint256 newTotalAllowance, uint256 fdtBal) external pure {
         require(custodian != address(0),     "P:INVALID_CUSTODIAN");
         require(amount    != uint256(0),     "P:INVALID_AMT");
         require(newTotalAllowance <= fdtBal, "P:INSUFFICIENT_BALANCE");
@@ -483,7 +483,7 @@ library PoolLib {
         uint256 poolAmountInRequired,
         uint256 poolAmountPresent
     ) {
-        swapOutAmountRequired = convertFromUsd(globals, liquidityAsset, globals.swapOutRequired());
+        swapOutAmountRequired = _convertFromUsd(globals, liquidityAsset, globals.swapOutRequired());
         (
             poolAmountInRequired,
             poolAmountPresent
@@ -522,7 +522,7 @@ library PoolLib {
         @param  usdAmount      USD amount to convert, in integer units (e.g., $100 = 100).
         @return usdAmount worth of liquidityAsset, in liquidityAsset units.
     */
-    function convertFromUsd(IMapleGlobals globals, address liquidityAsset, uint256 usdAmount) internal view returns (uint256) {
+    function _convertFromUsd(IMapleGlobals globals, address liquidityAsset, uint256 usdAmount) internal view returns (uint256) {
         return usdAmount
             .mul(10 ** 8)                                         // Cancel out 10 ** 8 decimals from oracle
             .mul(10 ** IERC20Details(liquidityAsset).decimals())  // Convert to liquidityAsset precision

@@ -21,7 +21,7 @@ abstract contract PoolFDT is ExtendedFDT {
     /**
         @dev Realizes losses incurred to LPs.
     */
-    function recognizeLosses() internal override returns (uint256 losses) {
+    function _recognizeLosses() internal override returns (uint256 losses) {
         losses = _prepareLossesWithdraw();
 
         poolLosses = poolLosses.sub(losses);

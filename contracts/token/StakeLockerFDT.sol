@@ -24,7 +24,7 @@ abstract contract StakeLockerFDT is ExtendedFDT {
         @dev    Updates loss accounting for msg.sender, recognizing losses.
         @return losses Amount to be subtracted from given withdraw amount.
     */
-    function recognizeLosses() internal override returns (uint256 losses) {
+    function _recognizeLosses() internal override returns (uint256 losses) {
         losses = _prepareLossesWithdraw();
 
         bptLosses = bptLosses.sub(losses);

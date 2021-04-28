@@ -184,7 +184,7 @@ abstract contract ExtendedFDT is BasicFDT {
     /**
         @dev Recognizes all recognizable losses for a user using loss accounting.
     */
-    function recognizeLosses() internal virtual returns (uint256 losses) { }
+    function _recognizeLosses() internal virtual returns (uint256 losses) { }
 
     /**
         @dev    Updates the current losses balance and returns the difference of new and previous losses balances.
