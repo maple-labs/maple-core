@@ -441,10 +441,10 @@ contract Pool is PoolFDT {
 
         (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = _globals(superFactory).getLpCooldownParams();
 
-        require(depositDate[from].add(lockupPeriod) <= block.timestamp,  "P:FUNDS_LOCKED");                                   // Restrict transfer during lockup period
-        require(balanceOf(from).sub(wad) >= totalCustodyAllowance[from], "P:INSUF_TRANSFERABLE_BAL");                         // User can only transfer tokens that aren't custodied
+        require(depositDate[from].add(lockupPeriod) <= block.timestamp,                         "P:FUNDS_LOCKED");                                   // Restrict transfer during lockup period
+        require(balanceOf(from).sub(wad) >= totalCustodyAllowance[from],                        "P:INSUF_TRANSFERABLE_BAL");                         // User can only transfer tokens that aren't custodied
         require(block.timestamp > (withdrawCooldown[to] + lpCooldownPeriod + lpWithdrawWindow), "P:TO_NOT_ALLOWED");   // Recipient must not be currently withdrawing
-        require(recognizableLossesOf(from) == uint256(0),                "P:RECOG_LOSSES");                                   // If an LP has unrecognized losses, they must recognize losses through withdraw
+        require(recognizableLossesOf(from) == uint256(0),                                       "P:RECOG_LOSSES");                                   // If an LP has unrecognized losses, they must recognize losses through withdraw
 
         PoolLib.updateDepositDate(depositDate, balanceOf(to), wad, to);
         super._transfer(from, to, wad);
