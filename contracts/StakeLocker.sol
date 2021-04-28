@@ -64,11 +64,8 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     modifier canUnstake(address from) {
         IPool _pool = IPool(pool);
 
-        require(
-            (from != _pool.poolDelegate() && _pool.isPoolFinalized()) ||
-            !_pool.isPoolFinalized(),
-            "SL:STAKE_LOCKED"
-        );
+        // Pool cannot be finalized, but if it is, user cannot be the Pool Delegate
+        require(!_pool.isPoolFinalized() || from != _pool.poolDelegate(), "SL:STAKE_LOCKED");
         _;
     }
 
@@ -120,7 +117,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         @dev   Set the lockup period. Only the Pool Delegate can call this function.
         @dev   It emits a `LockupPeriodUpdated` event.
         @param newLockupPeriod New lockup period used to restrict unstaking.
-     */
+    */
     function setLockupPeriod(uint256 newLockupPeriod) external {
         _whenProtocolNotPaused();
         _isValidPoolDelegate();
@@ -207,7 +204,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**
         @dev Cancels an initiated unstake by resetting unstakeCooldown.
         @dev It emits a `Cooldown` event.
-     */
+    */
     function cancelUnstake() external {
         require(unstakeCooldown[msg.sender] != uint256(0), "SL:NOT_UNSTAKING");
         unstakeCooldown[msg.sender] = 0;

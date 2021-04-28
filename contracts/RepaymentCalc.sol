@@ -36,8 +36,8 @@ contract RepaymentCalc {
                 .div(10_000)
                 .div(365 days);
 
-        return loan.paymentsRemaining() == 1
-            ? (interest.add(principalOwed), principalOwed, interest)
-            : (interest, 0, interest);
+        (total, principalOwed) = loan.paymentsRemaining() == 1
+            ? (interest.add(principalOwed), principalOwed)
+            : (interest, 0);
     }
 }

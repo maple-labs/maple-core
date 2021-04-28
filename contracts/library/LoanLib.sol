@@ -121,7 +121,7 @@ library LoanLib {
         @param token          Address of the token that need to reclaimed.
         @param liquidityAsset Address of loan asset that is supported by the loan in other words denominated currency in which it taking funds.
         @param globals        Instance of the `MapleGlobals` contract.
-     */
+    */
     function reclaimERC20(address token, address liquidityAsset, IMapleGlobals globals) external {
         require(msg.sender == globals.governor(),               "L:NOT_GOV");
         require(token != liquidityAsset && token != address(0), "L:INVALID_TOKEN");

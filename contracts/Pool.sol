@@ -174,7 +174,7 @@ contract Pool is PoolFDT {
                Only the Pool Delegate can call this function.
         @param loan      Address of the loan contract to liquidate.
         @param dlFactory Address of the debt locker factory that is used to pull corresponding debt locker.
-     */
+    */
     function triggerDefault(address loan, address dlFactory) external {
         _isValidDelegateAndProtocolNotPaused();
         IDebtLocker(debtLockers[loan][dlFactory]).triggerDefault();
@@ -302,7 +302,7 @@ contract Pool is PoolFDT {
         @dev   Set the lockup period. Only the Pool Delegate can call this function.
         @dev   It emits a `LockupPeriodSet` event.
         @param newLockupPeriod New lockup period used to restrict the withdrawals.
-     */
+    */
     function setLockupPeriod(uint256 newLockupPeriod) external {
         _isValidDelegateAndProtocolNotPaused();
         require(newLockupPeriod <= lockupPeriod, "P:INVALID_VALUE");
@@ -463,7 +463,7 @@ contract Pool is PoolFDT {
         @dev   Increase the custody allowance for a given `custodian` corresponds to `msg.sender`.
         @param custodian Address which will act as custodian of given `amount` for a tokenHolder.
         @param amount    Number of FDTs custodied by the custodian.
-     */
+    */
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
         uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
         uint256 newAllowance      = oldAllowance.add(amount);
@@ -482,7 +482,7 @@ contract Pool is PoolFDT {
         @param from   Address which holds to Pool FDTs.
         @param to     Address which going to be the new owner of the `amount` FDTs.
         @param amount Number of FDTs transferred.
-     */
+    */
     function transferByCustodian(address from, address to, uint256 amount) external {
         uint256 oldAllowance = custodyAllowance[from][msg.sender];
         uint256 newAllowance = oldAllowance.sub(amount);
@@ -492,7 +492,7 @@ contract Pool is PoolFDT {
         custodyAllowance[from][msg.sender] = newAllowance;
         totalCustodyAllowance[from]        = totalCustodyAllowance[from].sub(amount);
         emit CustodyTransfer(msg.sender, from, to, amount);
-        emit CustodyAllowanceChanged(msg.sender, to, oldAllowance, newAllowance);
+        emit CustodyAllowanceChanged(from, msg.sender, oldAllowance, newAllowance);
     }
 
     /**************************/
@@ -572,7 +572,7 @@ contract Pool is PoolFDT {
     /**
       @dev    Checks that the Pool state is `Finalized`.
       @return bool Boolean value indicating if Pool is in a Finalized state.
-     */
+    */
     function isPoolFinalized() external view returns(bool) {
         return poolState == State.Finalized;
     }

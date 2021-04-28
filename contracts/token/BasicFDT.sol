@@ -29,14 +29,14 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     /**
         @dev Distributes funds to token holders.
         @dev It reverts if the total supply of tokens is 0.
-        @dev It emits a `FundsDistributed` event if the amount of received ether is greater than 0.
-        @dev It emits a `PointsPerShareUpdated` event if the amount of received ether is greater than 0.
+        @dev It emits a `FundsDistributed` event if the amount of received funds is greater than 0.
+        @dev It emits a `PointsPerShareUpdated` event if the amount of received funds is greater than 0.
              About undistributed funds:
                 In each distribution, there is a small amount of funds which does not get distributed,
                    which is `(value  pointsMultiplier) % totalSupply()`.
                 With a well-chosen `pointsMultiplier`, the amount funds that are not getting distributed
                    in a distribution can be less than 1 (base unit).
-                We can actually keep track of the undistributed ether in a distribution
+                We can actually keep track of the undistributed funds in a distribution
                    and try to distribute it in the next distribution.
     */
     function _distributeFunds(uint256 value) internal {
@@ -51,7 +51,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
 
     /**
         @dev    Prepares funds withdrawal
-        @dev    It emits a `FundsWithdrawn` event if the amount of withdrawn ether is greater than 0.
+        @dev    It emits a `FundsWithdrawn` event if the amount of withdrawn funds is greater than 0.
         @return withdrawableDividend The amount of dividend funds that can be withdrawn.
     */
     function _prepareWithdraw() internal returns (uint256 withdrawableDividend) {
