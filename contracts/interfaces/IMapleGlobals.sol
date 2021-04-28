@@ -34,6 +34,8 @@ interface IMapleGlobals {
 
     function isValidCalc(address, uint8) external view returns (bool);
 
+    function getLpParameters() external view returns (uint256, uint256);
+
     function isValidLoanFactory(address) external view returns (bool);
 
     function isValidSubFactory(address, address, uint8) external view returns (bool);

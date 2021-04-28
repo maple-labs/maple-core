@@ -22,9 +22,7 @@ library PoolLib {
     uint256 public constant WAD         = 10 ** 18;
     uint8   public constant DL_FACTORY  = 1;         // Factory type of `DebtLockerFactory`
 
-    event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
-    event DepositDateUpdated(address indexed lp, uint256 depositDate);
-    event           Cooldown(address indexed lp, uint256 cooldown);
+    event LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
 
     /***************************************/
     /*** Pool Delegate Utility Functions ***/
@@ -199,66 +197,6 @@ library PoolLib {
     /********************************************/
 
     /**
-        @dev   Update the effective deposit date based on how much new capital has been added.
-               If more capital is added, the depositDate moves closer to the current timestamp.
-        @dev   It emits a `DepositDateUpdated` event.
-        @param depositDate Weighted timestamp representing effective deposit date.
-        @param balance     Balance of PoolFDT tokens of user.
-        @param amt         Total deposit amount.
-        @param who         Address of user depositing.
-    */
-    function updateDepositDate(mapping(address => uint256) storage depositDate, uint256 balance, uint256 amt, address who) internal {
-        uint256 prevDate = depositDate[who];
-
-        // prevDate + (now - prevDate) * (amt / (balance + amt))
-        // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now
-        uint256 newDate = (balance + amt) > 0
-            ? prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt))
-            : prevDate;
-
-        depositDate[who] = newDate;
-        emit DepositDateUpdated(who, newDate);
-    }
-
-    /**
-        @dev View function to indicate if `msg.sender` is within their withdraw window.
-    */
-    function isWithdrawAllowed(uint256 withdrawCooldown, IMapleGlobals globals) external view returns (bool) {
-        return (block.timestamp - (withdrawCooldown + globals.lpCooldownPeriod())) <= globals.lpWithdrawWindow();
-    }
-
-    /**
-        @dev View function to indicate if recipient is allowed to receive a transfer.
-             This is only possible if they have zero cooldown or they are passed their withdraw window.
-    */
-    function isReceiveAllowed(uint256 withdrawCooldown, IMapleGlobals globals) public view returns (bool) {
-        return block.timestamp > (withdrawCooldown + globals.lpCooldownPeriod() + globals.lpWithdrawWindow());
-    }
-
-    /**
-        @dev Performs all necessary checks for a `transfer` call.
-    */
-    function prepareTransfer(
-        mapping(address => uint256) storage withdrawCooldown,
-        mapping(address => uint256) storage depositDate,
-        uint256 totalCustodyAllowance,
-        uint256 fromBalance,
-        address from,
-        address to,
-        uint256 wad,
-        IMapleGlobals globals,
-        uint256 toBalance,
-        uint256 recognizableLosses,
-        uint256 lockupPeriod
-    ) external {
-        require(depositDate[from].add(lockupPeriod) <= block.timestamp, "P:FUNDS_LOCKED");              // Restrict transfer during lockup period
-        require(fromBalance.sub(wad) >= totalCustodyAllowance,          "P:INSUF_TRANSFERABLE_BAL");    // User can only transfer tokens that aren't custodied
-        require(isReceiveAllowed(withdrawCooldown[to], globals),        "P:RECIPIENT_NOT_ALLOWED");     // Recipient must not be currently withdrawing
-        require(recognizableLosses == uint256(0),                       "P:RECOG_LOSSES");              // If an LP has unrecognized losses, they must recognize losses through withdraw
-        updateDepositDate(depositDate, toBalance, wad, to);                                             // Update deposit date of recipient
-    }
-
-    /**
         @dev Performs all necessary checks for a `transferByCustodian` call.
         @dev From and to must always be equal.
     */
@@ -274,26 +212,6 @@ library PoolLib {
         require(custodian != address(0),     "P:INVALID_CUSTODIAN");
         require(amount    != uint256(0),     "P:INVALID_AMT");
         require(newTotalAllowance <= fdtBal, "P:INSUFFICIENT_BALANCE");
-    }
-
-    /**
-        @dev Activates the cooldown period to withdraw. It can't be called if the user is not an LP.
-        @dev It emits a `Cooldown` event.
-    */
-    function intendToWithdraw(mapping(address => uint256) storage withdrawCooldown, uint256 balance) external {
-        require(balance != uint256(0), "P:ZERO_BALANCE");
-        withdrawCooldown[msg.sender] = block.timestamp;
-        emit Cooldown(msg.sender, block.timestamp);
-    }
-
-    /**
-        @dev Cancel an initiated withdrawal.
-        @dev It emits a `Cooldown` event.
-    */
-    function cancelWithdraw(mapping(address => uint256) storage withdrawCooldown) external {
-        require(withdrawCooldown[msg.sender] != uint256(0), "P:NOT_WITHDRAWING");
-        withdrawCooldown[msg.sender] = uint256(0);
-        emit Cooldown(msg.sender, uint256(0));
     }
 
     /**********************************/
