@@ -257,17 +257,17 @@ contract Governor {
     }
 
     /*** Pool Functions ***/
-    function try_reclaimERC20(address target, address token) external returns(bool ok) {
+    function try_reclaimERC20(address target, address token) external returns (bool ok) {
         string memory sig = "reclaimERC20(address)";
         (ok,) = target.call(abi.encodeWithSignature(sig, token));
     }
 
     /*** PoolFactory/LoanFactory Functions ***/
-    function try_pause(address target) external returns(bool ok) {
+    function try_pause(address target) external returns (bool ok) {
         string memory sig = "pause()";
         (ok,) = target.call(abi.encodeWithSignature(sig));
     }
-    function try_unpause(address target) external returns(bool ok) {
+    function try_unpause(address target) external returns (bool ok) {
         string memory sig = "unpause()";
         (ok,) = target.call(abi.encodeWithSignature(sig));
     }

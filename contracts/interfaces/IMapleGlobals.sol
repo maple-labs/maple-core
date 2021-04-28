@@ -52,17 +52,17 @@ interface IMapleGlobals {
 
     function protocolPaused() external view returns (bool);
 
-    function stakerCooldownPeriod() external view returns(uint256);
+    function stakerCooldownPeriod() external view returns (uint256);
 
-    function lpCooldownPeriod() external view returns(uint256);
+    function lpCooldownPeriod() external view returns (uint256);
 
-    function stakerUnstakeWindow() external view returns(uint256);
+    function stakerUnstakeWindow() external view returns (uint256);
 
-    function lpWithdrawWindow() external view returns(uint256);
+    function lpWithdrawWindow() external view returns (uint256);
 
-    function oracleFor(address) external view returns(address);
+    function oracleFor(address) external view returns (address);
 
-    function validSubFactories(address, address) external view returns(bool);
+    function validSubFactories(address, address) external view returns (bool);
 
     function setStakerCooldownPeriod(uint256) external;
 

@@ -24,9 +24,9 @@ interface IStakeLocker is IStakeLockerFDT {
 
     function intendToUnstake() external;
 
-    function unstakeCooldown(address) external view returns(uint256);
+    function unstakeCooldown(address) external view returns (uint256);
 
-    function lockupPeriod() external view returns(uint256);
+    function lockupPeriod() external view returns (uint256);
 
     function stakeAsset() external view returns (address);
 

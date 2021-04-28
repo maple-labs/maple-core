@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 contract Commoner {
 
-    function try_setLiquidityCap(address pool, uint256 liquidityCap) external returns(bool ok) {
+    function try_setLiquidityCap(address pool, uint256 liquidityCap) external returns (bool ok) {
         string memory sig = "setLiquidityCap(uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, liquidityCap));
     }

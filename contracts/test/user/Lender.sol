@@ -53,12 +53,12 @@ contract Lender {
         (ok,) = loan.call(abi.encodeWithSignature(sig));
     }
 
-    function try_withdrawFunds(address loan) external returns(bool ok) {
+    function try_withdrawFunds(address loan) external returns (bool ok) {
         string memory sig = "withdrawFunds()";
         (ok,) = loan.call(abi.encodeWithSignature(sig));
     }
 
-    function try_triggerDefault(address loan) external returns(bool ok) {
+    function try_triggerDefault(address loan) external returns (bool ok) {
         string memory sig = "triggerDefault()";
         (ok,) = address(loan).call(abi.encodeWithSignature(sig));
     }

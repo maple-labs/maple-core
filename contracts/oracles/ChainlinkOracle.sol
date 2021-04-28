@@ -36,7 +36,7 @@ contract ChainlinkOracle is Ownable {
     /**
         @dev    Returns the latest price.
         @return price The latest price.
-     */
+    */
     function getLatestPrice() public view returns (int256) {
         if (manualOverride) return manualPrice;
         (uint80 roundID, int256 price,,uint256 timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
@@ -62,14 +62,14 @@ contract ChainlinkOracle is Ownable {
     /**
         @dev Returns address of oracle currency (0x0 for ETH).
     */
-    function getAssetAddress() external view returns(address) {
+    function getAssetAddress() external view returns (address) {
         return assetAddress;
     }
 
     /**
        @dev Returns denomination of price.
     */
-    function getDenomination() external pure returns(bytes32) {
+    function getDenomination() external pure returns (bytes32) {
         // All Chainlink oracles are denominated in USD
         return bytes32("USD");
     }
