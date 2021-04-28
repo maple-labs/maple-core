@@ -21,7 +21,7 @@ contract PoolTest is TestUtil {
     }
     
     function test_getInitialStakeRequirements(uint256 newSwapOutRequired) public {
-        newSwapOutRequired = constrictToRange(newSwapOutRequired, 10_000, 1_000_000, true);
+        newSwapOutRequired = constrictToRange(newSwapOutRequired, 10_000, 500_000, true);
         gov.setSwapOutRequired(newSwapOutRequired);
 
         uint256 minCover; uint256 minCover2; uint256 curCover;

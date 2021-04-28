@@ -443,7 +443,7 @@ contract TestUtil is DSTest {
     }
     // TODO: Update this and update tests to use realistic launch pool (waiting for pool fuzz merge)
     function createBalancerPool() public {
-        createBalancerPool(50_000_000 * USD, 100_000 * WAD);
+        createBalancerPool(1_550_000 * USD, 155_000 * WAD);
     }
 
     function setUpBalancerPool() public {

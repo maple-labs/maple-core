@@ -67,21 +67,21 @@ contract PoolLiquidationTest is TestUtil {
 
     function setUpLoanAndDefault() public {
         // Fund the pool
-        mint("USDC", address(leo), 20_000_000 * USD);
-        leo.approve(USDC, address(pool), MAX_UINT);
+        mint("USDC", address(leo), 4_000_000 * USD);
+        leo.approve(USDC, address(pool),  MAX_UINT);
         leo.approve(USDC, address(pool2), MAX_UINT);
-        leo.deposit(address(pool), 10_000_000 * USD);
-        leo.deposit(address(pool2), 10_000_000 * USD);
+        leo.deposit(address(pool),  1_000_000 * USD);
+        leo.deposit(address(pool2), 3_000_000 * USD);
 
         // Fund the loan
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), 1_000_000 * USD);
-        pam.fundLoan(address(pool2), address(loan), address(dlFactory), 3_000_000 * USD);
+        pat.fundLoan(address(pool), address(loan), address(dlFactory),  100_000 * USD);
+        pam.fundLoan(address(pool2), address(loan), address(dlFactory), 300_000 * USD);
         uint256 cReq = loan.collateralRequiredForDrawdown(4_000_000 * USD);
 
         // Drawdown loan
         mint("WETH", address(bob), cReq);
         bob.approve(WETH, address(loan), MAX_UINT);
-        bob.drawdown(address(loan), 4_000_000 * USD);
+        bob.drawdown(address(loan), 400_000 * USD);
 
         // Warp to late payment
         uint256 start = block.timestamp;
@@ -107,8 +107,8 @@ contract PoolLiquidationTest is TestUtil {
         uint256[7] memory vals_b = pam.claim(address(pool2), address(loan),  address(dlFactory));
 
         // Non-zero value is passed through.
-        assertEq(vals_a[6], loan.defaultSuffered() * (1_000_000 * WAD) / (4_000_000 * WAD));
-        assertEq(vals_b[6], loan.defaultSuffered() * (3_000_000 * WAD) / (4_000_000 * WAD));
+        assertEq(vals_a[6], loan.defaultSuffered() * (100_000 * WAD) / (400_000 * WAD));
+        assertEq(vals_b[6], loan.defaultSuffered() * (300_000 * WAD) / (400_000 * WAD));
         withinPrecision(vals_a[6] + vals_b[6], loan.defaultSuffered(), 2);
 
         // Call claim again to make sure that default isn't double accounted
@@ -142,14 +142,14 @@ contract PoolLiquidationTest is TestUtil {
         principalOut_a.pre = pool.principalOut();
         principalOut_b.pre = pool2.principalOut();
 
-        assertEq(principalOut_a.pre, 1_000_000 * USD);
-        assertEq(principalOut_b.pre, 3_000_000 * USD);
+        assertEq(principalOut_a.pre, 100_000 * USD);
+        assertEq(principalOut_b.pre, 300_000 * USD);
 
         assertEq(stakeLocker_a_bal.pre, 10 * WAD);
         assertEq(stakeLocker_b_bal.pre, 25 * WAD);
 
-        assertEq(liquidityLocker_a_bal.pre, 9_000_000 * USD);
-        assertEq(liquidityLocker_b_bal.pre, 7_000_000 * USD);
+        assertEq(liquidityLocker_a_bal.pre,   900_000 * USD);
+        assertEq(liquidityLocker_b_bal.pre, 2_700_000 * USD);
 
         pat.claim(address(pool), address(loan),  address(dlFactory));
         pam.claim(address(pool2), address(loan),  address(dlFactory));
@@ -164,17 +164,17 @@ contract PoolLiquidationTest is TestUtil {
         principalOut_a.post = pool.principalOut();
         principalOut_b.post = pool2.principalOut();
 
-        withinDiff(liquidityLocker_a_bal.post - liquidityLocker_a_bal.pre, 1_000_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
-        withinDiff(liquidityLocker_b_bal.post - liquidityLocker_b_bal.pre, 3_000_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
+        withinDiff(liquidityLocker_a_bal.post - liquidityLocker_a_bal.pre, 100_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
+        withinDiff(liquidityLocker_b_bal.post - liquidityLocker_b_bal.pre, 300_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
 
         withinDiff(principalOut_a.post, 0, 1);  // Principal out is set to zero (with dust)
         withinDiff(principalOut_b.post, 0, 1);  // Principal out is set to zero (with dust)
 
-        assertEq(liquidityLocker_a_bal.pre  + principalOut_a.pre,  10_000_000 * USD);  // Total pool value = 9m + 1m = 10m
-        assertEq(liquidityLocker_a_bal.post + principalOut_a.post, 10_000_000 * USD);  // Total pool value = 10m + 0 = 10m (successful full coverage from liquidation + staker burn)
+        assertEq(liquidityLocker_a_bal.pre  + principalOut_a.pre,  1_000_000 * USD);  // Total pool value = 900k + 100k = 1m
+        assertEq(liquidityLocker_a_bal.post + principalOut_a.post, 1_000_000 * USD);  // Total pool value = 1m + 0 = 1m (successful full coverage from liquidation + staker burn)
 
-        assertEq(liquidityLocker_b_bal.pre  + principalOut_b.pre,  10_000_000 * USD);  // Total pool value = 7m + 3m = 10m
-        assertEq(liquidityLocker_b_bal.post + principalOut_b.post, 10_000_000 * USD);  // Total pool value = 1m + 0 = 10m (successful full coverage from liquidation + staker burn)
+        assertEq(liquidityLocker_b_bal.pre  + principalOut_b.pre,  3_000_000 * USD);  // Total pool value = 2.7m + 300k = 3m
+        assertEq(liquidityLocker_b_bal.post + principalOut_b.post, 3_000_000 * USD);  // Total pool value = 3m + 0 = 3m (successful full coverage from liquidation + staker burn)
 
         assertTrue(stakeLocker_a_bal.pre - stakeLocker_a_bal.post > 0);  // Assert BPTs were burned
         assertTrue(stakeLocker_b_bal.pre - stakeLocker_b_bal.post > 0);  // Assert BPTs were burned
