@@ -44,15 +44,15 @@ library PoolLib {
         uint256 stakingFee, 
         uint256 delegateFee
     ) external view {
-        IBPool stakePool = IBPool(stakeAsset);
+        IBPool bPool = IBPool(stakeAsset);
 
         require(globals.isValidLiquidityAsset(liquidityAsset), "P:INVALID_LIQ_ASSET");
         require(stakingFee.add(delegateFee) <= 10_000,         "P:INVALID_FEES");
         require(
             globals.isValidBalancerPool(address(stakeAsset)) &&
-            stakePool.isBound(globals.mpl())                 && 
-            stakePool.isBound(liquidityAsset)                &&
-            stakePool.isFinalized(), 
+            bPool.isBound(globals.mpl())                     && 
+            bPool.isBound(liquidityAsset)                    &&
+            bPool.isFinalized(), 
             "P:INVALID_BALANCER_POOL"
         );
     }
