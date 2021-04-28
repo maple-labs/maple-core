@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "./TestUtil.sol";
 
-contract PoolTest is TestUtil {
+contract PoolClaimTest is TestUtil {
 
     using SafeMath for uint256;
 
