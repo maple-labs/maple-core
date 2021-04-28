@@ -2,15 +2,15 @@
 pragma solidity 0.6.11;
 
 interface ILoanFactory {
-    function CL_FACTORY() external view returns(uint8);
+    function CL_FACTORY() external view returns (uint8);
 
-    function FL_FACTORY() external view returns(uint8);
+    function FL_FACTORY() external view returns (uint8);
 
-    function INTEREST_CALC_TYPE() external view returns(uint8);
+    function INTEREST_CALC_TYPE() external view returns (uint8);
 
-    function LATEFEE_CALC_TYPE() external view returns(uint8);
+    function LATEFEE_CALC_TYPE() external view returns (uint8);
 
-    function PREMIUM_CALC_TYPE() external view returns(uint8);
+    function PREMIUM_CALC_TYPE() external view returns (uint8);
 
     function globals() external view returns (address);
 

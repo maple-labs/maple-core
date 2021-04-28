@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 import "./IBasicFDT.sol";
 
 interface IFDT is IBasicFDT {
-    function fundsToken() external view returns(address);
+    function fundsToken() external view returns (address);
 
-    function fundsTokenBalance() external view returns(uint256);
+    function fundsTokenBalance() external view returns (uint256);
 }

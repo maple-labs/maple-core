@@ -594,11 +594,11 @@ contract TestUtil is DSTest {
         }
     }
 
-    function constrictToRange(uint256 val, uint256 min, uint256 max) public pure returns(uint256) {
+    function constrictToRange(uint256 val, uint256 min, uint256 max) public pure returns (uint256) {
         return constrictToRange(val, min, max, false);
     }
 
-    function constrictToRange(uint256 val, uint256 min, uint256 max, bool nonZero) public pure returns(uint256) {
+    function constrictToRange(uint256 val, uint256 min, uint256 max, bool nonZero) public pure returns (uint256) {
         if      (val == 0 && !nonZero) return 0;
         else if (max == min)           return max;
         else                           return val % (max - min) + min;
@@ -680,7 +680,7 @@ contract TestUtil is DSTest {
         bow.drawdown(address(loan),  usdDrawdownAmt);
     }
 
-    function doPartialLoanPayment(Loan loan, Borrower bow) internal returns(uint256 amt) {
+    function doPartialLoanPayment(Loan loan, Borrower bow) internal returns (uint256 amt) {
         (amt,,,,) = loan.getNextPayment(); // USDC required for next payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
@@ -731,7 +731,7 @@ contract TestUtil is DSTest {
         hevm.warp(currentTime + globals.lpCooldownPeriod());
     }
 
-    function toWad(uint256 amt) internal view returns(uint256) {
+    function toWad(uint256 amt) internal view returns (uint256) {
         return amt.mul(WAD).div(USD);
     }
 

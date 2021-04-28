@@ -54,7 +54,7 @@ contract DebtLocker {
                 [5] = Amount Recovered (from Liquidation)
                 [6] = Default Suffered
     */
-    function claim() external isPool returns(uint256[7] memory) {
+    function claim() external isPool returns (uint256[7] memory) {
 
         // Initialize newDefaultSuffered as zero
         uint256 newDefaultSuffered   = uint256(0);

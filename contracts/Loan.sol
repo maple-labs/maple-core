@@ -455,7 +455,7 @@ contract Loan is FDT, Pausable {
         @dev    Public getter to know how much minimum amount of loan asset will get by swapping collateral asset.
         @return Expected amount of liquidityAsset to be recovered from liquidation based on current oracle prices.
     */
-    function getExpectedAmountRecovered() external view returns(uint256) {
+    function getExpectedAmountRecovered() external view returns (uint256) {
         uint256 liquidationAmt = _getCollateralLockerBalance();
         return Util.calcMinAmount(_globals(superFactory), address(collateralAsset), address(liquidityAsset), liquidationAmt);
     }
@@ -468,7 +468,7 @@ contract Loan is FDT, Pausable {
                 [3] = Payment Due Date
                 [4] = Is Payment Late
     */
-    function getNextPayment() public view returns(uint256, uint256, uint256, uint256, bool) {
+    function getNextPayment() public view returns (uint256, uint256, uint256, uint256, bool) {
         return LoanLib.getNextPayment(repaymentCalc, nextPaymentDue, lateFeeCalc);
     }
 
@@ -478,7 +478,7 @@ contract Loan is FDT, Pausable {
         @return principal Principal owed.
         @return interest  Interest owed.
     */
-    function getFullPayment() public view returns(uint256 total, uint256 principal, uint256 interest) {
+    function getFullPayment() public view returns (uint256 total, uint256 principal, uint256 interest) {
         (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
     }
 
@@ -487,7 +487,7 @@ contract Loan is FDT, Pausable {
         @param  amt The amount of liquidityAsset to draw down from FundingLocker.
         @return The amount of collateralAsset required to post in CollateralLocker for given drawdown amt.
     */
-    function collateralRequiredForDrawdown(uint256 amt) public view returns(uint256) {
+    function collateralRequiredForDrawdown(uint256 amt) public view returns (uint256) {
         return LoanLib.collateralRequiredForDrawdown(
             IERC20Details(address(collateralAsset)),
             IERC20Details(address(liquidityAsset)),
@@ -518,7 +518,7 @@ contract Loan is FDT, Pausable {
     /**
         @dev Utility to convert to WAD precision.
     */
-    function _toWad(uint256 amt) internal view returns(uint256) {
+    function _toWad(uint256 amt) internal view returns (uint256) {
         return amt.mul(10 ** 18).div(10 ** IERC20Details(address(liquidityAsset)).decimals());
     }
 

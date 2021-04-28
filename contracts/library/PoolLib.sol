@@ -502,7 +502,7 @@ library PoolLib {
         @param amt                    Amount to convert.
         @param liquidityAssetDecimals Liquidity asset decimal.
     */
-    function fromWad(uint256 amt, uint256 liquidityAssetDecimals) public pure returns(uint256) {
+    function fromWad(uint256 amt, uint256 liquidityAssetDecimals) public pure returns (uint256) {
         return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 

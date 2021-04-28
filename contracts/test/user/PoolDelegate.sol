@@ -62,7 +62,7 @@ contract PoolDelegate {
         ILoan(loan).unwind();
     }
 
-    function claim(address pool, address loan, address dlFactory) external returns(uint256[7] memory) {
+    function claim(address pool, address loan, address dlFactory) external returns (uint256[7] memory) {
         return IPool(pool).claim(loan, dlFactory);
     }
 
@@ -148,62 +148,62 @@ contract PoolDelegate {
         (ok,) = address(pool).call(abi.encodeWithSignature(sig));
     }
 
-    function try_deactivate(address pool) external returns(bool ok) {
+    function try_deactivate(address pool) external returns (bool ok) {
         string memory sig = "deactivate()";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig));
     }
 
-    function try_setLiquidityCap(address pool, uint256 liquidityCap) external returns(bool ok) {
+    function try_setLiquidityCap(address pool, uint256 liquidityCap) external returns (bool ok) {
         string memory sig = "setLiquidityCap(uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, liquidityCap));
     }
 
-    function try_setLockupPeriod(address pool, uint256 newPeriod) external returns(bool ok) {
+    function try_setLockupPeriod(address pool, uint256 newPeriod) external returns (bool ok) {
         string memory sig = "setLockupPeriod(uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, newPeriod));
     }
 
-    function try_setStakingFee(address pool, uint256 newStakingFee) external returns(bool ok) {
+    function try_setStakingFee(address pool, uint256 newStakingFee) external returns (bool ok) {
         string memory sig = "setStakingFee(uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, newStakingFee));
     }
 
-    function try_triggerDefault(address pool, address loan, address dlFactory) external returns(bool ok) {
+    function try_triggerDefault(address pool, address loan, address dlFactory) external returns (bool ok) {
         string memory sig = "triggerDefault(address,address)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, loan, dlFactory));
     }
 
-    function try_setOpenToPublic(address pool, bool open) external returns(bool ok) {
+    function try_setOpenToPublic(address pool, bool open) external returns (bool ok) {
         string memory sig = "setOpenToPublic(bool)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, open));
     }
 
-    function try_openStakeLockerToPublic(address stakeLocker) external returns(bool ok) {
+    function try_openStakeLockerToPublic(address stakeLocker) external returns (bool ok) {
         string memory sig = "openStakeLockerToPublic()";
         (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig));
     }
 
-    function try_setAllowList(address pool, address user, bool status) external returns(bool ok) {
+    function try_setAllowList(address pool, address user, bool status) external returns (bool ok) {
         string memory sig = "setAllowList(address,bool)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, user, status));
     }
 
-    function try_setAllowlist(address stakeLocker, address user, bool status) external returns(bool ok) {
+    function try_setAllowlist(address stakeLocker, address user, bool status) external returns (bool ok) {
         string memory sig = "setAllowlist(address,bool)";
         (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, user, status));
     }
 
-    function try_setPoolAdmin(address pool, address newPoolAdmin, bool status) external returns(bool ok) {
+    function try_setPoolAdmin(address pool, address newPoolAdmin, bool status) external returns (bool ok) {
         string memory sig = "setPoolAdmin(address,bool)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, newPoolAdmin, status));
     }
 
-    function try_pause(address target) external returns(bool ok) {
+    function try_pause(address target) external returns (bool ok) {
         string memory sig = "pause()";
         (ok,) = target.call(abi.encodeWithSignature(sig));
     }
 
-    function try_unpause(address target) external returns(bool ok) {
+    function try_unpause(address target) external returns (bool ok) {
         string memory sig = "unpause()";
         (ok,) = target.call(abi.encodeWithSignature(sig));
     }

@@ -28,7 +28,7 @@ interface ILoan is IFDT {
     
     function loanState() external view returns (uint256);
     
-    function collateralRequiredForDrawdown(uint256) external view returns(uint256);
+    function collateralRequiredForDrawdown(uint256) external view returns (uint256);
     
 
     // Loan Specifications
@@ -76,9 +76,9 @@ interface ILoan is IFDT {
     
     function amountRecovered() external view returns (uint256);
     
-    function getExpectedAmountRecovered() external view returns(uint256);
+    function getExpectedAmountRecovered() external view returns (uint256);
 
-    function liquidationExcess() external view returns(uint256);
+    function liquidationExcess() external view returns (uint256);
     
 
     // Functions

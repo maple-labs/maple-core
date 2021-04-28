@@ -536,17 +536,17 @@ contract PoolTest is TestUtil {
     /*** Helpers ***/
     /***************/
 
-    function assertConstFundLoan(Pool pool, address _loan, address dlFactory, uint256 amt, IERC20 liquidityAsset, uint256 constPoolVal) internal returns(bool) {
+    function assertConstFundLoan(Pool pool, address _loan, address dlFactory, uint256 amt, IERC20 liquidityAsset, uint256 constPoolVal) internal returns (bool) {
         assertTrue(pat.try_fundLoan(address(pool), _loan,  dlFactory, amt));
         assertTrue(isConstantPoolValue(pool, liquidityAsset, constPoolVal));
     }
 
-    function assertConstClaim(Pool pool, address _loan, address dlFactory, IERC20 liquidityAsset, uint256 constPoolVal) internal returns(bool) {
+    function assertConstClaim(Pool pool, address _loan, address dlFactory, IERC20 liquidityAsset, uint256 constPoolVal) internal returns (bool) {
         pat.claim(address(pool), _loan, dlFactory);
         assertTrue(isConstantPoolValue(pool, liquidityAsset, constPoolVal));
     }
 
-    function isConstantPoolValue(Pool pool, IERC20 liquidityAsset, uint256 constPoolVal) internal view returns(bool) {
+    function isConstantPoolValue(Pool pool, IERC20 liquidityAsset, uint256 constPoolVal) internal view returns (bool) {
         return pool.principalOut() + liquidityAsset.balanceOf(pool.liquidityLocker()) == constPoolVal;
     }
 
@@ -554,7 +554,7 @@ contract PoolTest is TestUtil {
         return newAmt == uint256(0) ? uint256(0) : newAmt.mul(totalClaim).div(totalNewAmt);
     }
 
-    function getDL(Pool pool, Loan loan, DebtLockerFactory dlFactory) internal view returns(address) {
+    function getDL(Pool pool, Loan loan, DebtLockerFactory dlFactory) internal view returns (address) {
         return pool.debtLockers(address(loan), address(dlFactory));
     }
 
@@ -564,7 +564,7 @@ contract PoolTest is TestUtil {
         uint256 numPayments,
         uint256 requestAmount,
         uint256 collateralRatio
-    ) internal returns(uint256 depositAmt) {
+    ) internal returns (uint256 depositAmt) {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
@@ -579,7 +579,7 @@ contract PoolTest is TestUtil {
         }
     }
     
-    function getLoanFundedAmounts(uint256 beforeLLBalance, uint256 rounds, uint256 loan1FundedCount, uint256 loan2FundedCount) internal returns(uint256, uint256[] memory) {
+    function getLoanFundedAmounts(uint256 beforeLLBalance, uint256 rounds, uint256 loan1FundedCount, uint256 loan2FundedCount) internal returns (uint256, uint256[] memory) {
         uint256 maxAmountPerFundLoan = beforeLLBalance / rounds;
         uint256 totalFundedAmount    = 0;
 

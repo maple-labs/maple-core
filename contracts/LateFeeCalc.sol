@@ -25,7 +25,7 @@ contract LateFeeCalc {
         @param  interest Amount of interest to be used to calculate late fee for.
         @return Late fee that is charged to borrower.
     */
-    function getLateFee(uint256 interest) external view returns(uint256) {
+    function getLateFee(uint256 interest) external view returns (uint256) {
         return interest.mul(lateFee).div(10_000);
     }
 }

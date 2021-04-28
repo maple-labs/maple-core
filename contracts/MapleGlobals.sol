@@ -427,7 +427,7 @@ contract MapleGlobals {
                                 3 = LIQUIDITY_LOCKER_FACTORY
                                 4 = STAKE_LOCKER_FACTORY
     */
-    function isValidSubFactory(address superFactory, address subFactory, uint8 factoryType) external view returns(bool) {
+    function isValidSubFactory(address superFactory, address subFactory, uint8 factoryType) external view returns (bool) {
         return validSubFactories[superFactory][subFactory] && ISubFactory(subFactory).factoryType() == factoryType;
     }
 
@@ -436,7 +436,7 @@ contract MapleGlobals {
         @param calc     Calculator address.
         @param calcType Calculator type.
     */
-    function isValidCalc(address calc, uint8 calcType) external view returns(bool) {
+    function isValidCalc(address calc, uint8 calcType) external view returns (bool) {
         return validCalcs[calc] && ICalc(calc).calcType() == calcType;
     }
 

@@ -335,7 +335,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**
         @dev Helper function to return interface of MapleGlobals.
     */
-    function _globals() internal view returns(IMapleGlobals) {
+    function _globals() internal view returns (IMapleGlobals) {
         return IMapleGlobals(IPoolFactory(IPool(pool).superFactory()).globals());
     }
 

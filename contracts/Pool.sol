@@ -195,7 +195,7 @@ contract Pool is PoolFDT {
                     claimInfo [5] = Recovered portion claimed (from liquidations)
                     claimInfo [6] = Default suffered
     */
-    function claim(address loan, address dlFactory) external returns(uint256[7] memory claimInfo) {
+    function claim(address loan, address dlFactory) external returns (uint256[7] memory claimInfo) {
         _whenProtocolNotPaused();
         _isValidDelegateOrPoolAdmin();
         claimInfo = IDebtLocker(debtLockers[loan][dlFactory]).claim();
@@ -532,7 +532,7 @@ contract Pool is PoolFDT {
         @dev   Checks that the given `depositAmt` is acceptable based on current liquidityCap.
         @param depositAmt Amount of tokens (i.e liquidityAsset type) user is trying to deposit.
     */
-    function isDepositAllowed(uint256 depositAmt) public view returns(bool) {
+    function isDepositAllowed(uint256 depositAmt) public view returns (bool) {
         return (openToPublic || allowedLiquidityProviders[msg.sender]) &&
                _balanceOfLiquidityLocker().add(principalOut).add(depositAmt) <= liquidityCap;
     }
@@ -573,7 +573,7 @@ contract Pool is PoolFDT {
       @dev    Checks that the Pool state is `Finalized`.
       @return bool Boolean value indicating if Pool is in a Finalized state.
     */
-    function isPoolFinalized() external view returns(bool) {
+    function isPoolFinalized() external view returns (bool) {
         return poolState == State.Finalized;
     }
 
@@ -585,7 +585,7 @@ contract Pool is PoolFDT {
         @dev   Utility to convert to WAD precision.
         @param amt Amount to convert.
     */
-    function _toWad(uint256 amt) internal view returns(uint256) {
+    function _toWad(uint256 amt) internal view returns (uint256) {
         return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
     }
 
@@ -593,7 +593,7 @@ contract Pool is PoolFDT {
         @dev   Fetch the balance of this Pool's LiquidityLocker.
         @return Balance of LiquidityLocker.
     */
-    function _balanceOfLiquidityLocker() internal view returns(uint256) {
+    function _balanceOfLiquidityLocker() internal view returns (uint256) {
         return liquidityAsset.balanceOf(liquidityLocker);
     }
 
