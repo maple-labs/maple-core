@@ -377,34 +377,13 @@ contract Pool is PoolFDT {
         withdrawCooldown[msg.sender] = uint256(0);  // Reset withdrawCooldown if LP had previously intended to withdraw
 
         uint256 wad = _toWad(amt);
-        _updateDepositDate(wad, msg.sender);
+        PoolLib.updateDepositDate(depositDate, balanceOf(msg.sender), wad, msg.sender);
 
         liquidityAsset.safeTransferFrom(msg.sender, liquidityLocker, amt);
         _mint(msg.sender, wad);
 
         _emitBalanceUpdatedEvent();
         emit Cooldown(msg.sender, uint256(0));
-    }
-
-    /**
-        @dev   Update the effective deposit date based on how much new capital has been added.
-               If more capital is added, the depositDate moves closer to the current timestamp.
-        @dev   It emits a `DepositDateUpdated` event.
-        @param amt Total deposit amount.
-        @param who Address of user depositing.
-    */
-    function _updateDepositDate(uint256 amt, address who) internal {
-        uint256 prevDate = depositDate[who];
-        uint256 balance = balanceOf(who);
-
-        // prevDate + (now - prevDate) * (amt / (balance + amt))
-        // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now
-        uint256 newDate = (balance + amt) > 0
-            ? prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt))
-            : prevDate;
-
-        depositDate[who] = newDate;
-        emit DepositDateUpdated(who, newDate);
     }
 
     /**
@@ -467,7 +446,7 @@ contract Pool is PoolFDT {
         require(block.timestamp > (withdrawCooldown[to] + lpCooldownPeriod + lpWithdrawWindow), "P:RECIPIENT_NOT_ALLOWED");   // Recipient must not be currently withdrawing
         require(recognizableLossesOf(from) == uint256(0),                "P:RECOG_LOSSES");                                   // If an LP has unrecognized losses, they must recognize losses through withdraw
 
-        _updateDepositDate(wad, to);  // Update deposit date of recipient
+        PoolLib.updateDepositDate(depositDate, balanceOf(to), wad, to);
         super._transfer(from, to, wad);
     }
 

@@ -22,7 +22,8 @@ library PoolLib {
     uint256 public constant WAD         = 10 ** 18;
     uint8   public constant DL_FACTORY  = 1;         // Factory type of `DebtLockerFactory`
 
-    event LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
+    event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
+    event DepositDateUpdated(address indexed lp, uint256 depositDate);
 
     /***************************************/
     /*** Pool Delegate Utility Functions ***/
@@ -195,6 +196,26 @@ library PoolLib {
     /********************************************/
     /*** Liquidity Provider Utility Functions ***/
     /********************************************/
+
+    /**
+        @dev   Update the effective deposit date based on how much new capital has been added.
+               If more capital is added, the depositDate moves closer to the current timestamp.
+        @dev   It emits a `DepositDateUpdated` event.
+        @param amt Total deposit amount.
+        @param who Address of user depositing.
+    */
+    function updateDepositDate(mapping(address => uint256) storage depositDate, uint256 balance, uint256 amt, address who) internal {
+        uint256 prevDate = depositDate[who];
+
+        // prevDate + (now - prevDate) * (amt / (balance + amt))
+        // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now
+        uint256 newDate = (balance + amt) > 0
+            ? prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt))
+            : prevDate;
+
+        depositDate[who] = newDate;
+        emit DepositDateUpdated(who, newDate);
+    }
 
     /**
         @dev Performs all necessary checks for a `transferByCustodian` call.
