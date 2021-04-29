@@ -172,7 +172,7 @@ contract Loan is LoanFDT, Pausable {
 
     /**
         @dev   Drawdown funding from FundingLocker, post collateral, and transition loanState from `Ready` to `Active`. Only the Loan Borrower can call this function.
-        @dev   It emits four `BalanceUpdated` event.
+        @dev   It emits four `BalanceUpdated` events.
         @dev   It emits a `LoanStateChanged` event.
         @dev   It emits a `Drawdown` event.
         @param amt Amount of liquidityAsset borrower draws down, remainder is returned to Loan where it can be claimed back by LoanFDT holders.

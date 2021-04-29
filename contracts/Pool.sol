@@ -415,7 +415,7 @@ contract Pool is PoolFDT {
         @param wad     The amount to withdraw.
     */
     function _canWithdraw(address account, uint256 wad) internal view {
-        require(depositDate[account].add(lockupPeriod) <= block.timestamp,     "P:FUNDS_LOCKED");     // Restrict transfer during lockup period
+        require(depositDate[account].add(lockupPeriod) <= block.timestamp,     "P:FUNDS_LOCKED");     // Restrict withdrawal during lockup period
         require(balanceOf(account).sub(wad) >= totalCustodyAllowance[account], "P:INSUF_TRANS_BAL");  // Account can only withdraw tokens that aren't custodied
     }
 
@@ -454,8 +454,8 @@ contract Pool is PoolFDT {
         (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = _globals(superFactory).getLpCooldownParams();
 
         _canWithdraw(from, wad);
-        require(block.timestamp > (withdrawCooldown[to] + lpCooldownPeriod + lpWithdrawWindow), "P:TO_NOT_ALLOWED");   // Recipient must not be currently withdrawing
-        require(recognizableLossesOf(from) == uint256(0),                                       "P:RECOG_LOSSES");     // If an LP has unrecognized losses, they must recognize losses through withdraw
+        require(block.timestamp > (withdrawCooldown[to] + lpCooldownPeriod + lpWithdrawWindow), "P:TO_NOT_ALLOWED");  // Recipient must not be currently withdrawing
+        require(recognizableLossesOf(from) == uint256(0),                                       "P:RECOG_LOSSES");    // If an LP has unrecognized losses, they must recognize losses through withdraw
 
         PoolLib.updateDepositDate(depositDate, balanceOf(to), wad, to);
         super._transfer(from, to, wad);
