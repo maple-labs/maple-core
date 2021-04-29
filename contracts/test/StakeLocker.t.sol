@@ -22,14 +22,14 @@ contract StakeLockerTest is TestUtil {
         createLoan();
     }
 
-    function getNewStakeDate(address who, uint256 amt) public returns (uint256 newStakeDate) {
-        // Keeping original test logic different from counterpart code to ensure continued expected behaviour (for now)
-        uint256 prevDate = stakeLocker.stakeDate(who);
+    function getNewStakeDate(address account, uint256 amt) public returns (uint256 newStakeDate) {
+        // Keeping original test logic different from counterpart code to ensure continued expected behavior (for now)
+        uint256 prevDate = stakeLocker.stakeDate(account);
         if (prevDate == uint256(0)) {
             newStakeDate = block.timestamp;
         } else {
             uint256 dTime = block.timestamp - prevDate;
-            newStakeDate  = prevDate + (dTime * amt / (stakeLocker.balanceOf(who) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
+            newStakeDate  = prevDate + (dTime * amt / (stakeLocker.balanceOf(account) + amt));  // stakeDate + (now - stakeDate) * (amt / (balance + amt))
         }
     }
 
@@ -239,7 +239,7 @@ contract StakeLockerTest is TestUtil {
 
         uint256 start = block.timestamp;
 
-        assertTrue(!sam.try_unstake(address(stakeLocker), amt),    "Should fail to unstake 10 WAD because user has to intendToWithdraw");
+        assertTrue(!sam.try_unstake(address(stakeLocker), amt),    "Should fail to unstake 10 WAD because account has to intendToWithdraw");
         assertTrue( sam.try_intendToUnstake(address(stakeLocker)), "Failed to intend to unstake");
         assertEq(stakeLocker.unstakeCooldown(address(sam)), start);
         assertTrue(!sam.try_unstake(address(stakeLocker), amt),    "Should fail to unstake before cooldown period has passed");
@@ -326,12 +326,12 @@ contract StakeLockerTest is TestUtil {
         assertTrue(sid.try_intendToUnstake(address(stakeLocker)));
         assertEq(stakeLocker.unstakeCooldown(address(sid)), start);
 
-        // Staker 2 fails to transfer to Staker 1 who is currently unstaking
+        // Staker 2 fails to transfer to Staker 1 that is currently unstaking
         assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
         hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow());  // Very end of Staker unstake window
         assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
 
-        // Staker 2 successfully transfers to Staker 1 who is now outside unstake window
+        // Staker 2 successfully transfers to Staker 1 that is now outside unstake window
         hevm.warp(start + globals.stakerCooldownPeriod() + globals.stakerUnstakeWindow() + 1);  // Second after Staker unstake window ends
         uint256 newStakeDate = getNewStakeDate(address(sid), stakeAmount);
         assertTrue(sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
@@ -387,14 +387,14 @@ contract StakeLockerTest is TestUtil {
         hevm.warp(stakeDate + globals.stakerCooldownPeriod());
         assertTrue(!sam.try_unstake(address(stakeLocker), stakeAmount));  // Still cannot unstake because of lockup period
 
-        hevm.warp(stakeDate + stakeLocker.lockupPeriod() - globals.stakerCooldownPeriod());  // Warp to first time that user can cooldown and unstake and will be after lockup
+        hevm.warp(stakeDate + stakeLocker.lockupPeriod() - globals.stakerCooldownPeriod());  // Warp to first time that account can cooldown and unstake and will be after lockup
         uint256 cooldownTimestamp = block.timestamp;
         assertTrue(sam.try_intendToUnstake(address(stakeLocker)));
 
         hevm.warp(cooldownTimestamp + globals.stakerCooldownPeriod() - 1);
         assertTrue(!sam.try_unstake(address(stakeLocker), stakeAmount));  // Staker cannot unstake BPTs until stakerCooldownPeriod has passed
 
-        hevm.warp(cooldownTimestamp + globals.stakerCooldownPeriod());  // Now user is able to unstake
+        hevm.warp(cooldownTimestamp + globals.stakerCooldownPeriod());  // Now account is able to unstake
 
         uint256 totalStakerEarnings    = IERC20(USDC).balanceOf(address(stakeLocker));
         uint256 samStakerEarnings_FDT  = stakeLocker.withdrawableFundsOf(address(sam));
@@ -435,7 +435,7 @@ contract StakeLockerTest is TestUtil {
         TestObj memory stakeLockerBal;        // StakeLocker total balance of BPTs
         TestObj memory fdtTotalSupply;        // Total Supply of FDTs
         TestObj memory stakerFDTBal;          // Staker FDT balance
-        TestObj memory fundsTokenBal;         // FDT accounting of interst earned
+        TestObj memory fundsTokenBal;         // FDT accounting of interest earned
         TestObj memory withdrawableFundsOf;   // Interest earned by Staker
         TestObj memory bptLosses;             // FDT accounting of losses from burning
         TestObj memory recognizableLossesOf;  // Recognizable losses of Staker
@@ -473,10 +473,10 @@ contract StakeLockerTest is TestUtil {
         assertEq(stakeLockerBal.pre,      stakeAmount + 75 * WAD);  // PD + Sam + Sid stake
         assertEq(fdtTotalSupply.pre,      stakeAmount + 75 * WAD);  // FDT Supply == amount staked
         assertEq(stakerFDTBal.pre,                   stakeAmount);  // Sam FDT balance == amount staked
-        assertEq(fundsTokenBal.pre,                            0);  // Claim hasnt been made yet - interest not realized
-        assertEq(withdrawableFundsOf.pre,                      0);  // Claim hasnt been made yet - interest not realized
-        assertEq(bptLosses.pre,                                0);  // Claim hasnt been made yet - losses   not realized
-        assertEq(recognizableLossesOf.pre,                     0);  // Claim hasnt been made yet - losses   not realized
+        assertEq(fundsTokenBal.pre,                            0);  // Claim hasn't been made yet - interest not realized
+        assertEq(withdrawableFundsOf.pre,                      0);  // Claim hasn't been made yet - interest not realized
+        assertEq(bptLosses.pre,                                0);  // Claim hasn't been made yet - losses   not realized
+        assertEq(recognizableLossesOf.pre,                     0);  // Claim hasn't been made yet - losses   not realized
 
         pat.claim(address(pool), address(loan),  address(dlFactory));  // Pool Delegate claims funds, updating accounting for interest and losses from Loan
 
@@ -602,7 +602,7 @@ contract StakeLockerTest is TestUtil {
         /************************************************************/
         /*** Post-Loss Staker Stake/Unstake Accounting (Sue Only) ***/
         /************************************************************/
-        // Ensure that Sue has no loss exposure if they stake after a default has already occured
+        // Ensure that Sue has no loss exposure if they stake after a default has already occurred
         uint256 eliStakeAmount = bPool.balanceOf(address(sid));
         sid.transfer(address(bPool), address(sue), eliStakeAmount);  // Sid sends Sue a balance of BPTs so they can stake
 

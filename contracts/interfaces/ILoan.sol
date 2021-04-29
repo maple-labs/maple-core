@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../token/interfaces/IFDT.sol";
+import "../token/interfaces/ILoanFDT.sol";
 
-interface ILoan is IFDT {
+interface ILoan is ILoanFDT {
     
     // State Variables
     function liquidityAsset() external view returns (address);

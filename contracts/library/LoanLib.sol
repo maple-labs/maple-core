@@ -35,7 +35,7 @@ library LoanLib {
         @param  liquidityAsset  Contract address of the liquidity asset.
         @param  collateralAsset Contract address of the collateral asset.
         @param  specs           Contains specifications for this loan.
-     */
+    */
     function loanSanityChecks(IMapleGlobals globals, address liquidityAsset, address collateralAsset, uint256[5] calldata specs) external view {
         require(globals.isValidLiquidityAsset(liquidityAsset),   "L:INVALID_LIQ_ASSET");
         require(globals.isValidCollateralAsset(collateralAsset), "L:INVALID_COL_ASSET");

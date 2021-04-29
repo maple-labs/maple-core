@@ -18,13 +18,13 @@ import "./interfaces/IUniswapRouter.sol";
 import "./library/Util.sol";
 import "./library/LoanLib.sol";
 
-import "./token/FDT.sol";
+import "./token/LoanFDT.sol";
 
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 /// @title Loan maintains all accounting and functionality related to Loans.
-contract Loan is FDT, Pausable {
+contract Loan is LoanFDT, Pausable {
 
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
@@ -84,7 +84,7 @@ contract Loan is FDT, Pausable {
     uint256 public liquidationExcess;  // If `amountRecovered > principalOwed`, amount of liquidityAsset that is to be returned to borrower
 
     event       LoanFunded(uint256 amtFunded, address indexed _fundedBy);
-    event   BalanceUpdated(address indexed who, address indexed token, uint256 balance);
+    event   BalanceUpdated(address indexed account, address indexed token, uint256 balance);
     event         Drawdown(uint256 drawdownAmt);
     event LoanStateChanged(State state);
     event     LoanAdminSet(address loanAdmin, bool allowed);
@@ -133,7 +133,7 @@ contract Loan is FDT, Pausable {
         address _clFactory,
         uint256[5] memory specs,
         address[3] memory calcs
-    ) FDT("Maple Loan Token", "MPL-LOAN", _liquidityAsset) public {
+    ) LoanFDT("Maple Loan Token", "MPL-LOAN", _liquidityAsset) public {
         IMapleGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks
@@ -172,7 +172,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev   Drawdown funding from FundingLocker, post collateral, and transition loanState from `Ready` to `Active`. Only the Loan Borrower can call this function.
-        @dev   It emits a `BalanceUpdated` event.
+        @dev   It emits four `BalanceUpdated` event.
         @dev   It emits a `LoanStateChanged` event.
         @dev   It emits a `Drawdown` event.
         @param amt Amount of liquidityAsset borrower draws down, remainder is returned to Loan where it can be claimed back by LoanFDT holders.
@@ -251,6 +251,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Internal function to update the payment variables and transfer funds from the borrower into the Loan.
+        @dev It emits one or two `BalanceUpdated` events (depending if payments remaining).
         @dev It emits a `LoanStateChanged` event if no payments remaining.
         @dev It emits a `PaymentMade` event.
     */
@@ -306,7 +307,8 @@ contract Loan is FDT, Pausable {
         @dev   Fund this loan and mint LoanFDTs for mintTo (DebtLocker in the case of Pool funding).
                Only Liquidity Locker using valid/approved Pool can call this function.
         @dev   It emits a `LoanFunded` event.
-        @param amt    Amount to fund the loan
+        @dev   It emits a `BalanceUpdated` event.
+        @param amt    Amount to fund the loan.
         @param mintTo Address that LoanFDTs are minted to.
     */
     function fundLoan(address mintTo, uint256 amt) whenNotPaused external {
@@ -345,6 +347,7 @@ contract Loan is FDT, Pausable {
     /**
         @dev Trigger a default if a Loan is in a condition where a default can be triggered, liquidating all collateral and updating accounting.
              Only the Loan can call this function.
+        @dev It emits a `BalanceUpdated` event.
         @dev It emits a `Liquidation` event.
         @dev It emits a `LoanStateChanged` event.
     */
@@ -436,10 +439,12 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Withdraws all available funds earned through FDT for a token holder.
+        @dev It emits a `BalanceUpdated` event.
     */
     function withdrawFunds() public override {
         _whenProtocolNotPaused();
         super.withdrawFunds();
+        emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
     }
 
     /************************/
@@ -540,7 +545,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev   Checks that the current state of the Loan matches the provided state.
-        @param _state Enum of desired Loan state
+        @param _state Enum of desired Loan state.
     */
     function _isValidState(State _state) internal view {
         require(loanState == _state, "L:INVALID_STATE");
@@ -585,6 +590,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Utility to emit BalanceUpdated event for Loan.
+        @dev It emits a `BalanceUpdated` event.
     */
     function _emitBalanceUpdateEventForLoan() internal {
         emit BalanceUpdated(address(this), address(liquidityAsset), liquidityAsset.balanceOf(address(this)));
@@ -592,6 +598,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Utility to emit BalanceUpdated event for FundingLocker.
+        @dev It emits a `BalanceUpdated` event.
     */
     function _emitBalanceUpdateEventForFundingLocker() internal {
         emit BalanceUpdated(fundingLocker, address(liquidityAsset), _getFundingLockerBalance());
@@ -599,6 +606,7 @@ contract Loan is FDT, Pausable {
 
     /**
         @dev Utility to emit BalanceUpdated event for CollateralLocker.
+        @dev It emits a `BalanceUpdated` event.
     */
     function _emitBalanceUpdateEventForCollateralLocker() internal {
         emit BalanceUpdated(collateralLocker, address(collateralAsset), _getCollateralLockerBalance());

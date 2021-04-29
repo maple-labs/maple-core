@@ -38,8 +38,8 @@ contract PoolDelegate {
         );
     }
 
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
+    function approve(address token, address account, uint256 amt) external {
+        IERC20(token).approve(account, amt);
     }
 
     function stake(address stakeLocker, uint256 amt) external {
@@ -94,16 +94,16 @@ contract PoolDelegate {
         IPool(pool).setStakingFee(stakingFee);
     }
 
-    function setAllowList(address pool, address user, bool status) external {
-        IPool(pool).setAllowList(user, status);
+    function setAllowList(address pool, address account, bool status) external {
+        IPool(pool).setAllowList(account, status);
     }
 
     function openStakeLockerToPublic(address stakeLocker) external {
         IStakeLocker(stakeLocker).openStakeLockerToPublic();
     }
 
-    function setAllowlist(address stakeLocker, address user, bool status) external {
-        IStakeLocker(stakeLocker).setAllowlist(user, status);
+    function setAllowlist(address stakeLocker, address account, bool status) external {
+        IStakeLocker(stakeLocker).setAllowlist(account, status);
     }
 
     /*********************/
@@ -183,14 +183,14 @@ contract PoolDelegate {
         (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig));
     }
 
-    function try_setAllowList(address pool, address user, bool status) external returns (bool ok) {
+    function try_setAllowList(address pool, address account, bool status) external returns (bool ok) {
         string memory sig = "setAllowList(address,bool)";
-        (ok,) = address(pool).call(abi.encodeWithSignature(sig, user, status));
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, account, status));
     }
 
-    function try_setAllowlist(address stakeLocker, address user, bool status) external returns (bool ok) {
+    function try_setAllowlist(address stakeLocker, address account, bool status) external returns (bool ok) {
         string memory sig = "setAllowlist(address,bool)";
-        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, user, status));
+        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, account, status));
     }
 
     function try_setPoolAdmin(address pool, address newPoolAdmin, bool status) external returns (bool ok) {

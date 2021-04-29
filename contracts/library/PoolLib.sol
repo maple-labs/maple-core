@@ -75,7 +75,7 @@ library PoolLib {
         address dlFactory,
         uint256 amt
     ) external {
-        IMapleGlobals globals = _globals(superFactory);
+        IMapleGlobals globals = IMapleGlobals(ILoanFactory(superFactory).globals());
         address loanFactory   = ILoan(loan).superFactory();
 
         // Auth checks
@@ -203,11 +203,11 @@ library PoolLib {
         @dev   Update the effective deposit date based on how much new capital has been added.
                If more capital is added, the depositDate moves closer to the current timestamp.
         @dev   It emits a `DepositDateUpdated` event.
-        @param amt Total deposit amount.
-        @param who Address of user depositing.
+        @param amt     Total deposit amount.
+        @param account Address of account depositing.
     */
-    function updateDepositDate(mapping(address => uint256) storage depositDate, uint256 balance, uint256 amt, address who) internal {
-        uint256 prevDate = depositDate[who];
+    function updateDepositDate(mapping(address => uint256) storage depositDate, uint256 balance, uint256 amt, address account) internal {
+        uint256 prevDate = depositDate[account];
 
         // prevDate + (now - prevDate) * (amt / (balance + amt))
         // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now
@@ -215,8 +215,8 @@ library PoolLib {
             ? prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt))
             : prevDate;
 
-        depositDate[who] = newDate;
-        emit DepositDateUpdated(who, newDate);
+        depositDate[account] = newDate;
+        emit DepositDateUpdated(account, newDate);
     }
 
     /**
@@ -234,7 +234,7 @@ library PoolLib {
     function increaseCustodyAllowanceChecks(address custodian, uint256 amount, uint256 newTotalAllowance, uint256 fdtBal) external pure {
         require(custodian != address(0),     "P:INVALID_CUSTODIAN");
         require(amount    != uint256(0),     "P:INVALID_AMT");
-        require(newTotalAllowance <= fdtBal, "P:INSUFFICIENT_BALANCE");
+        require(newTotalAllowance <= fdtBal, "P:INSUF_BALANCE");
     }
 
     /**********************************/
@@ -260,7 +260,7 @@ library PoolLib {
     /**
         @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision
     */
-    function bdiv(uint256 a, uint256 b) public pure returns (uint256) {
+    function _bdiv(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, "P:DIV_ZERO");
         uint256 c0 = a * WAD;
         require(a == 0 || c0 / a == WAD, "P:DIV_INTERNAL");  // bmul overflow
@@ -297,7 +297,7 @@ library PoolLib {
         uint256 liquidityAssetWeight  = bPool.getNormalizedWeight(liquidityAsset);
 
         // liquidityAsset value = (amountStaked/totalSupply) * (liquidityAssetBalance/liquidityAssetWeight)
-        return bdiv(amountStakedBPT, totalSupplyBPT).mul(bdiv(liquidityAssetBalance, liquidityAssetWeight)).div(WAD);
+        return _bdiv(amountStakedBPT, totalSupplyBPT).mul(_bdiv(liquidityAssetBalance, liquidityAssetWeight)).div(WAD);
     }
 
     /** 
@@ -444,15 +444,6 @@ library PoolLib {
     */
     function fromWad(uint256 amt, uint256 liquidityAssetDecimals) external pure returns (uint256) {
         return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
-    }
-
-    /** 
-        @dev    Internal helper function to return an interface of MapleGlobals.
-        @param  poolFactory Factory that deployed the Pool, stores MapleGlobals.
-        @return Interface of MapleGlobals.
-    */
-    function _globals(address poolFactory) internal view returns (IMapleGlobals) {
-        return IMapleGlobals(ILoanFactory(poolFactory).globals());
     }
 
     /** 

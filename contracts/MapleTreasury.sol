@@ -66,8 +66,8 @@ contract MapleTreasury {
     /**
         @dev   Reclaim treasury funds to the MapleDAO address. Only the Governor can call this function.
         @dev   It emits a `ERC20Reclaimed` event.
-        @param asset  Address of the token that need to be reclaimed from the treasury contract,
-        @param amount Amount to withdraw,
+        @param asset  Address of the token that need to be reclaimed from the treasury contract.
+        @param amount Amount to withdraw.
     */
     function reclaimERC20(address asset, uint256 amount) isGovernor external {
         IERC20(asset).safeTransfer(msg.sender, amount);

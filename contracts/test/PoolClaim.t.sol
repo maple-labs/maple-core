@@ -667,7 +667,7 @@ contract PoolClaimTest is TestUtil {
             // Eg. (interestClaimed / totalClaimed) * balance = Portion of total claim balance that is interest
             assertEq(calcAllotment(loanData[i] - debtLockerData[i], claim[0], sumNetNew), claim[i + 1]);
 
-            sumTransfer += balances[i + 6] - balances[i + 1]; // Sum up all transfers that occured from claim
+            sumTransfer += balances[i + 6] - balances[i + 1]; // Sum up all transfers that occurred from claim
         }
         
         assertEq(claim[0], sumTransfer); // Assert balance from withdrawFunds equals sum of transfers

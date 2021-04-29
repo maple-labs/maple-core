@@ -12,16 +12,16 @@ contract Lender {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    function fundLoan(address loan, uint256 amt, address who) external {
-        ILoan(loan).fundLoan(who, amt);
+    function fundLoan(address loan, uint256 amt, address account) external {
+        ILoan(loan).fundLoan(account, amt);
     }
 
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
+    function approve(address token, address account, uint256 amt) external {
+        IERC20(token).approve(account, amt);
     }
 
-    function transfer(address token, address who, uint256 amt) external {
-        IERC20(token).transfer(who, amt);
+    function transfer(address token, address account, uint256 amt) external {
+        IERC20(token).transfer(account, amt);
     }
 
     function triggerDefault(address loan) public {

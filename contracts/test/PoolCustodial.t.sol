@@ -13,7 +13,7 @@ contract PoolCustodialTest is TestUtil {
     uint256 principalOut;        // Total outstanding principal of Pool
     uint256 liquidityLockerBal;  // Total liquidityAsset balance of LiquidityLocker
     uint256 fdtTotalSupply;      // PoolFDT total supply
-    uint256 interestSum;         // FDT accounting of interst earned
+    uint256 interestSum;         // FDT accounting of interest earned
     uint256 poolLosses;          // FDT accounting of recognizable losses
 
     TestObj withdrawableFundsOf_fay;  // FDT accounting of interest
@@ -207,7 +207,7 @@ contract PoolCustodialTest is TestUtil {
         // Testing failure modes with Fay
         assertTrue(!fay.try_increaseCustodyAllowance(address(pool), address(0),              depositAmt));  // P:INVALID_ADDRESS
         assertTrue(!fay.try_increaseCustodyAllowance(address(pool), address(custodian1),              0));  // P:INVALID_AMT
-        assertTrue(!fay.try_increaseCustodyAllowance(address(pool), address(custodian1), depositAmt + 1));  // P:INSUFFICIENT_BALANCE
+        assertTrue(!fay.try_increaseCustodyAllowance(address(pool), address(custodian1), depositAmt + 1));  // P:INSUF_BALANCE
         assertTrue( fay.try_increaseCustodyAllowance(address(pool), address(custodian1),     depositAmt));  // Fay can custody entire balance
 
         // Testing state transition and transfers with Fez
@@ -285,10 +285,10 @@ contract PoolCustodialTest is TestUtil {
 
         assertTrue(!custodian.try_transferByCustodian(address(pool), address(fay), address(fox),     custodyAmt));  // P:INVALID_RECEIVER
         assertTrue(!custodian.try_transferByCustodian(address(pool), address(fay), address(fay),              0));  // P:INVALID_AMT
-        assertTrue(!custodian.try_transferByCustodian(address(pool), address(fay), address(fay), custodyAmt + 1));  // P:INSUFFICIENT_ALLOWANCE
+        assertTrue(!custodian.try_transferByCustodian(address(pool), address(fay), address(fay), custodyAmt + 1));  // P:INSUF_ALLOWANCE
         assertTrue( custodian.try_transferByCustodian(address(pool), address(fay), address(fay),     custodyAmt));  // Able to transfer custody amount back
 
-        assertEq(pool.custodyAllowance(address(fay), address(custodian)), 0);  // Custodian alloance has been reduced
+        assertEq(pool.custodyAllowance(address(fay), address(custodian)), 0);  // Custodian allowance has been reduced
         assertEq(pool.totalCustodyAllowance(address(fay)),                0);  // Total custody allowance has been reduced, giving Fay access to funds again
     }
 }

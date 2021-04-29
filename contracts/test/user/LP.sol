@@ -12,8 +12,8 @@ contract LP {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
+    function approve(address token, address account, uint256 amt) external {
+        IERC20(token).approve(account, amt);
     }
 
     function withdraw(address pool, uint256 amt) external {
@@ -24,8 +24,8 @@ contract LP {
         IPool(pool).deposit(amt);
     }
 
-    function transferFDT(address pool, address who, uint256 amt) external {
-        IPool(pool).transfer(who, amt);
+    function transferFDT(address pool, address account, uint256 amt) external {
+        IPool(pool).transfer(account, amt);
     }
 
     function claim(address pool, address loan, address dlFactory) external { IPool(pool).claim(loan, dlFactory); }
@@ -66,8 +66,8 @@ contract LP {
         (ok,) = pool.call(abi.encodeWithSignature(sig));
     }
 
-    function try_transfer(address pool, address who, uint256 amt) external returns (bool ok) {
+    function try_transfer(address pool, address account, uint256 amt) external returns (bool ok) {
         string memory sig = "transfer(address,uint256)";
-        (ok,) = pool.call(abi.encodeWithSignature(sig, who, amt));
+        (ok,) = pool.call(abi.encodeWithSignature(sig, account, amt));
     }
 }

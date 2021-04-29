@@ -21,12 +21,12 @@ contract Farmer is LP {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    function approve(address who, uint256 amt) public {
-        poolFDT.approve(who, amt);
+    function approve(address account, uint256 amt) public {
+        poolFDT.approve(account, amt);
     }
 
-    function increaseCustodyAllowance(address pool, address who, uint256 amt) public {
-        IPool(pool).increaseCustodyAllowance(who, amt);
+    function increaseCustodyAllowance(address pool, address account, uint256 amt) public {
+        IPool(pool).increaseCustodyAllowance(account, amt);
     }
 
     function transfer(address asset, address to, uint256 amt) public {
@@ -63,8 +63,8 @@ contract Farmer is LP {
         (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, amt));
     }
 
-    function try_increaseCustodyAllowance(address pool, address who, uint256 amt) external returns (bool ok) {
+    function try_increaseCustodyAllowance(address pool, address account, uint256 amt) external returns (bool ok) {
         string memory sig = "increaseCustodyAllowance(address,uint256)";
-        (ok,) = pool.call(abi.encodeWithSignature(sig, who, amt));
+        (ok,) = pool.call(abi.encodeWithSignature(sig, account, amt));
     }
 }

@@ -239,12 +239,12 @@ contract PoolTest is TestUtil {
         assertTrue(liz.try_intendToWithdraw(address(pool)), "Failed to intend to withdraw");
         assertEq( pool.withdrawCooldown(address(liz)), start);
 
-        // LP (Leo) fails to transfer to LP (liz) who is currently withdrawing
+        // LP (Leo) fails to transfer to LP (liz) that is currently withdrawing
         assertTrue(!leo.try_transfer(address(pool), address(liz), toWad(depositAmt)));
         hevm.warp(start + globals.lpCooldownPeriod() + globals.lpWithdrawWindow());  // Very end of LP withdrawal window
         assertTrue(!leo.try_transfer(address(pool), address(liz), toWad(depositAmt)));
 
-        // LP (leo) successfully transfers to LP (liz) who is outside withdraw window
+        // LP (leo) successfully transfers to LP (liz) that is outside withdraw window
         hevm.warp(start + globals.lpCooldownPeriod() + globals.lpWithdrawWindow() + 1);  // Second after LP withdrawal window ends
         assertTrue( leo.try_transfer(address(pool), address(liz), toWad(depositAmt)));
         assertTrue(!liz.try_withdraw(address(pool), toWad(depositAmt)));
@@ -272,7 +272,7 @@ contract PoolTest is TestUtil {
         uint256 amt   = depositAmt / 3; // 1/3 of deposit so withdraw can happen thrice
         uint256 start = block.timestamp;
 
-        assertTrue(!leo.try_withdraw(address(pool), amt),     "Should fail to withdraw 500 USD because user has to intendToWithdraw");
+        assertTrue(!leo.try_withdraw(address(pool), amt),     "Should fail to withdraw 500 USD because account has to intendToWithdraw");
         assertTrue(!lex.try_intendToWithdraw(address(pool)),  "Should fail to intend to withdraw because lex has zero pool FDTs");
         assertTrue( leo.try_intendToWithdraw(address(pool)),  "Should fail to intend to withdraw");
         assertEq(  pool.withdrawCooldown(address(leo)), start);
@@ -347,7 +347,7 @@ contract PoolTest is TestUtil {
         doFullLoanPayment(loan3, bud); 
         pat.claim(address(pool), address(loan3), address(dlFactory));
 
-        uint256 interest = pool.withdrawableFundsOf(address(lee));  // Get kims withdrawable funds
+        uint256 interest = pool.withdrawableFundsOf(address(lee));  // Get kim's withdrawable funds
 
         assertTrue(lee.try_intendToWithdraw(address(pool)));
         // Warp to exact time that lee can withdraw with weighted deposit date
@@ -394,7 +394,7 @@ contract PoolTest is TestUtil {
         assertTrue( lee.try_intendToWithdraw(address(pool)));
         assertTrue(!lee.try_withdraw(address(pool), newDepositAmt + depositAmt), "Withdraw failure didn't trigger");                // Not able to withdraw the funds as deposit date was updated
 
-        uint256 interest = pool.withdrawableFundsOf(address(lee));  // Get kims withdrawable funds
+        uint256 interest = pool.withdrawableFundsOf(address(lee));  // Get kim's withdrawable funds
 
         // Warp to exact time that lee can withdraw with weighted deposit date
         assertTrue(!lee.try_withdraw(address(pool), newDepositAmt + depositAmt), "Withdraw failure didn't trigger");

@@ -33,7 +33,7 @@ contract Governor {
         return mplRewards;
     }
 
-    // Used for "fake" governors pointing at a globals contract they didnt create
+    // Used for "fake" governors pointing at a globals contract they didn't create
     function setGovGlobals(MapleGlobals _globals) external {
         globals = _globals;
     }
@@ -42,18 +42,18 @@ contract Governor {
         mplRewardsFactory = _mplRewardsFactory;
     }
 
-    // Used for "fake" governors pointing at a staking rewards contract they dont own
+    // Used for "fake" governors pointing at a staking rewards contract they don't own
     function setGovMplRewards(MplRewards _mplRewards) external {
         mplRewards = _mplRewards;
     }
 
-    // Used for "fake" governors pointing at a treasury contract they didnt create
+    // Used for "fake" governors pointing at a treasury contract they didn't create
     function setGovTreasury(MapleTreasury _treasury) external {
         treasury = _treasury;
     }
 
-    function transfer(IERC20 token, address who, uint256 amt) external {
-        token.transfer(who, amt);
+    function transfer(IERC20 token, address account, uint256 amt) external {
+        token.transfer(account, amt);
     }
 
     /*** MapleGlobals Setters ***/

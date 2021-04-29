@@ -27,8 +27,8 @@ contract MapleGlobals {
     uint256 public minLoanEquity;         // Minimum amount of LoanFDTs required to trigger liquidations (basis points percentage of totalSupply)
     uint256 public stakerCooldownPeriod;  // Period (in secs) after which stakers are allowed to unstake  their BPTs  from the StakeLocker contract
     uint256 public lpCooldownPeriod;      // Period (in secs) after which LPs     are allowed to withdraw their funds from the Pool contract
-    uint256 public stakerUnstakeWindow;   // Window of time (in secs) after `stakerCooldownPeriod` that a user has to withdraw before their intent to unstake  is invalidated
-    uint256 public lpWithdrawWindow;      // Window of time (in secs) after `lpCooldownPeriod`     that a user has to withdraw before their intent to withdraw is invalidated
+    uint256 public stakerUnstakeWindow;   // Window of time (in secs) after `stakerCooldownPeriod` that an account has to withdraw before their intent to unstake  is invalidated
+    uint256 public lpWithdrawWindow;      // Window of time (in secs) after `lpCooldownPeriod`     that an account has to withdraw before their intent to withdraw is invalidated
 
     bool public protocolPaused;  // Switch to pause the functionality of the entire protocol
 
@@ -63,7 +63,7 @@ contract MapleGlobals {
     event               GlobalsAddressSet(bytes32 indexed which, address addr);
     event                  ProtocolPaused(bool pause);
     event                  GlobalAdminSet(address newGlobalAdmin);
-    event             PoolDelegateAllowed(address delegate, bool valid);
+    event                 PoolDelegateSet(address delegate, bool valid);
 
     /**
         @dev Checks that `msg.sender` is the Governor.
@@ -103,7 +103,7 @@ contract MapleGlobals {
     /************************/
 
     /**
-        @dev  Update the `stakerCooldownPeriod` state variable. This change will affect existing cool down period for the stakers who already intended to unstake.
+        @dev  Update the `stakerCooldownPeriod` state variable. This change will affect existing cool down period for the stakers that already intended to unstake.
               Only the Governor can call this function.
         @dev  It emits a `GlobalsParamSet` event.
         @param newCooldownPeriod New value for the cool down period.
@@ -114,7 +114,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update the `lpCooldownPeriod` state variable. This change will affect existing cool down period for the LPs who already intended to withdraw.
+        @dev   Update the `lpCooldownPeriod` state variable. This change will affect existing cool down period for the LPs that already intended to withdraw.
                Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newCooldownPeriod New value for the cool down period.
@@ -125,7 +125,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update the `stakerUnstakeWindow` state variable. This change will affect existing window for the stakers who already applied to unstake.
+        @dev   Update the `stakerUnstakeWindow` state variable. This change will affect existing window for the stakers that already applied to unstake.
                Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newUnstakeWindow New value for the unstake window.
@@ -136,7 +136,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update the `lpWithdrawWindow` state variable. This change will affect existing window for the LPs who already intended to withdraw.
+        @dev   Update the `lpWithdrawWindow` state variable. This change will affect existing window for the LPs that already intended to withdraw.
                Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newLpWithdrawWindow New value for the withdraw window.
@@ -181,7 +181,7 @@ contract MapleGlobals {
     }
 
     /**
-      @dev   Pause/unpause the protocol. Only the Global Admin user can call.
+      @dev   Pause/unpause the protocol. Only the Global Admin account can call.
       @dev   It emits a `ProtocolPaused` event.
       @param pause Boolean flag to switch externally facing functionality in the protocol on/off
     */
@@ -235,13 +235,13 @@ contract MapleGlobals {
 
     /**
         @dev   Update validity of Pool Delegate (those allowed to create Pools). Only the Governor can call this function.
-        @dev   It emits a `PoolDelegateAllowed` event.
+        @dev   It emits a `PoolDelegateSet` event.
         @param delegate Address to manage permissions for.
         @param valid    New permissions of address.
     */
     function setPoolDelegateAllowlist(address delegate, bool valid) external isGovernor {
         isValidPoolDelegate[delegate] = valid;
-        emit PoolDelegateAllowed(delegate, valid);
+        emit PoolDelegateSet(delegate, valid);
     }
 
     /**
@@ -281,8 +281,7 @@ contract MapleGlobals {
         @param _fee The fee, e.g., 50 = 0.50%.
     */
     function setInvestorFee(uint256 _fee) external isGovernor {
-        _checkPercentageRange(_fee);
-        require((_fee + treasuryFee) <= 10_000, "MG:INVALID_INVESTOR_FEE");
+        _checkPercentageRange(_fee + treasuryFee);
         investorFee = _fee;
         emit GlobalsParamSet("INVESTOR_FEE", _fee);
     }
@@ -293,8 +292,7 @@ contract MapleGlobals {
         @param _fee The fee, e.g., 50 = 0.50%.
     */
     function setTreasuryFee(uint256 _fee) external isGovernor {
-        _checkPercentageRange(_fee);
-        require((_fee + investorFee) <= 10_000, "MG:INVALID_TREASURY_FEE");
+        _checkPercentageRange(_fee + investorFee);
         treasuryFee = _fee;
         emit GlobalsParamSet("TREASURY_FEE", _fee);
     }
@@ -384,7 +382,7 @@ contract MapleGlobals {
     */
     function acceptGovernor() external {
         require(msg.sender == pendingGovernor, "MG:NOT_PENDING_GOV");
-        governor = pendingGovernor;
+        governor        = msg.sender;
         pendingGovernor = address(0);
         emit GovernorAccepted(msg.sender);
     }

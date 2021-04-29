@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 
 interface IMplRewards {
+
     // Views
     function rewardsToken() external view returns (address);
 

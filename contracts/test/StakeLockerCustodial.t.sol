@@ -42,7 +42,7 @@ contract StakeLockerCustodialTest is TestUtil {
         // Testing failure modes with Sam
         assertTrue(!sam.try_increaseCustodyAllowance(address(stakeLocker), address(0),              stakeAmt));  // P:INVALID_ADDRESS
         assertTrue(!sam.try_increaseCustodyAllowance(address(stakeLocker), address(custodian1),            0));  // P:INVALID_AMT
-        assertTrue(!sam.try_increaseCustodyAllowance(address(stakeLocker), address(custodian1), stakeAmt + 1));  // P:INSUFFICIENT_BALANCE
+        assertTrue(!sam.try_increaseCustodyAllowance(address(stakeLocker), address(custodian1), stakeAmt + 1));  // P:INSUF_BALANCE
         assertTrue( sam.try_increaseCustodyAllowance(address(stakeLocker), address(custodian1),     stakeAmt));  // Sam can custody entire balance
 
         // Testing state transition and transfers with Sid
@@ -98,7 +98,7 @@ contract StakeLockerCustodialTest is TestUtil {
 
         assertEq(stakeLocker.balanceOf(address(sam)), stakeAmt);
 
-        make_unstakable(sam, stakeLocker);
+        make_unstakeable(sam, stakeLocker);
 
         assertTrue(!sam.try_unstake(address(stakeLocker), unstakeableAmt + 1));
         assertTrue( sam.try_unstake(address(stakeLocker),     unstakeableAmt));
@@ -125,10 +125,10 @@ contract StakeLockerCustodialTest is TestUtil {
 
         assertTrue(!custodian.try_transferByCustodian(address(stakeLocker), address(sam), address(sid),     custodyAmt));  // P:INVALID_RECEIVER
         assertTrue(!custodian.try_transferByCustodian(address(stakeLocker), address(sam), address(sam),              0));  // P:INVALID_AMT
-        assertTrue(!custodian.try_transferByCustodian(address(stakeLocker), address(sam), address(sam), custodyAmt + 1));  // P:INSUFFICIENT_ALLOWANCE
+        assertTrue(!custodian.try_transferByCustodian(address(stakeLocker), address(sam), address(sam), custodyAmt + 1));  // P:INSUF_ALLOWANCE
         assertTrue( custodian.try_transferByCustodian(address(stakeLocker), address(sam), address(sam),     custodyAmt));  // Able to transfer custody amount back
 
-        assertEq(stakeLocker.custodyAllowance(address(sam), address(custodian)), 0);  // Custodian alloance has been reduced
+        assertEq(stakeLocker.custodyAllowance(address(sam), address(custodian)), 0);  // Custodian allowance has been reduced
         assertEq(stakeLocker.totalCustodyAllowance(address(sam)),                0);  // Total custody allowance has been reduced, giving Sam access to funds again
     }
 }

@@ -258,7 +258,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.principalOwed(),                                     drawdownAmount);  // Principal owed
         assertEq(uint256(loan.loanState()),                                             1);  // Loan state: Active
 
-        withinDiff(usdc.balanceOf(address(bob)), drawdownAmount - (investorFee + treasuryFee), 1); // Borrower liqudityAsset balance
+        withinDiff(usdc.balanceOf(address(bob)), drawdownAmount - (investorFee + treasuryFee), 1); // Borrower liquidityAsset balance
 
         assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());  // Next payment due timestamp calculated from time of drawdown
 
@@ -777,9 +777,9 @@ contract LoanTest is TestUtil {
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
 
-        // Below is the way of catering two senarios
+        // Below is the way of catering two scenarios
         // 1. When there is no late payment so interest paid will be a multiple of `numPayments`.
-        // 2. If there is a late payment then needs to handle the situation where interst paid is `interest (without late fee) + interest (late fee) * numPayments`.
+        // 2. If there is a late payment then needs to handle the situation where interest paid is `interest (without late fee) + interest (late fee) * numPayments`.
         numPayments = oldInterest == uint256(0) ? numPayments - paymentCount : numPayments - paymentCount - 1;
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
