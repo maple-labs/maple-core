@@ -12,12 +12,12 @@ contract Staker {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
+    function approve(address token, address account, uint256 amt) external {
+        IERC20(token).approve(account, amt);
     }
 
-    function increaseCustodyAllowance(address stakeLocker, address who, uint256 amt) public {
-        IStakeLocker(stakeLocker).increaseCustodyAllowance(who, amt);
+    function increaseCustodyAllowance(address stakeLocker, address account, uint256 amt) public {
+        IStakeLocker(stakeLocker).increaseCustodyAllowance(account, amt);
     }
 
     function stake(address stakeLocker, uint256 amt) external {
@@ -74,8 +74,8 @@ contract Staker {
         (ok,) = stakeLocker.call(abi.encodeWithSignature(sig));
     }
 
-    function try_increaseCustodyAllowance(address stakeLocker, address who, uint256 amt) external returns (bool ok) {
+    function try_increaseCustodyAllowance(address stakeLocker, address account, uint256 amt) external returns (bool ok) {
         string memory sig = "increaseCustodyAllowance(address,uint256)";
-        (ok,) = stakeLocker.call(abi.encodeWithSignature(sig, who, amt));
+        (ok,) = stakeLocker.call(abi.encodeWithSignature(sig, account, amt));
     }
 }

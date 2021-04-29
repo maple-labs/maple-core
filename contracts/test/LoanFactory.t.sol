@@ -141,7 +141,7 @@ contract LoanFactoryTest is TestUtil {
         // Verify the loan gets created successfully.
         assertTrue(bob.try_createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         assertEq(loanFactory.loansCreated(), 1, "Incorrect loan instantiation");  // Should be incremented by 1.
-        ILoan loan = ILoan(loanFactory.loans(0));                                 // Intital value of loansCreated.
+        ILoan loan = ILoan(loanFactory.loans(0));                                 // Initial value of loansCreated.
         assertTrue(loanFactory.isLoan(address(loan)));                            // Should be considered as a loan.
 
         // Verify the storage of loan contract

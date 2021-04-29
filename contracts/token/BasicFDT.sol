@@ -50,7 +50,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev    Prepares funds withdrawal
+        @dev    Prepares funds withdrawal.
         @dev    It emits a `FundsWithdrawn` event if the amount of withdrawn funds is greater than 0.
         @return withdrawableDividend The amount of dividend funds that can be withdrawn.
     */
@@ -98,7 +98,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
 
     /**
         @dev   Internal function that transfer tokens from one address to another. Update pointsCorrection to keep funds unchanged.
-        @dev   It emits a `PointsCorrectionUpdated` event for the sender and receiver.
+        @dev   It emits two `PointsCorrectionUpdated` events, one for the sender and one for the receiver.
         @param from  The address to transfer from.
         @param to    The address to transfer to.
         @param value The amount to be transferred.
@@ -162,14 +162,14 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
 
     /**
         @dev    Updates the current funds token balance and returns the difference of new and previous funds token balances.
-        @return A int256 representing the difference of the new and previous funds token balance
+        @return A int256 representing the difference of the new and previous funds token balance.
     */
     function _updateFundsTokenBalance() internal virtual returns (int256) {}
 
     /**
         @dev Register a payment of funds in tokens. May be called directly after a deposit is made.
         @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the new and the previous
-             funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds()
+             funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds().
     */
     function updateFundsReceived() public virtual {
         int256 newFunds = _updateFundsTokenBalance();

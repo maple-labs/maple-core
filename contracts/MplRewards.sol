@@ -33,9 +33,9 @@ contract MplRewards is Ownable {
     mapping(address => uint256) private _balances;
 
     event            RewardAdded(uint256 reward);
-    event                 Staked(address indexed user, uint256 amount);
-    event              Withdrawn(address indexed user, uint256 amount);
-    event             RewardPaid(address indexed user, uint256 reward);
+    event                 Staked(address indexed account, uint256 amount);
+    event              Withdrawn(address indexed account, uint256 amount);
+    event             RewardPaid(address indexed account, uint256 reward);
     event RewardsDurationUpdated(uint256 newDuration);
     event              Recovered(address token, uint256 amount);
     event           PauseChanged(bool isPaused);
@@ -173,7 +173,7 @@ contract MplRewards is Ownable {
     }
 
     /**
-        @dev Added to support recovering tokens unintentionally sent to this contract by users.
+        @dev Added to support recovering tokens unintentionally sent to this contract.
              Only the contract Owner may call this.
         @dev It emits a `Recovered` event.
     */

@@ -5,8 +5,8 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 import "./BasicFDT.sol";
 
-/// @title FDT inherits BasicFDT and uses the original ERC-2222 logic.
-abstract contract FDT is BasicFDT {
+/// @title LoanFDT inherits BasicFDT and uses the original ERC-2222 logic.
+abstract contract LoanFDT is BasicFDT {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;

@@ -36,8 +36,8 @@ contract Borrower {
         ILoan(loan).drawdown(_drawdownAmount);
     }
 
-    function approve(address token, address who, uint256 amt) external {
-        IERC20(token).approve(who, amt);
+    function approve(address token, address account, uint256 amt) external {
+        IERC20(token).approve(account, amt);
     }
 
     function createLoan(

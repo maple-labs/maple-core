@@ -208,7 +208,7 @@ contract MplRewardsTest is TestUtil {
     }
 
     function assertRewardsAccounting(
-        address user,
+        address account,
         uint256 totalSupply,
         uint256 rewardPerTokenStored,
         uint256 userRewardPerTokenPaid,
@@ -218,12 +218,12 @@ contract MplRewardsTest is TestUtil {
     )
         public
     {
-        assertEq(mplRewards.totalSupply(),                totalSupply);
-        assertEq(mplRewards.rewardPerTokenStored(),       rewardPerTokenStored);
-        assertEq(mplRewards.userRewardPerTokenPaid(user), userRewardPerTokenPaid);
-        assertEq(mplRewards.earned(user),                 earned);
-        assertEq(mplRewards.rewards(user),                rewards);
-        assertEq(mpl.balanceOf(user),                     rewardTokenBal);
+        assertEq(mplRewards.totalSupply(),                   totalSupply);
+        assertEq(mplRewards.rewardPerTokenStored(),          rewardPerTokenStored);
+        assertEq(mplRewards.userRewardPerTokenPaid(account), userRewardPerTokenPaid);
+        assertEq(mplRewards.earned(account),                 earned);
+        assertEq(mplRewards.rewards(account),                rewards);
+        assertEq(mpl.balanceOf(account),                     rewardTokenBal);
     }
 
     /**********************************/
@@ -249,7 +249,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = 0 post-stake ***/
         assertRewardsAccounting({
-            user:                   address(fay),  // User for accounting
+            account:                address(fay),  // Account for accounting
             totalSupply:            10 * WAD,      // Ali's stake
             rewardPerTokenStored:   0,             // Starting state
             userRewardPerTokenPaid: 0,             // Starting state
@@ -262,7 +262,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (0 days) post-claim ***/
         assertRewardsAccounting({
-            user:                   address(fay),  // User for accounting
+            account:                address(fay),  // Account for accounting
             totalSupply:            10 * WAD,      // Ali's stake
             rewardPerTokenStored:   0,             // Starting state (getReward has no effect at time = 0)
             userRewardPerTokenPaid: 0,             // Starting state (getReward has no effect at time = 0)
@@ -278,7 +278,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (1 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(fay),                 // User for accounting
+            account:                address(fay),                 // Account for accounting
             totalSupply:            10 * WAD,                     // Ali's stake
             rewardPerTokenStored:   0,                            // Not updated yet
             userRewardPerTokenPaid: 0,                            // Not updated yet
@@ -291,20 +291,20 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (1 days) post-claim ***/
         assertRewardsAccounting({
-            user:                   address(fay),                // User for accounting
+            account:                address(fay),                // Account for accounting
             totalSupply:            10 * WAD,                    // Ali's stake
             rewardPerTokenStored:   dTime1_rpt,                  // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt,                  // Updated on updateReward for 100% ownership in pool after 1hr
             earned:                 0,                           // Time-based calculation and userRewardPerTokenPaid cancel out
             rewards:                0,                           // Updated on updateReward to earned(), then set to zero on getReward
-            rewardTokenBal:         dTime1_rpt * 10 * WAD / WAD  // Updated on getReward, user has claimed rewards (equal to original earned() amt at this timestamp))
+            rewardTokenBal:         dTime1_rpt * 10 * WAD / WAD  // Updated on getReward, account has claimed rewards (equal to original earned() amt at this timestamp))
         });
 
         fez.stake(10 * WAD); // Bob stakes 10 FDTs, giving him 50% stake in the pool rewards going forward
 
         /*** Bob time = (1 days) post-stake ***/
         assertRewardsAccounting({
-            user:                   address(fez),  // User for accounting
+            account:                address(fez),  // Account for accounting
             totalSupply:            20 * WAD,      // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,    // Doesn't change since no time has passed
             userRewardPerTokenPaid: dTime1_rpt,    // Used so Bob can't claim past rewards
@@ -320,7 +320,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (2 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(fay),                 // User for accounting
+            account:                address(fay),                 // Account for accounting
             totalSupply:            20 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,                   // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt,                   // Used so Ali can't do multiple claims
@@ -331,7 +331,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (2 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(fez),                 // User for accounting
+            account:                address(fez),                 // Account for accounting
             totalSupply:            20 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,                   // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt,                   // Used so Bob can't do claims on past rewards
@@ -344,7 +344,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (2 days) post-stake ***/
         assertRewardsAccounting({
-            user:                   address(fez),                 // User for accounting
+            account:                address(fez),                 // Account for accounting
             totalSupply:            40 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,      // Updated on updateReward to snapshot rewardPerToken up to that point
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,      // Used so Bob can't do claims on past rewards
@@ -359,7 +359,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(fay),                                // User for accounting
+            account:                address(fay),                                // Account for accounting
             totalSupply:            40 * WAD,                                    // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                     // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt,                                  // Used so Ali can't do multiple claims
@@ -370,7 +370,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(fez),                                           // User for accounting
+            account:                address(fez),                                           // Account for accounting
             totalSupply:            40 * WAD,                                               // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                                // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,                                // Used so Bob can't do claims on past rewards
@@ -383,20 +383,20 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (2 days + 1 hours) post-claim ***/
         assertRewardsAccounting({
-            user:                   address(fez),                                          // User for accounting
+            account:                address(fez),                                          // Account for accounting
             totalSupply:            40 * WAD,                                              // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Used so Bob can't do multiple claims
             earned:                 0,                                                     // Time-based calculation and userRewardPerTokenPaid cancel out
             rewards:                0,                                                     // Updated on updateReward to earned(), then set to zero on getReward
-            rewardTokenBal:         (dTime2_rpt * 10 * WAD + dTime3_rpt * 30 * WAD) / WAD  // Updated on getReward, user has claimed rewards (equal to original earned() amt at this timestamp))
+            rewardTokenBal:         (dTime2_rpt * 10 * WAD + dTime3_rpt * 30 * WAD) / WAD  // Updated on getReward, account has claimed rewards (equal to original earned() amt at this timestamp))
         });
 
         fez.getReward();  // Try double claim
 
         /*** Bob time = (2 days + 1 hours) post-claim (ASSERT NOTHING CHANGES) ***/
         assertRewardsAccounting({
-            user:                   address(fez),                                          // Doesn't change
+            account:                address(fez),                                          // Doesn't change
             totalSupply:            40 * WAD,                                              // Doesn't change
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Doesn't change
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Doesn't change
@@ -409,7 +409,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(fay),                                // User for accounting
+            account:                address(fay),                                // Account for accounting
             totalSupply:            35 * WAD,                                    // Ali + Bob stake, lower now that Ali withdrew
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,        // From Bob's update
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,        // Used so Ali can't claim past earnings
@@ -424,7 +424,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (3 days + 1 hours) pre-exit ***/
         assertRewardsAccounting({
-            user:                   address(fay),                                                         // User for accounting
+            account:                address(fay),                                                         // Account for accounting
             totalSupply:            35 * WAD,                                                             // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                                 // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                                 // Used so Ali can't do multiple claims
@@ -435,7 +435,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (2 days + 1 hours) pre-exit ***/
         assertRewardsAccounting({
-            user:                   address(fez),                                          // User for accounting
+            account:                address(fez),                                          // Account for accounting
             totalSupply:            35 * WAD,                                              // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Used so Bob can't do multiple claims
@@ -449,7 +449,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (3 days + 1 hours) post-exit ***/
         assertRewardsAccounting({
-            user:                   address(fay),                                                                     // User for accounting
+            account:                address(fay),                                                                     // Account for accounting
             totalSupply:            0,                                                                                // Ali + Bob withdrew all stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                                // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                                // Used so Ali can't do multiple claims
@@ -460,7 +460,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (2 days + 1 hours) post-exit ***/
         assertRewardsAccounting({
-            user:                   address(fez),                                                         // User for accounting
+            account:                address(fez),                                                         // Account for accounting
             totalSupply:            0,                                                                    // Ali + Bob withdrew all stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                    // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                    // Used so Bob can't do multiple claims
@@ -505,7 +505,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (30 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(fay),                 // User for accounting
+            account:                address(fay),                 // Account for accounting
             totalSupply:            40 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   0,                            // Not updated yet
             userRewardPerTokenPaid: 0,                            // Not updated yet
@@ -516,7 +516,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (30 days) pre-claim ***/
         assertRewardsAccounting({
-            user:                   address(fez),                 // User for accounting
+            account:                address(fez),                 // Account for accounting
             totalSupply:            40 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   0,                            // Not updated yet
             userRewardPerTokenPaid: 0,                            // Not updated yet
@@ -529,7 +529,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (30 days) post-claim ***/
         assertRewardsAccounting({
-            user:                   address(fay),                 // User for accounting
+            account:                address(fay),                 // Account for accounting
             totalSupply:            40 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,                   // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt,                   // Used so Ali can't do multiple claims
@@ -548,7 +548,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (31 days) pre-claim (ASSERT NOTHING CHANGES DUE TO EPOCH BEING OVER) ***/
         assertRewardsAccounting({
-            user:                   address(fay),                 // Doesn't change
+            account:                address(fay),                 // Doesn't change
             totalSupply:            40 * WAD,                     // Doesn't change
             rewardPerTokenStored:   dTime1_rpt,                   // Doesn't change
             userRewardPerTokenPaid: dTime1_rpt,                   // Doesn't change
@@ -561,7 +561,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (31 days) post-claim (ASSERT NOTHING CHANGES DUE TO EPOCH BEING OVER) ***/
         assertRewardsAccounting({
-            user:                   address(fay),                 // Doesn't change
+            account:                address(fay),                 // Doesn't change
             totalSupply:            40 * WAD,                     // Doesn't change
             rewardPerTokenStored:   dTime1_rpt,                   // Doesn't change
             userRewardPerTokenPaid: dTime1_rpt,                   // Doesn't change
@@ -574,7 +574,7 @@ contract MplRewardsTest is TestUtil {
         /*** EPOCH 2 STARTS ***/
         /**********************/
 
-        assertEq(mpl.balanceOf(address(mplRewards)), 25_000 * WAD - dTime1_rpt * 10 * WAD / WAD);  // Bob's claimabe MPL is still in the contract
+        assertEq(mpl.balanceOf(address(mplRewards)), 25_000 * WAD - dTime1_rpt * 10 * WAD / WAD);  // Bob's claimable MPL is still in the contract
 
         gov.setRewardsDuration(15 days);
 
@@ -592,7 +592,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (1 days into epoch 2) pre-exit ***/
         assertRewardsAccounting({
-            user:                   address(fay),                 // User for accounting
+            account:                address(fay),                 // Account for accounting
             totalSupply:            40 * WAD,                     // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,                   // From last epoch
             userRewardPerTokenPaid: dTime1_rpt,                   // Used so Ali can't do multiple claims
@@ -603,7 +603,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (1 days into epoch 2) pre-exit ***/
         assertRewardsAccounting({
-            user:                   address(fez),                                // User for accounting
+            account:                address(fez),                                // Account for accounting
             totalSupply:            40 * WAD,                                    // Ali + Bob stake
             rewardPerTokenStored:   dTime1_rpt,                                  // From last epoch
             userRewardPerTokenPaid: 0,                                           // Used so Ali can't do multiple claims
@@ -617,7 +617,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Ali time = (1 days into epoch 2) post-exit ***/
         assertRewardsAccounting({
-            user:                   address(fay),                                // User for accounting
+            account:                address(fay),                                // Account for accounting
             totalSupply:            0,                                           // Ali + Bob exited
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                     // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,                     // Used so Ali can't do multiple claims
@@ -628,7 +628,7 @@ contract MplRewardsTest is TestUtil {
 
         /*** Bob time = (1 days into epoch 2) post-exit ***/
         assertRewardsAccounting({
-            user:                   address(fez),                                // User for accounting
+            account:                address(fez),                                // Account for accounting
             totalSupply:            0,                                           // Ali + Bob exited
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                     // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,                     // Used so Bob can't do multiple claims

@@ -549,18 +549,18 @@ contract TestUtil is DSTest {
     }
 
     // Manipulate mainnet ERC20 balance
-    function mint(bytes32 symbol, address who, uint256 amt) public {
+    function mint(bytes32 symbol, address account, uint256 amt) public {
         address addr = tokens[symbol].addr;
         uint256 slot  = tokens[symbol].slot;
-        uint256 bal = IERC20(addr).balanceOf(who);
+        uint256 bal = IERC20(addr).balanceOf(account);
 
         hevm.store(
             addr,
-            keccak256(abi.encode(who, slot)), // Mint tokens
+            keccak256(abi.encode(account, slot)), // Mint tokens
             bytes32(bal + amt)
         );
 
-        assertEq(IERC20(addr).balanceOf(who), bal + amt); // Assert new balance
+        assertEq(IERC20(addr).balanceOf(account), bal + amt); // Assert new balance
     }
 
     // Verify equality within accuracy decimals
@@ -615,7 +615,7 @@ contract TestUtil is DSTest {
         uint256 termDays            = paymentIntervalDays * numPayments;
 
         specs = [
-            constrictToRange(apr, 1, 10_000, true),                     // APR between 0.01% and 100% (non-zero for test behaviour)
+            constrictToRange(apr, 1, 10_000, true),                     // APR between 0.01% and 100% (non-zero for test behavior)
             termDays,                                                   // Fuzzed term days
             paymentIntervalDays,                                        // Payment interval days from array
             constrictToRange(requestAmount, 1 * USD, 1E10 * USD, true), // 1 USD - 10b USD loans (non-zero)
@@ -732,7 +732,7 @@ contract TestUtil is DSTest {
     /***********************/
     /*** Staking Helpers ***/
     /***********************/
-    function make_unstakable(Staker staker, StakeLocker stakeLocker) internal {
+    function make_unstakeable(Staker staker, StakeLocker stakeLocker) internal {
         uint256 currentTime = block.timestamp;
         assertTrue(staker.try_intendToUnstake(address(stakeLocker)));
         assertEq(stakeLocker.unstakeCooldown(address(staker)), currentTime, "Incorrect value set");

@@ -43,7 +43,7 @@ contract Pool is PoolFDT {
 
     uint256 public principalOut;  // Sum of all outstanding principal on Loans
     uint256 public liquidityCap;  // Amount of liquidity tokens accepted by the Pool
-    uint256 public lockupPeriod;  // Period of time from a user's depositDate that they cannot withdraw any funds
+    uint256 public lockupPeriod;  // Period of time from an account's depositDate that they cannot withdraw any funds
 
     bool public openToPublic;  // Boolean opening Pool to public for LP deposits
 
@@ -52,26 +52,27 @@ contract Pool is PoolFDT {
 
     mapping(address => uint256)                     public depositDate;                // Used for withdraw penalty calculation
     mapping(address => mapping(address => address)) public debtLockers;                // Address of the `DebtLocker` contract corresponds to [Loan][DebtLockerFactory].
-    mapping(address => bool)                        public poolAdmins;                 // Pool Admin addresses who have permission to do certain operations in case of disaster mgt.
+    mapping(address => bool)                        public poolAdmins;                 // Pool Admin addresses that have permission to do certain operations in case of disaster mgt.
     mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
     mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`
     mapping(address => mapping(address => uint256)) public custodyAllowance;           // Amount of PoolFDTs that are "locked" at a certain address
-    mapping(address => uint256)                     public totalCustodyAllowance;      // Total amount of PoolFDTs that are "locked" for a given user, cannot be greater than balance
+    mapping(address => uint256)                     public totalCustodyAllowance;      // Total amount of PoolFDTs that are "locked" for a given account, cannot be greater than balance
 
-    event              LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
-    event                   Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee, uint256 stakeLockerFee, uint256 poolDelegateFee);
-    event          BalanceUpdated(address indexed who, address indexed token, uint256 balance);
-    event         CustodyTransfer(address indexed custodian, address indexed from, address indexed to, uint256 amount);
-    event CustodyAllowanceChanged(address indexed tokenHolder, address indexed custodian, uint256 oldAllowance, uint256 newAllowance);
-    event         LPStatusChanged(address indexed user, bool status);
-    event         LiquidityCapSet(uint256 newLiquidityCap);
-    event         LockupPeriodSet(uint256 newLockupPeriod);
-    event           StakingFeeSet(uint256 newStakingFee);
-    event        PoolStateChanged(State state);
-    event                Cooldown(address indexed lp, uint256 cooldown);
-    event      PoolOpenedToPublic(bool isOpen);
-    event            PoolAdminSet(address poolAdmin, bool allowed);
-    event      DepositDateUpdated(address indexed lp, uint256 depositDate);
+    event                   LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
+    event                        Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee, uint256 stakeLockerPortion, uint256 poolDelegatePortion);
+    event               BalanceUpdated(address indexed account, address indexed token, uint256 balance);
+    event              CustodyTransfer(address indexed custodian, address indexed from, address indexed to, uint256 amount);
+    event      CustodyAllowanceChanged(address indexed account, address indexed custodian, uint256 oldAllowance, uint256 newAllowance);
+    event              LPStatusChanged(address indexed account, bool status);
+    event              LiquidityCapSet(uint256 newLiquidityCap);
+    event              LockupPeriodSet(uint256 newLockupPeriod);
+    event                StakingFeeSet(uint256 newStakingFee);
+    event             PoolStateChanged(State state);
+    event                     Cooldown(address indexed lp, uint256 cooldown);
+    event           PoolOpenedToPublic(bool isOpen);
+    event                 PoolAdminSet(address poolAdmin, bool allowed);
+    event           DepositDateUpdated(address indexed lp, uint256 depositDate);
+    event TotalCustodyAllowanceUpdated(address indexed account, uint256 newTotalAllowance);
     
     event DefaultSuffered(
         address indexed loan,
@@ -157,6 +158,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev   Fund a loan for amt, utilize the supplied dlFactory for debt lockers. Only the Pool Delegate can call this function.
+        @dev   It emits a `LoanFunded` event.
         @dev   It emits a `BalanceUpdated` event.
         @param loan      Address of the loan to fund.
         @param dlFactory The DebtLockerFactory to utilize.
@@ -325,15 +327,15 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev   Update user status on Pool allowlist. Only the Pool Delegate can call this function.
+        @dev   Update account status on Pool allowlist. Only the Pool Delegate can call this function.
         @dev   It emits an `LPStatusChanged` event.
-        @param user   The address to set status for.
-        @param status The status of user on allowlist.
+        @param account The address to set status for.
+        @param status  The status of an account on allowlist.
     */
-    function setAllowList(address user, bool status) external {
+    function setAllowList(address account, bool status) external {
         _isValidDelegateAndProtocolNotPaused();
-        allowedLiquidityProviders[user] = status;
-        emit LPStatusChanged(user, status);
+        allowedLiquidityProviders[account] = status;
+        emit LPStatusChanged(account, status);
     }
 
     /**
@@ -365,9 +367,10 @@ contract Pool is PoolFDT {
 
     /**
         @dev   Liquidity providers can deposit liquidityAsset into the LiquidityLocker, minting FDTs.
+        @dev   It emits a `DepositDateUpdated` event.
         @dev   It emits a `BalanceUpdated` event.
         @dev   It emits a `Cooldown` event.
-        @param amt Amount of liquidityAsset to deposit
+        @param amt Amount of liquidityAsset to deposit.
     */
     function deposit(uint256 amt) external {
         _whenProtocolNotPaused();
@@ -387,7 +390,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Activates the cooldown period to withdraw. It can't be called if the user is not providing liquidity.
+        @dev Activates the cooldown period to withdraw. It can't be called if the account is not providing liquidity.
         @dev It emits a `Cooldown` event.
     **/
     function intendToWithdraw() external {
@@ -407,8 +410,18 @@ contract Pool is PoolFDT {
     }
 
     /**
+        @dev   Checks that the account can withdraw an amount.
+        @param account The address of the account.
+        @param wad     The amount to withdraw.
+    */
+    function _canWithdraw(address account, uint256 wad) internal view {
+        require(depositDate[account].add(lockupPeriod) <= block.timestamp,     "P:FUNDS_LOCKED");     // Restrict withdrawal during lockup period
+        require(balanceOf(account).sub(wad) >= totalCustodyAllowance[account], "P:INSUF_TRANS_BAL");  // Account can only withdraw tokens that aren't custodied
+    }
+
+    /**
         @dev   Liquidity providers can withdraw liquidityAsset from the LiquidityLocker, burning PoolFDTs.
-        @dev   It emits a `BalanceUpdated` event.
+        @dev   It emits two `BalanceUpdated` event.
         @param amt Amount of liquidityAsset to withdraw.
     */
     function withdraw(uint256 amt) external {
@@ -416,9 +429,8 @@ contract Pool is PoolFDT {
         uint256 wad = _toWad(amt);
         (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = _globals(superFactory).getLpCooldownParams();
 
-        require(balanceOf(msg.sender).sub(wad) >= totalCustodyAllowance[msg.sender],                       "P:INSUF_WITHDRAWABLE_BAL");  // User can only withdraw tokens that aren't custodied
+        _canWithdraw(msg.sender, wad);
         require((block.timestamp - (withdrawCooldown[msg.sender] + lpCooldownPeriod)) <= lpWithdrawWindow, "P:WITHDRAW_NOT_ALLOWED");
-        require(depositDate[msg.sender].add(lockupPeriod) <= block.timestamp,                              "P:FUNDS_LOCKED");
 
         _burn(msg.sender, wad);  // Burn the corresponding FDT balance
         withdrawFunds();         // Transfer full entitled interest, decrement `interestSum`
@@ -441,17 +453,16 @@ contract Pool is PoolFDT {
 
         (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = _globals(superFactory).getLpCooldownParams();
 
-        require(depositDate[from].add(lockupPeriod) <= block.timestamp,                         "P:FUNDS_LOCKED");            // Restrict transfer during lockup period
-        require(balanceOf(from).sub(wad) >= totalCustodyAllowance[from],                        "P:INSUF_TRANSFERABLE_BAL");  // User can only transfer tokens that aren't custodied
-        require(block.timestamp > (withdrawCooldown[to] + lpCooldownPeriod + lpWithdrawWindow), "P:TO_NOT_ALLOWED");          // Recipient must not be currently withdrawing
-        require(recognizableLossesOf(from) == uint256(0),                                       "P:RECOG_LOSSES");            // If an LP has unrecognized losses, they must recognize losses through withdraw
+        _canWithdraw(from, wad);
+        require(block.timestamp > (withdrawCooldown[to] + lpCooldownPeriod + lpWithdrawWindow), "P:TO_NOT_ALLOWED");  // Recipient must not be currently withdrawing
+        require(recognizableLossesOf(from) == uint256(0),                                       "P:RECOG_LOSSES");    // If an LP has unrecognized losses, they must recognize losses through withdraw
 
         PoolLib.updateDepositDate(depositDate, balanceOf(to), wad, to);
         super._transfer(from, to, wad);
     }
 
     /**
-        @dev Withdraws all claimable interest from the `liquidityLocker` for a user using `interestSum` accounting.
+        @dev Withdraws all claimable interest from the `liquidityLocker` for an account using `interestSum` accounting.
         @dev It emits a `BalanceUpdated` event.
     */
     function withdrawFunds() public override {
@@ -471,7 +482,8 @@ contract Pool is PoolFDT {
     /**
         @dev   Increase the custody allowance for a given `custodian` corresponding to `msg.sender`.
         @dev   It emits a `CustodyAllowanceChanged` event.
-        @param custodian Address which will act as custodian of a given `amount` for a tokenHolder.
+        @dev   It emits a `TotalCustodyAllowanceUpdated` event.
+        @param custodian Address which will act as custodian of a given `amount` for an account.
         @param amount    Number of FDTs custodied by the custodian.
     */
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
@@ -484,6 +496,7 @@ contract Pool is PoolFDT {
         custodyAllowance[msg.sender][custodian] = newAllowance;
         totalCustodyAllowance[msg.sender]       = newTotalAllowance;
         emit CustodyAllowanceChanged(msg.sender, custodian, oldAllowance, newAllowance);
+        emit TotalCustodyAllowanceUpdated(msg.sender, newTotalAllowance);
     }
 
     /**
@@ -491,6 +504,7 @@ contract Pool is PoolFDT {
         @dev   This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
         @dev   It emits a `CustodyTransfer` event.
         @dev   It emits a `CustodyAllowanceChanged` event.
+        @dev   It emits a `TotalCustodyAllowanceUpdated` event.
         @param from   Address which holds to Pool FDTs.
         @param to     Address which will be the new owner of the `amount` of FDTs.
         @param amount Number of FDTs transferred.
@@ -502,9 +516,11 @@ contract Pool is PoolFDT {
         PoolLib.transferByCustodianChecks(from, to, amount);
 
         custodyAllowance[from][msg.sender] = newAllowance;
-        totalCustodyAllowance[from]        = totalCustodyAllowance[from].sub(amount);
+        uint256 newTotalAllowance          = totalCustodyAllowance[from].sub(amount);
+        totalCustodyAllowance[from]        = newTotalAllowance;
         emit CustodyTransfer(msg.sender, from, to, amount);
         emit CustodyAllowanceChanged(from, msg.sender, oldAllowance, newAllowance);
+        emit TotalCustodyAllowanceUpdated(msg.sender, newTotalAllowance);
     }
 
     /**************************/
@@ -525,11 +541,11 @@ contract Pool is PoolFDT {
 
     /**
         @dev    Calculates the value of BPT in units of liquidityAsset.
-        @param  _bPool          Address of Balancer pool
-        @param  _liquidityAsset Asset used by Pool for liquidity to fund loans
-        @param  _staker         Address that deposited BPTs to stakeLocker
-        @param  _stakeLocker    Escrows BPTs deposited by staker
-        @return USDC value of staker BPTs
+        @param  _bPool          Address of Balancer pool.
+        @param  _liquidityAsset Asset used by Pool for liquidity to fund loans.
+        @param  _staker         Address that deposited BPTs to stakeLocker.
+        @param  _stakeLocker    Escrows BPTs deposited by staker.
+        @return USDC value of staker BPTs.
     */
     function BPTVal(
         address _bPool,
@@ -542,7 +558,7 @@ contract Pool is PoolFDT {
 
     /**
         @dev   Checks that the given `depositAmt` is acceptable based on current liquidityCap.
-        @param depositAmt Amount of tokens (i.e liquidityAsset type) user is trying to deposit.
+        @param depositAmt Amount of tokens (i.e liquidityAsset type) the account is trying to deposit.
     */
     function isDepositAllowed(uint256 depositAmt) public view returns (bool) {
         return (openToPublic || allowedLiquidityProviders[msg.sender]) &&

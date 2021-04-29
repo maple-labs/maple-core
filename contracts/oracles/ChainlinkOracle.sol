@@ -22,10 +22,10 @@ contract ChainlinkOracle is Ownable {
 
     /**
         @dev   Creates a new Chainlink based oracle.
-        @param _aggregator   Address of Chainlink aggregator
-        @param _assetAddress Address of currency (0x0 for ETH)
-        @param _owner        Address of the owner of the contract
-      */
+        @param _aggregator   Address of Chainlink aggregator.
+        @param _assetAddress Address of currency (0x0 for ETH).
+        @param _owner        Address of the owner of the contract.
+    */
     constructor(address _aggregator, address _assetAddress, address _owner) public {
         require(_aggregator != address(0), "CO:ZERO_AGGREGATOR_ADDR");
         priceFeed       = IChainlinkAggregatorV3(_aggregator);
@@ -89,7 +89,7 @@ contract ChainlinkOracle is Ownable {
     /**
         @dev   Set manual override, allowing for manual price setting. Only the contract Owner can call this function.
         @dev   It emits a `SetManualOverride` event.
-        @param _override Whether to use the manual override price or not
+        @param _override Whether to use the manual override price or not.
     */
     function setManualOverride(bool _override) public onlyOwner {
         manualOverride = _override;

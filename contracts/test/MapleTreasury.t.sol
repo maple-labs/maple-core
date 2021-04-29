@@ -67,7 +67,7 @@ contract MapleTreasuryTest is TestUtil {
         assertTrue(     gov.try_distributeToHolders());  // Governor can distribute
 
         assertEq(IERC20(USDC).balanceOf(address(treasury)),         0);  // Withdraws all funds
-        assertEq(IERC20(USDC).balanceOf(address(mpl)),      100 * USD);  // Withdrawn to MPL address, where users can claim funds
+        assertEq(IERC20(USDC).balanceOf(address(mpl)),      100 * USD);  // Withdrawn to MPL address, where accounts can claim funds
 
         assertEq(IERC20(USDC).balanceOf(address(hal)), 0);  // Token holder hasn't claimed
         assertEq(IERC20(USDC).balanceOf(address(hue)), 0);  // Token holder hasn't claimed

@@ -20,7 +20,7 @@ abstract contract ExtendedFDT is BasicFDT {
 
     /**
         @dev   This event emits when new losses are distributed.
-        @param by                The address of the sender who distributed losses.
+        @param by                The address of the sender account distributed losses.
         @param lossesDistributed The amount of losses received for distribution.
     */
     event LossesDistributed(address indexed by, uint256 lossesDistributed);
@@ -110,7 +110,7 @@ abstract contract ExtendedFDT is BasicFDT {
 
     /**
         @dev   Internal function that transfer tokens from one address to another. Update pointsCorrection to keep funds unchanged.
-        @dev         It emits a `LossesCorrectionUpdated` event for the sender and receiver.
+        @dev         It emits two `LossesCorrectionUpdated` events, one for the sender and one for the receiver.
         @param from  The address to transfer from
         @param to    The address to transfer to
         @param value The amount to be transferred
@@ -153,7 +153,7 @@ abstract contract ExtendedFDT is BasicFDT {
     /**
         @dev   Internal function that burns an amount of the token of a given account. Update lossesCorrection to keep losses unchanged.
         @dev   It emits a `LossesCorrectionUpdated` event.
-        @param account The account whose tokens will be burnt.
+        @param account The account from which tokens will be burnt.
         @param value   The amount that will be burnt.
     */
     function _burn(address account, uint256 value) internal virtual override {
@@ -171,7 +171,7 @@ abstract contract ExtendedFDT is BasicFDT {
     /**
         @dev Register a loss. May be called directly after a shortfall after BPT burning occurs.
         @dev Calls _updateLossesTokenBalance(), whereby the contract computes the delta of the new and the previous
-             losses and increments the total losses (cumulative) by delta by calling _distributeLosses()
+             losses and increments the total losses (cumulative) by delta by calling _distributeLosses().
     */
     function updateLossesReceived() public virtual {
         int256 newLosses = _updateLossesBalance();
@@ -182,7 +182,7 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev Recognizes all recognizable losses for a user using loss accounting.
+        @dev Recognizes all recognizable losses for an account using loss accounting.
     */
     function _recognizeLosses() internal virtual returns (uint256 losses) { }
 

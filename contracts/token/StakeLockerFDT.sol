@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "./ExtendedFDT.sol";
 
-/// @title PoolFDT inherits ExtendedFDT and accounts for gains/losses for Stakers.
+/// @title StakeLockerFDT inherits ExtendedFDT and accounts for gains/losses for Stakers.
 abstract contract StakeLockerFDT is ExtendedFDT {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
