@@ -6,10 +6,14 @@ import "./interfaces/IERC20Details.sol";
 import "./interfaces/IOracle.sol";
 import "./interfaces/ISubFactory.sol";
 
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+
 interface ICalc { function calcType() external view returns (uint8); }
 
 /// @title MapleGlobals maintains a central source of parameters and allowlists for the Maple protocol.
 contract MapleGlobals {
+
+    using SafeMath for uint256;
 
     address public immutable mpl;         // Maple Token is the ERC-2222 token for the Maple protocol
 
@@ -281,7 +285,7 @@ contract MapleGlobals {
         @param _fee The fee, e.g., 50 = 0.50%.
     */
     function setInvestorFee(uint256 _fee) external isGovernor {
-        _checkPercentageRange(_fee + treasuryFee);
+        _checkPercentageRange(treasuryFee.add(_fee));
         investorFee = _fee;
         emit GlobalsParamSet("INVESTOR_FEE", _fee);
     }
@@ -292,7 +296,7 @@ contract MapleGlobals {
         @param _fee The fee, e.g., 50 = 0.50%.
     */
     function setTreasuryFee(uint256 _fee) external isGovernor {
-        _checkPercentageRange(_fee + investorFee);
+        _checkPercentageRange(investorFee.add(_fee));
         treasuryFee = _fee;
         emit GlobalsParamSet("TREASURY_FEE", _fee);
     }
