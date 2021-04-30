@@ -615,11 +615,11 @@ contract TestUtil is DSTest {
         uint256 termDays            = paymentIntervalDays * numPayments;
 
         specs = [
-            constrictToRange(apr, 1, 10_000, true),                     // APR between 0.01% and 100% (non-zero for test behavior)
-            termDays,                                                   // Fuzzed term days
-            paymentIntervalDays,                                        // Payment interval days from array
-            constrictToRange(requestAmount, 1 * USD, 1E10 * USD, true), // 1 USD - 10b USD loans (non-zero)
-            constrictToRange(collateralRatio, 0, 10_000)                // Collateral ratio between 0 and 100%
+            constrictToRange(apr, 1, 10_000, true),                           // APR between 0.01% and 100% (non-zero for test behavior)
+            termDays,                                                         // Fuzzed term days
+            paymentIntervalDays,                                              // Payment interval days from array
+            constrictToRange(requestAmount, 10_000 * USD, 1E10 * USD, true),  // 10k USD - 10b USD loans (non-zero)
+            constrictToRange(collateralRatio, 0, 10_000)                      // Collateral ratio between 0 and 100%
         ];
     }
 
