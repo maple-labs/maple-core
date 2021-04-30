@@ -54,7 +54,7 @@ library LoanLib {
         @return excessReturned Amount of liquidityAsset that was returned to the Loan from the FundingLocker.
     */
     function unwind(IERC20 liquidityAsset, address fundingLocker, uint256 createdAt, uint256 fundingPeriod) external returns (uint256 excessReturned) {
-        // Only callable if time has passed drawdown grace period, set in MapleGlobals
+        // Only callable if loan funding period has elapsed.
         require(block.timestamp > createdAt.add(fundingPeriod), "L:STILL_FUNDING_PERIOD");
 
         uint256 preBal = liquidityAsset.balanceOf(address(this));  // Account for existing balance in Loan

@@ -15,7 +15,7 @@ contract RepaymentCalc {
 
     /**
         @dev    Calculates the next payment for a Loan.
-        @param  _loan         Loan to calculate a payment for
+        @param  _loan         Loan to calculate a payment for.
         @return total         Entitled interest to the next payment, Principal + Interest only when the next payment is last payment of the loan.
         @return principalOwed Entitled principal amount needs to pay in the next payment.
         @return interest      Entitled interest amount needs to pay in the next payment.

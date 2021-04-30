@@ -242,7 +242,7 @@ contract PoolTest is TestUtil {
         assertEq(pool.principalOut(),                                       fundAmt + newFundAmt + newFundAmt2);  // Outstanding principal in liquidity pool 1
     }
 
-     function test_deactivate() public {
+    function test_deactivate() public {
 
         /*******************************/
         /*** Finalize liquidity pool ***/
@@ -366,7 +366,7 @@ contract PoolTest is TestUtil {
         assertTrue(pool.poolAdmins(address(securityAdmin)));
     }
 
-     function test_setStakingFee() public {
+    function test_setStakingFee() public {
         assertEq(pool.stakingFee(),  500);
         assertEq(pool.delegateFee(), 100);
         assertTrue(!pam.try_setStakingFee(address(pool), 1000));  // Cannot set stakingFee if not pool delegate

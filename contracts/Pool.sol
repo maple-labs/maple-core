@@ -50,13 +50,13 @@ contract Pool is PoolFDT {
     enum State { Initialized, Finalized, Deactivated }
     State public poolState;
 
-    mapping(address => uint256)                     public depositDate;                // Used for withdraw penalty calculation
-    mapping(address => mapping(address => address)) public debtLockers;                // Address of the `DebtLocker` contract corresponds to [Loan][DebtLockerFactory].
-    mapping(address => bool)                        public poolAdmins;                 // Pool Admin addresses that have permission to do certain operations in case of disaster mgt.
-    mapping(address => bool)                        public allowedLiquidityProviders;  // Map that contains the list of address to enjoy the early access of the pool.
-    mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`
-    mapping(address => mapping(address => uint256)) public custodyAllowance;           // Amount of PoolFDTs that are "locked" at a certain address
-    mapping(address => uint256)                     public totalCustodyAllowance;      // Total amount of PoolFDTs that are "locked" for a given account, cannot be greater than balance
+    mapping(address => uint256)                     public depositDate;                // Used for withdraw penalty calculation.
+    mapping(address => mapping(address => address)) public debtLockers;                // Address of the `DebtLocker` contract corresponding to [Loan][DebtLockerFactory].
+    mapping(address => bool)                        public poolAdmins;                 // Pool Admin addresses that have permission to do certain operations in case of disaster management..
+    mapping(address => bool)                        public allowedLiquidityProviders;  // Mapping that contains the list of addresses that have early access to the pool.
+    mapping(address => uint256)                     public withdrawCooldown;           // Timestamp of when LP calls `intendToWithdraw()`.
+    mapping(address => mapping(address => uint256)) public custodyAllowance;           // Amount of PoolFDTs that are "locked" at a certain address.
+    mapping(address => uint256)                     public totalCustodyAllowance;      // Total amount of PoolFDTs that are "locked" for a given account, cannot be greater than balance.
 
     event                   LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
     event                        Claim(address indexed loan, uint256 interest, uint256 principal, uint256 fee, uint256 stakeLockerPortion, uint256 poolDelegatePortion);
