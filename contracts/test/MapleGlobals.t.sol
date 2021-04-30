@@ -158,10 +158,12 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(     gov.try_setTreasuryFee(     0));  // Set to zero to test combined condition
 
         // investorFee + treasuryFee <= 100%
-        assertTrue(     gov.try_setInvestorFee(5_000));  // 100% is combined upper bound
-        assertTrue(     gov.try_setTreasuryFee(5_000));  // 100% is combined upper bound
-        assertTrue(    !gov.try_setInvestorFee(5_001));  // 100% is combined upper bound
-        assertTrue(    !gov.try_setTreasuryFee(5_001));  // 100% is combined upper bound
+        assertTrue(     gov.try_setInvestorFee(5_000));     // 100% is combined upper bound
+        assertTrue(     gov.try_setTreasuryFee(5_000));     // 100% is combined upper bound
+        assertTrue(    !gov.try_setInvestorFee(5_001));     // 100% is combined upper bound
+        assertTrue(    !gov.try_setTreasuryFee(5_001));     // 100% is combined upper bound
+        assertTrue(    !gov.try_setInvestorFee(MAX_UINT));  // Attempt overflow
+        assertTrue(    !gov.try_setTreasuryFee(MAX_UINT));  // Attempt overflow
 
         // setStakerCooldownPeriod()
         assertEq(   globals.stakerCooldownPeriod(),     10 days);
