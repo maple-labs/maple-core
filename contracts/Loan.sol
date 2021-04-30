@@ -55,7 +55,7 @@ contract Loan is LoanFDT, Pausable {
     address public immutable premiumCalc;        // The premium calculator for this loan
     address public immutable superFactory;       // The factory that deployed this Loan
 
-    mapping(address => bool) public loanAdmins;  // Admin addresses that have permission to do certain operations in case of disaster mgt
+    mapping(address => bool) public loanAdmins;  // Admin addresses that have permission to do certain operations in case of disaster management.
 
     uint256 public nextPaymentDue;  // The unix timestamp due date of next payment
 

@@ -60,7 +60,7 @@ library PoolLib {
     /**
         @dev   Fund a loan for amt, utilize the supplied debtLockerFactory for debt lockers.
         @dev   It emits a `LoanFunded` event.
-        @param debtLockers     Mapping contains the `debtLocker` contract address corresponds to the `dlFactory` and `loan`.
+        @param debtLockers     Mapping contains the `debtLocker` contract address corresponding to the `dlFactory` and `loan`.
         @param superFactory    Address of the `PoolFactory`.
         @param liquidityLocker Address of the `liquidityLocker` contract attached with this Pool.
         @param loan            Address of the loan to fund.
