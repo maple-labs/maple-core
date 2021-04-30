@@ -17,7 +17,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     using SignedSafeMath for int256;
     using SafeERC20      for IERC20;
 
-    uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division
+    uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division.
 
     IERC20  public immutable stakeAsset;  // The asset deposited by stakers into this contract, for liquidation during defaults.
 
@@ -26,11 +26,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     uint256 public lockupPeriod;  // Number of seconds for which unstaking is not allowed.
 
-    mapping(address => uint256)                     public stakeDate;              // Map address to effective stake date value
-    mapping(address => uint256)                     public unstakeCooldown;        // Timestamp of when staker called cooldown()
-    mapping(address => bool)                        public allowed;                // Map address to allowed status
-    mapping(address => mapping(address => uint256)) public custodyAllowance;       // Amount of StakeLockerFDTs that are "locked" at a certain address
-    mapping(address => uint256)                     public totalCustodyAllowance;  // Total amount of StakeLockerFDTs that are "locked" for a given account, cannot be greater than balance
+    mapping(address => uint256)                     public stakeDate;              // Map address to effective stake date value.
+    mapping(address => uint256)                     public unstakeCooldown;        // Timestamp of when staker called cooldown().
+    mapping(address => bool)                        public allowed;                // Map address to allowed status.
+    mapping(address => mapping(address => uint256)) public custodyAllowance;       // Amount of StakeLockerFDTs that are "locked" at a certain address.
+    mapping(address => uint256)                     public totalCustodyAllowance;  // Total amount of StakeLockerFDTs that are "locked" for a given account, cannot be greater than balance.
 
     bool public openToPublic;  // Boolean opening StakeLocker to public for staking BPTs
 

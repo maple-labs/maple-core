@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "./BasicFDT.sol";
 
-/// @title ExtendedFDT implements FDT functionality for accounting for losses
+/// @title ExtendedFDT implements FDT functionality for accounting for losses.
 abstract contract ExtendedFDT is BasicFDT {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;

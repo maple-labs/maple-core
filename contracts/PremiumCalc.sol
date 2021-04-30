@@ -13,7 +13,7 @@ contract PremiumCalc {
     uint8   public constant calcType = 12;      // PREMIUM type
     bytes32 public constant name     = "FLAT";
 
-    uint256 public immutable premiumFee;  // Flat percentage fee (in basis points) of principal to charge as a premium when calling a Loan
+    uint256 public immutable premiumFee;  // Flat percentage fee (in basis points) of principal to charge as a premium when calling a Loan.
 
     constructor(uint256 _premiumFee) public {
         premiumFee = _premiumFee;

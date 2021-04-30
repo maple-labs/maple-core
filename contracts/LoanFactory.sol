@@ -21,10 +21,10 @@ contract LoanFactory is Pausable {
 
     uint256 public loansCreated;   // Incrementor for number of loan vaults created.
 
-    mapping(uint256 => address) public loans;   // Loans address mapping
-    mapping(address => bool)    public isLoan;  // Used to check if a Loan was instantiated from this contract
+    mapping(uint256 => address) public loans;   // Loans address mapping.
+    mapping(address => bool)    public isLoan;  // Used to check if a Loan was instantiated from this contract.
 
-    mapping(address => bool) public loanFactoryAdmins;  // Loan Factory Admin addresses that have permission to do certain operations in case of disaster mgt
+    mapping(address => bool) public loanFactoryAdmins;  // Loan Factory Admin addresses that have permission to do certain operations in case of disaster management.
 
     event LoanFactoryAdminSet(address loanFactoryAdmin, bool allowed);
 

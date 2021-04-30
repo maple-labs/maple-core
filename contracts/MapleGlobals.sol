@@ -90,8 +90,8 @@ contract MapleGlobals {
         swapOutRequired      = 10_000;     // $10,000 of Pool cover
         fundingPeriod        = 10 days;
         defaultGracePeriod   = 5 days;
-        investorFee          = 50;         // 0.5%
-        treasuryFee          = 50;         // 0.5%
+        investorFee          = 50;         // 0.5 %
+        treasuryFee          = 50;         // 0.5 %
         maxSwapSlippage      = 1000;       // 10 %
         minLoanEquity        = 2000;       // 20 %
         globalAdmin          = _globalAdmin;
@@ -107,7 +107,7 @@ contract MapleGlobals {
     /************************/
 
     /**
-        @dev  Update the `stakerCooldownPeriod` state variable. This change will affect existing cool down period for the stakers that already intended to unstake.
+        @dev  Set the staker cooldown period. This change will affect existing cool down period for the stakers that already intended to unstake.
               Only the Governor can call this function.
         @dev  It emits a `GlobalsParamSet` event.
         @param newCooldownPeriod New value for the cool down period.
@@ -118,7 +118,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update the `lpCooldownPeriod` state variable. This change will affect existing cool down period for the LPs that already intended to withdraw.
+        @dev   Set the liquidity pool cooldown period. This change will affect existing cool down period for the LPs that already intended to withdraw.
                Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newCooldownPeriod New value for the cool down period.
@@ -129,7 +129,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update the `stakerUnstakeWindow` state variable. This change will affect existing window for the stakers that already applied to unstake.
+        @dev   Set the staker unstake window. This change will affect existing window for the stakers that already applied to unstake.
                Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newUnstakeWindow New value for the unstake window.
@@ -140,7 +140,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update the `lpWithdrawWindow` state variable. This change will affect existing window for the LPs that already intended to withdraw.
+        @dev   Set the liquidity pool withdraw window. This change will affect existing window for the LPs that already intended to withdraw.
                Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newLpWithdrawWindow New value for the withdraw window.
@@ -151,7 +151,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update the allowed Uniswap slippage percentage, in basis points. Only the Governor can call this function.
+        @dev   Set the allowed Uniswap slippage percentage, in basis points. Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param newMaxSlippage New max slippage percentage (in basis points)
     */
@@ -174,7 +174,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update the valid Balancer Pool mapping. Only the Governor can call this function.
+        @dev   Set the validity of a Balancer Pool. Only the Governor can call this function.
         @dev   It emits a `BalancerPoolSet` event.
         @param balancerPool Address of Balancer Pool contract.
         @param valid        The new bool value for validating Balancer Pool.
@@ -185,7 +185,7 @@ contract MapleGlobals {
     }
 
     /**
-      @dev   Pause/unpause the protocol. Only the Global Admin account can call.
+      @dev   Pause/unpause the protocol. Only the Global Admin can call this function.
       @dev   It emits a `ProtocolPaused` event.
       @param pause Boolean flag to switch externally facing functionality in the protocol on/off
     */
@@ -196,28 +196,28 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update the valid PoolFactory mapping. Only the Governor can call this function.
-        @param poolFactory Address of PoolFactory.
-        @param valid       The new bool value for validating poolFactory.
+        @dev   Set the validity of a Pool Factory. Only the Governor can call this function.
+        @param poolFactory Address of Pool Factory.
+        @param valid       The new bool value for validating Pool Factory.
     */
     function setValidPoolFactory(address poolFactory, bool valid) external isGovernor {
         isValidPoolFactory[poolFactory] = valid;
     }
 
     /**
-        @dev   Update the valid LoanFactory mapping. Only the Governor can call this function.
-        @param loanFactory Address of LoanFactory.
-        @param valid       The new bool value for validating loanFactory.
+        @dev   Set the validity of a Loan Factory. Only the Governor can call this function.
+        @param loanFactory Address of Loan Factory.
+        @param valid       The new bool value for validating Loan Factory.
     */
     function setValidLoanFactory(address loanFactory, bool valid) external isGovernor {
         isValidLoanFactory[loanFactory] = valid;
     }
 
     /**
-        @dev   Set the validity of a subFactory as it relates to a superFactory. Only the Governor can call this function.
-        @param superFactory The core factory (e.g. PoolFactory, LoanFactory).
-        @param subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory).
-        @param valid        The validity of subFactory within context of superFactory.
+        @dev   Set the validity of a sub factory as it relates to a super factory. Only the Governor can call this function.
+        @param superFactory The core factory (e.g. Pool Factory, Loan Factory).
+        @param subFactory   The sub factory used by core factory (e.g. Liquidity Locker Factory).
+        @param valid        The validity of subFactory within context of super factory.
     */
     function setValidSubFactory(address superFactory, address subFactory, bool valid) external isGovernor {
         require(isValidLoanFactory[superFactory] || isValidPoolFactory[superFactory], "MG:INVALID_SUPER_F");
@@ -238,7 +238,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update validity of Pool Delegate (those allowed to create Pools). Only the Governor can call this function.
+        @dev   Set the validity of a Pool Delegate (those allowed to create Pools). Only the Governor can call this function.
         @dev   It emits a `PoolDelegateSet` event.
         @param delegate Address to manage permissions for.
         @param valid    New permissions of address.
@@ -271,7 +271,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Specify validity of a calculator contract. Only the Governor can call this function.
+        @dev   Set the validity of a calculator contract. Only the Governor can call this function.
         @param calc  Calculator address.
         @param valid Validity of calculator.
     */
@@ -280,7 +280,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Adjust investorFee (in basis points). Only the Governor can call this function.
+        @dev   Set the investor fee (in basis points). Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param _fee The fee, e.g., 50 = 0.50%.
     */
@@ -291,7 +291,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Adjust treasuryFee (in basis points). Only the Governor can call this function.
+        @dev   Set the treasury fee (in basis points). Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param _fee The fee, e.g., 50 = 0.50%.
     */
@@ -302,9 +302,9 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Set the MapleTreasury contract. Only the Governor can call this function.
+        @dev   Set the Maple Treasury contract. Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
-        @param _mapleTreasury New MapleTreasury address.
+        @param _mapleTreasury New Maple Treasury address.
     */
     function setMapleTreasury(address _mapleTreasury) external isGovernor {
         require(_mapleTreasury != address(0), "MG:ZERO_ADDR");
@@ -313,7 +313,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Adjust defaultGracePeriod. Only the Governor can call this function.
+        @dev   Set the default grace period. Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param _defaultGracePeriod Number of seconds to set the grace period to.
     */
@@ -323,7 +323,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Adjust minLoanEquity. Only the Governor can call this function.
+        @dev   Set the minimum loan equity. Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param _minLoanEquity Min percentage of Loan equity an address must have to trigger liquidations.
     */
@@ -334,7 +334,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Adjust fundingPeriod. Only the Governor can call this function.
+        @dev   Set the funding period. Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param _fundingPeriod Number of seconds to set the drawdown grace period to.
     */
@@ -344,7 +344,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Adjust the minimum Pool cover required to finalize a Pool. Only the Governor can call this function.
+        @dev   Set the the minimum pool cover required to finalize a Pool. Only the Governor can call this function.
         @dev   It emits a `GlobalsParamSet` event.
         @param amt The new minimum swap out required.
     */
@@ -355,7 +355,7 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Update a price feed's oracle. Only the Governor can call this function.
+        @dev   Set a price feed's oracle. Only the Governor can call this function.
         @dev   It emits a `OracleSet` event.
         @param asset  Asset to update price for.
         @param oracle New oracle to use.
@@ -405,9 +405,9 @@ contract MapleGlobals {
     }
 
     /**
-        @dev   Checks that a subFactory is valid as it relates to a superFactory.
-        @param superFactory The core factory (e.g. PoolFactory, LoanFactory).
-        @param subFactory   The sub factory used by core factory (e.g. LiquidityLockerFactory).
+        @dev   Checks that a subFactory is valid as it relates to a super factory.
+        @param superFactory The core factory (e.g. Pool Factory, Loan Factory).
+        @param subFactory   The sub factory used by core factory (e.g. Liquidity Locker Factory).
         @param factoryType  The type expected for the subFactory. References listed below.
                                 0 = COLLATERAL_LOCKER_FACTORY
                                 1 = DEBT_LOCKER_FACTORY

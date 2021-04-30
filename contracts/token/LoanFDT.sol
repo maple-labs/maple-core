@@ -13,7 +13,7 @@ abstract contract LoanFDT is BasicFDT {
     using SafeMathInt    for  int256;
     using SafeERC20      for  IERC20;
 
-    IERC20 public immutable fundsToken; // The fundsToken (dividends)
+    IERC20 public immutable fundsToken; // The fundsToken (dividends).
 
     uint256 public fundsTokenBalance;   // The amount of fundsToken (liquidityAsset) currently present and accounted for in this contract.
 
