@@ -273,7 +273,7 @@ contract PoolTest is TestUtil {
         uint256 start = block.timestamp;
 
         assertTrue(!leo.try_withdraw(address(pool), amt),     "Should fail to withdraw 500 USD because account has to intendToWithdraw");
-        assertTrue(!lex.try_intendToWithdraw(address(pool)),  "Should fail to intend to withdraw because lex has zero pool FDTs");
+        assertTrue(!lex.try_intendToWithdraw(address(pool)),  "Should fail to intend to withdraw because lex has zero PoolFDTs");
         assertTrue( leo.try_intendToWithdraw(address(pool)),  "Should fail to intend to withdraw");
         assertEq(  pool.withdrawCooldown(address(leo)), start);
         assertTrue(!leo.try_withdraw(address(pool), amt),      "Should fail to withdraw as cooldown period hasn't passed yet");

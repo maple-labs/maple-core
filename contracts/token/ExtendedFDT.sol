@@ -20,7 +20,7 @@ abstract contract ExtendedFDT is BasicFDT {
 
     /**
         @dev   This event emits when new losses are distributed.
-        @param by                The address of the sender account distributed losses.
+        @param by                The address of the account that has distributed losses.
         @param lossesDistributed The amount of losses received for distribution.
     */
     event LossesDistributed(address indexed by, uint256 lossesDistributed);
@@ -29,7 +29,7 @@ abstract contract ExtendedFDT is BasicFDT {
         @dev   This event emits when distributed losses are recognized by a token holder.
         @param by                    The address of the receiver of losses.
         @param lossesRecognized      The amount of losses that were recognized.
-        @param totalLossesRecognized The total amount of losses that were recognized.
+        @param totalLossesRecognized The total amount of losses that are recognized.
     */
     event LossesRecognized(address indexed by, uint256 lossesRecognized, uint256 totalLossesRecognized);
 
@@ -41,12 +41,12 @@ abstract contract ExtendedFDT is BasicFDT {
         @dev It emits a `LossesDistributed` event if the amount of received losses is greater than 0.
         @dev It emits a `LossesPerShareUpdated` event if the amount of received losses is greater than 0.
              About undistributed losses:
-                In each distribution, there is a small amount of losses which does not get distributed,
+                In each distribution, there is a small amount of losses which do not get distributed,
                 which is `(value * pointsMultiplier) % totalSupply()`.
              With a well-chosen `pointsMultiplier`, the amount losses that are not getting distributed
                 in a distribution can be less than 1 (base unit).
              We can actually keep track of the undistributed losses in a distribution
-                and try to distribute it in the next distribution
+                and try to distribute it in the next distribution.
     */
     function _distributeLosses(uint256 value) internal {
         require(totalSupply() > 0, "FDT:ZERO_SUPPLY");
@@ -61,7 +61,7 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev    Prepares losses withdrawal.
+        @dev    Prepares losses for a withdrawal.
         @dev    It emits a `LossesWithdrawn` event if the amount of withdrawn losses is greater than 0.
         @return recognizableDividend The amount of dividend losses that can be recognized.
     */
@@ -75,7 +75,7 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev    View the amount of losses that an address can withdraw.
+        @dev    Returns the amount of losses that an address can withdraw.
         @param  _owner The address of a token holder.
         @return The amount of losses that `_owner` can withdraw.
     */
@@ -84,7 +84,7 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev    View the amount of losses that an address has recognized.
+        @dev    Returns the amount of losses that an address has recognized.
         @param  _owner The address of a token holder
         @return The amount of losses that `_owner` has recognized
     */
@@ -93,7 +93,7 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev    View the amount of losses that an address has earned in total.
+        @dev    Returns the amount of losses that an address has earned in total.
         @dev    accumulativeLossesOf(_owner) = recognizableLossesOf(_owner) + recognizedLossesOf(_owner)
                 = (lossesPerShare * balanceOf(_owner) + lossesCorrection[_owner]) / pointsMultiplier
         @param  _owner The address of a token holder
@@ -109,11 +109,11 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev   Internal function that transfer tokens from one address to another. Update pointsCorrection to keep funds unchanged.
+        @dev   Transfers tokens from one account to another. Updates pointsCorrection to keep funds unchanged.
         @dev         It emits two `LossesCorrectionUpdated` events, one for the sender and one for the receiver.
-        @param from  The address to transfer from
-        @param to    The address to transfer to
-        @param value The amount to be transferred
+        @param from  The address to transfer from.
+        @param to    The address to transfer to.
+        @param value The amount to be transferred.
     */
     function _transfer(
         address from,
@@ -133,7 +133,7 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev   Internal function that mints tokens to an account. Update lossesCorrection to keep losses unchanged.
+        @dev   Mints tokens to an account. Updates lossesCorrection to keep losses unchanged.
         @dev   It emits a `LossesCorrectionUpdated` event.
         @param account The account that will receive the created tokens.
         @param value   The amount that will be created.
@@ -151,7 +151,7 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev   Internal function that burns an amount of the token of a given account. Update lossesCorrection to keep losses unchanged.
+        @dev   Burns an amount of the token of a given account. Updates lossesCorrection to keep losses unchanged.
         @dev   It emits a `LossesCorrectionUpdated` event.
         @param account The account from which tokens will be burnt.
         @param value   The amount that will be burnt.
@@ -169,9 +169,9 @@ abstract contract ExtendedFDT is BasicFDT {
     }
 
     /**
-        @dev Register a loss. May be called directly after a shortfall after BPT burning occurs.
-        @dev Calls _updateLossesTokenBalance(), whereby the contract computes the delta of the new and the previous
-             losses and increments the total losses (cumulative) by delta by calling _distributeLosses().
+        @dev Registers a loss. May be called directly after a shortfall after BPT burning occurs.
+        @dev Calls _updateLossesTokenBalance(), whereby the contract computes the delta of the new and previous
+             losses balance and increments the total losses (cumulative), by delta, by calling _distributeLosses().
     */
     function updateLossesReceived() public virtual {
         int256 newLosses = _updateLossesBalance();
@@ -187,7 +187,7 @@ abstract contract ExtendedFDT is BasicFDT {
     function _recognizeLosses() internal virtual returns (uint256 losses) { }
 
     /**
-        @dev    Updates the current losses balance and returns the difference of new and previous losses balances.
+        @dev    Updates the current losses balance and returns the difference of the new and previous losses balance.
         @return A int256 representing the difference of the new and previous losses balance.
     */
     function _updateLossesBalance() internal virtual returns (int256) { }

@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 
 interface IOracle {
+
     function priceFeed() external view returns (address);
 
     function globals() external view returns (address);
@@ -23,4 +24,5 @@ interface IOracle {
     function setManualPrice(int256) external;
     
     function setManualOverride(bool) external;
+
 }

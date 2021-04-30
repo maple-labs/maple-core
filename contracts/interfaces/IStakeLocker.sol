@@ -4,6 +4,7 @@ pragma solidity 0.6.11;
 import "../token/interfaces/IStakeLockerFDT.sol";
 
 interface IStakeLocker is IStakeLockerFDT {
+
     function stakeDate(address) external returns (uint256);
 
     function stake(uint256) external;
@@ -49,4 +50,5 @@ interface IStakeLocker is IStakeLockerFDT {
     function isUnstakeAllowed(address) external view returns (bool);
 
     function isReceiveAllowed(uint256) external view returns (bool);
+
 }

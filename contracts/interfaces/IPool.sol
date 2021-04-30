@@ -4,6 +4,7 @@ pragma solidity 0.6.11;
 import "../token/interfaces/IPoolFDT.sol";
 
 interface IPool is IPoolFDT {
+
     function poolDelegate() external view returns (address);
 
     function poolAdmins(address) external view returns (bool);
@@ -85,4 +86,5 @@ interface IPool is IPoolFDT {
     function isDepositAllowed(uint256) external view returns (bool);
 
     function getInitialStakeRequirements() external view returns (uint256, uint256, bool, uint256, uint256);
+
 }

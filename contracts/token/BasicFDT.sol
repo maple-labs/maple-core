@@ -32,7 +32,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
         @dev It emits a `FundsDistributed` event if the amount of received funds is greater than 0.
         @dev It emits a `PointsPerShareUpdated` event if the amount of received funds is greater than 0.
              About undistributed funds:
-                In each distribution, there is a small amount of funds which does not get distributed,
+                In each distribution, there is a small amount of funds which do not get distributed,
                    which is `(value  pointsMultiplier) % totalSupply()`.
                 With a well-chosen `pointsMultiplier`, the amount funds that are not getting distributed
                    in a distribution can be less than 1 (base unit).
@@ -50,7 +50,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev    Prepares funds withdrawal.
+        @dev    Prepares the withdrawal of funds.
         @dev    It emits a `FundsWithdrawn` event if the amount of withdrawn funds is greater than 0.
         @return withdrawableDividend The amount of dividend funds that can be withdrawn.
     */
@@ -63,7 +63,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev    View the amount of funds that an address can withdraw.
+        @dev    Returns the amount of funds that an account can withdraw.
         @param  _owner The address of a token holder.
         @return The amount funds that `_owner` can withdraw.
     */
@@ -72,7 +72,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev    View the amount of funds that an address has withdrawn.
+        @dev    Returns the amount of funds that an account has withdrawn.
         @param  _owner The address of a token holder.
         @return The amount of funds that `_owner` has withdrawn.
     */
@@ -81,7 +81,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev    View the amount of funds that an address has earned in total.
+        @dev    Returns the amount of funds that an account has earned in total.
         @dev    accumulativeFundsOf(_owner) = withdrawableFundsOf(_owner) + withdrawnFundsOf(_owner)
                                          = (pointsPerShare * balanceOf(_owner) + pointsCorrection[_owner]) / pointsMultiplier
         @param  _owner The address of a token holder.
@@ -97,7 +97,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev   Internal function that transfer tokens from one address to another. Update pointsCorrection to keep funds unchanged.
+        @dev   Transfers tokens from one account to another. Updates pointsCorrection to keep funds unchanged.
         @dev   It emits two `PointsCorrectionUpdated` events, one for the sender and one for the receiver.
         @param from  The address to transfer from.
         @param to    The address to transfer to.
@@ -121,7 +121,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev   Internal function that mints tokens to an account. Update pointsCorrection to keep funds unchanged.
+        @dev   Mints tokens to an account. Updates pointsCorrection to keep funds unchanged.
         @param account The account that will receive the created tokens.
         @param value   The amount that will be created.
     */
@@ -138,7 +138,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     }
 
     /**
-        @dev   Internal function that burns an amount of the token of a given account. Update pointsCorrection to keep funds unchanged.
+        @dev   Burns an amount of the token of a given account. Updates pointsCorrection to keep funds unchanged.
         @dev   It emits a `PointsCorrectionUpdated` event.
         @param account The account whose tokens will be burnt.
         @param value   The amount that will be burnt.
@@ -161,15 +161,15 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
     function withdrawFunds() public virtual override {}
 
     /**
-        @dev    Updates the current funds token balance and returns the difference of new and previous funds token balances.
-        @return A int256 representing the difference of the new and previous funds token balance.
+        @dev    Updates the current `fundsToken` balance and returns the difference of the new and previous `fundsToken` balance.
+        @return A int256 representing the difference of the new and previous `fundsToken` balance.
     */
     function _updateFundsTokenBalance() internal virtual returns (int256) {}
 
     /**
-        @dev Register a payment of funds in tokens. May be called directly after a deposit is made.
-        @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the new and the previous
-             funds token balance and increments the total received funds (cumulative) by delta by calling _registerFunds().
+        @dev Registers a payment of funds in tokens. May be called directly after a deposit is made.
+        @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the new and previous
+             `fundsToken` balance and increments the total received funds (cumulative), by delta, by calling _distributeFunds().
     */
     function updateFundsReceived() public virtual {
         int256 newFunds = _updateFundsTokenBalance();

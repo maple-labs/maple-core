@@ -3,13 +3,13 @@ pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-/// @title CollateralLocker holds custody of collateralAsset for Loans.
+/// @title CollateralLocker holds custody of Collateral Asset for Loans.
 contract CollateralLocker {
 
     using SafeERC20 for IERC20;
 
-    IERC20  public immutable collateralAsset;  // Address the loan is funded with
-    address public immutable loan;             // Loan contract address this CollateralLocker is attached to
+    IERC20  public immutable collateralAsset;  // Address the Collateral Asset the Loan is collateralized with.
+    address public immutable loan;             // Loan contract address this CollateralLocker is attached to.
 
     constructor(address _collateralAsset, address _loan) public {
         collateralAsset = IERC20(_collateralAsset);
@@ -25,11 +25,12 @@ contract CollateralLocker {
     }
 
     /**
-        @dev   Transfers amt of collateralAsset to dst. Only the Loan can call this function.
-        @param dst Destination to transfer collateralAsset to.
-        @param amt Amount of collateralAsset to transfer.
+        @dev   Transfers amount of Collateral Asset to a destination account. Only the Loan can call this function.
+        @param dst Destination to transfer Collateral Asset to.
+        @param amt Amount of Collateral Asset to transfer.
     */
     function pull(address dst, uint256 amt) isLoan external {
         collateralAsset.safeTransfer(dst, amt);
     }
+
 }

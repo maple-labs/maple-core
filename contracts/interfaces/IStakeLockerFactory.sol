@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 
 interface IStakeLockerFactory {
+
     function owner(address) external returns (address);
 
     function isLocker(address) external returns (bool);
@@ -9,4 +10,5 @@ interface IStakeLockerFactory {
     function factoryType() external returns (uint8);
 
     function newLocker(address, address) external returns (address);
+
 }

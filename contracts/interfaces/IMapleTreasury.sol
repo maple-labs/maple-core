@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 
 interface IMapleTreasury {
+
     function mpl() external view returns (address);
 
     function fundsToken() external view returns (address);
@@ -17,4 +18,5 @@ interface IMapleTreasury {
     function distributeToHolders() external;
 
     function convertERC20(address) external;
+
 }

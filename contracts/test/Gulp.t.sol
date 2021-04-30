@@ -67,6 +67,6 @@ contract GulpTest is TestUtil {
         uint256 usdcBal_postGulp = bPool.getBalance(USDC);
 
         assertEq(usdcBal_preGulp,  1_550_000 * USD);
-        assertEq(usdcBal_postGulp, usdcBal_preGulp + earnings); // USDC is transferred into balancer pool, increasing value of MPL
+        assertEq(usdcBal_postGulp, usdcBal_preGulp + earnings); // USDC is transferred into Balancer pool, increasing value of MPL
     }
 }

@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "./Pool.sol";
-
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+
+import "./Pool.sol";
 
 /// @title PoolFactory instantiates Pools.
 contract PoolFactory is Pausable {
 
-    uint8 public constant LL_FACTORY = 3;  // Factory type of `LiquidityLockerFactory`
-    uint8 public constant SL_FACTORY = 4;  // Factory type of `StakeLockerFactory`
+    uint8 public constant LL_FACTORY = 3;  // Factory type of `LiquidityLockerFactory`.
+    uint8 public constant SL_FACTORY = 4;  // Factory type of `StakeLockerFactory`.
 
-    uint256  public poolsCreated;  // Incrementor for number of Pools created
-    IMapleGlobals public globals;  // MapleGlobals contract
+    uint256  public poolsCreated;  // Incrementor for number of Pools created.
+    IMapleGlobals public globals;  // A MapleGlobals instance.
 
-    mapping(uint256 => address) public pools;              // Map to keep `Pool` contracts corresponding to their respective indices.
-    mapping(address => bool)    public isPool;             // Used to check if a `Pool` was instantiated from this factory.
-    mapping(address => bool)    public poolFactoryAdmins;  // Pool Factory Admin addresses that have permission to do certain operations in case of disaster management.
+    mapping(uint256 => address) public pools;              // Map to reference Pools corresponding to their respective indices.
+    mapping(address => bool)    public isPool;             // True only if a Pool was instantiated by this factory.
+    mapping(address => bool)    public poolFactoryAdmins;  // The PoolFactory Admin addresses that have permission to do certain operations in case of disaster management.
 
-    event PoolFactoryAdminSet(address poolFactoryAdmin, bool allowed);
+    event PoolFactoryAdminSet(address indexed poolFactoryAdmin, bool allowed);
 
     event PoolCreated(
         address indexed pool,
@@ -39,8 +39,8 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev   Update the MapleGlobals contract. Only the Governor can call this function.
-        @param newGlobals Address of new MapleGlobals contract.
+        @dev   Sets the MapleGlobals instance. Only the Governor can call this function.
+        @param newGlobals Address of new MapleGlobals.
     */
     function setGlobals(address newGlobals) external {
         _isValidGovernor();
@@ -48,16 +48,16 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev    Instantiates a Pool contract.
+        @dev    Instantiates a Pool.
         @dev    It emits a `PoolCreated` event.
-        @param  liquidityAsset The asset escrowed in LiquidityLocker.
-        @param  stakeAsset     The asset escrowed in StakeLocker.
+        @param  liquidityAsset The asset escrowed in a LiquidityLocker.
+        @param  stakeAsset     The asset escrowed in a StakeLocker.
         @param  slFactory      The factory to instantiate a StakeLocker from.
         @param  llFactory      The factory to instantiate a LiquidityLocker from.
-        @param  stakingFee     Fee that stakers earn on interest, in basis points.
-        @param  delegateFee    Fee that pool delegate earns on interest, in basis points.
-        @param  liquidityCap   Amount of liquidityAsset accepted by the pool.
-        @return poolAddress    Address of the instantiated pool.
+        @param  stakingFee     Fee that Stakers earn on interest, in basis points.
+        @param  delegateFee    Fee that the Pool Delegate earns on interest, in basis points.
+        @param  liquidityCap   Amount of Liquidity Asset accepted by the Pool.
+        @return poolAddress    Address of the instantiated Pool.
     */
     function createPool(
         address liquidityAsset,
@@ -114,10 +114,10 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev   Set pool factory admin. Only the Governor can call this function.
+        @dev   Sets a PoolFactory Admin. Only the Governor can call this function.
         @dev   It emits a `PoolFactoryAdminSet` event.
-        @param poolFactoryAdmin An address being allowed or disallowed as a Pool Factory Admin.
-        @param allowed  Status of a pool factory admin.
+        @param poolFactoryAdmin An address being allowed or disallowed as a PoolFactory Admin.
+        @param allowed  Status of a PoolFactory Admin.
     */
     function setPoolFactoryAdmin(address poolFactoryAdmin, bool allowed) external {
         _isValidGovernor();
@@ -126,7 +126,7 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Triggers paused state. Halts functionality for certain functions. Only the Governor or a Pool Factory Admin can call this function.
+        @dev Triggers paused state. Halts functionality for certain functions. Only the Governor or a PoolFactory Admin can call this function.
     */
     function pause() external {
         _isValidGovernorOrPoolFactoryAdmin();
@@ -134,7 +134,7 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Triggers unpaused state. Returns functionality for certain functions. Only the Governor or a Pool Factory Admin can call this function.
+        @dev Triggers unpaused state. Restores functionality for certain functions. Only the Governor or a PoolFactory Admin can call this function.
     */
     function unpause() external {
         _isValidGovernorOrPoolFactoryAdmin();
@@ -149,7 +149,7 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev Checks that `msg.sender` is the Governor or a Pool Factory Admin.
+        @dev Checks that `msg.sender` is the Governor or a PoolFactory Admin.
     */
     function _isValidGovernorOrPoolFactoryAdmin() internal view {
         require(msg.sender == globals.governor() || poolFactoryAdmins[msg.sender], "PF:NOT_GOV_OR_ADMIN");
@@ -161,4 +161,5 @@ contract PoolFactory is Pausable {
     function _whenProtocolNotPaused() internal view {
         require(!globals.protocolPaused(), "PF:PROTO_PAUSED");
     }
+
 }

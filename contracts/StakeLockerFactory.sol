@@ -6,8 +6,8 @@ import "./StakeLocker.sol";
 /// @title StakeLockerFactory instantiates StakeLockers.
 contract StakeLockerFactory {
 
-    mapping(address => address) public owner;     // owner[locker] = Owner of the stake locker.
-    mapping(address => bool)    public isLocker;  // True if stake locker was created by this factory, otherwise false.
+    mapping(address => address) public owner;     // Mapping of StakeLocker addresses to their owner (i.e owner[locker] = Owner of the StakeLocker).
+    mapping(address => bool)    public isLocker;  // True only if a StakeLocker was created by this factory.
 
     uint8 public constant factoryType = 4;  // i.e FactoryType::STAKE_LOCKER_FACTORY.
 
@@ -21,10 +21,10 @@ contract StakeLockerFactory {
     );
 
     /**
-        @dev    Instantiate a StakeLocker contract.
+        @dev    Instantiate a StakeLocker.
         @dev    It emits a `StakeLockerCreated` event.
-        @param  stakeAsset     Address of the stakeAsset (generally Balancer Pool BPTs).
-        @param  liquidityAsset Address of the liquidityAsset (as defined in the pool).
+        @param  stakeAsset     Address of the Stake Asset (generally Balancer Pool BPTs).
+        @param  liquidityAsset Address of the Liquidity Asset (as defined in the Pool).
         @return stakeLocker    Address of the instantiated StakeLocker.
     */
     function newLocker(
@@ -44,4 +44,5 @@ contract StakeLockerFactory {
             StakeLocker(stakeLocker).symbol()
         );
     }
+
 }
