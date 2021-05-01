@@ -1,32 +1,32 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "./Loan.sol";
-
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+
+import "./Loan.sol";
 
 /// @title LoanFactory instantiates Loans.
 contract LoanFactory is Pausable {
 
     using SafeMath for uint256;
 
-    uint8 public constant CL_FACTORY = 0;  // Factory type of `CollateralLockerFactory`
-    uint8 public constant FL_FACTORY = 2;  // Factory type of `FundingLockerFactory`
+    uint8 public constant CL_FACTORY = 0;  // Factory type of `CollateralLockerFactory`.
+    uint8 public constant FL_FACTORY = 2;  // Factory type of `FundingLockerFactory`.
 
-    uint8 public constant INTEREST_CALC_TYPE = 10;  // Calc type of `RepaymentCalc`
-    uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`
-    uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`
+    uint8 public constant INTEREST_CALC_TYPE = 10;  // Calc type of `RepaymentCalc`.
+    uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`.
+    uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`.
 
-    IMapleGlobals public globals;  // Interface of MapleGlobals
+    IMapleGlobals public globals;  // Instance of the MapleGlobals.
 
-    uint256 public loansCreated;   // Incrementor for number of loan vaults created.
+    uint256 public loansCreated;   // Incrementor for number of Loans created.
 
     mapping(uint256 => address) public loans;   // Loans address mapping.
-    mapping(address => bool)    public isLoan;  // Used to check if a Loan was instantiated from this contract.
+    mapping(address => bool)    public isLoan;  // True only if a Loan was created by this factory.
 
-    mapping(address => bool) public loanFactoryAdmins;  // Loan Factory Admin addresses that have permission to do certain operations in case of disaster management.
+    mapping(address => bool) public loanFactoryAdmins;  // The LoanFactory Admin addresses that have permission to do certain operations in case of disaster management.
 
-    event LoanFactoryAdminSet(address loanFactoryAdmin, bool allowed);
+    event LoanFactoryAdminSet(address indexed loanFactoryAdmin, bool allowed);
 
     event LoanCreated(
         address loan,
@@ -46,8 +46,8 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev   Update the MapleGlobals contract. Only the Governor can call this function.
-        @param newGlobals Address of new MapleGlobals contract.
+        @dev   Sets MapleGlobals. Only the Governor can call this function.
+        @param newGlobals Address of new MapleGlobals.
     */
     function setGlobals(address newGlobals) external {
         _isValidGovernor();
@@ -57,17 +57,17 @@ contract LoanFactory is Pausable {
     /**
         @dev    Create a new Loan.
         @dev    It emits a `LoanCreated` event.
-        @param  liquidityAsset  Asset the loan will raise funding in.
-        @param  collateralAsset Asset the loan will use as collateral.
+        @param  liquidityAsset  Asset the Loan will raise funding in.
+        @param  collateralAsset Asset the Loan will use as collateral.
         @param  flFactory       The factory to instantiate a FundingLocker from.
         @param  clFactory       The factory to instantiate a CollateralLocker from.
-        @param  specs           Contains specifications for this loan.
+        @param  specs           Contains specifications for this Loan.
                                     specs[0] = apr
                                     specs[1] = termDays
                                     specs[2] = paymentIntervalDays
                                     specs[3] = requestAmount
                                     specs[4] = collateralRatio
-        @param  calcs           The calculators used for the loan.
+        @param  calcs           The calculators used for this Loan.
                                     calcs[0] = repaymentCalc
                                     calcs[1] = lateFeeCalc
                                     calcs[2] = premiumCalc
@@ -84,7 +84,7 @@ contract LoanFactory is Pausable {
         _whenProtocolNotPaused();
         IMapleGlobals _globals = globals;
 
-        // Validity checks
+        // Perform validity checks.
         require(_globals.isValidSubFactory(address(this), flFactory, FL_FACTORY), "LF:INVALID_FLF");
         require(_globals.isValidSubFactory(address(this), clFactory, CL_FACTORY), "LF:INVALID_CLF");
 
@@ -92,7 +92,7 @@ contract LoanFactory is Pausable {
         require(_globals.isValidCalc(calcs[1],  LATEFEE_CALC_TYPE), "LF:INVALID_LATE_FEE_C");
         require(_globals.isValidCalc(calcs[2],  PREMIUM_CALC_TYPE), "LF:INVALID_PREM_C");
 
-        // Deploy new Loan
+        // Deploy new Loan.
         Loan loan = new Loan(
             msg.sender,
             liquidityAsset,
@@ -103,7 +103,7 @@ contract LoanFactory is Pausable {
             calcs
         );
 
-        // Update LoanFactory identification mappings
+        // Update the LoanFactory identification mappings.
         loanAddress         = address(loan);
         loans[loansCreated] = loanAddress;
         isLoan[loanAddress] = true;
@@ -124,10 +124,10 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev   Set loan factory admin. Only the Governor can call this function.
+        @dev   Sets a LoanFactory Admin. Only the Governor can call this function.
         @dev   It emits a `LoanFactoryAdminSet` event.
-        @param loanFactoryAdmin An address being allowed or disallowed as a Loan Factory Admin.
-        @param allowed          Status of a loan factory admin.
+        @param loanFactoryAdmin An address being allowed or disallowed as a LoanFactory Admin.
+        @param allowed          Status of a LoanFactory Admin.
     */
     function setLoanFactoryAdmin(address loanFactoryAdmin, bool allowed) external {
         _isValidGovernor();
@@ -136,7 +136,7 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Triggers paused state. Halts functionality for certain functions. Only the Governor or a Loan Factory Admin can call this function.
+        @dev Triggers paused state. Halts functionality for certain functions. Only the Governor or a LoanFactory Admin can call this function.
     */
     function pause() external {
         _isValidGovernorOrLoanFactoryAdmin();
@@ -144,7 +144,7 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Triggers unpaused state. Returns functionality for certain functions. Only the Governor or a Loan Factory Admin can call this function.
+        @dev Triggers unpaused state. Restores functionality for certain functions. Only the Governor or a LoanFactory Admin can call this function.
     */
     function unpause() external {
         _isValidGovernorOrLoanFactoryAdmin();
@@ -159,7 +159,7 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev Checks that `msg.sender` is the Governor or a Loan Factory Admin.
+        @dev Checks that `msg.sender` is the Governor or a LoanFactory Admin.
     */
     function _isValidGovernorOrLoanFactoryAdmin() internal view {
         require(msg.sender == globals.governor() || loanFactoryAdmins[msg.sender], "LF:NOT_GOV_OR_ADMIN");
@@ -171,4 +171,5 @@ contract LoanFactory is Pausable {
     function _whenProtocolNotPaused() internal view {
         require(!globals.protocolPaused(), "LF:PROTO_PAUSED");
     }
+
 }

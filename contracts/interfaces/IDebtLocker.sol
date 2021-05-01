@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 
 interface IDebtLocker {
+
     function loan() external view returns (address);
 
     function liquidityAsset() external view returns (address);
@@ -23,4 +24,5 @@ interface IDebtLocker {
     function claim() external returns (uint256[7] memory);
     
     function triggerDefault() external;
+
 }

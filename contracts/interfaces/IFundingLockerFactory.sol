@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 
 interface IFundingLockerFactory {
+
     function owner(address) external view returns (address);
     
     function isLocker(address) external view returns (bool);
@@ -9,4 +10,5 @@ interface IFundingLockerFactory {
     function factoryType() external view returns (uint8);
     
     function newLocker(address) external returns (address);
+
 }

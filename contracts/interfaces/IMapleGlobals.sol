@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 
 interface IMapleGlobals {
+
     function pendingGovernor() external view returns (address);
 
     function governor() external view returns (address);
@@ -115,4 +116,5 @@ interface IMapleGlobals {
     function setPendingGovernor(address) external;
 
     function acceptGovernor() external;
+
 }

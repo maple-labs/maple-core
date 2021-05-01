@@ -30,7 +30,7 @@ abstract contract PoolFDT is ExtendedFDT {
     }
 
     /**
-        @dev    Updates the current losses balance and returns the difference of new and previous losses balances.
+        @dev    Updates the current losses balance and returns the difference of the new and previous losses balance.
         @return A int256 representing the difference of the new and previous losses balance.
     */
     function _updateLossesBalance() internal override returns (int256) {
@@ -42,7 +42,7 @@ abstract contract PoolFDT is ExtendedFDT {
     }
 
     /**
-        @dev    Updates the current interest balance and returns the difference of new and previous interest balances.
+        @dev    Updates the current interest balance and returns the difference of the new and previous interest balance.
         @return A int256 representing the difference of the new and previous interest balance.
     */
     function _updateFundsTokenBalance() internal override returns (int256) {

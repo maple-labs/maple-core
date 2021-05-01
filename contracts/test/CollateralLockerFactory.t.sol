@@ -24,7 +24,7 @@ contract CollateralLockerFactoryTest is TestUtil {
         assertEq(cl.loan(), address(this), "Incorrect loan address");
         assertEq(address(cl.collateralAsset()), USDC, "Incorrect address of collateral asset");
 
-        // Assert that no one can access collateral locker funds
+        // Assert that no one can access CollateralLocker funds
         mint("USDC", address(cl),  500 * USD);
         assertTrue(!bob.try_pull(address(cl), address(bob), 10));
     }

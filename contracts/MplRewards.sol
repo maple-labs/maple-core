@@ -5,6 +5,7 @@ import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/math/Math.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+
 import "./interfaces/IERC2258.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
@@ -209,4 +210,5 @@ contract MplRewards is Ownable {
         // Let everyone know that our pause state has changed.
         emit PauseChanged(paused);
     }
+
 }

@@ -6,18 +6,18 @@ import "./DebtLocker.sol";
 /// @title DebtLockerFactory instantiates DebtLockers.
 contract DebtLockerFactory {
 
-    mapping(address => address) public owner;     // Mapping of locker contract address to its owner i.e owner[locker] = Owner of the debt locker
-    mapping(address => bool)    public isLocker;  // True if debt locker was created in this factory, otherwise false
+    mapping(address => address) public owner;     // Mapping of DebtLocker addresses to their owner (i.e owner[locker] = Owner of the DebtLocker).
+    mapping(address => bool)    public isLocker;  // True only if a DebtLocker was created by this factory.
 
     uint8 public constant factoryType = 1;  // i.e LockerFactoryTypes::DEBT_LOCKER_FACTORY
 
     event DebtLockerCreated(address indexed owner, address debtLocker, address loan);
 
     /**
-        @dev    Instantiate a DebtLocker contract.
+        @dev    Instantiates a DebtLocker.
         @dev    It emits a `DebtLockerCreated` event.
-        @param  loan       The loan this debt locker will escrow tokens for.
-        @return debtLocker Address of the instantiated debt locker.
+        @param  loan       The Loan this DebtLocker will escrow tokens for.
+        @return debtLocker Address of the instantiated DebtLocker.
     */
     function newLocker(address loan) external returns (address debtLocker) {
         debtLocker           = address(new DebtLocker(loan, msg.sender));
@@ -26,4 +26,5 @@ contract DebtLockerFactory {
 
         emit DebtLockerCreated(msg.sender, debtLocker, loan);
     }
+
 }

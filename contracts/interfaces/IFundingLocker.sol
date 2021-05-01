@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 
 interface IFundingLocker {
+
     function liquidityAsset() external view returns (address);
 
     function loan() external view returns (address);
@@ -9,4 +10,5 @@ interface IFundingLocker {
     function pull(address, uint256) external;
 
     function drain() external;
+
 }

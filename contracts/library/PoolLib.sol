@@ -20,10 +20,10 @@ library PoolLib {
 
     uint256 public constant MAX_UINT256 = uint256(-1);
     uint256 public constant WAD         = 10 ** 18;
-    uint8   public constant DL_FACTORY  = 1;         // Factory type of `DebtLockerFactory`
+    uint8   public constant DL_FACTORY  = 1;         // Factory type of DebtLockerFactory
 
     event         LoanFunded(address indexed loan, address debtLocker, uint256 amountFunded);
-    event DepositDateUpdated(address indexed lp, uint256 depositDate);
+    event DepositDateUpdated(address indexed liquidityProvider, uint256 depositDate);
 
     /***************************************/
     /*** Pool Delegate Utility Functions ***/
@@ -31,11 +31,11 @@ library PoolLib {
 
     /** 
         @dev   Conducts sanity checks for Pools in the constructor.
-        @param globals        Address of MapleGlobals.
+        @param globals        Instance of a MapleGlobals.
         @param liquidityAsset Asset used by Pool for liquidity to fund loans.
         @param stakeAsset     Asset escrowed in StakeLocker.
-        @param stakingFee     Fee that `stakers` earn on interest, in basis points.
-        @param delegateFee    Fee that `_poolDelegate` earns on interest, in basis points.
+        @param stakingFee     Fee that the Stakers earn on interest, in basis points.
+        @param delegateFee    Fee that the Pool Delegate earns on interest, in basis points.
     */
     function poolSanityChecks(
         IMapleGlobals globals, 
@@ -58,14 +58,14 @@ library PoolLib {
     }
 
     /**
-        @dev   Fund a loan for amt, utilize the supplied debtLockerFactory for debt lockers.
+        @dev   Funds a Loan for an amount, utilizing the supplied DebtLockerFactory for DebtLockers.
         @dev   It emits a `LoanFunded` event.
-        @param debtLockers     Mapping contains the `debtLocker` contract address corresponding to the `dlFactory` and `loan`.
-        @param superFactory    Address of the `PoolFactory`.
-        @param liquidityLocker Address of the `liquidityLocker` contract attached with this Pool.
-        @param loan            Address of the loan to fund.
-        @param dlFactory       The debt locker factory to utilize.
-        @param amt             Amount to fund the loan.
+        @param debtLockers     Mapping contains the DebtLocker contract address corresponding to the DebtLockerFactory and Loan.
+        @param superFactory    Address of the PoolFactory.
+        @param liquidityLocker Address of the LiquidityLocker contract attached with this Pool.
+        @param loan            Address of the Loan to fund.
+        @param dlFactory       The DebtLockerFactory to utilize.
+        @param amt             Amount to fund the Loan.
     */
     function fundLoan(
         mapping(address => mapping(address => address)) storage debtLockers,
@@ -78,34 +78,34 @@ library PoolLib {
         IMapleGlobals globals = IMapleGlobals(ILoanFactory(superFactory).globals());
         address loanFactory   = ILoan(loan).superFactory();
 
-        // Auth checks
+        // Auth checks.
         require(globals.isValidLoanFactory(loanFactory),                        "P:INVALID_LF");
         require(ILoanFactory(loanFactory).isLoan(loan),                         "P:INVALID_L");
         require(globals.isValidSubFactory(superFactory, dlFactory, DL_FACTORY), "P:INVALID_DLF");
 
         address debtLocker = debtLockers[loan][dlFactory];
 
-        // Instantiate locker if it doesn't exist with this factory type
+        // Instantiate DebtLocker if it doesn't exist withing this factory
         if (debtLocker == address(0)) {
             debtLocker = IDebtLockerFactory(dlFactory).newLocker(loan);
             debtLockers[loan][dlFactory] = debtLocker;
         }
     
-        // Fund loan
+        // Fund the Loan.
         ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLocker, amt);
         
         emit LoanFunded(loan, debtLocker, amt);
     }
 
     /**
-        @dev    Helper function for claim() if a default has occurred.
-        @param  liquidityAsset                  IERC20 of liquidityAsset.
-        @param  stakeLocker                     Address of stakeLocker.
+        @dev    Helper function used by Pool `claim` function, for when if a default has occurred.
+        @param  liquidityAsset                  IERC20 of Liquidity Asset.
+        @param  stakeLocker                     Address of StakeLocker.
         @param  stakeAsset                      Address of BPTs.
-        @param  defaultSuffered                 Amount of shortfall in defaulted loan after liquidation.
+        @param  defaultSuffered                 Amount of shortfall in defaulted Loan after liquidation.
         @return bptsBurned                      Amount of BPTs burned to cover shortfall.
-        @return postBurnBptBal                  Amount of BPTs returned to stakeLocker after burn.
-        @return liquidityAssetRecoveredFromBurn Amount of liquidityAsset recovered from burn.
+        @return postBurnBptBal                  Amount of BPTs returned to StakeLocker after burn.
+        @return liquidityAssetRecoveredFromBurn Amount of Liquidity Asset recovered from burn.
     */
     function handleDefault(
         IERC20  liquidityAsset,
@@ -121,35 +121,35 @@ library PoolLib {
         ) 
     {
 
-        IBPool bPool = IBPool(stakeAsset);  // stakeAsset == Balancer Pool Tokens
+        IBPool bPool = IBPool(stakeAsset);  // stakeAsset = Balancer Pool Tokens
 
-        // Check amount of liquidityAsset coverage that exists in the StakeLocker
+        // Check amount of Liquidity Asset coverage that exists in the StakeLocker.
         uint256 availableSwapOut = getSwapOutValueLocker(stakeAsset, address(liquidityAsset), stakeLocker);
 
-        // Pull BPTs from StakeLocker
+        // Pull BPTs from StakeLocker.
         IStakeLocker(stakeLocker).pull(address(this), bPool.balanceOf(stakeLocker));
 
-        // To maintain accounting, account for direct transfers into Pool
+        // To maintain accounting, account for direct transfers into Pool.
         uint256 preBurnLiquidityAssetBal = liquidityAsset.balanceOf(address(this));
         uint256 preBurnBptBal            = bPool.balanceOf(address(this));
 
-        // Burn enough BPTs for liquidityAsset to cover defaultSuffered
+        // Burn enough BPTs for Liquidity Asset to cover default suffered.
         bPool.exitswapExternAmountOut(
             address(liquidityAsset), 
             availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut,  // Burn BPTs up to defaultSuffered amount
             preBurnBptBal
         );
 
-        // Return remaining BPTs to stakeLocker
+        // Return remaining BPTs to StakeLocker.
         postBurnBptBal = bPool.balanceOf(address(this));
         bptsBurned     = preBurnBptBal.sub(postBurnBptBal);
         bPool.transfer(stakeLocker, postBurnBptBal);
         liquidityAssetRecoveredFromBurn = liquidityAsset.balanceOf(address(this)).sub(preBurnLiquidityAssetBal);
-        IStakeLocker(stakeLocker).updateLosses(bptsBurned);  // Update StakeLocker FDT loss accounting for BPTs
+        IStakeLocker(stakeLocker).updateLosses(bptsBurned);  // Update StakeLockerFDT loss accounting for BPTs
     }
 
     /**
-        @dev    Calculate portions of claim from DebtLocker to be used by Pool claim function.
+        @dev    Calculates portions of claim from DebtLocker to be used by Pool `claim` function.
         @param  claimInfo           [0] = Total Claimed
                                     [1] = Interest Claimed
                                     [2] = Principal Claimed
@@ -159,8 +159,8 @@ library PoolLib {
                                     [6] = Default Suffered
         @param  delegateFee         Portion of interest (basis points) that goes to the Pool Delegate.
         @param  stakingFee          Portion of interest (basis points) that goes to the StakeLocker.
-        @return poolDelegatePortion Total funds to send to Pool Delegate.
-        @return stakeLockerPortion  Total funds to send to StakeLocker.
+        @return poolDelegatePortion Total funds to send to the Pool Delegate.
+        @return stakeLockerPortion  Total funds to send to the StakeLocker.
         @return principalClaim      Total principal claim.
         @return interestClaim       Total interest claim.
     */
@@ -178,18 +178,18 @@ library PoolLib {
             uint256 interestClaim
         ) 
     { 
-        poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10_000).add(claimInfo[3]);  // PD portion of interest plus fee
-        stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10_000);                     // SL portion of interest
+        poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10_000).add(claimInfo[3]);  // Pool Delegate portion of interest plus fee.
+        stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10_000);                     // StakeLocker portion of interest.
 
-        principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);                                     // Principal + excess + amountRecovered
-        interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10_000)).sub(stakeLockerPortion);  // Leftover interest
+        principalClaim = claimInfo[2].add(claimInfo[4]).add(claimInfo[5]);                                     // principal + excess + amountRecovered
+        interestClaim  = claimInfo[1].sub(claimInfo[1].mul(delegateFee).div(10_000)).sub(stakeLockerPortion);  // leftover interest
     }
 
     /**
         @dev   Checks that the deactivation is allowed.
-        @param globals        Globals contract interface.
-        @param principalOut   Amount of funds that is already funded to loans.
-        @param liquidityAsset Liquidity Asset of the pool.
+        @param globals        Instance of a MapleGlobals.
+        @param principalOut   Amount of funds that are already funded to Loans.
+        @param liquidityAsset Liquidity Asset of the Pool.
     */
     function validateDeactivation(IMapleGlobals globals, uint256 principalOut, address liquidityAsset) external view {
         require(principalOut <= _convertFromUsd(globals, liquidityAsset, 100), "P:PRINCIPAL_OUTSTANDING");
@@ -200,8 +200,8 @@ library PoolLib {
     /********************************************/
 
     /**
-        @dev   Update the effective deposit date based on how much new capital has been added.
-               If more capital is added, the depositDate moves closer to the current timestamp.
+        @dev   Updates the effective deposit date based on how much new capital has been added.
+               If more capital is added, the deposit date moves closer to the current timestamp.
         @dev   It emits a `DepositDateUpdated` event.
         @param amt     Total deposit amount.
         @param account Address of account depositing.
@@ -229,7 +229,7 @@ library PoolLib {
     }
 
     /**
-        @dev Performs all necessary checks for a `increaseCustodyAllowance` call
+        @dev Performs all necessary checks for an `increaseCustodyAllowance` call.
     */
     function increaseCustodyAllowanceChecks(address custodian, uint256 amount, uint256 newTotalAllowance, uint256 fdtBal) external pure {
         require(custodian != address(0),     "P:INVALID_CUSTODIAN");
@@ -242,10 +242,10 @@ library PoolLib {
     /**********************************/
 
     /**
-        @dev   Transfer any locked funds to the governor. Only the Governor can call this function.
-        @param token          Address of the token that need to reclaimed.
-        @param liquidityAsset Address of liquidity asset that is supported by the pool.
-        @param globals        Instance of the `MapleGlobals` contract.
+        @dev   Transfers any locked funds to the Governor. Only the Governor can call this function.
+        @param token          Address of the token to be reclaimed.
+        @param liquidityAsset Address of Liquidity Asset that is supported by the Pool.
+        @param globals        Instance of a MapleGlobals.
     */
     function reclaimERC20(address token, address liquidityAsset, IMapleGlobals globals) external {
         require(msg.sender == globals.governor(), "P:NOT_GOV");
@@ -258,7 +258,7 @@ library PoolLib {
     /************************/
 
     /**
-        @dev Official balancer pool bdiv() function, does synthetic float with 10^-18 precision
+        @dev Official Balancer pool bdiv() function. Does synthetic float with 10^-18 precision.
     */
     function _bdiv(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b != 0, "P:DIV_ZERO");
@@ -270,14 +270,14 @@ library PoolLib {
     }
 
     /**
-        @dev    Calculates the value of BPT in units of liquidityAsset.
+        @dev    Calculates the value of BPT in units of Liquidity Asset.
         @dev    Vulnerable to flash-loan attacks where the attacker can artificially inflate the BPT price by swapping a large amount
-                of liquidityAsset into the pool and swapping back after this function is called.
+                of Liquidity Asset into the Pool and swapping back after this function is called.
         @param  _bPool         Address of Balancer pool.
-        @param  liquidityAsset Asset used by Pool for liquidity to fund loans.
-        @param  staker         Address that deposited BPTs to stakeLocker.
-        @param  stakeLocker    Escrows BPTs deposited by staker.
-        @return USDC value of staker BPTs.
+        @param  liquidityAsset Asset used by Pool for liquidity to fund Loans.
+        @param  staker         Address that deposited BPTs to StakeLocker.
+        @param  stakeLocker    Escrows BPTs deposited by Staker.
+        @return USDC value of Staker BPTs.
     */
     function BPTVal(
         address _bPool,
@@ -285,11 +285,9 @@ library PoolLib {
         address staker,
         address stakeLocker
     ) external view returns (uint256) {
-
-        // Create interfaces for the balancerPool as a Pool and as an ERC-20 token
         IBPool bPool = IBPool(_bPool);
 
-        // FDTs are minted 1:1 (in wei) in the StakeLocker when staking BPTs, thus representing stake amount.
+        // StakeLockerFDTs are minted 1:1 (in wei) in the StakeLocker when staking BPTs, thus representing stake amount.
         // These are burned when withdrawing staked BPTs, thus representing the current stake amount.
         uint256 amountStakedBPT       = IERC20(stakeLocker).balanceOf(staker);
         uint256 totalSupplyBPT        = IERC20(_bPool).totalSupply();
@@ -301,11 +299,11 @@ library PoolLib {
     }
 
     /** 
-        @dev    Calculate liquidityAsset swap out value of staker BPT balance escrowed in stakeLocker.
+        @dev    Calculates Liquidity Asset swap out value of staker BPT balance escrowed in StakeLocker.
         @param  _bPool         Balancer pool that issues the BPTs.
         @param  liquidityAsset Swap out asset (e.g. USDC) to receive when burning BPTs.
-        @param  staker         Address that deposited BPTs to stakeLocker.
-        @param  stakeLocker    Escrows BPTs deposited by staker.
+        @param  staker         Address that deposited BPTs to StakeLocker.
+        @param  stakeLocker    Escrows BPTs deposited by Staker.
         @return liquidityAsset Swap out value of staker BPTs.
     */
     function getSwapOutValue(
@@ -318,10 +316,10 @@ library PoolLib {
     }
 
     /** 
-        @dev    Calculate liquidityAsset swap out value of entire BPT balance escrowed in stakeLocker.
+        @dev    Calculates Liquidity Asset swap out value of entire BPT balance escrowed in StakeLocker.
         @param  _bPool         Balancer pool that issues the BPTs.
         @param  liquidityAsset Swap out asset (e.g. USDC) to receive when burning BPTs.
-        @param  stakeLocker    Escrows BPTs deposited by staker.
+        @param  stakeLocker    Escrows BPTs deposited by Staker.
         @return liquidityAsset Swap out value of StakeLocker BPTs.
     */
     function getSwapOutValueLocker(
@@ -337,7 +335,7 @@ library PoolLib {
         address liquidityAsset,
         uint256 poolAmountIn
     ) internal view returns (uint256) {
-        // Fetch balancer pool token information
+        // Fetch Balancer pool token information
         IBPool bPool            = IBPool(_bPool);
         uint256 tokenBalanceOut = bPool.getBalance(liquidityAsset);
         uint256 tokenWeightOut  = bPool.getDenormalizedWeight(liquidityAsset);
@@ -380,7 +378,7 @@ library PoolLib {
         address stakeLocker,
         uint256 liquidityAssetAmountRequired
     ) public view returns (uint256 poolAmountInRequired, uint256 stakerBalance) {
-        // Fetch balancer pool token information
+        // Fetch Balancer pool token information.
         IBPool bPool = IBPool(_bPool);
 
         uint256 tokenBalanceOut = bPool.getBalance(liquidityAsset);
@@ -389,7 +387,7 @@ library PoolLib {
         uint256 totalWeight     = bPool.getTotalDenormalizedWeight();
         uint256 swapFee         = bPool.getSwapFee();
 
-        // Fetch amount of BPTs required to burn to receive liquidityAssetAmountRequired
+        // Fetch amount of BPTs required to burn to receive Liquidity Asset amount required.
         poolAmountInRequired = bPool.calcPoolInGivenSingleOut(
             tokenBalanceOut,
             tokenWeightOut,
@@ -399,21 +397,21 @@ library PoolLib {
             swapFee
         );
 
-        // Fetch amount staked in stakeLocker by staker
+        // Fetch amount staked in StakeLocker by Staker.
         stakerBalance = IERC20(stakeLocker).balanceOf(staker);
     }
 
     /**
         @dev    Returns information on the stake requirements.
-        @param  globals                    Interface of MapleGlobals.
+        @param  globals                    Instance of a MapleGlobals.
         @param  balancerPool               Address of Balancer pool.
-        @param  liquidityAsset             Address of liquidityAsset, to be returned from swap out.
+        @param  liquidityAsset             Address of Liquidity Asset, to be returned from swap out.
         @param  poolDelegate               Address of Pool Delegate.
         @param  stakeLocker                Address of StakeLocker.
-        @return swapOutAmountRequired      Min amount of liquidityAsset coverage from staking required (in liquidityAsset units).
-        @return currentPoolDelegateCover   Present amount of liquidityAsset coverage from Pool Delegate stake (in liquidityAsset units).
+        @return swapOutAmountRequired      Min amount of Liquidity Asset coverage from staking required (in Liquidity Asset units).
+        @return currentPoolDelegateCover   Present amount of Liquidity Asset coverage from Pool Delegate stake (in Liquidity Asset units).
         @return enoughStakeForFinalization If enough stake is present from Pool Delegate for Pool finalization.
-        @return poolAmountInRequired       BPTs required for minimum liquidityAsset coverage.
+        @return poolAmountInRequired       BPTs required for minimum Liquidity Asset coverage.
         @return poolAmountPresent          Current staked BPTs.
     */
     function getInitialStakeRequirements(IMapleGlobals globals, address balancerPool, address liquidityAsset, address poolDelegate, address stakeLocker) external view returns (
@@ -438,25 +436,25 @@ library PoolLib {
     /************************/
 
     /**
-        @dev   Utility to convert from WAD precision to liquidityAsset precision.
+        @dev   Converts from WAD precision to Liquidity Asset precision.
         @param amt                    Amount to convert.
-        @param liquidityAssetDecimals Liquidity asset decimal.
+        @param liquidityAssetDecimals Liquidity Asset decimal.
     */
     function fromWad(uint256 amt, uint256 liquidityAssetDecimals) external pure returns (uint256) {
         return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 
     /** 
-        @dev    Function to return liquidityAsset in liquidityAsset units when given integer USD (E.g., $100 = 100).
-        @param  globals        Globals contract interface.
+        @dev    Returns Liquidity Asset in Liquidity Asset units when given integer USD (E.g., $100 = 100).
+        @param  globals        Instance of a MapleGlobals.
         @param  liquidityAsset Liquidity Asset of the pool.
         @param  usdAmount      USD amount to convert, in integer units (e.g., $100 = 100).
-        @return usdAmount worth of liquidityAsset, in liquidityAsset units.
+        @return usdAmount worth of Liquidity Asset, in Liquidity Asset units.
     */
     function _convertFromUsd(IMapleGlobals globals, address liquidityAsset, uint256 usdAmount) internal view returns (uint256) {
         return usdAmount
-            .mul(10 ** 8)                                         // Cancel out 10 ** 8 decimals from oracle
-            .mul(10 ** IERC20Details(liquidityAsset).decimals())  // Convert to liquidityAsset precision
-            .div(globals.getLatestPrice(liquidityAsset));         // Convert to liquidityAsset value
+            .mul(10 ** 8)                                         // Cancel out 10 ** 8 decimals from oracle.
+            .mul(10 ** IERC20Details(liquidityAsset).decimals())  // Convert to Liquidity Asset precision.
+            .div(globals.getLatestPrice(liquidityAsset));         // Convert to Liquidity Asset value.
     }
 }

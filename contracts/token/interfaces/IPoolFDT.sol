@@ -4,6 +4,7 @@ pragma solidity 0.6.11;
 import "./IExtendedFDT.sol";
 
 interface IPoolFDT is IExtendedFDT {
+
     function interestSum() external view returns (uint256);
 
     function poolLosses() external view returns (uint256);
@@ -11,4 +12,5 @@ interface IPoolFDT is IExtendedFDT {
     function interestBalance() external view returns (uint256);
 
     function lossesBalance() external view returns (uint256);
+
 }

@@ -51,7 +51,7 @@ contract ChainlinkOracle is Ownable {
     /**
         @dev   Updates aggregator address. Only the contract Owner can call this function.
         @dev   It emits a `ChangeAggregatorFeed` event.
-        @param aggregator Address of chainlink aggregator
+        @param aggregator Address of Chainlink aggregator.
     */
     function changeAggregator(address aggregator) external onlyOwner {
         require(aggregator != address(0), "CO:ZERO_AGGREGATOR_ADDR");
@@ -67,18 +67,18 @@ contract ChainlinkOracle is Ownable {
     }
 
     /**
-       @dev Returns denomination of price.
+        @dev Returns denomination of price.
     */
     function getDenomination() external pure returns (bytes32) {
-        // All Chainlink oracles are denominated in USD
+        // All Chainlink oracles are denominated in USD.
         return bytes32("USD");
     }
 
     /**
-        @dev   Set a manual price.  Only the contract Owner can call this function.
+        @dev   Sets a manual price. Only the contract Owner can call this function.
                NOTE: this can only be used if manualOverride == true.
         @dev   It emits a `SetManualPrice` event.
-        @param _price Price to set
+        @param _price Price to set.
     */
     function setManualPrice(int256 _price) public onlyOwner {
         require(manualOverride, "CO:MANUAL_OVERRIDE_NOT_ACTIVE");
@@ -87,7 +87,7 @@ contract ChainlinkOracle is Ownable {
     }
 
     /**
-        @dev   Set manual override, allowing for manual price setting. Only the contract Owner can call this function.
+        @dev   Sets manual override, allowing for manual price setting. Only the contract Owner can call this function.
         @dev   It emits a `SetManualOverride` event.
         @param _override Whether to use the manual override price or not.
     */

@@ -229,7 +229,7 @@ contract LoanTest is TestUtil {
         uint256 pre = usdc.balanceOf(address(bob));
 
         assertEq(weth.balanceOf(address(bob)),  reqCollateral);  // Borrower collateral balance
-        assertEq(usdc.balanceOf(fundingLocker),    fundAmount);  // Funding locker liquidityAsset balance
+        assertEq(usdc.balanceOf(fundingLocker),    fundAmount);  // FundingLocker liquidityAsset balance
         assertEq(usdc.balanceOf(address(loan)),             0);  // Loan liquidityAsset balance
         assertEq(loan.principalOwed(),                      0);  // Principal owed
         assertEq(uint256(loan.loanState()),                 0);  // Loan state: Ready
@@ -248,12 +248,12 @@ contract LoanTest is TestUtil {
         assertTrue(bob.try_drawdown(address(loan), drawdownAmount));
 
         assertEq(weth.balanceOf(address(bob)),                                 0);  // Borrower collateral balance
-        assertEq(weth.balanceOf(address(loan.collateralLocker())), reqCollateral);  // Collateral locker collateral balance
+        assertEq(weth.balanceOf(address(loan.collateralLocker())), reqCollateral);  // CollateralLocker collateral balance
 
         uint256 investorFee = drawdownAmount * globals.investorFee() / 10_000;
         uint256 treasuryFee = drawdownAmount * globals.treasuryFee() / 10_000;
 
-        assertEq(usdc.balanceOf(fundingLocker),                                         0);  // Funding locker liquidityAsset balance
+        assertEq(usdc.balanceOf(fundingLocker),                                         0);  // FundingLocker liquidityAsset balance
         assertEq(usdc.balanceOf(address(loan)), fundAmount - drawdownAmount + investorFee);  // Loan liquidityAsset balance
         assertEq(loan.principalOwed(),                                     drawdownAmount);  // Principal owed
         assertEq(uint256(loan.loanState()),                                             1);  // Loan state: Active
@@ -357,7 +357,7 @@ contract LoanTest is TestUtil {
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
 
-        // Check collateral locker balance.
+        // Check CollateralLocker balance.
         assertEq(weth.balanceOf(loan.collateralLocker()), reqCollateral);
 
         // Make last payment.
@@ -377,7 +377,7 @@ contract LoanTest is TestUtil {
             nextPaymentDue:    0
         });
 
-        // Collateral locker after state.
+        // CollateralLocker after state.
         assertEq(weth.balanceOf(loan.collateralLocker()),             0);
         assertEq(weth.balanceOf(address(bob)),            reqCollateral);
     }
@@ -463,7 +463,7 @@ contract LoanTest is TestUtil {
         mint("USDC", address(bob),       total);
         bob.approve(USDC, address(loan), total);
 
-        // Check collateral locker balance.
+        // Check CollateralLocker balance.
         assertEq(weth.balanceOf(loan.collateralLocker()), reqCollateral);
 
         // Make payment.
@@ -483,7 +483,7 @@ contract LoanTest is TestUtil {
             nextPaymentDue:    0
         });
 
-        // Collateral locker after state.
+        // CollateralLocker after state.
         assertEq(weth.balanceOf(loan.collateralLocker()),             0);
         assertEq(weth.balanceOf(address(bob)),            reqCollateral);
     }
@@ -705,7 +705,7 @@ contract LoanTest is TestUtil {
             nextPaymentDue:    block.timestamp + loan.paymentIntervalSeconds()  // Not relevant to full payment
         });
 
-        // Collateral locker before state.
+        // CollateralLocker before state.
         assertEq(weth.balanceOf(loan.collateralLocker()), reqCollateral);
         assertEq(weth.balanceOf(address(bob)),                 0);
 
@@ -731,7 +731,7 @@ contract LoanTest is TestUtil {
             nextPaymentDue:    0
         });
 
-        // Collateral locker after state.
+        // CollateralLocker after state.
         assertEq(weth.balanceOf(loan.collateralLocker()),             0);
         assertEq(weth.balanceOf(address(bob)),     reqCollateral);
     }

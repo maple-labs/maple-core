@@ -101,7 +101,7 @@ contract PoolLiquidationTest is TestUtil {
             Now that triggerDefault() is called, the return value defaultSuffered
             will be greater than 0. Calling claim() is the mechanism which settles,
             or rather updates accounting in the Pool which in turn will enable us
-            to handle liquidation of BPTs in the Stake Locker accurately.
+            to handle liquidation of BPTs in the StakeLocker accurately.
         */
         uint256[7] memory vals_a = pat.claim(address(pool), address(loan),  address(dlFactory));
         uint256[7] memory vals_b = pam.claim(address(pool2), address(loan),  address(dlFactory));

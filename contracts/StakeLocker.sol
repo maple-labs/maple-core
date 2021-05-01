@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+
 import "./interfaces/IMapleGlobals.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IPoolFactory.sol";
 
 import "./token/StakeLockerFDT.sol";
-
-import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
-import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 /// @title StakeLocker holds custody of stakeAsset tokens for a given Pool and earns revenue from interest.
 contract StakeLocker is StakeLockerFDT, Pausable {
@@ -19,38 +19,38 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     uint256 constant WAD = 10 ** 18;  // Scaling factor for synthetic float division.
 
-    IERC20  public immutable stakeAsset;  // The asset deposited by stakers into this contract, for liquidation during defaults.
+    IERC20  public immutable stakeAsset;  // The asset deposited by Stakers into this contract, for liquidation during defaults.
 
-    address public immutable liquidityAsset;  // The liquidityAsset for the Pool as well as the dividend token for FDT interest.
-    address public immutable pool;            // The parent liquidity pool.
+    address public immutable liquidityAsset;  // The Liquidity Asset for the Pool as well as the dividend token for StakeLockerFDT interest.
+    address public immutable pool;            // The parent Pool.
 
     uint256 public lockupPeriod;  // Number of seconds for which unstaking is not allowed.
 
-    mapping(address => uint256)                     public stakeDate;              // Map address to effective stake date value.
-    mapping(address => uint256)                     public unstakeCooldown;        // Timestamp of when staker called cooldown().
-    mapping(address => bool)                        public allowed;                // Map address to allowed status.
+    mapping(address => uint256)                     public stakeDate;              // Map of account addresses to effective stake date.
+    mapping(address => uint256)                     public unstakeCooldown;        // The timestamp of when a Staker called `cooldown()`.
+    mapping(address => bool)                        public allowed;                // Map of addresses to allowed status.
     mapping(address => mapping(address => uint256)) public custodyAllowance;       // Amount of StakeLockerFDTs that are "locked" at a certain address.
     mapping(address => uint256)                     public totalCustodyAllowance;  // Total amount of StakeLockerFDTs that are "locked" for a given account, cannot be greater than balance.
 
     bool public openToPublic;  // Boolean opening StakeLocker to public for staking BPTs
 
     event            StakeLockerOpened();
-    event               BalanceUpdated(address indexed account, address indexed token, uint256 balance);
+    event               BalanceUpdated(address indexed staker, address indexed token, uint256 balance);
     event             AllowListUpdated(address indexed staker, bool status);
     event             StakeDateUpdated(address indexed staker, uint256 stakeDate);
     event          LockupPeriodUpdated(uint256 lockupPeriod);
     event                     Cooldown(address indexed staker, uint256 cooldown);
-    event                        Stake(uint256 amount, address indexed staker);
-    event                      Unstake(uint256 amount, address indexed staker);
+    event                        Stake(address indexed staker, uint256 amount);
+    event                      Unstake(address indexed staker, uint256 amount);
     event              CustodyTransfer(address indexed custodian, address indexed from, address indexed to, uint256 amount);
-    event      CustodyAllowanceChanged(address indexed account, address indexed custodian, uint256 oldAllowance, uint256 newAllowance);
-    event TotalCustodyAllowanceUpdated(address indexed account, uint256 newTotalAllowance);
+    event      CustodyAllowanceChanged(address indexed staker, address indexed custodian, uint256 oldAllowance, uint256 newAllowance);
+    event TotalCustodyAllowanceUpdated(address indexed staker, uint256 newTotalAllowance);
 
     constructor(
         address _stakeAsset,
         address _liquidityAsset,
         address _pool
-    ) StakeLockerFDT("Maple Stake Locker", "MPLSTAKE", _liquidityAsset) public {
+    ) StakeLockerFDT("Maple StakeLocker", "MPLSTAKE", _liquidityAsset) public {
         liquidityAsset = _liquidityAsset;
         stakeAsset     = IERC20(_stakeAsset);
         pool           = _pool;
@@ -63,13 +63,13 @@ contract StakeLocker is StakeLockerFDT, Pausable {
 
     /**
         @dev Checks that an account can unstake given the following conditions:
-                 1. Account is not Pool Delegate and the Pool is in Finalized state.
+                 1. The Account is not the Pool Delegate and the Pool is in Finalized state.
                  2. The Pool is in Initialized or Deactivated state.
     */
     modifier canUnstake(address from) {
         IPool _pool = IPool(pool);
 
-        // Pool cannot be finalized, but if it is, account cannot be the Pool Delegate
+        // The Pool cannot be finalized, but if it is, account cannot be the Pool Delegate.
         require(!_pool.isPoolFinalized() || from != _pool.poolDelegate(), "SL:STAKE_LOCKED");
         _;
     }
@@ -95,10 +95,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**********************/
 
     /**
-        @dev   Update staker status on the allowlist. Only the Pool Delegate can call this function.
+        @dev   Updates Staker status on the allowlist. Only the Pool Delegate can call this function.
         @dev   It emits an `AllowListUpdated` event.
-        @param staker The address to set status for.
-        @param status The status of staker on allowlist.
+        @param staker The address of the Staker to set status for.
+        @param status The status of the Staker on allowlist.
     */
     function setAllowlist(address staker, bool status) public {
         _whenProtocolNotPaused();
@@ -108,7 +108,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Set StakerLocker public access. Only the Pool Delegate can call this function.
+        @dev Sets the StakeLocker as open to the public. Only the Pool Delegate can call this function.
         @dev It emits a `StakeLockerOpened` event.
     */
     function openStakeLockerToPublic() external {
@@ -119,7 +119,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev   Set the lockup period. Only the Pool Delegate can call this function.
+        @dev   Sets the lockup period. Only the Pool Delegate can call this function.
         @dev   It emits a `LockupPeriodUpdated` event.
         @param newLockupPeriod New lockup period used to restrict unstaking.
     */
@@ -132,16 +132,16 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev   Transfers amt of stakeAsset to dst. Only the Pool can call this function.
-        @param dst Destination to transfer stakeAsset to.
-        @param amt Amount of stakeAsset to transfer.
+        @dev   Transfers an amount of Stake Asset to a destination account. Only the Pool can call this function.
+        @param dst Destination to transfer Stake Asset to.
+        @param amt Amount of Stake Asset to transfer.
     */
     function pull(address dst, uint256 amt) isPool external {
         stakeAsset.safeTransfer(dst, amt);
     }
 
     /**
-        @dev   Updates loss accounting for FDTs after BPTs have been burned. Only the Pool can call this function.
+        @dev   Updates loss accounting for StakeLockerFDTs after BPTs have been burned. Only the Pool can call this function.
         @param bptsBurned Amount of BPTs that have been burned.
     */
     function updateLosses(uint256 bptsBurned) isPool external {
@@ -154,25 +154,25 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /************************/
 
     /**
-        @dev   Deposit amt of stakeAsset, mint FDTs to msg.sender.
+        @dev   Handles a Staker's depositing of an amount of Stake Asset, minting them StakeLockerFDTs.
         @dev   It emits a `StakeDateUpdated` event.
         @dev   It emits a `Stake` event.
         @dev   It emits a `Cooldown` event.
         @dev   It emits a `BalanceUpdated` event.
-        @param amt Amount of stakeAsset (BPTs) to deposit.
+        @param amt Amount of Stake Asset (BPTs) to deposit.
     */
     function stake(uint256 amt) whenNotPaused external {
         _whenProtocolNotPaused();
         _isAllowed(msg.sender);
 
-        unstakeCooldown[msg.sender] = uint256(0);  // Reset unstakeCooldown if staker had previously intended to unstake
+        unstakeCooldown[msg.sender] = uint256(0);  // Reset account's unstake cooldown if Staker had previously intended to unstake.
 
         _updateStakeDate(msg.sender, amt);
 
         stakeAsset.safeTransferFrom(msg.sender, address(this), amt);
         _mint(msg.sender, amt);
 
-        emit Stake(amt, msg.sender);
+        emit Stake(msg.sender, amt);
         emit Cooldown(msg.sender, uint256(0));
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
@@ -180,15 +180,15 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /**
         @dev   Updates information used to calculate unstake delay.
         @dev   It emits a `StakeDateUpdated` event.
-        @param account Staker that deposited BPTs.
-        @param amt     Amount of BPTs staker has deposited.
+        @param account The Staker that deposited BPTs.
+        @param amt     Amount of BPTs the Staker has deposited.
     */
     function _updateStakeDate(address account, uint256 amt) internal {
         uint256 prevDate = stakeDate[account];
         uint256 balance = balanceOf(account);
 
         // stakeDate + (now - stakeDate) * (amt / (balance + amt))
-        // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now
+        // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now.
         uint256 newDate = (balance + amt) > 0
             ? prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt))
             : prevDate;
@@ -208,7 +208,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Cancels an initiated unstake by resetting unstakeCooldown.
+        @dev Cancels an initiated unstake by resetting the calling account's unstake cooldown.
         @dev It emits a `Cooldown` event.
     */
     function cancelUnstake() external {
@@ -218,10 +218,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev   Withdraw amt of stakeAsset minus any losses, claim interest, burn FDTs for msg.sender.
+        @dev   Handles a Staker's withdrawing of an amount of Stake Asset, minus any losses. It also claims interest and burns StakeLockerFDTs for the calling account.
         @dev   It emits an `Unstake` event.
         @dev   It emits a `BalanceUpdated` event.
-        @param amt Amount of stakeAsset (BPTs) to withdraw.
+        @param amt Amount of Stake Asset (BPTs) to withdraw.
     */
     function unstake(uint256 amt) external canUnstake(msg.sender) {
         _whenProtocolNotPaused();
@@ -231,17 +231,17 @@ contract StakeLocker is StakeLockerFDT, Pausable {
         require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp,          "SL:FUNDS_LOCKED");
 
         updateFundsReceived();   // Account for any funds transferred into contract since last call.
-        _burn(msg.sender, amt);  // Burn the corresponding FDT balance.
-        withdrawFunds();         // Transfer full entitled liquidityAsset interest.
+        _burn(msg.sender, amt);  // Burn the corresponding StakeLockerFDTs balance.
+        withdrawFunds();         // Transfer the full entitled Liquidity Asset interest.
 
-        stakeAsset.safeTransfer(msg.sender, amt.sub(_recognizeLosses()));  // Unstake amt minus losses
+        stakeAsset.safeTransfer(msg.sender, amt.sub(_recognizeLosses()));  // Unstake amount minus losses.
 
-        emit Unstake(amt, msg.sender);
+        emit Unstake(msg.sender, amt);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
     /**
-        @dev Withdraws all available FDT interest earned for a token holder.
+        @dev Withdraws all claimable interest earned from the StakeLocker for an account.
         @dev It emits a `BalanceUpdated` event if there are withdrawable funds.
     */
     function withdrawFunds() public override {
@@ -258,11 +258,11 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev   Increase the custody allowance for a given `custodian` corresponding to `msg.sender`.
+        @dev   Increases the custody allowance for a given Custodian corresponding to the account (`msg.sender`).
         @dev   It emits a `CustodyAllowanceChanged` event.
         @dev   It emits a `TotalCustodyAllowanceUpdated` event.
-        @param custodian Address which will act as custodian of a given `amount` for an account.
-        @param amount    Number of FDTs custodied by the custodian.
+        @param custodian Address which will act as Custodian of a given amount for an account.
+        @param amount    Number of additional FDTs to be custodied by the Custodian.
     */
     function increaseCustodyAllowance(address custodian, uint256 amount) external {
         uint256 oldAllowance      = custodyAllowance[msg.sender][custodian];
@@ -280,14 +280,15 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
+        @dev   Transfers custodied StakeLockerFDTs back to the account.
         @dev   `from` and `to` should always be equal in this implementation.
-        @dev   This means that the custodian can only decrease their own allowance and unlock funds for the original owner.
+        @dev   This means that the Custodian can only decrease their own allowance and unlock funds for the original owner.
         @dev   It emits a `CustodyTransfer` event.
         @dev   It emits a `CustodyAllowanceChanged` event.
         @dev   It emits a `TotalCustodyAllowanceUpdated` event.
-        @param from   Address which holds the StakeLocker FDTs.
-        @param to     Address which will be the new owner of the `amount` of FDTs.
-        @param amount Number of FDTs transferred.
+        @param from   Address which holds the StakeLockerFDTs.
+        @param to     Address which will be the new owner of the amount of StakeLockerFDTs.
+        @param amount Amount of StakeLockerFDTs transferred.
     */
     function transferByCustodian(address from, address to, uint256 amount) external {
         uint256 oldAllowance = custodyAllowance[from][msg.sender];
@@ -305,10 +306,10 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev   Transfer StakerLockerFDTs.
+        @dev   Transfers StakeLockerFDTs.
         @param from Address sending   StakeLockerFDTs.
         @param to   Address receiving StakeLockerFDTs.
-        @param wad  Amount of FDTs to transfer.
+        @param wad  Amount of StakeLockerFDTs to transfer.
     */
     function _transfer(address from, address to, uint256 wad) internal override canUnstake(from) {
         _whenProtocolNotPaused();
@@ -333,7 +334,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Triggers unpaused state. Returns functionality for certain functions. Only the Pool Delegate or a Pool Admin can call this function.
+        @dev Triggers unpaused state. Restores functionality for certain functions. Only the Pool Delegate or a Pool Admin can call this function.
     */
     function unpause() external {
         _isValidPoolDelegateOrPoolAdmin();
@@ -345,7 +346,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     /************************/
 
     /**
-        @dev View function to indicate if cooldown period has passed for `msg.sender` and if they are in the unstake window.
+        @dev Returns if the unstake cooldown period has passed for `msg.sender` and if they are in the unstake window.
     */
     function isUnstakeAllowed(address from) public view returns (bool) {
         IMapleGlobals globals = _globals();
@@ -353,7 +354,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev View function to indicate if recipient is allowed to receive a transfer.
+        @dev Returns if an account is allowed to receive a transfer.
              This is only possible if they have zero cooldown or they are past their unstake window.
     */
     function isReceiveAllowed(uint256 _unstakeCooldown) public view returns (bool) {
@@ -386,7 +387,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev Helper function to return interface of MapleGlobals.
+        @dev Returns the MapleGlobals instance.
     */
     function _globals() internal view returns (IMapleGlobals) {
         return IMapleGlobals(IPoolFactory(IPool(pool).superFactory()).globals());

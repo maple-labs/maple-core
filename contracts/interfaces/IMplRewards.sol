@@ -57,4 +57,5 @@ interface IMplRewards {
     function setRewardsDuration(uint256) external;
 
     function setPaused(bool) external;
+
 }

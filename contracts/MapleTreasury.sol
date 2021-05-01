@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "./library/Util.sol";
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+
 import "./interfaces/IMapleGlobals.sol";
 import "./interfaces/IMapleToken.sol";
 import "./interfaces/IERC20Details.sol";
 import "./interfaces/IUniswapRouter.sol";
 
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import "./library/Util.sol";
 
 /// @title MapleTreasury earns revenue from Loans and distributes it to token holders and the Maple development team.
 contract MapleTreasury {
@@ -16,17 +17,17 @@ contract MapleTreasury {
     using SafeMath  for uint256;
     using SafeERC20 for IERC20;
 
-    address public immutable mpl;            // MapleToken contract
-    address public immutable fundsToken;     // fundsToken value in the MapleToken contract
-    address public immutable uniswapRouter;  // Official UniswapV2 router contract
-    address public           globals;        // MapleGlobals contract
+    address public immutable mpl;            // The address of ERC-2222 Maple Token for the Maple protocol.
+    address public immutable fundsToken;     // The address of the `fundsToken` of the ERC-2222 Maple Token.
+    address public immutable uniswapRouter;  // The address of the official UniswapV2 router.
+    address public           globals;        // The address of an instance of MapleGlobals.
 
     /**
         @dev   Instantiates the MapleTreasury contract.
-        @param _mpl           MapleToken contract.
-        @param _fundsToken    fundsToken of MapleToken contract.
-        @param _uniswapRouter Official UniswapV2 router contract.
-        @param _globals       MapleGlobals contract.
+        @param _mpl           The address of ERC-2222 Maple Token for the Maple protocol.
+        @param _fundsToken    The address of the `fundsToken` of the ERC-2222 Maple Token.
+        @param _uniswapRouter The address of the official UniswapV2 router.
+        @param _globals       The address of an instance of MapleGlobals.
     */
     constructor(
         address _mpl,
@@ -54,9 +55,9 @@ contract MapleTreasury {
     }
 
     /**
-        @dev   Update the MapleGlobals contract. Only the Governor can call this function.
+        @dev   Updates the MapleGlobals instance. Only the Governor can call this function.
         @dev   It emits a `GlobalsSet` event.
-        @param newGlobals Address of new MapleGlobals contract.
+        @param newGlobals Address of a new MapleGlobals instance.
     */
     function setGlobals(address newGlobals) isGovernor external {
         globals = newGlobals;
@@ -64,9 +65,9 @@ contract MapleTreasury {
     }
 
     /**
-        @dev   Reclaim treasury funds to the MapleDAO address. Only the Governor can call this function.
+        @dev   Reclaims Treasury funds to the MapleDAO address. Only the Governor can call this function.
         @dev   It emits a `ERC20Reclaimed` event.
-        @param asset  Address of the token that need to be reclaimed from the treasury contract.
+        @param asset  Address of the token to be reclaimed.
         @param amount Amount to withdraw.
     */
     function reclaimERC20(address asset, uint256 amount) isGovernor external {
@@ -75,7 +76,7 @@ contract MapleTreasury {
     }
 
     /**
-        @dev Passes through the current fundsToken balance of the treasury to MapleToken, where it can be claimed by MPL holders.
+        @dev Passes through the current `fundsToken` balance of the Treasury to Maple Token, where it can be claimed by MPL holders.
              Only the Governor can call this function.
         @dev It emits a `DistributedToHolders` event.
     */
@@ -88,9 +89,9 @@ contract MapleTreasury {
     }
 
     /**
-        @dev   Convert an ERC-20 asset through Uniswap to fundsToken. Only the Governor can call this function.
+        @dev   Converts an ERC-20 asset, via Uniswap, to `fundsToken`. Only the Governor can call this function.
         @dev   It emits a `ERC20Conversion` event.
-        @param asset The ERC-20 asset to convert to fundsToken.
+        @param asset The ERC-20 asset to convert to `fundsToken`.
     */
     function convertERC20(address asset) isGovernor external {
         require(asset != fundsToken, "MT:ASSET_IS_FUNDS_TOKEN");
@@ -123,4 +124,5 @@ contract MapleTreasury {
 
         emit ERC20Conversion(asset, returnAmounts[0], returnAmounts[path.length - 1]);
     }
+
 }

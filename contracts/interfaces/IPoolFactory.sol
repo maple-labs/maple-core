@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 
 interface IPoolFactory {
+
     function LL_FACTORY() external view returns (uint8);
 
     function SL_FACTORY() external view returns (uint8);
@@ -25,4 +26,5 @@ interface IPoolFactory {
     function pause() external;
 
     function unpause() external;
+
 }

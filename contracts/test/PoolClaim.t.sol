@@ -678,7 +678,7 @@ contract PoolClaimTest is TestUtil {
         assertEq(  balances[7] - balances[2], claim[3] + claim[1] * pool.delegateFee() / 10_000);  // Pool delegate claim (feePaid + delegateFee portion of interest)
         assertEq(  balances[8] - balances[3],            claim[1] * pool.stakingFee()  / 10_000);  // Staking Locker claim (feePaid + stakingFee portion of interest)
 
-        // Liquidity Locker balance change should EXACTLY equal state variable change
+        // LiquidityLocker balance change should EXACTLY equal state variable change
         assertEq(balances[9] - balances[4], (beforePrincipalOut - pool.principalOut()) + (pool.interestSum() - beforeInterestSum));
 
         // Normal case, principalClaim <= principalOut

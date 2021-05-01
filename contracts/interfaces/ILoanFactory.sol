@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 
 interface ILoanFactory {
+
     function CL_FACTORY() external view returns (uint8);
 
     function FL_FACTORY() external view returns (uint8);
@@ -31,4 +32,5 @@ interface ILoanFactory {
     function pause() external;
 
     function unpause() external;
+
 }
