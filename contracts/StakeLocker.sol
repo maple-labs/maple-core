@@ -258,7 +258,7 @@ contract StakeLocker is StakeLockerFDT, Pausable {
     }
 
     /**
-        @dev   Increases the custody allowance for a given Custodian corresponding to th calling account (`msg.sender`).
+        @dev   Increases the custody allowance for a given Custodian corresponding to the account (`msg.sender`).
         @dev   It emits a `CustodyAllowanceChanged` event.
         @dev   It emits a `TotalCustodyAllowanceUpdated` event.
         @param custodian Address which will act as Custodian of a given amount for an account.

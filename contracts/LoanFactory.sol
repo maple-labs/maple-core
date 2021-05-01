@@ -19,7 +19,7 @@ contract LoanFactory is Pausable {
 
     IMapleGlobals public globals;  // Instance of the MapleGlobals.
 
-    uint256 public loansCreated;   // Incrementor for number of Loan vaults created.
+    uint256 public loansCreated;   // Incrementor for number of Loans created.
 
     mapping(uint256 => address) public loans;   // Loans address mapping.
     mapping(address => bool)    public isLoan;  // True only if a Loan was created by this factory.
@@ -46,7 +46,7 @@ contract LoanFactory is Pausable {
     }
 
     /**
-        @dev   Sets the MapleGlobals. Only the Governor can call this function.
+        @dev   Sets MapleGlobals. Only the Governor can call this function.
         @param newGlobals Address of new MapleGlobals.
     */
     function setGlobals(address newGlobals) external {

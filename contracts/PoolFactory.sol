@@ -39,7 +39,7 @@ contract PoolFactory is Pausable {
     }
 
     /**
-        @dev   Sets the MapleGlobals instance. Only the Governor can call this function.
+        @dev   Sets MapleGlobals instance. Only the Governor can call this function.
         @param newGlobals Address of new MapleGlobals.
     */
     function setGlobals(address newGlobals) external {

@@ -54,7 +54,7 @@ contract Pool is PoolFDT {
     mapping(address => mapping(address => address)) public debtLockers;                // Address of the DebtLocker corresponding to `[Loan][DebtLockerFactory]`.
     mapping(address => bool)                        public poolAdmins;                 // The Pool Admin addresses that have permission to do certain operations in case of disaster management.
     mapping(address => bool)                        public allowedLiquidityProviders;  // Mapping that contains the list of addresses that have early access to the pool.
-    mapping(address => uint256)                     public withdrawCooldown;           // The timestamp of when individual LP have notified of they intent to withdraw.
+    mapping(address => uint256)                     public withdrawCooldown;           // The timestamp of when individual LPs have notified of their intent to withdraw.
     mapping(address => mapping(address => uint256)) public custodyAllowance;           // The amount of PoolFDTs that are "locked" at a certain address.
     mapping(address => uint256)                     public totalCustodyAllowance;      // The total amount of PoolFDTs that are "locked" for a given account. Cannot be greater than an account's balance.
 
@@ -353,7 +353,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev   Sets whether the Pool is opn to the public. Only the Pool Delegate can call this function.
+        @dev   Sets whether the Pool is open to the public. Only the Pool Delegate can call this function.
         @dev   It emits a `PoolOpenedToPublic` event.
         @param open Public pool access status.
     */
@@ -482,7 +482,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev   Increases the custody allowance for a given Custodian corresponding to th calling account (`msg.sender`).
+        @dev   Increases the custody allowance for a given Custodian corresponding to the calling account (`msg.sender`).
         @dev   It emits a `CustodyAllowanceChanged` event.
         @dev   It emits a `TotalCustodyAllowanceUpdated` event.
         @param custodian Address which will act as Custodian of a given amount for an account.
@@ -543,7 +543,7 @@ contract Pool is PoolFDT {
     /*************************/
 
     /**
-        @dev    Calculates the value of BPT in units of Liquidiy Asset.
+        @dev    Calculates the value of BPT in units of Liquidity Asset.
         @param  _bPool          Address of Balancer pool.
         @param  _liquidityAsset Asset used by Pool for liquidity to fund Loans.
         @param  _staker         Address that deposited BPTs to StakeLocker.
@@ -644,7 +644,7 @@ contract Pool is PoolFDT {
     }
 
     /**
-        @dev Return the MapleGlobals instance.
+        @dev Returns the MapleGlobals instance.
     */
     function _globals(address poolFactory) internal view returns (IMapleGlobals) {
         return IMapleGlobals(IPoolFactory(poolFactory).globals());
