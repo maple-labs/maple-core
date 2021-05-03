@@ -608,18 +608,31 @@ contract TestUtil is DSTest {
         uint256 numPayments,       // Used for termDays
         uint256 requestAmount,
         uint256 collateralRatio
-    ) public returns (uint256[5] memory specs) {
+    ) public pure returns (uint256[5] memory specs) {
+        return getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio, 10_000 * USD, 10_000, 1E10 * USD);
+    }
+
+    function getFuzzedSpecs(
+        uint256 apr,
+        uint256 index,             // Random index for random payment interval
+        uint256 numPayments,       // Used for termDays
+        uint256 requestAmount,
+        uint256 collateralRatio,
+        uint256 minimumRequestAmt,
+        uint256 maxCollateralRatio,
+        uint256 maxRequestAmt
+    ) public pure returns (uint256[5] memory specs) {
         uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
         numPayments = constrictToRange(numPayments, 5, 100, true);
-        uint256 paymentIntervalDays = paymentIntervalArray[index % 10];           // TODO: Consider changing this approach
+        uint256 paymentIntervalDays = paymentIntervalArray[index % 10];  // TODO: Consider changing this approach
         uint256 termDays            = paymentIntervalDays * numPayments;
 
         specs = [
-            constrictToRange(apr, 1, 10_000, true),                           // APR between 0.01% and 100% (non-zero for test behavior)
-            termDays,                                                         // Fuzzed term days
-            paymentIntervalDays,                                              // Payment interval days from array
-            constrictToRange(requestAmount, 10_000 * USD, 1E10 * USD, true),  // 10k USD - 10b USD loans (non-zero)
-            constrictToRange(collateralRatio, 0, 10_000)                      // Collateral ratio between 0 and 100%
+            constrictToRange(apr, 1, 10_000, true),                                   // APR between 0.01% and 100% (non-zero for test behavior)
+            termDays,                                                                 // Fuzzed term days
+            paymentIntervalDays,                                                      // Payment interval days from array
+            constrictToRange(requestAmount, minimumRequestAmt, maxRequestAmt, true),  // 10k USD - 10b USD loans (non-zero) in general scenario
+            constrictToRange(collateralRatio, 0, maxCollateralRatio)                  // Collateral ratio between 0 and maxCollateralRatio
         ];
     }
 
@@ -666,9 +679,12 @@ contract TestUtil is DSTest {
     }
 
     function mintFundsAndDepositIntoPool(LP lp, Pool pool, uint256 mintAmt, uint256 liquidityAmt) internal {
-        if (mintAmt > uint256(0)) mint("USDC", address(lp), mintAmt);
+        if (mintAmt > uint256(0)) {
+            mint("USDC", address(lp), mintAmt);
+        }
+
         lp.approve(USDC, address(pool), MAX_UINT);
-        assertTrue(lp.try_deposit(address(pool), liquidityAmt)); 
+        lp.deposit(address(pool), liquidityAmt); 
     }
 
     function drawdown(Loan loan, Borrower bow, uint256 usdDrawdownAmt) internal {
