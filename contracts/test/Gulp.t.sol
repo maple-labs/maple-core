@@ -69,4 +69,47 @@ contract GulpTest is TestUtil {
         assertEq(usdcBal_preGulp,  1_550_000 * USD);
         assertEq(usdcBal_postGulp, usdcBal_preGulp + earnings); // USDC is transferred into Balancer pool, increasing value of MPL
     }
+
+    function test_uniswap_pool_skim() public {
+        setUpUniswapMplUsdcPool(75_000 * WAD, 1_500_000 * USD);
+
+        gov.setGovTreasury(treasury);
+        // Drawdown on loan will transfer fee to MPL token contract.
+        setUpLoanAndDrawdown();
+
+        assertTrue(gov.try_distributeToHolders());
+
+        uint256 totalFundsToken = IERC20(USDC).balanceOf(address(mpl));
+        uint256 mplBal          = mpl.balanceOf(address(uniswapPair));
+        uint256 earnings        = mpl.withdrawableFundsOf(address(uniswapPair));
+
+        assertEq(totalFundsToken, loan.principalOwed() * globals.treasuryFee() / 10_000);
+        assertEq(mplBal,          75_000 * WAD);
+        withinDiff(earnings, totalFundsToken * mplBal / mpl.totalSupply(), 1);
+
+        (uint256 before_reserve0, uint256 before_reserve1, ) = uniswapPair.getReserves();
+
+        // MPL is held by Balancer Pool, claim on behalf of BPool.
+        mpl.withdrawFundsOnBehalf(address(uniswapPair));
+
+        (uint256 after_reserve0, uint256 after_reserve1, ) = uniswapPair.getReserves();
+
+        assertEq(before_reserve0, after_reserve0, "Should not be any change in reserve0");
+        assertEq(before_reserve1, after_reserve1, "Should not be any change in reserve1");
+
+        uint256 usdcBal_preSkim     = usdc.balanceOf(address(uniswapPair));
+        uint256 lex_usdcBal_preSkim = usdc.balanceOf(address(lex));
+        
+        uniswapPair.skim(address(lex)); // Get the extra fund out of it.
+
+        uint256 usdcBal_postSkim     = usdc.balanceOf(address(uniswapPair));
+        uint256 lex_usdcBal_postSkim = usdc.balanceOf(address(lex));
+
+        (uint256 reserve0_afterSkim, uint256 reserve1_afterSkim, ) = uniswapPair.getReserves();
+
+        assertEq(usdcBal_preSkim - usdcBal_postSkim,         earnings,       "Should only transfer earnings amount");
+        assertEq(lex_usdcBal_postSkim - lex_usdcBal_preSkim, earnings,       "Should lex's USDC balance increase by earnings");
+        assertEq(reserve0_afterSkim,                         after_reserve0, "Should not be a change");
+        assertEq(reserve1_afterSkim,                         after_reserve1, "Should not be a change");
+    }
 }
