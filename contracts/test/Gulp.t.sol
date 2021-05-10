@@ -49,7 +49,7 @@ contract GulpTest is TestUtil {
         assertTrue(!fakeGov.try_distributeToHolders());
         assertTrue(     gov.try_distributeToHolders());
 
-        uint256 totalFundsToken = IERC20(USDC).balanceOf(address(mpl));
+        uint256 totalFundsToken = usdc.balanceOf(address(mpl));
         uint256 mplBal          = mpl.balanceOf(address(bPool));
         uint256 earnings        = mpl.withdrawableFundsOf(address(bPool));
 
