@@ -26,6 +26,10 @@ import "../MplRewardsFactory.sol";
 import "../PoolFactory.sol";
 import "../StakeLockerFactory.sol";
 
+import "./interfaces/IUniswapV2Factory.sol";
+import "./interfaces/IUniswapV2Pair.sol";
+import "./interfaces/IUniswapV2Router02.sol";
+
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
 import "../RepaymentCalc.sol";
@@ -114,11 +118,12 @@ contract TestUtil is DSTest {
     /***********************/
     /*** Maple Contracts ***/
     /***********************/
-    MapleGlobals      globals;
-    MapleToken            mpl;
-    MapleTreasury    treasury;
-    IBPool              bPool;
-    MplRewards     mplRewards;
+    MapleGlobals       globals;
+    MapleToken             mpl;
+    MapleTreasury     treasury;
+    IBPool               bPool;
+    MplRewards      mplRewards;
+    IUniswapV2Pair uniswapPair;
 
     /***************/
     /*** Oracles ***/
@@ -165,6 +170,7 @@ contract TestUtil is DSTest {
 
     address constant BPOOL_FACTORY        = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd; // Balancer pool factory
     address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router
+    address constant UNISWAP_V2_FACTORY   = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f; // Uniswap V2 factory.
 
     /*****************/
     /*** Constants ***/
@@ -743,6 +749,19 @@ contract TestUtil is DSTest {
         assertTrue(investor.try_intendToWithdraw(address(pool)));
         assertEq(pool.withdrawCooldown(address(investor)), currentTime, "Incorrect value set");
         hevm.warp(currentTime + globals.lpCooldownPeriod());
+    }
+
+    function setUpUniswapMplUsdcPool(uint256 mplDesiredAmt, uint256 usdcDesiredAmt) internal {
+        // Mint USDC into this account
+        mint("USDC", address(this), usdcDesiredAmt);
+
+        // Initialize MPL/USDC Uniswap Pool
+        uniswapPair = IUniswapV2Pair(IUniswapV2Factory(UNISWAP_V2_FACTORY).createPair(address(mpl), address(usdc)));
+        usdc.approve(UNISWAP_V2_ROUTER_02, MAX_UINT);
+        mpl.approve(UNISWAP_V2_ROUTER_02,  MAX_UINT);
+        // passing the same value of amountAMin, amountBMin to mplDesiredAmt & usdcDesiredAmt respectively as those
+        // values will never gonna be in use for the initial addition of the liquidity.
+        IUniswapV2Router02(UNISWAP_V2_ROUTER_02).addLiquidity(address(mpl), address(usdc), mplDesiredAmt, usdcDesiredAmt, mplDesiredAmt, usdcDesiredAmt, address(gov), now + 10 minutes);
     }
 
     /***********************/
