@@ -28,6 +28,10 @@ contract LP {
         IPool(pool).transfer(account, amt);
     }
 
+    function withdrawFunds(address pool) external {
+        IPool(pool).withdrawFunds();
+    }
+
     function claim(address pool, address loan, address dlFactory) external { IPool(pool).claim(loan, dlFactory); }
 
     function intendToWithdraw(address pool) external { IPool(pool).intendToWithdraw(); }
