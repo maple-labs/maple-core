@@ -37,6 +37,8 @@ interface IBPool {
 
     function getFinalTokens() external view returns (address[] memory);
 
+    function joinPool(uint poolAmountOut, uint[] calldata maxAmountsIn) external;
+
     function calcSingleOutGivenPoolIn(
         uint256 tokenBalanceOut,
         uint256 tokenWeightOut,

@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import "../../interfaces/IBPool.sol";
 import "../../interfaces/IStakeLocker.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -33,6 +34,12 @@ contract Staker {
     }
 
     function intendToUnstake(address stakeLocker) external { IStakeLocker(stakeLocker).intendToUnstake(); }
+
+    // Balancer Pool
+    function joinBPool(IBPool bPool, uint poolAmountOut, uint[] calldata maxAmountsIn) external {
+        bPool.joinPool(poolAmountOut, maxAmountsIn);
+    }
+
 
 
     /*********************/
