@@ -2,6 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import "../../interfaces/IBPool.sol";
 import "../../interfaces/ILoan.sol";
 import "../../interfaces/IPool.sol";
 import "../../interfaces/IPoolFactory.sol";
@@ -104,6 +105,11 @@ contract PoolDelegate {
 
     function setAllowlist(address stakeLocker, address account, bool status) external {
         IStakeLocker(stakeLocker).setAllowlist(account, status);
+    }
+
+    // Balancer Pool
+    function joinBPool(IBPool bPool, uint poolAmountOut, uint[] calldata maxAmountsIn) external {
+        bPool.joinPool(poolAmountOut, maxAmountsIn);
     }
 
     /*********************/
