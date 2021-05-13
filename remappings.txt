@@ -1,3 +1,3 @@
-maple-token/=module/maple-token/contracts/
+maple-token/=lib/maple-token/contracts/
 ds-test/=lib/ds-test/contracts/
 openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
