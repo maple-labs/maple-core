@@ -1,6 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
+import "ds-test/test.sol";
+import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import "maple-token/MapleToken.sol";
+
+import "./interfaces/IUniswapV2Factory.sol";
+import "./interfaces/IUniswapV2Pair.sol";
+import "./interfaces/IUniswapV2Router02.sol";
+
+import "../interfaces/IBPool.sol";
+import "../interfaces/IBFactory.sol";
+
 import "./user/Borrower.sol";
 import "./user/Commoner.sol";
 import "./user/Farmer.sol";
@@ -15,7 +26,6 @@ import "./user/EmergencyAdmin.sol";
 
 import "../MapleGlobals.sol";
 import "../MapleTreasury.sol";
-import "module/maple-token/contracts/MapleToken.sol";
 
 import "../CollateralLockerFactory.sol";
 import "../DebtLockerFactory.sol";
@@ -26,22 +36,12 @@ import "../MplRewardsFactory.sol";
 import "../PoolFactory.sol";
 import "../StakeLockerFactory.sol";
 
-import "./interfaces/IUniswapV2Factory.sol";
-import "./interfaces/IUniswapV2Pair.sol";
-import "./interfaces/IUniswapV2Router02.sol";
-
 import "../LateFeeCalc.sol";
 import "../PremiumCalc.sol";
 import "../RepaymentCalc.sol";
 
 import "../oracles/ChainlinkOracle.sol";
 import "../oracles/UsdOracle.sol";
-
-import "../interfaces/IBPool.sol";
-import "../interfaces/IBFactory.sol";
-
-import "lib/ds-test/contracts/test.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 interface Hevm {
     function warp(uint256) external;

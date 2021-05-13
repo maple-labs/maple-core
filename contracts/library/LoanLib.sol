@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
+import "openzeppelin-contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-contracts/math/SafeMath.sol";
+
 import "../interfaces/ICollateralLocker.sol";
 import "../interfaces/ICollateralLockerFactory.sol";
 import "../interfaces/IERC20Details.sol";
@@ -14,9 +17,6 @@ import "../interfaces/IRepaymentCalc.sol";
 import "../interfaces/IUniswapRouter.sol";
 
 import "../library/Util.sol";
-
-import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 /// @title LoanLib is a library of utility functions used by Loan.
 library LoanLib {

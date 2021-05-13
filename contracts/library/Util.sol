@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "../interfaces/IERC20Details.sol";
 import "../interfaces/IMapleGlobals.sol";
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "openzeppelin-contracts/math/SafeMath.sol";
 
 /// @title Util is a library that contains utility functions.
 library Util {

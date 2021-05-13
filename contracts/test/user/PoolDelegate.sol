@@ -2,13 +2,13 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+
 import "../../interfaces/IBPool.sol";
 import "../../interfaces/ILoan.sol";
 import "../../interfaces/IPool.sol";
 import "../../interfaces/IPoolFactory.sol";
 import "../../interfaces/IStakeLocker.sol";
-
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract PoolDelegate {
 
