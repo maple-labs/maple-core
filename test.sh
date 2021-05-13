@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 set -e
 
+while getopts t:r:b: flag
+do
+    case "${flag}" in
+        t) test=${OPTARG};;
+        r) runs=${OPTARG};;
+        b) build=${OPTARG};;
+    esac
+done
+
+runs=$([ -z "$runs" ] && echo "10" || echo "$runs")
+build=$([ -z "$build" ] && echo "1" || echo "$build")
+skip_build=$([ "$build" == "0" ] && echo "1" || echo "0")
+
 [[ $SKIP_MAINNET_CHECK || "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || { echo "Please set a mainnet ETH_RPC_URL"; exit 1; }
 
 export DAPP_TEST_TIMESTAMP=1615792486
@@ -11,6 +24,8 @@ export DAPP_BUILD_OPTIMIZE=1
 export DAPP_BUILD_OPTIMIZE_RUNS=200
 export DAPP_LINK_TEST_LIBRARIES=1
 
-if [ ${1} ]; then match=${1}; dapp_test_verbosity=2; else match="contracts/test"; dapp_test_verbosity=1; fi
+if [ "$skip_build" = "1" ]; then export DAPP_SKIP_BUILD=1; fi
 
-LANG=C.UTF-8 dapp test --match "$match" --rpc-url "$ETH_RPC_URL" --verbosity $dapp_test_verbosity --cache "cache/dapp-cache" --fuzz-runs 10
+if [ -z "$test" ]; then match="contracts/test"; dapp_test_verbosity=1; else match=$test; dapp_test_verbosity=2; fi
+
+LANG=C.UTF-8 dapp test --match "$match" --rpc-url "$ETH_RPC_URL" --verbosity $dapp_test_verbosity --cache "cache/dapp-cache" --fuzz-runs $runs
