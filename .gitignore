@@ -8,5 +8,5 @@ hevm*
 /out
 /cache
 
-# Flattened contracts
-/flatten
+# Flattened functions
+/flattened-contracts/functions
