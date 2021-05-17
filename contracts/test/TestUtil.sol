@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 
 import "ds-test/test.sol";
-import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "maple-token/MapleToken.sol";
 
 import "./interfaces/IUniswapV2Factory.sol";

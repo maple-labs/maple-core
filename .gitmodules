@@ -7,6 +7,6 @@
 [submodule "cache/dapp-cache"]
 	path = cache/dapp-cache
 	url = git@github.com:maple-labs/maple-cache
-[submodule "lib/maple-token"]
-	path = lib/maple-token
+[submodule "module/maple-token"]
+	path = module/maple-token
 	url = https://github.com/maple-labs/maple-token
