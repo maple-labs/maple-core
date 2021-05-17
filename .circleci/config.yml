@@ -51,8 +51,6 @@ jobs:
             cd ~/project
             TEST=$(circleci tests glob contracts/test/*.t.sol | circleci tests split --split-by=name)
             export ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY 
-            echo $ETH_RPC_URL
-            echo $(seth chain)
             ./test-ci.sh $TEST
           no_output_timeout: 60m
 
