@@ -2,10 +2,10 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../MapleGlobals.sol";
-import "../../MapleTreasury.sol";
-import "../../MplRewards.sol";
-import "../../MplRewardsFactory.sol";
+import "core/globals/v1/MapleGlobals.sol";
+import "core/treasury/v1/MapleTreasury.sol";
+import "core/mpl-rewards/v1/MplRewards.sol";
+import "core/mpl-rewards/v1/MplRewardsFactory.sol";
 
 contract Governor {
 

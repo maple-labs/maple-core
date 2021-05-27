@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../token/interfaces/IBaseFDT.sol";
+import "libraries/funds-distribution-token/v1/interfaces/IBaseFDT.sol";
 
 contract Holder {
     function withdrawFunds(address token) external {
