@@ -4,12 +4,11 @@ pragma solidity 0.6.11;
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "./interfaces/IMapleGlobals.sol";
+import "core/globals/v1/interfaces/IMapleGlobals.sol";
 import "./interfaces/IMapleToken.sol";
-import "./interfaces/IERC20Details.sol";
-import "./interfaces/IUniswapRouter.sol";
+import "external-interfaces/IUniswapRouter.sol";
 
-import "./library/Util.sol";
+import "libraries/util/v1/Util.sol";
 
 /// @title MapleTreasury earns revenue from Loans and distributes it to token holders and the Maple development team.
 contract MapleTreasury {

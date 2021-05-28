@@ -3,20 +3,17 @@ pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "./interfaces/IBPool.sol";
-import "./interfaces/IDebtLocker.sol";
-import "./interfaces/IMapleGlobals.sol";
-import "./interfaces/ILiquidityLocker.sol";
-import "./interfaces/ILiquidityLockerFactory.sol";
-import "./interfaces/ILoan.sol";
-import "./interfaces/ILoanFactory.sol";
+import "core/debt-locker/v1/interfaces/IDebtLocker.sol";
+import "core/globals/v1/interfaces/IMapleGlobals.sol";
+import "core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
+import "core/liquidity-locker/v1/interfaces/ILiquidityLockerFactory.sol";
 import "./interfaces/IPoolFactory.sol";
-import "./interfaces/IStakeLocker.sol";
-import "./interfaces/IStakeLockerFactory.sol";
+import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
+import "core/stake-locker/v1/interfaces/IStakeLockerFactory.sol";
 
-import "./library/PoolLib.sol";
+import "libraries/pool/v1/PoolLib.sol";
 
-import "./token/PoolFDT.sol";
+import "./PoolFDT.sol";
 
 /// @title Pool maintains all accounting and functionality related to Pools.
 contract Pool is PoolFDT {

@@ -6,7 +6,7 @@ import "lib/openzeppelin-contracts/contracts/math/Math.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "./interfaces/IERC2258.sol";
+import "external-interfaces/IERC2258.sol";
 
 // https://docs.synthetix.io/contracts/source/contracts/stakingrewards
 /// @title MplRewards Synthetix farming contract fork for liquidity mining.

@@ -4,25 +4,22 @@ pragma solidity 0.6.11;
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "./interfaces/ICollateralLocker.sol";
-import "./interfaces/ICollateralLockerFactory.sol";
-import "./interfaces/IERC20Details.sol";
-import "./interfaces/IFundingLocker.sol";
-import "./interfaces/IFundingLockerFactory.sol";
-import "./interfaces/IMapleGlobals.sol";
-import "./interfaces/ILateFeeCalc.sol";
-import "./interfaces/ILiquidityLocker.sol";
+import "core/collateral-locker/v1/interfaces/ICollateralLocker.sol";
+import "core/collateral-locker/v1/interfaces/ICollateralLockerFactory.sol";
+import "external-interfaces/IERC20Details.sol";
+import "core/funding-locker/v1/interfaces/IFundingLocker.sol";
+import "core/funding-locker/v1/interfaces/IFundingLockerFactory.sol";
+import "core/globals/v1/interfaces/IMapleGlobals.sol";
+import "core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
+import "core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
 import "./interfaces/ILoanFactory.sol";
-import "./interfaces/IPool.sol";
-import "./interfaces/IPoolFactory.sol";
-import "./interfaces/IPremiumCalc.sol";
-import "./interfaces/IRepaymentCalc.sol";
-import "./interfaces/IUniswapRouter.sol";
+import "core/pool/v1/interfaces/IPool.sol";
+import "core/pool/v1/interfaces/IPoolFactory.sol";
 
-import "./library/Util.sol";
-import "./library/LoanLib.sol";
+import "libraries/util/v1/Util.sol";
+import "libraries/loan/v1/LoanLib.sol";
 
-import "./token/LoanFDT.sol";
+import "./LoanFDT.sol";
 
 /// @title Loan maintains all accounting and functionality related to Loans.
 contract Loan is LoanFDT, Pausable {

@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
-import "./interfaces/ILoan.sol";
+import "core/loan/v1/interfaces/ILoan.sol";
 
 /// @title RepaymentCalc calculates payment amounts on Loans.
 contract RepaymentCalc {

@@ -3,8 +3,6 @@ pragma solidity 0.6.11;
 
 import "./FundingLocker.sol";
 
-import "./interfaces/ILoanFactory.sol";
-
 /// @title FundingLockerFactory instantiates FundingLockers.
 contract FundingLockerFactory {
 

@@ -4,11 +4,11 @@ pragma solidity 0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
-import "./interfaces/IMapleGlobals.sol";
-import "./interfaces/IPool.sol";
-import "./interfaces/IPoolFactory.sol";
+import "core/globals/v1/interfaces/IMapleGlobals.sol";
+import "core/pool/v1/interfaces/IPool.sol";
+import "core/pool/v1/interfaces/IPoolFactory.sol";
 
-import "./token/StakeLockerFDT.sol";
+import "./StakeLockerFDT.sol";
 
 /// @title StakeLocker holds custody of stakeAsset tokens for a given Pool and earns revenue from interest.
 contract StakeLocker is StakeLockerFDT, Pausable {

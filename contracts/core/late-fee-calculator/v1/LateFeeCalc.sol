@@ -3,9 +3,6 @@ pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
-import "./interfaces/ILoan.sol";
-import "./interfaces/IRepaymentCalc.sol";
-
 /// @title LateFeeCalc calculates late fees on Loans.
 contract LateFeeCalc {
 

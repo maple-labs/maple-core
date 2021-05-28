@@ -10,5 +10,6 @@ export DAPP_SOLC_VERSION=0.6.11
 export DAPP_SRC="contracts"
 export SOLC_FLAGS="--optimize --optimize-runs 200"
 export DAPP_LINK_TEST_LIBRARIES=1
+export DAPP_REMAPPINGS=$(cat remappings.txt)
 
 LANG=C.UTF-8 dapp test --match ${1} --rpc-url "$ETH_RPC_URL" --verbose --cache "cache/dapp-cache" --fuzz-runs 1

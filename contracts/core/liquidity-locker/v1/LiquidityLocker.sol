@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "./interfaces/ILoan.sol";
+import "core/loan/v1/interfaces/ILoan.sol";
 
 /// @title LiquidityLocker holds custody of Liquidity Asset tokens for a given Pool.
 contract LiquidityLocker {

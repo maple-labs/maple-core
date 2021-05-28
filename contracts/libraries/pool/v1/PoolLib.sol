@@ -3,14 +3,14 @@ pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
-import "../interfaces/ILoan.sol";
-import "../interfaces/IBPool.sol";
-import "../interfaces/IMapleGlobals.sol";
-import "../interfaces/ILiquidityLocker.sol";
-import "../interfaces/IERC20Details.sol";
-import "../interfaces/ILoanFactory.sol";
-import "../interfaces/IStakeLocker.sol";
-import "../interfaces/IDebtLockerFactory.sol";
+import "core/loan/v1/interfaces/ILoan.sol";
+import "external-interfaces/IBPool.sol";
+import "core/globals/v1/interfaces/IMapleGlobals.sol";
+import "core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
+import "external-interfaces/IERC20Details.sol";
+import "core/loan/v1/interfaces/ILoanFactory.sol";
+import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
+import "core/debt-locker/v1/interfaces/IDebtLockerFactory.sol";
 
 /// @title PoolLib is a library of utility functions used by Pool.
 library PoolLib {
