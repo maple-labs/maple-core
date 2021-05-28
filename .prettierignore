@@ -1,0 +1,4 @@
+flattened-contracts
+cache
+lib/*
+module/*

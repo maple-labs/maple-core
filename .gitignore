@@ -7,6 +7,7 @@ key.json
 hevm*
 /out
 /cache
+node_modules
 
 # Flattened functions
 /flattened-contracts/functions

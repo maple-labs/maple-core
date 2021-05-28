@@ -1,0 +1,30 @@
+{
+  "name": "maple-core",
+  "version": "1.0.0",
+  "description": "Protocol for under-collateralized loans",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "format": "prettier --write \"contracts/**/*.sol\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maple-labs/maple-core.git"
+  },
+  "keywords": [
+    "Maple",
+    "FDT",
+    "Loans"
+  ],
+  "author": "Maple",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/maple-labs/maple-core/issues"
+  },
+  "homepage": "https://github.com/maple-labs/maple-core#readme",
+  "dependencies": {
+    "prettier-plugin-solidity": "^1.0.0-beta.11"
+  }
+}
