@@ -23,7 +23,7 @@ export DAPP_SRC="contracts"
 export DAPP_BUILD_OPTIMIZE=1
 export DAPP_BUILD_OPTIMIZE_RUNS=200
 export DAPP_LINK_TEST_LIBRARIES=1
-export DAPP_REMAPPINGS=$(cat remappings.txt)
+export DAPP_REMAPPINGS=$(cat remappings)
 
 if [ "$skip_build" = "1" ]; then export DAPP_SKIP_BUILD=1; fi
 

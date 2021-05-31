@@ -5,7 +5,9 @@ pragma experimental ABIEncoderV2;
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 import "external-interfaces/IERC20Details.sol";
+
 import "core/oracle/v1/interfaces/IOracle.sol";
+
 import "./interfaces/ISubFactory.sol";
 
 interface ICalc { function calcType() external view returns (uint8); }

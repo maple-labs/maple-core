@@ -4,9 +4,11 @@ pragma solidity 0.6.11;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
-import "./interfaces/IBaseFDT.sol";
+
 import "libraries/math/v1/SafeMathUint.sol";
 import "libraries/math/v1/SafeMathInt.sol";
+
+import "./interfaces/IBaseFDT.sol";
 
 /// @title BasicFDT implements base level FDT functionality for accounting for revenues.
 abstract contract BasicFDT is IBaseFDT, ERC20 {

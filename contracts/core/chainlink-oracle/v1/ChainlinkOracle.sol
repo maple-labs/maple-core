@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "external-interfaces/IChainlinkAggregatorV3.sol";
-import "core/globals/v1/interfaces/IMapleGlobals.sol";
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+
+import "external-interfaces/IChainlinkAggregatorV3.sol";
+
+import "core/globals/v1/interfaces/IMapleGlobals.sol";
 
 /// @title ChainlinkOracle is a wrapper contract for Chainlink oracle price feeds that allows for manual price feed overrides.
 contract ChainlinkOracle is Ownable {
