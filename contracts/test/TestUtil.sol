@@ -605,6 +605,22 @@ contract TestUtil is DSTest {
         fail();
     }
 
+    // Verify equality within accuracy percentage (basis points)
+    function withinPercentage(uint256 val0, uint256 val1, uint256 percentage) public {
+        uint256 diff  = val0 > val1 ? val0 - val1 : val1 - val0;
+        if (diff == 0) return;
+
+        uint256 denominator = val0 == 0 ? val1 : val0;
+        bool check = ((diff * RAY) / denominator) < percentage * RAY / 10_000;
+
+        if (!check){
+            emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", percentage);
+            emit log_named_uint("  Expected", val0);
+            emit log_named_uint("    Actual", val1);
+            fail();
+        }
+    }
+
     // Verify equality within difference
     function withinDiff(uint256 val0, uint256 val1, uint256 expectedDiff) public {
         uint256 actualDiff = getDiff(val0, val1);
