@@ -29,6 +29,6 @@ export DAPP_REMAPPINGS=$(cat remappings)
 
 if [ "$skip_build" = "1" ]; then export DAPP_SKIP_BUILD=1; fi
 
-if [ -z "$test" ]; then match="contracts/*/*/$version/test/*.t.sol"; dapp_test_verbosity=1; else match=$test; dapp_test_verbosity=2; fi
+if [ -z "$test" ]; then match="[contracts/*/*/$version/test/*.t.sol]"; dapp_test_verbosity=1; else match=$test; dapp_test_verbosity=2; fi
 
 LANG=C.UTF-8 dapp test --match "$match" --rpc-url "$ETH_RPC_URL" --verbosity $dapp_test_verbosity --cache "cache/dapp-cache" --fuzz-runs $runs
