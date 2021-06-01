@@ -107,7 +107,7 @@ contract MapleTreasuryTest is TestUtil {
         assertEq(IERC20(WBTC).balanceOf(address(treasury)),         0);
         assertEq(IERC20(DAI).balanceOf(address(treasury)),  100 ether);
 
-        withinPrecision(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWBTC, 2);
+        withinPercentage(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWBTC, 300);  // Less than 3% difference
 
         gov.distributeToHolders();  // Empty treasury balance of USDC
 
@@ -118,7 +118,7 @@ contract MapleTreasuryTest is TestUtil {
         assertEq(IERC20(WETH).balanceOf(address(treasury)),         0);
         assertEq(IERC20(DAI).balanceOf(address(treasury)),  100 ether);
 
-        withinPrecision(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWETH, 2);
+        withinPercentage(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromWETH, 300);  // Less than 3% difference
 
         gov.distributeToHolders();  // Empty treasury balance of USDC
 
@@ -129,6 +129,6 @@ contract MapleTreasuryTest is TestUtil {
         assertEq(IERC20(WETH).balanceOf(address(treasury)), 0);
         assertEq(IERC20(DAI).balanceOf(address(treasury)),  0);
 
-        withinPrecision(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromDAI, 2);
+        withinPercentage(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromDAI, 300);  // Less than 3% difference
     }
 }
