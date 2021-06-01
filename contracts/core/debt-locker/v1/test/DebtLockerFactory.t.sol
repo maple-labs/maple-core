@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "./TestUtil.sol";
+import "../../../../test/TestUtil.sol";
 
 contract DebtLockerFactoryTest is TestUtil {
 

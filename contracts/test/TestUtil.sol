@@ -650,6 +650,35 @@ contract TestUtil is DSTest {
     function calcPortion(uint256 amt, uint256 totalClaim, uint256 totalAmt) internal pure returns (uint256) {
         return amt == uint256(0) ? uint256(0) : amt.mul(totalClaim).div(totalAmt);
     }
+
+    function setUpRepayments(uint256 loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee, uint256 premiumFee) public {
+        uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
+
+        uint256 paymentInterval = paymentIntervalArray[index % 10];
+        uint256 termDays        = paymentInterval * (numPayments % 100);
+
+        {
+            // Mint "infinite" amount of USDC and deposit into pool
+            mint("USDC", address(this), loanAmt);
+            IERC20(USDC).approve(address(pool), uint256(-1));
+            pool.deposit(loanAmt);
+
+            // Create loan, fund loan, draw down on loan
+            address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
+            uint256[5] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000];
+            loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
+        }
+
+        assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory), loanAmt));
+
+        {
+            uint256 cReq = loan.collateralRequiredForDrawdown(loanAmt); // wETH required for 1_000 USDC drawdown on loan
+            mint("WETH", address(bob), cReq);
+            bob.approve(WETH, address(loan), cReq);
+            bob.drawdown(address(loan), loanAmt);
+        }
+    }
+
     /*****************************/
     /*** Yield Farming Helpers ***/
     /*****************************/

@@ -2,9 +2,9 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "./TestUtil.sol";
+import "../../../../test/TestUtil.sol";
 
-import "./user/Custodian.sol";
+import "../../../../test/user/Custodian.sol";
 
 contract PoolCustodialTest is TestUtil {
 
