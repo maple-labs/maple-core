@@ -2,6 +2,9 @@
   "language": "Solidity",
   "sources": {
     "contracts/core/globals/v1/MapleGlobals.sol": { "urls": ["contracts/core/globals/v1/MapleGlobals.sol"] },
+    "contracts/core/globals/v1/test/MapleGlobals.t.sol": {
+      "urls": ["contracts/core/globals/v1/test/MapleGlobals.t.sol"]
+    },
     "contracts/core/globals/v1/interfaces/ISubFactory.sol": {
       "urls": ["contracts/core/globals/v1/interfaces/ISubFactory.sol"]
     },
@@ -11,6 +14,11 @@
     "contracts/core/loan/v1/LoanFactory.sol": { "urls": ["contracts/core/loan/v1/LoanFactory.sol"] },
     "contracts/core/loan/v1/LoanFDT.sol": { "urls": ["contracts/core/loan/v1/LoanFDT.sol"] },
     "contracts/core/loan/v1/Loan.sol": { "urls": ["contracts/core/loan/v1/Loan.sol"] },
+    "contracts/core/loan/v1/test/LoanFactory.t.sol": { "urls": ["contracts/core/loan/v1/test/LoanFactory.t.sol"] },
+    "contracts/core/loan/v1/test/Loan.t.sol": { "urls": ["contracts/core/loan/v1/test/Loan.t.sol"] },
+    "contracts/core/loan/v1/test/LoanLiquidation.t.sol": {
+      "urls": ["contracts/core/loan/v1/test/LoanLiquidation.t.sol"]
+    },
     "contracts/core/loan/v1/interfaces/ILoanFDT.sol": { "urls": ["contracts/core/loan/v1/interfaces/ILoanFDT.sol"] },
     "contracts/core/loan/v1/interfaces/ILoan.sol": { "urls": ["contracts/core/loan/v1/interfaces/ILoan.sol"] },
     "contracts/core/loan/v1/interfaces/ILoanFactory.sol": {
@@ -19,9 +27,18 @@
     "contracts/core/chainlink-oracle/v1/ChainlinkOracle.sol": {
       "urls": ["contracts/core/chainlink-oracle/v1/ChainlinkOracle.sol"]
     },
+    "contracts/core/chainlink-oracle/v1/test/ChainLinkOracle.t.sol": {
+      "urls": ["contracts/core/chainlink-oracle/v1/test/ChainLinkOracle.t.sol"]
+    },
     "contracts/core/mpl-rewards/v1/MplRewards.sol": { "urls": ["contracts/core/mpl-rewards/v1/MplRewards.sol"] },
     "contracts/core/mpl-rewards/v1/MplRewardsFactory.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/MplRewardsFactory.sol"]
+    },
+    "contracts/core/mpl-rewards/v1/test/MplRewardsFactory.t.sol": {
+      "urls": ["contracts/core/mpl-rewards/v1/test/MplRewardsFactory.t.sol"]
+    },
+    "contracts/core/mpl-rewards/v1/test/MplRewards.t.sol": {
+      "urls": ["contracts/core/mpl-rewards/v1/test/MplRewards.t.sol"]
     },
     "contracts/core/mpl-rewards/v1/interfaces/IMplRewardsFactory.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/interfaces/IMplRewardsFactory.sol"]
@@ -35,6 +52,9 @@
     "contracts/core/collateral-locker/v1/CollateralLocker.sol": {
       "urls": ["contracts/core/collateral-locker/v1/CollateralLocker.sol"]
     },
+    "contracts/core/collateral-locker/v1/test/CollateralLockerFactory.t.sol": {
+      "urls": ["contracts/core/collateral-locker/v1/test/CollateralLockerFactory.t.sol"]
+    },
     "contracts/core/collateral-locker/v1/interfaces/ICollateralLockerFactory.sol": {
       "urls": ["contracts/core/collateral-locker/v1/interfaces/ICollateralLockerFactory.sol"]
     },
@@ -45,6 +65,9 @@
     "contracts/core/premium-calculator/v1/PremiumCalc.sol": {
       "urls": ["contracts/core/premium-calculator/v1/PremiumCalc.sol"]
     },
+    "contracts/core/premium-calculator/v1/test/PremiumCalc.t.sol": {
+      "urls": ["contracts/core/premium-calculator/v1/test/PremiumCalc.t.sol"]
+    },
     "contracts/core/premium-calculator/v1/interfaces/IPremiumCalc.sol": {
       "urls": ["contracts/core/premium-calculator/v1/interfaces/IPremiumCalc.sol"]
     },
@@ -53,6 +76,9 @@
     },
     "contracts/core/funding-locker/v1/FundingLocker.sol": {
       "urls": ["contracts/core/funding-locker/v1/FundingLocker.sol"]
+    },
+    "contracts/core/funding-locker/v1/test/FundingLockerFactory.t.sol": {
+      "urls": ["contracts/core/funding-locker/v1/test/FundingLockerFactory.t.sol"]
     },
     "contracts/core/funding-locker/v1/interfaces/IFundingLockerFactory.sol": {
       "urls": ["contracts/core/funding-locker/v1/interfaces/IFundingLockerFactory.sol"]
@@ -63,6 +89,9 @@
     "contracts/core/debt-locker/v1/DebtLocker.sol": { "urls": ["contracts/core/debt-locker/v1/DebtLocker.sol"] },
     "contracts/core/debt-locker/v1/DebtLockerFactory.sol": {
       "urls": ["contracts/core/debt-locker/v1/DebtLockerFactory.sol"]
+    },
+    "contracts/core/debt-locker/v1/test/DebtLockerFactory.t.sol": {
+      "urls": ["contracts/core/debt-locker/v1/test/DebtLockerFactory.t.sol"]
     },
     "contracts/core/debt-locker/v1/interfaces/IDebtLocker.sol": {
       "urls": ["contracts/core/debt-locker/v1/interfaces/IDebtLocker.sol"]
@@ -77,6 +106,15 @@
     "contracts/core/stake-locker/v1/StakeLockerFDT.sol": {
       "urls": ["contracts/core/stake-locker/v1/StakeLockerFDT.sol"]
     },
+    "contracts/core/stake-locker/v1/test/StakeLocker.t.sol": {
+      "urls": ["contracts/core/stake-locker/v1/test/StakeLocker.t.sol"]
+    },
+    "contracts/core/stake-locker/v1/test/StakeLockerFactory.t.sol": {
+      "urls": ["contracts/core/stake-locker/v1/test/StakeLockerFactory.t.sol"]
+    },
+    "contracts/core/stake-locker/v1/test/StakeLockerCustodial.t.sol": {
+      "urls": ["contracts/core/stake-locker/v1/test/StakeLockerCustodial.t.sol"]
+    },
     "contracts/core/stake-locker/v1/interfaces/IStakeLocker.sol": {
       "urls": ["contracts/core/stake-locker/v1/interfaces/IStakeLocker.sol"]
     },
@@ -89,8 +127,26 @@
     "contracts/core/repayment-calculator/v1/RepaymentCalc.sol": {
       "urls": ["contracts/core/repayment-calculator/v1/RepaymentCalc.sol"]
     },
+    "contracts/core/repayment-calculator/v1/test/RepaymentCalc.t.sol": {
+      "urls": ["contracts/core/repayment-calculator/v1/test/RepaymentCalc.t.sol"]
+    },
     "contracts/core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol": {
       "urls": ["contracts/core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol"]
+    },
+    "contracts/core/funds-distribution-token/v1/ExtendedFDT.sol": {
+      "urls": ["contracts/core/funds-distribution-token/v1/ExtendedFDT.sol"]
+    },
+    "contracts/core/funds-distribution-token/v1/BasicFDT.sol": {
+      "urls": ["contracts/core/funds-distribution-token/v1/BasicFDT.sol"]
+    },
+    "contracts/core/funds-distribution-token/v1/interfaces/IBasicFDT.sol": {
+      "urls": ["contracts/core/funds-distribution-token/v1/interfaces/IBasicFDT.sol"]
+    },
+    "contracts/core/funds-distribution-token/v1/interfaces/IExtendedFDT.sol": {
+      "urls": ["contracts/core/funds-distribution-token/v1/interfaces/IExtendedFDT.sol"]
+    },
+    "contracts/core/funds-distribution-token/v1/interfaces/IBaseFDT.sol": {
+      "urls": ["contracts/core/funds-distribution-token/v1/interfaces/IBaseFDT.sol"]
     },
     "contracts/core/liquidity-locker/v1/LiquidityLockerFactory.sol": {
       "urls": ["contracts/core/liquidity-locker/v1/LiquidityLockerFactory.sol"]
@@ -108,10 +164,16 @@
     "contracts/core/late-fee-calculator/v1/LateFeeCalc.sol": {
       "urls": ["contracts/core/late-fee-calculator/v1/LateFeeCalc.sol"]
     },
+    "contracts/core/late-fee-calculator/v1/test/LateFeeCalc.t.sol": {
+      "urls": ["contracts/core/late-fee-calculator/v1/test/LateFeeCalc.t.sol"]
+    },
     "contracts/core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol": {
       "urls": ["contracts/core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol"]
     },
     "contracts/core/treasury/v1/MapleTreasury.sol": { "urls": ["contracts/core/treasury/v1/MapleTreasury.sol"] },
+    "contracts/core/treasury/v1/test/MapleTreasury.t.sol": {
+      "urls": ["contracts/core/treasury/v1/test/MapleTreasury.t.sol"]
+    },
     "contracts/core/treasury/v1/interfaces/IMapleTreasury.sol": {
       "urls": ["contracts/core/treasury/v1/interfaces/IMapleTreasury.sol"]
     },
@@ -124,37 +186,26 @@
     "contracts/core/pool/v1/Pool.sol": { "urls": ["contracts/core/pool/v1/Pool.sol"] },
     "contracts/core/pool/v1/PoolFDT.sol": { "urls": ["contracts/core/pool/v1/PoolFDT.sol"] },
     "contracts/core/pool/v1/PoolFactory.sol": { "urls": ["contracts/core/pool/v1/PoolFactory.sol"] },
+    "contracts/core/pool/v1/test/PoolClaim.t.sol": { "urls": ["contracts/core/pool/v1/test/PoolClaim.t.sol"] },
+    "contracts/core/pool/v1/test/PoolLiquidityProvider.t.sol": {
+      "urls": ["contracts/core/pool/v1/test/PoolLiquidityProvider.t.sol"]
+    },
+    "contracts/core/pool/v1/test/PoolLiquidation.t.sol": {
+      "urls": ["contracts/core/pool/v1/test/PoolLiquidation.t.sol"]
+    },
+    "contracts/core/pool/v1/test/PoolExcess.t.sol": { "urls": ["contracts/core/pool/v1/test/PoolExcess.t.sol"] },
+    "contracts/core/pool/v1/test/PoolDelegate.t.sol": { "urls": ["contracts/core/pool/v1/test/PoolDelegate.t.sol"] },
+    "contracts/core/pool/v1/test/PoolCustodial.t.sol": { "urls": ["contracts/core/pool/v1/test/PoolCustodial.t.sol"] },
+    "contracts/core/pool/v1/test/PoolFDTLosses.t.sol": { "urls": ["contracts/core/pool/v1/test/PoolFDTLosses.t.sol"] },
+    "contracts/core/pool/v1/test/PoolFactory.t.sol": { "urls": ["contracts/core/pool/v1/test/PoolFactory.t.sol"] },
     "contracts/core/pool/v1/interfaces/IPoolFDT.sol": { "urls": ["contracts/core/pool/v1/interfaces/IPoolFDT.sol"] },
     "contracts/core/pool/v1/interfaces/IPool.sol": { "urls": ["contracts/core/pool/v1/interfaces/IPool.sol"] },
     "contracts/core/pool/v1/interfaces/IPoolFactory.sol": {
       "urls": ["contracts/core/pool/v1/interfaces/IPoolFactory.sol"]
     },
     "contracts/core/pool/v1/interfaces/IBPool.sol": { "urls": ["contracts/core/pool/v1/interfaces/IBPool.sol"] },
-    "contracts/test/CollateralLockerFactory.t.sol": { "urls": ["contracts/test/CollateralLockerFactory.t.sol"] },
-    "contracts/test/MplRewardsFactory.t.sol": { "urls": ["contracts/test/MplRewardsFactory.t.sol"] },
-    "contracts/test/FundingLockerFactory.t.sol": { "urls": ["contracts/test/FundingLockerFactory.t.sol"] },
-    "contracts/test/LoanFactory.t.sol": { "urls": ["contracts/test/LoanFactory.t.sol"] },
     "contracts/test/Gulp.t.sol": { "urls": ["contracts/test/Gulp.t.sol"] },
-    "contracts/test/Calcs.t.sol": { "urls": ["contracts/test/Calcs.t.sol"] },
     "contracts/test/TestUtil.sol": { "urls": ["contracts/test/TestUtil.sol"] },
-    "contracts/test/PoolClaim.t.sol": { "urls": ["contracts/test/PoolClaim.t.sol"] },
-    "contracts/test/PoolLiquidityProvider.t.sol": { "urls": ["contracts/test/PoolLiquidityProvider.t.sol"] },
-    "contracts/test/DebtLockerFactory.t.sol": { "urls": ["contracts/test/DebtLockerFactory.t.sol"] },
-    "contracts/test/MapleTreasury.t.sol": { "urls": ["contracts/test/MapleTreasury.t.sol"] },
-    "contracts/test/MapleGlobals.t.sol": { "urls": ["contracts/test/MapleGlobals.t.sol"] },
-    "contracts/test/Loan.t.sol": { "urls": ["contracts/test/Loan.t.sol"] },
-    "contracts/test/ChainLinkOracle.t.sol": { "urls": ["contracts/test/ChainLinkOracle.t.sol"] },
-    "contracts/test/StakeLocker.t.sol": { "urls": ["contracts/test/StakeLocker.t.sol"] },
-    "contracts/test/PoolLiquidation.t.sol": { "urls": ["contracts/test/PoolLiquidation.t.sol"] },
-    "contracts/test/MplRewards.t.sol": { "urls": ["contracts/test/MplRewards.t.sol"] },
-    "contracts/test/PoolExcess.t.sol": { "urls": ["contracts/test/PoolExcess.t.sol"] },
-    "contracts/test/StakeLockerFactory.t.sol": { "urls": ["contracts/test/StakeLockerFactory.t.sol"] },
-    "contracts/test/PoolDelegate.t.sol": { "urls": ["contracts/test/PoolDelegate.t.sol"] },
-    "contracts/test/LoanLiquidation.t.sol": { "urls": ["contracts/test/LoanLiquidation.t.sol"] },
-    "contracts/test/StakeLockerCustodial.t.sol": { "urls": ["contracts/test/StakeLockerCustodial.t.sol"] },
-    "contracts/test/PoolCustodial.t.sol": { "urls": ["contracts/test/PoolCustodial.t.sol"] },
-    "contracts/test/PoolFDTLosses.t.sol": { "urls": ["contracts/test/PoolFDTLosses.t.sol"] },
-    "contracts/test/PoolFactory.t.sol": { "urls": ["contracts/test/PoolFactory.t.sol"] },
     "contracts/test/user/LP.sol": { "urls": ["contracts/test/user/LP.sol"] },
     "contracts/test/user/Staker.sol": { "urls": ["contracts/test/user/Staker.sol"] },
     "contracts/test/user/Governor.sol": { "urls": ["contracts/test/user/Governor.sol"] },
@@ -171,21 +222,6 @@
     "contracts/libraries/util/v1/Util.sol": { "urls": ["contracts/libraries/util/v1/Util.sol"] },
     "contracts/libraries/math/v1/SafeMathInt.sol": { "urls": ["contracts/libraries/math/v1/SafeMathInt.sol"] },
     "contracts/libraries/math/v1/SafeMathUint.sol": { "urls": ["contracts/libraries/math/v1/SafeMathUint.sol"] },
-    "contracts/libraries/funds-distribution-token/v1/ExtendedFDT.sol": {
-      "urls": ["contracts/libraries/funds-distribution-token/v1/ExtendedFDT.sol"]
-    },
-    "contracts/libraries/funds-distribution-token/v1/BasicFDT.sol": {
-      "urls": ["contracts/libraries/funds-distribution-token/v1/BasicFDT.sol"]
-    },
-    "contracts/libraries/funds-distribution-token/v1/interfaces/IBasicFDT.sol": {
-      "urls": ["contracts/libraries/funds-distribution-token/v1/interfaces/IBasicFDT.sol"]
-    },
-    "contracts/libraries/funds-distribution-token/v1/interfaces/IExtendedFDT.sol": {
-      "urls": ["contracts/libraries/funds-distribution-token/v1/interfaces/IExtendedFDT.sol"]
-    },
-    "contracts/libraries/funds-distribution-token/v1/interfaces/IBaseFDT.sol": {
-      "urls": ["contracts/libraries/funds-distribution-token/v1/interfaces/IBaseFDT.sol"]
-    },
     "contracts/libraries/pool/v1/PoolLib.sol": { "urls": ["contracts/libraries/pool/v1/PoolLib.sol"] },
     "contracts/external-interfaces/IERC20Details.sol": { "urls": ["contracts/external-interfaces/IERC20Details.sol"] },
     "contracts/external-interfaces/IUniswapV2Router02.sol": {
@@ -210,6 +246,7 @@
       "core/=contracts/core/",
       "libraries/=contracts/libraries/",
       "external-interfaces/=contracts/external-interfaces/",
+      "test/=contracts/test/",
       "maple-token/=module/maple-token/contracts/",
       "ds-test/=lib/ds-test/contracts/",
       "openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/"
