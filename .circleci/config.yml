@@ -29,9 +29,10 @@ jobs:
             # echo first
             # ./build.sh -c "config.json"
             # echo second
-            # ./build.sh -c "./config.json"
+            ./build.sh -c "./config.json"
             # echo third
-            ./build.sh -c "~/project/config.json"
+            pwd
+            # ./build.sh -c "~/project/config.json"
       - persist_to_workspace:
           root: ~/project
           paths:
