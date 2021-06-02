@@ -3,9 +3,9 @@ pragma solidity 0.6.11;
 
 import "./LP.sol";
 
-import "../../MplRewards.sol";
+import "core/mpl-rewards/v1/MplRewards.sol";
 
-import "../../interfaces/IPool.sol";
+import "core/pool/v1/interfaces/IPool.sol";
 
 contract Farmer is LP {
 
