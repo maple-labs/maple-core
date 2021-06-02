@@ -24,17 +24,7 @@ jobs:
           name: Build contracts
           command: |
             GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git submodule update --init --recursive
-            # pwd
-            # ls -al
-            # cat config.json
-            # echo first
-            # ./build.sh -c "config.json"
-            # echo second
-            cat /nix/store/70i4mrw6ywil6pq9nqn9xgswzmiipgjw-dapp-0.32.1/libexec/dapp/dapp-build
-            ./build.sh -c "/home/admin/project/config.json"
-
-            # echo third
-            # ./build.sh -c "~/project/config.json"
+            ./build.sh
       - persist_to_workspace:
           root: ~/project
           paths:
