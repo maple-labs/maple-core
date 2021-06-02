@@ -11,7 +11,7 @@ aliases:
 jobs:
   dapp_build:
     docker:
-      - image: bakii0499/dapptools:0.44.0
+      - image: bakii0499/dapptools:0.1.0
     steps:
       - restore_cache:
           key: nix-deps-02
