@@ -24,8 +24,9 @@ jobs:
           name: Build contracts
           command: |
             GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git submodule update --init --recursive
-            dapp
-            dapp --version
+            DAPP_SRC=contracts dapp --version
+            curl https://dapp.tools/install | sh
+            DAPP_SRC=contracts dapp --version
             ./build.sh
       - persist_to_workspace:
           root: ~/project
