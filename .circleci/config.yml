@@ -26,7 +26,12 @@ jobs:
             GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git submodule update --init --recursive
             ls -al
             cat config.json
-            ./build.sh
+            echo first
+            ./build.sh -c "config.json"
+            echo second
+            ./build.sh -c "./config.json"
+            echo third
+            ./build.sh -c "~/project/config.json"
       - persist_to_workspace:
           root: ~/project
           paths:
