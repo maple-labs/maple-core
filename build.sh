@@ -18,6 +18,7 @@ export DAPP_BUILD_OPTIMIZE=0
 export DAPP_BUILD_OPTIMIZE_RUNS=200
 export DAPP_LINK_TEST_LIBRARIES=0
 export DAPP_STANDARD_JSON=$config
+echo $DAPP_STANDARD_JSON
 # export DAPP_REMAPPINGS=$(cat remappings)
 # export DAPP_LIBRARIES=" contracts/libraries/loan/v1/LoanLib.sol:LoanLib:0x51A189ccD2eB5e1168DdcA7e59F7c8f39AA52232 contracts/libraries/pool/v1/PoolLib.sol:PoolLib:0x2c1C30fb8cC313Ef3cfd2E2bBf2da88AdD902C30 contracts/libraries/util/v1/Util.sol:Util:0x95f9676A34aF2675B63948dDba8F8c798741A52a"
 
