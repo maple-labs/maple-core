@@ -75,7 +75,7 @@ contract PoolClaimTest is TestUtil {
         bob.drawdown(address(zero_loan), depositAmt);
 
         // Initial claim to clear out claimable funds from drawdown
-        uint256[7] memory claim = pat.claim(address(pool), address(zero_loan), address(dlFactory));
+        pat.claim(address(pool), address(zero_loan), address(dlFactory));
 
         uint256 beforeBalance = usdc.balanceOf(address(bPool));
         // Time warp to default

@@ -253,7 +253,7 @@ contract PoolLiquidationTest is TestUtil {
         principalOut.pre       = pool.principalOut();
         poolLosses.pre         = pool.poolLosses();
 
-        uint256[7] memory vals_a = pat.claim(address(pool), address(loan),  address(dlFactory));
+        pat.claim(address(pool), address(loan),  address(dlFactory));
 
         assertPoolAccounting(pool);
 

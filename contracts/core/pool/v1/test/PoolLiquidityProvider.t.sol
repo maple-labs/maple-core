@@ -21,7 +21,6 @@ contract PoolTest is TestUtil {
     }
 
     function test_deposit(uint256 depositAmt) public {
-        address stakeLocker = pool.stakeLocker();
         address liqLocker   = pool.liquidityLocker();
 
         depositAmt = constrictToRange(depositAmt, 1 * USD, 100 * USD, true);

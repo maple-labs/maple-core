@@ -162,7 +162,6 @@ contract PoolTest is TestUtil {
     }
 
     function test_fundLoan(uint256 depositAmt, uint256 fundAmt) public {
-        address stakeLocker   = pool.stakeLocker();
         address liqLocker     = pool.liquidityLocker();
         address fundingLocker = loan.fundingLocker();
 

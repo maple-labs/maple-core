@@ -168,7 +168,6 @@ contract LoanTest is TestUtil {
         loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         fundAmount = constrictToRange(fundAmount, specs[3], 1E10 * USD, true);  // Fund between requestAmount and 10b USD
-        uint256 wadAmount = fundAmount * WAD / USD;
 
         mint("USDC", address(leo),       fundAmount);
         leo.approve(USDC, address(pool), fundAmount);
@@ -225,8 +224,6 @@ contract LoanTest is TestUtil {
 
         assertTrue(!bob.try_drawdown(address(loan), loan.requestAmount() - 1));  // Can't drawdown less than requestAmount
         assertTrue(!bob.try_drawdown(address(loan),           fundAmount + 1));  // Can't drawdown more than fundingLocker balance
-
-        uint256 pre = usdc.balanceOf(address(bob));
 
         assertEq(weth.balanceOf(address(bob)),  reqCollateral);  // Borrower collateral balance
         assertEq(usdc.balanceOf(fundingLocker),    fundAmount);  // FundingLocker liquidityAsset balance
@@ -581,7 +578,7 @@ contract LoanTest is TestUtil {
 
         assertEq(uint256(loan.loanState()), 0);  // `Ready` state
 
-        uint256 reqCollateral = drawdown(loan, drawdownAmount);
+        drawdown(loan, drawdownAmount);
 
         assertEq(uint256(loan.loanState()), 1);  // `Active` state
 
