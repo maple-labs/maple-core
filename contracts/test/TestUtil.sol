@@ -678,7 +678,7 @@ contract TestUtil is DSTest {
         ];
     }
 
-    function toApy(uint256 yield, uint256 stake, uint256 dTime) internal returns (uint256) {
+    function toApy(uint256 yield, uint256 stake, uint256 dTime) internal pure returns (uint256) {
         return yield * 10_000 * 365 days / stake / dTime;
     }
 
@@ -839,7 +839,7 @@ contract TestUtil is DSTest {
         hevm.warp(currentTime + globals.stakerCooldownPeriod());
     }
 
-    function toWad(uint256 amt) internal view returns (uint256) {
+    function toWad(uint256 amt) internal pure returns (uint256) {
         return amt.mul(WAD).div(USD);
     }
 

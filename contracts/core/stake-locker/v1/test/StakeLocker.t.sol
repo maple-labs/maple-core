@@ -22,7 +22,7 @@ contract StakeLockerTest is TestUtil {
         createLoan();
     }
 
-    function getNewStakeDate(address account, uint256 amt) public returns (uint256 newStakeDate) {
+    function getNewStakeDate(address account, uint256 amt) public view returns (uint256 newStakeDate) {
         // Keeping original test logic different from counterpart code to ensure continued expected behavior (for now)
         uint256 prevDate = stakeLocker.stakeDate(account);
         if (prevDate == uint256(0)) {
@@ -47,7 +47,8 @@ contract StakeLockerTest is TestUtil {
         TestObj memory stakerFDTBal, 
         TestObj memory stakerStakeDate
     ) 
-        internal 
+        internal
+        view
     {
         stakeLockerBal.pre  = bPool.balanceOf(address(stakeLocker));
         fdtTotalSupply.pre  = stakeLocker.totalSupply();
@@ -63,7 +64,8 @@ contract StakeLockerTest is TestUtil {
         TestObj memory stakerFDTBal, 
         TestObj memory stakerStakeDate
     ) 
-        internal 
+        internal
+        view
     {
         stakeLockerBal.post  = bPool.balanceOf(address(stakeLocker));
         fdtTotalSupply.post  = stakeLocker.totalSupply();

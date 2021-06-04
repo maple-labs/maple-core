@@ -579,7 +579,7 @@ contract PoolClaimTest is TestUtil {
         }
     }
     
-    function getLoanFundedAmounts(uint256 beforeLLBalance, uint256 rounds, uint256 loan1FundedCount, uint256 loan2FundedCount) internal returns (uint256, uint256[] memory) {
+    function getLoanFundedAmounts(uint256 beforeLLBalance, uint256 rounds, uint256 loan1FundedCount, uint256 loan2FundedCount) internal view returns (uint256, uint256[] memory) {
         uint256 maxAmountPerFundLoan = beforeLLBalance / rounds;
         uint256 totalFundedAmount    = 0;
 
