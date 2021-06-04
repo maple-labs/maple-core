@@ -29,8 +29,8 @@ contract PoolExcessTest is TestUtil {
         leo.deposit(address(pool2), 10_000_000 * USD);
 
         // Fund the loan
-        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 1_000_000 * USD);
-        pam.fundLoan(address(pool2), address(loan1), address(dlFactory), 3_000_000 * USD);
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory1), 1_000_000 * USD);
+        pam.fundLoan(address(pool2), address(loan1), address(dlFactory1), 3_000_000 * USD);
     }
 
     function test_unwind_loan_reclaim() public {
@@ -47,8 +47,8 @@ contract PoolExcessTest is TestUtil {
         uint256 llBalance_b_pre = IERC20(pool2.liquidityAsset()).balanceOf(pool2.liquidityLocker());
 
         // Claim unwind() excessReturned
-        uint256[7] memory vals_a = pat.claim(address(pool1), address(loan1), address(dlFactory));
-        uint256[7] memory vals_b = pam.claim(address(pool2), address(loan1), address(dlFactory));
+        uint256[7] memory vals_a = pat.claim(address(pool1), address(loan1), address(dlFactory1));
+        uint256[7] memory vals_b = pam.claim(address(pool2), address(loan1), address(dlFactory1));
 
         uint256 principalOut_a_post = pool1.principalOut();
         uint256 principalOut_b_post = pool2.principalOut();

@@ -46,8 +46,8 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(globals.validCalcs(address(premiumCalc)));
         assertTrue(globals.validCalcs(address(repaymentCalc)));
 
-        assertTrue(globals.isValidCalc(address(lateFeeCalc),         LATEFEE_CALC_TYPE));
-        assertTrue(globals.isValidCalc(address(premiumCalc),          PREMIUM_CALC_TYPE));
+        assertTrue(globals.isValidCalc(address(lateFeeCalc),   LATEFEE_CALC_TYPE));
+        assertTrue(globals.isValidCalc(address(premiumCalc),   PREMIUM_CALC_TYPE));
         assertTrue(globals.isValidCalc(address(repaymentCalc), INTEREST_CALC_TYPE));
 
         assertTrue(globals.isValidPoolFactory(address(poolFactory)));
@@ -55,15 +55,15 @@ contract MapleGlobalsTest is TestUtil {
 
         assertTrue(globals.validSubFactories(address(poolFactory), address(slFactory)));
         assertTrue(globals.validSubFactories(address(poolFactory), address(llFactory)));
-        assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory)));
+        assertTrue(globals.validSubFactories(address(poolFactory), address(dlFactory1)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(clFactory)));
         assertTrue(globals.validSubFactories(address(loanFactory), address(flFactory)));
 
-        assertTrue(globals.isValidSubFactory(address(poolFactory), address(slFactory), SL_FACTORY));
-        assertTrue(globals.isValidSubFactory(address(poolFactory), address(llFactory), LL_FACTORY));
-        assertTrue(globals.isValidSubFactory(address(poolFactory), address(dlFactory), DL_FACTORY));
-        assertTrue(globals.isValidSubFactory(address(loanFactory), address(clFactory), CL_FACTORY));
-        assertTrue(globals.isValidSubFactory(address(loanFactory), address(flFactory), FL_FACTORY));
+        assertTrue(globals.isValidSubFactory(address(poolFactory), address(slFactory),  SL_FACTORY));
+        assertTrue(globals.isValidSubFactory(address(poolFactory), address(llFactory),  LL_FACTORY));
+        assertTrue(globals.isValidSubFactory(address(poolFactory), address(dlFactory1), DL_FACTORY));
+        assertTrue(globals.isValidSubFactory(address(loanFactory), address(clFactory),  CL_FACTORY));
+        assertTrue(globals.isValidSubFactory(address(loanFactory), address(flFactory),  FL_FACTORY));
     }
 
     function test_setters() public {
@@ -90,12 +90,12 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(!globals.isValidLoanFactory(address(pat)));
 
         // setValidSubFactory()
-        assertTrue( globals.validSubFactories(address(poolFactory), address(dlFactory)));
-        assertTrue(!fakeGov.try_setValidSubFactory(address(poolFactory), address(dlFactory), false));  // Non-governor cant set
-        assertTrue(     gov.try_setValidSubFactory(address(poolFactory), address(dlFactory), false));
-        assertTrue(!globals.validSubFactories(address(poolFactory), address(dlFactory)));
-        assertTrue(     gov.try_setValidSubFactory(address(poolFactory), address(dlFactory), true));
-        assertTrue( globals.validSubFactories(address(poolFactory), address(dlFactory)));
+        assertTrue( globals.validSubFactories(address(poolFactory), address(dlFactory1)));
+        assertTrue(!fakeGov.try_setValidSubFactory(address(poolFactory), address(dlFactory1), false));  // Non-governor cant set
+        assertTrue(     gov.try_setValidSubFactory(address(poolFactory), address(dlFactory1), false));
+        assertTrue(!globals.validSubFactories(address(poolFactory), address(dlFactory1)));
+        assertTrue(     gov.try_setValidSubFactory(address(poolFactory), address(dlFactory1), true));
+        assertTrue( globals.validSubFactories(address(poolFactory), address(dlFactory1)));
 
         // setPoolDelegateAllowlist()
         assertTrue(!globals.isValidPoolDelegate(address(bob)));

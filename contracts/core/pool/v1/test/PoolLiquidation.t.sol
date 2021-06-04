@@ -34,8 +34,8 @@ contract PoolLiquidationTest is TestUtil {
         leo.deposit(address(pool2), 20_000_000 * USD - 1);
 
         // Fund the loan
-        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 80_000_000 * USD + 1);  // Plus 1e-6 to create exact 100m totalSupply
-        pam.fundLoan(address(pool2), address(loan1), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1e-6 equity
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory1), 80_000_000 * USD + 1);  // Plus 1e-6 to create exact 100m totalSupply
+        pam.fundLoan(address(pool2), address(loan1), address(dlFactory1), 20_000_000 * USD - 1);  // 20% minus 1e-6 equity
 
         // Drawdown loan
         drawdown(loan1, bob, drawdownAmt);
@@ -47,22 +47,22 @@ contract PoolLiquidationTest is TestUtil {
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
         // Attempt to trigger default as PD holding less than minimum LoanFDTs required (MapleGlobals.minLoanEquity)
-        assertTrue(!pam.try_triggerDefault(address(pool2), address(loan1), address(dlFactory)));
+        assertTrue(!pam.try_triggerDefault(address(pool2), address(loan1), address(dlFactory1)));
 
         // Update storage to have exactly 20% equity (totalSupply remains the same)
         hevm.store(
             address(loan1),
-            keccak256(abi.encode(address(pool2.debtLockers(address(loan1), address(dlFactory))), 0)), // Overwrite balance to have exact 20% equity
+            keccak256(abi.encode(address(pool2.debtLockers(address(loan1), address(dlFactory1))), 0)), // Overwrite balance to have exact 20% equity
             bytes32(uint256(20_000_000 * WAD))
         );
 
         // Pause protocol and attempt triggerDefault()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!pam.try_triggerDefault(address(pool2), address(loan1), address(dlFactory)));
+        assertTrue(!pam.try_triggerDefault(address(pool2), address(loan1), address(dlFactory1)));
 
         // Unpause protocol and triggerDefault()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(pam.try_triggerDefault(address(pool2), address(loan1), address(dlFactory)));
+        assertTrue(pam.try_triggerDefault(address(pool2), address(loan1), address(dlFactory1)));
     }
 
     function setUpLoanAndDefault() public {
@@ -74,8 +74,8 @@ contract PoolLiquidationTest is TestUtil {
         leo.deposit(address(pool2), 3_000_000 * USD);
 
         // Fund the loan
-        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 100_000 * USD);
-        pam.fundLoan(address(pool2), address(loan1), address(dlFactory), 300_000 * USD);
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory1), 100_000 * USD);
+        pam.fundLoan(address(pool2), address(loan1), address(dlFactory1), 300_000 * USD);
         uint256 cReq = loan1.collateralRequiredForDrawdown(4_000_000 * USD);
 
         // Drawdown loan
@@ -90,7 +90,7 @@ contract PoolLiquidationTest is TestUtil {
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
         // Trigger default
-        pat.triggerDefault(address(pool1), address(loan1), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(loan1), address(dlFactory1));
     }
 
     function test_claim_default_info() public {
@@ -103,8 +103,8 @@ contract PoolLiquidationTest is TestUtil {
             or rather updates accounting in the Pool which in turn will enable us
             to handle liquidation of BPTs in the StakeLocker accurately.
         */
-        uint256[7] memory vals_a = pat.claim(address(pool1), address(loan1), address(dlFactory));
-        uint256[7] memory vals_b = pam.claim(address(pool2), address(loan1), address(dlFactory));
+        uint256[7] memory vals_a = pat.claim(address(pool1), address(loan1), address(dlFactory1));
+        uint256[7] memory vals_b = pam.claim(address(pool2), address(loan1), address(dlFactory1));
 
         // Non-zero value is passed through.
         assertEq(vals_a[6], loan1.defaultSuffered() * (100_000 * WAD) / (400_000 * WAD));
@@ -112,8 +112,8 @@ contract PoolLiquidationTest is TestUtil {
         withinPrecision(vals_a[6] + vals_b[6], loan1.defaultSuffered(), 2);
 
         // Call claim again to make sure that default isn't double accounted
-        vals_a = pat.claim(address(pool1), address(loan1), address(dlFactory));
-        vals_b = pam.claim(address(pool2), address(loan1), address(dlFactory));
+        vals_a = pat.claim(address(pool1), address(loan1), address(dlFactory1));
+        vals_b = pam.claim(address(pool2), address(loan1), address(dlFactory1));
         assertEq(vals_a[6], 0);
         assertEq(vals_b[6], 0);
     }
@@ -151,8 +151,8 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(liquidityLocker_a_bal.pre,   900_000 * USD);
         assertEq(liquidityLocker_b_bal.pre, 2_700_000 * USD);
 
-        pat.claim(address(pool1), address(loan1), address(dlFactory));
-        pam.claim(address(pool2), address(loan1), address(dlFactory));
+        pat.claim(address(pool1), address(loan1), address(dlFactory1));
+        pam.claim(address(pool2), address(loan1), address(dlFactory1));
 
         // Post-state liquidityLocker checks.
         liquidityLocker_a_bal.post = IERC20(USDC).balanceOf(liquidityLocker_a);
@@ -211,7 +211,7 @@ contract PoolLiquidationTest is TestUtil {
         assertPoolAccounting(pool1);
 
         // Fund the loan
-        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 100_000_000 * USD);
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory1), 100_000_000 * USD);
         uint256 cReq = loan1.collateralRequiredForDrawdown(100_000_000 * USD);
 
         assertPoolAccounting(pool1);
@@ -227,7 +227,7 @@ contract PoolLiquidationTest is TestUtil {
         hevm.warp(block.timestamp + loan1.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 
         // Trigger default
-        pat.triggerDefault(address(pool1), address(loan1), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(loan1), address(dlFactory1));
 
         // Instantiate all test variables
         TestObj memory liquidityLockerBal;
@@ -253,7 +253,7 @@ contract PoolLiquidationTest is TestUtil {
         principalOut.pre       = pool1.principalOut();
         poolLosses.pre         = pool1.poolLosses();
 
-        pat.claim(address(pool1), address(loan1), address(dlFactory));
+        pat.claim(address(pool1), address(loan1), address(dlFactory1));
 
         assertPoolAccounting(pool1);
 

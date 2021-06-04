@@ -342,10 +342,10 @@ contract PoolTest is TestUtil {
         assertEq(pool1.depositDate(address(lee)), start);
 
         // Fund loan, drawdown, make payment and claim so lee can claim interest
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan3), address(dlFactory), depositAmt), "Fail to fund the loan");
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan3), address(dlFactory1), depositAmt), "Fail to fund the loan");
         drawdown(loan3, bud, depositAmt);
         doFullLoanPayment(loan3, bud);
-        pat.claim(address(pool1), address(loan3), address(dlFactory));
+        pat.claim(address(pool1), address(loan3), address(dlFactory1));
 
         uint256 interest = pool1.withdrawableFundsOf(address(lee));  // Get kim's withdrawable funds
 
@@ -378,10 +378,10 @@ contract PoolTest is TestUtil {
         assertEq(pool1.depositDate(address(lee)), start);
 
         // Fund loan, drawdown, make payment and claim so lee can claim interest
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan3), address(dlFactory), depositAmt), "Fail to fund the loan");
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan3), address(dlFactory1), depositAmt), "Fail to fund the loan");
         drawdown(loan3, bud, depositAmt);
         doFullLoanPayment(loan3, bud);
-        pat.claim(address(pool1), address(loan3), address(dlFactory));
+        pat.claim(address(pool1), address(loan3), address(dlFactory1));
 
         // Warp to exact time that lee can withdraw for the first time
         hevm.warp(start + pool1.lockupPeriod());

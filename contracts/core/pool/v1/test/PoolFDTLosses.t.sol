@@ -61,7 +61,7 @@ contract PoolFDTLossesTest is TestUtil {
         mintFundsAndDepositIntoPool(leo, pool1, depositAmt, depositAmt);
 
         // Fund the loan by the pool delegate.
-        pat.fundLoan(address(pool1), address(custom_loan), address(dlFactory), depositAmt);
+        pat.fundLoan(address(pool1), address(custom_loan), address(dlFactory1), depositAmt);
 
         // Drawdown of the loan.
         drawdown(custom_loan, bob, depositAmt);
@@ -71,7 +71,7 @@ contract PoolFDTLossesTest is TestUtil {
         doPartialLoanPayment(custom_loan, bob);
 
         // Claim the funds.
-        uint256[7] memory claimInfo = pat.claim(address(pool1), address(custom_loan), address(dlFactory));
+        uint256[7] memory claimInfo = pat.claim(address(pool1), address(custom_loan), address(dlFactory1));
 
         // Leo withdraws interest.
         leo.withdrawFunds(address(pool1));
@@ -90,13 +90,13 @@ contract PoolFDTLossesTest is TestUtil {
         gov.setMaxSwapSlippage(7000);
 
         // Pool Delegate trigger a default
-        pat.triggerDefault(address(pool1), address(custom_loan), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(custom_loan), address(dlFactory1));
 
         // Check for successful default.
         assertTrue(uint8(custom_loan.loanState()) == 4, "Unexpected Loan state");
 
         // PD claims funds and also sells the stake to recover the losses.
-        claimInfo = pat.claim(address(pool1), address(custom_loan), address(dlFactory));
+        claimInfo = pat.claim(address(pool1), address(custom_loan), address(dlFactory1));
 
         assertTrue(claimInfo[6] > 0, "Loan doesn't have default suffered");
 
@@ -160,8 +160,8 @@ contract PoolFDTLossesTest is TestUtil {
         mintFundsAndDepositIntoPool(lee, pool2, leeDepositAmt, leeDepositAmt);
 
         // Fund the loan by both pool delegates.
-        pat.fundLoan(address(pool1), address(custom_loan), address(dlFactory), usdc.balanceOf(pool1.liquidityLocker()));
-        pam.fundLoan(address(pool2), address(custom_loan), address(dlFactory), usdc.balanceOf(pool2.liquidityLocker()));
+        pat.fundLoan(address(pool1), address(custom_loan), address(dlFactory1), usdc.balanceOf(pool1.liquidityLocker()));
+        pam.fundLoan(address(pool2), address(custom_loan), address(dlFactory1), usdc.balanceOf(pool2.liquidityLocker()));
 
         // Drawdown of the loan
         drawdown(custom_loan, bob, totalDepositAmt);
@@ -172,8 +172,8 @@ contract PoolFDTLossesTest is TestUtil {
 
         {
             // Claim the funds.
-            uint256[7] memory claimInfo1 = pat.claim(address(pool1), address(custom_loan), address(dlFactory));
-            uint256[7] memory claimInfo2 = pam.claim(address(pool2), address(custom_loan), address(dlFactory));
+            uint256[7] memory claimInfo1 = pat.claim(address(pool1), address(custom_loan), address(dlFactory1));
+            uint256[7] memory claimInfo2 = pam.claim(address(pool2), address(custom_loan), address(dlFactory1));
 
             // Withdraw interest by the lps.
             leo.withdrawFunds(address(pool1));
@@ -202,16 +202,16 @@ contract PoolFDTLossesTest is TestUtil {
 
             // At least one of the pool delegates should be able to trigger a default
             assertTrue(
-                pat.try_triggerDefault(address(pool1), address(custom_loan), address(dlFactory)) ||
-                pam.try_triggerDefault(address(pool2), address(custom_loan), address(dlFactory)),
+                pat.try_triggerDefault(address(pool1), address(custom_loan), address(dlFactory1)) ||
+                pam.try_triggerDefault(address(pool2), address(custom_loan), address(dlFactory1)),
                 "Should be able to trigger Loan default"
             );
 
             // Check for successful default.
             assertTrue(uint8(custom_loan.loanState()) == 4, "Unexpected Loan state");
 
-            claimInfo1 = pat.claim(address(pool1), address(custom_loan), address(dlFactory));
-            claimInfo2 = pam.claim(address(pool2), address(custom_loan), address(dlFactory));
+            claimInfo1 = pat.claim(address(pool1), address(custom_loan), address(dlFactory1));
+            claimInfo2 = pam.claim(address(pool2), address(custom_loan), address(dlFactory1));
 
             assertTrue(claimInfo1[6]     > 0,      "Loan doesn't have default suffered");
             assertTrue(pool1.poolLosses() > 0, "Pool 1 losses should be greater than 0");

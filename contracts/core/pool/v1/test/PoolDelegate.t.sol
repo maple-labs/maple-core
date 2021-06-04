@@ -176,7 +176,7 @@ contract PoolTest is TestUtil {
 
         gov.setValidLoanFactory(address(loanFactory), false);
 
-        assertTrue(!pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), depositAmt));  // LoanFactory not in globals
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), depositAmt));  // LoanFactory not in globals
 
         gov.setValidLoanFactory(address(loanFactory), true);
 
@@ -189,13 +189,13 @@ contract PoolTest is TestUtil {
 
         // Pause protocol and attempt fundLoan()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), fundAmt));
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), fundAmt));
 
         // Unpause protocol and fundLoan()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), fundAmt), "Fail to fund a loan");  // Fund loan for 20 USDC
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), fundAmt), "Fail to fund a loan");  // Fund loan for 20 USDC
 
-        DebtLocker debtLocker = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory)));
+        DebtLocker debtLocker = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory1)));
 
         assertEq(address(debtLocker.loan()),           address(loan1));
         assertEq(debtLocker.pool(),                    address(pool1));
@@ -210,10 +210,10 @@ contract PoolTest is TestUtil {
         /*** Fund same loan with the same DL ***/
         /***************************************/
         uint256 newFundAmt = constrictToRange(fundAmt, 1 * USD, depositAmt - fundAmt, true);
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), newFundAmt));  // Fund same loan for newFundAmt
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), newFundAmt));  // Fund same loan for newFundAmt
 
-        assertEq(dlFactory.owner(address(debtLocker)), address(pool1));
-        assertTrue(dlFactory.isLocker(address(debtLocker)));
+        assertEq(dlFactory1.owner(address(debtLocker)), address(pool1));
+        assertTrue(dlFactory1.isLocker(address(debtLocker)));
 
         assertEq(usdc.balanceOf(liqLocker),                    depositAmt - fundAmt - newFundAmt);  // Balance of LiquidityLocker
         assertEq(usdc.balanceOf(address(fundingLocker)),                    fundAmt + newFundAmt);  // Balance of FundingLocker
@@ -274,7 +274,7 @@ contract PoolTest is TestUtil {
         assertTrue(!leo.try_deposit(address(pool1), 100_000_000 * USD));
 
         // fundLoan()
-        assertTrue(!pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), 1));
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), 1));
 
         // deactivate()
         assertTrue(!pat.try_deactivate(address(pool1)));

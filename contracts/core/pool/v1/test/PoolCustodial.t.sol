@@ -105,11 +105,11 @@ contract PoolCustodialTest is TestUtil {
         {
             uint256[5] memory specs = [500, 180, 30, totalDeposits, 2000];
             createLoan(specs);
-            pat.fundLoan(address(pool1), address(loan1), address(dlFactory), totalDeposits);
+            pat.fundLoan(address(pool1), address(loan1), address(dlFactory1), totalDeposits);
             drawdown(loan1, bob, totalDeposits);
             hevm.warp(loan1.nextPaymentDue());  // Will affect yield farming
             doPartialLoanPayment(loan1, bob);
-            pat.claim(address(pool1), address(loan1), address(dlFactory));
+            pat.claim(address(pool1), address(loan1), address(dlFactory1));
         }
 
         // Update variables to reflect change in accounting from last dTime
@@ -154,7 +154,7 @@ contract PoolCustodialTest is TestUtil {
         /********************************************/
         hevm.warp(loan1.nextPaymentDue() - 6 hours);  // Will affect yield farming (using a different timestamp just for the sake of yield farming assertions)
         doPartialLoanPayment(loan1, bob);
-        pat.claim(address(pool1), address(loan1), address(dlFactory));
+        pat.claim(address(pool1), address(loan1), address(dlFactory1));
 
         // Update variables to reflect change in accounting from last dTime
         updateState();

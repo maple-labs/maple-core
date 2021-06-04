@@ -36,7 +36,7 @@ contract LoanLiquidationTest is TestUtil {
 
         loan = bob.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
 
-        pat.fundLoan(address(pool1), address(loan), address(dlFactory), 1000 * USD);
+        pat.fundLoan(address(pool1), address(loan), address(dlFactory1), 1000 * USD);
 
         bob.approve(_collateral, address(loan), MAX_UINT);
         assertTrue(bob.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
@@ -59,7 +59,7 @@ contract LoanLiquidationTest is TestUtil {
         assertEq(uint256(loan.loanState()),                                                     1);
         assertEq(IERC20(collateralAsset).balanceOf(address(collateralLocker)),  collateralBalance);
 
-        pat.triggerDefault(address(pool1), address(loan), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(loan), address(dlFactory1));
 
         {
             uint256 principalOwed_post      = loan.principalOwed();

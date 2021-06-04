@@ -25,30 +25,30 @@ contract PoolClaimTest is TestUtil {
         mintFundsAndDepositIntoPool(lex, pool1, 10_000 * USD, 10_000 * USD);
 
         // Fund Loan (so that debtLocker is instantiated and given LoanFDTs)
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), 10_000 * USD));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), 10_000 * USD));
 
         // Assert that LPs and non-admins cannot claim
-        assertTrue(!lex.try_claim(address(pool1), address(loan1), address(dlFactory)));            // Does not have permission to call `claim()` function
-        assertTrue(!securityAdmin.try_claim(address(pool1), address(loan1), address(dlFactory)));  // Does not have permission to call `claim()` function
+        assertTrue(!lex.try_claim(address(pool1), address(loan1), address(dlFactory1)));            // Does not have permission to call `claim()` function
+        assertTrue(!securityAdmin.try_claim(address(pool1), address(loan1), address(dlFactory1)));  // Does not have permission to call `claim()` function
 
         // Pool delegate can claim
-        assertTrue(pat.try_claim(address(pool1), address(loan1), address(dlFactory)));   // Successfully call the `claim()` function
+        assertTrue(pat.try_claim(address(pool1), address(loan1), address(dlFactory1)));   // Successfully call the `claim()` function
 
         // Admin can claim once added
-        pat.setPoolAdmin(address(pool1), address(securityAdmin), true);                           // Add admin to allow to call the `claim()` function
-        assertTrue(securityAdmin.try_claim(address(pool1), address(loan1), address(dlFactory)));  // Successfully call the `claim()` function
+        pat.setPoolAdmin(address(pool1), address(securityAdmin), true);                            // Add admin to allow to call the `claim()` function
+        assertTrue(securityAdmin.try_claim(address(pool1), address(loan1), address(dlFactory1)));  // Successfully call the `claim()` function
 
         // Pause protocol and attempt claim()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!securityAdmin.try_claim(address(pool1), address(loan1), address(dlFactory)));
+        assertTrue(!securityAdmin.try_claim(address(pool1), address(loan1), address(dlFactory1)));
 
         // Unpause protocol and claim()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(securityAdmin.try_claim(address(pool1), address(loan1), address(dlFactory)));
+        assertTrue(securityAdmin.try_claim(address(pool1), address(loan1), address(dlFactory1)));
 
         // Admin can't claim after removed
-        pat.setPoolAdmin(address(pool1), address(securityAdmin), false);                           // Add admin to allow to call the `claim()` function
-        assertTrue(!securityAdmin.try_claim(address(pool1), address(loan1), address(dlFactory)));  // Does not have permission to call `claim()` function
+        pat.setPoolAdmin(address(pool1), address(securityAdmin), false);                            // Add admin to allow to call the `claim()` function
+        assertTrue(!securityAdmin.try_claim(address(pool1), address(loan1), address(dlFactory1)));  // Does not have permission to call `claim()` function
     }
 
     function test_claim_defaulting_for_zero_collateral_loan(
@@ -67,7 +67,7 @@ contract PoolClaimTest is TestUtil {
         Loan zero_loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         // Fund the loan by pool delegate.
-        assertTrue(pat.try_fundLoan(address(pool1), address(zero_loan), address(dlFactory), depositAmt));
+        assertTrue(pat.try_fundLoan(address(pool1), address(zero_loan), address(dlFactory1), depositAmt));
 
         // Drawdown of the loan
         uint256 cReq = zero_loan.collateralRequiredForDrawdown(depositAmt);
@@ -75,17 +75,17 @@ contract PoolClaimTest is TestUtil {
         bob.drawdown(address(zero_loan), depositAmt);
 
         // Initial claim to clear out claimable funds from drawdown
-        pat.claim(address(pool1), address(zero_loan), address(dlFactory));
+        pat.claim(address(pool1), address(zero_loan), address(dlFactory1));
 
         uint256 beforeBalance = usdc.balanceOf(address(bPool));
         // Time warp to default
         hevm.warp(block.timestamp + zero_loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
-        pat.triggerDefault(address(pool1), address(zero_loan), address(dlFactory));   // Triggers a "liquidation" that does not perform a swap
+        pat.triggerDefault(address(pool1), address(zero_loan), address(dlFactory1));   // Triggers a "liquidation" that does not perform a swap
 
         assertEq(pool1.principalOut(), depositAmt);
         assertEq(usdc.balanceOf(pool1.liquidityLocker()), 0);
 
-        uint256[7] memory claim = pat.claim(address(pool1), address(zero_loan), address(dlFactory));
+        uint256[7] memory claim = pat.claim(address(pool1), address(zero_loan), address(dlFactory1));
         assertEq(claim[0], 0);
         assertEq(claim[1], 0);
         assertEq(claim[2], 0);
@@ -132,12 +132,12 @@ contract PoolClaimTest is TestUtil {
         uint256 beforeLLBalance = usdc.balanceOf(pool1.liquidityLocker());
         (uint256 totalFundedAmount, uint256[] memory fundedAmounts) = getLoanFundedAmounts(beforeLLBalance, 8, uint256(4), uint256(4));
 
-        assertConstFundLoan(pool1, address(loan1), address(dlFactory),  fundedAmounts[0], usdc, CONST_POOL_VALUE);
-        assertConstFundLoan(pool1, address(loan1), address(dlFactory),  fundedAmounts[1], usdc, CONST_POOL_VALUE);
+        assertConstFundLoan(pool1, address(loan1), address(dlFactory1), fundedAmounts[0], usdc, CONST_POOL_VALUE);
+        assertConstFundLoan(pool1, address(loan1), address(dlFactory1), fundedAmounts[1], usdc, CONST_POOL_VALUE);
         assertConstFundLoan(pool1, address(loan1), address(dlFactory2), fundedAmounts[2], usdc, CONST_POOL_VALUE);
         assertConstFundLoan(pool1, address(loan1), address(dlFactory2), fundedAmounts[3], usdc, CONST_POOL_VALUE);
-        assertConstFundLoan(pool1, address(loan2), address(dlFactory),  fundedAmounts[4], usdc, CONST_POOL_VALUE);
-        assertConstFundLoan(pool1, address(loan2), address(dlFactory),  fundedAmounts[5], usdc, CONST_POOL_VALUE);
+        assertConstFundLoan(pool1, address(loan2), address(dlFactory1), fundedAmounts[4], usdc, CONST_POOL_VALUE);
+        assertConstFundLoan(pool1, address(loan2), address(dlFactory1), fundedAmounts[5], usdc, CONST_POOL_VALUE);
         assertConstFundLoan(pool1, address(loan2), address(dlFactory2), fundedAmounts[6], usdc, CONST_POOL_VALUE);
         assertConstFundLoan(pool1, address(loan2), address(dlFactory2), fundedAmounts[7], usdc, CONST_POOL_VALUE);
 
@@ -162,8 +162,8 @@ contract PoolClaimTest is TestUtil {
         /*** Pool Claim ***/
         /******************/
 
-        assertConstClaim(pool1, address(loan1), address(dlFactory),  usdc, CONST_POOL_VALUE);
-        assertConstClaim(pool1, address(loan2), address(dlFactory),  usdc, CONST_POOL_VALUE);
+        assertConstClaim(pool1, address(loan1), address(dlFactory1), usdc, CONST_POOL_VALUE);
+        assertConstClaim(pool1, address(loan2), address(dlFactory1), usdc, CONST_POOL_VALUE);
         assertConstClaim(pool1, address(loan2), address(dlFactory2), usdc, CONST_POOL_VALUE);
         assertConstClaim(pool1, address(loan1), address(dlFactory2), usdc, CONST_POOL_VALUE);
 
@@ -195,22 +195,22 @@ contract PoolClaimTest is TestUtil {
         uint256 beforeLLBalance = usdc.balanceOf(pool1.liquidityLocker());
         (uint256 totalFundedAmount,  uint256[] memory fundedAmounts)  = getLoanFundedAmounts(beforeLLBalance,  8, uint256(4), uint256(4));
 
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory),  fundedAmounts[0]));
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory),  fundedAmounts[1]));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), fundedAmounts[0]));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), fundedAmounts[1]));
         assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory2), fundedAmounts[2]));
         assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory2), fundedAmounts[3]));
 
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory),   fundedAmounts[4]));
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory),   fundedAmounts[5]));
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2),  fundedAmounts[6]));
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2),  fundedAmounts[7]));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory1), fundedAmounts[4]));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory1), fundedAmounts[5]));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), fundedAmounts[6]));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), fundedAmounts[7]));
 
         assertEq(pool1.principalOut(), totalFundedAmount);
         assertEq(usdc.balanceOf(pool1.liquidityLocker()), beforeLLBalance - totalFundedAmount);
 
-        DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory)));   // debtLocker1 = DebtLocker 1, for loan1 using dlFactory
+        DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory1)));  // debtLocker1 = DebtLocker 1, for loan1 using dlFactory1
         DebtLocker debtLocker2 = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory2)));  // debtLocker2 = DebtLocker 2, for loan1 using dlFactory2
-        DebtLocker debtLocker3 = DebtLocker(pool1.debtLockers(address(loan2), address(dlFactory)));   // debtLocker3 = DebtLocker 3, for loan2 using dlFactory
+        DebtLocker debtLocker3 = DebtLocker(pool1.debtLockers(address(loan2), address(dlFactory1)));  // debtLocker3 = DebtLocker 3, for loan2 using dlFactory1
         DebtLocker debtLocker4 = DebtLocker(pool1.debtLockers(address(loan2), address(dlFactory2)));  // debtLocker4 = DebtLocker 4, for loan2 using dlFactory2
 
         /*****************/
@@ -231,9 +231,9 @@ contract PoolClaimTest is TestUtil {
         /*** Pool Claim ***/
         /******************/
 
-        checkClaim(debtLocker1, loan1, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker1, loan1, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker2, loan1, pat, usdc, pool1, address(dlFactory2));
-        checkClaim(debtLocker3, loan2, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker3, loan2, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker4, loan2, pat, usdc, pool1, address(dlFactory2));
 
         /******************************/
@@ -250,9 +250,9 @@ contract PoolClaimTest is TestUtil {
         /*** Pool Claim ***/
         /******************/
 
-        checkClaim(debtLocker1, loan1, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker1, loan1, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker2, loan1, pat, usdc, pool1, address(dlFactory2));
-        checkClaim(debtLocker3, loan2, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker3, loan2, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker4, loan2, pat, usdc, pool1, address(dlFactory2));
 
         /*********************************/
@@ -266,9 +266,9 @@ contract PoolClaimTest is TestUtil {
         /*** Pool Claim ***/
         /******************/
 
-        checkClaim(debtLocker1, loan1, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker1, loan1, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker2, loan1, pat, usdc, pool1, address(dlFactory2));
-        checkClaim(debtLocker3, loan2, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker3, loan2, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker4, loan2, pat, usdc, pool1, address(dlFactory2));
 
         // Ensure both loans are matured.
@@ -310,24 +310,24 @@ contract PoolClaimTest is TestUtil {
             (uint256 totalFundedAmount2, uint256[] memory fundedAmounts2) = getLoanFundedAmounts(beforeLLBalance2, 6, uint256(2), uint256(4));
 
             // Pool 1 loan 1
-            assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory),  fundedAmounts[0]));
-            assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory),  fundedAmounts[1]));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), fundedAmounts[0]));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), fundedAmounts[1]));
             assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory2), fundedAmounts[2]));
             assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory2), fundedAmounts[3]));
 
             // Pool 2 loan 1
-            assertTrue(pam.try_fundLoan(address(pool2), address(loan1), address(dlFactory),  fundedAmounts2[0]));
+            assertTrue(pam.try_fundLoan(address(pool2), address(loan1), address(dlFactory1), fundedAmounts2[0]));
             assertTrue(pam.try_fundLoan(address(pool2), address(loan1), address(dlFactory2), fundedAmounts2[1]));
 
             // Pool 1 Loan 2
-            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory),  fundedAmounts[4]));
-            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory),  fundedAmounts[5]));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory1), fundedAmounts[4]));
+            assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory1), fundedAmounts[5]));
             assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), fundedAmounts[6]));
             assertTrue(pat.try_fundLoan(address(pool1), address(loan2), address(dlFactory2), fundedAmounts[7]));
 
             // Pool 2 loan 2
-            assertTrue(pam.try_fundLoan(address(pool2), address(loan2), address(dlFactory),  fundedAmounts2[2]));
-            assertTrue(pam.try_fundLoan(address(pool2), address(loan2), address(dlFactory),  fundedAmounts2[3]));
+            assertTrue(pam.try_fundLoan(address(pool2), address(loan2), address(dlFactory1), fundedAmounts2[2]));
+            assertTrue(pam.try_fundLoan(address(pool2), address(loan2), address(dlFactory1), fundedAmounts2[3]));
             assertTrue(pam.try_fundLoan(address(pool2), address(loan2), address(dlFactory2), fundedAmounts2[4]));
             assertTrue(pam.try_fundLoan(address(pool2), address(loan2), address(dlFactory2), fundedAmounts2[5]));
 
@@ -336,23 +336,23 @@ contract PoolClaimTest is TestUtil {
             assertEq(usdc.balanceOf(pool2.liquidityLocker()),          beforeLLBalance2 - totalFundedAmount2);
             assertEq(usdc.balanceOf(address(loan1.fundingLocker())),   fundedAmounts[0] + fundedAmounts[1] + fundedAmounts[2] + fundedAmounts[3] + fundedAmounts2[0] + fundedAmounts2[1]);   // Balance of loan fl
             assertEq(usdc.balanceOf(address(loan2.fundingLocker())),   fundedAmounts[4] + fundedAmounts[5] + fundedAmounts[6] + fundedAmounts[7] + fundedAmounts2[2] + fundedAmounts2[3] + fundedAmounts2[4] + fundedAmounts2[5]);  // Balance of loan2 fl
-            assertEq(loan1.balanceOf(getDL(pool1,  loan1, dlFactory)),  toWad(fundedAmounts[0]) + toWad(fundedAmounts[1]));    // Balance of debtLocker1 for pool1 with dlFactory
-            assertEq(loan1.balanceOf(getDL(pool1,  loan1, dlFactory2)), toWad(fundedAmounts[2]) + toWad(fundedAmounts[3]));    // Balance of debtLocker2 for pool1 with dlFactory2
-            assertEq(loan2.balanceOf(getDL(pool1,  loan2, dlFactory)),  toWad(fundedAmounts[4]) + toWad(fundedAmounts[5]));    // Balance of debtLocker3 for pool1 with dlFactory
-            assertEq(loan2.balanceOf(getDL(pool1,  loan2, dlFactory2)), toWad(fundedAmounts[6]) + toWad(fundedAmounts[7]));    // Balance of debtLocker4 for pool1 with dlFactory2
-            assertEq(loan1.balanceOf(getDL(pool2, loan1, dlFactory)),  toWad(fundedAmounts2[0]));                             // Balance of debtLocker1 for pool2 with dlFactory
+            assertEq(loan1.balanceOf(getDL(pool1, loan1, dlFactory1)), toWad(fundedAmounts[0]) + toWad(fundedAmounts[1]));    // Balance of debtLocker1 for pool1 with dlFactory1
+            assertEq(loan1.balanceOf(getDL(pool1, loan1, dlFactory2)), toWad(fundedAmounts[2]) + toWad(fundedAmounts[3]));    // Balance of debtLocker2 for pool1 with dlFactory2
+            assertEq(loan2.balanceOf(getDL(pool1, loan2, dlFactory1)), toWad(fundedAmounts[4]) + toWad(fundedAmounts[5]));    // Balance of debtLocker3 for pool1 with dlFactory1
+            assertEq(loan2.balanceOf(getDL(pool1, loan2, dlFactory2)), toWad(fundedAmounts[6]) + toWad(fundedAmounts[7]));    // Balance of debtLocker4 for pool1 with dlFactory2
+            assertEq(loan1.balanceOf(getDL(pool2, loan1, dlFactory1)), toWad(fundedAmounts2[0]));                             // Balance of debtLocker1 for pool2 with dlFactory1
             assertEq(loan1.balanceOf(getDL(pool2, loan1, dlFactory2)), toWad(fundedAmounts2[1]));                             // Balance of debtLocker2 for pool2 with dlFactory2
-            assertEq(loan2.balanceOf(getDL(pool2, loan2, dlFactory)),  toWad(fundedAmounts2[2]) + toWad(fundedAmounts2[3]));  // Balance of debtLocker3 for pool2 with dlFactory
+            assertEq(loan2.balanceOf(getDL(pool2, loan2, dlFactory1)), toWad(fundedAmounts2[2]) + toWad(fundedAmounts2[3]));  // Balance of debtLocker3 for pool2 with dlFactory1
             assertEq(loan2.balanceOf(getDL(pool2, loan2, dlFactory2)), toWad(fundedAmounts2[4]) + toWad(fundedAmounts2[5]));  // Balance of debtLocker4 for pool2 with dlFactory2
         }
 
-        DebtLocker debtLocker1_pool1 = DebtLocker(getDL(pool1,  loan1, dlFactory));   // debtLocker1_pool1 = DebtLocker 1, for pool1, for loan1 using dlFactory
-        DebtLocker debtLocker2_pool1 = DebtLocker(getDL(pool1,  loan1, dlFactory2));  // debtLocker2_pool1 = DebtLocker 2, for pool1, for loan1 using dlFactory2
-        DebtLocker debtLocker3_pool1 = DebtLocker(getDL(pool1,  loan2, dlFactory));   // debtLocker3_pool1 = DebtLocker 3, for pool1, for loan2 using dlFactory
-        DebtLocker debtLocker4_pool1 = DebtLocker(getDL(pool1,  loan2, dlFactory2));  // debtLocker4_pool1 = DebtLocker 4, for pool1, for loan2 using dlFactory2
-        DebtLocker debtLocker1_pool2 = DebtLocker(getDL(pool2, loan1, dlFactory));   // debtLocker1_pool2 = DebtLocker 1, for pool2, for loan1 using dlFactory
+        DebtLocker debtLocker1_pool1 = DebtLocker(getDL(pool1, loan1, dlFactory1));  // debtLocker1_pool1 = DebtLocker 1, for pool1, for loan1 using dlFactory1
+        DebtLocker debtLocker2_pool1 = DebtLocker(getDL(pool1, loan1, dlFactory2));  // debtLocker2_pool1 = DebtLocker 2, for pool1, for loan1 using dlFactory2
+        DebtLocker debtLocker3_pool1 = DebtLocker(getDL(pool1, loan2, dlFactory1));  // debtLocker3_pool1 = DebtLocker 3, for pool1, for loan2 using dlFactory1
+        DebtLocker debtLocker4_pool1 = DebtLocker(getDL(pool1, loan2, dlFactory2));  // debtLocker4_pool1 = DebtLocker 4, for pool1, for loan2 using dlFactory2
+        DebtLocker debtLocker1_pool2 = DebtLocker(getDL(pool2, loan1, dlFactory1));  // debtLocker1_pool2 = DebtLocker 1, for pool2, for loan1 using dlFactory1
         DebtLocker debtLocker2_pool2 = DebtLocker(getDL(pool2, loan1, dlFactory2));  // debtLocker2_pool2 = DebtLocker 2, for pool2, for loan1 using dlFactory2
-        DebtLocker debtLocker3_pool2 = DebtLocker(getDL(pool2, loan2, dlFactory));   // debtLocker3_pool2 = DebtLocker 3, for pool2, for loan2 using dlFactory
+        DebtLocker debtLocker3_pool2 = DebtLocker(getDL(pool2, loan2, dlFactory1));  // debtLocker3_pool2 = DebtLocker 3, for pool2, for loan2 using dlFactory1
         DebtLocker debtLocker4_pool2 = DebtLocker(getDL(pool2, loan2, dlFactory2));  // debtLocker4_pool2 = DebtLocker 4, for pool2, for loan2 using dlFactory2
 
         /*****************/
@@ -373,14 +373,14 @@ contract PoolClaimTest is TestUtil {
         /*** Pool Claim ***/
         /******************/
 
-        checkClaim(debtLocker1_pool1, loan1, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker1_pool1, loan1, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker2_pool1, loan1, pat, usdc, pool1, address(dlFactory2));
-        checkClaim(debtLocker3_pool1, loan2, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker3_pool1, loan2, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker4_pool1, loan2, pat, usdc, pool1, address(dlFactory2));
 
-        checkClaim(debtLocker1_pool2, loan1, pam, usdc, pool2, address(dlFactory));
+        checkClaim(debtLocker1_pool2, loan1, pam, usdc, pool2, address(dlFactory1));
         checkClaim(debtLocker2_pool2, loan1, pam, usdc, pool2, address(dlFactory2));
-        checkClaim(debtLocker3_pool2, loan2, pam, usdc, pool2, address(dlFactory));
+        checkClaim(debtLocker3_pool2, loan2, pam, usdc, pool2, address(dlFactory1));
         checkClaim(debtLocker4_pool2, loan2, pam, usdc, pool2, address(dlFactory2));
 
         /******************************/
@@ -397,14 +397,14 @@ contract PoolClaimTest is TestUtil {
         /*** Pool Claim ***/
         /******************/
 
-        checkClaim(debtLocker1_pool1, loan1, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker1_pool1, loan1, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker2_pool1, loan1, pat, usdc, pool1, address(dlFactory2));
-        checkClaim(debtLocker3_pool1, loan2, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker3_pool1, loan2, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker4_pool1, loan2, pat, usdc, pool1, address(dlFactory2));
 
-        checkClaim(debtLocker1_pool2, loan1, pam, usdc, pool2, address(dlFactory));
+        checkClaim(debtLocker1_pool2, loan1, pam, usdc, pool2, address(dlFactory1));
         checkClaim(debtLocker2_pool2, loan1, pam, usdc, pool2, address(dlFactory2));
-        checkClaim(debtLocker3_pool2, loan2, pam, usdc, pool2, address(dlFactory));
+        checkClaim(debtLocker3_pool2, loan2, pam, usdc, pool2, address(dlFactory1));
         checkClaim(debtLocker4_pool2, loan2, pam, usdc, pool2, address(dlFactory2));
 
         /*********************************/
@@ -418,14 +418,14 @@ contract PoolClaimTest is TestUtil {
         /*** Pool Claim ***/
         /******************/
 
-        checkClaim(debtLocker1_pool1, loan1, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker1_pool1, loan1, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker2_pool1, loan1, pat, usdc, pool1, address(dlFactory2));
-        checkClaim(debtLocker3_pool1, loan2, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker3_pool1, loan2, pat, usdc, pool1, address(dlFactory1));
         checkClaim(debtLocker4_pool1, loan2, pat, usdc, pool1, address(dlFactory2));
 
-        checkClaim(debtLocker1_pool2, loan1, pam, usdc, pool2, address(dlFactory));
+        checkClaim(debtLocker1_pool2, loan1, pam, usdc, pool2, address(dlFactory1));
         checkClaim(debtLocker2_pool2, loan1, pam, usdc, pool2, address(dlFactory2));
-        checkClaim(debtLocker3_pool2, loan2, pam, usdc, pool2, address(dlFactory));
+        checkClaim(debtLocker3_pool2, loan2, pam, usdc, pool2, address(dlFactory1));
         checkClaim(debtLocker4_pool2, loan2, pam, usdc, pool2, address(dlFactory2));
 
         // Ensure both loans are matured.
@@ -451,8 +451,8 @@ contract PoolClaimTest is TestUtil {
 
         mintFundsAndDepositIntoPool(leo, pool1, 2_000_000_000 * USD, depositAmt);
 
-        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), depositAmt);
-        assertTrue(pool1.debtLockers(address(loan1), address(dlFactory)) != address(0));
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory1), depositAmt);
+        assertTrue(pool1.debtLockers(address(loan1), address(dlFactory1)) != address(0));
         assertEq(pool1.principalOut(), depositAmt);
 
         /*****************/
@@ -473,7 +473,7 @@ contract PoolClaimTest is TestUtil {
 
         leo.approve(USDC, address(this), MAX_UINT);
 
-        DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory)));
+        DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory1)));
 
         uint256 poolBal_before       = usdc.balanceOf(address(pool1));
         uint256 debtLockerBal_before = usdc.balanceOf(address(debtLocker1));
@@ -495,7 +495,7 @@ contract PoolClaimTest is TestUtil {
         poolBal_before       = poolBal_after;
         debtLockerBal_before = debtLockerBal_after;
 
-        checkClaim(debtLocker1, loan1, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker1, loan1, pat, usdc, pool1, address(dlFactory1));
 
         poolBal_after       = usdc.balanceOf(address(pool1));
         debtLockerBal_after = usdc.balanceOf(address(debtLocker1));
@@ -521,7 +521,7 @@ contract PoolClaimTest is TestUtil {
         poolBal_before       = usdc.balanceOf(address(pool1));
         debtLockerBal_before = usdc.balanceOf(address(debtLocker1));
 
-        checkClaim(debtLocker1, loan1, pat, usdc, pool1, address(dlFactory));
+        checkClaim(debtLocker1, loan1, pat, usdc, pool1, address(dlFactory1));
 
         poolBal_after       = usdc.balanceOf(address(pool1));
         debtLockerBal_after = usdc.balanceOf(address(debtLocker1));
@@ -642,7 +642,7 @@ contract PoolClaimTest is TestUtil {
 
         uint256 beforePrincipalOut = pool.principalOut();
         uint256 beforeInterestSum  = pool.interestSum();
-        uint256[7] memory claim = pd.claim(address(pool), address(_loan),   address(dlFactory));
+        uint256[7] memory claim    = pd.claim(address(pool), address(_loan), address(dlFactory));
 
         // Updated DL state variables
         debtLockerData[4] = debtLocker.lastInterestPaid();

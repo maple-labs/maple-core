@@ -61,59 +61,59 @@ contract TestUtil is DSTest {
     /***********************/
     /*** Protocol Actors ***/
     /***********************/
-    Borrower      bob;
-    Borrower      ben;
-    Borrower      bud;
+    Borrower     bob;
+    Borrower     ben;
+    Borrower     bud;
 
-    Commoner      cam;
+    Commoner     cam;
 
-    Farmer        fay;
-    Farmer        fez;
-    Farmer        fox;
+    Farmer       fay;
+    Farmer       fez;
+    Farmer       fox;
 
-    Holder        hal;
-    Holder        hue;
+    Holder       hal;
+    Holder       hue;
 
-    LP            leo;
-    LP            liz;
-    LP            lex;
-    LP            lee;
+    LP           leo;
+    LP           liz;
+    LP           lex;
+    LP           lee;
 
-    PoolDelegate  pat;
-    PoolDelegate  pam;
+    PoolDelegate pat;
+    PoolDelegate pam;
 
-    Staker        sam;
-    Staker        sid;
-    Staker        sue;
+    Staker       sam;
+    Staker       sid;
+    Staker       sue;
 
     /**************************/
     /*** Multisig Addresses ***/
     /**************************/
-    Governor                   gov;
-    Governor               fakeGov;
-    SecurityAdmin    securityAdmin;
-    EmergencyAdmin  emergencyAdmin;
+    Governor                  gov;
+    Governor              fakeGov;
+    SecurityAdmin   securityAdmin;
+    EmergencyAdmin emergencyAdmin;
 
     /*******************/
     /*** Calculators ***/
     /*******************/
-    LateFeeCalc      lateFeeCalc;
-    PremiumCalc      premiumCalc;
-    RepaymentCalc  repaymentCalc;
-    address[3]             calcs;
+    LateFeeCalc     lateFeeCalc;
+    PremiumCalc     premiumCalc;
+    RepaymentCalc repaymentCalc;
+    address[3]            calcs;
 
     /*****************/
     /*** Factories ***/
     /*****************/
-    CollateralLockerFactory          clFactory;
-    DebtLockerFactory                dlFactory;
-    DebtLockerFactory               dlFactory2;
-    FundingLockerFactory             flFactory;
-    LiquidityLockerFactory           llFactory;
-    LoanFactory                    loanFactory;
-    PoolFactory                    poolFactory;
-    StakeLockerFactory               slFactory;
-    MplRewardsFactory        mplRewardsFactory;
+    CollateralLockerFactory         clFactory;
+    DebtLockerFactory              dlFactory1;
+    DebtLockerFactory              dlFactory2;
+    FundingLockerFactory            flFactory;
+    LiquidityLockerFactory          llFactory;
+    LoanFactory                   loanFactory;
+    PoolFactory                   poolFactory;
+    StakeLockerFactory              slFactory;
+    MplRewardsFactory       mplRewardsFactory;
 
     /***********************/
     /*** Maple Contracts ***/
@@ -128,25 +128,25 @@ contract TestUtil is DSTest {
     /***************/
     /*** Oracles ***/
     /***************/
-    ChainlinkOracle  wethOracle;
-    ChainlinkOracle  wbtcOracle;
-    ChainlinkOracle   daiOracle;
-    UsdOracle         usdOracle;
+    ChainlinkOracle wethOracle;
+    ChainlinkOracle wbtcOracle;
+    ChainlinkOracle  daiOracle;
+    UsdOracle        usdOracle;
 
     /*************/
     /*** Loans ***/
     /*************/
-    Loan  loan1;
-    Loan  loan2;
-    Loan  loan3;
-    Loan  loan4;
+    Loan loan1;
+    Loan loan2;
+    Loan loan3;
+    Loan loan4;
 
     /*************/
     /*** Pools ***/
     /*************/
-    Pool  pool1;
-    Pool  pool2;
-    Pool  pool3;
+    Pool pool1;
+    Pool pool2;
+    Pool pool3;
 
     /***************/
     /*** Lockers ***/
@@ -157,11 +157,11 @@ contract TestUtil is DSTest {
     /**********************************/
     /*** Mainnet Contract Addresses ***/
     /**********************************/
-    address constant DAI   = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address constant USDC  = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
-    address constant CDAI  = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
+    address constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address constant CDAI = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
 
     IERC20 constant dai  = IERC20(DAI);
     IERC20 constant usdc = IERC20(USDC);
@@ -315,7 +315,7 @@ contract TestUtil is DSTest {
     function createPoolFactory()             public { poolFactory = new PoolFactory(address(globals)); }
     function createStakeLockerFactory()      public { slFactory   = new StakeLockerFactory(); }
     function createLiquidityLockerFactory()  public { llFactory   = new LiquidityLockerFactory(); }
-    function createDebtLockerFactories()     public { dlFactory   = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
+    function createDebtLockerFactories()     public { dlFactory1  = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
     function createLoanFactory()             public { loanFactory = new LoanFactory(address(globals)); }
     function createCollateralLockerFactory() public { clFactory   = new CollateralLockerFactory(); }
     function createFundingLockerFactory()    public { flFactory   = new FundingLockerFactory(); }
@@ -332,7 +332,7 @@ contract TestUtil is DSTest {
         gov.setValidPoolFactory(address(poolFactory), true);
         gov.setValidSubFactory( address(poolFactory), address(slFactory),  true);
         gov.setValidSubFactory( address(poolFactory), address(llFactory),  true);
-        gov.setValidSubFactory( address(poolFactory), address(dlFactory),  true);
+        gov.setValidSubFactory( address(poolFactory), address(dlFactory1), true);
         gov.setValidSubFactory( address(poolFactory), address(dlFactory2), true);
 
         gov.setValidLoanFactory(address(loanFactory), true);
@@ -705,7 +705,7 @@ contract TestUtil is DSTest {
             loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, _calcs);
         }
 
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), loanAmt));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), loanAmt));
 
         {
             uint256 cReq = loan1.collateralRequiredForDrawdown(loanAmt);  // wETH required for 1_000 USDC drawdown on loan
@@ -786,7 +786,7 @@ contract TestUtil is DSTest {
         leo.deposit(address(pool1), 10_000_000 * USD);
 
         // Fund the loan
-        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 1_000_000 * USD);
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory1), 1_000_000 * USD);
         uint cReq = loan1.collateralRequiredForDrawdown(1_000_000 * USD);
 
         // Drawdown loan
@@ -806,7 +806,7 @@ contract TestUtil is DSTest {
         hevm.warp(start + nextPaymentDue + defaultGracePeriod + 1);
 
         // Trigger default
-        pat.triggerDefault(address(pool1), address(loan1), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(loan1), address(dlFactory1));
     }
 
     function make_withdrawable(LP investor, Pool pool) internal {

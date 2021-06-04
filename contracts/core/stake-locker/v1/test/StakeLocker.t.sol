@@ -347,10 +347,10 @@ contract StakeLockerTest is TestUtil {
 
     function setUpLoanAndRepay() public {
         mint("USDC", address(leo), 10_000_000 * USD);  // Mint USDC to LP
-        leo.approve(USDC, address(pool1), MAX_UINT);    // LP approves USDC
+        leo.approve(USDC, address(pool1), MAX_UINT);   // LP approves USDC
 
-        leo.deposit(address(pool1), 10_000_000 * USD);                                       // LP deposits 10m USDC to Pool
-        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
+        leo.deposit(address(pool1), 10_000_000 * USD);                                        // LP deposits 10m USDC to Pool
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory1), 10_000_000 * USD);  // PD funds loan for 10m USDC
 
         uint256 cReq = loan1.collateralRequiredForDrawdown(10_000_000 * USD);  // WETH required for 100_000_000 USDC drawdown on loan
         mint("WETH", address(bob), cReq);                                      // Mint WETH to borrower
@@ -361,7 +361,7 @@ contract StakeLockerTest is TestUtil {
         bob.approve(USDC, address(loan1), MAX_UINT);   // Borrower approves USDC
         bob.makeFullPayment(address(loan1));           // Borrower makes full payment, which includes interest
 
-        pat.claim(address(pool1), address(loan1), address(dlFactory));  // PD claims interest, distributing funds to stakeLocker
+        pat.claim(address(pool1), address(loan1), address(dlFactory1));  // PD claims interest, distributing funds to stakeLocker
     }
 
     function test_unstake(uint256 stakeAmount) public {
@@ -480,7 +480,7 @@ contract StakeLockerTest is TestUtil {
         assertEq(bptLosses.pre,                                0);  // Claim hasn't been made yet - losses   not realized
         assertEq(recognizableLossesOf.pre,                     0);  // Claim hasn't been made yet - losses   not realized
 
-        pat.claim(address(pool1), address(loan1), address(dlFactory));  // Pool Delegate claims funds, updating accounting for interest and losses from Loan
+        pat.claim(address(pool1), address(loan1), address(dlFactory1));  // Pool Delegate claims funds, updating accounting for interest and losses from Loan
 
         // Post-claim FDT and StakeLocker checks (Sam only)
         stakeLockerBal.post       = bPool.balanceOf(address(stakeLocker1));
