@@ -153,7 +153,7 @@ contract PoolTest is TestUtil {
         
         // Mint 100 USDC into this LP account
         uint256 startDate  = block.timestamp;
-        uint256 depositAmt = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
+        depositAmt         = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
         mintFundsAndDepositIntoPool(leo, pool, 20_000_000 * USD, depositAmt);
     
         assertEq(pool.depositDate(address(leo)), startDate);
@@ -178,7 +178,7 @@ contract PoolTest is TestUtil {
 
         // Deposit 100 USDC on first day
         uint256 startDate = block.timestamp;
-        uint256 depositAmt = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
+        depositAmt        = constrictToRange(depositAmt, 100 * USD, 10_000_000 * USD, true);
 
         // Mint 200 USDC into this LP account
         mintFundsAndDepositIntoPool(leo, pool, 20_000_000 * USD, depositAmt);

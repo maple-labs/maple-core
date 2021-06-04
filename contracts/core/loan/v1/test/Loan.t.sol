@@ -300,7 +300,7 @@ contract LoanTest is TestUtil {
 
         // NOTE: Do not need to hevm.warp in this test because payments can be made whenever as long as they are before the nextPaymentDue
 
-        uint256 numPayments = loan.paymentsRemaining();
+        uint256 _numPayments = loan.paymentsRemaining();
         // Approve 1st of 3 payments.
         (uint256 total, uint256 principal, uint256 interest, uint256 due,) = loan.getNextPayment();
         if(total == 0 && interest == 0) return;  // If fuzz params cause payments to be so small they round to zero, skip fuzz iteration
@@ -318,7 +318,7 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      0,
             loanBalance:       loanPreBal,
-            paymentsRemaining: numPayments,
+            paymentsRemaining: _numPayments,
             nextPaymentDue:    due
         });
 
@@ -340,13 +340,13 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      interest,
             loanBalance:       loanPreBal + interest,
-            paymentsRemaining: numPayments - 1,
+            paymentsRemaining: _numPayments - 1,
             nextPaymentDue:    due
         });
 
-        // Approve numPayments - 1.
-        for (uint256 i = 2; i <= numPayments - 1; i++) {
-            repetitivePayment(loan, numPayments, i, drawdownAmount, loanPreBal, uint256(0));
+        // Approve _numPayments - 1.
+        for (uint256 i = 2; i <= _numPayments - 1; i++) {
+            repetitivePayment(loan, _numPayments, i, drawdownAmount, loanPreBal, uint256(0));
         }
         
         // Approve last payment.
@@ -368,8 +368,8 @@ contract LoanTest is TestUtil {
             loanState:         2,
             principalOwed:     0,
             principalPaid:     principal,
-            interestPaid:      interest * numPayments,
-            loanBalance:       loanPreBal + interest * numPayments + principal,
+            interestPaid:      interest * _numPayments,
+            loanBalance:       loanPreBal + interest * _numPayments + principal,
             paymentsRemaining: 0,
             nextPaymentDue:    0
         });
@@ -403,7 +403,7 @@ contract LoanTest is TestUtil {
         // Approve collateral and drawdown loan.
         uint256 reqCollateral = drawdown(loan, drawdownAmount);
         uint256 loanPreBal    = usdc.balanceOf(address(loan));  // Accounts for excess and fees from drawdown
-        uint256 numPayments   = loan.paymentsRemaining();
+        uint256 _numPayments  = loan.paymentsRemaining();
 
         // Approve 1st of 3 payments.
         (uint256 total, uint256 principal, uint256 interest, uint256 due,) = loan.getNextPayment();
@@ -422,7 +422,7 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      0,
             loanBalance:       loanPreBal,
-            paymentsRemaining: numPayments,
+            paymentsRemaining: _numPayments,
             nextPaymentDue:    due
         });
 
@@ -439,15 +439,15 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      interest,
             loanBalance:       loanPreBal + interest,
-            paymentsRemaining: numPayments - 1,
+            paymentsRemaining: _numPayments - 1,
             nextPaymentDue:    due
         });
 
-        // Approve numPayments - 1.
-        for (uint256 i = 1; i < numPayments - 1; i++) {
+        // Approve _numPayments - 1.
+        for (uint256 i = 1; i < _numPayments - 1; i++) {
             // Warp to 1 second after next payment is due (payment is late)
             hevm.warp(loan.nextPaymentDue() + 1);
-            repetitivePayment(loan, numPayments, i, drawdownAmount, loanPreBal, interest);
+            repetitivePayment(loan, _numPayments, i, drawdownAmount, loanPreBal, interest);
         }
 
         uint256 interest_late;
@@ -474,8 +474,8 @@ contract LoanTest is TestUtil {
             loanState:         2,
             principalOwed:     0,
             principalPaid:     principal,
-            interestPaid:      interest + interest_late * (numPayments - 1),
-            loanBalance:       loanPreBal + interest + interest_late * (numPayments - 1) + principal,
+            interestPaid:      interest + interest_late * (_numPayments - 1),
+            loanBalance:       loanPreBal + interest + interest_late * (_numPayments - 1) + principal,
             paymentsRemaining: 0,
             nextPaymentDue:    0
         });
@@ -776,7 +776,7 @@ contract LoanTest is TestUtil {
         // Below is the way of catering two scenarios
         // 1. When there is no late payment so interest paid will be a multiple of `numPayments`.
         // 2. If there is a late payment then needs to handle the situation where interest paid is `interest (without late fee) + interest (late fee) * numPayments`.
-        numPayments = oldInterest == uint256(0) ? numPayments - paymentCount : numPayments - paymentCount - 1;
+        uint256 _numPayments = oldInterest == uint256(0) ? numPayments - paymentCount : numPayments - paymentCount - 1;
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
 
@@ -790,7 +790,7 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      oldInterest + (interest * paymentCount),
             loanBalance:       loanPreBal  + oldInterest + (interest * paymentCount),
-            paymentsRemaining: numPayments,
+            paymentsRemaining: _numPayments,
             nextPaymentDue:    due
         });
     }
