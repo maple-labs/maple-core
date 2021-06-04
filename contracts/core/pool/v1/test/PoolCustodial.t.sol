@@ -50,15 +50,15 @@ contract PoolCustodialTest is TestUtil {
         mplEarnings_fox.pre = mplEarnings_fox.post;
 
         // Update post state
-        principalOut       = pool.principalOut();
-        liquidityLockerBal = usdc.balanceOf(pool.liquidityLocker());
-        fdtTotalSupply     = pool.totalSupply();
-        interestSum        = pool.interestSum();
-        poolLosses         = pool.poolLosses();
+        principalOut       = pool1.principalOut();
+        liquidityLockerBal = usdc.balanceOf(pool1.liquidityLocker());
+        fdtTotalSupply     = pool1.totalSupply();
+        interestSum        = pool1.interestSum();
+        poolLosses         = pool1.poolLosses();
 
-        withdrawableFundsOf_fay.post = pool.withdrawableFundsOf(address(fay));
-        withdrawableFundsOf_fez.post = pool.withdrawableFundsOf(address(fez));
-        withdrawableFundsOf_fox.post = pool.withdrawableFundsOf(address(fox));
+        withdrawableFundsOf_fay.post = pool1.withdrawableFundsOf(address(fay));
+        withdrawableFundsOf_fez.post = pool1.withdrawableFundsOf(address(fez));
+        withdrawableFundsOf_fox.post = pool1.withdrawableFundsOf(address(fox));
 
         mplEarnings_fay.post = mplRewards.earned(address(fay));
         mplEarnings_fez.post = mplRewards.earned(address(fez));
@@ -78,10 +78,10 @@ contract PoolCustodialTest is TestUtil {
         /**********************************************************************/
         setUpFarming(300_000 * WAD, 180 days);
 
-        mintFundsAndDepositIntoPool(fay, pool, depositAmt1, depositAmt1);
+        mintFundsAndDepositIntoPool(fay, pool1, depositAmt1, depositAmt1);
         stakeIntoFarm(fay, toWad(depositAmt1));
 
-        mintFundsAndDepositIntoPool(fez, pool, depositAmt2, depositAmt2);
+        mintFundsAndDepositIntoPool(fez, pool1, depositAmt2, depositAmt2);
         stakeIntoFarm(fez, toWad(depositAmt2));
 
         uint256 totalDeposits = depositAmt1 + depositAmt2;
@@ -105,11 +105,11 @@ contract PoolCustodialTest is TestUtil {
         {
             uint256[5] memory specs = [500, 180, 30, totalDeposits, 2000];
             createLoan(specs);
-            pat.fundLoan(address(pool), address(loan1), address(dlFactory), totalDeposits);
+            pat.fundLoan(address(pool1), address(loan1), address(dlFactory), totalDeposits);
             drawdown(loan1, bob, totalDeposits);
             hevm.warp(loan1.nextPaymentDue());  // Will affect yield farming
             doPartialLoanPayment(loan1, bob);
-            pat.claim(address(pool), address(loan1), address(dlFactory));
+            pat.claim(address(pool1), address(loan1), address(dlFactory));
         }
 
         // Update variables to reflect change in accounting from last dTime
@@ -144,7 +144,7 @@ contract PoolCustodialTest is TestUtil {
         /***********************************************************/
         /*** Fox deposits into the pool and starts yield farming ***/
         /***********************************************************/
-        mintFundsAndDepositIntoPool(fox, pool, depositAmt3, depositAmt3);
+        mintFundsAndDepositIntoPool(fox, pool1, depositAmt3, depositAmt3);
         stakeIntoFarm(fox, toWad(depositAmt3));
 
         totalDeposits = totalDeposits + depositAmt3;
@@ -154,7 +154,7 @@ contract PoolCustodialTest is TestUtil {
         /********************************************/
         hevm.warp(loan1.nextPaymentDue() - 6 hours);  // Will affect yield farming (using a different timestamp just for the sake of yield farming assertions)
         doPartialLoanPayment(loan1, bob);
-        pat.claim(address(pool), address(loan1), address(dlFactory));
+        pat.claim(address(pool1), address(loan1), address(dlFactory));
 
         // Update variables to reflect change in accounting from last dTime
         updateState();
@@ -194,10 +194,10 @@ contract PoolCustodialTest is TestUtil {
         custodyAmt1 = constrictToRange(custodyAmt1,  40, depositAmt / 2, true);  // $1 - half of deposit
         custodyAmt2 = constrictToRange(custodyAmt2,  40, depositAmt / 2, true);  // $1 - half of deposit
 
-        mintFundsAndDepositIntoPool(fay, pool, depositAmt * USD, depositAmt * USD);
-        mintFundsAndDepositIntoPool(fez, pool, depositAmt * USD, depositAmt * USD);
+        mintFundsAndDepositIntoPool(fay, pool1, depositAmt * USD, depositAmt * USD);
+        mintFundsAndDepositIntoPool(fez, pool1, depositAmt * USD, depositAmt * USD);
 
-        pat.setLockupPeriod(address(pool), 0);
+        pat.setLockupPeriod(address(pool1), 0);
 
         // Convert all amounts to WAD, USD not needed for the rest of the test
         depositAmt  *= WAD;
@@ -205,35 +205,35 @@ contract PoolCustodialTest is TestUtil {
         custodyAmt2 *= WAD;
 
         // Testing failure modes with Fay
-        assertTrue(!fay.try_increaseCustodyAllowance(address(pool), address(0),              depositAmt));  // P:INVALID_ADDRESS
-        assertTrue(!fay.try_increaseCustodyAllowance(address(pool), address(custodian1),              0));  // P:INVALID_AMT
-        assertTrue(!fay.try_increaseCustodyAllowance(address(pool), address(custodian1), depositAmt + 1));  // P:INSUF_BALANCE
-        assertTrue( fay.try_increaseCustodyAllowance(address(pool), address(custodian1),     depositAmt));  // Fay can custody entire balance
+        assertTrue(!fay.try_increaseCustodyAllowance(address(pool1), address(0),              depositAmt));  // P:INVALID_ADDRESS
+        assertTrue(!fay.try_increaseCustodyAllowance(address(pool1), address(custodian1),              0));  // P:INVALID_AMT
+        assertTrue(!fay.try_increaseCustodyAllowance(address(pool1), address(custodian1), depositAmt + 1));  // P:INSUF_BALANCE
+        assertTrue( fay.try_increaseCustodyAllowance(address(pool1), address(custodian1),     depositAmt));  // Fay can custody entire balance
 
         // Testing state transition and transfers with Fez
-        assertEq(pool.custodyAllowance(address(fez), address(custodian1)), 0);
-        assertEq(pool.totalCustodyAllowance(address(fez)),                 0);
+        assertEq(pool1.custodyAllowance(address(fez), address(custodian1)), 0);
+        assertEq(pool1.totalCustodyAllowance(address(fez)),                 0);
 
-        fez.increaseCustodyAllowance(address(pool), address(custodian1), custodyAmt1);
+        fez.increaseCustodyAllowance(address(pool1), address(custodian1), custodyAmt1);
 
-        assertEq(pool.custodyAllowance(address(fez), address(custodian1)), custodyAmt1);  // Fez gives custody to custodian 1
-        assertEq(pool.totalCustodyAllowance(address(fez)),                 custodyAmt1);  // Total custody allowance goes up
+        assertEq(pool1.custodyAllowance(address(fez), address(custodian1)), custodyAmt1);  // Fez gives custody to custodian 1
+        assertEq(pool1.totalCustodyAllowance(address(fez)),                 custodyAmt1);  // Total custody allowance goes up
 
-        fez.increaseCustodyAllowance(address(pool), address(custodian2), custodyAmt2);
+        fez.increaseCustodyAllowance(address(pool1), address(custodian2), custodyAmt2);
 
-        assertEq(pool.custodyAllowance(address(fez), address(custodian2)),               custodyAmt2);  // Fez gives custody to custodian 2
-        assertEq(pool.totalCustodyAllowance(address(fez)),                 custodyAmt1 + custodyAmt2);  // Total custody allowance goes up
+        assertEq(pool1.custodyAllowance(address(fez), address(custodian2)),               custodyAmt2);  // Fez gives custody to custodian 2
+        assertEq(pool1.totalCustodyAllowance(address(fez)),                 custodyAmt1 + custodyAmt2);  // Total custody allowance goes up
 
         uint256 transferableAmt = depositAmt - custodyAmt1 - custodyAmt2;
 
-        assertEq(pool.balanceOf(address(fez)), depositAmt);
-        assertEq(pool.balanceOf(address(fox)),          0);
+        assertEq(pool1.balanceOf(address(fez)), depositAmt);
+        assertEq(pool1.balanceOf(address(fox)),          0);
 
-        assertTrue(!fez.try_transfer(address(pool), address(fox), transferableAmt + 1));  // Fez cannot transfer more than balance - totalCustodyAllowance
-        assertTrue( fez.try_transfer(address(pool), address(fox),     transferableAmt));  // Fez can transfer transferableAmt
+        assertTrue(!fez.try_transfer(address(pool1), address(fox), transferableAmt + 1));  // Fez cannot transfer more than balance - totalCustodyAllowance
+        assertTrue( fez.try_transfer(address(pool1), address(fox),     transferableAmt));  // Fez can transfer transferableAmt
 
-        assertEq(pool.balanceOf(address(fez)), depositAmt - transferableAmt);
-        assertEq(pool.balanceOf(address(fox)), transferableAmt);
+        assertEq(pool1.balanceOf(address(fez)), depositAmt - transferableAmt);
+        assertEq(pool1.balanceOf(address(fox)), transferableAmt);
     }
 
     function test_custody_and_withdraw(uint256 depositAmt, uint256 custodyAmt) public {
@@ -242,28 +242,28 @@ contract PoolCustodialTest is TestUtil {
         depositAmt = constrictToRange(depositAmt, 1, 1E9,        true);  // $1 - $1b
         custodyAmt = constrictToRange(custodyAmt, 1, depositAmt, true);  // $1 - deposit
 
-        mintFundsAndDepositIntoPool(fez, pool, depositAmt * USD, depositAmt * USD);
+        mintFundsAndDepositIntoPool(fez, pool1, depositAmt * USD, depositAmt * USD);
 
-        pat.setLockupPeriod(address(pool), 0);
+        pat.setLockupPeriod(address(pool1), 0);
 
-        assertEq(pool.custodyAllowance(address(fez), address(custodian)), 0);
-        assertEq(pool.totalCustodyAllowance(address(fez)),                0);
+        assertEq(pool1.custodyAllowance(address(fez), address(custodian)), 0);
+        assertEq(pool1.totalCustodyAllowance(address(fez)),                0);
 
-        fez.increaseCustodyAllowance(address(pool), address(custodian), custodyAmt * WAD);
+        fez.increaseCustodyAllowance(address(pool1), address(custodian), custodyAmt * WAD);
 
-        assertEq(pool.custodyAllowance(address(fez), address(custodian)), custodyAmt * WAD);
-        assertEq(pool.totalCustodyAllowance(address(fez)),                custodyAmt * WAD);
+        assertEq(pool1.custodyAllowance(address(fez), address(custodian)), custodyAmt * WAD);
+        assertEq(pool1.totalCustodyAllowance(address(fez)),                custodyAmt * WAD);
 
         uint256 withdrawableAmt = (depositAmt - custodyAmt) * USD;
 
-        assertEq(pool.balanceOf(address(fez)), depositAmt * WAD);
+        assertEq(pool1.balanceOf(address(fez)), depositAmt * WAD);
 
-        make_withdrawable(fez, pool);
+        make_withdrawable(fez, pool1);
 
-        assertTrue(!fez.try_withdraw(address(pool), withdrawableAmt + 1));
-        assertTrue( fez.try_withdraw(address(pool),     withdrawableAmt));
+        assertTrue(!fez.try_withdraw(address(pool1), withdrawableAmt + 1));
+        assertTrue( fez.try_withdraw(address(pool1),     withdrawableAmt));
 
-        assertEq(pool.balanceOf(address(fez)), custodyAmt * WAD);
+        assertEq(pool1.balanceOf(address(fez)), custodyAmt * WAD);
         assertEq(usdc.balanceOf(address(fez)), withdrawableAmt);
     }
 
@@ -273,22 +273,22 @@ contract PoolCustodialTest is TestUtil {
         depositAmt  = constrictToRange(depositAmt, 1, 1E9,        true);  // $1 - $1b
         custodyAmt  = constrictToRange(custodyAmt, 1, depositAmt, true);  // $1 - deposit
 
-        mintFundsAndDepositIntoPool(fay, pool, depositAmt * USD, depositAmt * USD);
+        mintFundsAndDepositIntoPool(fay, pool1, depositAmt * USD, depositAmt * USD);
 
         depositAmt  *= WAD;
         custodyAmt  *= WAD;
 
-        fay.increaseCustodyAllowance(address(pool), address(custodian), custodyAmt);
+        fay.increaseCustodyAllowance(address(pool1), address(custodian), custodyAmt);
 
-        assertEq(pool.custodyAllowance(address(fay), address(custodian)), custodyAmt);  // Fay gives custody to custodian
-        assertEq(pool.totalCustodyAllowance(address(fay)),                custodyAmt);  // Total custody allowance goes up
+        assertEq(pool1.custodyAllowance(address(fay), address(custodian)), custodyAmt);  // Fay gives custody to custodian
+        assertEq(pool1.totalCustodyAllowance(address(fay)),                custodyAmt);  // Total custody allowance goes up
 
-        assertTrue(!custodian.try_transferByCustodian(address(pool), address(fay), address(fox),     custodyAmt));  // P:INVALID_RECEIVER
-        assertTrue(!custodian.try_transferByCustodian(address(pool), address(fay), address(fay),              0));  // P:INVALID_AMT
-        assertTrue(!custodian.try_transferByCustodian(address(pool), address(fay), address(fay), custodyAmt + 1));  // P:INSUF_ALLOWANCE
-        assertTrue( custodian.try_transferByCustodian(address(pool), address(fay), address(fay),     custodyAmt));  // Able to transfer custody amount back
+        assertTrue(!custodian.try_transferByCustodian(address(pool1), address(fay), address(fox),     custodyAmt));  // P:INVALID_RECEIVER
+        assertTrue(!custodian.try_transferByCustodian(address(pool1), address(fay), address(fay),              0));  // P:INVALID_AMT
+        assertTrue(!custodian.try_transferByCustodian(address(pool1), address(fay), address(fay), custodyAmt + 1));  // P:INSUF_ALLOWANCE
+        assertTrue( custodian.try_transferByCustodian(address(pool1), address(fay), address(fay),     custodyAmt));  // Able to transfer custody amount back
 
-        assertEq(pool.custodyAllowance(address(fay), address(custodian)), 0);  // Custodian allowance has been reduced
-        assertEq(pool.totalCustodyAllowance(address(fay)),                0);  // Total custody allowance has been reduced, giving Fay access to funds again
+        assertEq(pool1.custodyAllowance(address(fay), address(custodian)), 0);  // Custodian allowance has been reduced
+        assertEq(pool1.totalCustodyAllowance(address(fay)),                0);  // Total custody allowance has been reduced, giving Fay access to funds again
     }
 }

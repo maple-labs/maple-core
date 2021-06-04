@@ -52,16 +52,16 @@ contract PoolFDTLossesTest is TestUtil {
         uint256 numPayments,
         uint256 requestAmount
     ) public {
-        uint256 minimumRequestAmt = PoolLib.getSwapOutValueLocker(address(bPool), USDC, address(pool.stakeLocker()));
+        uint256 minimumRequestAmt = PoolLib.getSwapOutValueLocker(address(bPool), USDC, address(pool1.stakeLocker()));
 
         // Create Loan with 0% CR, so no claimable funds are present after default, and a deposit amount from arguments
         (Loan custom_loan, uint256 depositAmt) = createLoanForLossesAndGetDepositAmount(apr, index, numPayments, requestAmount, 0, minimumRequestAmt);
 
         // Lex is putting up the funds into the Pool.
-        mintFundsAndDepositIntoPool(leo, pool, depositAmt, depositAmt);
+        mintFundsAndDepositIntoPool(leo, pool1, depositAmt, depositAmt);
 
         // Fund the loan by the pool delegate.
-        pat.fundLoan(address(pool), address(custom_loan), address(dlFactory), depositAmt);
+        pat.fundLoan(address(pool1), address(custom_loan), address(dlFactory), depositAmt);
 
         // Drawdown of the loan.
         drawdown(custom_loan, bob, depositAmt);
@@ -71,14 +71,14 @@ contract PoolFDTLossesTest is TestUtil {
         doPartialLoanPayment(custom_loan, bob);
 
         // Claim the funds.
-        uint256[7] memory claimInfo = pat.claim(address(pool), address(custom_loan), address(dlFactory));
+        uint256[7] memory claimInfo = pat.claim(address(pool1), address(custom_loan), address(dlFactory));
 
         // Leo withdraws interest.
-        leo.withdrawFunds(address(pool));
+        leo.withdrawFunds(address(pool1));
 
         // Verify the interest.
         withinDiff(
-            getClaimedInterestNetOfFees(claimInfo[1], pool.delegateFee(), pool.stakingFee()),
+            getClaimedInterestNetOfFees(claimInfo[1], pool1.delegateFee(), pool1.stakingFee()),
             usdc.balanceOf(address(leo)),
             1
         );
@@ -90,47 +90,47 @@ contract PoolFDTLossesTest is TestUtil {
         gov.setMaxSwapSlippage(7000);
 
         // Pool Delegate trigger a default
-        pat.triggerDefault(address(pool), address(custom_loan), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(custom_loan), address(dlFactory));
         
         // Check for successful default.
         assertTrue(uint8(custom_loan.loanState()) == 4, "Unexpected Loan state");
 
         // PD claims funds and also sells the stake to recover the losses.
-        claimInfo = pat.claim(address(pool), address(custom_loan), address(dlFactory));
+        claimInfo = pat.claim(address(pool1), address(custom_loan), address(dlFactory));
         
         assertTrue(claimInfo[6] > 0, "Loan doesn't have default suffered");
 
-        uint256 poolLosses = pool.poolLosses();
+        uint256 poolLosses = pool1.poolLosses();
         assertTrue(poolLosses > 0, "Pool losses should be greater than 0");
-        withinDiff(pool.recognizableLossesOf(address(leo)), poolLosses, 1);
+        withinDiff(pool1.recognizableLossesOf(address(leo)), poolLosses, 1);
 
         // Time warp to past lockup to remove lockup transfer restriction
-        hevm.warp(block.timestamp + pool.lockupPeriod() + 1);
+        hevm.warp(block.timestamp + pool1.lockupPeriod() + 1);
 
         // Fails to transfer if the losses are > 0.
         assertTrue(
-            !leo.try_transfer(address(pool), address(leo), 1),
+            !leo.try_transfer(address(pool1), address(leo), 1),
             "Should not be allowed to transfer because losses are > 0"
         );
 
         // Intend to withdraw and warp to withdraw window
-        leo.intendToWithdraw(address(pool));
+        leo.intendToWithdraw(address(pool1));
         hevm.warp(block.timestamp + globals.lpCooldownPeriod() + 1);
 
         // Before withdrawing funds.
         uint256 old_lex_bal = usdc.balanceOf(address(leo));
 
         // Withdrawing half should be sufficient to recognize all the losses
-        leo.withdraw(address(pool), depositAmt - 1);
+        leo.withdraw(address(pool1), depositAmt - 1);
 
         withinDiff(usdc.balanceOf(address(leo)) - old_lex_bal, depositAmt - poolLosses - 1, 1);
 
         assertTrue(
-            leo.try_transfer(address(pool), address(liz), 1 * (WAD / USD)),
+            leo.try_transfer(address(pool1), address(liz), 1 * (WAD / USD)),
             "Should be allowed to transfer because losses recognized"
         );
 
-        assertEq(pool.balanceOf(address(liz)), 1 * (WAD / USD), "Liz should have 1 FDT");
+        assertEq(pool1.balanceOf(address(liz)), 1 * (WAD / USD), "Liz should have 1 FDT");
     }
 
     function test_multipleLpBearingLossesWithMultiplePools(
@@ -141,7 +141,7 @@ contract PoolFDTLossesTest is TestUtil {
         uint256 leoDepositAmt,
         uint256 lexDepositAmt
     ) public {
-        uint256 minDepositAmountForPool1 = PoolLib.getSwapOutValueLocker(address(bPool), USDC, address(pool.stakeLocker()));
+        uint256 minDepositAmountForPool1 = PoolLib.getSwapOutValueLocker(address(bPool), USDC, address(pool1.stakeLocker()));
         uint256 minDepositAmountForPool2 = PoolLib.getSwapOutValueLocker(address(bPool), USDC, address(pool2.stakeLocker()));
 
         // Create Loan and a deposit amount from arguments
@@ -154,13 +154,13 @@ contract PoolFDTLossesTest is TestUtil {
         (lexDepositAmt, leeDepositAmt) = getSplitDepositAmounts(lexDepositAmt, totalDepositAmt - leoDepositAmt - lizDepositAmt);
 
         // LPs is putting up the funds into the Pool.
-        mintFundsAndDepositIntoPool(leo, pool,  leoDepositAmt, leoDepositAmt);
-        mintFundsAndDepositIntoPool(liz, pool,  lizDepositAmt, lizDepositAmt);
+        mintFundsAndDepositIntoPool(leo, pool1,  leoDepositAmt, leoDepositAmt);
+        mintFundsAndDepositIntoPool(liz, pool1,  lizDepositAmt, lizDepositAmt);
         mintFundsAndDepositIntoPool(lex, pool2, lexDepositAmt, lexDepositAmt);
         mintFundsAndDepositIntoPool(lee, pool2, leeDepositAmt, leeDepositAmt);
 
         // Fund the loan by both pool delegates.
-        pat.fundLoan(address(pool),  address(custom_loan), address(dlFactory), usdc.balanceOf(pool.liquidityLocker()));
+        pat.fundLoan(address(pool1), address(custom_loan), address(dlFactory), usdc.balanceOf(pool1.liquidityLocker()));
         pam.fundLoan(address(pool2), address(custom_loan), address(dlFactory), usdc.balanceOf(pool2.liquidityLocker()));
 
         // Drawdown of the loan
@@ -172,18 +172,18 @@ contract PoolFDTLossesTest is TestUtil {
 
         {
             // Claim the funds.
-            uint256[7] memory claimInfo1 = pat.claim(address(pool),  address(custom_loan), address(dlFactory));
+            uint256[7] memory claimInfo1 = pat.claim(address(pool1), address(custom_loan), address(dlFactory));
             uint256[7] memory claimInfo2 = pam.claim(address(pool2), address(custom_loan), address(dlFactory));
 
             // Withdraw interest by the lps.
-            leo.withdrawFunds(address(pool));
-            liz.withdrawFunds(address(pool));
+            leo.withdrawFunds(address(pool1));
+            liz.withdrawFunds(address(pool1));
             lex.withdrawFunds(address(pool2));
             lee.withdrawFunds(address(pool2));
 
             // Verify the interest.
             withinDiff(
-                getClaimedInterestNetOfFees(claimInfo1[1], pool.delegateFee(), pool.stakingFee()),
+                getClaimedInterestNetOfFees(claimInfo1[1], pool1.delegateFee(), pool1.stakingFee()),
                 usdc.balanceOf(address(leo)) + usdc.balanceOf(address(liz)),
                 1
             );
@@ -202,7 +202,7 @@ contract PoolFDTLossesTest is TestUtil {
 
             // At least one of the pool delegates should be able to trigger a default
             assertTrue(
-                pat.try_triggerDefault(address(pool),  address(custom_loan), address(dlFactory)) ||
+                pat.try_triggerDefault(address(pool1), address(custom_loan), address(dlFactory)) ||
                 pam.try_triggerDefault(address(pool2), address(custom_loan), address(dlFactory)),
                 "Should be able to trigger Loan default"
             );
@@ -210,12 +210,12 @@ contract PoolFDTLossesTest is TestUtil {
             // Check for successful default.
             assertTrue(uint8(custom_loan.loanState()) == 4, "Unexpected Loan state");
 
-            claimInfo1 = pat.claim(address(pool),  address(custom_loan), address(dlFactory));
+            claimInfo1 = pat.claim(address(pool1), address(custom_loan), address(dlFactory));
             claimInfo2 = pam.claim(address(pool2), address(custom_loan), address(dlFactory));
 
-            assertTrue(claimInfo1[6]     > 0,     "Loan doesn't have default suffered");
-            assertTrue(pool.poolLosses() > 0, "Pool 1 losses should be greater than 0");
-            withinDiff(pool.recognizableLossesOf(address(leo)) + pool.recognizableLossesOf(address(liz)),  pool.poolLosses(), 1);
+            assertTrue(claimInfo1[6]     > 0,      "Loan doesn't have default suffered");
+            assertTrue(pool1.poolLosses() > 0, "Pool 1 losses should be greater than 0");
+            withinDiff(pool1.recognizableLossesOf(address(leo)) + pool1.recognizableLossesOf(address(liz)), pool1.poolLosses(), 1);
 
             assertTrue(claimInfo2[6]      > 0,     "Loan doesn't have default suffered");
             assertTrue(pool2.poolLosses() > 0, "Pool 2 losses should be greater than 0");
@@ -223,16 +223,16 @@ contract PoolFDTLossesTest is TestUtil {
         }
 
         // Time warp to past lockup to remove lockup transfer restriction
-        hevm.warp(block.timestamp + pool.lockupPeriod() + 1);
+        hevm.warp(block.timestamp + pool1.lockupPeriod() + 1);
 
         // Fails to transfer if the losses are > 0.
         assertTrue(
-            !leo.try_transfer(address(pool), address(liz), 1),
+            !leo.try_transfer(address(pool1), address(liz), 1),
             "Should not allow Lex to transfer because losses are > 0"
         );
 
         assertTrue(
-            !liz.try_transfer(address(pool), address(leo), 1),
+            !liz.try_transfer(address(pool1), address(leo), 1),
             "Should not allow Lee to transfer because losses are > 0"
         );
 
@@ -247,8 +247,8 @@ contract PoolFDTLossesTest is TestUtil {
         );
 
         // LPs is withdrawing funds from the Pool with losses.
-        leo.intendToWithdraw(address(pool));
-        liz.intendToWithdraw(address(pool));
+        leo.intendToWithdraw(address(pool1));
+        liz.intendToWithdraw(address(pool1));
         lex.intendToWithdraw(address(pool2));
         lee.intendToWithdraw(address(pool2));
 
@@ -261,24 +261,24 @@ contract PoolFDTLossesTest is TestUtil {
         uint256 old_lex_bal = usdc.balanceOf(address(lex));
         uint256 old_lee_bal = usdc.balanceOf(address(lee));
 
-        leo.withdraw(address(pool),  leoDepositAmt - 1);
-        liz.withdraw(address(pool),  lizDepositAmt - 1);
+        leo.withdraw(address(pool1), leoDepositAmt - 1);
+        liz.withdraw(address(pool1), lizDepositAmt - 1);
         lex.withdraw(address(pool2), lexDepositAmt - 1);
         lee.withdraw(address(pool2), leeDepositAmt - 1);
 
-        assertEq(pool.balanceOf(address(leo)),  1 * (WAD / USD), "Leo should have 1 FDTs");
-        assertEq(pool.balanceOf(address(liz)),  1 * (WAD / USD), "Liz should have 1 FDTs");
+        assertEq(pool1.balanceOf(address(leo)), 1 * (WAD / USD), "Leo should have 1 FDTs");
+        assertEq(pool1.balanceOf(address(liz)), 1 * (WAD / USD), "Liz should have 1 FDTs");
         assertEq(pool2.balanceOf(address(lex)), 1 * (WAD / USD), "Lex should have 1 FDTs");
         assertEq(pool2.balanceOf(address(lex)), 1 * (WAD / USD), "Lee should have 1 FDTs");
 
-        withinDiff(usdc.balanceOf(address(leo)) - old_leo_bal, leoDepositAmt - pool.recognizedLossesOf(address(leo)) - 1,  1);
-        withinDiff(usdc.balanceOf(address(liz)) - old_liz_bal, lizDepositAmt - pool.recognizedLossesOf(address(liz)) - 1,  1);
+        withinDiff(usdc.balanceOf(address(leo)) - old_leo_bal, leoDepositAmt - pool1.recognizedLossesOf(address(leo)) - 1,  1);
+        withinDiff(usdc.balanceOf(address(liz)) - old_liz_bal, lizDepositAmt - pool1.recognizedLossesOf(address(liz)) - 1,  1);
         withinDiff(usdc.balanceOf(address(lex)) - old_lex_bal, lexDepositAmt - pool2.recognizedLossesOf(address(lex)) - 1, 1);
         withinDiff(usdc.balanceOf(address(lee)) - old_lee_bal, leeDepositAmt - pool2.recognizedLossesOf(address(lee)) - 1, 1);
 
         // Leo transfers 1 Pool1 FDT to Lex (who is not in a Pool1 withdrawal window)
         assertTrue(
-            leo.try_transfer(address(pool), address(lex), 1 * (WAD / USD)),
+            leo.try_transfer(address(pool1), address(lex), 1 * (WAD / USD)),
             "Should allow Leo to transfer because losses recognized"
         );
 
@@ -288,12 +288,12 @@ contract PoolFDTLossesTest is TestUtil {
             "Should allow Lex to transfer because losses recognized"
         );
 
-        assertEq(pool.balanceOf(address(lex)),  1 * (WAD / USD), "Lex should have 1 Pool1 FDTs");
+        assertEq(pool1.balanceOf(address(lex)), 1 * (WAD / USD), "Lex should have 1 Pool1 FDTs");
         assertEq(pool2.balanceOf(address(leo)), 1 * (WAD / USD), "Leo should have 1 Pool2 FDTs");
 
         // Lez transfers 1 Pool1 FDT to Lee (who is not in a Pool1 withdrawal window)
         assertTrue(
-            liz.try_transfer(address(pool), address(lee), 1 * (WAD / USD)),
+            liz.try_transfer(address(pool1), address(lee), 1 * (WAD / USD)),
             "Should allow Liz to transfer because losses recognized"
         );
 
@@ -303,7 +303,7 @@ contract PoolFDTLossesTest is TestUtil {
             "Should allow Lee to transfer because losses recognized"
         );
 
-        assertEq(pool.balanceOf(address(lee)),  1 * (WAD / USD), "Lee should have 1 Pool1 FDTs");
+        assertEq(pool1.balanceOf(address(lee)), 1 * (WAD / USD), "Lee should have 1 Pool1 FDTs");
         assertEq(pool2.balanceOf(address(liz)), 1 * (WAD / USD), "Liz should have 1 Pool2 FDTs");
     }
 

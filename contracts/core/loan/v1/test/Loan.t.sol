@@ -96,7 +96,7 @@ contract LoanTest is TestUtil {
         Loan loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         address fundingLocker   = loan.fundingLocker();
-        address liquidityLocker = pool.liquidityLocker();
+        address liquidityLocker = pool1.liquidityLocker();
 
         fundAmount = constrictToRange(fundAmount, 1 * USD, 1E10 * USD);
         uint256 wadAmount = fundAmount * WAD / USD;
@@ -104,9 +104,9 @@ contract LoanTest is TestUtil {
         fundAmount2 = constrictToRange(fundAmount, 1 * USD, 1E10 * USD);
         uint256 wadAmount2 = fundAmount2 * WAD / USD;
 
-        mint("USDC", address(leo),       (fundAmount + fundAmount2));
-        leo.approve(USDC, address(pool), (fundAmount + fundAmount2));
-        leo.deposit(address(pool),       (fundAmount + fundAmount2));
+        mint("USDC", address(leo),        (fundAmount + fundAmount2));
+        leo.approve(USDC, address(pool1), (fundAmount + fundAmount2));
+        leo.deposit(address(pool1),       (fundAmount + fundAmount2));
 
         // Note: Cannot do pre-state check for LoanFDT balance of debtLocker since it is not instantiated
         assertEq(usdc.balanceOf(address(fundingLocker)),                            0);
@@ -117,7 +117,7 @@ contract LoanTest is TestUtil {
         assertTrue(!cam.try_pause(address(loan)));
         assertTrue( bob.try_pause(address(loan)));
         assertTrue(loan.paused());
-        assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount));  // Allow for two fundings
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan), address(dlFactory), fundAmount));  // Allow for two fundings
 
         assertTrue(!cam.try_unpause(address(loan)));
         assertTrue( bob.try_unpause(address(loan)));
@@ -126,12 +126,12 @@ contract LoanTest is TestUtil {
         uint256 start = block.timestamp;
 
         hevm.warp(start + globals.fundingPeriod() + 1);  // Warp to past fundingPeriod, loan cannot be funded
-        assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount));
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan), address(dlFactory), fundAmount));
 
         hevm.warp(start + globals.fundingPeriod());  // Warp to fundingPeriod, loan can be funded
-        assertTrue(pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan), address(dlFactory), fundAmount));
 
-        address debtLocker = pool.debtLockers(address(loan), address(dlFactory));
+        address debtLocker = pool1.debtLockers(address(loan), address(dlFactory));
 
         assertEq(loan.balanceOf(address(debtLocker)),        wadAmount);
         assertEq(usdc.balanceOf(address(fundingLocker)),    fundAmount);
@@ -141,11 +141,11 @@ contract LoanTest is TestUtil {
         assertTrue(!cam.try_setProtocolPause(address(globals), true));
         assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(globals.protocolPaused());
-        assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount2));
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan), address(dlFactory), fundAmount2));
 
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(!globals.protocolPaused());
-        assertTrue(pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount2));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan), address(dlFactory), fundAmount2));
 
         assertEq(loan.balanceOf(address(debtLocker)),        wadAmount + wadAmount2);
         assertEq(usdc.balanceOf(address(fundingLocker)),   fundAmount + fundAmount2);
@@ -169,11 +169,11 @@ contract LoanTest is TestUtil {
 
         fundAmount = constrictToRange(fundAmount, specs[3], 1E10 * USD, true);  // Fund between requestAmount and 10b USD
 
-        mint("USDC", address(leo),       fundAmount);
-        leo.approve(USDC, address(pool), fundAmount);
-        leo.deposit(address(pool),       fundAmount);
+        mint("USDC", address(leo),        fundAmount);
+        leo.approve(USDC, address(pool1), fundAmount);
+        leo.deposit(address(pool1),       fundAmount);
 
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), fundAmount);
+        pat.fundLoan(address(pool1), address(loan), address(dlFactory), fundAmount);
     }
 
     function test_collateralRequiredForDrawdown(
@@ -265,7 +265,7 @@ contract LoanTest is TestUtil {
         assertEq(usdc.balanceOf(address(treasury)),                 treasuryFee);  // Treasury loanAsset balance
 
         // Test FDT accounting
-        address debtLocker = pool.debtLockers(address(loan), address(dlFactory));
+        address debtLocker = pool1.debtLockers(address(loan), address(dlFactory));
         assertEq(loan.balanceOf(debtLocker), fundAmount * WAD / USD);
         withinDiff(loan.withdrawableFundsOf(address(debtLocker)), fundAmount - drawdownAmount + investorFee, 1);
 
@@ -540,13 +540,13 @@ contract LoanTest is TestUtil {
 
         // Pause protocol and attempt withdrawFunds() (through claim)
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!pat.try_claim(address(pool), address(loan), address(dlFactory)));
+        assertTrue(!pat.try_claim(address(pool1), address(loan), address(dlFactory)));
 
         // Unpause protocol and withdrawFunds() (through claim)
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(pat.try_claim(address(pool), address(loan), address(dlFactory)));
+        assertTrue(pat.try_claim(address(pool1), address(loan), address(dlFactory)));
 
-        withinDiff(usdc.balanceOf(address(pool.liquidityLocker())), fundAmount, 1);
+        withinDiff(usdc.balanceOf(address(pool1.liquidityLocker())), fundAmount, 1);
         withinDiff(usdc.balanceOf(address(loan)),                            0, 1);
 
         // Can't unwind() loan after it has already been called.
@@ -573,7 +573,7 @@ contract LoanTest is TestUtil {
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
 
-        address debtLocker = pool.debtLockers(address(loan), address(dlFactory));
+        address debtLocker = pool1.debtLockers(address(loan), address(dlFactory));
 
         assertEq(uint256(loan.loanState()), 0);  // `Ready` state
 
@@ -581,18 +581,18 @@ contract LoanTest is TestUtil {
 
         assertEq(uint256(loan.loanState()), 1);  // `Active` state
 
-        assertTrue(!pat.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Should fail to trigger default because current time is still less than the `nextPaymentDue`.
-        assertTrue(!cam.try_triggerDefault(address(loan)));                                     // Failed because commoner in not allowed to default the loan because they do not own any LoanFDTs.
+        assertTrue(!pat.try_triggerDefault(address(pool1), address(loan), address(dlFactory)));  // Should fail to trigger default because current time is still less than the `nextPaymentDue`.
+        assertTrue(!cam.try_triggerDefault(address(loan)));                                      // Failed because commoner in not allowed to default the loan because they do not own any LoanFDTs.
 
         hevm.warp(loan.nextPaymentDue() + 1);
 
-        assertTrue(!pat.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
-        assertTrue(!cam.try_triggerDefault(address(loan)));                                     // Failed because still commoner is not allowed to default the loan.
+        assertTrue(!pat.try_triggerDefault(address(pool1), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
+        assertTrue(!cam.try_triggerDefault(address(loan)));                                      // Failed because still commoner is not allowed to default the loan.
 
         hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
 
-        assertTrue(!pat.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
-        assertTrue(!cam.try_triggerDefault(address(loan)));                                     // Failed because still commoner is not allowed to default the loan.
+        assertTrue(!pat.try_triggerDefault(address(pool1), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
+        assertTrue(!cam.try_triggerDefault(address(loan)));                                      // Failed because still commoner is not allowed to default the loan.
 
         hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 

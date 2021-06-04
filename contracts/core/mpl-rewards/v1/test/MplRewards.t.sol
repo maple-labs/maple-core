@@ -126,7 +126,7 @@ contract MplRewardsTest is TestUtil {
         assertTrue(!mplRewards.paused());
 
         // Fay can stake
-        fay.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
+        fay.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
         assertTrue(fay.try_stake(100 * WAD));
 
         // Set to paused
@@ -136,11 +136,11 @@ contract MplRewardsTest is TestUtil {
         assertTrue(mplRewards.paused());
 
         // Fez can't stake
-        fez.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
+        fez.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
         assertTrue(!fez.try_stake(100 * WAD));
 
         // Fay can't withdraw
-        fay.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
+        fay.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
         assertTrue(!fay.try_withdraw(100 * WAD));
 
         // Set to unpaused
@@ -151,7 +151,7 @@ contract MplRewardsTest is TestUtil {
         assertTrue(fay.try_withdraw(100 * WAD));
 
         // Fez can stake
-        fez.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
+        fez.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
         assertTrue(fez.try_stake(100 * WAD));
     }
 
@@ -161,9 +161,9 @@ contract MplRewardsTest is TestUtil {
     function test_stake() public {
         uint256 start = block.timestamp;
 
-        assertEq(pool.balanceOf(address(fay)),           1000 * WAD);
-        assertEq(pool.depositDate(address(fay)),              start);
-        assertEq(pool.depositDate(address(mplRewards)),           0);  // MplRewards depDate should always be zero so that it can avoid lockup logic
+        assertEq(pool1.balanceOf(address(fay)),          1000 * WAD);
+        assertEq(pool1.depositDate(address(fay)),             start);
+        assertEq(pool1.depositDate(address(mplRewards)),          0);  // MplRewards depDate should always be zero so that it can avoid lockup logic
         assertEq(mplRewards.balanceOf(address(fay)),              0);
         assertEq(mplRewards.totalSupply(),                        0);
 
@@ -171,14 +171,14 @@ contract MplRewardsTest is TestUtil {
 
         assertTrue(!fay.try_stake(100 * WAD));  // Can't stake before approval
 
-        fay.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
+        fay.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
 
         assertTrue(!fay.try_stake(0));          // Can't stake zero
         assertTrue( fay.try_stake(100 * WAD));  // Can stake after approval
 
-        assertEq(pool.balanceOf(address(fay)),          1000 * WAD);  // PoolFDT balance doesn't change
-        assertEq(pool.depositDate(address(fay)),             start);  // Has not changed
-        assertEq(pool.depositDate(address(mplRewards)),          0);  // Has not changed
+        assertEq(pool1.balanceOf(address(fay)),         1000 * WAD);  // PoolFDT balance doesn't change
+        assertEq(pool1.depositDate(address(fay)),            start);  // Has not changed
+        assertEq(pool1.depositDate(address(mplRewards)),         0);  // Has not changed
         assertEq(mplRewards.balanceOf(address(fay)),     100 * WAD);
         assertEq(mplRewards.totalSupply(),               100 * WAD);
     }
@@ -186,23 +186,23 @@ contract MplRewardsTest is TestUtil {
     function test_withdraw() public {
         uint256 start = block.timestamp;
 
-        fay.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
+        fay.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
         fay.stake(100 * WAD);
 
         hevm.warp(start + 1 days); // Warp to ensure no effect on depositDates
 
-        assertEq(pool.balanceOf(address(fay)),           1000 * WAD);  // PoolFDT balance doesn't change
-        assertEq(pool.depositDate(address(fay)),              start);
-        assertEq(pool.depositDate(address(mplRewards)),           0);  // MplRewards depDate should always be zero so that it can avoid lockup logic
+        assertEq(pool1.balanceOf(address(fay)),          1000 * WAD);  // PoolFDT balance doesn't change
+        assertEq(pool1.depositDate(address(fay)),             start);
+        assertEq(pool1.depositDate(address(mplRewards)),          0);  // MplRewards depDate should always be zero so that it can avoid lockup logic
         assertEq(mplRewards.balanceOf(address(fay)),      100 * WAD);
         assertEq(mplRewards.totalSupply(),                100 * WAD);
 
         assertTrue(!fay.try_withdraw(0));          // Can't withdraw zero
         assertTrue( fay.try_withdraw(100 * WAD));  // Can withdraw
 
-        assertEq(pool.balanceOf(address(fay)),           1000 * WAD);
-        assertEq(pool.depositDate(address(fay)),              start);  // Does not change
-        assertEq(pool.depositDate(address(mplRewards)),           0);  // MplRewards depDate should always be zero so that it can avoid lockup logic
+        assertEq(pool1.balanceOf(address(fay)),          1000 * WAD);
+        assertEq(pool1.depositDate(address(fay)),             start);  // Does not change
+        assertEq(pool1.depositDate(address(mplRewards)),          0);  // MplRewards depDate should always be zero so that it can avoid lockup logic
         assertEq(mplRewards.balanceOf(address(fay)),              0);
         assertEq(mplRewards.totalSupply(),                        0);
     }
@@ -230,8 +230,8 @@ contract MplRewardsTest is TestUtil {
     /*** Rewards accounting testing ***/
     /**********************************/
     function test_rewards_single_epoch() public {
-        fay.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
-        fez.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
+        fay.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
+        fez.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
         fay.stake(10 * WAD);
 
         mpl.transfer(address(mplRewards), 25_000 * WAD);
@@ -471,8 +471,8 @@ contract MplRewardsTest is TestUtil {
     }
 
     function test_rewards_multi_epoch() public {
-        fay.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
-        fez.increaseCustodyAllowance(address(pool), address(mplRewards), 100 * WAD);
+        fay.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
+        fez.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
 
         fay.stake(10 * WAD);
         fez.stake(30 * WAD);

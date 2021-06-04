@@ -28,13 +28,13 @@ contract PoolLiquidationTest is TestUtil {
 
         // Fund the pool
         mint("USDC", address(leo), 100_000_000 * USD);
-        leo.approve(USDC, address(pool), MAX_UINT);
+        leo.approve(USDC, address(pool1), MAX_UINT);
         leo.approve(USDC, address(pool2), MAX_UINT);
-        leo.deposit(address(pool), 80_000_000 * USD + 1);
+        leo.deposit(address(pool1), 80_000_000 * USD + 1);
         leo.deposit(address(pool2), 20_000_000 * USD - 1);
 
         // Fund the loan
-        pat.fundLoan(address(pool), address(loan1), address(dlFactory), 80_000_000 * USD + 1);   // Plus 1e-6 to create exact 100m totalSupply
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 80_000_000 * USD + 1);  // Plus 1e-6 to create exact 100m totalSupply
         pam.fundLoan(address(pool2), address(loan1), address(dlFactory), 20_000_000 * USD - 1);  // 20% minus 1e-6 equity
 
         // Drawdown loan
@@ -68,13 +68,13 @@ contract PoolLiquidationTest is TestUtil {
     function setUpLoanAndDefault() public {
         // Fund the pool
         mint("USDC", address(leo), 4_000_000 * USD);
-        leo.approve(USDC, address(pool),  MAX_UINT);
+        leo.approve(USDC, address(pool1), MAX_UINT);
         leo.approve(USDC, address(pool2), MAX_UINT);
-        leo.deposit(address(pool),  1_000_000 * USD);
+        leo.deposit(address(pool1), 1_000_000 * USD);
         leo.deposit(address(pool2), 3_000_000 * USD);
 
         // Fund the loan
-        pat.fundLoan(address(pool), address(loan1), address(dlFactory),  100_000 * USD);
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 100_000 * USD);
         pam.fundLoan(address(pool2), address(loan1), address(dlFactory), 300_000 * USD);
         uint256 cReq = loan1.collateralRequiredForDrawdown(4_000_000 * USD);
 
@@ -90,7 +90,7 @@ contract PoolLiquidationTest is TestUtil {
         hevm.warp(start + nextPaymentDue + gracePeriod + 1);
 
         // Trigger default
-        pat.triggerDefault(address(pool), address(loan1), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(loan1), address(dlFactory));
     }
 
     function test_claim_default_info() public {
@@ -103,7 +103,7 @@ contract PoolLiquidationTest is TestUtil {
             or rather updates accounting in the Pool which in turn will enable us
             to handle liquidation of BPTs in the StakeLocker accurately.
         */
-        uint256[7] memory vals_a = pat.claim(address(pool), address(loan1), address(dlFactory));
+        uint256[7] memory vals_a = pat.claim(address(pool1), address(loan1), address(dlFactory));
         uint256[7] memory vals_b = pam.claim(address(pool2), address(loan1), address(dlFactory));
 
         // Non-zero value is passed through.
@@ -112,7 +112,7 @@ contract PoolLiquidationTest is TestUtil {
         withinPrecision(vals_a[6] + vals_b[6], loan1.defaultSuffered(), 2);
 
         // Call claim again to make sure that default isn't double accounted
-        vals_a = pat.claim(address(pool), address(loan1), address(dlFactory));
+        vals_a = pat.claim(address(pool1), address(loan1), address(dlFactory));
         vals_b = pam.claim(address(pool2), address(loan1), address(dlFactory));
         assertEq(vals_a[6], 0);
         assertEq(vals_b[6], 0);
@@ -129,7 +129,7 @@ contract PoolLiquidationTest is TestUtil {
         TestObj memory principalOut_a;
         TestObj memory principalOut_b;
 
-        address liquidityLocker_a = pool.liquidityLocker();
+        address liquidityLocker_a = pool1.liquidityLocker();
         address liquidityLocker_b = pool2.liquidityLocker();
 
         // Pre-state liquidityLocker checks.
@@ -139,7 +139,7 @@ contract PoolLiquidationTest is TestUtil {
         stakeLocker_a_bal.pre = bPool.balanceOf(address(stakeLocker));
         stakeLocker_b_bal.pre = bPool.balanceOf(address(stakeLocker2));
 
-        principalOut_a.pre = pool.principalOut();
+        principalOut_a.pre = pool1.principalOut();
         principalOut_b.pre = pool2.principalOut();
 
         assertEq(principalOut_a.pre, 100_000 * USD);
@@ -151,7 +151,7 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(liquidityLocker_a_bal.pre,   900_000 * USD);
         assertEq(liquidityLocker_b_bal.pre, 2_700_000 * USD);
 
-        pat.claim(address(pool), address(loan1), address(dlFactory));
+        pat.claim(address(pool1), address(loan1), address(dlFactory));
         pam.claim(address(pool2), address(loan1), address(dlFactory));
 
         // Post-state liquidityLocker checks.
@@ -161,7 +161,7 @@ contract PoolLiquidationTest is TestUtil {
         stakeLocker_a_bal.post = bPool.balanceOf(address(stakeLocker));
         stakeLocker_b_bal.post = bPool.balanceOf(address(stakeLocker2));
 
-        principalOut_a.post = pool.principalOut();
+        principalOut_a.post = pool1.principalOut();
         principalOut_b.post = pool2.principalOut();
 
         withinDiff(liquidityLocker_a_bal.post - liquidityLocker_a_bal.pre, 100_000 * USD, 1);  // Entire initial loan amount was recovered between liquidation and burn
@@ -202,32 +202,32 @@ contract PoolLiquidationTest is TestUtil {
         mint("USDC", address(leo), 500_000_000 * USD);
         mint("USDC", address(liz),  10_000_000 * USD);
 
-        leo.approve(USDC, address(pool), MAX_UINT);
-        liz.approve(USDC, address(pool), MAX_UINT);
-        leo.deposit(address(pool), 500_000_000 * USD);  // Ali symbolizes all other LPs, test focuses on Bob
-        liz.deposit(address(pool), 10_000_000 * USD);
-        assertTrue(liz.try_intendToWithdraw(address(pool)));
+        leo.approve(USDC, address(pool1), MAX_UINT);
+        liz.approve(USDC, address(pool1), MAX_UINT);
+        leo.deposit(address(pool1), 500_000_000 * USD);  // Ali symbolizes all other LPs, test focuses on Bob
+        liz.deposit(address(pool1), 10_000_000 * USD);
+        assertTrue(liz.try_intendToWithdraw(address(pool1)));
 
-        assertPoolAccounting(pool);
+        assertPoolAccounting(pool1);
 
         // Fund the loan
-        pat.fundLoan(address(pool), address(loan1), address(dlFactory), 100_000_000 * USD);
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 100_000_000 * USD);
         uint256 cReq = loan1.collateralRequiredForDrawdown(100_000_000 * USD);
 
-        assertPoolAccounting(pool);
+        assertPoolAccounting(pool1);
 
         // Drawdown loan
         mint("WETH", address(bob), cReq);
         bob.approve(WETH, address(loan1), MAX_UINT);
         bob.drawdown(address(loan1), 100_000_000 * USD);
 
-        assertPoolAccounting(pool);
+        assertPoolAccounting(pool1);
 
         // Warp to late payment
         hevm.warp(block.timestamp + loan1.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 
         // Trigger default
-        pat.triggerDefault(address(pool), address(loan1), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(loan1), address(dlFactory));
 
         // Instantiate all test variables
         TestObj memory liquidityLockerBal;
@@ -239,8 +239,8 @@ contract PoolLiquidationTest is TestUtil {
         TestObj memory bob_poolBal;
         TestObj memory bob_recognizableLosses;
 
-        address liquidityLocker = pool.liquidityLocker();
-        address stakeLocker     = pool.stakeLocker();
+        address liquidityLocker = pool1.liquidityLocker();
+        address stakeLocker     = pool1.stakeLocker();
 
         /**************************************************/
         /*** Loan Default Accounting with BPT Shortfall ***/
@@ -249,20 +249,20 @@ contract PoolLiquidationTest is TestUtil {
         // Pre-claim accounting checks
         liquidityLockerBal.pre = IERC20(USDC).balanceOf(liquidityLocker);
         slBPTBal.pre           = bPool.balanceOf(stakeLocker);
-        fdtSupply.pre          = pool.totalSupply();
-        principalOut.pre       = pool.principalOut();
-        poolLosses.pre         = pool.poolLosses();
+        fdtSupply.pre          = pool1.totalSupply();
+        principalOut.pre       = pool1.principalOut();
+        poolLosses.pre         = pool1.poolLosses();
 
-        pat.claim(address(pool), address(loan1), address(dlFactory));
+        pat.claim(address(pool1), address(loan1), address(dlFactory));
 
-        assertPoolAccounting(pool);
+        assertPoolAccounting(pool1);
 
         // Pre-claim accounting checks
         liquidityLockerBal.post = IERC20(USDC).balanceOf(liquidityLocker);
         slBPTBal.post           = bPool.balanceOf(stakeLocker);
-        fdtSupply.post          = pool.totalSupply();
-        principalOut.post       = pool.principalOut();
-        poolLosses.post         = pool.poolLosses();
+        fdtSupply.post          = pool1.totalSupply();
+        principalOut.post       = pool1.principalOut();
+        poolLosses.post         = pool1.poolLosses();
 
         assertEq(principalOut.pre,       100_000_000 * USD);  // Total Pool Value (TPV) = PO + LLBal = 510m
         assertEq(liquidityLockerBal.pre, 410_000_000 * USD);
@@ -287,35 +287,35 @@ contract PoolLiquidationTest is TestUtil {
         /*** Liquidity Provider Minimum Withdrawal Accounting ***/
         /********************************************************/
 
-        make_withdrawable(liz, pool);
+        make_withdrawable(liz, pool1);
 
-        bob_recognizableLosses.pre = pool.recognizableLossesOf(address(liz));  // Unrealized losses of liz from shortfall
+        bob_recognizableLosses.pre = pool1.recognizableLossesOf(address(liz));  // Unrealized losses of liz from shortfall
 
-        assertTrue(!liz.try_withdraw(address(pool), bob_recognizableLosses.pre - 1));  // Cannot withdraw less than recognizableLosses
+        assertTrue(!liz.try_withdraw(address(pool1), bob_recognizableLosses.pre - 1));  // Cannot withdraw less than recognizableLosses
 
         bob_usdcBal.pre = IERC20(USDC).balanceOf(address(liz));  // Bob USDC bal
-        bob_poolBal.pre = pool.balanceOf(address(liz));        // Bob FDT  bal
+        bob_poolBal.pre = pool1.balanceOf(address(liz));         // Bob FDT  bal
 
         // Withdraw lowest possible amount (amt == recognizableLosses)
         // NOTE: LPs can withdraw more than this amount, it will just go towards their USDC
-        assertTrue(!liz.try_transfer(address(pool), address(leo), bob_poolBal.pre));
-        assertTrue( liz.try_withdraw(address(pool), bob_recognizableLosses.pre));
+        assertTrue(!liz.try_transfer(address(pool1), address(leo), bob_poolBal.pre));
+        assertTrue( liz.try_withdraw(address(pool1), bob_recognizableLosses.pre));
 
-        assertPoolAccounting(pool);
+        assertPoolAccounting(pool1);
 
-        bob_recognizableLosses.post = pool.recognizableLossesOf(address(liz));  // Unrealized losses of liz after withdrawal
+        bob_recognizableLosses.post = pool1.recognizableLossesOf(address(liz));  // Unrealized losses of liz after withdrawal
 
         bob_usdcBal.post = IERC20(USDC).balanceOf(address(liz));  // Bob USDC bal
-        bob_poolBal.post = pool.balanceOf(address(liz));        // Bob FDT  bal
+        bob_poolBal.post = pool1.balanceOf(address(liz));         // Bob FDT  bal
 
         liquidityLockerBal.pre  = liquidityLockerBal.post;                  // Update pre/post variables for withdrawal checks
         liquidityLockerBal.post = IERC20(USDC).balanceOf(liquidityLocker);  // Update pre/post variables for withdrawal checks
 
-        fdtSupply.pre  = fdtSupply.post;        // Update pre/post variables for withdrawal checks
-        fdtSupply.post = pool.totalSupply();  // Update pre/post variables for withdrawal checks
+        fdtSupply.pre  = fdtSupply.post;       // Update pre/post variables for withdrawal checks
+        fdtSupply.post = pool1.totalSupply();  // Update pre/post variables for withdrawal checks
 
-        poolLosses.pre  = poolLosses.post;      // Update pre/post variables for withdrawal checks
-        poolLosses.post = pool.poolLosses();  // Update pre/post variables for withdrawal checks
+        poolLosses.pre  = poolLosses.post;     // Update pre/post variables for withdrawal checks
+        poolLosses.post = pool1.poolLosses();  // Update pre/post variables for withdrawal checks
 
         assertEq(bob_recognizableLosses.post, 0);  // After withdrawal, liz has zero unrecognized losses
 
@@ -338,20 +338,20 @@ contract PoolLiquidationTest is TestUtil {
 
         uint256 withdrawAmt = bob_poolBal.pre * 1E6 / WAD;
 
-        make_withdrawable(liz, pool);
+        make_withdrawable(liz, pool1);
 
-        assertTrue(liz.try_withdraw(address(pool), withdrawAmt));  // Withdraw max amount
+        assertTrue(liz.try_withdraw(address(pool1), withdrawAmt));  // Withdraw max amount
 
-        assertPoolAccounting(pool);
+        assertPoolAccounting(pool1);
 
         bob_usdcBal.post = IERC20(USDC).balanceOf(address(liz));  // Bob USDC bal
-        bob_poolBal.post = pool.balanceOf(address(liz));        // Bob FDT  bal
+        bob_poolBal.post = pool1.balanceOf(address(liz));         // Bob FDT  bal
 
         liquidityLockerBal.pre  = liquidityLockerBal.post;                  // Update pre/post variables for withdrawal checks
         liquidityLockerBal.post = IERC20(USDC).balanceOf(liquidityLocker);  // Update pre/post variables for withdrawal checks
 
-        fdtSupply.pre  = fdtSupply.post;        // Update pre/post variables for withdrawal checks
-        fdtSupply.post = pool.totalSupply();  // Update pre/post variables for withdrawal checks
+        fdtSupply.pre  = fdtSupply.post;       // Update pre/post variables for withdrawal checks
+        fdtSupply.post = pool1.totalSupply();  // Update pre/post variables for withdrawal checks
 
         assertEq(bob_usdcBal.pre,  0);            // Deposited entire balance into pool
         assertEq(bob_usdcBal.post, withdrawAmt);  // Withdrew enough just to realize losses, no USDC was transferred out of LL

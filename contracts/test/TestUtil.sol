@@ -144,7 +144,7 @@ contract TestUtil is DSTest {
     /*************/
     /*** Pools ***/
     /*************/
-    Pool   pool;
+    Pool  pool1;
     Pool  pool2;
     Pool  pool3;
 
@@ -344,7 +344,7 @@ contract TestUtil is DSTest {
     /*** Liquidity Pool Setup Functions ***/
     /**************************************/
     function createLiquidityPool() public {
-        pool = Pool(pat.createPool(
+        pool1 = Pool(pat.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -372,19 +372,19 @@ contract TestUtil is DSTest {
 
     function setUpLiquidityPool() public {
         createLiquidityPool();
-        stakeLocker = StakeLocker(pool.stakeLocker());
-        pat.approve(address(bPool), pool.stakeLocker(), uint256(-1));
-        pat.stake(pool.stakeLocker(), bPool.balanceOf(address(pat)));
-        pat.finalize(address(pool));
-        pat.setOpenToPublic(address(pool), true);
+        stakeLocker = StakeLocker(pool1.stakeLocker());
+        pat.approve(address(bPool), pool1.stakeLocker(), uint256(-1));
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)));
+        pat.finalize(address(pool1));
+        pat.setOpenToPublic(address(pool1), true);
     }
 
     function stakeAndFinalizePool(uint256 stakeAmt) public {
-        stakeLocker = StakeLocker(pool.stakeLocker());
-        pat.approve(address(bPool), pool.stakeLocker(), uint256(-1));
-        pat.stake(pool.stakeLocker(), stakeAmt);
-        pat.finalize(address(pool));
-        pat.setOpenToPublic(address(pool), true);
+        stakeLocker = StakeLocker(pool1.stakeLocker());
+        pat.approve(address(bPool), pool1.stakeLocker(), uint256(-1));
+        pat.stake(pool1.stakeLocker(), stakeAmt);
+        pat.finalize(address(pool1));
+        pat.setOpenToPublic(address(pool1), true);
     }
 
     function stakeAndFinalizePools(uint256 stakeAmt, uint256 stakeAmt2) public {
@@ -509,22 +509,22 @@ contract TestUtil is DSTest {
     /*** Yield Farming Setup Functions ***/
     /*************************************/
     function setUpMplRewards() public {
-        mplRewards = gov.createMplRewards(address(mpl), address(pool));
+        mplRewards = gov.createMplRewards(address(mpl), address(pool1));
         fakeGov.setGovMplRewards(mplRewards);                            // Used to assert failures
     }
 
     function createFarmers() public {
-        fay = new Farmer(mplRewards, pool);
-        fez = new Farmer(mplRewards, pool);
-        fox = new Farmer(mplRewards, pool);
+        fay = new Farmer(mplRewards, pool1);
+        fez = new Farmer(mplRewards, pool1);
+        fox = new Farmer(mplRewards, pool1);
     }
 
     function setUpFarmers(uint256 amt1, uint256 amt2, uint256 amt3) public {
         createFarmers();
 
-        mintFundsAndDepositIntoPool(fay, pool, amt1, amt1);
-        mintFundsAndDepositIntoPool(fez, pool, amt2, amt2);
-        mintFundsAndDepositIntoPool(fox, pool, amt3, amt3);
+        mintFundsAndDepositIntoPool(fay, pool1, amt1, amt1);
+        mintFundsAndDepositIntoPool(fez, pool1, amt2, amt2);
+        mintFundsAndDepositIntoPool(fox, pool1, amt3, amt3);
     }
 
     /******************************/
@@ -696,8 +696,8 @@ contract TestUtil is DSTest {
         {
             // Mint "infinite" amount of USDC and deposit into pool
             mint("USDC", address(this), loanAmt);
-            IERC20(USDC).approve(address(pool), uint256(-1));
-            pool.deposit(loanAmt);
+            IERC20(USDC).approve(address(pool1), uint256(-1));
+            pool1.deposit(loanAmt);
 
             // Create loan, fund loan, draw down on loan
             address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
@@ -705,7 +705,7 @@ contract TestUtil is DSTest {
             loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         }
 
-        assertTrue(pat.try_fundLoan(address(pool), address(loan1), address(dlFactory), loanAmt));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), loanAmt));
 
         {
             uint256 cReq = loan1.collateralRequiredForDrawdown(loanAmt); // wETH required for 1_000 USDC drawdown on loan
@@ -726,7 +726,7 @@ contract TestUtil is DSTest {
     }
 
     function stakeIntoFarm(Farmer farmer, uint256 amt) internal{
-        farmer.increaseCustodyAllowance(address(pool), address(mplRewards), amt);
+        farmer.increaseCustodyAllowance(address(pool1), address(mplRewards), amt);
         farmer.stake(amt); 
     }
 
@@ -782,11 +782,11 @@ contract TestUtil is DSTest {
     function setUpLoanMakeOnePaymentAndDefault() public returns (uint256 interestPaid) {
         // Fund the pool
         mint("USDC", address(leo), 20_000_000 * USD);
-        leo.approve(USDC, address(pool), MAX_UINT);
-        leo.deposit(address(pool), 10_000_000 * USD);
+        leo.approve(USDC, address(pool1), MAX_UINT);
+        leo.deposit(address(pool1), 10_000_000 * USD);
 
         // Fund the loan
-        pat.fundLoan(address(pool), address(loan1), address(dlFactory), 1_000_000 * USD);
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 1_000_000 * USD);
         uint cReq = loan1.collateralRequiredForDrawdown(1_000_000 * USD);
 
         // Drawdown loan
@@ -806,7 +806,7 @@ contract TestUtil is DSTest {
         hevm.warp(start + nextPaymentDue + defaultGracePeriod + 1);
 
         // Trigger default
-        pat.triggerDefault(address(pool), address(loan1), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(loan1), address(dlFactory));
     }
 
     function make_withdrawable(LP investor, Pool pool) internal {

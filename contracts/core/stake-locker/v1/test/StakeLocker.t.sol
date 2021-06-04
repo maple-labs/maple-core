@@ -299,7 +299,7 @@ contract StakeLockerTest is TestUtil {
         assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
 
         // Warp to just before lockup period ends
-        hevm.warp(startDate + pool.lockupPeriod() - 1);
+        hevm.warp(startDate + pool1.lockupPeriod() - 1);
         assertTrue(!sam.try_transfer(address(stakeLocker), address(sid), stakeAmount));
 
         // Warp to after lockup period and transfer
@@ -347,10 +347,10 @@ contract StakeLockerTest is TestUtil {
 
     function setUpLoanAndRepay() public {
         mint("USDC", address(leo), 10_000_000 * USD);  // Mint USDC to LP
-        leo.approve(USDC, address(pool), MAX_UINT);    // LP approves USDC
+        leo.approve(USDC, address(pool1), MAX_UINT);    // LP approves USDC
 
-        leo.deposit(address(pool), 10_000_000 * USD);                                       // LP deposits 10m USDC to Pool
-        pat.fundLoan(address(pool), address(loan1), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
+        leo.deposit(address(pool1), 10_000_000 * USD);                                       // LP deposits 10m USDC to Pool
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
 
         uint256 cReq = loan1.collateralRequiredForDrawdown(10_000_000 * USD);  // WETH required for 100_000_000 USDC drawdown on loan
         mint("WETH", address(bob), cReq);                                      // Mint WETH to borrower
@@ -361,7 +361,7 @@ contract StakeLockerTest is TestUtil {
         bob.approve(USDC, address(loan1), MAX_UINT);   // Borrower approves USDC
         bob.makeFullPayment(address(loan1));           // Borrower makes full payment, which includes interest
 
-        pat.claim(address(pool), address(loan1), address(dlFactory));  // PD claims interest, distributing funds to stakeLocker
+        pat.claim(address(pool1), address(loan1), address(dlFactory));  // PD claims interest, distributing funds to stakeLocker
     }
 
     function test_unstake(uint256 stakeAmount) public {
@@ -480,7 +480,7 @@ contract StakeLockerTest is TestUtil {
         assertEq(bptLosses.pre,                                0);  // Claim hasn't been made yet - losses   not realized
         assertEq(recognizableLossesOf.pre,                     0);  // Claim hasn't been made yet - losses   not realized
 
-        pat.claim(address(pool), address(loan1), address(dlFactory));  // Pool Delegate claims funds, updating accounting for interest and losses from Loan
+        pat.claim(address(pool1), address(loan1), address(dlFactory));  // Pool Delegate claims funds, updating accounting for interest and losses from Loan
 
         // Post-claim FDT and StakeLocker checks (Sam only)
         stakeLockerBal.post       = bPool.balanceOf(address(stakeLocker));
@@ -491,7 +491,7 @@ contract StakeLockerTest is TestUtil {
         bptLosses.post            = stakeLocker.bptLosses();
         recognizableLossesOf.post = stakeLocker.recognizableLossesOf(address(sam));
 
-        uint256 stakingRevenue = interestPaid * pool.stakingFee() / 10_000;  // Portion of interest that goes to the StakeLocker
+        uint256 stakingRevenue = interestPaid * pool1.stakingFee() / 10_000;  // Portion of interest that goes to the StakeLocker
 
         assertTrue(stakeLockerBal.post < stakeLockerBal.pre);  // BPTs were burned to cover losses
 
