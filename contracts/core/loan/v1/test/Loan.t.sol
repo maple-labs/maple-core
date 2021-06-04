@@ -491,8 +491,7 @@ contract LoanTest is TestUtil {
         uint256 numPayments,
         uint256 requestAmount,
         uint256 collateralRatio,
-        uint256 fundAmount,
-        uint256 drawdownAmount
+        uint256 fundAmount
     )
         public
     {

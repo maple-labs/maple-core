@@ -25,7 +25,7 @@ contract PremiumCalcTest is TestUtil {
 
         premiumFee = premiumFee % 10_000;
 
-        setUpRepayments(loanAmt, 100, 1, 1, 100, premiumFee);
+        setUpRepayments(loanAmt, 100, 1, 1);
 
         mint("USDC",      address(bob),  loanAmt * 1000); // Mint enough to pay interest
         bob.approve(USDC, address(loan), loanAmt * 1000);
@@ -48,13 +48,13 @@ contract PremiumCalcTest is TestUtil {
         assertEq(beforeBal - afterBal, total);
     }
 
-    function test_late_premium(uint56 _loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee, uint256 premiumFee) public {
+    function test_late_premium(uint56 _loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee) public {
         uint256 loanAmt = constrictToRange(_loanAmt, 10_000 * USD, 100 * 1E9 * USD, true);  // $10k to $100b, non zero
 
         apr     = apr     % 10_000;
         lateFee = lateFee % 10_000;
 
-        setUpRepayments(loanAmt, apr, index, numPayments, lateFee, 100);
+        setUpRepayments(loanAmt, apr, index, numPayments);
 
         mint("USDC",      address(bob),  loanAmt * 1000); // Mint enough to pay interest
         bob.approve(USDC, address(loan), loanAmt * 1000);

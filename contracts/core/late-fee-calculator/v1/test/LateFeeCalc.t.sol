@@ -26,7 +26,7 @@ contract LateFeeCalcTest is TestUtil {
         apr     = apr     % 10_000;
         lateFee = lateFee % 10_000;
 
-        setUpRepayments(loanAmt, apr, index, numPayments, lateFee, 100);
+        setUpRepayments(loanAmt, apr, index, numPayments);
 
         // Calculate theoretical values and sum up actual values
         uint256 totalPaid;

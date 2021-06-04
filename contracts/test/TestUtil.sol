@@ -687,7 +687,7 @@ contract TestUtil is DSTest {
         return amt == uint256(0) ? uint256(0) : amt.mul(totalClaim).div(totalAmt);
     }
 
-    function setUpRepayments(uint256 loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee, uint256 premiumFee) public {
+    function setUpRepayments(uint256 loanAmt, uint256 apr, uint16 index, uint16 numPayments) public {
         uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
 
         uint256 paymentInterval = paymentIntervalArray[index % 10];

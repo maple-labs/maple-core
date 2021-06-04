@@ -25,7 +25,7 @@ contract RepaymentCalcTest is TestUtil {
 
         apr = apr % 10_000;
 
-        setUpRepayments(loanAmt, uint256(apr), index, numPayments, 100, 100);
+        setUpRepayments(loanAmt, uint256(apr), index, numPayments);
 
         // Calculate theoretical values and sum up actual values
         uint256 totalPaid;
