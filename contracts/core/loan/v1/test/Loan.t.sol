@@ -255,7 +255,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.principalOwed(),                                     drawdownAmount);  // Principal owed
         assertEq(uint256(loan.loanState()),                                             1);  // Loan state: Active
 
-        withinDiff(usdc.balanceOf(address(bob)), drawdownAmount - (investorFee + treasuryFee), 1); // Borrower liquidityAsset balance
+        withinDiff(usdc.balanceOf(address(bob)), drawdownAmount - (investorFee + treasuryFee), 1);  // Borrower liquidityAsset balance
 
         assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());  // Next payment due timestamp calculated from time of drawdown
 
@@ -348,7 +348,7 @@ contract LoanTest is TestUtil {
         for (uint256 i = 2; i <= _numPayments - 1; i++) {
             repetitivePayment(loan, _numPayments, i, drawdownAmount, loanPreBal, uint256(0));
         }
-        
+
         // Approve last payment.
         (total, principal, interest, due,) = loan.getNextPayment();
         mint("USDC", address(bob),       total);

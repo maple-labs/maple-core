@@ -22,7 +22,7 @@ interface IDebtLocker {
     function lastAmountRecovered() external view returns (uint256);
 
     function claim() external returns (uint256[7] memory);
-    
+
     function triggerDefault() external;
 
 }

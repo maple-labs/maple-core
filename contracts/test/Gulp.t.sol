@@ -62,12 +62,12 @@ contract GulpTest is TestUtil {
 
         uint256 usdcBal_preGulp = bPool.getBalance(USDC);
 
-        bPool.gulp(USDC); // Update BPool with gulp(token).
+        bPool.gulp(USDC);  // Update BPool with gulp(token).
 
         uint256 usdcBal_postGulp = bPool.getBalance(USDC);
 
         assertEq(usdcBal_preGulp,  1_550_000 * USD);
-        assertEq(usdcBal_postGulp, usdcBal_preGulp + earnings); // USDC is transferred into Balancer pool, increasing value of MPL
+        assertEq(usdcBal_postGulp, usdcBal_preGulp + earnings);  // USDC is transferred into Balancer pool, increasing value of MPL
     }
 
     function test_uniswap_pool_skim() public {
@@ -99,8 +99,8 @@ contract GulpTest is TestUtil {
 
         uint256 usdcBal_preSkim     = usdc.balanceOf(address(uniswapPair));
         uint256 lex_usdcBal_preSkim = usdc.balanceOf(address(lex));
-        
-        uniswapPair.skim(address(lex)); // Get the extra fund out of it.
+
+        uniswapPair.skim(address(lex));  // Get the extra fund out of it.
 
         uint256 usdcBal_postSkim     = usdc.balanceOf(address(uniswapPair));
         uint256 lex_usdcBal_postSkim = usdc.balanceOf(address(lex));

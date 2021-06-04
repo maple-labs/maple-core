@@ -21,7 +21,7 @@ interface IMplRewards {
     function lastPauseTime() external view returns (uint256);
 
     function paused() external view returns (bool);
-    
+
     function userRewardPerTokenPaid(address) external view returns (uint256);
 
     function rewards(address) external view returns (uint256);

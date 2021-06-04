@@ -11,4 +11,4 @@ interface ILateFeeCalc {
 
     function getLateFee(uint256) external view returns (uint256);
 
-} 
+}

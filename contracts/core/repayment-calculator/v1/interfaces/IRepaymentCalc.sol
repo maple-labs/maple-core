@@ -9,4 +9,4 @@ interface IRepaymentCalc {
 
     function getNextPayment(address) external view returns (uint256, uint256, uint256);
 
-} 
+}

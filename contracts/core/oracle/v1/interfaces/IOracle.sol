@@ -14,15 +14,15 @@ interface IOracle {
     function manualPrice() external view returns (int256);
 
     function getLatestPrice() external view returns (int256);
-    
+
     function changeAggregator(address) external;
 
     function getAssetAddress() external view returns (address);
-    
+
     function getDenomination() external view returns (bytes32);
-    
+
     function setManualPrice(int256) external;
-    
+
     function setManualOverride(bool) external;
 
 }

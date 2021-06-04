@@ -168,9 +168,9 @@ contract TestUtil is DSTest {
     IERC20 constant weth = IERC20(WETH);
     IERC20 constant wbtc = IERC20(WBTC);
 
-    address constant BPOOL_FACTORY        = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd; // Balancer pool factory
-    address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router
-    address constant UNISWAP_V2_FACTORY   = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f; // Uniswap V2 factory.
+    address constant BPOOL_FACTORY        = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd;  // Balancer pool factory
+    address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;  // Uniswap V2 Router
+    address constant UNISWAP_V2_FACTORY   = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;  // Uniswap V2 factory.
 
     /*****************/
     /*** Constants ***/
@@ -196,9 +196,9 @@ contract TestUtil is DSTest {
     /*** Utilities ***/
     /*****************/
     struct Token {
-        address addr; // ERC20 Mainnet address
-        uint256 slot; // Balance storage slot
-        address orcl; // Chainlink oracle address
+        address addr;  // ERC20 Mainnet address
+        uint256 slot;  // Balance storage slot
+        address orcl;  // Chainlink oracle address
     }
 
     mapping (bytes32 => Token) tokens;
@@ -566,7 +566,7 @@ contract TestUtil is DSTest {
             bytes32(bal + amt)
         );
 
-        assertEq(IERC20(addr).balanceOf(account), bal + amt); // Assert new balance
+        assertEq(IERC20(addr).balanceOf(account), bal + amt);  // Assert new balance
     }
 
     function getDiff(uint256 val0, uint256 val1) internal pure returns (uint256 diff) {
@@ -586,7 +586,7 @@ contract TestUtil is DSTest {
         emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", accuracy);
         emit log_named_uint("  Expected", val0);
         emit log_named_uint("    Actual", val1);
-        fail(); 
+        fail();
     }
 
     // Verify equality within accuracy percentage (basis points)
@@ -708,7 +708,7 @@ contract TestUtil is DSTest {
         assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), loanAmt));
 
         {
-            uint256 cReq = loan1.collateralRequiredForDrawdown(loanAmt); // wETH required for 1_000 USDC drawdown on loan
+            uint256 cReq = loan1.collateralRequiredForDrawdown(loanAmt);  // wETH required for 1_000 USDC drawdown on loan
             mint("WETH", address(bob), cReq);
             bob.approve(WETH, address(loan1), cReq);
             bob.drawdown(address(loan1), loanAmt);
@@ -727,7 +727,7 @@ contract TestUtil is DSTest {
 
     function stakeIntoFarm(Farmer farmer, uint256 amt) internal{
         farmer.increaseCustodyAllowance(address(pool1), address(mplRewards), amt);
-        farmer.stake(amt); 
+        farmer.stake(amt);
     }
 
     function setUpFarmingAndDeposit(uint256 totalMpl, uint256 rewardsDuration, uint256 amt1, uint256 amt2, uint256 amt3) internal {
@@ -755,25 +755,25 @@ contract TestUtil is DSTest {
         }
 
         lp.approve(USDC, address(pool), MAX_UINT);
-        lp.deposit(address(pool), liquidityAmt); 
+        lp.deposit(address(pool), liquidityAmt);
     }
 
     function drawdown(Loan loan, Borrower bow, uint256 usdDrawdownAmt) internal {
-        uint256 cReq = loan.collateralRequiredForDrawdown(usdDrawdownAmt); // wETH required for `usdDrawdownAmt` USDC drawdown on loan
+        uint256 cReq = loan.collateralRequiredForDrawdown(usdDrawdownAmt);  // wETH required for `usdDrawdownAmt` USDC drawdown on loan
         mint("WETH", address(bow), cReq);
         bow.approve(WETH, address(loan),  cReq);
         bow.drawdown(address(loan),  usdDrawdownAmt);
     }
 
     function doPartialLoanPayment(Loan loan, Borrower bow) internal returns (uint256 amt) {
-        (amt,,,,) = loan.getNextPayment(); // USDC required for next payment of loan
+        (amt,,,,) = loan.getNextPayment();  // USDC required for next payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makePayment(address(loan));
     }
 
     function doFullLoanPayment(Loan loan, Borrower bow) internal {
-        (uint256 amt,,) = loan.getFullPayment(); // USDC required for full payment of loan
+        (uint256 amt,,) = loan.getFullPayment();  // USDC required for full payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makeFullPayment(address(loan));

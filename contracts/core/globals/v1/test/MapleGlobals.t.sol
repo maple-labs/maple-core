@@ -224,8 +224,8 @@ contract MapleGlobalsTest is TestUtil {
         assertEq(globals.oracleFor(WETH),            address(wethOracle));
         assertEq(globals.oracleFor(WBTC),            address(wbtcOracle));
 
-        assertTrue(globals.getLatestPrice(WETH) != 0); // Shows real WETH value from Chainlink
-        assertTrue(globals.getLatestPrice(WBTC) != 0); // Shows real WBTC value from Chainlink
+        assertTrue(globals.getLatestPrice(WETH) != 0);  // Shows real WETH value from Chainlink
+        assertTrue(globals.getLatestPrice(WBTC) != 0);  // Shows real WBTC value from Chainlink
 
         // setMaxSwapSlippage()
         assertEq(   globals.maxSwapSlippage(),      1_000);

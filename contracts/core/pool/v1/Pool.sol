@@ -71,7 +71,7 @@ contract Pool is PoolFDT {
     event                 PoolAdminSet(address indexed poolAdmin, bool allowed);
     event           DepositDateUpdated(address indexed liquidityProvider, uint256 depositDate);
     event TotalCustodyAllowanceUpdated(address indexed liquidityProvider, uint256 newTotalAllowance);
-    
+
     event DefaultSuffered(
         address indexed loan,
         uint256 defaultSuffered,

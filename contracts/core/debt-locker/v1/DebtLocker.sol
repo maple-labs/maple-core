@@ -74,7 +74,7 @@ contract DebtLocker {
         if (loan.withdrawableFundsOf(address(this)) == uint256(0)) return([0, 0, 0, 0, 0, 0, newDefaultSuffered]);
 
         // If there are claimable funds, calculate portions and claim using LoanFDT.
-        
+
         // Calculate payment deltas.
         uint256 newInterest  = loan.interestPaid() - lastInterestPaid;    // `loan.interestPaid`  updated in `loan._makePayment()`
         uint256 newPrincipal = loan.principalPaid() - lastPrincipalPaid;  // `loan.principalPaid` updated in `loan._makePayment()`

@@ -40,7 +40,7 @@ contract LateFeeCalcTest is TestUtil {
         hevm.warp(loan1.nextPaymentDue() + 1);  // Payment is late
         (uint256 lastTotal,,,,) =  loan1.getNextPayment();
 
-        mint("USDC",      address(bob),  loanAmt * 1000); // Mint enough to pay interest
+        mint("USDC",      address(bob),  loanAmt * 1000);  // Mint enough to pay interest
         bob.approve(USDC, address(loan1), loanAmt * 1000);
 
         uint256 beforeBal = IERC20(USDC).balanceOf(address(bob));
@@ -48,8 +48,8 @@ contract LateFeeCalcTest is TestUtil {
         while (loan1.paymentsRemaining() > 0) {
             hevm.warp(loan1.nextPaymentDue() + 1);  // Payment is late
 
-            (uint256 total,      uint256 principal,      uint256 interest,,)    = loan1.getNextPayment();                       // USDC required for payment on loan
-            (uint256 total_calc, uint256 principal_calc, uint256 interest_calc) = repaymentCalc.getNextPayment(address(loan1)); // USDC required for payment on loan
+            (uint256 total,      uint256 principal,      uint256 interest,,)    = loan1.getNextPayment();                        // USDC required for payment on loan
+            (uint256 total_calc, uint256 principal_calc, uint256 interest_calc) = repaymentCalc.getNextPayment(address(loan1));  // USDC required for payment on loan
 
             uint256 interest_late = lateFeeCalc.getLateFee(interest_calc);  // USDC required for payment on loan
 
@@ -71,7 +71,7 @@ contract LateFeeCalcTest is TestUtil {
                 assertEq(total,     principal + interest);
                 assertEq(principal,              loanAmt);
                 withinPrecision(totalPaid, sumTotal, 8);
-                assertEq(beforeBal - IERC20(USDC).balanceOf(address(bob)), sumTotal); // Pays back all principal, plus interest
+                assertEq(beforeBal - IERC20(USDC).balanceOf(address(bob)), sumTotal);  // Pays back all principal, plus interest
             }
 
             lastTotal = total;

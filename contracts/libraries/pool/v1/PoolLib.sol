@@ -31,7 +31,7 @@ library PoolLib {
     /*** Pool Delegate Utility Functions ***/
     /***************************************/
 
-    /** 
+    /**
         @dev   Conducts sanity checks for Pools in the constructor.
         @param globals        Instance of a MapleGlobals.
         @param liquidityAsset Asset used by Pool for liquidity to fund loans.
@@ -40,10 +40,10 @@ library PoolLib {
         @param delegateFee    Fee that the Pool Delegate earns on interest, in basis points.
     */
     function poolSanityChecks(
-        IMapleGlobals globals, 
-        address liquidityAsset, 
-        address stakeAsset, 
-        uint256 stakingFee, 
+        IMapleGlobals globals,
+        address liquidityAsset,
+        address stakeAsset,
+        uint256 stakingFee,
         uint256 delegateFee
     ) external view {
         IBPool bPool = IBPool(stakeAsset);
@@ -52,9 +52,9 @@ library PoolLib {
         require(stakingFee.add(delegateFee) <= 10_000,         "P:INVALID_FEES");
         require(
             globals.isValidBalancerPool(address(stakeAsset)) &&
-            bPool.isBound(globals.mpl())                     && 
+            bPool.isBound(globals.mpl())                     &&
             bPool.isBound(liquidityAsset)                    &&
-            bPool.isFinalized(), 
+            bPool.isFinalized(),
             "P:INVALID_BALANCER_POOL"
         );
     }
@@ -92,10 +92,10 @@ library PoolLib {
             debtLocker = IDebtLockerFactory(dlFactory).newLocker(loan);
             debtLockers[loan][dlFactory] = debtLocker;
         }
-    
+
         // Fund the Loan.
         ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLocker, amt);
-        
+
         emit LoanFunded(loan, debtLocker, amt);
     }
 
@@ -114,13 +114,13 @@ library PoolLib {
         address stakeLocker,
         address stakeAsset,
         uint256 defaultSuffered
-    ) 
+    )
         external
         returns (
             uint256 bptsBurned,
             uint256 postBurnBptBal,
             uint256 liquidityAssetRecoveredFromBurn
-        ) 
+        )
     {
 
         IBPool bPool = IBPool(stakeAsset);  // stakeAsset = Balancer Pool Tokens
@@ -137,7 +137,7 @@ library PoolLib {
 
         // Burn enough BPTs for Liquidity Asset to cover default suffered.
         bPool.exitswapExternAmountOut(
-            address(liquidityAsset), 
+            address(liquidityAsset),
             availableSwapOut >= defaultSuffered ? defaultSuffered : availableSwapOut,  // Burn BPTs up to defaultSuffered amount
             preBurnBptBal
         );
@@ -170,7 +170,7 @@ library PoolLib {
         uint256[7] calldata claimInfo,
         uint256 delegateFee,
         uint256 stakingFee
-    ) 
+    )
         external
         pure
         returns (
@@ -178,8 +178,8 @@ library PoolLib {
             uint256 stakeLockerPortion,
             uint256 principalClaim,
             uint256 interestClaim
-        ) 
-    { 
+        )
+    {
         poolDelegatePortion = claimInfo[1].mul(delegateFee).div(10_000).add(claimInfo[3]);  // Pool Delegate portion of interest plus fee.
         stakeLockerPortion  = claimInfo[1].mul(stakingFee).div(10_000);                     // StakeLocker portion of interest.
 
@@ -300,7 +300,7 @@ library PoolLib {
         return _bdiv(amountStakedBPT, totalSupplyBPT).mul(_bdiv(liquidityAssetBalance, liquidityAssetWeight)).div(WAD);
     }
 
-    /** 
+    /**
         @dev    Calculates Liquidity Asset swap out value of staker BPT balance escrowed in StakeLocker.
         @param  _bPool         Balancer pool that issues the BPTs.
         @param  liquidityAsset Swap out asset (e.g. USDC) to receive when burning BPTs.
@@ -317,7 +317,7 @@ library PoolLib {
         return _getSwapOutValue(_bPool, liquidityAsset, IERC20(stakeLocker).balanceOf(staker));
     }
 
-    /** 
+    /**
         @dev    Calculates Liquidity Asset swap out value of entire BPT balance escrowed in StakeLocker.
         @param  _bPool         Balancer pool that issues the BPTs.
         @param  liquidityAsset Swap out asset (e.g. USDC) to receive when burning BPTs.
@@ -356,7 +356,7 @@ library PoolLib {
         );
 
         // Max amount that can be swapped based on amount of liquidityAsset in the Balancer Pool
-        uint256 maxSwapOut = tokenBalanceOut.mul(bPool.MAX_OUT_RATIO()).div(WAD);  
+        uint256 maxSwapOut = tokenBalanceOut.mul(bPool.MAX_OUT_RATIO()).div(WAD);
 
         return tokenAmountOut <= maxSwapOut ? tokenAmountOut : maxSwapOut;
     }
@@ -446,7 +446,7 @@ library PoolLib {
         return amt.mul(10 ** liquidityAssetDecimals).div(WAD);
     }
 
-    /** 
+    /**
         @dev    Returns Liquidity Asset in Liquidity Asset units when given integer USD (E.g., $100 = 100).
         @param  globals        Instance of a MapleGlobals.
         @param  liquidityAsset Liquidity Asset of the pool.

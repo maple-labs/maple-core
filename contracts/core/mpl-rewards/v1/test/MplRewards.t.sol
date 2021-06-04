@@ -70,7 +70,7 @@ contract MplRewardsTest is TestUtil {
         assertEq(mplRewards.balanceOf(address(fay)),                       0);
         assertEq(mplRewards.totalSupply(),                                 0);
 
-        fay.transfer(USDC, address(mplRewards), 1000 * USD); // Ali transfers USDC directly into Staking rewards accidentally
+        fay.transfer(USDC, address(mplRewards), 1000 * USD);  // Ali transfers USDC directly into Staking rewards accidentally
 
         assertEq(IERC20(USDC).balanceOf(address(fay)),                     0);
         assertEq(IERC20(USDC).balanceOf(address(gov)),                     0);
@@ -109,15 +109,15 @@ contract MplRewardsTest is TestUtil {
         assertEq(mplRewards.rewardsDuration(),                   7 days);
 
         assertTrue(!fakeGov.try_setRewardsDuration(30 days));
-        assertTrue(    !gov.try_setRewardsDuration(30 days)); // Won't work because current rewards period hasn't ended
+        assertTrue(    !gov.try_setRewardsDuration(30 days));  // Won't work because current rewards period hasn't ended
 
         hevm.warp(mplRewards.periodFinish());
 
-        assertTrue(!gov.try_setRewardsDuration(30 days)); // Won't work because current rewards period hasn't ended
+        assertTrue(!gov.try_setRewardsDuration(30 days));  // Won't work because current rewards period hasn't ended
 
         hevm.warp(mplRewards.periodFinish() + 1);
 
-        assertTrue(gov.try_setRewardsDuration(30 days)); // Works because current rewards period has ended
+        assertTrue(gov.try_setRewardsDuration(30 days));  // Works because current rewards period has ended
 
         assertEq(mplRewards.rewardsDuration(), 30 days);
     }
@@ -167,7 +167,7 @@ contract MplRewardsTest is TestUtil {
         assertEq(mplRewards.balanceOf(address(fay)),              0);
         assertEq(mplRewards.totalSupply(),                        0);
 
-        hevm.warp(start + 1 days); // Warp to ensure no effect on depositDates
+        hevm.warp(start + 1 days);  // Warp to ensure no effect on depositDates
 
         assertTrue(!fay.try_stake(100 * WAD));  // Can't stake before approval
 
@@ -189,7 +189,7 @@ contract MplRewardsTest is TestUtil {
         fay.increaseCustodyAllowance(address(pool1), address(mplRewards), 100 * WAD);
         fay.stake(100 * WAD);
 
-        hevm.warp(start + 1 days); // Warp to ensure no effect on depositDates
+        hevm.warp(start + 1 days);  // Warp to ensure no effect on depositDates
 
         assertEq(pool1.balanceOf(address(fay)),          1000 * WAD);  // PoolFDT balance doesn't change
         assertEq(pool1.depositDate(address(fay)),             start);
@@ -300,7 +300,7 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         dTime1_rpt * 10 * WAD / WAD  // Updated on getReward, account has claimed rewards (equal to original earned() amt at this timestamp))
         });
 
-        fez.stake(10 * WAD); // Bob stakes 10 FDTs, giving him 50% stake in the pool rewards going forward
+        fez.stake(10 * WAD);  // Bob stakes 10 FDTs, giving him 50% stake in the pool rewards going forward
 
         /*** Bob time = (1 days) post-stake ***/
         assertRewardsAccounting({
@@ -340,7 +340,7 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         0                             // Not updated yet
         });
 
-        fez.stake(20 * WAD); // Bob stakes another 20 FDTs, giving him 75% stake in the pool rewards going forward
+        fez.stake(20 * WAD);  // Bob stakes another 20 FDTs, giving him 75% stake in the pool rewards going forward
 
         /*** Bob time = (2 days) post-stake ***/
         assertRewardsAccounting({
@@ -582,7 +582,7 @@ contract MplRewardsTest is TestUtil {
 
         gov.notifyRewardAmount(40_000 * WAD);
 
-        uint256 rewardRate2 = mplRewards.rewardRate(); // New rewardRate
+        uint256 rewardRate2 = mplRewards.rewardRate();  // New rewardRate
 
         assertEq(rewardRate2, uint256(40_000 * WAD) / 15 days);
 

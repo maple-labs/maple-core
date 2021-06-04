@@ -19,7 +19,7 @@ contract PoolTest is TestUtil {
         createLiquidityPools();
         createLoans();
     }
-    
+
     function test_getInitialStakeRequirements(uint256 newSwapOutRequired) public {
         newSwapOutRequired = constrictToRange(newSwapOutRequired, 10_000, 500_000, true);
         gov.setSwapOutRequired(newSwapOutRequired);
@@ -37,10 +37,10 @@ contract PoolTest is TestUtil {
 
         // Pre-state checks.
         assertBalanceState(pool1.stakeLocker(), patBptBalance, 0, 0);
-        
+
         (,,, minStake,) = pool1.getInitialStakeRequirements();
         // Mint the minStake to PD
-        if (minStake > patBptBalance) { 
+        if (minStake > patBptBalance) {
             transferMoreBpts(address(pat), minStake - patBptBalance);
             patBptBalance = minStake;
         }
@@ -52,7 +52,7 @@ contract PoolTest is TestUtil {
             assertEq(minCover, globals.swapOutRequired() * USD);                      // Equal to globally specified value
             assertEq(curCover, 0);                                                    // Nothing staked
             assertTrue(!covered);                                                     // Not covered
-            assertEq(minStake, calc_minStake);                                        // Minimum stake equals calculated minimum stake     
+            assertEq(minStake, calc_minStake);                                        // Minimum stake equals calculated minimum stake
             assertEq(curStake, calc_stakerBal);                                       // Current stake equals calculated stake
             assertEq(curStake, IERC20(pool1.stakeLocker()).balanceOf(address(pat)));  // Current stake equals balance of StakeLockerFDTs
         }
@@ -80,7 +80,7 @@ contract PoolTest is TestUtil {
         /***********************************/
         /*** Stake Exact Required Amount ***/
         /***********************************/
-        pat.stake(pool1.stakeLocker(), 1); // Add one more wei of BPT to get to minStake amount
+        pat.stake(pool1.stakeLocker(), 1);  // Add one more wei of BPT to get to minStake amount
 
         // Post-state checks.
         assertBalanceState(pool1.stakeLocker(), patBptBalance - minStake, minStake, minStake);
@@ -122,7 +122,7 @@ contract PoolTest is TestUtil {
         /***********************************/
         /*** Stake Exact Required Amount ***/
         /***********************************/
-        pat.stake(stakeLocker, 1); // Add one more wei of BPT to get to minStake amount
+        pat.stake(stakeLocker, 1);  // Add one more wei of BPT to get to minStake amount
 
         // Post-state checks.
         assertBalanceState(stakeLocker, 50 * WAD - minStake, minStake, minStake);
@@ -133,7 +133,7 @@ contract PoolTest is TestUtil {
         // Pause protocol and attempt finalize()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(!pat.try_finalize(address(pool1)));
-        
+
         // Unpause protocol and finalize()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(pat.try_finalize(address(pool1)));  // PD that staked can finalize
@@ -169,20 +169,20 @@ contract PoolTest is TestUtil {
         finalizePool(pool1, pat, true);
 
         depositAmt = constrictToRange(depositAmt, loan1.requestAmount(), loan1.requestAmount() + 1000 * USD, true);
-        fundAmt    = constrictToRange(fundAmt, 1 * USD, depositAmt, true); 
+        fundAmt    = constrictToRange(fundAmt, 1 * USD, depositAmt, true);
 
         // Mint funds and deposit to Pool.
         mintFundsAndDepositIntoPool(leo, pool1, depositAmt, depositAmt);
 
         gov.setValidLoanFactory(address(loanFactory), false);
 
-        assertTrue(!pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), depositAmt)); // LoanFactory not in globals
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), depositAmt));  // LoanFactory not in globals
 
         gov.setValidLoanFactory(address(loanFactory), true);
 
         assertEq(usdc.balanceOf(liqLocker),               depositAmt);  // Balance of LiquidityLocker
         assertEq(usdc.balanceOf(address(fundingLocker)),           0);  // Balance of FundingLocker
-        
+
         /*******************/
         /*** Fund a Loan ***/
         /*******************/
@@ -210,7 +210,7 @@ contract PoolTest is TestUtil {
         /*** Fund same loan with the same DL ***/
         /***************************************/
         uint256 newFundAmt = constrictToRange(fundAmt, 1 * USD, depositAmt - fundAmt, true);
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), newFundAmt)); // Fund same loan for newFundAmt
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), newFundAmt));  // Fund same loan for newFundAmt
 
         assertEq(dlFactory.owner(address(debtLocker)), address(pool1));
         assertTrue(dlFactory.isLocker(address(debtLocker)));
@@ -224,7 +224,7 @@ contract PoolTest is TestUtil {
         /*** Fund same loan with a different DL ***/
         /******************************************/
         uint256 newFundAmt2 = constrictToRange(fundAmt, 1 * USD, depositAmt - fundAmt - newFundAmt, true);
-        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory2), newFundAmt2)); // Fund loan for 15 USDC
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory2), newFundAmt2));  // Fund loan for 15 USDC
 
         DebtLocker debtLocker2 = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory2)));
 
@@ -246,7 +246,7 @@ contract PoolTest is TestUtil {
         /*******************************/
         /*** Finalize liquidity pool ***/
         /*******************************/
-        
+
         finalizePool(pool1, pat, true);
 
         address liquidityAsset         = address(pool1.liquidityAsset());
@@ -286,22 +286,22 @@ contract PoolTest is TestUtil {
         /*******************************/
         /*** Finalize liquidity pool ***/
         /*******************************/
-        
+
         finalizePool(pool1, pat, true);
-        
+
         /**************************************************/
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
 
         depositAmt = constrictToRange(depositAmt, loan1.requestAmount(), loan1.requestAmount() + 100_000_000 * USD, true);
-        fundAmt    = constrictToRange(fundAmt, 101 * USD, depositAmt, true); 
+        fundAmt    = constrictToRange(fundAmt, 101 * USD, depositAmt, true);
 
         mintFundsAndDepositIntoPool(leo, pool1, loan1.requestAmount() + 100_000_000 * USD, depositAmt);
 
         /***********************************/
         /*** Fund loan1 / loan2 (Excess) ***/
         /***********************************/
-        
+
         assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory2), fundAmt));
 
         address liquidityAsset         = address(pool1.liquidityAsset());
@@ -383,7 +383,7 @@ contract PoolTest is TestUtil {
         assertTrue(pat.try_setStakingFee(address(pool1), 2000));
         assertEq(pool1.stakingFee(),                     2000);
     }
-    
+
     /***************/
     /*** Helpers ***/
     /***************/

@@ -358,8 +358,8 @@ contract PoolLiquidationTest is TestUtil {
 
         assertEq(bob_poolBal.post, 0);  // Withdrew entire amount, so all remaining BPTs are burned
 
-        assertEq(fdtSupply.pre - fdtSupply.post, bob_poolBal.pre); // Bob's FDTs have been burned
+        assertEq(fdtSupply.pre - fdtSupply.post, bob_poolBal.pre);  // Bob's FDTs have been burned
 
         assertEq(liquidityLockerBal.pre - liquidityLockerBal.post, withdrawAmt);  // All Bob's USDC was transferred out of LL
     }
-} 
+}

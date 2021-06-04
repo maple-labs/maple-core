@@ -88,7 +88,7 @@ contract Loan is LoanFDT, Pausable {
     event         Drawdown(uint256 drawdownAmount);
     event LoanStateChanged(State state);
     event     LoanAdminSet(address indexed loanAdmin, bool allowed);
-    
+
     event PaymentMade(
         uint256 totalPaid,
         uint256 principalPaid,
@@ -98,7 +98,7 @@ contract Loan is LoanFDT, Pausable {
         uint256 nextPaymentDue,
         bool latePayment
     );
-    
+
     event Liquidation(
         uint256 collateralSwapped,
         uint256 liquidityAssetReturned,
@@ -209,7 +209,7 @@ contract Loan is LoanFDT, Pausable {
         _transferFunds(_fundingLocker, treasury, treasuryAmt);                         // Send the treasury fee directly to the MapleTreasury.
         _transferFunds(_fundingLocker, borrower, amt.sub(treasuryAmt).sub(_feePaid));  // Transfer drawdown amount to the Borrower.
 
-        // Update excessReturned for `claim()`. 
+        // Update excessReturned for `claim()`.
         excessReturned = _getFundingLockerBalance().sub(_feePaid);
 
         // Drain remaining funds from the FundingLocker (amount equal to `excessReturned` plus `feePaid`)

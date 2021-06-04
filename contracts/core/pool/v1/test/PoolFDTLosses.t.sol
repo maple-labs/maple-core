@@ -91,13 +91,13 @@ contract PoolFDTLossesTest is TestUtil {
 
         // Pool Delegate trigger a default
         pat.triggerDefault(address(pool1), address(custom_loan), address(dlFactory));
-        
+
         // Check for successful default.
         assertTrue(uint8(custom_loan.loanState()) == 4, "Unexpected Loan state");
 
         // PD claims funds and also sells the stake to recover the losses.
         claimInfo = pat.claim(address(pool1), address(custom_loan), address(dlFactory));
-        
+
         assertTrue(claimInfo[6] > 0, "Loan doesn't have default suffered");
 
         uint256 poolLosses = pool1.poolLosses();
@@ -187,7 +187,7 @@ contract PoolFDTLossesTest is TestUtil {
                 usdc.balanceOf(address(leo)) + usdc.balanceOf(address(liz)),
                 1
             );
-            
+
             withinDiff(
                 getClaimedInterestNetOfFees(claimInfo2[1], pool2.delegateFee(), pool2.stakingFee()),
                 usdc.balanceOf(address(lex)) + usdc.balanceOf(address(lee)),
@@ -206,7 +206,7 @@ contract PoolFDTLossesTest is TestUtil {
                 pam.try_triggerDefault(address(pool2), address(custom_loan), address(dlFactory)),
                 "Should be able to trigger Loan default"
             );
-            
+
             // Check for successful default.
             assertTrue(uint8(custom_loan.loanState()) == 4, "Unexpected Loan state");
 

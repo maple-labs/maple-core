@@ -46,7 +46,7 @@ contract StakeLockerTest is TestUtil {
         TestObj memory stakerBPTBal,
         TestObj memory stakerFDTBal,
         TestObj memory stakerStakeDate
-    ) 
+    )
         internal
         view
     {
@@ -58,12 +58,12 @@ contract StakeLockerTest is TestUtil {
     }
 
     function populateStakeLockerPostState(
-        TestObj memory stakeLockerBal, 
-        TestObj memory fdtTotalSupply, 
-        TestObj memory stakerBPTBal, 
-        TestObj memory stakerFDTBal, 
+        TestObj memory stakeLockerBal,
+        TestObj memory fdtTotalSupply,
+        TestObj memory stakerBPTBal,
+        TestObj memory stakerFDTBal,
         TestObj memory stakerStakeDate
-    ) 
+    )
         internal
         view
     {
@@ -191,7 +191,7 @@ contract StakeLockerTest is TestUtil {
 
         sid.approve(address(bPool), address(stakeLocker1), 25 * WAD);
 
-        assertTrue(!sid.try_stake(address(stakeLocker1), 25 * WAD)); // Isn't allowlisted
+        assertTrue(!sid.try_stake(address(stakeLocker1), 25 * WAD));  // Isn't allowlisted
 
         // Open StakeLocker to public
         assertTrue(!stakeLocker1.openToPublic());
@@ -237,7 +237,7 @@ contract StakeLockerTest is TestUtil {
 
         gov.setStakerCooldownPeriod(10 days);
 
-        uint256 amt = 5 * WAD; // 1/3 of stake so unstake can happen thrice
+        uint256 amt = 5 * WAD;  // 1/3 of stake so unstake can happen thrice
 
         uint256 start = block.timestamp;
 

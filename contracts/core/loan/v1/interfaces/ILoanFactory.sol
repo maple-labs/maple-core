@@ -24,7 +24,7 @@ interface ILoanFactory {
     function loanFactoryAdmins(address) external view returns (bool);
 
     function setGlobals(address) external;
-    
+
     function createLoan(address, address, address, address, uint256[5] memory, address[3] memory) external returns (address);
 
     function setLoanFactoryAdmin(address, bool) external;

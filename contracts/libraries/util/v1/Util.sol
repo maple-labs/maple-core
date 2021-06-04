@@ -21,7 +21,7 @@ library Util {
         @return Expected amount of `toAsset` to receive from swap based on current oracle prices.
     */
     function calcMinAmount(IMapleGlobals globals, address fromAsset, address toAsset, uint256 swapAmt) external view returns (uint256) {
-        return 
+        return
             swapAmt
                 .mul(globals.getLatestPrice(fromAsset))           // Convert from `fromAsset` value.
                 .mul(10 ** IERC20Details(toAsset).decimals())     // Convert to `toAsset` decimal precision.
