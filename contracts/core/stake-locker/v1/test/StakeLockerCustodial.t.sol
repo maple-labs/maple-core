@@ -31,44 +31,44 @@ contract StakeLockerCustodialTest is TestUtil {
         custodyAmt2 = constrictToRange(custodyAmt2,  40, stakeAmt / 2,                  true);  //  40 wei - half of stake
 
         // Make StakeLocker public and stake tokens
-        pat.openStakeLockerToPublic(address(stakeLocker));
-        sam.approve(address(bPool), address(stakeLocker), stakeAmt);
-        sid.approve(address(bPool), address(stakeLocker), stakeAmt);
-        sam.stake(address(stakeLocker),                   stakeAmt);
-        sid.stake(address(stakeLocker),                   stakeAmt);
+        pat.openStakeLockerToPublic(address(stakeLocker1));
+        sam.approve(address(bPool), address(stakeLocker1), stakeAmt);
+        sid.approve(address(bPool), address(stakeLocker1), stakeAmt);
+        sam.stake(address(stakeLocker1),                   stakeAmt);
+        sid.stake(address(stakeLocker1),                   stakeAmt);
 
-        pat.setStakeLockerLockupPeriod(address(stakeLocker), 0);
+        pat.setStakeLockerLockupPeriod(address(stakeLocker1), 0);
 
         // Testing failure modes with Sam
-        assertTrue(!sam.try_increaseCustodyAllowance(address(stakeLocker), address(0),              stakeAmt));  // P:INVALID_ADDRESS
-        assertTrue(!sam.try_increaseCustodyAllowance(address(stakeLocker), address(custodian1),            0));  // P:INVALID_AMT
-        assertTrue(!sam.try_increaseCustodyAllowance(address(stakeLocker), address(custodian1), stakeAmt + 1));  // P:INSUF_BALANCE
-        assertTrue( sam.try_increaseCustodyAllowance(address(stakeLocker), address(custodian1),     stakeAmt));  // Sam can custody entire balance
+        assertTrue(!sam.try_increaseCustodyAllowance(address(stakeLocker1), address(0),              stakeAmt));  // P:INVALID_ADDRESS
+        assertTrue(!sam.try_increaseCustodyAllowance(address(stakeLocker1), address(custodian1),            0));  // P:INVALID_AMT
+        assertTrue(!sam.try_increaseCustodyAllowance(address(stakeLocker1), address(custodian1), stakeAmt + 1));  // P:INSUF_BALANCE
+        assertTrue( sam.try_increaseCustodyAllowance(address(stakeLocker1), address(custodian1),     stakeAmt));  // Sam can custody entire balance
 
         // Testing state transition and transfers with Sid
-        assertEq(stakeLocker.custodyAllowance(address(sid), address(custodian1)), 0);
-        assertEq(stakeLocker.totalCustodyAllowance(address(sid)),                 0);
+        assertEq(stakeLocker1.custodyAllowance(address(sid), address(custodian1)), 0);
+        assertEq(stakeLocker1.totalCustodyAllowance(address(sid)),                 0);
 
-        sid.increaseCustodyAllowance(address(stakeLocker), address(custodian1), custodyAmt1);
+        sid.increaseCustodyAllowance(address(stakeLocker1), address(custodian1), custodyAmt1);
 
-        assertEq(stakeLocker.custodyAllowance(address(sid), address(custodian1)), custodyAmt1);  // Sid gives custody to custodian 1
-        assertEq(stakeLocker.totalCustodyAllowance(address(sid)),                 custodyAmt1);  // Total custody allowance goes up
+        assertEq(stakeLocker1.custodyAllowance(address(sid), address(custodian1)), custodyAmt1);  // Sid gives custody to custodian 1
+        assertEq(stakeLocker1.totalCustodyAllowance(address(sid)),                 custodyAmt1);  // Total custody allowance goes up
 
-        sid.increaseCustodyAllowance(address(stakeLocker), address(custodian2), custodyAmt2);
+        sid.increaseCustodyAllowance(address(stakeLocker1), address(custodian2), custodyAmt2);
 
-        assertEq(stakeLocker.custodyAllowance(address(sid), address(custodian2)),               custodyAmt2);  // Sid gives custody to custodian 2
-        assertEq(stakeLocker.totalCustodyAllowance(address(sid)),                 custodyAmt1 + custodyAmt2);  // Total custody allowance goes up
+        assertEq(stakeLocker1.custodyAllowance(address(sid), address(custodian2)),               custodyAmt2);  // Sid gives custody to custodian 2
+        assertEq(stakeLocker1.totalCustodyAllowance(address(sid)),                 custodyAmt1 + custodyAmt2);  // Total custody allowance goes up
 
         uint256 transferableAmt = stakeAmt - custodyAmt1 - custodyAmt2;
 
-        assertEq(stakeLocker.balanceOf(address(sid)), stakeAmt);
-        assertEq(stakeLocker.balanceOf(address(sue)),        0);
+        assertEq(stakeLocker1.balanceOf(address(sid)), stakeAmt);
+        assertEq(stakeLocker1.balanceOf(address(sue)),        0);
 
-        assertTrue(!sid.try_transfer(address(stakeLocker), address(sue), transferableAmt + 1));  // Sid cannot transfer more than balance - totalCustodyAllowance
-        assertTrue( sid.try_transfer(address(stakeLocker), address(sue),     transferableAmt));  // Sid can transfer transferableAmt
+        assertTrue(!sid.try_transfer(address(stakeLocker1), address(sue), transferableAmt + 1));  // Sid cannot transfer more than balance - totalCustodyAllowance
+        assertTrue( sid.try_transfer(address(stakeLocker1), address(sue),     transferableAmt));  // Sid can transfer transferableAmt
 
-        assertEq(stakeLocker.balanceOf(address(sid)), stakeAmt - transferableAmt);
-        assertEq(stakeLocker.balanceOf(address(sue)), transferableAmt);
+        assertEq(stakeLocker1.balanceOf(address(sid)), stakeAmt - transferableAmt);
+        assertEq(stakeLocker1.balanceOf(address(sue)), transferableAmt);
     }
 
     function test_custody_and_unstake(uint256 stakeAmt, uint256 custodyAmt) public {
@@ -80,30 +80,30 @@ contract StakeLockerCustodialTest is TestUtil {
         custodyAmt = constrictToRange(custodyAmt, 1, stakeAmt,       true);  // 1 wei - stakeAmt
 
         // Make StakeLocker public and stake tokens
-        pat.openStakeLockerToPublic(address(stakeLocker));
-        sam.approve(address(bPool), address(stakeLocker), stakeAmt);
-        sam.stake(address(stakeLocker),                   stakeAmt);
+        pat.openStakeLockerToPublic(address(stakeLocker1));
+        sam.approve(address(bPool), address(stakeLocker1), stakeAmt);
+        sam.stake(address(stakeLocker1),                   stakeAmt);
 
-        pat.setStakeLockerLockupPeriod(address(stakeLocker), 0);
+        pat.setStakeLockerLockupPeriod(address(stakeLocker1), 0);
 
-        assertEq(stakeLocker.custodyAllowance(address(sam), address(custodian)), 0);
-        assertEq(stakeLocker.totalCustodyAllowance(address(sam)),                0);
+        assertEq(stakeLocker1.custodyAllowance(address(sam), address(custodian)), 0);
+        assertEq(stakeLocker1.totalCustodyAllowance(address(sam)),                0);
 
-        sam.increaseCustodyAllowance(address(stakeLocker), address(custodian), custodyAmt);
+        sam.increaseCustodyAllowance(address(stakeLocker1), address(custodian), custodyAmt);
 
-        assertEq(stakeLocker.custodyAllowance(address(sam), address(custodian)), custodyAmt);
-        assertEq(stakeLocker.totalCustodyAllowance(address(sam)),                custodyAmt);
+        assertEq(stakeLocker1.custodyAllowance(address(sam), address(custodian)), custodyAmt);
+        assertEq(stakeLocker1.totalCustodyAllowance(address(sam)),                custodyAmt);
 
         uint256 unstakeableAmt = stakeAmt - custodyAmt;
 
-        assertEq(stakeLocker.balanceOf(address(sam)), stakeAmt);
+        assertEq(stakeLocker1.balanceOf(address(sam)), stakeAmt);
 
-        make_unstakeable(sam, stakeLocker);
+        make_unstakeable(sam, stakeLocker1);
 
-        assertTrue(!sam.try_unstake(address(stakeLocker), unstakeableAmt + 1));
-        assertTrue( sam.try_unstake(address(stakeLocker),     unstakeableAmt));
+        assertTrue(!sam.try_unstake(address(stakeLocker1), unstakeableAmt + 1));
+        assertTrue( sam.try_unstake(address(stakeLocker1),     unstakeableAmt));
 
-        assertEq(stakeLocker.balanceOf(address(sam)),                  custodyAmt);
+        assertEq(stakeLocker1.balanceOf(address(sam)),                  custodyAmt);
         assertEq(bPool.balanceOf(address(sam)),       startingBptBal - custodyAmt);
     }
 
@@ -114,21 +114,21 @@ contract StakeLockerCustodialTest is TestUtil {
         custodyAmt = constrictToRange(custodyAmt, 1, stakeAmt,                      true);  // 1 wei - stakeAmt
 
         // Make StakeLocker public and stake tokens
-        pat.openStakeLockerToPublic(address(stakeLocker));
-        sam.approve(address(bPool), address(stakeLocker), stakeAmt);
-        sam.stake(address(stakeLocker),                   stakeAmt);
+        pat.openStakeLockerToPublic(address(stakeLocker1));
+        sam.approve(address(bPool), address(stakeLocker1), stakeAmt);
+        sam.stake(address(stakeLocker1),                   stakeAmt);
 
-        sam.increaseCustodyAllowance(address(stakeLocker), address(custodian), custodyAmt);
+        sam.increaseCustodyAllowance(address(stakeLocker1), address(custodian), custodyAmt);
 
-        assertEq(stakeLocker.custodyAllowance(address(sam), address(custodian)), custodyAmt);  // Sam gives custody to custodian
-        assertEq(stakeLocker.totalCustodyAllowance(address(sam)),                custodyAmt);  // Total custody allowance goes up
+        assertEq(stakeLocker1.custodyAllowance(address(sam), address(custodian)), custodyAmt);  // Sam gives custody to custodian
+        assertEq(stakeLocker1.totalCustodyAllowance(address(sam)),                custodyAmt);  // Total custody allowance goes up
 
-        assertTrue(!custodian.try_transferByCustodian(address(stakeLocker), address(sam), address(sid),     custodyAmt));  // P:INVALID_RECEIVER
-        assertTrue(!custodian.try_transferByCustodian(address(stakeLocker), address(sam), address(sam),              0));  // P:INVALID_AMT
-        assertTrue(!custodian.try_transferByCustodian(address(stakeLocker), address(sam), address(sam), custodyAmt + 1));  // P:INSUF_ALLOWANCE
-        assertTrue( custodian.try_transferByCustodian(address(stakeLocker), address(sam), address(sam),     custodyAmt));  // Able to transfer custody amount back
+        assertTrue(!custodian.try_transferByCustodian(address(stakeLocker1), address(sam), address(sid),     custodyAmt));  // P:INVALID_RECEIVER
+        assertTrue(!custodian.try_transferByCustodian(address(stakeLocker1), address(sam), address(sam),              0));  // P:INVALID_AMT
+        assertTrue(!custodian.try_transferByCustodian(address(stakeLocker1), address(sam), address(sam), custodyAmt + 1));  // P:INSUF_ALLOWANCE
+        assertTrue( custodian.try_transferByCustodian(address(stakeLocker1), address(sam), address(sam),     custodyAmt));  // Able to transfer custody amount back
 
-        assertEq(stakeLocker.custodyAllowance(address(sam), address(custodian)), 0);  // Custodian allowance has been reduced
-        assertEq(stakeLocker.totalCustodyAllowance(address(sam)),                0);  // Total custody allowance has been reduced, giving Sam access to funds again
+        assertEq(stakeLocker1.custodyAllowance(address(sam), address(custodian)), 0);  // Custodian allowance has been reduced
+        assertEq(stakeLocker1.totalCustodyAllowance(address(sam)),                0);  // Total custody allowance has been reduced, giving Sam access to funds again
     }
 }

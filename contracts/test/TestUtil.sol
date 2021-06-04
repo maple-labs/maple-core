@@ -151,7 +151,7 @@ contract TestUtil is DSTest {
     /***************/
     /*** Lockers ***/
     /***************/
-    StakeLocker stakeLocker;
+    StakeLocker stakeLocker1;
     StakeLocker stakeLocker2;
 
     /**********************************/
@@ -372,7 +372,7 @@ contract TestUtil is DSTest {
 
     function setUpLiquidityPool() public {
         createLiquidityPool();
-        stakeLocker = StakeLocker(pool1.stakeLocker());
+        stakeLocker1 = StakeLocker(pool1.stakeLocker());
         pat.approve(address(bPool), pool1.stakeLocker(), uint256(-1));
         pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)));
         pat.finalize(address(pool1));
@@ -380,7 +380,7 @@ contract TestUtil is DSTest {
     }
 
     function stakeAndFinalizePool(uint256 stakeAmt) public {
-        stakeLocker = StakeLocker(pool1.stakeLocker());
+        stakeLocker1 = StakeLocker(pool1.stakeLocker());
         pat.approve(address(bPool), pool1.stakeLocker(), uint256(-1));
         pat.stake(pool1.stakeLocker(), stakeAmt);
         pat.finalize(address(pool1));

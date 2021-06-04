@@ -136,7 +136,7 @@ contract PoolLiquidationTest is TestUtil {
         liquidityLocker_a_bal.pre = IERC20(USDC).balanceOf(liquidityLocker_a);
         liquidityLocker_b_bal.pre = IERC20(USDC).balanceOf(liquidityLocker_b);
 
-        stakeLocker_a_bal.pre = bPool.balanceOf(address(stakeLocker));
+        stakeLocker_a_bal.pre = bPool.balanceOf(address(stakeLocker1));
         stakeLocker_b_bal.pre = bPool.balanceOf(address(stakeLocker2));
 
         principalOut_a.pre = pool1.principalOut();
@@ -158,7 +158,7 @@ contract PoolLiquidationTest is TestUtil {
         liquidityLocker_a_bal.post = IERC20(USDC).balanceOf(liquidityLocker_a);
         liquidityLocker_b_bal.post = IERC20(USDC).balanceOf(liquidityLocker_b);
 
-        stakeLocker_a_bal.post = bPool.balanceOf(address(stakeLocker));
+        stakeLocker_a_bal.post = bPool.balanceOf(address(stakeLocker1));
         stakeLocker_b_bal.post = bPool.balanceOf(address(stakeLocker2));
 
         principalOut_a.post = pool1.principalOut();
@@ -179,8 +179,8 @@ contract PoolLiquidationTest is TestUtil {
         assertTrue(stakeLocker_a_bal.pre - stakeLocker_a_bal.post > 0);  // Assert BPTs were burned
         assertTrue(stakeLocker_b_bal.pre - stakeLocker_b_bal.post > 0);  // Assert BPTs were burned
 
-        assertEq(stakeLocker_a_bal.pre - stakeLocker_a_bal.post, stakeLocker.bptLosses());  // Assert FDT loss accounting
-        assertEq(stakeLocker_a_bal.pre - stakeLocker_a_bal.post, stakeLocker.bptLosses());  // Assert FDT loss accounting
+        assertEq(stakeLocker_a_bal.pre - stakeLocker_a_bal.post, stakeLocker1.bptLosses());  // Assert FDT loss accounting
+        assertEq(stakeLocker_a_bal.pre - stakeLocker_a_bal.post, stakeLocker1.bptLosses());  // Assert FDT loss accounting
     }
 
     function assertPoolAccounting(Pool pool) internal {
