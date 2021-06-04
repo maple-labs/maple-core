@@ -85,14 +85,14 @@ contract PoolClaimTest is TestUtil {
         assertEq(pool1.principalOut(), depositAmt);
         assertEq(usdc.balanceOf(pool1.liquidityLocker()), 0);
 
-        uint256[7] memory claim2 = pat.claim(address(pool1), address(zero_loan), address(dlFactory));
-        assertEq(claim2[0], 0);
-        assertEq(claim2[1], 0);
-        assertEq(claim2[2], 0);
-        assertEq(claim2[3], 0);
-        assertEq(claim2[4], 0);
-        assertEq(claim2[5], 0);
-        assertEq(claim2[6], depositAmt);
+        uint256[7] memory claim = pat.claim(address(pool1), address(zero_loan), address(dlFactory));
+        assertEq(claim[0], 0);
+        assertEq(claim[1], 0);
+        assertEq(claim[2], 0);
+        assertEq(claim[3], 0);
+        assertEq(claim[4], 0);
+        assertEq(claim[5], 0);
+        assertEq(claim[6], depositAmt);
 
         assertEq(pool1.principalOut(), 0);
         

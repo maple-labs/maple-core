@@ -700,9 +700,9 @@ contract TestUtil is DSTest {
             pool1.deposit(loanAmt);
 
             // Create loan, fund loan, draw down on loan
-            address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
-            uint256[5] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000];
-            loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+            address[3] memory _calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
+            uint256[5] memory specs  = [apr, termDays, paymentInterval, loanAmt, 2000];
+            loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, _calcs);
         }
 
         assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory), loanAmt));
