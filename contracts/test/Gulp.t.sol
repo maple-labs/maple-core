@@ -24,13 +24,13 @@ contract GulpTest is TestUtil {
         mint("USDC", address(leo), 10_000_000 * USD);  // Mint USDC to LP
         leo.approve(USDC, address(pool), MAX_UINT);    // LP approves USDC
 
-        leo.deposit(address(pool), 10_000_000 * USD);                                      // LP deposits 10m USDC to Pool
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
+        leo.deposit(address(pool), 10_000_000 * USD);                                       // LP deposits 10m USDC to Pool
+        pat.fundLoan(address(pool), address(loan1), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
 
-        uint256 cReq = loan.collateralRequiredForDrawdown(10_000_000 * USD);  // WETH required for 100_000_000 USDC drawdown on loan
-        mint("WETH", address(bob), cReq);                                  // Mint WETH to borrower
-        bob.approve(WETH, address(loan), MAX_UINT);                        // Borrower approves WETH
-        bob.drawdown(address(loan), 10_000_000 * USD);                     // Borrower draws down 10m USDC
+        uint256 cReq = loan1.collateralRequiredForDrawdown(10_000_000 * USD);  // WETH required for 100_000_000 USDC drawdown on loan
+        mint("WETH", address(bob), cReq);                                      // Mint WETH to borrower
+        bob.approve(WETH, address(loan1), MAX_UINT);                           // Borrower approves WETH
+        bob.drawdown(address(loan1), 10_000_000 * USD);                        // Borrower draws down 10m USDC
     }
 
     function test_gulp() public {
@@ -53,7 +53,7 @@ contract GulpTest is TestUtil {
         uint256 mplBal          = mpl.balanceOf(address(bPool));
         uint256 earnings        = mpl.withdrawableFundsOf(address(bPool));
 
-        assertEq(totalFundsToken, loan.principalOwed() * globals.treasuryFee() / 10_000);
+        assertEq(totalFundsToken, loan1.principalOwed() * globals.treasuryFee() / 10_000);
         assertEq(mplBal,          155_000 * WAD);
         withinDiff(earnings, totalFundsToken * mplBal / mpl.totalSupply(), 1);
 
@@ -83,7 +83,7 @@ contract GulpTest is TestUtil {
         uint256 mplBal          = mpl.balanceOf(address(uniswapPair));
         uint256 earnings        = mpl.withdrawableFundsOf(address(uniswapPair));
 
-        assertEq(totalFundsToken, loan.principalOwed() * globals.treasuryFee() / 10_000);
+        assertEq(totalFundsToken, loan1.principalOwed() * globals.treasuryFee() / 10_000);
         assertEq(mplBal,          75_000 * WAD);
         withinDiff(earnings, totalFundsToken * mplBal / mpl.totalSupply(), 1);
 

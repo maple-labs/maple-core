@@ -163,12 +163,12 @@ contract PoolTest is TestUtil {
 
     function test_fundLoan(uint256 depositAmt, uint256 fundAmt) public {
         address liqLocker     = pool.liquidityLocker();
-        address fundingLocker = loan.fundingLocker();
+        address fundingLocker = loan1.fundingLocker();
 
         // Finalize the Pool
         finalizePool(pool, pat, true);
 
-        depositAmt = constrictToRange(depositAmt, loan.requestAmount(), loan.requestAmount() + 1000 * USD, true);
+        depositAmt = constrictToRange(depositAmt, loan1.requestAmount(), loan1.requestAmount() + 1000 * USD, true);
         fundAmt    = constrictToRange(fundAmt, 1 * USD, depositAmt, true); 
 
         // Mint funds and deposit to Pool.
@@ -176,7 +176,7 @@ contract PoolTest is TestUtil {
 
         gov.setValidLoanFactory(address(loanFactory), false);
 
-        assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), depositAmt)); // LoanFactory not in globals
+        assertTrue(!pat.try_fundLoan(address(pool), address(loan1), address(dlFactory), depositAmt)); // LoanFactory not in globals
 
         gov.setValidLoanFactory(address(loanFactory), true);
 
@@ -189,46 +189,46 @@ contract PoolTest is TestUtil {
 
         // Pause protocol and attempt fundLoan()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmt));
+        assertTrue(!pat.try_fundLoan(address(pool), address(loan1), address(dlFactory), fundAmt));
 
         // Unpause protocol and fundLoan()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmt), "Fail to fund a loan");  // Fund loan for 20 USDC
+        assertTrue(pat.try_fundLoan(address(pool), address(loan1), address(dlFactory), fundAmt), "Fail to fund a loan");  // Fund loan for 20 USDC
 
-        DebtLocker debtLocker = DebtLocker(pool.debtLockers(address(loan), address(dlFactory)));
+        DebtLocker debtLocker = DebtLocker(pool.debtLockers(address(loan1), address(dlFactory)));
 
-        assertEq(address(debtLocker.loan()),           address(loan));
+        assertEq(address(debtLocker.loan()),           address(loan1));
         assertEq(debtLocker.pool(),                    address(pool));
         assertEq(address(debtLocker.liquidityAsset()), USDC);
 
         assertEq(usdc.balanceOf(liqLocker),                    depositAmt - fundAmt);  // Balance of LiquidityLocker
         assertEq(usdc.balanceOf(address(fundingLocker)),                    fundAmt);  // Balance of FundingLocker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker)),        toWad(fundAmt));  // LoanFDT balance of DebtLocker
+        assertEq(IERC20(loan1).balanceOf(address(debtLocker)),       toWad(fundAmt));  // LoanFDT balance of DebtLocker
         assertEq(pool.principalOut(),                                       fundAmt);  // Outstanding principal in liquidity pool 1
 
-        /****************************************/
+        /***************************************/
         /*** Fund same loan with the same DL ***/
-        /****************************************/
+        /***************************************/
         uint256 newFundAmt = constrictToRange(fundAmt, 1 * USD, depositAmt - fundAmt, true);
-        assertTrue(pat.try_fundLoan(address(pool), address(loan), address(dlFactory), newFundAmt)); // Fund same loan for newFundAmt
+        assertTrue(pat.try_fundLoan(address(pool), address(loan1), address(dlFactory), newFundAmt)); // Fund same loan for newFundAmt
 
         assertEq(dlFactory.owner(address(debtLocker)), address(pool));
         assertTrue(dlFactory.isLocker(address(debtLocker)));
 
         assertEq(usdc.balanceOf(liqLocker),                    depositAmt - fundAmt - newFundAmt);  // Balance of LiquidityLocker
         assertEq(usdc.balanceOf(address(fundingLocker)),                    fundAmt + newFundAmt);  // Balance of FundingLocker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker)),        toWad(fundAmt + newFundAmt));  // LoanFDT balance of DebtLocker
+        assertEq(IERC20(loan1).balanceOf(address(debtLocker)),       toWad(fundAmt + newFundAmt));  // LoanFDT balance of DebtLocker
         assertEq(pool.principalOut(),                                       fundAmt + newFundAmt);  // Outstanding principal in liquidity pool 1
 
-        /*******************************************/
+        /******************************************/
         /*** Fund same loan with a different DL ***/
-        /*******************************************/
+        /******************************************/
         uint256 newFundAmt2 = constrictToRange(fundAmt, 1 * USD, depositAmt - fundAmt - newFundAmt, true);
-        assertTrue(pat.try_fundLoan(address(pool), address(loan), address(dlFactory2), newFundAmt2)); // Fund loan for 15 USDC
+        assertTrue(pat.try_fundLoan(address(pool), address(loan1), address(dlFactory2), newFundAmt2)); // Fund loan for 15 USDC
 
-        DebtLocker debtLocker2 = DebtLocker(pool.debtLockers(address(loan),  address(dlFactory2)));
+        DebtLocker debtLocker2 = DebtLocker(pool.debtLockers(address(loan1), address(dlFactory2)));
 
-        assertEq(address(debtLocker2.loan()),           address(loan));
+        assertEq(address(debtLocker2.loan()),           address(loan1));
         assertEq(debtLocker2.pool(),                    address(pool));
         assertEq(address(debtLocker2.liquidityAsset()), USDC);
 
@@ -237,7 +237,7 @@ contract PoolTest is TestUtil {
 
         assertEq(usdc.balanceOf(liqLocker),                    depositAmt - fundAmt - newFundAmt - newFundAmt2);  // Balance of LiquidityLocker
         assertEq(usdc.balanceOf(address(fundingLocker)),                    fundAmt + newFundAmt + newFundAmt2);  // Balance of FundingLocker
-        assertEq(IERC20(loan).balanceOf(address(debtLocker2)),                              toWad(newFundAmt2));  // LoanFDT balance of DebtLocker 2
+        assertEq(IERC20(loan1).balanceOf(address(debtLocker2)),                             toWad(newFundAmt2));  // LoanFDT balance of DebtLocker 2
         assertEq(pool.principalOut(),                                       fundAmt + newFundAmt + newFundAmt2);  // Outstanding principal in liquidity pool 1
     }
 
@@ -274,7 +274,7 @@ contract PoolTest is TestUtil {
         assertTrue(!leo.try_deposit(address(pool), 100_000_000 * USD));
 
         // fundLoan()
-        assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), 1));
+        assertTrue(!pat.try_fundLoan(address(pool), address(loan1), address(dlFactory), 1));
 
         // deactivate()
         assertTrue(!pat.try_deactivate(address(pool)));
@@ -293,16 +293,16 @@ contract PoolTest is TestUtil {
         /*** Mint and deposit funds into liquidity pool ***/
         /**************************************************/
 
-        depositAmt = constrictToRange(depositAmt, loan.requestAmount(), loan.requestAmount() + 100_000_000 * USD, true);
+        depositAmt = constrictToRange(depositAmt, loan1.requestAmount(), loan1.requestAmount() + 100_000_000 * USD, true);
         fundAmt    = constrictToRange(fundAmt, 101 * USD, depositAmt, true); 
 
-        mintFundsAndDepositIntoPool(leo, pool, loan.requestAmount() + 100_000_000 * USD, depositAmt);
+        mintFundsAndDepositIntoPool(leo, pool, loan1.requestAmount() + 100_000_000 * USD, depositAmt);
 
-        /************************************/
-        /*** Fund loan / loan2 (Excess) ***/
-        /************************************/
+        /***********************************/
+        /*** Fund loan1 / loan2 (Excess) ***/
+        /***********************************/
         
-        assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory2), fundAmt));
+        assertTrue(pat.try_fundLoan(address(pool), address(loan1), address(dlFactory2), fundAmt));
 
         address liquidityAsset         = address(pool.liquidityAsset());
         uint256 liquidityAssetDecimals = IERC20Details(liquidityAsset).decimals();

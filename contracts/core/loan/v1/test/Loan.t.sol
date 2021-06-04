@@ -734,20 +734,20 @@ contract LoanTest is TestUtil {
 
     function test_reclaim_erc20() external {
         // Add different kinds of assets to the loan.
-        mint("USDC", address(loan), 1000 * USD);
-        mint("DAI",  address(loan), 1000 * WAD);
-        mint("WETH", address(loan),  100 * WAD);
+        mint("USDC", address(loan1), 1000 * USD);
+        mint("DAI",  address(loan1), 1000 * WAD);
+        mint("WETH", address(loan1),  100 * WAD);
 
         Governor fakeGov = new Governor();
 
         uint256 beforeBalanceDAI  =  dai.balanceOf(address(gov));
         uint256 beforeBalanceWETH = weth.balanceOf(address(gov));
 
-        assertTrue(!fakeGov.try_reclaimERC20(address(loan), DAI));
-        assertTrue(    !gov.try_reclaimERC20(address(loan), USDC));  // Governor cannot remove liquidityAsset from loans
-        assertTrue(    !gov.try_reclaimERC20(address(loan), address(0)));
-        assertTrue(     gov.try_reclaimERC20(address(loan), WETH));
-        assertTrue(     gov.try_reclaimERC20(address(loan), DAI));
+        assertTrue(!fakeGov.try_reclaimERC20(address(loan1), DAI));
+        assertTrue(    !gov.try_reclaimERC20(address(loan1), USDC));  // Governor cannot remove liquidityAsset from loans
+        assertTrue(    !gov.try_reclaimERC20(address(loan1), address(0)));
+        assertTrue(     gov.try_reclaimERC20(address(loan1), WETH));
+        assertTrue(     gov.try_reclaimERC20(address(loan1), DAI));
 
         uint256 afterBalanceDAI  =  dai.balanceOf(address(gov));
         uint256 afterBalanceWETH = weth.balanceOf(address(gov));
@@ -759,13 +759,13 @@ contract LoanTest is TestUtil {
     function test_setLoanAdmin() public {
         // Pause protocol and attempt setLoanAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!bob.try_setLoanAdmin(address(loan), address(securityAdmin), true));
-        assertTrue(!loan.loanAdmins(address(securityAdmin)));
+        assertTrue(!bob.try_setLoanAdmin(address(loan1), address(securityAdmin), true));
+        assertTrue(!loan1.loanAdmins(address(securityAdmin)));
 
         // Unpause protocol and setLoanAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(bob.try_setLoanAdmin(address(loan), address(securityAdmin), true));
-        assertTrue(loan.loanAdmins(address(securityAdmin)));
+        assertTrue(bob.try_setLoanAdmin(address(loan1), address(securityAdmin), true));
+        assertTrue(loan1.loanAdmins(address(securityAdmin)));
     }
 
     function repetitivePayment(Loan loan, uint256 numPayments, uint256 paymentCount, uint256 drawdownAmount, uint256 loanPreBal, uint256 oldInterest) internal {

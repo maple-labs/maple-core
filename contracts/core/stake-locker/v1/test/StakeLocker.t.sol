@@ -41,10 +41,10 @@ contract StakeLockerTest is TestUtil {
     }
 
     function populateStakeLockerPreState(
-        TestObj memory stakeLockerBal, 
-        TestObj memory fdtTotalSupply, 
-        TestObj memory stakerBPTBal, 
-        TestObj memory stakerFDTBal, 
+        TestObj memory stakeLockerBal,
+        TestObj memory fdtTotalSupply,
+        TestObj memory stakerBPTBal,
+        TestObj memory stakerFDTBal,
         TestObj memory stakerStakeDate
     ) 
         internal
@@ -349,19 +349,19 @@ contract StakeLockerTest is TestUtil {
         mint("USDC", address(leo), 10_000_000 * USD);  // Mint USDC to LP
         leo.approve(USDC, address(pool), MAX_UINT);    // LP approves USDC
 
-        leo.deposit(address(pool), 10_000_000 * USD);                                      // LP deposits 10m USDC to Pool
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
+        leo.deposit(address(pool), 10_000_000 * USD);                                       // LP deposits 10m USDC to Pool
+        pat.fundLoan(address(pool), address(loan1), address(dlFactory), 10_000_000 * USD);  // PD funds loan for 10m USDC
 
-        uint256 cReq = loan.collateralRequiredForDrawdown(10_000_000 * USD);  // WETH required for 100_000_000 USDC drawdown on loan
-        mint("WETH", address(bob), cReq);                                  // Mint WETH to borrower
-        bob.approve(WETH, address(loan), MAX_UINT);                        // Borrower approves WETH
-        bob.drawdown(address(loan), 10_000_000 * USD);                     // Borrower draws down 10m USDC
+        uint256 cReq = loan1.collateralRequiredForDrawdown(10_000_000 * USD);  // WETH required for 100_000_000 USDC drawdown on loan
+        mint("WETH", address(bob), cReq);                                      // Mint WETH to borrower
+        bob.approve(WETH, address(loan1), MAX_UINT);                           // Borrower approves WETH
+        bob.drawdown(address(loan1), 10_000_000 * USD);                        // Borrower draws down 10m USDC
 
         mint("USDC", address(bob), 10_000_000 * USD);  // Mint USDC to Borrower for repayment plus interest
-        bob.approve(USDC, address(loan), MAX_UINT);    // Borrower approves USDC
-        bob.makeFullPayment(address(loan));            // Borrower makes full payment, which includes interest
+        bob.approve(USDC, address(loan1), MAX_UINT);   // Borrower approves USDC
+        bob.makeFullPayment(address(loan1));           // Borrower makes full payment, which includes interest
 
-        pat.claim(address(pool), address(loan),  address(dlFactory));  // PD claims interest, distributing funds to stakeLocker
+        pat.claim(address(pool), address(loan1), address(dlFactory));  // PD claims interest, distributing funds to stakeLocker
     }
 
     function test_unstake(uint256 stakeAmount) public {
@@ -480,7 +480,7 @@ contract StakeLockerTest is TestUtil {
         assertEq(bptLosses.pre,                                0);  // Claim hasn't been made yet - losses   not realized
         assertEq(recognizableLossesOf.pre,                     0);  // Claim hasn't been made yet - losses   not realized
 
-        pat.claim(address(pool), address(loan),  address(dlFactory));  // Pool Delegate claims funds, updating accounting for interest and losses from Loan
+        pat.claim(address(pool), address(loan1), address(dlFactory));  // Pool Delegate claims funds, updating accounting for interest and losses from Loan
 
         // Post-claim FDT and StakeLocker checks (Sam only)
         stakeLockerBal.post       = bPool.balanceOf(address(stakeLocker));

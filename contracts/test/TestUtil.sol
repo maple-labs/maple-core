@@ -136,7 +136,7 @@ contract TestUtil is DSTest {
     /*************/
     /*** Loans ***/
     /*************/
-    Loan   loan;
+    Loan  loan1;
     Loan  loan2;
     Loan  loan3;
     Loan  loan4;
@@ -493,14 +493,14 @@ contract TestUtil is DSTest {
     /****************************/
     function createLoan() public {
         uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
-        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
     function createLoan(uint256[5] memory specs) public {
-        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
     function createLoans() public {
         uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
-        loan  = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan3 = bud.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
@@ -702,16 +702,16 @@ contract TestUtil is DSTest {
             // Create loan, fund loan, draw down on loan
             address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
             uint256[5] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000];
-            loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
+            loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         }
 
-        assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory), loanAmt));
+        assertTrue(pat.try_fundLoan(address(pool), address(loan1), address(dlFactory), loanAmt));
 
         {
-            uint256 cReq = loan.collateralRequiredForDrawdown(loanAmt); // wETH required for 1_000 USDC drawdown on loan
+            uint256 cReq = loan1.collateralRequiredForDrawdown(loanAmt); // wETH required for 1_000 USDC drawdown on loan
             mint("WETH", address(bob), cReq);
-            bob.approve(WETH, address(loan), cReq);
-            bob.drawdown(address(loan), loanAmt);
+            bob.approve(WETH, address(loan1), cReq);
+            bob.drawdown(address(loan1), loanAmt);
         }
     }
 
@@ -786,27 +786,27 @@ contract TestUtil is DSTest {
         leo.deposit(address(pool), 10_000_000 * USD);
 
         // Fund the loan
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), 1_000_000 * USD);
-        uint cReq = loan.collateralRequiredForDrawdown(1_000_000 * USD);
+        pat.fundLoan(address(pool), address(loan1), address(dlFactory), 1_000_000 * USD);
+        uint cReq = loan1.collateralRequiredForDrawdown(1_000_000 * USD);
 
         // Drawdown loan
         mint("WETH", address(bob), cReq);
-        bob.approve(WETH, address(loan), MAX_UINT);
-        bob.approve(USDC, address(loan), MAX_UINT);
-        bob.drawdown(address(loan), 1_000_000 * USD);
+        bob.approve(WETH, address(loan1), MAX_UINT);
+        bob.approve(USDC, address(loan1), MAX_UINT);
+        bob.drawdown(address(loan1), 1_000_000 * USD);
 
         uint256 preBal = IERC20(USDC).balanceOf(address(bob));
-        bob.makePayment(address(loan));  // Make one payment to register interest for Staker
+        bob.makePayment(address(loan1));  // Make one payment to register interest for Staker
         interestPaid = preBal.sub(IERC20(USDC).balanceOf(address(bob)));
 
         // Warp to late payment
         uint256 start = block.timestamp;
-        uint256 nextPaymentDue = loan.nextPaymentDue();
+        uint256 nextPaymentDue = loan1.nextPaymentDue();
         uint256 defaultGracePeriod = globals.defaultGracePeriod();
         hevm.warp(start + nextPaymentDue + defaultGracePeriod + 1);
 
         // Trigger default
-        pat.triggerDefault(address(pool), address(loan), address(dlFactory));
+        pat.triggerDefault(address(pool), address(loan1), address(dlFactory));
     }
 
     function make_withdrawable(LP investor, Pool pool) internal {

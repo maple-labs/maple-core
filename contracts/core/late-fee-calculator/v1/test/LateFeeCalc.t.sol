@@ -32,24 +32,24 @@ contract LateFeeCalcTest is TestUtil {
         uint256 totalPaid;
         uint256 sumTotal;
         {
-            uint256 paymentIntervalDays = loan.paymentIntervalSeconds().div(1 days);
-            uint256 totalInterest       = loanAmt * apr / 10_000 * paymentIntervalDays / 365 * loan.paymentsRemaining();
+            uint256 paymentIntervalDays = loan1.paymentIntervalSeconds().div(1 days);
+            uint256 totalInterest       = loanAmt * apr / 10_000 * paymentIntervalDays / 365 * loan1.paymentsRemaining();
                     totalPaid           = loanAmt + totalInterest + totalInterest * lateFeeCalc.lateFee() / 10_000;
         }
 
-        hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
-        (uint256 lastTotal,,,,) =  loan.getNextPayment();
+        hevm.warp(loan1.nextPaymentDue() + 1);  // Payment is late
+        (uint256 lastTotal,,,,) =  loan1.getNextPayment();
 
         mint("USDC",      address(bob),  loanAmt * 1000); // Mint enough to pay interest
-        bob.approve(USDC, address(loan), loanAmt * 1000);
+        bob.approve(USDC, address(loan1), loanAmt * 1000);
 
         uint256 beforeBal = IERC20(USDC).balanceOf(address(bob));
 
-        while (loan.paymentsRemaining() > 0) {
-            hevm.warp(loan.nextPaymentDue() + 1);  // Payment is late
+        while (loan1.paymentsRemaining() > 0) {
+            hevm.warp(loan1.nextPaymentDue() + 1);  // Payment is late
 
-            (uint256 total,      uint256 principal,      uint256 interest,,)    = loan.getNextPayment();                       // USDC required for payment on loan
-            (uint256 total_calc, uint256 principal_calc, uint256 interest_calc) = repaymentCalc.getNextPayment(address(loan)); // USDC required for payment on loan
+            (uint256 total,      uint256 principal,      uint256 interest,,)    = loan1.getNextPayment();                       // USDC required for payment on loan
+            (uint256 total_calc, uint256 principal_calc, uint256 interest_calc) = repaymentCalc.getNextPayment(address(loan1)); // USDC required for payment on loan
 
             uint256 interest_late = lateFeeCalc.getLateFee(interest_calc);  // USDC required for payment on loan
 
@@ -59,9 +59,9 @@ contract LateFeeCalcTest is TestUtil {
 
             sumTotal += total;
 
-            bob.makePayment(address(loan));
+            bob.makePayment(address(loan1));
 
-            if (loan.paymentsRemaining() > 0) {
+            if (loan1.paymentsRemaining() > 0) {
                 assertEq(total,     lastTotal);
                 assertEq(total,      interest);
                 assertEq(principal,         0);

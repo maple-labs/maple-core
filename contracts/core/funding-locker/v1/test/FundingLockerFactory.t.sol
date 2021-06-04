@@ -19,7 +19,7 @@ contract FundingLockerFactoryTest is TestUtil {
         assertTrue(flFactory.isLocker(address(fl)));
 
         // Validate the storage of fl.
-        assertEq(fl.loan(), address(this), "Incorrect loan address");
+        assertEq(fl.loan(), address(this),           "Incorrect loan address");
         assertEq(address(fl.liquidityAsset()), USDC, "Incorrect address of loan asset");
     }
 }
