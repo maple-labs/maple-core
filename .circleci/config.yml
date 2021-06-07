@@ -11,7 +11,7 @@ aliases:
 jobs:
   dapp_build:
     docker:
-      - image: bakii0499/dapptools:0.1.0
+      - image: bakii0499/dapptools:0.46.0
     steps:
       - restore_cache:
           key: nix-deps-02
@@ -39,7 +39,7 @@ jobs:
 
   dapp_test:
     docker:
-      - image: bakii0499/dapptools:0.1.0
+      - image: bakii0499/dapptools:0.46.0
     parallelism: 24
     steps:
       - attach_workspace:
