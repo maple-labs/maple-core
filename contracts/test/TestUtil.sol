@@ -569,33 +569,53 @@ contract TestUtil is DSTest {
         assertEq(IERC20(addr).balanceOf(account), bal + amt); // Assert new balance
     }
 
+    function getDiff(uint256 val0, uint256 val1) internal pure returns (uint256 diff) {
+        diff = val0 > val1 ? val0 - val1 : val1 - val0;
+    }
+
     // Verify equality within accuracy decimals
     function withinPrecision(uint256 val0, uint256 val1, uint256 accuracy) public {
-        uint256 diff  = val0 > val1 ? val0 - val1 : val1 - val0;
+        uint256 diff = getDiff(val0, val1);
         if (diff == 0) return;
 
         uint256 denominator = val0 == 0 ? val1 : val0;
         bool check = ((diff * RAY) / denominator) < (RAY / 10 ** accuracy);
 
-        if (!check){
-            emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", accuracy);
-            emit log_named_uint("  Expected", val0);
-            emit log_named_uint("    Actual", val1);
-            fail();
-        }
+        if (check) return;
+
+        emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", accuracy);
+        emit log_named_uint("  Expected", val0);
+        emit log_named_uint("    Actual", val1);
+        fail(); 
+    }
+
+    // Verify equality within accuracy percentage (basis points)
+    function withinPercentage(uint256 val0, uint256 val1, uint256 percentage) public {
+        uint256 diff = getDiff(val0, val1);
+        if (diff == 0) return;
+
+        uint256 denominator = val0 == 0 ? val1 : val0;
+        bool check = ((diff * RAY) / denominator) < percentage * RAY / 10_000;
+
+        if (check) return;
+
+        emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", percentage);
+        emit log_named_uint("  Expected", val0);
+        emit log_named_uint("    Actual", val1);
+        fail();
     }
 
     // Verify equality within difference
     function withinDiff(uint256 val0, uint256 val1, uint256 expectedDiff) public {
-        uint256 actualDiff = val0 > val1 ? val0 - val1 : val1 - val0;
+        uint256 actualDiff = getDiff(val0, val1);
         bool check = actualDiff <= expectedDiff;
 
-        if (!check) {
-            emit log_named_uint("Error: approx a == b not satisfied, accuracy difference ", expectedDiff);
-            emit log_named_uint("  Expected", val0);
-            emit log_named_uint("    Actual", val1);
-            fail();
-        }
+        if (check) return;
+
+        emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", expectedDiff);
+        emit log_named_uint("  Expected", val0);
+        emit log_named_uint("    Actual", val1);
+        fail();
     }
 
     function constrictToRange(uint256 val, uint256 min, uint256 max) public pure returns (uint256) {
