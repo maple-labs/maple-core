@@ -1,47 +1,43 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
+import "../../lib/ds-test/contracts/test.sol";
+import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import "../../module/maple-token/contracts/MapleToken.sol";
+
+import "../external-interfaces/IBPool.sol";
+import "../external-interfaces/IBFactory.sol";
+import "../external-interfaces/IUniswapV2Factory.sol";
+import "../external-interfaces/IUniswapV2Pair.sol";
+import "../external-interfaces/IUniswapV2Router02.sol";
+
+import "../core/chainlink-oracle/v1/ChainlinkOracle.sol";
+import "../core/collateral-locker/v1/CollateralLockerFactory.sol";
+import "../core/debt-locker/v1/DebtLockerFactory.sol";
+import "../core/funding-locker/v1/FundingLockerFactory.sol";
+import "../core/globals/v1/MapleGlobals.sol";
+import "../core/late-fee-calculator/v1/LateFeeCalc.sol";
+import "../core/liquidity-locker/v1/LiquidityLockerFactory.sol";
+import "../core/loan/v1/LoanFactory.sol";
+import "../core/mpl-rewards/v1/MplRewardsFactory.sol";
+import "../core/pool/v1/PoolFactory.sol";
+import "../core/premium-calculator/v1/PremiumCalc.sol";
+import "../core/repayment-calculator/v1/RepaymentCalc.sol";
+import "../core/stake-locker/v1/StakeLockerFactory.sol";
+import "../core/treasury/v1/MapleTreasury.sol";
+import "../core/usd-oracle/v1/UsdOracle.sol";
+
 import "./user/Borrower.sol";
 import "./user/Commoner.sol";
+import "./user/EmergencyAdmin.sol";
 import "./user/Farmer.sol";
+import "./user/Governor.sol";
 import "./user/Holder.sol";
 import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
-import "./user/Staker.sol";
-
-import "./user/Governor.sol";
 import "./user/SecurityAdmin.sol";
-import "./user/EmergencyAdmin.sol";
-
-import "core/globals/v1/MapleGlobals.sol";
-import "core/treasury/v1/MapleTreasury.sol";
-import "module/maple-token/contracts/MapleToken.sol";
-
-import "core/collateral-locker/v1/CollateralLockerFactory.sol";
-import "core/debt-locker/v1/DebtLockerFactory.sol";
-import "core/funding-locker/v1/FundingLockerFactory.sol";
-import "core/liquidity-locker/v1/LiquidityLockerFactory.sol";
-import "core/loan/v1/LoanFactory.sol";
-import "core/mpl-rewards/v1/MplRewardsFactory.sol";
-import "core/pool/v1/PoolFactory.sol";
-import "core/stake-locker/v1/StakeLockerFactory.sol";
-
-import "external-interfaces/IUniswapV2Factory.sol";
-import "external-interfaces/IUniswapV2Pair.sol";
-import "external-interfaces/IUniswapV2Router02.sol";
-
-import "core/late-fee-calculator/v1/LateFeeCalc.sol";
-import "core/premium-calculator/v1/PremiumCalc.sol";
-import "core/repayment-calculator/v1/RepaymentCalc.sol";
-
-import "core/chainlink-oracle/v1/ChainlinkOracle.sol";
-import "core/usd-oracle/v1/UsdOracle.sol";
-
-import "external-interfaces/IBPool.sol";
-import "external-interfaces/IBFactory.sol";
-
-import "lib/ds-test/contracts/test.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "./user/Staker.sol";
 
 interface Hevm {
     function warp(uint256) external;

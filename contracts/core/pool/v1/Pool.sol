@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "libraries/pool/v1/PoolLib.sol";
+import "../../../libraries/pool/v1/PoolLib.sol";
 
-import "core/debt-locker/v1/interfaces/IDebtLocker.sol";
-import "core/globals/v1/interfaces/IMapleGlobals.sol";
-import "core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
-import "core/liquidity-locker/v1/interfaces/ILiquidityLockerFactory.sol";
-import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
-import "core/stake-locker/v1/interfaces/IStakeLockerFactory.sol";
+import "../../debt-locker/v1/interfaces/IDebtLocker.sol";
+import "../../globals/v1/interfaces/IMapleGlobals.sol";
+import "../../liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
+import "../../liquidity-locker/v1/interfaces/ILiquidityLockerFactory.sol";
+import "../../stake-locker/v1/interfaces/IStakeLocker.sol";
+import "../../stake-locker/v1/interfaces/IStakeLockerFactory.sol";
 
 import "./interfaces/IPoolFactory.sol";
 
