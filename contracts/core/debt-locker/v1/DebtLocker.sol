@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "core/loan/v1/interfaces/ILoan.sol";
+import "../../loan/v1/interfaces/ILoan.sol";
 
 /// @title DebtLocker holds custody of LoanFDT tokens.
 contract DebtLocker {
@@ -74,7 +74,7 @@ contract DebtLocker {
         if (loan.withdrawableFundsOf(address(this)) == uint256(0)) return([0, 0, 0, 0, 0, 0, newDefaultSuffered]);
 
         // If there are claimable funds, calculate portions and claim using LoanFDT.
-        
+
         // Calculate payment deltas.
         uint256 newInterest  = loan.interestPaid() - lastInterestPaid;    // `loan.interestPaid`  updated in `loan._makePayment()`
         uint256 newPrincipal = loan.principalPaid() - lastPrincipalPaid;  // `loan.principalPaid` updated in `loan._makePayment()`

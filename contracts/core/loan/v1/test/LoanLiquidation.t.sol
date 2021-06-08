@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import "../../../../test/TestUtil.sol";
 
 contract LoanLiquidationTest is TestUtil {
 
@@ -26,8 +26,8 @@ contract LoanLiquidationTest is TestUtil {
         mint("USDC", address(this), 50_000_000 * USD);
 
         /*** LP deposits USDC into Pool ***/
-        leo.approve(USDC, address(pool), MAX_UINT);
-        leo.deposit(address(pool), 5000 * USD);
+        leo.approve(USDC, address(pool1), MAX_UINT);
+        leo.deposit(address(pool1), 5000 * USD);
     }
 
     function createAndFundLoan(address _interestStructure, address _collateral, uint256 collateralRatio) internal returns (Loan loan) {
@@ -36,7 +36,7 @@ contract LoanLiquidationTest is TestUtil {
 
         loan = bob.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
 
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), 1000 * USD);
+        pat.fundLoan(address(pool1), address(loan), address(dlFactory1), 1000 * USD);
 
         bob.approve(_collateral, address(loan), MAX_UINT);
         assertTrue(bob.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
@@ -59,7 +59,7 @@ contract LoanLiquidationTest is TestUtil {
         assertEq(uint256(loan.loanState()),                                                     1);
         assertEq(IERC20(collateralAsset).balanceOf(address(collateralLocker)),  collateralBalance);
 
-        pat.triggerDefault(address(pool), address(loan), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(loan), address(dlFactory1));
 
         {
             uint256 principalOwed_post      = loan.principalOwed();

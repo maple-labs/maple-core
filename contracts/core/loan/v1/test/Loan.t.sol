@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import "../../../../test/TestUtil.sol";
 
 contract LoanTest is TestUtil {
 
@@ -96,7 +96,7 @@ contract LoanTest is TestUtil {
         Loan loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         address fundingLocker   = loan.fundingLocker();
-        address liquidityLocker = pool.liquidityLocker();
+        address liquidityLocker = pool1.liquidityLocker();
 
         fundAmount = constrictToRange(fundAmount, 1 * USD, 1E10 * USD);
         uint256 wadAmount = fundAmount * WAD / USD;
@@ -104,9 +104,9 @@ contract LoanTest is TestUtil {
         fundAmount2 = constrictToRange(fundAmount, 1 * USD, 1E10 * USD);
         uint256 wadAmount2 = fundAmount2 * WAD / USD;
 
-        mint("USDC", address(leo),       (fundAmount + fundAmount2));
-        leo.approve(USDC, address(pool), (fundAmount + fundAmount2));
-        leo.deposit(address(pool),       (fundAmount + fundAmount2));
+        mint("USDC", address(leo),        (fundAmount + fundAmount2));
+        leo.approve(USDC, address(pool1), (fundAmount + fundAmount2));
+        leo.deposit(address(pool1),       (fundAmount + fundAmount2));
 
         // Note: Cannot do pre-state check for LoanFDT balance of debtLocker since it is not instantiated
         assertEq(usdc.balanceOf(address(fundingLocker)),                            0);
@@ -117,7 +117,7 @@ contract LoanTest is TestUtil {
         assertTrue(!cam.try_pause(address(loan)));
         assertTrue( bob.try_pause(address(loan)));
         assertTrue(loan.paused());
-        assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount));  // Allow for two fundings
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), fundAmount));  // Allow for two fundings
 
         assertTrue(!cam.try_unpause(address(loan)));
         assertTrue( bob.try_unpause(address(loan)));
@@ -126,12 +126,12 @@ contract LoanTest is TestUtil {
         uint256 start = block.timestamp;
 
         hevm.warp(start + globals.fundingPeriod() + 1);  // Warp to past fundingPeriod, loan cannot be funded
-        assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount));
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), fundAmount));
 
         hevm.warp(start + globals.fundingPeriod());  // Warp to fundingPeriod, loan can be funded
-        assertTrue(pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), fundAmount));
 
-        address debtLocker = pool.debtLockers(address(loan), address(dlFactory));
+        address debtLocker = pool1.debtLockers(address(loan), address(dlFactory1));
 
         assertEq(loan.balanceOf(address(debtLocker)),        wadAmount);
         assertEq(usdc.balanceOf(address(fundingLocker)),    fundAmount);
@@ -141,11 +141,11 @@ contract LoanTest is TestUtil {
         assertTrue(!cam.try_setProtocolPause(address(globals), true));
         assertTrue( emergencyAdmin.try_setProtocolPause(address(globals), true));
         assertTrue(globals.protocolPaused());
-        assertTrue(!pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount2));
+        assertTrue(!pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), fundAmount2));
 
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
         assertTrue(!globals.protocolPaused());
-        assertTrue(pat.try_fundLoan(address(pool), address(loan), address(dlFactory), fundAmount2));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan), address(dlFactory1), fundAmount2));
 
         assertEq(loan.balanceOf(address(debtLocker)),        wadAmount + wadAmount2);
         assertEq(usdc.balanceOf(address(fundingLocker)),   fundAmount + fundAmount2);
@@ -168,13 +168,12 @@ contract LoanTest is TestUtil {
         loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         fundAmount = constrictToRange(fundAmount, specs[3], 1E10 * USD, true);  // Fund between requestAmount and 10b USD
-        uint256 wadAmount = fundAmount * WAD / USD;
 
-        mint("USDC", address(leo),       fundAmount);
-        leo.approve(USDC, address(pool), fundAmount);
-        leo.deposit(address(pool),       fundAmount);
+        mint("USDC", address(leo),        fundAmount);
+        leo.approve(USDC, address(pool1), fundAmount);
+        leo.deposit(address(pool1),       fundAmount);
 
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), fundAmount);
+        pat.fundLoan(address(pool1), address(loan), address(dlFactory1), fundAmount);
     }
 
     function test_collateralRequiredForDrawdown(
@@ -226,8 +225,6 @@ contract LoanTest is TestUtil {
         assertTrue(!bob.try_drawdown(address(loan), loan.requestAmount() - 1));  // Can't drawdown less than requestAmount
         assertTrue(!bob.try_drawdown(address(loan),           fundAmount + 1));  // Can't drawdown more than fundingLocker balance
 
-        uint256 pre = usdc.balanceOf(address(bob));
-
         assertEq(weth.balanceOf(address(bob)),  reqCollateral);  // Borrower collateral balance
         assertEq(usdc.balanceOf(fundingLocker),    fundAmount);  // FundingLocker liquidityAsset balance
         assertEq(usdc.balanceOf(address(loan)),             0);  // Loan liquidityAsset balance
@@ -258,7 +255,7 @@ contract LoanTest is TestUtil {
         assertEq(loan.principalOwed(),                                     drawdownAmount);  // Principal owed
         assertEq(uint256(loan.loanState()),                                             1);  // Loan state: Active
 
-        withinDiff(usdc.balanceOf(address(bob)), drawdownAmount - (investorFee + treasuryFee), 1); // Borrower liquidityAsset balance
+        withinDiff(usdc.balanceOf(address(bob)), drawdownAmount - (investorFee + treasuryFee), 1);  // Borrower liquidityAsset balance
 
         assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());  // Next payment due timestamp calculated from time of drawdown
 
@@ -268,7 +265,7 @@ contract LoanTest is TestUtil {
         assertEq(usdc.balanceOf(address(treasury)),                 treasuryFee);  // Treasury loanAsset balance
 
         // Test FDT accounting
-        address debtLocker = pool.debtLockers(address(loan), address(dlFactory));
+        address debtLocker = pool1.debtLockers(address(loan), address(dlFactory1));
         assertEq(loan.balanceOf(debtLocker), fundAmount * WAD / USD);
         withinDiff(loan.withdrawableFundsOf(address(debtLocker)), fundAmount - drawdownAmount + investorFee, 1);
 
@@ -303,7 +300,7 @@ contract LoanTest is TestUtil {
 
         // NOTE: Do not need to hevm.warp in this test because payments can be made whenever as long as they are before the nextPaymentDue
 
-        uint256 numPayments = loan.paymentsRemaining();
+        uint256 _numPayments = loan.paymentsRemaining();
         // Approve 1st of 3 payments.
         (uint256 total, uint256 principal, uint256 interest, uint256 due,) = loan.getNextPayment();
         if(total == 0 && interest == 0) return;  // If fuzz params cause payments to be so small they round to zero, skip fuzz iteration
@@ -321,7 +318,7 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      0,
             loanBalance:       loanPreBal,
-            paymentsRemaining: numPayments,
+            paymentsRemaining: _numPayments,
             nextPaymentDue:    due
         });
 
@@ -343,15 +340,15 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      interest,
             loanBalance:       loanPreBal + interest,
-            paymentsRemaining: numPayments - 1,
+            paymentsRemaining: _numPayments - 1,
             nextPaymentDue:    due
         });
 
-        // Approve numPayments - 1.
-        for (uint256 i = 2; i <= numPayments - 1; i++) {
-            repetitivePayment(loan, numPayments, i, drawdownAmount, loanPreBal, uint256(0));
+        // Approve _numPayments - 1.
+        for (uint256 i = 2; i <= _numPayments - 1; i++) {
+            repetitivePayment(loan, _numPayments, i, drawdownAmount, loanPreBal, uint256(0));
         }
-        
+
         // Approve last payment.
         (total, principal, interest, due,) = loan.getNextPayment();
         mint("USDC", address(bob),       total);
@@ -371,8 +368,8 @@ contract LoanTest is TestUtil {
             loanState:         2,
             principalOwed:     0,
             principalPaid:     principal,
-            interestPaid:      interest * numPayments,
-            loanBalance:       loanPreBal + interest * numPayments + principal,
+            interestPaid:      interest * _numPayments,
+            loanBalance:       loanPreBal + interest * _numPayments + principal,
             paymentsRemaining: 0,
             nextPaymentDue:    0
         });
@@ -406,7 +403,7 @@ contract LoanTest is TestUtil {
         // Approve collateral and drawdown loan.
         uint256 reqCollateral = drawdown(loan, drawdownAmount);
         uint256 loanPreBal    = usdc.balanceOf(address(loan));  // Accounts for excess and fees from drawdown
-        uint256 numPayments   = loan.paymentsRemaining();
+        uint256 _numPayments  = loan.paymentsRemaining();
 
         // Approve 1st of 3 payments.
         (uint256 total, uint256 principal, uint256 interest, uint256 due,) = loan.getNextPayment();
@@ -425,7 +422,7 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      0,
             loanBalance:       loanPreBal,
-            paymentsRemaining: numPayments,
+            paymentsRemaining: _numPayments,
             nextPaymentDue:    due
         });
 
@@ -442,15 +439,15 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      interest,
             loanBalance:       loanPreBal + interest,
-            paymentsRemaining: numPayments - 1,
+            paymentsRemaining: _numPayments - 1,
             nextPaymentDue:    due
         });
 
-        // Approve numPayments - 1.
-        for (uint256 i = 1; i < numPayments - 1; i++) {
+        // Approve _numPayments - 1.
+        for (uint256 i = 1; i < _numPayments - 1; i++) {
             // Warp to 1 second after next payment is due (payment is late)
             hevm.warp(loan.nextPaymentDue() + 1);
-            repetitivePayment(loan, numPayments, i, drawdownAmount, loanPreBal, interest);
+            repetitivePayment(loan, _numPayments, i, drawdownAmount, loanPreBal, interest);
         }
 
         uint256 interest_late;
@@ -477,8 +474,8 @@ contract LoanTest is TestUtil {
             loanState:         2,
             principalOwed:     0,
             principalPaid:     principal,
-            interestPaid:      interest + interest_late * (numPayments - 1),
-            loanBalance:       loanPreBal + interest + interest_late * (numPayments - 1) + principal,
+            interestPaid:      interest + interest_late * (_numPayments - 1),
+            loanBalance:       loanPreBal + interest + interest_late * (_numPayments - 1) + principal,
             paymentsRemaining: 0,
             nextPaymentDue:    0
         });
@@ -494,8 +491,7 @@ contract LoanTest is TestUtil {
         uint256 numPayments,
         uint256 requestAmount,
         uint256 collateralRatio,
-        uint256 fundAmount,
-        uint256 drawdownAmount
+        uint256 fundAmount
     )
         public
     {
@@ -544,13 +540,13 @@ contract LoanTest is TestUtil {
 
         // Pause protocol and attempt withdrawFunds() (through claim)
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!pat.try_claim(address(pool), address(loan), address(dlFactory)));
+        assertTrue(!pat.try_claim(address(pool1), address(loan), address(dlFactory1)));
 
         // Unpause protocol and withdrawFunds() (through claim)
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(pat.try_claim(address(pool), address(loan), address(dlFactory)));
+        assertTrue(pat.try_claim(address(pool1), address(loan), address(dlFactory1)));
 
-        withinDiff(usdc.balanceOf(address(pool.liquidityLocker())), fundAmount, 1);
+        withinDiff(usdc.balanceOf(address(pool1.liquidityLocker())), fundAmount, 1);
         withinDiff(usdc.balanceOf(address(loan)),                            0, 1);
 
         // Can't unwind() loan after it has already been called.
@@ -577,26 +573,26 @@ contract LoanTest is TestUtil {
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
 
-        address debtLocker = pool.debtLockers(address(loan), address(dlFactory));
+        address debtLocker = pool1.debtLockers(address(loan), address(dlFactory1));
 
         assertEq(uint256(loan.loanState()), 0);  // `Ready` state
 
-        uint256 reqCollateral = drawdown(loan, drawdownAmount);
+        drawdown(loan, drawdownAmount);
 
         assertEq(uint256(loan.loanState()), 1);  // `Active` state
 
-        assertTrue(!pat.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Should fail to trigger default because current time is still less than the `nextPaymentDue`.
-        assertTrue(!cam.try_triggerDefault(address(loan)));                                     // Failed because commoner in not allowed to default the loan because they do not own any LoanFDTs.
+        assertTrue(!pat.try_triggerDefault(address(pool1), address(loan), address(dlFactory1)));  // Should fail to trigger default because current time is still less than the `nextPaymentDue`.
+        assertTrue(!cam.try_triggerDefault(address(loan)));                                       // Failed because commoner in not allowed to default the loan because they do not own any LoanFDTs.
 
         hevm.warp(loan.nextPaymentDue() + 1);
 
-        assertTrue(!pat.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
-        assertTrue(!cam.try_triggerDefault(address(loan)));                                     // Failed because still commoner is not allowed to default the loan.
+        assertTrue(!pat.try_triggerDefault(address(pool1), address(loan), address(dlFactory1)));  // Failed because still loan has defaultGracePeriod to repay the dues.
+        assertTrue(!cam.try_triggerDefault(address(loan)));                                       // Failed because still commoner is not allowed to default the loan.
 
         hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
 
-        assertTrue(!pat.try_triggerDefault(address(pool), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
-        assertTrue(!cam.try_triggerDefault(address(loan)));                                     // Failed because still commoner is not allowed to default the loan.
+        assertTrue(!pat.try_triggerDefault(address(pool1), address(loan), address(dlFactory1)));  // Failed because still loan has defaultGracePeriod to repay the dues.
+        assertTrue(!cam.try_triggerDefault(address(loan)));                                       // Failed because still commoner is not allowed to default the loan.
 
         hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 
@@ -738,20 +734,20 @@ contract LoanTest is TestUtil {
 
     function test_reclaim_erc20() external {
         // Add different kinds of assets to the loan.
-        mint("USDC", address(loan), 1000 * USD);
-        mint("DAI",  address(loan), 1000 * WAD);
-        mint("WETH", address(loan),  100 * WAD);
+        mint("USDC", address(loan1), 1000 * USD);
+        mint("DAI",  address(loan1), 1000 * WAD);
+        mint("WETH", address(loan1),  100 * WAD);
 
         Governor fakeGov = new Governor();
 
         uint256 beforeBalanceDAI  =  dai.balanceOf(address(gov));
         uint256 beforeBalanceWETH = weth.balanceOf(address(gov));
 
-        assertTrue(!fakeGov.try_reclaimERC20(address(loan), DAI));
-        assertTrue(    !gov.try_reclaimERC20(address(loan), USDC));  // Governor cannot remove liquidityAsset from loans
-        assertTrue(    !gov.try_reclaimERC20(address(loan), address(0)));
-        assertTrue(     gov.try_reclaimERC20(address(loan), WETH));
-        assertTrue(     gov.try_reclaimERC20(address(loan), DAI));
+        assertTrue(!fakeGov.try_reclaimERC20(address(loan1), DAI));
+        assertTrue(    !gov.try_reclaimERC20(address(loan1), USDC));  // Governor cannot remove liquidityAsset from loans
+        assertTrue(    !gov.try_reclaimERC20(address(loan1), address(0)));
+        assertTrue(     gov.try_reclaimERC20(address(loan1), WETH));
+        assertTrue(     gov.try_reclaimERC20(address(loan1), DAI));
 
         uint256 afterBalanceDAI  =  dai.balanceOf(address(gov));
         uint256 afterBalanceWETH = weth.balanceOf(address(gov));
@@ -763,13 +759,13 @@ contract LoanTest is TestUtil {
     function test_setLoanAdmin() public {
         // Pause protocol and attempt setLoanAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
-        assertTrue(!bob.try_setLoanAdmin(address(loan), address(securityAdmin), true));
-        assertTrue(!loan.loanAdmins(address(securityAdmin)));
+        assertTrue(!bob.try_setLoanAdmin(address(loan1), address(securityAdmin), true));
+        assertTrue(!loan1.loanAdmins(address(securityAdmin)));
 
         // Unpause protocol and setLoanAdmin()
         assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
-        assertTrue(bob.try_setLoanAdmin(address(loan), address(securityAdmin), true));
-        assertTrue(loan.loanAdmins(address(securityAdmin)));
+        assertTrue(bob.try_setLoanAdmin(address(loan1), address(securityAdmin), true));
+        assertTrue(loan1.loanAdmins(address(securityAdmin)));
     }
 
     function repetitivePayment(Loan loan, uint256 numPayments, uint256 paymentCount, uint256 drawdownAmount, uint256 loanPreBal, uint256 oldInterest) internal {
@@ -780,7 +776,7 @@ contract LoanTest is TestUtil {
         // Below is the way of catering two scenarios
         // 1. When there is no late payment so interest paid will be a multiple of `numPayments`.
         // 2. If there is a late payment then needs to handle the situation where interest paid is `interest (without late fee) + interest (late fee) * numPayments`.
-        numPayments = oldInterest == uint256(0) ? numPayments - paymentCount : numPayments - paymentCount - 1;
+        uint256 _numPayments = oldInterest == uint256(0) ? numPayments - paymentCount : numPayments - paymentCount - 1;
         // Make payment.
         assertTrue(bob.try_makePayment(address(loan)));
 
@@ -794,7 +790,7 @@ contract LoanTest is TestUtil {
             principalPaid:     0,
             interestPaid:      oldInterest + (interest * paymentCount),
             loanBalance:       loanPreBal  + oldInterest + (interest * paymentCount),
-            paymentsRemaining: numPayments,
+            paymentsRemaining: _numPayments,
             nextPaymentDue:    due
         });
     }

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
+import "../../core/mpl-rewards/v1/MplRewards.sol";
+import "../../core/pool/v1/interfaces/IPool.sol";
+
 import "./LP.sol";
-
-import "core/mpl-rewards/v1/MplRewards.sol";
-
-import "core/pool/v1/interfaces/IPool.sol";
 
 contract Farmer is LP {
 

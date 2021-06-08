@@ -1,47 +1,43 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
+import "../../lib/ds-test/contracts/test.sol";
+import "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import "../../module/maple-token/contracts/MapleToken.sol";
+
+import "../external-interfaces/IBPool.sol";
+import "../external-interfaces/IBFactory.sol";
+import "../external-interfaces/IUniswapV2Factory.sol";
+import "../external-interfaces/IUniswapV2Pair.sol";
+import "../external-interfaces/IUniswapV2Router02.sol";
+
+import "../core/chainlink-oracle/v1/ChainlinkOracle.sol";
+import "../core/collateral-locker/v1/CollateralLockerFactory.sol";
+import "../core/debt-locker/v1/DebtLockerFactory.sol";
+import "../core/funding-locker/v1/FundingLockerFactory.sol";
+import "../core/globals/v1/MapleGlobals.sol";
+import "../core/late-fee-calculator/v1/LateFeeCalc.sol";
+import "../core/liquidity-locker/v1/LiquidityLockerFactory.sol";
+import "../core/loan/v1/LoanFactory.sol";
+import "../core/mpl-rewards/v1/MplRewardsFactory.sol";
+import "../core/pool/v1/PoolFactory.sol";
+import "../core/premium-calculator/v1/PremiumCalc.sol";
+import "../core/repayment-calculator/v1/RepaymentCalc.sol";
+import "../core/stake-locker/v1/StakeLockerFactory.sol";
+import "../core/treasury/v1/MapleTreasury.sol";
+import "../core/usd-oracle/v1/UsdOracle.sol";
+
 import "./user/Borrower.sol";
 import "./user/Commoner.sol";
+import "./user/EmergencyAdmin.sol";
 import "./user/Farmer.sol";
+import "./user/Governor.sol";
 import "./user/Holder.sol";
 import "./user/LP.sol";
 import "./user/PoolDelegate.sol";
-import "./user/Staker.sol";
-
-import "./user/Governor.sol";
 import "./user/SecurityAdmin.sol";
-import "./user/EmergencyAdmin.sol";
-
-import "core/globals/v1/MapleGlobals.sol";
-import "core/treasury/v1/MapleTreasury.sol";
-import "module/maple-token/contracts/MapleToken.sol";
-
-import "core/collateral-locker/v1/CollateralLockerFactory.sol";
-import "core/debt-locker/v1/DebtLockerFactory.sol";
-import "core/funding-locker/v1/FundingLockerFactory.sol";
-import "core/liquidity-locker/v1/LiquidityLockerFactory.sol";
-import "core/loan/v1/LoanFactory.sol";
-import "core/mpl-rewards/v1/MplRewardsFactory.sol";
-import "core/pool/v1/PoolFactory.sol";
-import "core/stake-locker/v1/StakeLockerFactory.sol";
-
-import "external-interfaces/IUniswapV2Factory.sol";
-import "external-interfaces/IUniswapV2Pair.sol";
-import "external-interfaces/IUniswapV2Router02.sol";
-
-import "core/late-fee-calculator/v1/LateFeeCalc.sol";
-import "core/premium-calculator/v1/PremiumCalc.sol";
-import "core/repayment-calculator/v1/RepaymentCalc.sol";
-
-import "core/chainlink-oracle/v1/ChainlinkOracle.sol";
-import "core/usd-oracle/v1/UsdOracle.sol";
-
-import "external-interfaces/IBPool.sol";
-import "external-interfaces/IBFactory.sol";
-
-import "lib/ds-test/contracts/test.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "./user/Staker.sol";
 
 interface Hevm {
     function warp(uint256) external;
@@ -61,59 +57,59 @@ contract TestUtil is DSTest {
     /***********************/
     /*** Protocol Actors ***/
     /***********************/
-    Borrower      bob;
-    Borrower      ben;
-    Borrower      bud;
+    Borrower     bob;
+    Borrower     ben;
+    Borrower     bud;
 
-    Commoner      cam;
+    Commoner     cam;
 
-    Farmer        fay;
-    Farmer        fez;
-    Farmer        fox;
+    Farmer       fay;
+    Farmer       fez;
+    Farmer       fox;
 
-    Holder        hal;
-    Holder        hue;
+    Holder       hal;
+    Holder       hue;
 
-    LP            leo;
-    LP            liz;
-    LP            lex;
-    LP            lee;
+    LP           leo;
+    LP           liz;
+    LP           lex;
+    LP           lee;
 
-    PoolDelegate  pat;
-    PoolDelegate  pam;
+    PoolDelegate pat;
+    PoolDelegate pam;
 
-    Staker        sam;
-    Staker        sid;
-    Staker        sue;
+    Staker       sam;
+    Staker       sid;
+    Staker       sue;
 
     /**************************/
     /*** Multisig Addresses ***/
     /**************************/
-    Governor                   gov;
-    Governor               fakeGov;
-    SecurityAdmin    securityAdmin;
-    EmergencyAdmin  emergencyAdmin;
+    Governor                  gov;
+    Governor              fakeGov;
+    SecurityAdmin   securityAdmin;
+    EmergencyAdmin emergencyAdmin;
 
     /*******************/
     /*** Calculators ***/
     /*******************/
-    LateFeeCalc      lateFeeCalc;
-    PremiumCalc      premiumCalc;
-    RepaymentCalc  repaymentCalc;
-    address[3]             calcs;
+    LateFeeCalc     lateFeeCalc;
+    PremiumCalc     premiumCalc;
+    RepaymentCalc repaymentCalc;
+    address[3]            calcs;
 
     /*****************/
     /*** Factories ***/
     /*****************/
-    CollateralLockerFactory          clFactory;
-    DebtLockerFactory                dlFactory;
-    DebtLockerFactory               dlFactory2;
-    FundingLockerFactory             flFactory;
-    LiquidityLockerFactory           llFactory;
-    LoanFactory                    loanFactory;
-    PoolFactory                    poolFactory;
-    StakeLockerFactory               slFactory;
-    MplRewardsFactory        mplRewardsFactory;
+    CollateralLockerFactory         clFactory;
+    DebtLockerFactory              dlFactory1;
+    DebtLockerFactory              dlFactory2;
+    FundingLockerFactory            flFactory;
+    LiquidityLockerFactory          llFactory;
+    LoanFactory                   loanFactory;
+    PoolFactory                   poolFactory;
+    StakeLockerFactory              slFactory;
+    MplRewardsFactory       mplRewardsFactory;
 
     /***********************/
     /*** Maple Contracts ***/
@@ -128,49 +124,49 @@ contract TestUtil is DSTest {
     /***************/
     /*** Oracles ***/
     /***************/
-    ChainlinkOracle  wethOracle;
-    ChainlinkOracle  wbtcOracle;
-    ChainlinkOracle   daiOracle;
-    UsdOracle         usdOracle;
+    ChainlinkOracle wethOracle;
+    ChainlinkOracle wbtcOracle;
+    ChainlinkOracle  daiOracle;
+    UsdOracle        usdOracle;
 
     /*************/
     /*** Loans ***/
     /*************/
-    Loan   loan;
-    Loan  loan2;
-    Loan  loan3;
-    Loan  loan4;
+    Loan loan1;
+    Loan loan2;
+    Loan loan3;
+    Loan loan4;
 
     /*************/
     /*** Pools ***/
     /*************/
-    Pool   pool;
-    Pool  pool2;
-    Pool  pool3;
+    Pool pool1;
+    Pool pool2;
+    Pool pool3;
 
     /***************/
     /*** Lockers ***/
     /***************/
-    StakeLocker stakeLocker;
+    StakeLocker stakeLocker1;
     StakeLocker stakeLocker2;
 
     /**********************************/
     /*** Mainnet Contract Addresses ***/
     /**********************************/
-    address constant DAI   = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address constant USDC  = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
-    address constant CDAI  = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
+    address constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address constant CDAI = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
 
     IERC20 constant dai  = IERC20(DAI);
     IERC20 constant usdc = IERC20(USDC);
     IERC20 constant weth = IERC20(WETH);
     IERC20 constant wbtc = IERC20(WBTC);
 
-    address constant BPOOL_FACTORY        = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd; // Balancer pool factory
-    address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router
-    address constant UNISWAP_V2_FACTORY   = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f; // Uniswap V2 factory.
+    address constant BPOOL_FACTORY        = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd;  // Balancer pool factory
+    address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;  // Uniswap V2 Router
+    address constant UNISWAP_V2_FACTORY   = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;  // Uniswap V2 factory.
 
     /*****************/
     /*** Constants ***/
@@ -196,9 +192,9 @@ contract TestUtil is DSTest {
     /*** Utilities ***/
     /*****************/
     struct Token {
-        address addr; // ERC20 Mainnet address
-        uint256 slot; // Balance storage slot
-        address orcl; // Chainlink oracle address
+        address addr;  // ERC20 Mainnet address
+        uint256 slot;  // Balance storage slot
+        address orcl;  // Chainlink oracle address
     }
 
     mapping (bytes32 => Token) tokens;
@@ -315,7 +311,7 @@ contract TestUtil is DSTest {
     function createPoolFactory()             public { poolFactory = new PoolFactory(address(globals)); }
     function createStakeLockerFactory()      public { slFactory   = new StakeLockerFactory(); }
     function createLiquidityLockerFactory()  public { llFactory   = new LiquidityLockerFactory(); }
-    function createDebtLockerFactories()     public { dlFactory   = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
+    function createDebtLockerFactories()     public { dlFactory1  = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
     function createLoanFactory()             public { loanFactory = new LoanFactory(address(globals)); }
     function createCollateralLockerFactory() public { clFactory   = new CollateralLockerFactory(); }
     function createFundingLockerFactory()    public { flFactory   = new FundingLockerFactory(); }
@@ -332,7 +328,7 @@ contract TestUtil is DSTest {
         gov.setValidPoolFactory(address(poolFactory), true);
         gov.setValidSubFactory( address(poolFactory), address(slFactory),  true);
         gov.setValidSubFactory( address(poolFactory), address(llFactory),  true);
-        gov.setValidSubFactory( address(poolFactory), address(dlFactory),  true);
+        gov.setValidSubFactory( address(poolFactory), address(dlFactory1), true);
         gov.setValidSubFactory( address(poolFactory), address(dlFactory2), true);
 
         gov.setValidLoanFactory(address(loanFactory), true);
@@ -344,7 +340,7 @@ contract TestUtil is DSTest {
     /*** Liquidity Pool Setup Functions ***/
     /**************************************/
     function createLiquidityPool() public {
-        pool = Pool(pat.createPool(
+        pool1 = Pool(pat.createPool(
             address(poolFactory),
             USDC,
             address(bPool),
@@ -372,19 +368,19 @@ contract TestUtil is DSTest {
 
     function setUpLiquidityPool() public {
         createLiquidityPool();
-        stakeLocker = StakeLocker(pool.stakeLocker());
-        pat.approve(address(bPool), pool.stakeLocker(), uint256(-1));
-        pat.stake(pool.stakeLocker(), bPool.balanceOf(address(pat)));
-        pat.finalize(address(pool));
-        pat.setOpenToPublic(address(pool), true);
+        stakeLocker1 = StakeLocker(pool1.stakeLocker());
+        pat.approve(address(bPool), pool1.stakeLocker(), uint256(-1));
+        pat.stake(pool1.stakeLocker(), bPool.balanceOf(address(pat)));
+        pat.finalize(address(pool1));
+        pat.setOpenToPublic(address(pool1), true);
     }
 
     function stakeAndFinalizePool(uint256 stakeAmt) public {
-        stakeLocker = StakeLocker(pool.stakeLocker());
-        pat.approve(address(bPool), pool.stakeLocker(), uint256(-1));
-        pat.stake(pool.stakeLocker(), stakeAmt);
-        pat.finalize(address(pool));
-        pat.setOpenToPublic(address(pool), true);
+        stakeLocker1 = StakeLocker(pool1.stakeLocker());
+        pat.approve(address(bPool), pool1.stakeLocker(), uint256(-1));
+        pat.stake(pool1.stakeLocker(), stakeAmt);
+        pat.finalize(address(pool1));
+        pat.setOpenToPublic(address(pool1), true);
     }
 
     function stakeAndFinalizePools(uint256 stakeAmt, uint256 stakeAmt2) public {
@@ -493,14 +489,14 @@ contract TestUtil is DSTest {
     /****************************/
     function createLoan() public {
         uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
-        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
     function createLoan(uint256[5] memory specs) public {
-        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
     function createLoans() public {
         uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
-        loan  = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
         loan3 = bud.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
@@ -509,22 +505,22 @@ contract TestUtil is DSTest {
     /*** Yield Farming Setup Functions ***/
     /*************************************/
     function setUpMplRewards() public {
-        mplRewards = gov.createMplRewards(address(mpl), address(pool));
+        mplRewards = gov.createMplRewards(address(mpl), address(pool1));
         fakeGov.setGovMplRewards(mplRewards);                            // Used to assert failures
     }
 
     function createFarmers() public {
-        fay = new Farmer(mplRewards, pool);
-        fez = new Farmer(mplRewards, pool);
-        fox = new Farmer(mplRewards, pool);
+        fay = new Farmer(mplRewards, pool1);
+        fez = new Farmer(mplRewards, pool1);
+        fox = new Farmer(mplRewards, pool1);
     }
 
     function setUpFarmers(uint256 amt1, uint256 amt2, uint256 amt3) public {
         createFarmers();
 
-        mintFundsAndDepositIntoPool(fay, pool, amt1, amt1);
-        mintFundsAndDepositIntoPool(fez, pool, amt2, amt2);
-        mintFundsAndDepositIntoPool(fox, pool, amt3, amt3);
+        mintFundsAndDepositIntoPool(fay, pool1, amt1, amt1);
+        mintFundsAndDepositIntoPool(fez, pool1, amt2, amt2);
+        mintFundsAndDepositIntoPool(fox, pool1, amt3, amt3);
     }
 
     /******************************/
@@ -566,7 +562,7 @@ contract TestUtil is DSTest {
             bytes32(bal + amt)
         );
 
-        assertEq(IERC20(addr).balanceOf(account), bal + amt); // Assert new balance
+        assertEq(IERC20(addr).balanceOf(account), bal + amt);  // Assert new balance
     }
 
     function getDiff(uint256 val0, uint256 val1) internal pure returns (uint256 diff) {
@@ -586,7 +582,7 @@ contract TestUtil is DSTest {
         emit log_named_uint("Error: approx a == b not satisfied, accuracy digits ", accuracy);
         emit log_named_uint("  Expected", val0);
         emit log_named_uint("    Actual", val1);
-        fail(); 
+        fail();
     }
 
     // Verify equality within accuracy percentage (basis points)
@@ -662,7 +658,7 @@ contract TestUtil is DSTest {
         ];
     }
 
-    function toApy(uint256 yield, uint256 stake, uint256 dTime) internal returns (uint256) {
+    function toApy(uint256 yield, uint256 stake, uint256 dTime) internal pure returns (uint256) {
         return yield * 10_000 * 365 days / stake / dTime;
     }
 
@@ -671,7 +667,7 @@ contract TestUtil is DSTest {
         return amt == uint256(0) ? uint256(0) : amt.mul(totalClaim).div(totalAmt);
     }
 
-    function setUpRepayments(uint256 loanAmt, uint256 apr, uint16 index, uint16 numPayments, uint256 lateFee, uint256 premiumFee) public {
+    function setUpRepayments(uint256 loanAmt, uint256 apr, uint16 index, uint16 numPayments) public {
         uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
 
         uint256 paymentInterval = paymentIntervalArray[index % 10];
@@ -680,22 +676,22 @@ contract TestUtil is DSTest {
         {
             // Mint "infinite" amount of USDC and deposit into pool
             mint("USDC", address(this), loanAmt);
-            IERC20(USDC).approve(address(pool), uint256(-1));
-            pool.deposit(loanAmt);
+            IERC20(USDC).approve(address(pool1), uint256(-1));
+            pool1.deposit(loanAmt);
 
             // Create loan, fund loan, draw down on loan
-            address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
-            uint256[5] memory specs = [apr, termDays, paymentInterval, loanAmt, 2000];
-            loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, calcs);
+            address[3] memory _calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
+            uint256[5] memory specs  = [apr, termDays, paymentInterval, loanAmt, 2000];
+            loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, _calcs);
         }
 
-        assertTrue(pat.try_fundLoan(address(pool), address(loan),  address(dlFactory), loanAmt));
+        assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), loanAmt));
 
         {
-            uint256 cReq = loan.collateralRequiredForDrawdown(loanAmt); // wETH required for 1_000 USDC drawdown on loan
+            uint256 cReq = loan1.collateralRequiredForDrawdown(loanAmt);  // wETH required for 1_000 USDC drawdown on loan
             mint("WETH", address(bob), cReq);
-            bob.approve(WETH, address(loan), cReq);
-            bob.drawdown(address(loan), loanAmt);
+            bob.approve(WETH, address(loan1), cReq);
+            bob.drawdown(address(loan1), loanAmt);
         }
     }
 
@@ -710,8 +706,8 @@ contract TestUtil is DSTest {
     }
 
     function stakeIntoFarm(Farmer farmer, uint256 amt) internal{
-        farmer.increaseCustodyAllowance(address(pool), address(mplRewards), amt);
-        farmer.stake(amt); 
+        farmer.increaseCustodyAllowance(address(pool1), address(mplRewards), amt);
+        farmer.stake(amt);
     }
 
     function setUpFarmingAndDeposit(uint256 totalMpl, uint256 rewardsDuration, uint256 amt1, uint256 amt2, uint256 amt3) internal {
@@ -739,25 +735,25 @@ contract TestUtil is DSTest {
         }
 
         lp.approve(USDC, address(pool), MAX_UINT);
-        lp.deposit(address(pool), liquidityAmt); 
+        lp.deposit(address(pool), liquidityAmt);
     }
 
     function drawdown(Loan loan, Borrower bow, uint256 usdDrawdownAmt) internal {
-        uint256 cReq = loan.collateralRequiredForDrawdown(usdDrawdownAmt); // wETH required for `usdDrawdownAmt` USDC drawdown on loan
+        uint256 cReq = loan.collateralRequiredForDrawdown(usdDrawdownAmt);  // wETH required for `usdDrawdownAmt` USDC drawdown on loan
         mint("WETH", address(bow), cReq);
         bow.approve(WETH, address(loan),  cReq);
         bow.drawdown(address(loan),  usdDrawdownAmt);
     }
 
     function doPartialLoanPayment(Loan loan, Borrower bow) internal returns (uint256 amt) {
-        (amt,,,,) = loan.getNextPayment(); // USDC required for next payment of loan
+        (amt,,,,) = loan.getNextPayment();  // USDC required for next payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makePayment(address(loan));
     }
 
     function doFullLoanPayment(Loan loan, Borrower bow) internal {
-        (uint256 amt,,) = loan.getFullPayment(); // USDC required for full payment of loan
+        (uint256 amt,,) = loan.getFullPayment();  // USDC required for full payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makeFullPayment(address(loan));
@@ -766,31 +762,31 @@ contract TestUtil is DSTest {
     function setUpLoanMakeOnePaymentAndDefault() public returns (uint256 interestPaid) {
         // Fund the pool
         mint("USDC", address(leo), 20_000_000 * USD);
-        leo.approve(USDC, address(pool), MAX_UINT);
-        leo.deposit(address(pool), 10_000_000 * USD);
+        leo.approve(USDC, address(pool1), MAX_UINT);
+        leo.deposit(address(pool1), 10_000_000 * USD);
 
         // Fund the loan
-        pat.fundLoan(address(pool), address(loan), address(dlFactory), 1_000_000 * USD);
-        uint cReq = loan.collateralRequiredForDrawdown(1_000_000 * USD);
+        pat.fundLoan(address(pool1), address(loan1), address(dlFactory1), 1_000_000 * USD);
+        uint cReq = loan1.collateralRequiredForDrawdown(1_000_000 * USD);
 
         // Drawdown loan
         mint("WETH", address(bob), cReq);
-        bob.approve(WETH, address(loan), MAX_UINT);
-        bob.approve(USDC, address(loan), MAX_UINT);
-        bob.drawdown(address(loan), 1_000_000 * USD);
+        bob.approve(WETH, address(loan1), MAX_UINT);
+        bob.approve(USDC, address(loan1), MAX_UINT);
+        bob.drawdown(address(loan1), 1_000_000 * USD);
 
         uint256 preBal = IERC20(USDC).balanceOf(address(bob));
-        bob.makePayment(address(loan));  // Make one payment to register interest for Staker
+        bob.makePayment(address(loan1));  // Make one payment to register interest for Staker
         interestPaid = preBal.sub(IERC20(USDC).balanceOf(address(bob)));
 
         // Warp to late payment
         uint256 start = block.timestamp;
-        uint256 nextPaymentDue = loan.nextPaymentDue();
+        uint256 nextPaymentDue = loan1.nextPaymentDue();
         uint256 defaultGracePeriod = globals.defaultGracePeriod();
         hevm.warp(start + nextPaymentDue + defaultGracePeriod + 1);
 
         // Trigger default
-        pat.triggerDefault(address(pool), address(loan), address(dlFactory));
+        pat.triggerDefault(address(pool1), address(loan1), address(dlFactory1));
     }
 
     function make_withdrawable(LP investor, Pool pool) internal {
@@ -823,7 +819,7 @@ contract TestUtil is DSTest {
         hevm.warp(currentTime + globals.stakerCooldownPeriod());
     }
 
-    function toWad(uint256 amt) internal view returns (uint256) {
+    function toWad(uint256 amt) internal pure returns (uint256) {
         return amt.mul(WAD).div(USD);
     }
 

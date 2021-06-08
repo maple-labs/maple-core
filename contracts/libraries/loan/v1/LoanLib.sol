@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "external-interfaces/IERC20Details.sol";
-import "external-interfaces/IUniswapRouter.sol";
+import "../../../external-interfaces/IERC20Details.sol";
+import "../../../external-interfaces/IUniswapRouter.sol";
 
-import "libraries/util/v1/Util.sol";
+import "../../../core/collateral-locker/v1/interfaces/ICollateralLocker.sol";
+import "../../../core/funding-locker/v1/interfaces/IFundingLocker.sol";
+import "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
+import "../../../core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
+import "../../../core/loan/v1/interfaces/ILoanFactory.sol";
+import "../../../core/premium-calculator/v1/interfaces/IPremiumCalc.sol";
+import "../../../core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol";
 
-import "core/collateral-locker/v1/interfaces/ICollateralLocker.sol";
-import "core/funding-locker/v1/interfaces/IFundingLocker.sol";
-import "core/globals/v1/interfaces/IMapleGlobals.sol";
-import "core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
-import "core/loan/v1/interfaces/ILoanFactory.sol";
-import "core/premium-calculator/v1/interfaces/IPremiumCalc.sol";
-import "core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol";
+import "../../util/v1/Util.sol";
 
 /// @title LoanLib is a library of utility functions used by Loan.
 library LoanLib {
@@ -80,16 +80,16 @@ library LoanLib {
         address liquidityAsset,
         address superFactory,
         address collateralLocker
-    ) 
+    )
         external
         returns (
             uint256 amountLiquidated,
             uint256 amountRecovered
-        ) 
+        )
     {
         // Get the liquidation amount from CollateralLocker.
         uint256 liquidationAmt = collateralAsset.balanceOf(address(collateralLocker));
-        
+
         // Pull the Collateral Asset from CollateralLocker.
         ICollateralLocker(collateralLocker).pull(address(this), liquidationAmt);
 
@@ -187,7 +187,7 @@ library LoanLib {
             uint256 interest,
             uint256 _nextPaymentDue,
             bool    paymentLate
-        ) 
+        )
     {
         _nextPaymentDue  = nextPaymentDue;
 
@@ -199,7 +199,7 @@ library LoanLib {
         // If payment is late, add late fees.
         if (paymentLate) {
             uint256 lateFee = ILateFeeCalc(lateFeeCalc).getLateFee(interest);
-            
+
             total    = total.add(lateFee);
             interest = interest.add(lateFee);
         }
@@ -227,7 +227,7 @@ library LoanLib {
             uint256 total,
             uint256 principal,
             uint256 interest
-        ) 
+        )
     {
         (total, principal, interest) = IPremiumCalc(premiumCalc).getPremiumPayment(address(this));
 
@@ -237,7 +237,7 @@ library LoanLib {
         (,, uint256 regInterest) = IRepaymentCalc(repaymentCalc).getNextPayment(address(this));
 
         uint256 lateFee = ILateFeeCalc(lateFeeCalc).getLateFee(regInterest);
-        
+
         total    = total.add(lateFee);
         interest = interest.add(lateFee);
     }
@@ -257,10 +257,10 @@ library LoanLib {
         uint256 collateralRatio,
         address superFactory,
         uint256 amt
-    ) 
+    )
         external
         view
-        returns (uint256) 
+        returns (uint256)
     {
         IMapleGlobals globals = _globals(superFactory);
 

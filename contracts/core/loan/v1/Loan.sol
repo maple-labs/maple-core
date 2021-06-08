@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
-import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
-import "external-interfaces/IERC20Details.sol";
+import "../../../external-interfaces/IERC20Details.sol";
 
-import "libraries/loan/v1/LoanLib.sol";
-import "libraries/util/v1/Util.sol";
+import "../../../libraries/loan/v1/LoanLib.sol";
+import "../../../libraries/util/v1/Util.sol";
 
-import "core/collateral-locker/v1/interfaces/ICollateralLocker.sol";
-import "core/collateral-locker/v1/interfaces/ICollateralLockerFactory.sol";
-import "core/funding-locker/v1/interfaces/IFundingLocker.sol";
-import "core/funding-locker/v1/interfaces/IFundingLockerFactory.sol";
-import "core/globals/v1/interfaces/IMapleGlobals.sol";
-import "core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
-import "core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
-import "core/pool/v1/interfaces/IPool.sol";
-import "core/pool/v1/interfaces/IPoolFactory.sol";
+import "../../collateral-locker/v1/interfaces/ICollateralLocker.sol";
+import "../../collateral-locker/v1/interfaces/ICollateralLockerFactory.sol";
+import "../../funding-locker/v1/interfaces/IFundingLocker.sol";
+import "../../funding-locker/v1/interfaces/IFundingLockerFactory.sol";
+import "../../globals/v1/interfaces/IMapleGlobals.sol";
+import "../../late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
+import "../../liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
+import "../../pool/v1/interfaces/IPool.sol";
+import "../../pool/v1/interfaces/IPoolFactory.sol";
 
 import "./interfaces/ILoanFactory.sol";
 
@@ -88,7 +88,7 @@ contract Loan is LoanFDT, Pausable {
     event         Drawdown(uint256 drawdownAmount);
     event LoanStateChanged(State state);
     event     LoanAdminSet(address indexed loanAdmin, bool allowed);
-    
+
     event PaymentMade(
         uint256 totalPaid,
         uint256 principalPaid,
@@ -98,7 +98,7 @@ contract Loan is LoanFDT, Pausable {
         uint256 nextPaymentDue,
         bool latePayment
     );
-    
+
     event Liquidation(
         uint256 collateralSwapped,
         uint256 liquidityAssetReturned,
@@ -209,7 +209,7 @@ contract Loan is LoanFDT, Pausable {
         _transferFunds(_fundingLocker, treasury, treasuryAmt);                         // Send the treasury fee directly to the MapleTreasury.
         _transferFunds(_fundingLocker, borrower, amt.sub(treasuryAmt).sub(_feePaid));  // Transfer drawdown amount to the Borrower.
 
-        // Update excessReturned for `claim()`. 
+        // Update excessReturned for `claim()`.
         excessReturned = _getFundingLockerBalance().sub(_feePaid);
 
         // Drain remaining funds from the FundingLocker (amount equal to `excessReturned` plus `feePaid`)

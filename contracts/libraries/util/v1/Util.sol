@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
-import "external-interfaces/IERC20Details.sol";
+import "../../../external-interfaces/IERC20Details.sol";
 
-import "core/globals/v1/interfaces/IMapleGlobals.sol";
+import "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
 
 /// @title Util is a library that contains utility functions.
 library Util {
@@ -21,7 +21,7 @@ library Util {
         @return Expected amount of `toAsset` to receive from swap based on current oracle prices.
     */
     function calcMinAmount(IMapleGlobals globals, address fromAsset, address toAsset, uint256 swapAmt) external view returns (uint256) {
-        return 
+        return
             swapAmt
                 .mul(globals.getLatestPrice(fromAsset))           // Convert from `fromAsset` value.
                 .mul(10 ** IERC20Details(toAsset).decimals())     // Convert to `toAsset` decimal precision.

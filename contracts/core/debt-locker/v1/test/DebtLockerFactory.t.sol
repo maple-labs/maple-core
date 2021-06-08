@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import "../../../../test/TestUtil.sol";
 
 contract DebtLockerFactoryTest is TestUtil {
 
@@ -16,14 +16,14 @@ contract DebtLockerFactoryTest is TestUtil {
     }
 
     function test_newLocker() public {
-        DebtLocker dl  = DebtLocker(dlFactory.newLocker(address(loan)));
+        DebtLocker dl  = DebtLocker(dlFactory1.newLocker(address(loan1)));
         // Validate the storage of dlfactory.
-        assertEq(  dlFactory.owner(address(dl)), address(this));
-        assertTrue(dlFactory.isLocker(address(dl)));
+        assertEq(  dlFactory1.owner(address(dl)), address(this));
+        assertTrue(dlFactory1.isLocker(address(dl)));
 
         // Validate the storage of dl.
-        assertEq(address(dl.loan()),       address(loan), "Incorrect loan address");
-        assertEq(dl.pool(),                address(this), "Incorrect owner of the DebtLocker");
-        assertEq(address(dl.liquidityAsset()),  USDC,     "Incorrect address of loan asset");
+        assertEq(address(dl.loan()), address(loan1),  "Incorrect loan address");
+        assertEq(dl.pool(), address(this),            "Incorrect owner of the DebtLocker");
+        assertEq(address(dl.liquidityAsset()),  USDC, "Incorrect address of loan asset");
     }
 }

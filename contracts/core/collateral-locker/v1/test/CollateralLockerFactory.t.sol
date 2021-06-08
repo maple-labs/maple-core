@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import "../../../../test/TestUtil.sol";
 
 contract CollateralLockerFactoryTest is TestUtil {
 
@@ -21,7 +21,7 @@ contract CollateralLockerFactoryTest is TestUtil {
         assertTrue(clFactory.isLocker(address(cl)));
 
         // Validate the storage of cl.
-        assertEq(cl.loan(), address(this), "Incorrect loan address");
+        assertEq(cl.loan(), address(this),            "Incorrect loan address");
         assertEq(address(cl.collateralAsset()), USDC, "Incorrect address of collateral asset");
 
         // Assert that no one can access CollateralLocker funds

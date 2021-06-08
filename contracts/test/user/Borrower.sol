@@ -2,13 +2,12 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "core/loan/v1/Loan.sol";
+import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
-import "core/loan/v1/interfaces/ILoan.sol";
-import "core/loan/v1/interfaces/ILoanFactory.sol";
-
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../../core/loan/v1/interfaces/ILoan.sol";
+import "../../core/loan/v1/interfaces/ILoanFactory.sol";
+import "../../core/loan/v1/Loan.sol";
+import "../../core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
 contract Borrower {
 

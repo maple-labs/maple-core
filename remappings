@@ -1,7 +1,0 @@
-core/=contracts/core/
-libraries/=contracts/libraries/
-external-interfaces/=contracts/external-interfaces/
-maple-token/=module/maple-token/contracts/
-ds-test/=lib/ds-test/contracts/
-openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
-test/=contracts/test/
