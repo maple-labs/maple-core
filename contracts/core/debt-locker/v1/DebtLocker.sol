@@ -6,28 +6,30 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 import "core/loan/v1/interfaces/ILoan.sol";
 
+import "./interfaces/IDebtLocker.sol";
+
 /// @title DebtLocker holds custody of LoanFDT tokens.
-contract DebtLocker {
+contract DebtLocker is IDebtLocker {
 
     using SafeMath  for uint256;
     using SafeERC20 for IERC20;
 
     uint256 constant WAD = 10 ** 18;
 
-    ILoan   public immutable loan;            // The Loan contract this locker is holding tokens for.
-    IERC20  public immutable liquidityAsset;  // The Liquidity Asset this locker can claim.
-    address public immutable pool;            // The owner of this Locker (the Pool).
+    ILoan   public override immutable loan;
+    IERC20  public override immutable liquidityAsset;
+    address public override immutable pool;
 
-    uint256 public lastPrincipalPaid;    // Loan total principal   paid at last time claim() was called.
-    uint256 public lastInterestPaid;     // Loan total interest    paid at last time claim() was called.
-    uint256 public lastFeePaid;          // Loan total fees        paid at last time claim() was called.
-    uint256 public lastExcessReturned;   // Loan total excess  returned at last time claim() was called.
-    uint256 public lastDefaultSuffered;  // Loan total default suffered at last time claim() was called.
-    uint256 public lastAmountRecovered;  // Liquidity Asset (a.k.a. loan asset) recovered from liquidation of Loan collateral.
+    uint256 public override lastPrincipalPaid;
+    uint256 public override lastInterestPaid;
+    uint256 public override lastFeePaid;
+    uint256 public override lastExcessReturned;
+    uint256 public override lastDefaultSuffered;
+    uint256 public override lastAmountRecovered;
 
     /**
         @dev Checks that `msg.sender` is the Pool.
-    */
+     */
     modifier isPool() {
         require(msg.sender == pool, "DL:NOT_P");
         _;
@@ -44,17 +46,7 @@ contract DebtLocker {
         return newAmt == uint256(0) ? uint256(0) : newAmt.mul(totalClaim).div(totalNewAmt);
     }
 
-    /**
-        @dev    Claims funds distribution for Loan via LoanFDT. Only the Pool can call this function.
-        @return [0] = Total Claimed
-                [1] = Interest Claimed
-                [2] = Principal Claimed
-                [3] = Pool Delegate Fee Claimed
-                [4] = Excess Returned Claimed
-                [5] = Amount Recovered (from Liquidation)
-                [6] = Default Suffered
-    */
-    function claim() external isPool returns (uint256[7] memory) {
+    function claim() external override isPool returns (uint256[7] memory) {
 
         uint256 newDefaultSuffered   = uint256(0);
         uint256 loan_defaultSuffered = loan.defaultSuffered();
@@ -118,10 +110,7 @@ contract DebtLocker {
         return([claimBal, newInterest, newPrincipal, newFee, newExcess, newAmountRecovered, newDefaultSuffered]);
     }
 
-    /**
-        @dev Liquidates a Loan that is held by this contract. Only the Pool can call this function.
-    */
-    function triggerDefault() external isPool {
+    function triggerDefault() external override isPool {
         loan.triggerDefault();
     }
 

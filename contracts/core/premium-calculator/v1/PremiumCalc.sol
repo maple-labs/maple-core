@@ -5,29 +5,24 @@ import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 import "core/loan/v1/interfaces/ILoan.sol";
 
+import "./interfaces/IPremiumCalc.sol";
+
 /// @title PremiumCalc calculates premium fees on Loans.
-contract PremiumCalc {
+contract PremiumCalc is IPremiumCalc {
 
     using SafeMath for uint256;
 
-    uint8   public constant calcType = 12;      // PREMIUM type.
-    bytes32 public constant name     = "FLAT";
+    uint8   public override constant calcType = 12;
+    bytes32 public override constant name     = "FLAT";
 
-    uint256 public immutable premiumFee;  // Flat percentage fee (in basis points) of principal to charge as a premium when calling a Loan.
+    uint256 public override immutable premiumFee;
 
     constructor(uint256 _premiumFee) public {
         premiumFee = _premiumFee;
     }
 
-    /**
-        @dev    Calculates the premium payment for a Loan, when making a full payment.
-        @param  _loan         The address of a Loan to calculate a premium payment for.
-        @return total         Principal + Interest.
-        @return principalOwed Principal.
-        @return interest      Interest.
-    */
-    function getPremiumPayment(address _loan) external view returns (uint256 total, uint256 principalOwed, uint256 interest) {
-        principalOwed = ILoan(_loan).principalOwed();
+    function getPremiumPayment(address loan) external override view returns (uint256 total, uint256 principalOwed, uint256 interest) {
+        principalOwed = ILoan(loan).principalOwed();
         interest      = principalOwed.mul(premiumFee).div(10_000);
         total         = interest.add(principalOwed);
     }

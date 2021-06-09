@@ -8,10 +8,10 @@ import "lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
 import "libraries/math/v1/SafeMathUint.sol";
 import "libraries/math/v1/SafeMathInt.sol";
 
-import "./interfaces/IBaseFDT.sol";
+import "./interfaces/IBasicFDT.sol";
 
-/// @title BasicFDT implements base level FDT functionality for accounting for revenues.
-abstract contract BasicFDT is IBaseFDT, ERC20 {
+/// @title BasicFDT implements the basic level FDT functionality for accounting for revenues.
+abstract contract BasicFDT is IBasicFDT, ERC20 {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
@@ -22,9 +22,6 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
 
     mapping(address => int256)  internal pointsCorrection;
     mapping(address => uint256) internal withdrawnFunds;
-
-    event   PointsPerShareUpdated(uint256 pointsPerShare);
-    event PointsCorrectionUpdated(address indexed account, int256 pointsCorrection);
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) public { }
 
@@ -40,7 +37,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
                    in a distribution can be less than 1 (base unit).
                 We can actually keep track of the undistributed funds in a distribution
                    and try to distribute it in the next distribution.
-    */
+     */
     function _distributeFunds(uint256 value) internal {
         require(totalSupply() > 0, "FDT:ZERO_SUPPLY");
 
@@ -55,7 +52,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
         @dev    Prepares the withdrawal of funds.
         @dev    It emits a `FundsWithdrawn` event if the amount of withdrawn funds is greater than 0.
         @return withdrawableDividend The amount of dividend funds that can be withdrawn.
-    */
+     */
     function _prepareWithdraw() internal returns (uint256 withdrawableDividend) {
         withdrawableDividend       = withdrawableFundsOf(msg.sender);
         uint256 _withdrawnFunds    = withdrawnFunds[msg.sender].add(withdrawableDividend);
@@ -64,37 +61,20 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
         emit FundsWithdrawn(msg.sender, withdrawableDividend, _withdrawnFunds);
     }
 
-    /**
-        @dev    Returns the amount of funds that an account can withdraw.
-        @param  _owner The address of a token holder.
-        @return The amount funds that `_owner` can withdraw.
-    */
-    function withdrawableFundsOf(address _owner) public view override returns (uint256) {
-        return accumulativeFundsOf(_owner).sub(withdrawnFunds[_owner]);
+    function withdrawableFundsOf(address account) public view override returns (uint256) {
+        return accumulativeFundsOf(account).sub(withdrawnFunds[account]);
     }
 
-    /**
-        @dev    Returns the amount of funds that an account has withdrawn.
-        @param  _owner The address of a token holder.
-        @return The amount of funds that `_owner` has withdrawn.
-    */
-    function withdrawnFundsOf(address _owner) external view returns (uint256) {
-        return withdrawnFunds[_owner];
+    function withdrawnFundsOf(address account) external override view returns (uint256) {
+        return withdrawnFunds[account];
     }
 
-    /**
-        @dev    Returns the amount of funds that an account has earned in total.
-        @dev    accumulativeFundsOf(_owner) = withdrawableFundsOf(_owner) + withdrawnFundsOf(_owner)
-                                         = (pointsPerShare * balanceOf(_owner) + pointsCorrection[_owner]) / pointsMultiplier
-        @param  _owner The address of a token holder.
-        @return The amount of funds that `_owner` has earned in total.
-    */
-    function accumulativeFundsOf(address _owner) public view returns (uint256) {
+    function accumulativeFundsOf(address account) public override view returns (uint256) {
         return
             pointsPerShare
-                .mul(balanceOf(_owner))
+                .mul(balanceOf(account))
                 .toInt256Safe()
-                .add(pointsCorrection[_owner])
+                .add(pointsCorrection[account])
                 .toUint256Safe() / pointsMultiplier;
     }
 
@@ -104,7 +84,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
         @param from  The address to transfer from.
         @param to    The address to transfer to.
         @param value The amount to be transferred.
-    */
+     */
     function _transfer(
         address from,
         address to,
@@ -126,7 +106,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
         @dev   Mints tokens to an account. Updates pointsCorrection to keep funds unchanged.
         @param account The account that will receive the created tokens.
         @param value   The amount that will be created.
-    */
+     */
     function _mint(address account, uint256 value) internal virtual override {
         super._mint(account, value);
 
@@ -144,7 +124,7 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
         @dev   It emits a `PointsCorrectionUpdated` event.
         @param account The account whose tokens will be burnt.
         @param value   The amount that will be burnt.
-    */
+     */
     function _burn(address account, uint256 value) internal virtual override {
         super._burn(account, value);
 
@@ -157,23 +137,15 @@ abstract contract BasicFDT is IBaseFDT, ERC20 {
         emit PointsCorrectionUpdated(account, _pointsCorrection);
     }
 
-    /**
-        @dev Withdraws all available funds for a token holder.
-    */
     function withdrawFunds() public virtual override {}
 
     /**
         @dev    Updates the current `fundsToken` balance and returns the difference of the new and previous `fundsToken` balance.
         @return A int256 representing the difference of the new and previous `fundsToken` balance.
-    */
+     */
     function _updateFundsTokenBalance() internal virtual returns (int256) {}
 
-    /**
-        @dev Registers a payment of funds in tokens. May be called directly after a deposit is made.
-        @dev Calls _updateFundsTokenBalance(), whereby the contract computes the delta of the new and previous
-             `fundsToken` balance and increments the total received funds (cumulative), by delta, by calling _distributeFunds().
-    */
-    function updateFundsReceived() public virtual {
+    function updateFundsReceived() public override virtual {
         int256 newFunds = _updateFundsTokenBalance();
 
         if (newFunds <= 0) return;

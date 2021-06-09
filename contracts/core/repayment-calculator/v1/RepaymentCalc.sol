@@ -5,38 +5,33 @@ import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 import "core/loan/v1/interfaces/ILoan.sol";
 
+import "./interfaces/IRepaymentCalc.sol";
+
 /// @title RepaymentCalc calculates payment amounts on Loans.
-contract RepaymentCalc {
+contract RepaymentCalc is IRepaymentCalc {
 
 	using SafeMath for uint256;
 
-    uint8   public constant calcType = 10;               // INTEREST type.
-    bytes32 public constant name     = "INTEREST_ONLY";  // Calculator.
+    uint8   public override constant calcType = 10;
+    bytes32 public override constant name     = "INTEREST_ONLY";
 
-    /**
-        @dev    Calculates the next payment for a Loan.
-        @param  _loan         The address of a Loan to calculate a payment for.
-        @return total         Entitled interest of the next payment (Principal + Interest only when the next payment is last payment of the Loan).
-        @return principalOwed Entitled principal amount needed to be paid in the next payment.
-        @return interest      Entitled interest amount needed to be paid in the next payment.
-    */
-    function getNextPayment(address _loan) external view returns (uint256 total, uint256 principalOwed, uint256 interest) {
+    function getNextPayment(address loan) external override view returns (uint256 total, uint256 principalOwed, uint256 interest) {
 
-        ILoan loan = ILoan(_loan);
+        ILoan _loan = ILoan(loan);
 
-        principalOwed = loan.principalOwed();
+        principalOwed = _loan.principalOwed();
 
         // Equation = principal * APR * (paymentInterval / year)
         // Principal * APR gives annual interest
         // Multiplying that by (paymentInterval / year) gives portion of annual interest due for each interval.
         interest =
             principalOwed
-                .mul(loan.apr())
-                .mul(loan.paymentIntervalSeconds())
+                .mul(_loan.apr())
+                .mul(_loan.paymentIntervalSeconds())
                 .div(10_000)
                 .div(365 days);
 
-        (total, principalOwed) = loan.paymentsRemaining() == 1
+        (total, principalOwed) = _loan.paymentsRemaining() == 1
             ? (interest.add(principalOwed), principalOwed)
             : (interest, 0);
     }

@@ -31,11 +31,11 @@ library LoanLib {
 
     /**
         @dev    Performs sanity checks on the data passed in Loan constructor.
-        @param  globals         Instance of a MapleGlobals.
-        @param  liquidityAsset  Contract address of the Liquidity Asset.
-        @param  collateralAsset Contract address of the Collateral Asset.
-        @param  specs           Contains specifications for this Loan.
-    */
+        @param  globals         The instance of a MapleGlobals.
+        @param  liquidityAsset  The contract address of the Liquidity Asset.
+        @param  collateralAsset The contract address of the Collateral Asset.
+        @param  specs           The contains specifications for this Loan.
+     */
     function loanSanityChecks(IMapleGlobals globals, address liquidityAsset, address collateralAsset, uint256[5] calldata specs) external view {
         require(globals.isValidLiquidityAsset(liquidityAsset),   "L:INVALID_LIQ_ASSET");
         require(globals.isValidCollateralAsset(collateralAsset), "L:INVALID_COL_ASSET");
@@ -47,12 +47,12 @@ library LoanLib {
 
     /**
         @dev    Returns capital to Lenders, if the Borrower has not drawn down the Loan past the grace period.
-        @param  liquidityAsset IERC20 of the Liquidity Asset.
-        @param  fundingLocker  Address of FundingLocker.
-        @param  createdAt      Timestamp of Loan instantiation.
-        @param  fundingPeriod  Duration of the funding period, after which funds can be reclaimed.
-        @return excessReturned Amount of Liquidity Asset that was returned to the Loan from the FundingLocker.
-    */
+        @param  liquidityAsset The IERC20 of the Liquidity Asset.
+        @param  fundingLocker  The address of FundingLocker.
+        @param  createdAt      The unix timestamp of Loan instantiation.
+        @param  fundingPeriod  The duration of the funding period, after which funds can be reclaimed.
+        @return excessReturned The amount of Liquidity Asset that was returned to the Loan from the FundingLocker.
+     */
     function unwind(IERC20 liquidityAsset, address fundingLocker, uint256 createdAt, uint256 fundingPeriod) external returns (uint256 excessReturned) {
         // Only callable if Loan funding period has elapsed.
         require(block.timestamp > createdAt.add(fundingPeriod), "L:STILL_FUNDING_PERIOD");
@@ -67,14 +67,15 @@ library LoanLib {
     }
 
     /**
-        @dev    Liquidates a Borrower's collateral, via Uniswap, when a default is triggered. Only the Loan can call this function.
-        @param  collateralAsset  IERC20 of the Collateral Asset.
-        @param  liquidityAsset   Address of Liquidity Asset.
-        @param  superFactory     Factory that instantiated Loan.
-        @param  collateralLocker Address of CollateralLocker.
-        @return amountLiquidated Amount of Collateral Asset that was liquidated.
-        @return amountRecovered  Amount of Liquidity Asset that was returned to the Loan from the liquidation.
-    */
+        @dev    Liquidates a Borrower's collateral, via Uniswap, when a default is triggered. 
+        @dev    Only the Loan can call this function. 
+        @param  collateralAsset  The IERC20 of the Collateral Asset.
+        @param  liquidityAsset   The address of Liquidity Asset.
+        @param  superFactory     The factory that instantiated Loan.
+        @param  collateralLocker The address of CollateralLocker.
+        @return amountLiquidated The amount of Collateral Asset that was liquidated.
+        @return amountRecovered  The amount of Liquidity Asset that was returned to the Loan from the liquidation.
+     */
     function liquidateCollateral(
         IERC20  collateralAsset,
         address liquidityAsset,
@@ -131,11 +132,12 @@ library LoanLib {
     /**********************************/
 
     /**
-        @dev   Transfers any locked funds to the Governor. Only the Governor can call this function.
-        @param token          Address of the token to be reclaimed.
-        @param liquidityAsset Address of token that is used by the loan for drawdown and payments.
-        @param globals        Instance of a MapleGlobals.
-    */
+        @dev   Transfers any locked funds to the Governor. 
+        @dev   Only the Governor can call this function.
+        @param token          The address of the token to be reclaimed.
+        @param liquidityAsset The address of token that is used by the loan for drawdown and payments.
+        @param globals        The instance of a MapleGlobals.
+     */
     function reclaimERC20(address token, address liquidityAsset, IMapleGlobals globals) external {
         require(msg.sender == globals.governor(),               "L:NOT_GOV");
         require(token != liquidityAsset && token != address(0), "L:INVALID_TOKEN");
@@ -148,13 +150,13 @@ library LoanLib {
 
     /**
         @dev    Returns if a default can be triggered.
-        @param  nextPaymentDue     Timestamp of when payment is due.
-        @param  defaultGracePeriod Amount of time after the next payment is due that a Borrower has before a liquidation can occur.
-        @param  superFactory       Factory that instantiated Loan.
-        @param  balance            LoanFDT balance of account trying to trigger a default.
-        @param  totalSupply        Total supply of LoanFDT.
-        @return Boolean indicating if default can be triggered.
-    */
+        @param  nextPaymentDue     The unix timestamp of when payment is due.
+        @param  defaultGracePeriod The amount of time after the next payment is due that a Borrower has before a liquidation can occur.
+        @param  superFactory       The factory that instantiated Loan.
+        @param  balance            The LoanFDT balance of account trying to trigger a default.
+        @param  totalSupply        The total supply of LoanFDT.
+        @return Whether a default can be triggered.
+     */
     function canTriggerDefault(uint256 nextPaymentDue, uint256 defaultGracePeriod, address superFactory, uint256 balance, uint256 totalSupply) external view returns (bool) {
         bool pastDefaultGracePeriod = block.timestamp > nextPaymentDue.add(defaultGracePeriod);
 
@@ -165,15 +167,15 @@ library LoanLib {
 
     /**
         @dev    Returns information on next payment amount.
-        @param  repaymentCalc   Address of RepaymentCalc.
-        @param  nextPaymentDue  Timestamp of when payment is due.
-        @param  lateFeeCalc     Address of LateFeeCalc.
-        @return total           Entitled total amount needed to be paid in the next payment (Principal + Interest only when the next payment is last payment of the Loan).
-        @return principal       Entitled principal amount needed to be paid in the next payment.
-        @return interest        Entitled interest amount needed to be paid in the next payment.
-        @return _nextPaymentDue Payment Due Date.
+        @param  repaymentCalc   The address of RepaymentCalc.
+        @param  nextPaymentDue  The unix timestamp of when payment is due.
+        @param  lateFeeCalc     The address of LateFeeCalc.
+        @return total           The entitled total amount needed to be paid in the next payment (Principal + Interest only when the next payment is last payment of the Loan).
+        @return principal       The entitled principal amount needed to be paid in the next payment.
+        @return interest        The entitled interest amount needed to be paid in the next payment.
+        @return _nextPaymentDue The payment due date.
         @return paymentLate     Whether payment is late.
-    */
+     */
     function getNextPayment(
         address repaymentCalc,
         uint256 nextPaymentDue,
@@ -207,14 +209,14 @@ library LoanLib {
 
     /**
         @dev    Returns information on full payment amount.
-        @param  repaymentCalc   Address of RepaymentCalc.
-        @param  nextPaymentDue  Timestamp of when payment is due.
-        @param  lateFeeCalc     Address of LateFeeCalc.
-        @param  premiumCalc     Address of PremiumCalc.
-        @return total           Principal + Interest for the full payment.
-        @return principal       Entitled principal amount needed to be paid in the full payment.
-        @return interest        Entitled interest amount needed to be paid in the full payment.
-    */
+        @param  repaymentCalc   The address of RepaymentCalc.
+        @param  nextPaymentDue  The unix timestamp of when payment is due.
+        @param  lateFeeCalc     The address of LateFeeCalc.
+        @param  premiumCalc     The address of PremiumCalc.
+        @return total           The Principal + Interest for the full payment.
+        @return principal       The entitled principal amount needed to be paid in the full payment.
+        @return interest        The entitled interest amount needed to be paid in the full payment.
+     */
     function getFullPayment(
         address repaymentCalc,
         uint256 nextPaymentDue,
@@ -244,13 +246,13 @@ library LoanLib {
 
     /**
         @dev    Calculates collateral required to drawdown amount.
-        @param  collateralAsset IERC20 of the Collateral Asset.
-        @param  liquidityAsset  IERC20 of the Liquidity Asset.
-        @param  collateralRatio Percentage of drawdown value that must be posted as collateral.
-        @param  superFactory    Factory that instantiated Loan.
-        @param  amt             Drawdown amount.
-        @return Amount of Collateral Asset required to post in CollateralLocker for given drawdown amount.
-    */
+        @param  collateralAsset The IERC20 of the Collateral Asset.
+        @param  liquidityAsset  The IERC20 of the Liquidity Asset.
+        @param  collateralRatio The percentage of drawdown value that must be posted as collateral.
+        @param  superFactory    The factory that instantiated Loan.
+        @param  amt             The drawdown amount.
+        @return The amount of Collateral Asset required to post in CollateralLocker for given drawdown amount.
+     */
     function collateralRequiredForDrawdown(
         IERC20Details collateralAsset,
         IERC20Details liquidityAsset,

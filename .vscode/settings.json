@@ -50,6 +50,7 @@
     "fundings",
     "hevm",
     "keccak",
+    "oracled",
     "permissioning",
     "slfactory",
     "staker",

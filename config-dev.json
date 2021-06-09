@@ -264,10 +264,12 @@
     "outputSelection": {
       "*": {
         "*": [
+          "abi",
+          "devdoc",
+          "userdoc",
           "metadata",
           "evm.bytecode",
           "evm.deployedBytecode",
-          "abi",
           "storageLayout",
           "evm.bytecode.sourceMap",
           "evm.bytecode.linkReferences",

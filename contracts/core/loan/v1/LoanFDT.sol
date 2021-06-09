@@ -5,26 +5,25 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
 import "core/funds-distribution-token/v1/BasicFDT.sol";
 
+import "./interfaces/ILoanFDT.sol";
+
 /// @title LoanFDT inherits BasicFDT and uses the original ERC-2222 logic.
-abstract contract LoanFDT is BasicFDT {
+abstract contract LoanFDT is ILoanFDT, BasicFDT {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
     using SafeMathInt    for  int256;
     using SafeERC20      for  IERC20;
 
-    IERC20 public immutable fundsToken;  // The `fundsToken` (dividends).
+    IERC20 public override immutable fundsToken;
 
-    uint256 public fundsTokenBalance;   // The amount of `fundsToken` (Liquidity Asset) currently present and accounted for in this contract.
+    uint256 public override fundsTokenBalance;
 
     constructor(string memory name, string memory symbol, address _fundsToken) BasicFDT(name, symbol) public {
         fundsToken = IERC20(_fundsToken);
     }
 
-    /**
-        @dev Withdraws all available funds for a token holder.
-    */
-    function withdrawFunds() public virtual override {
+    function withdrawFunds() public virtual override(ILoanFDT, BasicFDT) {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         if (withdrawableFunds > uint256(0)) {
@@ -37,7 +36,7 @@ abstract contract LoanFDT is BasicFDT {
     /**
         @dev    Updates the current `fundsToken` balance and returns the difference of the new and previous `fundsToken` balance.
         @return A int256 representing the difference of the new and previous `fundsToken` balance.
-    */
+     */
     function _updateFundsTokenBalance() internal virtual override returns (int256) {
         uint256 _prevFundsTokenBalance = fundsTokenBalance;
 

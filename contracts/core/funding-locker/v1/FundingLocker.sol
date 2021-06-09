@@ -8,8 +8,8 @@ contract FundingLocker {
 
     using SafeERC20 for IERC20;
 
-    IERC20  public immutable liquidityAsset;  // Asset the Loan was funded with.
-    address public immutable loan;            // Loan this FundingLocker has funded.
+    IERC20  public immutable liquidityAsset;
+    address public immutable loan;
 
     constructor(address _liquidityAsset, address _loan) public {
         liquidityAsset = IERC20(_liquidityAsset);
@@ -24,18 +24,10 @@ contract FundingLocker {
         _;
     }
 
-    /**
-        @dev   Transfers amount of Liquidity Asset to a destination account. Only the Loan can call this function.
-        @param dst Destination to transfer Liquidity Asset to.
-        @param amt Amount of Liquidity Asset to transfer.
-    */
-    function pull(address dst, uint256 amt) isLoan external {
-        liquidityAsset.safeTransfer(dst, amt);
+    function pull(address destination, uint256 amount) isLoan external {
+        liquidityAsset.safeTransfer(destination, amount);
     }
 
-    /**
-        @dev Transfers entire amount of Liquidity Asset held in escrow to the Loan. Only the Loan can call this function.
-    */
     function drain() isLoan external {
         uint256 amt = liquidityAsset.balanceOf(address(this));
         liquidityAsset.safeTransfer(loan, amt);
