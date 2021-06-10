@@ -14,7 +14,7 @@ done
 
 runs=$([ -z "$runs" ] && echo "10" || echo "$runs")
 build=$([ -z "$build" ] && echo "1" || echo "$build")
-config=$([ -z "$config" ] && echo "config.json" || echo "$config")
+config=$([ -z "$config" ] && echo "config-dev.json" || echo "$config")
 skip_build=$([ "$build" == "0" ] && echo "1" || echo "0")
 version=$([ -z "$version" ] && echo "v1" || echo "$version")
 

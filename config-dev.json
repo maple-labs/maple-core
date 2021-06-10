@@ -242,6 +242,9 @@
     "contracts/external-interfaces/IUniswapRouter.sol": { "urls": ["contracts/external-interfaces/IUniswapRouter.sol"] }
   },
   "settings": {
+    "optimizer": {
+      "enabled": false
+    },
     "libraries": {
       "": {
         "contracts/libraries/loan/v1/LoanLib.sol:LoanLib": "0x51A189ccD2eB5e1168DdcA7e59F7c8f39AA52232",
