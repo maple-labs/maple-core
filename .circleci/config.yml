@@ -22,7 +22,7 @@ jobs:
           name: Build contracts
           command: |
             GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git submodule update --init --recursive
-            ls -la
+            ls -la ./cache
             ./build.sh
       - persist_to_workspace:
           root: ~/project
