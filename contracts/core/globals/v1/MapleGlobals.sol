@@ -2,11 +2,11 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
-import "../../../external-interfaces/IERC20Details.sol";
+import "external-interfaces/IERC20Details.sol";
 
-import "../../oracle/v1/interfaces/IOracle.sol";
+import "core/oracle/v1/interfaces/IOracle.sol";
 
 import "./interfaces/ISubFactory.sol";
 
