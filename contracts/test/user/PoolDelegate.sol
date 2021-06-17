@@ -2,14 +2,14 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "../../external-interfaces/IBPool.sol";
+import "external-interfaces/IBPool.sol";
 
-import "../../core/loan/v1/interfaces/ILoan.sol";
-import "../../core/pool/v1/interfaces/IPool.sol";
-import "../../core/pool/v1/interfaces/IPoolFactory.sol";
-import "../../core/stake-locker/v1/interfaces/IStakeLocker.sol";
+import "core/loan/v1/interfaces/ILoan.sol";
+import "core/pool/v1/interfaces/IPool.sol";
+import "core/pool/v1/interfaces/IPoolFactory.sol";
+import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
 contract PoolDelegate {
 
