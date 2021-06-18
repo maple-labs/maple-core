@@ -13,8 +13,6 @@ jobs:
     docker:
       - image: bakii0499/dapptools:0.46.0
     steps:
-      - restore_cache:
-          key: nix-deps-02
       - run:
           name: Checkout maple-core
           command: |
@@ -24,36 +22,25 @@ jobs:
           name: Build contracts
           command: |
             GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git submodule update --init --recursive
-            DAPP_SRC=contracts dapp --version
-            curl https://dapp.tools/install | sh
-            DAPP_SRC=contracts dapp --version
             ./build.sh
       - persist_to_workspace:
           root: ~/project
           paths:
             - "./*"
-      - save_cache:
-          paths:
-            - /nix/deps/02 # location depends on npm version
-          key: nix-deps-02
 
   dapp_test:
     docker:
       - image: bakii0499/dapptools:0.46.0
-    parallelism: 24
     steps:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: ~/project
-      - restore_cache:
-          key: nix-deps-02
       - run:
           name: Run unit tests
           command: |
             cd ~/project
-            TEST=$(circleci tests glob contracts/*/*/v1/test/*.t.sol | circleci tests split --split-by=name)
             export ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY 
-            ./test.sh -t $TEST -r 1 -b 0
+            ./test.sh
           no_output_timeout: 60m
 
 workflows:
