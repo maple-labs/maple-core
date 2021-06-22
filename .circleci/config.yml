@@ -40,6 +40,7 @@ jobs:
           name: Run unit tests
           command: |
             cd ~/project
+            cd cache/dapp-cache && git checkout master && cd ../..
             export ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY 
             ./test.sh -r 1 -b 0
           no_output_timeout: 60m
