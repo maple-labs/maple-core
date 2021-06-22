@@ -14,7 +14,7 @@ contract MplRewardsTest is TestUtil {
         setUpBalancerPool();
         setUpLiquidityPool();
         setUpMplRewardsFactory();
-        setUpMplRewards();
+        setUpMplRewards(address(pool1));
         setUpFarmers(1000 * USD, 1000 * USD, 1000 * USD);
     }
 
@@ -637,4 +637,6 @@ contract MplRewardsTest is TestUtil {
             rewardTokenBal:         (dTime1_rpt + dTime2_rpt) * 30 * WAD / WAD   // Total claimed earnings from pool over both epochs
         });
     }
+
+    function 
 }

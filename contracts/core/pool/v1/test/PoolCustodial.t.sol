@@ -34,7 +34,7 @@ contract PoolCustodialTest is TestUtil {
         transferBptsToPoolDelegates();
         setUpLiquidityPool();
         setUpMplRewardsFactory();
-        setUpMplRewards();
+        setUpMplRewards(address(pool1));
         createFarmers();
     }
 

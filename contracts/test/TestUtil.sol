@@ -504,8 +504,8 @@ contract TestUtil is DSTest {
     /*************************************/
     /*** Yield Farming Setup Functions ***/
     /*************************************/
-    function setUpMplRewards() public {
-        mplRewards = gov.createMplRewards(address(mpl), address(pool1));
+    function setUpMplRewards(address stakeToken) public {
+        mplRewards = gov.createMplRewards(address(mpl), stakeToken);
         fakeGov.setGovMplRewards(mplRewards);                            // Used to assert failures
     }
 
