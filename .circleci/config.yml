@@ -40,6 +40,7 @@ jobs:
           name: Run unit tests
           command: |
             cd ~/project
+            cd cache/dapp-cache && git branch && git log
             TEST=$(circleci tests glob contracts/*/*/v1/test/*.t.sol | circleci tests split --split-by=name)
             export ETH_RPC_URL=$ETH_RPC_URL_ALCHEMY 
             ./test.sh -t $TEST -r 1 -b 0
