@@ -190,9 +190,9 @@ interface IMplRewards {
     /**
         @dev   Only the contract Owner may call this. 
         @dev   It emits a `RewardsDurationUpdated` event. 
-        @param newRewardsDuration The new duration for rewards.
+        @param _rewardsDuration The new duration for rewards.
      */
-    function setRewardsDuration(uint256 newRewardsDuration) external;
+    function setRewardsDuration(uint256 _rewardsDuration) external;
 
     /**
         @dev Change the paused state of the contract. Only the contract Owner may call this. 

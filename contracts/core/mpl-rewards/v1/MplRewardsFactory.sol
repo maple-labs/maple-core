@@ -18,9 +18,9 @@ contract MplRewardsFactory is IMplRewardsFactory{
         globals = IMapleGlobals(_globals);
     }
 
-    function setGlobals(address newGlobals) external override {
+    function setGlobals(address _globals) external override {
         require(msg.sender == globals.governor(), "RF:NOT_GOV");
-        globals = IMapleGlobals(newGlobals);
+        globals = IMapleGlobals(_globals);
     }
 
     function createMplRewards(address rewardsToken, address stakingToken) external override returns (address mplRewards) {

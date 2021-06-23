@@ -110,10 +110,10 @@ interface IStakeLocker is IStakeLockerFDT {
     /**
         @dev   Transfers an amount of Stake Asset to a destination account. 
         @dev   Only the Pool can call this function. 
-        @param destination The destination to transfer Stake Asset to.
-        @param amount      The amount of Stake Asset to transfer.
+        @param dst The destination to transfer Stake Asset to.
+        @param amt The amount of Stake Asset to transfer.
      */
-    function pull(address destination, uint256 amount) external;
+    function pull(address dst, uint256 amt) external;
 
     /**
         @dev   Updates loss accounting for StakeLockerFDTs after BPTs have been burned. 
@@ -128,9 +128,9 @@ interface IStakeLocker is IStakeLockerFDT {
         @dev   It emits a `Stake` event. 
         @dev   It emits a `Cooldown` event. 
         @dev   It emits a `BalanceUpdated` event. 
-        @param amount The amount of Stake Asset (BPTs) to deposit.
+        @param amt The amount of Stake Asset (BPTs) to deposit.
      */
-    function stake(uint256 amount) external;
+    function stake(uint256 amt) external;
 
     /**
         @dev Activates the cooldown period to unstake. 
@@ -150,9 +150,9 @@ interface IStakeLocker is IStakeLockerFDT {
         @dev   It also claims interest and burns StakeLockerFDTs for the calling account. 
         @dev   It emits an `Unstake` event. 
         @dev   It emits a `BalanceUpdated` event. 
-        @param amount The amount of Stake Asset (BPTs) to withdraw.
+        @param amt The amount of Stake Asset (BPTs) to withdraw.
      */
-    function unstake(uint256 amount) external;
+    function unstake(uint256 amt) external;
 
     /**
         @dev Withdraws all claimable interest earned from the StakeLocker for an account. 

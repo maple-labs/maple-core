@@ -251,9 +251,9 @@ interface ILoan is ILoanFDT {
         @dev   It emits four `BalanceUpdated` events. 
         @dev   It emits a `LoanStateChanged` event. 
         @dev   It emits a `Drawdown` event. 
-        @param amount the amount of Liquidity Asset the Borrower draws down. Remainder is returned to the Loan where it can be claimed back by LoanFDT holders.
+        @param amt the amount of Liquidity Asset the Borrower draws down. Remainder is returned to the Loan where it can be claimed back by LoanFDT holders.
      */
-    function drawdown(uint256 amount) external;
+    function drawdown(uint256 amt) external;
 
     /**
         @dev Makes a payment for this Loan. 
@@ -273,9 +273,9 @@ interface ILoan is ILoanFDT {
         @dev   It emits a `LoanFunded` event. 
         @dev   It emits a `BalanceUpdated` event. 
         @param mintTo The address that LoanFDTs are minted to.
-        @param amount The amount to fund the Loan.
+        @param amt    The amount to fund the Loan.
      */
-    function fundLoan(address mintTo, uint256 amount) external;
+    function fundLoan(address mintTo, uint256 amt) external;
 
     /**
         @dev Handles returning capital to the Loan, where it can be claimed back by LoanFDT holders, 
@@ -354,9 +354,9 @@ interface ILoan is ILoanFDT {
 
     /**
         @dev    Calculates the collateral required to draw down amount.
-        @param  amount The amount of the Liquidity Asset to draw down from the FundingLocker.
+        @param  amt The amount of the Liquidity Asset to draw down from the FundingLocker.
         @return The amount of the Collateral Asset required to post in the CollateralLocker for a given drawdown amount.
      */
-    function collateralRequiredForDrawdown(uint256 amount) external view returns (uint256);
+    function collateralRequiredForDrawdown(uint256 amt) external view returns (uint256);
 
 }

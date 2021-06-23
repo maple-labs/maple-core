@@ -21,8 +21,8 @@ contract PremiumCalc is IPremiumCalc {
         premiumFee = _premiumFee;
     }
 
-    function getPremiumPayment(address loan) external override view returns (uint256 total, uint256 principalOwed, uint256 interest) {
-        principalOwed = ILoan(loan).principalOwed();
+    function getPremiumPayment(address _loan) external override view returns (uint256 total, uint256 principalOwed, uint256 interest) {
+        principalOwed = ILoan(_loan).principalOwed();
         interest      = principalOwed.mul(premiumFee).div(10_000);
         total         = interest.add(principalOwed);
     }

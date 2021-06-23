@@ -16,11 +16,11 @@ interface IRepaymentCalc {
 
     /**
         @dev    Calculates the next payment for a Loan.
-        @param  loan          The address of a Loan to calculate a payment for.
+        @param  _loan         The address of a Loan to calculate a payment for.
         @return total         The entitled interest of the next payment (Principal + Interest only when the next payment is last payment of the Loan).
         @return principalOwed The entitled principal amount needed to be paid in the next payment.
         @return interest      The entitled interest amount needed to be paid in the next payment.
      */
-    function getNextPayment(address loan) external view returns (uint256 total, uint256 principalOwed, uint256 interest);
+    function getNextPayment(address _loan) external view returns (uint256 total, uint256 principalOwed, uint256 interest);
 
 }

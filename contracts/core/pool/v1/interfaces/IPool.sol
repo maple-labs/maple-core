@@ -386,9 +386,9 @@ interface IPool is IPoolFDT {
     /**
         @dev   Handles Liquidity Providers withdrawing of Liquidity Asset from the LiquidityLocker, burning PoolFDTs. 
         @dev   It emits two `BalanceUpdated` event. 
-        @param amount The amount of Liquidity Asset to withdraw.
+        @param amt The amount of Liquidity Asset to withdraw.
      */
-    function withdraw(uint256 amount) external;
+    function withdraw(uint256 amt) external;
 
     /**
         @dev Withdraws all claimable interest from the LiquidityLocker for an account using `interestSum` accounting. 

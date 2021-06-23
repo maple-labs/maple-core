@@ -307,9 +307,9 @@ contract Pool is IPool, PoolFDT {
         require(balanceOf(account).sub(wad) >= totalCustodyAllowance[account], "P:INSUF_TRANS_BAL");  // Account can only withdraw tokens that aren't custodied
     }
 
-    function withdraw(uint256 amount) external override {
+    function withdraw(uint256 amt) external override {
         _whenProtocolNotPaused();
-        uint256 wad = _toWad(amount);
+        uint256 wad = _toWad(amt);
         (uint256 lpCooldownPeriod, uint256 lpWithdrawWindow) = _globals(superFactory).getLpCooldownParams();
 
         _canWithdraw(msg.sender, wad);
@@ -320,7 +320,7 @@ contract Pool is IPool, PoolFDT {
 
         // Transfer amount that is due after realized losses are accounted for.
         // Recognized losses are absorbed by the LP.
-        _transferLiquidityLockerFunds(msg.sender, amount.sub(_recognizeLosses()));
+        _transferLiquidityLockerFunds(msg.sender, amt.sub(_recognizeLosses()));
 
         _emitBalanceUpdatedEvent();
     }
@@ -344,7 +344,7 @@ contract Pool is IPool, PoolFDT {
         super._transfer(from, to, wad);
     }
 
-    function withdrawFunds() public override(IPool, IBaseFDT) {
+    function withdrawFunds() public override(IPool, IBasicFDT) {
         _whenProtocolNotPaused();
         uint256 withdrawableFunds = _prepareWithdraw();
 
@@ -435,10 +435,10 @@ contract Pool is IPool, PoolFDT {
 
     /**
         @dev   Converts to WAD precision.
-        @param amount The amount to convert.
+        @param amt The amount to convert.
      */
-    function _toWad(uint256 amount) internal view returns (uint256) {
-        return amount.mul(WAD).div(10 ** liquidityAssetDecimals);
+    function _toWad(uint256 amt) internal view returns (uint256) {
+        return amt.mul(WAD).div(10 ** liquidityAssetDecimals);
     }
 
     /**

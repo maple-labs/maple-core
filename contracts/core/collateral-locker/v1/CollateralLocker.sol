@@ -26,8 +26,8 @@ contract CollateralLocker is ICollateralLocker {
         _;
     }
 
-    function pull(address destination, uint256 amount) external override isLoan {
-        collateralAsset.safeTransfer(destination, amount);
+    function pull(address dst, uint256 amt) external override isLoan {
+        collateralAsset.safeTransfer(dst, amt);
     }
 
 }

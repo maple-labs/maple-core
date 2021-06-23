@@ -28,9 +28,9 @@ contract LiquidityLocker is ILiquidityLocker {
         _;
     }
 
-    function transfer(address destination, uint256 amount) external override isPool {
-        require(destination != address(0), "LL:NULL_DST");
-        liquidityAsset.safeTransfer(destination, amount);
+    function transfer(address dst, uint256 amt) external override isPool {
+        require(dst != address(0), "LL:NULL_DST");
+        liquidityAsset.safeTransfer(dst, amt);
     }
 
     function fundLoan(address loan, address debtLocker, uint256 amount) external override isPool {

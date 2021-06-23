@@ -67,7 +67,7 @@ library PoolLib {
         @param liquidityLocker The address of the LiquidityLocker contract attached with this Pool.
         @param loan            The address of the Loan to fund.
         @param dlFactory       The DebtLockerFactory to utilize.
-        @param amount          The amount to fund the Loan.
+        @param amt             The amount to fund the Loan.
      */
     function fundLoan(
         mapping(address => mapping(address => address)) storage debtLockers,
@@ -75,7 +75,7 @@ library PoolLib {
         address liquidityLocker,
         address loan,
         address dlFactory,
-        uint256 amount
+        uint256 amt
     ) external {
         IMapleGlobals globals = IMapleGlobals(ILoanFactory(superFactory).globals());
         address loanFactory   = ILoan(loan).superFactory();
@@ -94,9 +94,9 @@ library PoolLib {
         }
 
         // Fund the Loan.
-        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLocker, amount);
+        ILiquidityLocker(liquidityLocker).fundLoan(loan, debtLocker, amt);
 
-        emit LoanFunded(loan, debtLocker, amount);
+        emit LoanFunded(loan, debtLocker, amt);
     }
 
     /**
@@ -205,16 +205,18 @@ library PoolLib {
         @dev   Updates the effective deposit date based on how much new capital has been added. 
         @dev   If more capital is added, the deposit date moves closer to the current timestamp. 
         @dev   It emits a `DepositDateUpdated` event. 
-        @param amount  Total deposit amount.
-        @param account Address of account depositing.
+        @param depositDate Storage reference to mapping of effective deposit dates.
+        @param balance     Balance of account depositing.
+        @param amt         Total deposit amount.
+        @param account     Address of account depositing.
      */
-    function updateDepositDate(mapping(address => uint256) storage depositDate, uint256 balance, uint256 amount, address account) internal {
+    function updateDepositDate(mapping(address => uint256) storage depositDate, uint256 balance, uint256 amt, address account) internal {
         uint256 prevDate = depositDate[account];
 
-        // prevDate + (now - prevDate) * (amount / (balance + amount))
+        // prevDate + (now - prevDate) * (amt / (balance + amt))
         // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now
-        uint256 newDate = (balance + amount) > 0
-            ? prevDate.add(block.timestamp.sub(prevDate).mul(amount).div(balance + amount))
+        uint256 newDate = (balance + amt) > 0
+            ? prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt))
             : prevDate;
 
         depositDate[account] = newDate;

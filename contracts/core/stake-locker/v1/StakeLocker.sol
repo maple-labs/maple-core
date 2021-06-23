@@ -106,8 +106,8 @@ contract StakeLocker is IStakeLocker, StakeLockerFDT, Pausable {
         emit LockupPeriodUpdated(newLockupPeriod);
     }
 
-    function pull(address destination, uint256 amount) isPool external override {
-        stakeAsset.safeTransfer(destination, amount);
+    function pull(address dst, uint256 amt) isPool external override {
+        stakeAsset.safeTransfer(dst, amt);
     }
 
     function updateLosses(uint256 bptsBurned) isPool external override {
@@ -119,18 +119,18 @@ contract StakeLocker is IStakeLocker, StakeLockerFDT, Pausable {
     /*** Staker Functions ***/
     /************************/
 
-    function stake(uint256 amount) whenNotPaused external override {
+    function stake(uint256 amt) whenNotPaused external override {
         _whenProtocolNotPaused();
         _isAllowed(msg.sender);
 
         unstakeCooldown[msg.sender] = uint256(0);  // Reset account's unstake cooldown if Staker had previously intended to unstake.
 
-        _updateStakeDate(msg.sender, amount);
+        _updateStakeDate(msg.sender, amt);
 
-        stakeAsset.safeTransferFrom(msg.sender, address(this), amount);
-        _mint(msg.sender, amount);
+        stakeAsset.safeTransferFrom(msg.sender, address(this), amt);
+        _mint(msg.sender, amt);
 
-        emit Stake(msg.sender, amount);
+        emit Stake(msg.sender, amt);
         emit Cooldown(msg.sender, uint256(0));
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
@@ -139,16 +139,16 @@ contract StakeLocker is IStakeLocker, StakeLockerFDT, Pausable {
         @dev   Updates information used to calculate unstake delay.
         @dev   It emits a `StakeDateUpdated` event.
         @param account The Staker that deposited BPTs.
-        @param amount  Amount of BPTs the Staker has deposited.
+        @param amt     Amount of BPTs the Staker has deposited.
      */
-    function _updateStakeDate(address account, uint256 amount) internal {
+    function _updateStakeDate(address account, uint256 amt) internal {
         uint256 prevDate = stakeDate[account];
         uint256 balance = balanceOf(account);
 
-        // stakeDate + (now - stakeDate) * (amount / (balance + amount))
+        // stakeDate + (now - stakeDate) * (amt / (balance + amt))
         // NOTE: prevDate = 0 implies balance = 0, and equation reduces to now.
-        uint256 newDate = (balance + amount) > 0
-            ? prevDate.add(block.timestamp.sub(prevDate).mul(amount).div(balance + amount))
+        uint256 newDate = (balance + amt) > 0
+            ? prevDate.add(block.timestamp.sub(prevDate).mul(amt).div(balance + amt))
             : prevDate;
 
         stakeDate[account] = newDate;
@@ -167,24 +167,24 @@ contract StakeLocker is IStakeLocker, StakeLockerFDT, Pausable {
         emit Cooldown(msg.sender, uint256(0));
     }
 
-    function unstake(uint256 amount) external override canUnstake(msg.sender) {
+    function unstake(uint256 amt) external override canUnstake(msg.sender) {
         _whenProtocolNotPaused();
 
-        require(balanceOf(msg.sender).sub(amount) >= totalCustodyAllowance[msg.sender], "SL:INSUF_UNSTAKEABLE_BAL");  // Account can only unstake tokens that aren't custodied
-        require(isUnstakeAllowed(msg.sender),                                           "SL:OUTSIDE_COOLDOWN");
-        require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp,             "SL:FUNDS_LOCKED");
+        require(balanceOf(msg.sender).sub(amt) >= totalCustodyAllowance[msg.sender], "SL:INSUF_UNSTAKEABLE_BAL");  // Account can only unstake tokens that aren't custodied
+        require(isUnstakeAllowed(msg.sender),                                        "SL:OUTSIDE_COOLDOWN");
+        require(stakeDate[msg.sender].add(lockupPeriod) <= block.timestamp,          "SL:FUNDS_LOCKED");
 
-        updateFundsReceived();      // Account for any funds transferred into contract since last call.
-        _burn(msg.sender, amount);  // Burn the corresponding StakeLockerFDTs balance.
-        withdrawFunds();            // Transfer the full entitled Liquidity Asset interest.
+        updateFundsReceived();   // Account for any funds transferred into contract since last call.
+        _burn(msg.sender, amt);  // Burn the corresponding StakeLockerFDTs balance.
+        withdrawFunds();         // Transfer the full entitled Liquidity Asset interest.
 
-        stakeAsset.safeTransfer(msg.sender, amount.sub(_recognizeLosses()));  // Unstake amount minus losses.
+        stakeAsset.safeTransfer(msg.sender, amt.sub(_recognizeLosses()));  // Unstake amount minus losses.
 
-        emit Unstake(msg.sender, amount);
+        emit Unstake(msg.sender, amt);
         emit BalanceUpdated(address(this), address(stakeAsset), stakeAsset.balanceOf(address(this)));
     }
 
-    function withdrawFunds() public override(IBaseFDT, IStakeLocker) {
+    function withdrawFunds() public override(IBasicFDT, IStakeLocker) {
         _whenProtocolNotPaused();
 
         uint256 withdrawableFunds = _prepareWithdraw();

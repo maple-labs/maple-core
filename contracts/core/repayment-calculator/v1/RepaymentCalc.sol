@@ -15,23 +15,23 @@ contract RepaymentCalc is IRepaymentCalc {
     uint8   public override constant calcType = 10;
     bytes32 public override constant name     = "INTEREST_ONLY";
 
-    function getNextPayment(address loan) external override view returns (uint256 total, uint256 principalOwed, uint256 interest) {
+    function getNextPayment(address _loan) external override view returns (uint256 total, uint256 principalOwed, uint256 interest) {
 
-        ILoan _loan = ILoan(loan);
+        ILoan loan = ILoan(_loan);
 
-        principalOwed = _loan.principalOwed();
+        principalOwed = loan.principalOwed();
 
         // Equation = principal * APR * (paymentInterval / year)
         // Principal * APR gives annual interest
         // Multiplying that by (paymentInterval / year) gives portion of annual interest due for each interval.
         interest =
             principalOwed
-                .mul(_loan.apr())
-                .mul(_loan.paymentIntervalSeconds())
+                .mul(loan.apr())
+                .mul(loan.paymentIntervalSeconds())
                 .div(10_000)
                 .div(365 days);
 
-        (total, principalOwed) = _loan.paymentsRemaining() == 1
+        (total, principalOwed) = loan.paymentsRemaining() == 1
             ? (interest.add(principalOwed), principalOwed)
             : (interest, 0);
     }

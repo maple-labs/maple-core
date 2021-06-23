@@ -390,57 +390,57 @@ interface IMapleGlobals {
         @dev   Sets the investor fee (in basis points). 
         @dev   Only the Governor can call this function. 
         @dev   It emits a `GlobalsParamSet` event. 
-        @param fee The fee, e.g., 50 = 0.50%.
+        @param _fee The fee, e.g., 50 = 0.50%.
      */
-    function setInvestorFee(uint256 fee) external;
+    function setInvestorFee(uint256 _fee) external;
 
     /**
         @dev   Sets the treasury fee (in basis points). 
         @dev   Only the Governor can call this function. 
         @dev   It emits a `GlobalsParamSet` event. 
-        @param fee The fee, e.g., 50 = 0.50%.
+        @param _fee The fee, e.g., 50 = 0.50%.
      */
-    function setTreasuryFee(uint256 fee) external;
+    function setTreasuryFee(uint256 _fee) external;
 
     /**
         @dev   Sets the MapleTreasury. 
         @dev   Only the Governor can call this function. 
         @dev   It emits a `GlobalsParamSet` event. 
-        @param newMapleTreasury A new MapleTreasury address.
+        @param _mapleTreasury A new MapleTreasury address.
      */
-    function setMapleTreasury(address newMapleTreasury) external;
+    function setMapleTreasury(address _mapleTreasury) external;
 
     /**
         @dev   Sets the default grace period. 
         @dev   Only the Governor can call this function. 
         @dev   It emits a `GlobalsParamSet` event. 
-        @param newDefaultGracePeriod The new number of seconds to set the grace period to.
+        @param _defaultGracePeriod The new number of seconds to set the grace period to.
      */
-    function setDefaultGracePeriod(uint256 newDefaultGracePeriod) external;
+    function setDefaultGracePeriod(uint256 _defaultGracePeriod) external;
 
     /**
         @dev   Sets the minimum Loan equity. 
         @dev   Only the Governor can call this function. 
         @dev   It emits a `GlobalsParamSet` event. 
-        @param newMinLoanEquity The new minimum percentage of Loan equity an account must have to trigger liquidations.
+        @param _minLoanEquity The new minimum percentage of Loan equity an account must have to trigger liquidations.
      */
-    function setMinLoanEquity(uint256 newMinLoanEquity) external;
+    function setMinLoanEquity(uint256 _minLoanEquity) external;
 
     /**
         @dev   Sets the funding period. 
         @dev   Only the Governor can call this function. 
         @dev   It emits a `GlobalsParamSet` event. 
-        @param newFundingPeriod The number of seconds to set the drawdown grace period to.
+        @param _fundingPeriod The number of seconds to set the drawdown grace period to.
      */
-    function setFundingPeriod(uint256 newFundingPeriod) external;
+    function setFundingPeriod(uint256 _fundingPeriod) external;
 
     /**
         @dev   Sets the the minimum Pool cover required to finalize a Pool. 
         @dev   Only the Governor can call this function. 
         @dev   It emits a `GlobalsParamSet` event. 
-        @param amount The new minimum swap out required.
+        @param amt The new minimum swap out required.
      */
-    function setSwapOutRequired(uint256 amount) external;
+    function setSwapOutRequired(uint256 amt) external;
 
     /**
         @dev   Sets a price feed's oracle. 
@@ -456,9 +456,9 @@ interface IMapleGlobals {
         @dev   This address can become Governor if they accept. 
         @dev   Only the Governor can call this function. 
         @dev   It emits a `PendingGovernorSet` event. 
-        @param newPendingGovernor The address of a new Pending Governor.
+        @param _pendingGovernor The address of a new Pending Governor.
      */
-    function setPendingGovernor(address newPendingGovernor) external;
+    function setPendingGovernor(address _pendingGovernor) external;
 
     /**
         @dev Accept the Governor position. 

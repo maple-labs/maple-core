@@ -58,20 +58,20 @@ abstract contract ExtendedFDT is IExtendedFDT, BasicFDT {
         emit LossesRecognized(msg.sender, recognizableDividend, _recognizedLosses);
     }
 
-    function recognizableLossesOf(address account) public override view returns (uint256) {
-        return accumulativeLossesOf(account).sub(recognizedLosses[account]);
+    function recognizableLossesOf(address _owner) public override view returns (uint256) {
+        return accumulativeLossesOf(_owner).sub(recognizedLosses[_owner]);
     }
 
-    function recognizedLossesOf(address account) external override view returns (uint256) {
-        return recognizedLosses[account];
+    function recognizedLossesOf(address _owner) external override view returns (uint256) {
+        return recognizedLosses[_owner];
     }
 
-    function accumulativeLossesOf(address account) public override view returns (uint256) {
+    function accumulativeLossesOf(address _owner) public override view returns (uint256) {
         return
             lossesPerShare
-                .mul(balanceOf(account))
+                .mul(balanceOf(_owner))
                 .toInt256Safe()
-                .add(lossesCorrection[account])
+                .add(lossesCorrection[_owner])
                 .toUint256Safe() / pointsMultiplier;
     }
 

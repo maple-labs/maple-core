@@ -3,13 +3,15 @@ pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
+import "./interfaces/IFundingLocker.sol";
+
 /// @title FundingLocker holds custody of Liquidity Asset tokens during the funding period of a Loan.
-contract FundingLocker {
+contract FundingLocker is IFundingLocker {
 
     using SafeERC20 for IERC20;
 
-    IERC20  public immutable liquidityAsset;
-    address public immutable loan;
+    IERC20  public override immutable liquidityAsset;
+    address public override immutable loan;
 
     constructor(address _liquidityAsset, address _loan) public {
         liquidityAsset = IERC20(_liquidityAsset);
@@ -24,11 +26,11 @@ contract FundingLocker {
         _;
     }
 
-    function pull(address destination, uint256 amount) isLoan external {
-        liquidityAsset.safeTransfer(destination, amount);
+    function pull(address dst, uint256 amt) isLoan external override {
+        liquidityAsset.safeTransfer(dst, amt);
     }
 
-    function drain() isLoan external {
+    function drain() isLoan external override {
         uint256 amt = liquidityAsset.balanceOf(address(this));
         liquidityAsset.safeTransfer(loan, amt);
     }

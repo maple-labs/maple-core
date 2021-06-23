@@ -19,10 +19,10 @@ interface ILiquidityLocker {
     /**
         @dev   Transfers amount of Liquidity Asset to a destination account. 
         @dev   Only the Pool can call this function. 
-        @param destination The destination to transfer Liquidity Asset to.
-        @param amount      The amount of Liquidity Asset to transfer.
+        @param dst The destination to transfer Liquidity Asset to.
+        @param amt The amount of Liquidity Asset to transfer.
      */
-    function transfer(address destination, uint256 amount) external;
+    function transfer(address dst, uint256 amt) external;
 
     /**
         @dev   Funds a Loan using available assets in this LiquidityLocker. 

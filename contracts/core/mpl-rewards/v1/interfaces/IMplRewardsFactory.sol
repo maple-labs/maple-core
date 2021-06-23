@@ -29,9 +29,9 @@ interface IMplRewardsFactory {
     /**
         @dev   Updates the MapleGlobals instance. 
         @dev   Only the Governor can call this function. 
-        @param newGlobals Address of new MapleGlobals contract.
+        @param _globals Address of new MapleGlobals contract.
      */
-    function setGlobals(address newGlobals) external;
+    function setGlobals(address _globals) external;
 
     /**
         @dev   Instantiates a MplRewards contract. 

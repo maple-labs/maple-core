@@ -170,44 +170,44 @@ contract MapleGlobals is IMapleGlobals {
         validCalcs[calc] = valid;
     }
 
-    function setInvestorFee(uint256 fee) external override isGovernor {
-        _checkPercentageRange(treasuryFee.add(fee));
-        investorFee = fee;
-        emit GlobalsParamSet("INVESTOR_FEE", fee);
+    function setInvestorFee(uint256 _fee) external override isGovernor {
+        _checkPercentageRange(treasuryFee.add(_fee));
+        investorFee = _fee;
+        emit GlobalsParamSet("INVESTOR_FEE", _fee);
     }
 
-    function setTreasuryFee(uint256 fee) external override isGovernor {
-        _checkPercentageRange(investorFee.add(fee));
-        treasuryFee = fee;
-        emit GlobalsParamSet("TREASURY_FEE", fee);
+    function setTreasuryFee(uint256 _fee) external override isGovernor {
+        _checkPercentageRange(investorFee.add(_fee));
+        treasuryFee = _fee;
+        emit GlobalsParamSet("TREASURY_FEE", _fee);
     }
 
-    function setMapleTreasury(address newMapleTreasury) external override isGovernor {
-        require(newMapleTreasury != address(0), "MG:ZERO_ADDR");
-        mapleTreasury = newMapleTreasury;
-        emit GlobalsAddressSet("MAPLE_TREASURY", newMapleTreasury);
+    function setMapleTreasury(address _mapleTreasury) external override isGovernor {
+        require(_mapleTreasury != address(0), "MG:ZERO_ADDR");
+        mapleTreasury = _mapleTreasury;
+        emit GlobalsAddressSet("MAPLE_TREASURY", _mapleTreasury);
     }
 
-    function setDefaultGracePeriod(uint256 newDefaultGracePeriod) external override isGovernor {
-        defaultGracePeriod = newDefaultGracePeriod;
-        emit GlobalsParamSet("DEFAULT_GRACE_PERIOD", newDefaultGracePeriod);
+    function setDefaultGracePeriod(uint256 _defaultGracePeriod) external override isGovernor {
+        defaultGracePeriod = _defaultGracePeriod;
+        emit GlobalsParamSet("DEFAULT_GRACE_PERIOD", _defaultGracePeriod);
     }
 
-    function setMinLoanEquity(uint256 newMinLoanEquity) external override isGovernor {
-        _checkPercentageRange(newMinLoanEquity);
-        minLoanEquity = newMinLoanEquity;
-        emit GlobalsParamSet("MIN_LOAN_EQUITY", newMinLoanEquity);
+    function setMinLoanEquity(uint256 _minLoanEquity) external override isGovernor {
+        _checkPercentageRange(_minLoanEquity);
+        minLoanEquity = _minLoanEquity;
+        emit GlobalsParamSet("MIN_LOAN_EQUITY", _minLoanEquity);
     }
 
-    function setFundingPeriod(uint256 newFundingPeriod) external override isGovernor {
-        fundingPeriod = newFundingPeriod;
-        emit GlobalsParamSet("FUNDING_PERIOD", newFundingPeriod);
+    function setFundingPeriod(uint256 _fundingPeriod) external override isGovernor {
+        fundingPeriod = _fundingPeriod;
+        emit GlobalsParamSet("FUNDING_PERIOD", _fundingPeriod);
     }
 
-    function setSwapOutRequired(uint256 amount) external override isGovernor {
-        require(amount >= uint256(10_000), "MG:SWAP_OUT_TOO_LOW");
-        swapOutRequired = amount;
-        emit GlobalsParamSet("SWAP_OUT_REQUIRED", amount);
+    function setSwapOutRequired(uint256 amt) external override isGovernor {
+        require(amt >= uint256(10_000), "MG:SWAP_OUT_TOO_LOW");
+        swapOutRequired = amt;
+        emit GlobalsParamSet("SWAP_OUT_REQUIRED", amt);
     }
 
     function setPriceOracle(address asset, address oracle) external override isGovernor {
@@ -219,10 +219,10 @@ contract MapleGlobals is IMapleGlobals {
     /*** Transfer Ownership Functions ***/
     /************************************/
 
-    function setPendingGovernor(address newPendingGovernor) external override isGovernor {
-        require(newPendingGovernor != address(0), "MG:ZERO_ADDR");
-        pendingGovernor = newPendingGovernor;
-        emit PendingGovernorSet(newPendingGovernor);
+    function setPendingGovernor(address _pendingGovernor) external override isGovernor {
+        require(_pendingGovernor != address(0), "MG:ZERO_ADDR");
+        pendingGovernor = _pendingGovernor;
+        emit PendingGovernorSet(_pendingGovernor);
     }
 
     function acceptGovernor() external override {

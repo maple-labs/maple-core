@@ -156,9 +156,9 @@ contract MplRewards is IMplRewards, Ownable {
         emit Recovered(tokenAddress, tokenAmount);
     }
 
-    function setRewardsDuration(uint256 newRewardsDuration) external override onlyOwner {
+    function setRewardsDuration(uint256 _rewardsDuration) external override onlyOwner {
         require(block.timestamp > periodFinish, "R:PERIOD_NOT_FINISHED");
-        rewardsDuration = newRewardsDuration;
+        rewardsDuration = _rewardsDuration;
         emit RewardsDurationUpdated(rewardsDuration);
     }
 

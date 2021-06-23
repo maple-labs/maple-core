@@ -36,26 +36,26 @@ interface IExtendedFDT is IBasicFDT {
 
     /**
         @dev    Returns the amount of losses that an account can withdraw.
-        @param  account The address of a token holder.
-        @return The amount of losses that `account` can withdraw.
+        @param  _owner The address of a token holder.
+        @return The amount of losses that `_owner` can withdraw.
      */
-    function recognizableLossesOf(address account) external view returns (uint256);
+    function recognizableLossesOf(address _owner) external view returns (uint256);
 
     /**
         @dev    Returns the amount of losses that an account has recognized.
-        @param  account The address of a token holder.
-        @return The amount of losses that `account` has recognized.
+        @param  _owner The address of a token holder.
+        @return The amount of losses that `_owner` has recognized.
      */
-    function recognizedLossesOf(address account) external view returns (uint256);
+    function recognizedLossesOf(address _owner) external view returns (uint256);
 
     /**
         @dev    Returns the amount of losses that an account has earned in total. 
-        @dev    accumulativeLossesOf(account) = recognizableLossesOf(account) + recognizedLossesOf(account) 
-                = (lossesPerShare * balanceOf(account) + lossesCorrection[account]) / pointsMultiplier 
-        @param  account The address of a token holder
-        @return The amount of losses that `account` has earned in total
+        @dev    accumulativeLossesOf(_owner) = recognizableLossesOf(_owner) + recognizedLossesOf(_owner) 
+                = (lossesPerShare * balanceOf(_owner) + lossesCorrection[_owner]) / pointsMultiplier 
+        @param  _owner The address of a token holder.
+        @return The amount of losses that `_owner` has earned in total.
      */
-    function accumulativeLossesOf(address account) external view returns (uint256);
+    function accumulativeLossesOf(address _owner) external view returns (uint256);
 
     /**
         @dev Registers a loss. 

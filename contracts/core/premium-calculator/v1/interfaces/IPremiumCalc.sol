@@ -21,11 +21,11 @@ interface IPremiumCalc {
 
     /**
         @dev    Calculates the premium payment for a Loan, when making a full payment.
-        @param  loan          The address of a Loan to calculate a premium payment for.
+        @param  _loan         The address of a Loan to calculate a premium payment for.
         @return total         The principal + interest.
         @return principalOwed The principal.
         @return interest      The interest.
      */
-    function getPremiumPayment(address loan) external view returns (uint256 total, uint256 principalOwed, uint256 interest);
+    function getPremiumPayment(address _loan) external view returns (uint256 total, uint256 principalOwed, uint256 interest);
 
 }

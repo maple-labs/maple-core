@@ -139,7 +139,7 @@ contract Loan is ILoan, LoanFDT, Pausable {
     /*** Borrower Functions ***/
     /**************************/
 
-    function drawdown(uint256 amount) external override {
+    function drawdown(uint256 amt) external override {
         _whenProtocolNotPaused();
         _isValidBorrower();
         _isValidState(State.Ready);
@@ -147,17 +147,17 @@ contract Loan is ILoan, LoanFDT, Pausable {
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
 
-        require(amount >= requestAmount,              "L:AMT_LT_REQUEST_AMT");
-        require(amount <= _getFundingLockerBalance(), "L:AMT_GT_FUNDED_AMT");
+        require(amt >= requestAmount,              "L:AMT_LT_REQUEST_AMT");
+        require(amt <= _getFundingLockerBalance(), "L:AMT_GT_FUNDED_AMT");
 
         // Update accounting variables for the Loan.
-        principalOwed  = amount;
+        principalOwed  = amt;
         nextPaymentDue = block.timestamp.add(paymentIntervalSeconds);
 
         loanState = State.Active;
 
         // Transfer the required amount of collateral for drawdown from the Borrower to the CollateralLocker.
-        collateralAsset.safeTransferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amount));
+        collateralAsset.safeTransferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt));
 
         // Transfer funding amount from the FundingLocker to the Borrower, then drain remaining funds to the Loan.
         uint256 treasuryFee = globals.treasuryFee();
@@ -165,11 +165,11 @@ contract Loan is ILoan, LoanFDT, Pausable {
 
         address treasury = globals.mapleTreasury();
 
-        uint256 _feePaid = feePaid = amount.mul(investorFee).div(10_000);  // Update fees paid for `claim()`.
-        uint256 treasuryAmt        = amount.mul(treasuryFee).div(10_000);  // Calculate amount to send to the MapleTreasury.
+        uint256 _feePaid = feePaid = amt.mul(investorFee).div(10_000);  // Update fees paid for `claim()`.
+        uint256 treasuryAmt        = amt.mul(treasuryFee).div(10_000);  // Calculate amount to send to the MapleTreasury.
 
-        _transferFunds(_fundingLocker, treasury, treasuryAmt);                            // Send the treasury fee directly to the MapleTreasury.
-        _transferFunds(_fundingLocker, borrower, amount.sub(treasuryAmt).sub(_feePaid));  // Transfer drawdown amount to the Borrower.
+        _transferFunds(_fundingLocker, treasury, treasuryAmt);                         // Send the treasury fee directly to the MapleTreasury.
+        _transferFunds(_fundingLocker, borrower, amt.sub(treasuryAmt).sub(_feePaid));  // Transfer drawdown amount to the Borrower.
 
         // Update excessReturned for `claim()`.
         excessReturned = _getFundingLockerBalance().sub(_feePaid);
@@ -186,7 +186,7 @@ contract Loan is ILoan, LoanFDT, Pausable {
 
         emit BalanceUpdated(treasury, address(liquidityAsset), liquidityAsset.balanceOf(treasury));
         emit LoanStateChanged(State.Active);
-        emit Drawdown(amount);
+        emit Drawdown(amt);
     }
 
     function makePayment() external override {
@@ -259,17 +259,17 @@ contract Loan is ILoan, LoanFDT, Pausable {
     /*** Lender Functions ***/
     /************************/
 
-    function fundLoan(address mintTo, uint256 amount) whenNotPaused external override {
+    function fundLoan(address mintTo, uint256 amt) whenNotPaused external override {
         _whenProtocolNotPaused();
         _isValidState(State.Ready);
         _isValidPool();
         _isWithinFundingPeriod();
-        liquidityAsset.safeTransferFrom(msg.sender, fundingLocker, amount);
+        liquidityAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
 
-        uint256 wad = _toWad(amount);  // Convert to WAD precision.
-        _mint(mintTo, wad);            // Mint LoanFDTs to `mintTo` (i.e DebtLocker contract).
+        uint256 wad = _toWad(amt);  // Convert to WAD precision.
+        _mint(mintTo, wad);         // Mint LoanFDTs to `mintTo` (i.e DebtLocker contract).
 
-        emit LoanFunded(mintTo, amount);
+        emit LoanFunded(mintTo, amt);
         _emitBalanceUpdateEventForFundingLocker();
     }
 
@@ -374,13 +374,13 @@ contract Loan is ILoan, LoanFDT, Pausable {
         (total, principal, interest) = LoanLib.getFullPayment(repaymentCalc, nextPaymentDue, lateFeeCalc, premiumCalc);
     }
 
-    function collateralRequiredForDrawdown(uint256 amount) public override view returns (uint256) {
+    function collateralRequiredForDrawdown(uint256 amt) public override view returns (uint256) {
         return LoanLib.collateralRequiredForDrawdown(
             IERC20Details(address(collateralAsset)),
             IERC20Details(address(liquidityAsset)),
             collateralRatio,
             superFactory,
-            amount
+            amt
         );
     }
 

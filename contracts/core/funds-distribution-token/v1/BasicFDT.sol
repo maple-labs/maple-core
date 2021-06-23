@@ -61,20 +61,20 @@ abstract contract BasicFDT is IBasicFDT, ERC20 {
         emit FundsWithdrawn(msg.sender, withdrawableDividend, _withdrawnFunds);
     }
 
-    function withdrawableFundsOf(address account) public view override returns (uint256) {
-        return accumulativeFundsOf(account).sub(withdrawnFunds[account]);
+    function withdrawableFundsOf(address _owner) public view override returns (uint256) {
+        return accumulativeFundsOf(_owner).sub(withdrawnFunds[_owner]);
     }
 
-    function withdrawnFundsOf(address account) external override view returns (uint256) {
-        return withdrawnFunds[account];
+    function withdrawnFundsOf(address _owner) external override view returns (uint256) {
+        return withdrawnFunds[_owner];
     }
 
-    function accumulativeFundsOf(address account) public override view returns (uint256) {
+    function accumulativeFundsOf(address _owner) public override view returns (uint256) {
         return
             pointsPerShare
-                .mul(balanceOf(account))
+                .mul(balanceOf(_owner))
                 .toInt256Safe()
-                .add(pointsCorrection[account])
+                .add(pointsCorrection[_owner])
                 .toUint256Safe() / pointsMultiplier;
     }
 

@@ -43,10 +43,10 @@ contract ChainlinkOracle is IChainlinkOracle, Ownable {
         return price;
     }
 
-    function changeAggregator(address newAggregator) external override onlyOwner {
-        require(newAggregator != address(0), "CO:ZERO_AGGREGATOR_ADDR");
-        emit ChangeAggregatorFeed(newAggregator, address(priceFeed));
-        priceFeed = IChainlinkAggregatorV3(newAggregator);
+    function changeAggregator(address aggregator) external override onlyOwner {
+        require(aggregator != address(0), "CO:ZERO_AGGREGATOR_ADDR");
+        emit ChangeAggregatorFeed(aggregator, address(priceFeed));
+        priceFeed = IChainlinkAggregatorV3(aggregator);
     }
 
     function getAssetAddress() external override view returns (address) {
@@ -58,15 +58,15 @@ contract ChainlinkOracle is IChainlinkOracle, Ownable {
         return bytes32("USD");
     }
 
-    function setManualPrice(int256 price) public override onlyOwner {
+    function setManualPrice(int256 _price) public override onlyOwner {
         require(manualOverride, "CO:MANUAL_OVERRIDE_NOT_ACTIVE");
-        emit SetManualPrice(manualPrice, price);
-        manualPrice = price;
+        emit SetManualPrice(manualPrice, _price);
+        manualPrice = _price;
     }
 
-    function setManualOverride(bool enabled) public override onlyOwner {
-        manualOverride = enabled;
-        emit SetManualOverride(enabled);
+    function setManualOverride(bool _override) public override onlyOwner {
+        manualOverride = _override;
+        emit SetManualOverride(_override);
     }
 
 }
