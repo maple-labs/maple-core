@@ -4,9 +4,10 @@ pragma solidity 0.6.11;
 import "external-interfaces/IChainlinkAggregatorV3.sol";
 
 import "core/globals/v1/interfaces/IMapleGlobals.sol";
+import "core/oracle/v1/interfaces/IOracle.sol";
 
 /// @title ChainlinkOracle is a wrapper contract for Chainlink oracle price feeds that allows for manual price feed overrides.
-interface IChainlinkOracle {
+interface IChainlinkOracle is IOracle {
 
     /**
         @dev   Emits an event indicating that the price feed aggregator has changed from `oldFeed` to `newFeed`.
@@ -56,7 +57,7 @@ interface IChainlinkOracle {
     /**
         @return The latest price.
      */
-    function getLatestPrice() external view returns (int256);
+    function getLatestPrice() external override view returns (int256);
 
     /**
         @dev   Updates the aggregator address to `aggregator`. 

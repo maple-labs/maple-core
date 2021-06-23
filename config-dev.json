@@ -148,6 +148,9 @@
     "contracts/core/oracle/v1/interfaces/IOracle.sol": {
       "urls": ["contracts/core/oracle/v1/interfaces/IOracle.sol"]
     },
+    "contracts/core/oracle/v1/Oracle.sol": {
+      "urls": ["contracts/core/oracle/v1/Oracle.sol"]
+    },
     "contracts/core/pool/v1/interfaces/IPool.sol": {
       "urls": ["contracts/core/pool/v1/interfaces/IPool.sol"]
     },

@@ -3,15 +3,15 @@ pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "core/chainlink-oracle/v1/ChainlinkOracle.sol";
-import "core/oracle/v1/interfaces/IOracle.sol";
+import "core/chainlink-oracle/v1/interfaces/IChainlinkOracle.sol";
 import "core/pool/v1/interfaces/IPool.sol";
 
 contract SecurityAdmin {
 
     function claim(address pool, address loan, address dlFactory) external { IPool(pool).claim(loan, dlFactory); }
-    function setManualPrice(address target, int256 price)         external { IOracle(target).setManualPrice(price); }
-    function setManualOverride(address target, bool _override)    external { IOracle(target).setManualOverride(_override); }
-    function changeAggregator(address target, address aggregator) external { IOracle(target).changeAggregator(aggregator); }
+    function setManualPrice(address target, int256 price)         external { IChainlinkOracle(target).setManualPrice(price); }
+    function setManualOverride(address target, bool _override)    external { IChainlinkOracle(target).setManualOverride(_override); }
+    function changeAggregator(address target, address aggregator) external { IChainlinkOracle(target).changeAggregator(aggregator); }
 
     function try_claim(address pool, address loan, address dlFactory) external returns (bool ok) {
         string memory sig = "claim(address,address)";
