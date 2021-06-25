@@ -1,12 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
 import "core/funds-distribution-token/v1/interfaces/IBasicFDT.sol";
 
 interface ILoanFDT is IBasicFDT {
 
-    function fundsToken() external view returns (address);
+    /**
+        @dev The `fundsToken` (dividends).
+     */
+    function fundsToken() external view returns (IERC20);
 
+    /**
+        @dev The amount of `fundsToken` (Liquidity Asset) currently present and accounted for in this contract.
+     */
     function fundsTokenBalance() external view returns (uint256);
 
+    /**
+        @dev Withdraws all available funds for a token holder.
+    */
+    function withdrawFunds() external override;
 }

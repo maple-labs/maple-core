@@ -14,12 +14,12 @@ library Util {
 
     /**
         @dev    Calculates the minimum amount from a swap (adjustable for price slippage).
-        @param  globals   Instance of a MapleGlobals.
-        @param  fromAsset Address of ERC-20 that will be swapped.
-        @param  toAsset   Address of ERC-20 that will returned from swap.
-        @param  swapAmt   Amount of `fromAsset` to be swapped.
-        @return Expected amount of `toAsset` to receive from swap based on current oracle prices.
-    */
+        @param  globals   The instance of a MapleGlobals.
+        @param  fromAsset The address of ERC-20 that will be swapped.
+        @param  toAsset   The address of ERC-20 that will returned from swap.
+        @param  swapAmt   The amount of `fromAsset` to be swapped.
+        @return The expected amount of `toAsset` to receive from swap based on current oracle prices.
+     */
     function calcMinAmount(IMapleGlobals globals, address fromAsset, address toAsset, uint256 swapAmt) external view returns (uint256) {
         return
             swapAmt

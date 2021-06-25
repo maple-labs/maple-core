@@ -9,4 +9,4 @@ hevm*
 /cache
 
 # Flattened functions
-/flattened-contracts/functions
+/flattened-contracts

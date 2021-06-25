@@ -3,18 +3,20 @@ pragma solidity 0.6.11;
 
 import "core/funds-distribution-token/v1/ExtendedFDT.sol";
 
+import "./interfaces/IStakeLockerFDT.sol";
+
 /// @title StakeLockerFDT inherits ExtendedFDT and accounts for gains/losses for Stakers.
-abstract contract StakeLockerFDT is ExtendedFDT {
+abstract contract StakeLockerFDT is IStakeLockerFDT, ExtendedFDT {
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
     using SafeMathInt    for  int256;
 
-    IERC20 public immutable fundsToken;
+    IERC20 public override immutable fundsToken;
 
-    uint256 public bptLosses;          // Sum of all unrecognized losses.
-    uint256 public lossesBalance;      // The amount of losses present and accounted for in this contract.
-    uint256 public fundsTokenBalance;  // The amount of `fundsToken` (Liquidity Asset) currently present and accounted for in this contract.
+    uint256 public override bptLosses;
+    uint256 public override lossesBalance;
+    uint256 public override fundsTokenBalance;
 
     constructor(string memory name, string memory symbol, address _fundsToken) ExtendedFDT(name, symbol) public {
         fundsToken = IERC20(_fundsToken);
@@ -22,8 +24,8 @@ abstract contract StakeLockerFDT is ExtendedFDT {
 
     /**
         @dev    Updates loss accounting for `msg.sender`, recognizing losses.
-        @return losses Amount to be subtracted from a withdraw amount.
-    */
+        @return losses The amount to be subtracted from a withdraw amount.
+     */
     function _recognizeLosses() internal override returns (uint256 losses) {
         losses = _prepareLossesWithdraw();
 
@@ -34,8 +36,8 @@ abstract contract StakeLockerFDT is ExtendedFDT {
 
     /**
         @dev    Updates the current losses balance and returns the difference of the new and previous losses balance.
-        @return A int256 representing the difference of the new and previous losses balance.
-    */
+        @return The difference of the new and previous losses balance.
+     */
     function _updateLossesBalance() internal override returns (int256) {
         uint256 _prevLossesTokenBalance = lossesBalance;
 
@@ -46,8 +48,8 @@ abstract contract StakeLockerFDT is ExtendedFDT {
 
     /**
         @dev    Updates the current interest balance and returns the difference of the new and previous interest balance.
-        @return A int256 representing the difference of the new and previous interest balance.
-    */
+        @return The difference of the new and previous interest balance.
+     */
     function _updateFundsTokenBalance() internal virtual override returns (int256) {
         uint256 _prevFundsTokenBalance = fundsTokenBalance;
 

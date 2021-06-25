@@ -7,27 +7,25 @@ import "external-interfaces/IChainlinkAggregatorV3.sol";
 
 import "core/globals/v1/interfaces/IMapleGlobals.sol";
 
+import "./interfaces/IChainlinkOracle.sol";
+
 /// @title ChainlinkOracle is a wrapper contract for Chainlink oracle price feeds that allows for manual price feed overrides.
-contract ChainlinkOracle is Ownable {
+contract ChainlinkOracle is IChainlinkOracle, Ownable {
 
-    IChainlinkAggregatorV3 public priceFeed;
-    IMapleGlobals public globals;
+    IChainlinkAggregatorV3 public override priceFeed;
+    IMapleGlobals public override globals;
 
-    address public immutable assetAddress;
+    address public override immutable assetAddress;
 
-    bool   public manualOverride;
-    int256 public manualPrice;
-
-    event ChangeAggregatorFeed(address _newMedianizer, address _oldMedianizer);
-    event       SetManualPrice(int256 _oldPrice, int256 _newPrice);
-    event    SetManualOverride(bool _override);
+    bool   public override manualOverride;
+    int256 public override manualPrice;
 
     /**
         @dev   Creates a new Chainlink based oracle.
         @param _aggregator   Address of Chainlink aggregator.
         @param _assetAddress Address of currency (0x0 for ETH).
         @param _owner        Address of the owner of the contract.
-    */
+     */
     constructor(address _aggregator, address _assetAddress, address _owner) public {
         require(_aggregator != address(0), "CO:ZERO_AGGREGATOR_ADDR");
         priceFeed       = IChainlinkAggregatorV3(_aggregator);
@@ -35,11 +33,7 @@ contract ChainlinkOracle is Ownable {
         transferOwnership(_owner);
     }
 
-    /**
-        @dev    Returns the latest price.
-        @return price The latest price.
-    */
-    function getLatestPrice() public view returns (int256) {
+    function getLatestPrice() public override view returns (int256) {
         if (manualOverride) return manualPrice;
         (uint80 roundID, int256 price,,uint256 timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
 
@@ -49,51 +43,28 @@ contract ChainlinkOracle is Ownable {
         return price;
     }
 
-
-    /**
-        @dev   Updates aggregator address. Only the contract Owner can call this function.
-        @dev   It emits a `ChangeAggregatorFeed` event.
-        @param aggregator Address of Chainlink aggregator.
-    */
-    function changeAggregator(address aggregator) external onlyOwner {
+    function changeAggregator(address aggregator) external override onlyOwner {
         require(aggregator != address(0), "CO:ZERO_AGGREGATOR_ADDR");
         emit ChangeAggregatorFeed(aggregator, address(priceFeed));
         priceFeed = IChainlinkAggregatorV3(aggregator);
     }
 
-    /**
-        @dev Returns address of oracle currency (0x0 for ETH).
-    */
-    function getAssetAddress() external view returns (address) {
+    function getAssetAddress() external override view returns (address) {
         return assetAddress;
     }
 
-    /**
-        @dev Returns denomination of price.
-    */
-    function getDenomination() external pure returns (bytes32) {
+    function getDenomination() external override pure returns (bytes32) {
         // All Chainlink oracles are denominated in USD.
         return bytes32("USD");
     }
 
-    /**
-        @dev   Sets a manual price. Only the contract Owner can call this function.
-               NOTE: this can only be used if manualOverride == true.
-        @dev   It emits a `SetManualPrice` event.
-        @param _price Price to set.
-    */
-    function setManualPrice(int256 _price) public onlyOwner {
+    function setManualPrice(int256 _price) public override onlyOwner {
         require(manualOverride, "CO:MANUAL_OVERRIDE_NOT_ACTIVE");
         emit SetManualPrice(manualPrice, _price);
         manualPrice = _price;
     }
 
-    /**
-        @dev   Sets manual override, allowing for manual price setting. Only the contract Owner can call this function.
-        @dev   It emits a `SetManualOverride` event.
-        @param _override Whether to use the manual override price or not.
-    */
-    function setManualOverride(bool _override) public onlyOwner {
+    function setManualOverride(bool _override) public override onlyOwner {
         manualOverride = _override;
         emit SetManualOverride(_override);
     }

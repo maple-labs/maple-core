@@ -3,23 +3,17 @@ pragma solidity 0.6.11;
 
 import "./FundingLocker.sol";
 
+import "./interfaces/IFundingLockerFactory.sol";
+
 /// @title FundingLockerFactory instantiates FundingLockers.
-contract FundingLockerFactory {
+contract FundingLockerFactory is IFundingLockerFactory {
 
-    mapping(address => address) public owner;     // Mapping of FundingLocker addresses to their owner (i.e owner[locker] = Owner of the FundingLocker).
-    mapping(address => bool)    public isLocker;  // True only if a FundingLocker was created by this factory.
+    mapping(address => address) public override owner;     // Owners of respective FundingLockers.
+    mapping(address => bool)    public override isLocker;  // True only if a FundingLocker was created by this factory.
 
-    uint8 public constant factoryType = 2;  // i.e FactoryType::FUNDING_LOCKER_FACTORY
+    uint8 public override constant factoryType = 2;
 
-    event FundingLockerCreated(address indexed owner, address fundingLocker, address liquidityAsset);
-
-    /**
-        @dev    Instantiates a FundingLocker.
-        @dev    It emits a `FundingLockerCreated` event.
-        @param  liquidityAsset The Liquidity Asset this FundingLocker will escrow.
-        @return fundingLocker  Address of the instantiated FundingLocker.
-    */
-    function newLocker(address liquidityAsset) external returns (address fundingLocker) {
+    function newLocker(address liquidityAsset) external override returns (address fundingLocker) {
         fundingLocker           = address(new FundingLocker(liquidityAsset, msg.sender));
         owner[fundingLocker]    = msg.sender;
         isLocker[fundingLocker] = true;

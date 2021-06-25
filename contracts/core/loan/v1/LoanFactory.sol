@@ -3,76 +3,40 @@ pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
+import "./interfaces/ILoanFactory.sol";
+
 import "./Loan.sol";
 
 /// @title LoanFactory instantiates Loans.
-contract LoanFactory is Pausable {
+contract LoanFactory is ILoanFactory, Pausable {
 
     using SafeMath for uint256;
 
-    uint8 public constant CL_FACTORY = 0;  // Factory type of `CollateralLockerFactory`.
-    uint8 public constant FL_FACTORY = 2;  // Factory type of `FundingLockerFactory`.
+    uint8 public override constant CL_FACTORY = 0;
+    uint8 public override constant FL_FACTORY = 2;
 
-    uint8 public constant INTEREST_CALC_TYPE = 10;  // Calc type of `RepaymentCalc`.
-    uint8 public constant LATEFEE_CALC_TYPE  = 11;  // Calc type of `LateFeeCalc`.
-    uint8 public constant PREMIUM_CALC_TYPE  = 12;  // Calc type of `PremiumCalc`.
+    uint8 public override constant INTEREST_CALC_TYPE = 10;
+    uint8 public override constant LATEFEE_CALC_TYPE  = 11;
+    uint8 public override constant PREMIUM_CALC_TYPE  = 12;
 
-    IMapleGlobals public globals;  // Instance of the MapleGlobals.
+    IMapleGlobals public override globals;
 
-    uint256 public loansCreated;   // Incrementor for number of Loans created.
+    uint256 public override loansCreated;
 
-    mapping(uint256 => address) public loans;   // Loans address mapping.
-    mapping(address => bool)    public isLoan;  // True only if a Loan was created by this factory.
+    mapping(uint256 => address) public override loans;
+    mapping(address => bool)    public override isLoan;  // True only if a Loan was created by this factory.
 
-    mapping(address => bool) public loanFactoryAdmins;  // The LoanFactory Admin addresses that have permission to do certain operations in case of disaster management.
-
-    event LoanFactoryAdminSet(address indexed loanFactoryAdmin, bool allowed);
-
-    event LoanCreated(
-        address loan,
-        address indexed borrower,
-        address indexed liquidityAsset,
-        address collateralAsset,
-        address collateralLocker,
-        address fundingLocker,
-        uint256[5] specs,
-        address[3] calcs,
-        string name,
-        string symbol
-    );
+    mapping(address => bool) public override loanFactoryAdmins;
 
     constructor(address _globals) public {
         globals = IMapleGlobals(_globals);
     }
 
-    /**
-        @dev   Sets MapleGlobals. Only the Governor can call this function.
-        @param newGlobals Address of new MapleGlobals.
-    */
-    function setGlobals(address newGlobals) external {
+    function setGlobals(address newGlobals) external override {
         _isValidGovernor();
         globals = IMapleGlobals(newGlobals);
     }
 
-    /**
-        @dev    Create a new Loan.
-        @dev    It emits a `LoanCreated` event.
-        @param  liquidityAsset  Asset the Loan will raise funding in.
-        @param  collateralAsset Asset the Loan will use as collateral.
-        @param  flFactory       The factory to instantiate a FundingLocker from.
-        @param  clFactory       The factory to instantiate a CollateralLocker from.
-        @param  specs           Contains specifications for this Loan.
-                                    specs[0] = apr
-                                    specs[1] = termDays
-                                    specs[2] = paymentIntervalDays
-                                    specs[3] = requestAmount
-                                    specs[4] = collateralRatio
-        @param  calcs           The calculators used for this Loan.
-                                    calcs[0] = repaymentCalc
-                                    calcs[1] = lateFeeCalc
-                                    calcs[2] = premiumCalc
-        @return loanAddress     Address of the instantiated Loan.
-    */
     function createLoan(
         address liquidityAsset,
         address collateralAsset,
@@ -80,7 +44,7 @@ contract LoanFactory is Pausable {
         address clFactory,
         uint256[5] memory specs,
         address[3] memory calcs
-    ) external whenNotPaused returns (address loanAddress) {
+    ) external override whenNotPaused returns (address loanAddress) {
         _whenProtocolNotPaused();
         IMapleGlobals _globals = globals;
 
@@ -123,51 +87,39 @@ contract LoanFactory is Pausable {
         );
     }
 
-    /**
-        @dev   Sets a LoanFactory Admin. Only the Governor can call this function.
-        @dev   It emits a `LoanFactoryAdminSet` event.
-        @param loanFactoryAdmin An address being allowed or disallowed as a LoanFactory Admin.
-        @param allowed          Status of a LoanFactory Admin.
-    */
-    function setLoanFactoryAdmin(address loanFactoryAdmin, bool allowed) external {
+    function setLoanFactoryAdmin(address loanFactoryAdmin, bool allowed) external override {
         _isValidGovernor();
         loanFactoryAdmins[loanFactoryAdmin] = allowed;
         emit LoanFactoryAdminSet(loanFactoryAdmin, allowed);
     }
 
-    /**
-        @dev Triggers paused state. Halts functionality for certain functions. Only the Governor or a LoanFactory Admin can call this function.
-    */
-    function pause() external {
+    function pause() external override {
         _isValidGovernorOrLoanFactoryAdmin();
         super._pause();
     }
 
-    /**
-        @dev Triggers unpaused state. Restores functionality for certain functions. Only the Governor or a LoanFactory Admin can call this function.
-    */
-    function unpause() external {
+    function unpause() external override {
         _isValidGovernorOrLoanFactoryAdmin();
         super._unpause();
     }
 
     /**
         @dev Checks that `msg.sender` is the Governor.
-    */
+     */
     function _isValidGovernor() internal view {
         require(msg.sender == globals.governor(), "LF:NOT_GOV");
     }
 
     /**
         @dev Checks that `msg.sender` is the Governor or a LoanFactory Admin.
-    */
+     */
     function _isValidGovernorOrLoanFactoryAdmin() internal view {
         require(msg.sender == globals.governor() || loanFactoryAdmins[msg.sender], "LF:NOT_GOV_OR_ADMIN");
     }
 
     /**
         @dev Checks that the protocol is not in a paused state.
-    */
+     */
     function _whenProtocolNotPaused() internal view {
         require(!globals.protocolPaused(), "LF:PROTO_PAUSED");
     }
