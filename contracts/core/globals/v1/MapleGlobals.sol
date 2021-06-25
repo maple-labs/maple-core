@@ -7,9 +7,9 @@ import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "external-interfaces/IERC20Details.sol";
 
 import "core/oracle/v1/interfaces/IOracle.sol";
+import "core/subfactory/v1/interfaces/ISubFactory.sol";
 
 import "./interfaces/IMapleGlobals.sol";
-import "./interfaces/ISubFactory.sol";
 
 interface ICalc { function calcType() external view returns (uint8); }
 

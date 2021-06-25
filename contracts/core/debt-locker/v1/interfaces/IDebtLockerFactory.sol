@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
+import "core/subfactory/v1/interfaces/ISubFactory.sol";
+
 /// @title DebtLockerFactory instantiates DebtLockers.
-interface IDebtLockerFactory {
+interface IDebtLockerFactory is ISubFactory {
 
     /**
         @dev   Emits an event indicating a DebtLocker was created.
@@ -25,9 +27,9 @@ interface IDebtLockerFactory {
     function isLocker(address debtLocker) external view returns (bool);
 
     /**
-        @return The type of the factory (i.e FactoryType::DEBT_LOCKER_FACTORY).
+        @dev The type of the factory (i.e FactoryType::DEBT_LOCKER_FACTORY).
      */
-    function factoryType() external view returns (uint8);
+    function factoryType() external override pure returns (uint8);
 
     /**
         @dev    Instantiates a DebtLocker. 

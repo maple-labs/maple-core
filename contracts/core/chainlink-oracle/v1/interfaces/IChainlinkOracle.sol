@@ -10,18 +10,18 @@ import "core/oracle/v1/interfaces/IOracle.sol";
 interface IChainlinkOracle is IOracle {
 
     /**
-        @dev   Emits an event indicating that the price feed aggregator has changed from `oldFeed` to `newFeed`.
+        @dev   Emits an event indicating that the price feed aggregator has changed from `_oldMedianizer` to `_newMedianizer`.
         @param _newMedianizer The new price feed aggregator.
         @param _oldMedianizer The old price feed aggregator.
      */
     event ChangeAggregatorFeed(address _newMedianizer, address _oldMedianizer);
 
     /**
-        @dev   Emits an event indicating that the price has been updated manually from `oldPrice` to `newPrice`.
-        @param oldPrice The old price.
-        @param newPrice The new price.
+        @dev   Emits an event indicating that the price has been updated manually from `_oldPrice` to `_newPrice`.
+        @param _oldPrice The old price.
+        @param _newPrice The new price.
      */
-    event SetManualPrice(int256 oldPrice, int256 newPrice);
+    event SetManualPrice(int256 _oldPrice, int256 _newPrice);
 
     /**
         @dev   Emits an event indicating whether manual price overriding is enabled.

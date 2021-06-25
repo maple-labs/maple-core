@@ -22,17 +22,17 @@ interface IBasicFDT is IERC20 {
     event FundsWithdrawn(address indexed by, uint256 fundsWithdrawn, uint256 totalWithdrawn);
 
     /**
-        @dev   This event emits when the internal `pointsPerShare` is updated.
-        @param pointsPerShare The new value of the internal `pointsPerShare`.
+        @dev This event emits when the internal `pointsPerShare` is updated.
+        @dev First, and only, parameter is the new value of the internal `pointsPerShare`.
      */
-    event PointsPerShareUpdated(uint256 pointsPerShare);
+    event PointsPerShareUpdated(uint256);
 
     /**
-        @dev   This event emits when an account's `pointsCorrection` is updated.
-        @param account          The address of some account.
-        @param pointsCorrection The new value of the account's `pointsCorrection`.
+        @dev This event emits when an account's `pointsCorrection` is updated.
+        @dev First parameter is the address of some account.
+        @dev Second parameter is the new value of the account's `pointsCorrection`.
      */
-    event PointsCorrectionUpdated(address indexed account, int256 pointsCorrection);
+    event PointsCorrectionUpdated(address indexed, int256);
 
     /**
         @dev    Returns the amount of funds that an account can withdraw.

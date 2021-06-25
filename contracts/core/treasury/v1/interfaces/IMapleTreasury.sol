@@ -6,12 +6,31 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 /// @title MapleTreasury earns revenue from Loans and distributes it to token holders and the Maple development team.
 interface IMapleTreasury {
 
+    /**
+        @dev   Emits an event indicating that an amount of some asset was converted to `fundsToken`.
+        @param asset     The ERC-20 asset to convert to `fundsToken`.
+        @param amountIn  The amount of the asset being converted to `fundsToken`.
+        @param amountOut The amount of `fundsToken` received from the conversion.
+     */
     event ERC20Conversion(address indexed asset, uint256 amountIn, uint256 amountOut);
 
+    /**
+        @dev   Emits an event indicating that a distribution was made to token holders.
+        @param amount The amount distributed to token holders.
+     */
     event DistributedToHolders(uint256 amount);
     
+    /**
+        @dev   Emits an event indicating the Governor reclaimed some token.
+        @param asset  The address of the token to reclaimed.
+        @param amount The amount reclaimed.
+     */
     event ERC20Reclaimed(address indexed asset, uint256 amount);
     
+    /**
+        @dev   Emits an event indicating the MapleGlobals instance has changed.
+        @param newGlobals The address of a new MapleGlobals.
+     */
     event GlobalsSet(address newGlobals);
 
     /**
@@ -43,11 +62,11 @@ interface IMapleTreasury {
     function setGlobals(address newGlobals) external;
 
     /**
-        @dev   Reclaims Treasury funds to the MapleDAO address. 
+        @dev   Reclaims Treasury funds to the Governor. 
         @dev   Only the Governor can call this function. 
         @dev   It emits a `ERC20Reclaimed` event. 
         @param asset  The address of the token to be reclaimed.
-        @param amount The amount to withdraw.
+        @param amount The amount reclaimed.
      */
     function reclaimERC20(address asset, uint256 amount) external;
 

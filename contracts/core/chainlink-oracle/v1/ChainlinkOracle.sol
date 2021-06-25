@@ -7,12 +7,10 @@ import "external-interfaces/IChainlinkAggregatorV3.sol";
 
 import "core/globals/v1/interfaces/IMapleGlobals.sol";
 
-import "core/oracle/v1/Oracle.sol";
-
 import "./interfaces/IChainlinkOracle.sol";
 
 /// @title ChainlinkOracle is a wrapper contract for Chainlink oracle price feeds that allows for manual price feed overrides.
-contract ChainlinkOracle is IChainlinkOracle, Oracle, Ownable {
+contract ChainlinkOracle is IChainlinkOracle, Ownable {
 
     IChainlinkAggregatorV3 public override priceFeed;
     IMapleGlobals public override globals;
@@ -35,7 +33,7 @@ contract ChainlinkOracle is IChainlinkOracle, Oracle, Ownable {
         transferOwnership(_owner);
     }
 
-    function getLatestPrice() public override(IChainlinkOracle, Oracle) view returns (int256) {
+    function getLatestPrice() public override view returns (int256) {
         if (manualOverride) return manualPrice;
         (uint80 roundID, int256 price,,uint256 timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
 

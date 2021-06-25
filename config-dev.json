@@ -70,9 +70,6 @@
     "contracts/core/globals/v1/interfaces/IMapleGlobals.sol": {
       "urls": ["contracts/core/globals/v1/interfaces/IMapleGlobals.sol"]
     },
-    "contracts/core/globals/v1/interfaces/ISubFactory.sol": {
-      "urls": ["contracts/core/globals/v1/interfaces/ISubFactory.sol"]
-    },
     "contracts/core/globals/v1/MapleGlobals.sol": {
       "urls": ["contracts/core/globals/v1/MapleGlobals.sol"]
     },
@@ -147,9 +144,6 @@
     },
     "contracts/core/oracle/v1/interfaces/IOracle.sol": {
       "urls": ["contracts/core/oracle/v1/interfaces/IOracle.sol"]
-    },
-    "contracts/core/oracle/v1/Oracle.sol": {
-      "urls": ["contracts/core/oracle/v1/Oracle.sol"]
     },
     "contracts/core/pool/v1/interfaces/IPool.sol": {
       "urls": ["contracts/core/pool/v1/interfaces/IPool.sol"]
@@ -237,9 +231,6 @@
     },
     "contracts/core/stake-locker/v1/test/StakeLockerCustodial.t.sol": {
       "urls": ["contracts/core/stake-locker/v1/test/StakeLockerCustodial.t.sol"]
-    },
-    "contracts/core/treasury/v1/interfaces/IMapleToken.sol": {
-      "urls": ["contracts/core/treasury/v1/interfaces/IMapleToken.sol"]
     },
     "contracts/core/treasury/v1/interfaces/IMapleTreasury.sol": {
       "urls": ["contracts/core/treasury/v1/interfaces/IMapleTreasury.sol"]

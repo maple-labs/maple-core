@@ -8,26 +8,83 @@ import "./IStakeLockerFDT.sol";
 /// @title StakeLocker holds custody of stakeAsset tokens for a given Pool and earns revenue from interest.
 interface IStakeLocker is IStakeLockerFDT {
 
+    /**
+        @dev   Emits an event indicating that the Stake Locker is now open to the public.
+     */
     event StakeLockerOpened();
 
+    /**
+        @dev   Emits an event indicating some Balance was updated.
+        @param staker  The address of a Staker.
+        @param token   The address of the token for which the balance of `staker` changed.
+        @param balance The new balance for `staker`.
+     */
     event BalanceUpdated(address indexed staker, address indexed token, uint256 balance);
 
+    /**
+        @dev   Emits an event indicating that the ability of `staker` to stake before the locker is open to the public, has changed.
+        @param staker The address of some account.
+        @param status Whether `staker` can stake before the locker is open to the public.
+     */
     event AllowListUpdated(address indexed staker, bool status);
 
+    /**
+        @dev   Emits an event indicating a that a Staker's effective stake date has changed.
+        @param staker    The address of a Staker.
+        @param stakeDate The new effective stake date.
+     */
     event StakeDateUpdated(address indexed staker, uint256 stakeDate);
 
+    /**
+        @dev   Emits an event indicating that the stake lockup period has changed.
+        @param lockupPeriod The new stake lockup period.
+     */
     event LockupPeriodUpdated(uint256 lockupPeriod);
 
+    /**
+        @dev   Emits an event indicating that the cooldown timestamp for a staker has changed.
+        @param staker   The address of a Staker.
+        @param cooldown The new cooldown timestamp for `staker`.
+     */
     event Cooldown(address indexed staker, uint256 cooldown);
 
+    /**
+        @dev   Emits an event indicating `staker` has added `amount` to the total they have staked.
+        @param staker The address of a Staker.
+        @param amount The additional amount staked.
+     */
     event Stake(address indexed staker, uint256 amount);
 
+    /**
+        @dev   Emits an event indicating `staker` has removed `amount` from the total they have staked.
+        @param staker The address of a Staker.
+        @param amount The amount unstaked.
+     */
     event Unstake(address indexed staker, uint256 amount);
 
+    /**
+        @dev   Emits an event indicating that a Custodian transferred some StakeLockerFDTs for purposes of custody.
+        @param custodian The address of the Custodian initiating the transfer.
+        @param from      The account that owns the StakeLockerFDTs.
+        @param to        The address of a Custodian taking custody of the amount.
+        @param amount    The amount of StakeLockerFDTs being re-custodied.
+     */
     event CustodyTransfer(address indexed custodian, address indexed from, address indexed to, uint256 amount);
 
+    /**
+        @dev   Emits an event indicating that the amount being custodied by a Custodian, on behalf of a Staker, has changed.
+        @param staker       The address of a Staker.
+        @param custodian    The address of a Custodian.
+        @param oldAllowance The old amount of StakeLockerFDTs `custodian` had custodied on behalf of `staker`.
+        @param newAllowance The new amount of StakeLockerFDTs `custodian` has custodied on behalf of `staker`.
+     */
     event CustodyAllowanceChanged(address indexed staker, address indexed custodian, uint256 oldAllowance, uint256 newAllowance);
 
+    /**
+        @dev   Emits an event indicating that the total amount of StakeLockerFDTs custodied, on behalf of a Staker, by all custodians, has changed.
+        @param staker            The address of a Staker.
+        @param newTotalAllowance The total amount of StakeLockerFDTs custodied, on behalf of `staker`, by all custodians.
+     */
     event TotalCustodyAllowanceUpdated(address indexed staker, uint256 newTotalAllowance);
 
     /**

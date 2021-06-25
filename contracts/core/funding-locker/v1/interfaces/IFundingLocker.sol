@@ -17,7 +17,7 @@ interface IFundingLocker {
     function loan() external view returns (address);
 
     /**
-        @dev   Transfers `amount` of Liquidity Asset to `destination`. 
+        @dev   Transfers `amt` of Liquidity Asset to `dst`. 
         @dev   Only the Loan can call this function. 
         @param dst The destination to transfer Liquidity Asset to.
         @param amt The amount of Liquidity Asset to transfer.

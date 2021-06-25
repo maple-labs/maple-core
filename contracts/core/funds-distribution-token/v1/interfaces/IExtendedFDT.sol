@@ -7,32 +7,32 @@ import "./IBasicFDT.sol";
 interface IExtendedFDT is IBasicFDT {
 
     /**
-        @dev   This event emits when the internal `lossesPerShare` is updated.
-        @param lossesPerShare The new value of the internal `lossesPerShare`.
+        @dev This event emits when the internal `lossesPerShare` is updated.
+        @dev First, and only, parameter is the new value of the internal `lossesPerShare`.
      */
-    event LossesPerShareUpdated(uint256 lossesPerShare);
+    event LossesPerShareUpdated(uint256);
 
     /**
-        @dev   This event emits when an account's `lossesCorrection` is updated.
-        @param account          The address of some account.
-        @param lossesCorrection The new value of the account's `lossesCorrection`.
+        @dev This event emits when an account's `lossesCorrection` is updated.
+        @dev First parameter is the address of some account.
+        @dev Second parameter is the new value of the account's `lossesCorrection`.
      */
-    event LossesCorrectionUpdated(address indexed account, int256 lossesCorrection);
+    event LossesCorrectionUpdated(address indexed, int256);
 
     /**
-        @dev   This event emits when new losses are distributed.
-        @param by                The address of the account that has distributed losses.
-        @param lossesDistributed The amount of losses received for distribution.
+        @dev This event emits when new losses are distributed.
+        @dev First parameter is the address of the account that has distributed losses.
+        @dev Second parameter is the amount of losses received for distribution.
      */
-    event LossesDistributed(address indexed by, uint256 lossesDistributed);
+    event LossesDistributed(address indexed, uint256);
 
     /**
         @dev   This event emits when distributed losses are recognized by a token holder.
-        @param by                    The address of the receiver of losses.
-        @param lossesRecognized      The amount of losses that were recognized.
-        @param totalLossesRecognized The total amount of losses that are recognized.
+        @dev First parameter is the address of the receiver of losses.
+        @dev Second parameter is the amount of losses that were recognized.
+        @dev Third parameter is the total amount of losses that are recognized.
      */
-    event LossesRecognized(address indexed by, uint256 lossesRecognized, uint256 totalLossesRecognized);
+    event LossesRecognized(address indexed, uint256, uint256);
 
     /**
         @dev    Returns the amount of losses that an account can withdraw.

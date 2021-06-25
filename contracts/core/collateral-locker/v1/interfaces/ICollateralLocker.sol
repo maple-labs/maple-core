@@ -17,7 +17,7 @@ interface ICollateralLocker {
     function loan() external view returns (address);
 
     /**
-        @dev   Transfers `amount` of Collateral Asset to `destination`. 
+        @dev   Transfers `amt` of Collateral Asset to `dst`. 
         @dev   Only the Loan can call this function. 
         @param dst The destination to transfer Collateral Asset to.
         @param amt The amount of Collateral Asset to transfer.
