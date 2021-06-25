@@ -2,10 +2,9 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
-import "test/user/Custodian.sol";
+import "./helper/Rewards.sol";
 
-contract PoolCustodialTest is TestUtil {
+contract PoolCustodialTest is CustodialTestHelper {
 
     using SafeMath for uint256;
 
@@ -24,16 +23,7 @@ contract PoolCustodialTest is TestUtil {
     TestObj mplEarnings_fox;  // MPL earnings from yield farming
 
     function setUp() public {
-        setUpGlobals();
-        setUpTokens();
-        setUpOracles();
-        setUpFactories();
-        setUpCalcs();
-        setUpActors();
-        createBalancerPool(100_000 * USD, 10_000 * USD);
-        transferBptsToPoolDelegates();
-        setUpLiquidityPool();
-        setUpMplRewardsFactory();
+        setupFarmingEcosystem();
         setUpMplRewards(address(pool1));
         createFarmers();
     }
@@ -186,108 +176,30 @@ contract PoolCustodialTest is TestUtil {
     }
 
     function test_custody_and_transfer(uint256 depositAmt, uint256 custodyAmt1, uint256 custodyAmt2) public {
-        Custodian custodian1 = new Custodian();  // Custodial contract for PoolFDTs - will start out as liquidity mining but could be broader DeFi eventually
-        Custodian custodian2 = new Custodian();  // Custodial contract for PoolFDTs - will start out as liquidity mining but could be broader DeFi eventually
-
-        depositAmt  = constrictToRange(depositAmt,  100, 1E9,            true);  // $1 - $1b
-        custodyAmt1 = constrictToRange(custodyAmt1,  40, depositAmt / 2, true);  // $1 - half of deposit
-        custodyAmt2 = constrictToRange(custodyAmt2,  40, depositAmt / 2, true);  // $1 - half of deposit
-
-        mintFundsAndDepositIntoPool(fay, pool1, depositAmt * USD, depositAmt * USD);
-        mintFundsAndDepositIntoPool(fez, pool1, depositAmt * USD, depositAmt * USD);
-
-        pat.setLockupPeriod(address(pool1), 0);
-
-        // Convert all amounts to WAD, USD not needed for the rest of the test
-        depositAmt  *= WAD;
-        custodyAmt1 *= WAD;
-        custodyAmt2 *= WAD;
-
-        // Testing failure modes with Fay
-        assertTrue(!fay.try_increaseCustodyAllowance(address(pool1), address(0),              depositAmt));  // P:INVALID_ADDRESS
-        assertTrue(!fay.try_increaseCustodyAllowance(address(pool1), address(custodian1),              0));  // P:INVALID_AMT
-        assertTrue(!fay.try_increaseCustodyAllowance(address(pool1), address(custodian1), depositAmt + 1));  // P:INSUF_BALANCE
-        assertTrue( fay.try_increaseCustodyAllowance(address(pool1), address(custodian1),     depositAmt));  // Fay can custody entire balance
-
-        // Testing state transition and transfers with Fez
-        assertEq(pool1.custodyAllowance(address(fez), address(custodian1)), 0);
-        assertEq(pool1.totalCustodyAllowance(address(fez)),                 0);
-
-        fez.increaseCustodyAllowance(address(pool1), address(custodian1), custodyAmt1);
-
-        assertEq(pool1.custodyAllowance(address(fez), address(custodian1)), custodyAmt1);  // Fez gives custody to custodian 1
-        assertEq(pool1.totalCustodyAllowance(address(fez)),                 custodyAmt1);  // Total custody allowance goes up
-
-        fez.increaseCustodyAllowance(address(pool1), address(custodian2), custodyAmt2);
-
-        assertEq(pool1.custodyAllowance(address(fez), address(custodian2)),               custodyAmt2);  // Fez gives custody to custodian 2
-        assertEq(pool1.totalCustodyAllowance(address(fez)),                 custodyAmt1 + custodyAmt2);  // Total custody allowance goes up
-
-        uint256 transferableAmt = depositAmt - custodyAmt1 - custodyAmt2;
-
-        assertEq(pool1.balanceOf(address(fez)), depositAmt);
-        assertEq(pool1.balanceOf(address(fox)),          0);
-
-        assertTrue(!fez.try_transfer(address(pool1), address(fox), transferableAmt + 1));  // Fez cannot transfer more than balance - totalCustodyAllowance
-        assertTrue( fez.try_transfer(address(pool1), address(fox),     transferableAmt));  // Fez can transfer transferableAmt
-
-        assertEq(pool1.balanceOf(address(fez)), depositAmt - transferableAmt);
-        assertEq(pool1.balanceOf(address(fox)), transferableAmt);
+        custody_and_transfer(depositAmt, custodyAmt1, custodyAmt2, true, IStakeToken(address(pool1)));
     }
 
     function test_custody_and_withdraw(uint256 depositAmt, uint256 custodyAmt) public {
-        Custodian custodian = new Custodian();
-
-        depositAmt = constrictToRange(depositAmt, 1, 1E9,        true);  // $1 - $1b
-        custodyAmt = constrictToRange(custodyAmt, 1, depositAmt, true);  // $1 - deposit
-
-        mintFundsAndDepositIntoPool(fez, pool1, depositAmt * USD, depositAmt * USD);
-
-        pat.setLockupPeriod(address(pool1), 0);
-
-        assertEq(pool1.custodyAllowance(address(fez), address(custodian)), 0);
-        assertEq(pool1.totalCustodyAllowance(address(fez)),                0);
-
-        fez.increaseCustodyAllowance(address(pool1), address(custodian), custodyAmt * WAD);
-
-        assertEq(pool1.custodyAllowance(address(fez), address(custodian)), custodyAmt * WAD);
-        assertEq(pool1.totalCustodyAllowance(address(fez)),                custodyAmt * WAD);
-
-        uint256 withdrawableAmt = (depositAmt - custodyAmt) * USD;
-
-        assertEq(pool1.balanceOf(address(fez)), depositAmt * WAD);
-
-        make_withdrawable(fez, pool1);
-
-        assertTrue(!fez.try_withdraw(address(pool1), withdrawableAmt + 1));
-        assertTrue( fez.try_withdraw(address(pool1),     withdrawableAmt));
-
-        assertEq(pool1.balanceOf(address(fez)), custodyAmt * WAD);
-        assertEq(usdc.balanceOf(address(fez)), withdrawableAmt);
+        custody_and_pullback(depositAmt, custodyAmt, true, IStakeToken(address(pool1)));
     }
 
     function test_transferByCustodian(uint256 depositAmt, uint256 custodyAmt) public {
-        Custodian custodian = new Custodian();  // Custodial contract for PoolFDTs - will start out as liquidity mining but could be broader DeFi eventually
+        fdt_transferByCustodian(depositAmt, custodyAmt, true, IStakeToken(address(pool1)));
+    }
 
-        depositAmt  = constrictToRange(depositAmt, 1, 1E9,        true);  // $1 - $1b
-        custodyAmt  = constrictToRange(custodyAmt, 1, depositAmt, true);  // $1 - deposit
+    function test_stake() public {
+        stake_test(true, 1000, 100, IStakeToken(address(pool1)));
+    }
 
-        mintFundsAndDepositIntoPool(fay, pool1, depositAmt * USD, depositAmt * USD);
+    function test_withdraw() public {
+        withdraw_test(true, 1000, 100, IStakeToken(address(pool1)));
+    }
 
-        depositAmt  *= WAD;
-        custodyAmt  *= WAD;
+    function test_rewards_signle_epoch() public {
+        rewards_single_epoch_test(true, 100, IStakeToken(address(pool1)));
+    }
 
-        fay.increaseCustodyAllowance(address(pool1), address(custodian), custodyAmt);
-
-        assertEq(pool1.custodyAllowance(address(fay), address(custodian)), custodyAmt);  // Fay gives custody to custodian
-        assertEq(pool1.totalCustodyAllowance(address(fay)),                custodyAmt);  // Total custody allowance goes up
-
-        assertTrue(!custodian.try_transferByCustodian(address(pool1), address(fay), address(fox),     custodyAmt));  // P:INVALID_RECEIVER
-        assertTrue(!custodian.try_transferByCustodian(address(pool1), address(fay), address(fay),              0));  // P:INVALID_AMT
-        assertTrue(!custodian.try_transferByCustodian(address(pool1), address(fay), address(fay), custodyAmt + 1));  // P:INSUF_ALLOWANCE
-        assertTrue( custodian.try_transferByCustodian(address(pool1), address(fay), address(fay),     custodyAmt));  // Able to transfer custody amount back
-
-        assertEq(pool1.custodyAllowance(address(fay), address(custodian)), 0);  // Custodian allowance has been reduced
-        assertEq(pool1.totalCustodyAllowance(address(fay)),                0);  // Total custody allowance has been reduced, giving Fay access to funds again
+    function test_rewards_multi_epoch() public {
+        rewards_single_epoch_test(true, 100, IStakeToken(address(pool1)));
     }
 }
