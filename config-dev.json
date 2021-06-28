@@ -124,6 +124,15 @@
     "contracts/core/loan/v1/test/LoanLiquidation.t.sol": {
       "urls": ["contracts/core/loan/v1/test/LoanLiquidation.t.sol"]
     },
+    "contracts/core/loan/v2/Loan.sol": {
+      "urls": ["contracts/core/loan/v2/Loan.sol"]
+    },
+    "contracts/core/loan/v2/LoanFactory.sol": {
+      "urls": ["contracts/core/loan/v2/LoanFactory.sol"]
+    },
+    "contracts/core/loan/v2/LoanFDT.sol": {
+      "urls": ["contracts/core/loan/v2/LoanFDT.sol"]
+    },
     "contracts/core/mpl-rewards/v1/interfaces/IMplRewards.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/interfaces/IMplRewards.sol"]
     },
