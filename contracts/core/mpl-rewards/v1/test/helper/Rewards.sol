@@ -42,7 +42,7 @@ contract CustodialTestHelper is TestUtil {
             custodyAmt1 *= WAD;
             custodyAmt2 *= WAD;
         } else {
-            // Transfer BPTs to the Farmers i.e Fay and Fez. Although both can use interchangeably but to make code consistent chose to use Fay anf Fez. 
+            // Transfer BPTs to the Farmers i.e Fay and Fez. Although both can use interchangeably but to make code consistent chose to use Fay and Fez. 
             sam.transfer(address(bPool), address(fay), bPool.balanceOf(address(sam)));
             sid.transfer(address(bPool), address(fez), bPool.balanceOf(address(sid)));
 
@@ -106,7 +106,7 @@ contract CustodialTestHelper is TestUtil {
             amt        *= WAD;
             custodyAmt *= WAD;
         } else {
-            // Transfer BPTs to the Farmers i.e Fay and Fez. Although both can use interchangeably but to make it code consistent chosses to use Fay and Fez. 
+            // Transfer BPTs to the Farmers i.e Fay and Fez. Although both can use interchangeably but to make code consistent chose to use Fay and Fez. 
             sam.transfer(address(bPool), address(fez), bPool.balanceOf(address(sam)));
 
             amt        = constrictToRange(amt,        1, bPool.balanceOf(address(fez)), true);  // 1 wei - whole BPT bal
@@ -135,7 +135,7 @@ contract CustodialTestHelper is TestUtil {
             make_withdrawable(fez, pool1);
 
             assertTrue(!fez.try_withdraw(address(stakeToken), toUsd(withdrawAmt) + 1));
-            assertTrue( fez.try_withdraw(address(stakeToken),     toUsd(withdrawAmt)));
+            assertTrue( fez.try_withdraw(address(stakeToken), toUsd(withdrawAmt)));
 
             assertEq(usdc.balanceOf(address(fez)), toUsd(withdrawAmt));
 
@@ -143,7 +143,7 @@ contract CustodialTestHelper is TestUtil {
             make_unstakeable(Staker(address(fez)), stakeLocker1);
 
             assertTrue(!fez.try_unstake(address(stakeToken), withdrawAmt + 1));
-            assertTrue( fez.try_unstake(address(stakeToken),     withdrawAmt));
+            assertTrue( fez.try_unstake(address(stakeToken), withdrawAmt));
         }
 
         assertEq(stakeToken.balanceOf(address(fez)), custodyAmt);
