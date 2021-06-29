@@ -139,6 +139,18 @@
     "contracts/core/mpl-rewards/v1/test/MplRewards.t.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/test/MplRewards.t.sol"]
     },
+    "contracts/core/mpl-rewards/v1/test/FarmingWithPoolFdt.t.sol": {
+      "urls": ["contracts/core/mpl-rewards/v1/test/FarmingWithPoolFdt.t.sol"]
+    },
+    "contracts/core/mpl-rewards/v1/test/FarmingWithStakeLockerFdt.t.sol": {
+      "urls": ["contracts/core/mpl-rewards/v1/test/FarmingWithStakeLockerFdt.t.sol"]
+    },
+    "contracts/core/mpl-rewards/v1/test/helper/Rewards.t.sol": {
+      "urls": ["contracts/core/mpl-rewards/v1/test/helper/Rewards.t.sol"]
+    },
+    "contracts/core/mpl-rewards/v1/test/helper/IStakeToken.t.sol": {
+      "urls": ["contracts/core/mpl-rewards/v1/test/helper/IStakeToken.t.sol"]
+    },
     "contracts/core/mpl-rewards/v1/test/MplRewardsFactory.t.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/test/MplRewardsFactory.t.sol"]
     },
@@ -165,9 +177,6 @@
     },
     "contracts/core/pool/v1/test/PoolClaim.t.sol": {
       "urls": ["contracts/core/pool/v1/test/PoolClaim.t.sol"]
-    },
-    "contracts/core/pool/v1/test/PoolCustodial.t.sol": {
-      "urls": ["contracts/core/pool/v1/test/PoolCustodial.t.sol"]
     },
     "contracts/core/pool/v1/test/PoolDelegate.t.sol": {
       "urls": ["contracts/core/pool/v1/test/PoolDelegate.t.sol"]
@@ -228,9 +237,6 @@
     },
     "contracts/core/stake-locker/v1/test/StakeLockerFactory.t.sol": {
       "urls": ["contracts/core/stake-locker/v1/test/StakeLockerFactory.t.sol"]
-    },
-    "contracts/core/stake-locker/v1/test/StakeLockerCustodial.t.sol": {
-      "urls": ["contracts/core/stake-locker/v1/test/StakeLockerCustodial.t.sol"]
     },
     "contracts/core/treasury/v1/interfaces/IMapleTreasury.sol": {
       "urls": ["contracts/core/treasury/v1/interfaces/IMapleTreasury.sol"]
