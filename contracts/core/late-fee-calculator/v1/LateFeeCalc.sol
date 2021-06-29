@@ -10,7 +10,7 @@ contract LateFeeCalc is ILateFeeCalc {
 
     using SafeMath for uint256;
 
-    uint8   public override constant calcType = 11;
+    uint8   public override constant calcType = 11;      // LATEFEE type.
     bytes32 public override constant name     = "FLAT";
 
     uint256 public override immutable lateFee;

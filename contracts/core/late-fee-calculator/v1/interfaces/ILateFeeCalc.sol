@@ -1,18 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
+import "core/calculator/v1/interfaces/ICalc.sol";
+
 /// @title LateFeeCalc calculates late fees on Loans.
-interface ILateFeeCalc {
-
-    /**
-        @dev The Calculator type.
-     */
-    function calcType() external view returns (uint8);
-
-    /**
-        @dev The Calculator name.
-     */
-    function name() external view returns (bytes32);
+interface ILateFeeCalc is ICalc {
 
     /**
         @dev The fee in basis points, charged on the payment amount.

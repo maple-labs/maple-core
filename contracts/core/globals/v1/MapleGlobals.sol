@@ -6,12 +6,11 @@ import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 import "external-interfaces/IERC20Details.sol";
 
+import "core/calculator/v1/interfaces/ICalc.sol";
 import "core/oracle/v1/interfaces/IOracle.sol";
 import "core/subfactory/v1/interfaces/ISubFactory.sol";
 
 import "./interfaces/IMapleGlobals.sol";
-
-interface ICalc { function calcType() external view returns (uint8); }
 
 /// @title MapleGlobals maintains a central source of parameters and allowlists for the Maple protocol.
 contract MapleGlobals is IMapleGlobals {
