@@ -21,7 +21,7 @@ contract StakeLockerCustodialTest is CustodialTestHelper {
     }
 
     function test_custody_and_unstake(uint256 stakeAmt, uint256 custodyAmt) public {
-        custody_and_pullback(stakeAmt, custodyAmt, false, IStakeToken(address(stakeLocker1)));
+        custody_and_withdraw(stakeAmt, custodyAmt, false, IStakeToken(address(stakeLocker1)));
     }
 
     function test_transferByCustodian(uint256 stakeAmt, uint256 custodyAmt) public {
@@ -38,11 +38,11 @@ contract StakeLockerCustodialTest is CustodialTestHelper {
         withdraw_test(false, 1000, 100, IStakeToken(address(stakeLocker1)));
     }
 
-    function test_rewards_signle_epoch() public {
+    function test_rewards_single_epoch() public {
         rewards_single_epoch_test(false, 100, IStakeToken(address(stakeLocker1)));
     }
 
     function test_rewards_multi_epoch() public {
-        rewards_single_epoch_test(false, 100, IStakeToken(address(stakeLocker1)));
+        rewards_multi_epoch_test(false, 100, IStakeToken(address(stakeLocker1)));
     }
 }

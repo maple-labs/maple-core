@@ -180,7 +180,7 @@ contract PoolCustodialTest is CustodialTestHelper {
     }
 
     function test_custody_and_withdraw(uint256 depositAmt, uint256 custodyAmt) public {
-        custody_and_pullback(depositAmt, custodyAmt, true, IStakeToken(address(pool1)));
+        custody_and_withdraw(depositAmt, custodyAmt, true, IStakeToken(address(pool1)));
     }
 
     function test_transferByCustodian(uint256 depositAmt, uint256 custodyAmt) public {
@@ -195,11 +195,11 @@ contract PoolCustodialTest is CustodialTestHelper {
         withdraw_test(true, 1000, 100, IStakeToken(address(pool1)));
     }
 
-    function test_rewards_signle_epoch() public {
+    function test_rewards_single_epoch() public {
         rewards_single_epoch_test(true, 100, IStakeToken(address(pool1)));
     }
 
     function test_rewards_multi_epoch() public {
-        rewards_single_epoch_test(true, 100, IStakeToken(address(pool1)));
+        rewards_multi_epoch_test(true, 100, IStakeToken(address(pool1)));
     }
 }

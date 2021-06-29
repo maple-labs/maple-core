@@ -4,6 +4,7 @@ pragma solidity 0.6.11;
 import "core/mpl-rewards/v1/MplRewards.sol";
 import "core/pool/v1/interfaces/IPool.sol";
 import "external-interfaces/IERC2258.sol";
+import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
 import "./LP.sol";
 
@@ -44,6 +45,10 @@ contract Farmer is LP {
 
     function exit() public {
         mplRewards.exit();
+    }
+
+    function stakeTo(address stakeLocker, uint256 amt) public {
+        IStakeLocker(stakeLocker).stake(amt);
     }
 
     /*********************/
