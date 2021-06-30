@@ -127,12 +127,6 @@
     "contracts/core/mpl-rewards/v1/test/FarmingWithStakeLockerFdt.t.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/test/FarmingWithStakeLockerFdt.t.sol"]
     },
-    "contracts/core/mpl-rewards/v1/test/helper/Rewards.t.sol": {
-      "urls": ["contracts/core/mpl-rewards/v1/test/helper/Rewards.t.sol"]
-    },
-    "contracts/core/mpl-rewards/v1/test/helper/IStakeToken.t.sol": {
-      "urls": ["contracts/core/mpl-rewards/v1/test/helper/IStakeToken.t.sol"]
-    },
     "contracts/core/mpl-rewards/v1/test/MplRewardsFactory.t.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/test/MplRewardsFactory.t.sol"]
     },

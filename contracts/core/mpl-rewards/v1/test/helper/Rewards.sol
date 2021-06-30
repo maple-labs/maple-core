@@ -265,39 +265,37 @@ contract CustodialTestHelper is TestUtil {
     /*** Rewards accounting testing ***/
     /**********************************/
 
-    function rewards_single_epoch_test(bool isPfdtStakeToken, uint256 amt, IStakeToken stakeToken) public {
+    function prepareStakers(Staker[] memory stakers, Farmer[] memory farmers, MplRewards mplRewards, uint256 amt) public {
+        for (uint256 i; i < stakers.length; ++i) {
+            mint("BPT", address(stakers[i]), amt * WAD);
+            setUpForStakeLocker(amt, stakers[i], farmers[i]);
+            farmers[i].increaseCustodyAllowance(address(mplRewards), amt * WAD);
+        }
+    }
 
-        if (isPfdtStakeToken) {
-            mintFundsAndDepositIntoPool(fay, pool1, amt * USD, amt * USD);
-            mintFundsAndDepositIntoPool(fez, pool1, amt * USD, amt * USD);
-            pat.setLockupPeriod(address(pool1), 0);
-        } else {
-            mint("BPT", address(sam), amt * WAD);
-            mint("BPT", address(sid), amt * WAD);
-            setUpForStakeLocker(amt, sam, fay);
-            setUpForStakeLocker(amt, sid, fez);
+    function prepareFarmers(Farmer[] memory farmers, Pool pool, PoolDelegate poolDelegate, MplRewards mplRewards, uint256 amt) public {
+        for (uint256 i; i < farmers.length; ++i) {
+            mintFundsAndDepositIntoPool(farmers[i], pool, amt * USD, amt * USD);
         }
 
-        fay.increaseCustodyAllowance(address(mplRewards), amt * WAD);
-        fez.increaseCustodyAllowance(address(mplRewards), amt * WAD);
-        fay.stake(10 * WAD);
+        poolDelegate.setLockupPeriod(address(pool), 0);
 
-        mpl.transfer(address(mplRewards), 25_000 * WAD);
+        for (uint256 i; i < farmers.length; ++i) {
+            farmers[i].increaseCustodyAllowance(address(mplRewards), amt * WAD);
+        }
+    }
 
-        gov.setRewardsDuration(30 days);
+    function startRewards(MapleToken mpl, MplRewards mplRewards, Governor gov, uint256 totalRewards, uint256 rewardsDuration) public returns (uint256) {
+        mpl.transfer(address(mplRewards), totalRewards);
+        gov.setRewardsDuration(rewardsDuration);
+        gov.notifyRewardAmount(totalRewards);
+        return block.timestamp;
+    }
 
-        gov.notifyRewardAmount(25_000 * WAD);
-
-        uint256 rewardRate = mplRewards.rewardRate();
-        uint256 start      = block.timestamp;
-
-        assertEq(rewardRate, uint256(25_000 * WAD) / 30 days);
-
-        assertEq(mpl.balanceOf(address(mplRewards)), 25_000 * WAD);
-
+    function rewards_single_epoch_test(uint256 start, Farmer[] memory farmers, MplRewards mplRewards) public {
         /*** Fay time = 0 post-stake ***/
         assertRewardsAccounting({
-            account:                address(fay),   // Account for accounting
+            account:                address(farmers[0]),   // Account for accounting
             totalSupply:            10 * WAD,       // Fay's stake
             rewardPerTokenStored:   0,              // Starting state
             userRewardPerTokenPaid: 0,              // Starting state
@@ -306,11 +304,11 @@ contract CustodialTestHelper is TestUtil {
             rewardTokenBal:         0               // Starting state
         });
 
-        fay.getReward();  // Get reward at time = 0
+        farmers[0].getReward();  // Get reward at time = 0
 
         /*** Fay time = (0 days) post-claim ***/
         assertRewardsAccounting({
-            account:                address(fay),   // Account for accounting
+            account:                address(farmers[0]),   // Account for accounting
             totalSupply:            10 * WAD,       // Fay's stake
             rewardPerTokenStored:   0,              // Starting state (getReward has no effect at time = 0)
             userRewardPerTokenPaid: 0,              // Starting state (getReward has no effect at time = 0)
@@ -322,37 +320,37 @@ contract CustodialTestHelper is TestUtil {
         hevm.warp(start + 1 days);  // Warp to time = (1 days) (dTime = 1 days)
 
         // Reward per token (RPT) that was used before fez entered the pool (accrued over dTime = 1 days)
-        uint256 dTime1_rpt = rewardRate * 1 days * WAD / (10 * WAD);
+        uint256 dTime1_rpt = mplRewards.rewardRate() * 1 days / 10;
 
         /*** Fay time = (1 days) pre-claim ***/
         assertRewardsAccounting({
-            account:                address(fay),                 // Account for accounting
+            account:                address(farmers[0]),                 // Account for accounting
             totalSupply:            10 * WAD,                     // Fay's stake
             rewardPerTokenStored:   0,                            // Not updated yet
             userRewardPerTokenPaid: 0,                            // Not updated yet
-            earned:                 dTime1_rpt * 10 * WAD / WAD,  // Time-based calculation
+            earned:                 dTime1_rpt * 10,  // Time-based calculation
             rewards:                0,                            // Not updated yet
             rewardTokenBal:         0                             // Nothing claimed
         });
 
-        fay.getReward();  // Get reward at time = (1 days)
+        farmers[0].getReward();  // Get reward at time = (1 days)
 
         /*** Fay time = (1 days) post-claim ***/
         assertRewardsAccounting({
-            account:                address(fay),                 // Account for accounting
+            account:                address(farmers[0]),                 // Account for accounting
             totalSupply:            10 * WAD,                     // Fay's stake
             rewardPerTokenStored:   dTime1_rpt,                   // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt,                   // Updated on updateReward for 100% ownership in pool after 1hr
             earned:                 0,                            // Time-based calculation and userRewardPerTokenPaid cancel out
             rewards:                0,                            // Updated on updateReward to earned(), then set to zero on getReward
-            rewardTokenBal:         dTime1_rpt * 10 * WAD / WAD   // Updated on getReward, account has claimed rewards (equal to original earned() amt at this timestamp))
+            rewardTokenBal:         dTime1_rpt * 10   // Updated on getReward, account has claimed rewards (equal to original earned() amt at this timestamp))
         });
 
-        fez.stake(10 * WAD);  // Fez stakes 10 FDTs, giving him 50% stake in the pool rewards going forward
+        farmers[1].stake(10 * WAD);  // Fez stakes 10 FDTs, giving him 50% stake in the pool rewards going forward
 
         /*** Fez time = (1 days) post-stake ***/
         assertRewardsAccounting({
-            account:                address(fez),  // Account for accounting
+            account:                address(farmers[1]),  // Account for accounting
             totalSupply:            2 * 10 * WAD,  // Fay + Fez stake
             rewardPerTokenStored:   dTime1_rpt,    // Doesn't change since no time has passed
             userRewardPerTokenPaid: dTime1_rpt,    // Used so Fez can't claim past rewards
@@ -364,140 +362,140 @@ contract CustodialTestHelper is TestUtil {
         hevm.warp(start + 2 days);  // Warp to time = (2 days) (dTime = 1 days)
 
         // Reward per token (RPT) that was used after Fez entered the pool (accrued over dTime = 1 days, on second day), smaller since supply increased
-        uint256 dTime2_rpt = rewardRate * 1 days * WAD / (2 * 10 * WAD);
+        uint256 dTime2_rpt = mplRewards.rewardRate() * 1 days / (2 * 10);
 
         /*** Fay time = (2 days) pre-claim ***/
         assertRewardsAccounting({
-            account:                address(fay),                 // Account for accounting
+            account:                address(farmers[0]),                 // Account for accounting
             totalSupply:            2 * 10 * WAD,                 // Fay + Fez stake
             rewardPerTokenStored:   dTime1_rpt,                   // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt,                   // Used so Fay can't do multiple claims
-            earned:                 dTime2_rpt * 10 * WAD / WAD,  // Fay has not claimed any rewards that have accrued during dTime2
+            earned:                 dTime2_rpt * 10,  // Fay has not claimed any rewards that have accrued during dTime2
             rewards:                0,                            // Not updated yet
-            rewardTokenBal:         dTime1_rpt * 10 * WAD / WAD   // From previous claim
+            rewardTokenBal:         dTime1_rpt * 10   // From previous claim
         });
 
         /*** Fez time = (2 days) pre-claim ***/
         assertRewardsAccounting({
-            account:                address(fez),                 // Account for accounting
+            account:                address(farmers[1]),                 // Account for accounting
             totalSupply:            2 * 10 * WAD,                 // Fay + Fez stake
             rewardPerTokenStored:   dTime1_rpt,                   // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt,                   // Used so Fez can't do claims on past rewards
-            earned:                 dTime2_rpt * 10 * WAD / WAD,  // Fez has not claimed any rewards that have accrued during dTime2
+            earned:                 dTime2_rpt * 10,  // Fez has not claimed any rewards that have accrued during dTime2
             rewards:                0,                            // Not updated yet
             rewardTokenBal:         0                             // Not updated yet
         });
 
-        fez.stake(2 * 10 * WAD);  // Fez stakes another 2 * 10 FDTs, giving him 75% stake in the pool rewards going forward
+        farmers[1].stake(2 * 10 * WAD);  // Fez stakes another 2 * 10 FDTs, giving him 75% stake in the pool rewards going forward
 
         /*** Fez time = (2 days) post-stake ***/
         assertRewardsAccounting({
-            account:                address(fez),                 // Account for accounting
+            account:                address(farmers[1]),                 // Account for accounting
             totalSupply:            4 * 10 * WAD,                 // Fay + Fez stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,      // Updated on updateReward to snapshot rewardPerToken up to that point
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,      // Used so Fez can't do claims on past rewards
-            earned:                 dTime2_rpt * 10 * WAD / WAD,  // Earned updated to reflect all unclaimed earnings pre stake
-            rewards:                dTime2_rpt * 10 * WAD / WAD,  // Rewards updated to earnings on updateReward
+            earned:                 dTime2_rpt * 10,  // Earned updated to reflect all unclaimed earnings pre stake
+            rewards:                dTime2_rpt * 10,  // Rewards updated to earnings on updateReward
             rewardTokenBal:         0                             // Not updated yet
         });
 
         hevm.warp(start + 2 days + 1 hours);  // Warp to time = (2 days + 1 hours) (dTime = 1 hours)
 
-        uint256 dTime3_rpt = rewardRate * 1 hours * WAD / (4 * 10 * WAD);  // Reward per token (RPT) that was used after Fez staked more into the pool (accrued over dTime = 1 hours)
+        uint256 dTime3_rpt = mplRewards.rewardRate() * 1 hours / (4 * 10);  // Reward per token (RPT) that was used after Fez staked more into the pool (accrued over dTime = 1 hours)
 
         /*** Fay time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
-            account:                address(fay),                                // Account for accounting
+            account:                address(farmers[0]),                                // Account for accounting
             totalSupply:            4 * 10 * WAD,                                // Fay + Fez stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                     // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt,                                  // Used so Fay can't do multiple claims
-            earned:                 (dTime2_rpt + dTime3_rpt) * 10 * WAD / WAD,  // Fay has not claimed any rewards that have accrued during dTime2 or dTime3
+            earned:                 (dTime2_rpt + dTime3_rpt) * 10,  // Fay has not claimed any rewards that have accrued during dTime2 or dTime3
             rewards:                0,                                           // Not updated yet
-            rewardTokenBal:         dTime1_rpt * 10 * WAD / WAD                  // From previous claim
+            rewardTokenBal:         dTime1_rpt * 10                  // From previous claim
         });
 
         /*** Fez time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
-            account:                address(fez),                                           // Account for accounting
+            account:                address(farmers[1]),                                           // Account for accounting
             totalSupply:            40 * WAD,                                               // Fay + Fez stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt,                                // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt,                                // Used so Fez can't do claims on past rewards
-            earned:                 (dTime2_rpt * 10 * WAD + dTime3_rpt * 30 * WAD) / WAD,  // Fez's earnings since he entered the pool
-            rewards:                dTime2_rpt * 10 * WAD / WAD,                            // Rewards updated to reflect all unclaimed earnings pre stake
+            earned:                 dTime2_rpt * 10 + dTime3_rpt * 30,  // Fez's earnings since he entered the pool
+            rewards:                dTime2_rpt * 10,                            // Rewards updated to reflect all unclaimed earnings pre stake
             rewardTokenBal:         0                                                       // Not updated yet
         });
 
-        fez.getReward();  // Get reward at time = (2 days + 1 hours)
+        farmers[1].getReward();  // Get reward at time = (2 days + 1 hours)
 
         /*** Fez time = (2 days + 1 hours) post-claim ***/
         assertRewardsAccounting({
-            account:                address(fez),                                          // Account for accounting
+            account:                address(farmers[1]),                                          // Account for accounting
             totalSupply:            40 * WAD,                                              // Fay + Fez stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Used so Fez can't do multiple claims
             earned:                 0,                                                     // Time-based calculation and userRewardPerTokenPaid cancel out
             rewards:                0,                                                     // Updated on updateReward to earned(), then set to zero on getReward
-            rewardTokenBal:         (dTime2_rpt * 10 * WAD + dTime3_rpt * 30 * WAD) / WAD  // Updated on getReward, account has claimed rewards (equal to original earned() amt at this timestamp))
+            rewardTokenBal:         dTime2_rpt * 10 + dTime3_rpt * 30  // Updated on getReward, account has claimed rewards (equal to original earned() amt at this timestamp))
         });
 
-        fez.getReward();  // Try double claim
+        farmers[1].getReward();  // Try double claim
 
         /*** Fez time = (2 days + 1 hours) post-claim (ASSERT NOTHING CHANGES) ***/
         assertRewardsAccounting({
-            account:                address(fez),                                          // Doesn't change
+            account:                address(farmers[1]),                                          // Doesn't change
             totalSupply:            40 * WAD,                                              // Doesn't change
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Doesn't change
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Doesn't change
             earned:                 0,                                                     // Doesn't change
             rewards:                0,                                                     // Doesn't change
-            rewardTokenBal:         (dTime2_rpt * 10 * WAD + dTime3_rpt * 30 * WAD) / WAD  // Doesn't change
+            rewardTokenBal:         dTime2_rpt * 10 + dTime3_rpt * 30  // Doesn't change
         });
 
-        fay.withdraw(5 * WAD);  // Fay withdraws 5 * WAD at time = (2 days + 1 hours)
+        farmers[0].withdraw(5 * WAD);  // Fay withdraws 5 * WAD at time = (2 days + 1 hours)
 
         /*** Fay time = (2 days + 1 hours) pre-claim ***/
         assertRewardsAccounting({
-            account:                address(fay),                                // Account for accounting
+            account:                address(farmers[0]),                                // Account for accounting
             totalSupply:            35 * WAD,                                    // Fay + Fez stake, lower now that Fay withdrew
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,        // From Fez's update
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,        // Used so Fay can't claim past earnings
-            earned:                 (dTime2_rpt + dTime3_rpt) * 10 * WAD / WAD,  // Fay has not claimed any rewards that have accrued during dTime2 and dTime3
-            rewards:                (dTime2_rpt + dTime3_rpt) * 10 * WAD / WAD,  // Updated on updateReward to earned()
-            rewardTokenBal:         dTime1_rpt * 10 * WAD / WAD                  // From previous claim
+            earned:                 (dTime2_rpt + dTime3_rpt) * 10,  // Fay has not claimed any rewards that have accrued during dTime2 and dTime3
+            rewards:                (dTime2_rpt + dTime3_rpt) * 10,  // Updated on updateReward to earned()
+            rewardTokenBal:         dTime1_rpt * 10                  // From previous claim
         });
 
         hevm.warp(start + 3 days + 1 hours);  // Warp to time = (3 days + 1 hours) (dTime = 1 days)
 
-        uint256 dTime4_rpt = rewardRate * 1 days * WAD / (35 * WAD);  // Reward per token (RPT) that was used after Fay withdrew from the pool (accrued over dTime = 1 days)
+        uint256 dTime4_rpt = mplRewards.rewardRate() * 1 days / 35;  // Reward per token (RPT) that was used after Fay withdrew from the pool (accrued over dTime = 1 days)
 
         /*** Fay time = (3 days + 1 hours) pre-exit ***/
         assertRewardsAccounting({
-            account:                address(fay),                                                         // Account for accounting
+            account:                address(farmers[0]),                                                         // Account for accounting
             totalSupply:            35 * WAD,                                                             // Fay + Fez stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                                 // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                                 // Used so Fay can't do multiple claims
-            earned:                 ((dTime2_rpt + dTime3_rpt) * 10 * WAD + dTime4_rpt * 5 * WAD) / WAD,  // Fay has not claimed any rewards that have accrued during dTime2, dTime3 and dTime4
-            rewards:                (dTime2_rpt + dTime3_rpt) * 10 * WAD / WAD,                           // Not updated yet
-            rewardTokenBal:         dTime1_rpt * 10 * WAD / WAD                                           // From previous claim
+            earned:                 (dTime2_rpt + dTime3_rpt) * 10 + dTime4_rpt * 5,  // Fay has not claimed any rewards that have accrued during dTime2, dTime3 and dTime4
+            rewards:                (dTime2_rpt + dTime3_rpt) * 10,                           // Not updated yet
+            rewardTokenBal:         dTime1_rpt * 10                                           // From previous claim
         });
 
         /*** Fez time = (2 days + 1 hours) pre-exit ***/
         assertRewardsAccounting({
-            account:                address(fez),                                          // Account for accounting
+            account:                address(farmers[1]),                                          // Account for accounting
             totalSupply:            35 * WAD,                                              // Fay + Fez stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Not updated yet
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt,                  // Used so Fez can't do multiple claims
-            earned:                 dTime4_rpt * 30 * WAD / WAD,                           // Fez has not claimed any rewards that have accrued during dTime4
+            earned:                 dTime4_rpt * 30,                           // Fez has not claimed any rewards that have accrued during dTime4
             rewards:                0,                                                     // Not updated yet
-            rewardTokenBal:         (dTime2_rpt * 10 * WAD + dTime3_rpt * 30 * WAD) / WAD  // From previous claim
+            rewardTokenBal:         dTime2_rpt * 10 + dTime3_rpt * 30  // From previous claim
         });
 
-        fay.exit();  // Fay exits at time = (3 days + 1 hours)
-        fez.exit();  // Fez exits at time = (3 days + 1 hours)
+        farmers[0].exit();  // Fay exits at time = (3 days + 1 hours)
+        farmers[1].exit();  // Fez exits at time = (3 days + 1 hours)
 
         /*** Fay time = (3 days + 1 hours) post-exit ***/
         assertRewardsAccounting({
-            account:                address(fay),                                                                     // Account for accounting
+            account:                address(farmers[0]),                                                                     // Account for accounting
             totalSupply:            0,                                                                                // Fay + Fez withdrew all stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                                // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                                // Used so Fay can't do multiple claims
@@ -508,7 +506,7 @@ contract CustodialTestHelper is TestUtil {
 
         /*** Fez time = (2 days + 1 hours) post-exit ***/
         assertRewardsAccounting({
-            account:                address(fez),                                                         // Account for accounting
+            account:                address(farmers[1]),                                                         // Account for accounting
             totalSupply:            0,                                                                    // Fay + Fez withdrew all stake
             rewardPerTokenStored:   dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                    // Updated on updateReward
             userRewardPerTokenPaid: dTime1_rpt + dTime2_rpt + dTime3_rpt + dTime4_rpt,                    // Used so Fez can't do multiple claims
@@ -704,9 +702,11 @@ contract CustodialTestHelper is TestUtil {
 
     function setUpForStakeLocker(uint256 amt, Staker staker, Farmer farmer) internal {
         staker.transfer(address(bPool), address(farmer), bPool.balanceOf(address(staker)));
+
         if (!stakeLocker1.openToPublic()) {
             pat.openStakeLockerToPublic(address(stakeLocker1));
         }
+
         farmer.approve(address(bPool), address(stakeLocker1), amt * WAD);
         farmer.stakeTo(                address(stakeLocker1), amt * WAD);
     }
