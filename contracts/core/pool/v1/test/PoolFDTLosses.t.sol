@@ -27,7 +27,7 @@ contract PoolFDTLossesTest is TestUtil {
         uint256 requestAmount,
         uint256 collateralRatio,
         uint256 minimumRequestAmt
-    ) internal returns (Loan custom_loan, uint256 depositAmt) {
+    ) internal returns (ILoan custom_loan, uint256 depositAmt) {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio, (125 * minimumRequestAmt) / 100, 0, 1E7 * USD);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
@@ -55,7 +55,7 @@ contract PoolFDTLossesTest is TestUtil {
         uint256 minimumRequestAmt = PoolLib.getSwapOutValueLocker(address(bPool), USDC, address(pool1.stakeLocker()));
 
         // Create Loan with 0% CR, so no claimable funds are present after default, and a deposit amount from arguments
-        (Loan custom_loan, uint256 depositAmt) = createLoanForLossesAndGetDepositAmount(apr, index, numPayments, requestAmount, 0, minimumRequestAmt);
+        (ILoan custom_loan, uint256 depositAmt) = createLoanForLossesAndGetDepositAmount(apr, index, numPayments, requestAmount, 0, minimumRequestAmt);
 
         // Lex is putting up the funds into the Pool.
         mintFundsAndDepositIntoPool(leo, pool1, depositAmt, depositAmt);
@@ -145,7 +145,7 @@ contract PoolFDTLossesTest is TestUtil {
         uint256 minDepositAmountForPool2 = PoolLib.getSwapOutValueLocker(address(bPool), USDC, address(pool2.stakeLocker()));
 
         // Create Loan and a deposit amount from arguments
-        (Loan custom_loan, uint256 totalDepositAmt) = createLoanForLossesAndGetDepositAmount(apr, index, numPayments, requestAmount, 0, minDepositAmountForPool1 + minDepositAmountForPool2);
+        (ILoan custom_loan, uint256 totalDepositAmt) = createLoanForLossesAndGetDepositAmount(apr, index, numPayments, requestAmount, 0, minDepositAmountForPool1 + minDepositAmountForPool2);
 
         uint256 lizDepositAmt;
         (leoDepositAmt, lizDepositAmt) = getSplitDepositAmounts(leoDepositAmt, (minDepositAmountForPool1 * totalDepositAmt) / (minDepositAmountForPool1 + minDepositAmountForPool2));

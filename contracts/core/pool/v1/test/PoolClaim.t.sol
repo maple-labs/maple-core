@@ -64,7 +64,7 @@ contract PoolClaimTest is TestUtil {
         uint256 depositAmt = specs[3];
         mintFundsAndDepositIntoPool(lex, pool1, depositAmt, depositAmt);
 
-        Loan zero_loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        ILoan zero_loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
 
         // Fund the loan by pool delegate.
         assertTrue(pat.try_fundLoan(address(pool1), address(zero_loan), address(dlFactory1), depositAmt));
@@ -554,7 +554,7 @@ contract PoolClaimTest is TestUtil {
         return newAmt == uint256(0) ? uint256(0) : newAmt.mul(totalClaim).div(totalNewAmt);
     }
 
-    function getDL(Pool pool, Loan loan, DebtLockerFactory dlFactory) internal view returns (address) {
+    function getDL(Pool pool, ILoan loan, DebtLockerFactory dlFactory) internal view returns (address) {
         return pool.debtLockers(address(loan), address(dlFactory));
     }
 
@@ -615,7 +615,7 @@ contract PoolClaimTest is TestUtil {
         return (totalFundedAmount, fundedAmounts);
     }
 
-    function checkClaim(DebtLocker debtLocker, Loan _loan, PoolDelegate pd, IERC20 liquidityAsset, Pool pool, address dlFactory) internal {
+    function checkClaim(DebtLocker debtLocker, ILoan _loan, PoolDelegate pd, IERC20 liquidityAsset, Pool pool, address dlFactory) internal {
         uint256[10] memory balances = [
             liquidityAsset.balanceOf(address(debtLocker)),
             liquidityAsset.balanceOf(address(pool)),

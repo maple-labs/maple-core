@@ -5,10 +5,10 @@ import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 import "./interfaces/ILoanFactory.sol";
 
-import "./Loan.sol";
+import "./LoanV1.sol";
 
 /// @title LoanFactory instantiates Loans.
-contract LoanFactory is ILoanFactory, Pausable {
+contract LoanFactoryV1 is ILoanFactory, Pausable {
 
     using SafeMath for uint256;
 
@@ -46,18 +46,12 @@ contract LoanFactory is ILoanFactory, Pausable {
         address[3] memory calcs
     ) external override whenNotPaused returns (address loanAddress) {
         _whenProtocolNotPaused();
-        IMapleGlobals _globals = globals;
 
         // Perform validity checks.
-        require(_globals.isValidSubFactory(address(this), flFactory, FL_FACTORY), "LF:INVALID_FLF");
-        require(_globals.isValidSubFactory(address(this), clFactory, CL_FACTORY), "LF:INVALID_CLF");
-
-        require(_globals.isValidCalc(calcs[0], INTEREST_CALC_TYPE), "LF:INVALID_INT_C");
-        require(_globals.isValidCalc(calcs[1],  LATEFEE_CALC_TYPE), "LF:INVALID_LATE_FEE_C");
-        require(_globals.isValidCalc(calcs[2],  PREMIUM_CALC_TYPE), "LF:INVALID_PREM_C");
+        _preParamValidation(flFactory, clFactory, calcs);
 
         // Deploy new Loan.
-        Loan loan = new Loan(
+        LoanV1 loan = new LoanV1(
             msg.sender,
             liquidityAsset,
             collateralAsset,
@@ -122,6 +116,20 @@ contract LoanFactory is ILoanFactory, Pausable {
      */
     function _whenProtocolNotPaused() internal view {
         require(!globals.protocolPaused(), "LF:PROTO_PAUSED");
+    }
+
+    /**
+        @dev Required sanity checks for the loan creation.
+     */
+    function _preParamValidation(address flFactory, address clFactory, address[3] memory calcs) internal view {
+        IMapleGlobals _globals = globals;
+
+        require(_globals.isValidSubFactory(address(this), flFactory, FL_FACTORY), "LF:INVALID_FLF");
+        require(_globals.isValidSubFactory(address(this), clFactory, CL_FACTORY), "LF:INVALID_CLF");
+
+        require(_globals.isValidCalc(calcs[0], INTEREST_CALC_TYPE), "LF:INVALID_INT_C");
+        require(_globals.isValidCalc(calcs[1],  LATEFEE_CALC_TYPE), "LF:INVALID_LATE_FEE_C");
+        require(_globals.isValidCalc(calcs[2],  PREMIUM_CALC_TYPE), "LF:INVALID_PREM_C");
     }
 
 }

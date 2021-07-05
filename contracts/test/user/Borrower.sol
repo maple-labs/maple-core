@@ -6,7 +6,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import "core/loan/v1/interfaces/ILoan.sol";
 import "core/loan/v1/interfaces/ILoanFactory.sol";
-import "core/loan/v1/Loan.sol";
+import "core/loan/v1/LoanV1.sol";
 import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
 contract Borrower {
@@ -48,9 +48,9 @@ contract Borrower {
         uint256[5] memory specs,
         address[3] memory calcs
     )
-        external returns (Loan loan)
+        external returns (LoanV1 loan)
     {
-        loan = Loan(
+        loan = LoanV1(
             ILoanFactory(loanFactory).createLoan(liquidityAsset, collateralAsset, flFactory, clFactory, specs, calcs)
         );
     }

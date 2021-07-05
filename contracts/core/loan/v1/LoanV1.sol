@@ -25,7 +25,7 @@ import "./interfaces/ILoanFactory.sol";
 import "./LoanFDT.sol";
 
 /// @title Loan maintains all accounting and functionality related to Loans.
-contract Loan is ILoan, LoanFDT, Pausable {
+contract LoanV1 is ILoan, LoanFDT, Pausable {
 
     using SafeMathInt     for int256;
     using SignedSafeMath  for int256;
@@ -140,24 +140,11 @@ contract Loan is ILoan, LoanFDT, Pausable {
     /**************************/
 
     function drawdown(uint256 amt) external override {
-        _whenProtocolNotPaused();
-        _isValidBorrower();
-        _isValidState(State.Ready);
+        _preDrawdownChecksAndUpdateLoanState(amt);
+
         IMapleGlobals globals = _globals(superFactory);
 
         IFundingLocker _fundingLocker = IFundingLocker(fundingLocker);
-
-        require(amt >= requestAmount,              "L:AMT_LT_REQUEST_AMT");
-        require(amt <= _getFundingLockerBalance(), "L:AMT_GT_FUNDED_AMT");
-
-        // Update accounting variables for the Loan.
-        principalOwed  = amt;
-        nextPaymentDue = block.timestamp.add(paymentIntervalSeconds);
-
-        loanState = State.Active;
-
-        // Transfer the required amount of collateral for drawdown from the Borrower to the CollateralLocker.
-        collateralAsset.safeTransferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt));
 
         // Transfer funding amount from the FundingLocker to the Borrower, then drain remaining funds to the Loan.
         uint256 treasuryFee = globals.treasuryFee();
@@ -180,6 +167,28 @@ contract Loan is ILoan, LoanFDT, Pausable {
         // Call `updateFundsReceived()` update LoanFDT accounting with funds received from fees and excess returned.
         updateFundsReceived();
 
+        _postDrawdownEmitEvents(amt, treasury);
+    }
+
+    function _preDrawdownChecksAndUpdateLoanState(uint256 amt) internal {
+        _whenProtocolNotPaused();
+        _isValidBorrower();
+        _isValidState(State.Ready);
+
+        require(amt >= requestAmount,              "L:AMT_LT_REQUEST_AMT");
+        require(amt <= _getFundingLockerBalance(), "L:AMT_GT_FUNDED_AMT");
+
+        // Update accounting variables for the Loan.
+        principalOwed  = amt;
+        nextPaymentDue = block.timestamp.add(paymentIntervalSeconds);
+
+        loanState = State.Active;
+
+        // Transfer the required amount of collateral for drawdown from the Borrower to the CollateralLocker.
+        collateralAsset.safeTransferFrom(borrower, collateralLocker, collateralRequiredForDrawdown(amt));
+    }
+
+    function _postDrawdownEmitEvents(uint256 amt, address treasury) internal {
         _emitBalanceUpdateEventForCollateralLocker();
         _emitBalanceUpdateEventForFundingLocker();
         _emitBalanceUpdateEventForLoan();

@@ -3,6 +3,7 @@ pragma solidity 0.6.11;
 
 import "lib/ds-test/contracts/test.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 import "module/maple-token/contracts/MapleToken.sol";
 
@@ -20,7 +21,7 @@ import "core/funding-locker/v1/FundingLockerFactory.sol";
 import "core/globals/v1/MapleGlobals.sol";
 import "core/late-fee-calculator/v1/LateFeeCalc.sol";
 import "core/liquidity-locker/v1/LiquidityLockerFactory.sol";
-import "core/loan/v1/LoanFactory.sol";
+import "core/loan/v1/LoanFactoryV1.sol";
 import "core/mpl-rewards/v1/MplRewardsFactory.sol";
 import "core/pool/v1/PoolFactory.sol";
 import "core/premium-calculator/v1/PremiumCalc.sol";
@@ -28,6 +29,7 @@ import "core/repayment-calculator/v1/RepaymentCalc.sol";
 import "core/stake-locker/v1/StakeLockerFactory.sol";
 import "core/treasury/v1/MapleTreasury.sol";
 import "core/usd-oracle/v1/UsdOracle.sol";
+import "core/loan/v1/interfaces/ILoan.sol";
 
 import "./user/Borrower.sol";
 import "./user/Commoner.sol";
@@ -107,7 +109,7 @@ contract TestUtil is DSTest {
     DebtLockerFactory              dlFactory2;
     FundingLockerFactory            flFactory;
     LiquidityLockerFactory          llFactory;
-    LoanFactory                   loanFactory;
+    LoanFactoryV1                 loanFactory;
     PoolFactory                   poolFactory;
     StakeLockerFactory              slFactory;
     MplRewardsFactory       mplRewardsFactory;
@@ -133,10 +135,10 @@ contract TestUtil is DSTest {
     /*************/
     /*** Loans ***/
     /*************/
-    Loan loan1;
-    Loan loan2;
-    Loan loan3;
-    Loan loan4;
+    ILoan loan1;
+    ILoan loan2;
+    ILoan loan3;
+    ILoan loan4;
 
     /*************/
     /*** Pools ***/
@@ -313,7 +315,7 @@ contract TestUtil is DSTest {
     function createStakeLockerFactory()      public { slFactory   = new StakeLockerFactory(); }
     function createLiquidityLockerFactory()  public { llFactory   = new LiquidityLockerFactory(); }
     function createDebtLockerFactories()     public { dlFactory1  = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
-    function createLoanFactory()             public { loanFactory = new LoanFactory(address(globals)); }
+    function createLoanFactory()             public { loanFactory = new LoanFactoryV1(address(globals)); }
     function createCollateralLockerFactory() public { clFactory   = new CollateralLockerFactory(); }
     function createFundingLockerFactory()    public { flFactory   = new FundingLockerFactory(); }
 
@@ -744,21 +746,21 @@ contract TestUtil is DSTest {
         lp.deposit(address(pool), liquidityAmt);
     }
 
-    function drawdown(Loan loan, Borrower bow, uint256 usdDrawdownAmt) internal {
+    function drawdown(ILoan loan, Borrower bow, uint256 usdDrawdownAmt) internal {
         uint256 cReq = loan.collateralRequiredForDrawdown(usdDrawdownAmt);  // wETH required for `usdDrawdownAmt` USDC drawdown on loan
         mint("WETH", address(bow), cReq);
         bow.approve(WETH, address(loan),  cReq);
         bow.drawdown(address(loan),  usdDrawdownAmt);
     }
 
-    function doPartialLoanPayment(Loan loan, Borrower bow) internal returns (uint256 amt) {
+    function doPartialLoanPayment(ILoan loan, Borrower bow) internal returns (uint256 amt) {
         (amt,,,,) = loan.getNextPayment();  // USDC required for next payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
         bow.makePayment(address(loan));
     }
 
-    function doFullLoanPayment(Loan loan, Borrower bow) internal {
+    function doFullLoanPayment(ILoan loan, Borrower bow) internal {
         (uint256 amt,,) = loan.getFullPayment();  // USDC required for full payment of loan
         mint("USDC", address(bow), amt);
         bow.approve(USDC, address(loan),  amt);
