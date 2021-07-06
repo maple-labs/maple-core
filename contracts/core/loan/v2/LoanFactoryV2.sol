@@ -2,9 +2,12 @@
 pragma solidity 0.6.11;
 
 import "./LoanV2.sol";
+import "core/loan/v1/LoanFactory.sol";
 
 /// @title LoanFactoryV2 instantiates Loans.
-contract LoanFactoryV2 is LoanFactoryV1 {
+contract LoanFactoryV2 is LoanFactory {
+
+    constructor(address _globals) LoanFactory(_globals) public {}
 
     function createLoan(
         address liquidityAsset,

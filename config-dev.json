@@ -106,11 +106,17 @@
     "contracts/core/loan/v1/interfaces/ILoanFDT.sol": {
       "urls": ["contracts/core/loan/v1/interfaces/ILoanFDT.sol"]
     },
-    "contracts/core/loan/v1/LoanV1.sol": {
-      "urls": ["contracts/core/loan/v1/LoanV1.sol"]
+    "contracts/core/loan/v1/Loan.sol": {
+      "urls": ["contracts/core/loan/v1/Loan.sol"]
     },
-    "contracts/core/loan/v1/LoanFactoryV1.sol": {
-      "urls": ["contracts/core/loan/v1/LoanFactoryV1.sol"]
+    "contracts/core/loan/v2/LoanV2.sol": {
+      "urls": ["contracts/core/loan/v2/LoanV2.sol"]
+    },
+    "contracts/core/loan/v1/LoanFactory.sol": {
+      "urls": ["contracts/core/loan/v1/LoanFactory.sol"]
+    },
+    "contracts/core/loan/v2/LoanFactoryV2.sol": {
+      "urls": ["contracts/core/loan/v2/LoanFactoryV2.sol"]
     },
     "contracts/core/loan/v1/LoanFDT.sol": {
       "urls": ["contracts/core/loan/v1/LoanFDT.sol"]

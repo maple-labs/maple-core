@@ -21,7 +21,7 @@ import "core/funding-locker/v1/FundingLockerFactory.sol";
 import "core/globals/v1/MapleGlobals.sol";
 import "core/late-fee-calculator/v1/LateFeeCalc.sol";
 import "core/liquidity-locker/v1/LiquidityLockerFactory.sol";
-import "core/loan/v1/LoanFactoryV1.sol";
+import "core/loan/v1/LoanFactory.sol";
 import "core/mpl-rewards/v1/MplRewardsFactory.sol";
 import "core/pool/v1/PoolFactory.sol";
 import "core/premium-calculator/v1/PremiumCalc.sol";
@@ -109,7 +109,7 @@ contract TestUtil is DSTest {
     DebtLockerFactory              dlFactory2;
     FundingLockerFactory            flFactory;
     LiquidityLockerFactory          llFactory;
-    LoanFactoryV1                 loanFactory;
+    LoanFactory                   loanFactory;
     PoolFactory                   poolFactory;
     StakeLockerFactory              slFactory;
     MplRewardsFactory       mplRewardsFactory;
@@ -315,7 +315,7 @@ contract TestUtil is DSTest {
     function createStakeLockerFactory()      public { slFactory   = new StakeLockerFactory(); }
     function createLiquidityLockerFactory()  public { llFactory   = new LiquidityLockerFactory(); }
     function createDebtLockerFactories()     public { dlFactory1  = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
-    function createLoanFactory()             public { loanFactory = new LoanFactoryV1(address(globals)); }
+    function createLoanFactory()             public { loanFactory = new LoanFactory(address(globals)); }
     function createCollateralLockerFactory() public { clFactory   = new CollateralLockerFactory(); }
     function createFundingLockerFactory()    public { flFactory   = new FundingLockerFactory(); }
 

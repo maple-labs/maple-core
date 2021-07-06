@@ -5,10 +5,10 @@ import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 import "./interfaces/ILoanFactory.sol";
 
-import "./LoanV1.sol";
+import "./Loan.sol";
 
 /// @title LoanFactory instantiates Loans.
-contract LoanFactoryV1 is ILoanFactory, Pausable {
+contract LoanFactory is ILoanFactory, Pausable {
 
     using SafeMath for uint256;
 
@@ -44,14 +44,14 @@ contract LoanFactoryV1 is ILoanFactory, Pausable {
         address clFactory,
         uint256[5] memory specs,
         address[3] memory calcs
-    ) external override whenNotPaused returns (address loanAddress) {
+    ) external virtual override whenNotPaused returns (address loanAddress) {
         _whenProtocolNotPaused();
 
         // Perform validity checks.
         _preParamValidation(flFactory, clFactory, calcs);
 
         // Deploy new Loan.
-        LoanV1 loan = new LoanV1(
+        Loan loan = new Loan(
             msg.sender,
             liquidityAsset,
             collateralAsset,
