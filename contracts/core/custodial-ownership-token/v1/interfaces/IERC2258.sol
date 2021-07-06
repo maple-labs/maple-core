@@ -16,6 +16,6 @@ interface IERC2258 {
     function totalCustodyAllowance(address account) external view returns (uint256);
 
     // Allows a custodian to exercise their right to transfer custodied tokens
-    function transferByCustodian(address account, address _receiver, uint256 amount) external;
+    function transferByCustodian(address from, address to, uint256 amount) external;
 
 }

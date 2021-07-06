@@ -22,6 +22,94 @@ contract SomeAccount {
         (ok, returnData) = someContract.call(someData);
         require(ok);
     }
+
+    function mplRewards_transferOwnership(MplRewards mplRewards, address newOwner) external {
+        mplRewards.transferOwnership(newOwner);
+    }
+
+    function try_mplRewards_transferOwnership(address mplRewards, address newOwner) external returns (bool ok) {
+        (ok,) = mplRewards.call(abi.encodeWithSignature("transferOwnership(address)", newOwner));
+    }
+
+    function mplRewards_notifyRewardAmount(MplRewards mplRewards, uint256 amount) external {
+        mplRewards.notifyRewardAmount(amount);
+    }
+
+    function try_mplRewards_notifyRewardAmount(address mplRewards, uint256 amount) external returns (bool ok) {
+        (ok,) = mplRewards.call(abi.encodeWithSignature("notifyRewardAmount(uint256)", amount));
+    }
+
+    function mplRewards_updatePeriodFinish(MplRewards mplRewards, uint256 periodFinish) external {
+        mplRewards.updatePeriodFinish(periodFinish);
+    }
+
+    function try_mplRewards_updatePeriodFinish(address mplRewards, uint256 periodFinish) external returns (bool ok) {
+        (ok,) = mplRewards.call(abi.encodeWithSignature("updatePeriodFinish(uint256)", periodFinish));
+    }
+
+    function mplRewards_recoverERC20(MplRewards mplRewards, address tokenAddress, uint256 amount) external {
+        mplRewards.recoverERC20(tokenAddress, amount);
+    }
+
+    function try_mplRewards_recoverERC20(address mplRewards, address tokenAddress, uint256 amount) external returns (bool ok) {
+        (ok,) = mplRewards.call(abi.encodeWithSignature("recoverERC20(address,uint256)", tokenAddress, amount));
+    }
+
+    function mplRewards_setRewardsDuration(MplRewards mplRewards, uint256 duration) external {
+        mplRewards.setRewardsDuration(duration);
+    }
+
+    function try_mplRewards_setRewardsDuration(address mplRewards, uint256 duration) external returns (bool ok) {
+        (ok,) = mplRewards.call(abi.encodeWithSignature("setRewardsDuration(uint256)", duration));
+    }
+
+    function mplRewards_setPaused(MplRewards mplRewards, bool paused) external {
+        mplRewards.setPaused(paused);
+    }
+
+    function try_mplRewards_setPaused(address mplRewards, bool paused) external returns (bool ok) {
+        (ok,) = mplRewards.call(abi.encodeWithSignature("setPaused(bool)", paused));
+    }
+
+    function mplRewards_stake(MplRewards mplRewards, uint256 amount) external {
+        mplRewards.stake(amount);
+    }
+
+    function try_mplRewards_stake(address mplRewards, uint256 amount) external returns (bool ok) {
+        (ok,) = mplRewards.call(abi.encodeWithSignature("stake(uint256)", amount));
+    }
+
+    function mplRewards_withdraw(MplRewards mplRewards, uint256 amount) external {
+        mplRewards.withdraw(amount);
+    }
+
+    function try_mplRewards_withdraw(address mplRewards, uint256 amount) external returns (bool ok) {
+        (ok,) = mplRewards.call(abi.encodeWithSignature("withdraw(uint256)", amount));
+    }
+
+    function mplRewards_getReward(MplRewards mplRewards) external {
+        mplRewards.getReward();
+    }
+
+    function try_mplRewards_getReward(address mplRewards) external returns (bool ok) {
+        (ok,) = mplRewards.call(abi.encodeWithSignature("getReward()"));
+    }
+
+    function mplRewards_exit(MplRewards mplRewards) external {
+        mplRewards.exit();
+    }
+
+    function try_mplRewards_exit(address mplRewards) external returns (bool ok) {
+        (ok,) = mplRewards.call(abi.encodeWithSignature("exit()"));
+    }
+
+    function erc2258_increaseCustodyAllowance(ERC2258 token, address custodian, uint256 amount) external {
+        token.increaseCustodyAllowance(custodian, amount);
+    }
+
+    function try_erc2258_increaseCustodyAllowance(address token, address custodian, uint256 amount) external returns (bool ok) {
+        (ok,) = token.call(abi.encodeWithSignature("increaseCustodyAllowance(address,uint256)", custodian, amount));
+    }
 }
 
 contract SomeERC2258 is ERC2258 {
@@ -49,39 +137,15 @@ contract MplRewardsTest is DSTest {
         
         assertEq(rewardsContract.owner(), address(account1));
 
-        {
-            (bool success,) = account2.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("transferOwnership(address)", address(account1))
-            );
-            assertTrue(!success);
-        }
+        assertTrue(!account2.try_mplRewards_transferOwnership(address(rewardsContract), address(account2)));
 
-        {
-            (bool success,) = account1.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("transferOwnership(address)", address(account2))
-            );
-            assertTrue(success);
-            assertEq(rewardsContract.owner(), address(account2));
-        }
+        assertTrue(account1.try_mplRewards_transferOwnership(address(rewardsContract), address(account2)));
+        assertEq(rewardsContract.owner(), address(account2));
         
-        {
-            (bool success,) = account1.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("transferOwnership(address)", address(account2))
-            );
-            assertTrue(!success);
-        }
+        assertTrue(!account1.try_mplRewards_transferOwnership(address(rewardsContract), address(account1)));
 
-        {
-            (bool success,) = account2.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("transferOwnership(address)", address(account1))
-            );
-            assertTrue(success);
-            assertEq(rewardsContract.owner(), address(account1));
-        }
+        assertTrue(account2.try_mplRewards_transferOwnership(address(rewardsContract), address(account1)));
+        assertEq(rewardsContract.owner(), address(account1));
     }
 
     function test_notifyRewardAmount() external {
@@ -100,21 +164,9 @@ contract MplRewardsTest is DSTest {
 
         rewardsToken.mint(address(rewardsContract), totalRewards);
 
-        {
-            (bool success,) = notOwner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("notifyRewardAmount(uint256)", totalRewards)
-            );
-            assertTrue(!success);
-        }
+        assertTrue(!notOwner.try_mplRewards_notifyRewardAmount(address(rewardsContract), totalRewards));
 
-        {
-            (bool success,) = owner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("notifyRewardAmount(uint256)", totalRewards)
-            );
-            assertTrue(success);
-        }
+        assertTrue(owner.try_mplRewards_notifyRewardAmount(address(rewardsContract), totalRewards));
 
         assertEq(rewardsContract.rewardRate(),        totalRewards / 7 days);
         assertEq(rewardsContract.lastUpdateTime(),          block.timestamp);
@@ -126,21 +178,9 @@ contract MplRewardsTest is DSTest {
         SomeAccount notOwner = new SomeAccount();
         MplRewards rewardsContract = new MplRewards(address(0), address(1), address(owner));
 
-        {
-            (bool success,) = notOwner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("updatePeriodFinish(uint256)", block.timestamp + 30 days)
-            );
-            assertTrue(!success);
-        }
+        assertTrue(!notOwner.try_mplRewards_updatePeriodFinish(address(rewardsContract), block.timestamp + 30 days));
 
-        {
-            (bool success,) = owner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("updatePeriodFinish(uint256)", block.timestamp + 30 days)
-            );
-            assertTrue(success);
-        }
+        assertTrue(owner.try_mplRewards_updatePeriodFinish(address(rewardsContract), block.timestamp + 30 days));
     }
 
     function test_recoverERC20() external {
@@ -153,23 +193,11 @@ contract MplRewardsTest is DSTest {
         assertEq(someToken.balanceOf(address(rewardsContract)), 1);
         assertEq(rewardsContract.totalSupply(), 0);
 
-        {
-            (bool success,) = notOwner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("recoverERC20(address,uint256)", address(someToken), 1)
-            );
-            assertTrue(!success);
-        }
+        assertTrue(!notOwner.try_mplRewards_recoverERC20(address(rewardsContract), address(someToken), 1));
 
-        {
-            (bool success,) = owner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("recoverERC20(address,uint256)", address(someToken), 1)
-            );
-            assertTrue(success);
-            assertEq(someToken.balanceOf(address(rewardsContract)), 0);
-        }
-        
+        assertTrue(owner.try_mplRewards_recoverERC20(address(rewardsContract), address(someToken), 1));
+        assertEq(someToken.balanceOf(address(rewardsContract)), 0);
+
         assertEq(rewardsContract.totalSupply(), 0);
     }
 
@@ -181,49 +209,23 @@ contract MplRewardsTest is DSTest {
 
         rewardsToken.mint(address(rewardsContract), 1);
 
-        owner.call(
-            address(rewardsContract),
-            abi.encodeWithSignature("notifyRewardAmount(uint256)", 1)
-        );
-        
+        owner.mplRewards_notifyRewardAmount(rewardsContract, 1);        
         assertEq(rewardsContract.periodFinish(),    block.timestamp + 7 days);
         assertEq(rewardsContract.rewardsDuration(),                   7 days);
 
-        {
-            (bool success,) = notOwner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("setRewardsDuration(uint256)", 30 days)
-            );
-            assertTrue(!success);
-        }
+        assertTrue(!notOwner.try_mplRewards_setRewardsDuration(address(rewardsContract), 30 days));
 
-        {
-            (bool success,) = owner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("setRewardsDuration(uint256)", 30 days)
-            );
-            assertTrue(!success);
-        }
+        assertTrue(!owner.try_mplRewards_setRewardsDuration(address(rewardsContract), 30 days));
 
         hevm.warp(rewardsContract.periodFinish());
 
-        {
-            (bool success,) = owner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("setRewardsDuration(uint256)", 30 days)
-            );
-            assertTrue(!success);
-        }
+        assertTrue(!owner.try_mplRewards_setRewardsDuration(address(rewardsContract), 30 days));
 
         hevm.warp(rewardsContract.periodFinish() + 1);
 
-        {
-            (bool success,) = owner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("setRewardsDuration(uint256)", 30 days)
-            );
-            assertTrue(success);
-        }
+        assertTrue(!notOwner.try_mplRewards_setRewardsDuration(address(rewardsContract), 30 days));
+
+        assertTrue(owner.try_mplRewards_setRewardsDuration(address(rewardsContract), 30 days));
 
         assertEq(rewardsContract.rewardsDuration(), 30 days);
     }
@@ -238,80 +240,27 @@ contract MplRewardsTest is DSTest {
 
         assertTrue(!rewardsContract.paused());
 
-        {
-            (bool success,) = notOwner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("setPaused(bool)", true)
-            );
-            assertTrue(!success);
-        }
+        assertTrue(!notOwner.try_mplRewards_setPaused(address(rewardsContract), true));
 
-        {
-            (bool success,) = owner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("setPaused(bool)", true)
-            );
-            assertTrue(success);
-            assertTrue(rewardsContract.paused());
-        }
+        assertTrue(owner.try_mplRewards_setPaused(address(rewardsContract), true));
+        assertTrue(rewardsContract.paused());
 
-        {
-            (bool success,) = owner.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("setPaused(bool)", false)
-            );
-            assertTrue(success);
-            assertTrue(!rewardsContract.paused());
-        }
+        assertTrue(!notOwner.try_mplRewards_setPaused(address(rewardsContract), false));
+
+        assertTrue(owner.try_mplRewards_setPaused(address(rewardsContract), false));
+        assertTrue(!rewardsContract.paused());
 
         stakingToken.mint(address(account1), 2);
 
-        {
-            account1.call(
-                address(stakingToken),
-                abi.encodeWithSignature("increaseCustodyAllowance(address,uint256)", address(rewardsContract), 2)
-            );
-            (bool success,) = account1.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("stake(uint256)", 2)
-            );
-            assertTrue(success);
-        }
+        account1.erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 2);
+        assertTrue(account1.try_mplRewards_stake(address(rewardsContract), 2));
+        assertTrue(account1.try_mplRewards_withdraw(address(rewardsContract), 1));
 
-        {
-            (bool success,) = account1.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("withdraw(uint256)", 1)
-            );
-            assertTrue(success);
-        }
+        owner.mplRewards_setPaused(rewardsContract, true);
 
-        {
-            owner.call(
-                address(rewardsContract),
-                abi.encodeWithSignature("setPaused(bool)", true)
-            );
-        }
-
-        {
-            account1.call(
-                address(stakingToken),
-                abi.encodeWithSignature("increaseCustodyAllowance(address,uint256)", address(rewardsContract), 1)
-            );
-            (bool success,) = account1.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("stake(uint256)", 1)
-            );
-            assertTrue(!success);
-        }
-
-        {
-            (bool success,) = account1.tryCall(
-                address(rewardsContract),
-                abi.encodeWithSignature("withdraw(uint256)", 1)
-            );
-            assertTrue(!success);
-        }
+        account1.erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 1);
+        assertTrue(!account1.try_mplRewards_stake(address(rewardsContract), 1));
+        assertTrue(!account1.try_mplRewards_withdraw(address(rewardsContract), 1));
     }
 
     function test_rewardsSingleEpoch() external {
@@ -329,27 +278,15 @@ contract MplRewardsTest is DSTest {
 
         for (uint256 i; i < farmers.length; ++i) {
             stakingToken.mint(address(farmers[i]), 100 * WAD);
-            farmers[i].call(
-                address(stakingToken),
-                abi.encodeWithSignature("increaseCustodyAllowance(address,uint256)", address(rewardsContract), 100 * WAD)
-            );
+            farmers[i].erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 100 * WAD);
         }
 
-        farmers[0].call(
-            address(rewardsContract),
-            abi.encodeWithSignature("stake(uint256)", 10 * WAD)
-        );
+        farmers[0].mplRewards_stake(rewardsContract, 10 * WAD);
 
         rewardToken.mint(address(rewardsContract), totalRewardsInWad);
 
-        owner.call(
-            address(rewardsContract),
-            abi.encodeWithSignature("setRewardsDuration(uint256)", rewardsDuration)
-        );
-        owner.call(
-            address(rewardsContract),
-            abi.encodeWithSignature("notifyRewardAmount(uint256)", totalRewardsInWad)
-        );
+        owner.mplRewards_setRewardsDuration(rewardsContract, rewardsDuration);
+        owner.mplRewards_notifyRewardAmount(rewardsContract, totalRewardsInWad);
         
         uint256 start = block.timestamp;
 
@@ -365,10 +302,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(farmers[0])), 0);
 
         // getReward has no effect at time = 0
-        farmers[0].call(
-            address(rewardsContract),
-            abi.encodeWithSignature("getReward()")
-        );
+        farmers[0].mplRewards_getReward(rewardsContract);
 
         /*** Farmer-0 time = (0 days) post-claim ***/
         assertEq(rewardsContract.totalSupply(), 10 * WAD);
@@ -393,10 +327,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(farmers[0])), 0);
 
         // Get reward at time = (1 days)
-        farmers[0].call(
-            address(rewardsContract),
-            abi.encodeWithSignature("getReward()")
-        );
+        farmers[0].mplRewards_getReward(rewardsContract);
 
         /*** Farmer-0 time = (1 days) post-claim ***/
         assertEq(rewardsContract.totalSupply(), 10 * WAD);
@@ -407,10 +338,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(farmers[0])), dTime1_rpt * 10);
 
         // Farmer-1 stakes 10 FDTs, giving him 50% stake in the pool rewards going forward
-        farmers[1].call(
-            address(rewardsContract),
-            abi.encodeWithSignature("stake(uint256)", 10 * WAD)
-        );
+        farmers[1].mplRewards_stake(rewardsContract, 10 * WAD);
 
         /*** Farmer-1 time = (1 days) post-stake ***/
         assertEq(rewardsContract.totalSupply(), 2 * 10 * WAD);
@@ -443,10 +371,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(farmers[1])), 0);
 
         // Farmer-1 stakes another 2 * 10 FDTs, giving him 75% stake in the pool rewards going forward
-        farmers[1].call(
-            address(rewardsContract),
-            abi.encodeWithSignature("stake(uint256)", 2 * 10 * WAD)
-        );
+        farmers[1].mplRewards_stake(rewardsContract, 2 * 10 * WAD);
 
         /*** Farmer-1 time = (2 days) post-stake ***/
         assertEq(rewardsContract.totalSupply(), 4 * 10 * WAD);
@@ -479,10 +404,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(farmers[1])), 0);
 
         // Get reward at time = (2 days + 1 hours)
-        farmers[1].call(
-            address(rewardsContract),
-            abi.encodeWithSignature("getReward()")
-        );
+        farmers[1].mplRewards_getReward(rewardsContract);
 
         /*** Farmer-1 time = (2 days + 1 hours) post-claim ***/
         assertEq(rewardsContract.totalSupply(), 4 * 10 * WAD);
@@ -493,10 +415,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(farmers[1])), dTime2_rpt * 10 + dTime3_rpt * 30);
         
         // Try double claim
-        farmers[1].call(
-            address(rewardsContract),
-            abi.encodeWithSignature("getReward()")
-        );
+        farmers[1].mplRewards_getReward(rewardsContract);
 
         /*** Farmer-1 time = (2 days + 1 hours) post-claim (ASSERT NOTHING CHANGES) ***/
         assertEq(rewardsContract.totalSupply(), 4 * 10 * WAD);
@@ -507,10 +426,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(farmers[1])), dTime2_rpt * 10 + dTime3_rpt * 30);
 
         // Farmer-0 withdraws 5 * WAD at time = (2 days + 1 hours)
-        farmers[0].call(
-            address(rewardsContract),
-            abi.encodeWithSignature("withdraw(uint256)", 5 * WAD)
-        );
+        farmers[0].mplRewards_withdraw(rewardsContract, 5 * WAD);
 
         /*** Farmer-0 time = (2 days + 1 hours) pre-claim ***/
         assertEq(rewardsContract.totalSupply(), 35 * WAD);
@@ -543,16 +459,10 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(farmers[1])), dTime2_rpt * 10 + dTime3_rpt * 30);
 
         // Farmer-0 exits at time = (3 days + 1 hours)
-        farmers[0].call(
-            address(rewardsContract),
-            abi.encodeWithSignature("exit()")
-        );
+        farmers[0].mplRewards_exit(rewardsContract);
 
         // Farmer-1 exits at time = (3 days + 1 hours)
-        farmers[1].call(
-            address(rewardsContract),
-            abi.encodeWithSignature("exit()")
-        );
+        farmers[1].mplRewards_exit(rewardsContract);
 
         /*** Farmer-0 time = (3 days + 1 hours) post-exit ***/
         assertEq(rewardsContract.totalSupply(), 0);
