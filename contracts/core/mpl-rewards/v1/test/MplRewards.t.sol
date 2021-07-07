@@ -111,7 +111,7 @@ contract MplRewardsTest is DSTest {
 
         rewardsToken.mint(address(rewardsContract), 1);
 
-        owner.mplRewards_notifyRewardAmount(rewardsContract, 1);        
+        owner.mplRewards_notifyRewardAmount(address(rewardsContract), 1);        
         assertEq(rewardsContract.periodFinish(),    block.timestamp + 7 days);
         assertEq(rewardsContract.rewardsDuration(), 7 days);
 
@@ -152,13 +152,13 @@ contract MplRewardsTest is DSTest {
 
         stakingToken.mint(address(staker), 2);
 
-        staker.erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 2);
+        staker.erc2258_increaseCustodyAllowance(address(stakingToken), address(rewardsContract), 2);
         assertTrue(staker.try_mplRewards_stake(address(rewardsContract), 2));
         assertTrue(staker.try_mplRewards_withdraw(address(rewardsContract), 1));
 
-        owner.mplRewards_setPaused(rewardsContract, true);
+        owner.mplRewards_setPaused(address(rewardsContract), true);
 
-        staker.erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 1);
+        staker.erc2258_increaseCustodyAllowance(address(stakingToken), address(rewardsContract), 1);
         assertTrue(!staker.try_mplRewards_stake(address(rewardsContract), 1));
         assertTrue(!staker.try_mplRewards_withdraw(address(rewardsContract), 1));
     }
@@ -174,13 +174,13 @@ contract MplRewardsTest is DSTest {
         uint256 rewardsDuration   = 30 days;
 
         stakingToken.mint(address(staker), 100 * WAD);
-        staker.erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 100 * WAD);
-        staker.mplRewards_stake(rewardsContract, 100 * WAD);
+        staker.erc2258_increaseCustodyAllowance(address(stakingToken), address(rewardsContract), 100 * WAD);
+        staker.mplRewards_stake(address(rewardsContract), 100 * WAD);
 
         rewardToken.mint(address(rewardsContract), totalRewardsInWad);
 
-        owner.mplRewards_setRewardsDuration(rewardsContract, rewardsDuration);
-        owner.mplRewards_notifyRewardAmount(rewardsContract, totalRewardsInWad);
+        owner.mplRewards_setRewardsDuration(address(rewardsContract), rewardsDuration);
+        owner.mplRewards_notifyRewardAmount(address(rewardsContract), totalRewardsInWad);
 
         uint256 start = block.timestamp;
 
@@ -230,13 +230,13 @@ contract MplRewardsTest is DSTest {
         uint256 rewardsDuration   = 30 days;
 
         stakingToken.mint(address(staker), 100 * WAD);
-        staker.erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 100 * WAD);
-        staker.mplRewards_stake(rewardsContract, 100 * WAD);
+        staker.erc2258_increaseCustodyAllowance(address(stakingToken), address(rewardsContract), 100 * WAD);
+        staker.mplRewards_stake(address(rewardsContract), 100 * WAD);
 
         rewardToken.mint(address(rewardsContract), totalRewardsInWad);
 
-        owner.mplRewards_setRewardsDuration(rewardsContract, rewardsDuration);
-        owner.mplRewards_notifyRewardAmount(rewardsContract, totalRewardsInWad);
+        owner.mplRewards_setRewardsDuration(address(rewardsContract), rewardsDuration);
+        owner.mplRewards_notifyRewardAmount(address(rewardsContract), totalRewardsInWad);
 
         uint256 start = block.timestamp;
 
@@ -265,10 +265,10 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardsContract.rewards(address(staker)),                0);
         assertEq(rewardToken.balanceOf(address(staker)),                  0);
 
-        staker.mplRewards_withdraw(rewardsContract, 100 * WAD);
+        staker.mplRewards_withdraw(address(rewardsContract), 100 * WAD);
 
-        staker.erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 100 * WAD);
-        staker.mplRewards_stake(rewardsContract, 100 * WAD);
+        staker.erc2258_increaseCustodyAllowance(address(stakingToken), address(rewardsContract), 100 * WAD);
+        staker.mplRewards_stake(address(rewardsContract), 100 * WAD);
 
         // Warp to the end of the period
         hevm.warp(rewardsContract.periodFinish());
@@ -293,13 +293,13 @@ contract MplRewardsTest is DSTest {
         uint256 rewardsDuration   = 30 days;
 
         stakingToken.mint(address(staker), 100 * WAD);
-        staker.erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 100 * WAD);
-        staker.mplRewards_stake(rewardsContract, 100 * WAD);
+        staker.erc2258_increaseCustodyAllowance(address(stakingToken), address(rewardsContract), 100 * WAD);
+        staker.mplRewards_stake(address(rewardsContract), 100 * WAD);
 
         rewardToken.mint(address(rewardsContract), totalRewardsInWad);
 
-        owner.mplRewards_setRewardsDuration(rewardsContract, rewardsDuration);
-        owner.mplRewards_notifyRewardAmount(rewardsContract, totalRewardsInWad);
+        owner.mplRewards_setRewardsDuration(address(rewardsContract), rewardsDuration);
+        owner.mplRewards_notifyRewardAmount(address(rewardsContract), totalRewardsInWad);
 
         uint256 start = block.timestamp;
 
@@ -328,10 +328,10 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardsContract.rewards(address(staker)),                0);
         assertEq(rewardToken.balanceOf(address(staker)),                  0);
 
-        staker.mplRewards_exit(rewardsContract);
+        staker.mplRewards_exit(address(rewardsContract));
 
-        staker.erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 100 * WAD);
-        staker.mplRewards_stake(rewardsContract, 100 * WAD);
+        staker.erc2258_increaseCustodyAllowance(address(stakingToken), address(rewardsContract), 100 * WAD);
+        staker.mplRewards_stake(address(rewardsContract), 100 * WAD);
 
         // Warp to the end of the period
         hevm.warp(rewardsContract.periodFinish());
@@ -360,15 +360,15 @@ contract MplRewardsTest is DSTest {
 
         for (uint256 i; i < stakers.length; ++i) {
             stakingToken.mint(address(stakers[i]), 100 * WAD);
-            stakers[i].erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 100 * WAD);
+            stakers[i].erc2258_increaseCustodyAllowance(address(stakingToken), address(rewardsContract), 100 * WAD);
         }
 
-        stakers[0].mplRewards_stake(rewardsContract, 10 * WAD);
+        stakers[0].mplRewards_stake(address(rewardsContract), 10 * WAD);
 
         rewardToken.mint(address(rewardsContract), totalRewardsInWad);
 
-        owner.mplRewards_setRewardsDuration(rewardsContract, rewardsDuration);
-        owner.mplRewards_notifyRewardAmount(rewardsContract, totalRewardsInWad);
+        owner.mplRewards_setRewardsDuration(address(rewardsContract), rewardsDuration);
+        owner.mplRewards_notifyRewardAmount(address(rewardsContract), totalRewardsInWad);
 
         uint256 start = block.timestamp;
 
@@ -385,7 +385,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[0])),                  0);
 
         // getReward has no effect at time = 0
-        stakers[0].mplRewards_getReward(rewardsContract);
+        stakers[0].mplRewards_getReward(address(rewardsContract));
 
         /*** Staker-0 time = (0 days) post-claim ***/
         assertEq(rewardsContract.totalSupply(),                               10 * WAD);
@@ -410,7 +410,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[0])),                  0);
 
         // Get reward at time = (1 days)
-        stakers[0].mplRewards_getReward(rewardsContract);
+        stakers[0].mplRewards_getReward(address(rewardsContract));
 
         /*** Staker-0 time = (1 days) post-claim ***/
         assertEq(rewardsContract.totalSupply(),                               10 * WAD);
@@ -421,7 +421,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[0])),                  dTime1_rpt * 10);
 
         // Staker-1 stakes 10 FDTs, giving him 50% stake in the pool rewards going forward
-        stakers[1].mplRewards_stake(rewardsContract, 10 * WAD);
+        stakers[1].mplRewards_stake(address(rewardsContract), 10 * WAD);
 
         /*** Staker-1 time = (1 days) post-stake ***/
         assertEq(rewardsContract.totalSupply(),                               2 * 10 * WAD);
@@ -454,7 +454,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[1])),                  0);
 
         // Staker-1 stakes another 2 * 10 FDTs, giving him 75% stake in the pool rewards going forward
-        stakers[1].mplRewards_stake(rewardsContract, 2 * 10 * WAD);
+        stakers[1].mplRewards_stake(address(rewardsContract), 2 * 10 * WAD);
 
         /*** Staker-1 time = (2 days) post-stake ***/
         assertEq(rewardsContract.totalSupply(),                               4 * 10 * WAD);
@@ -487,7 +487,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[1])),                  0);
 
         // Get reward at time = (2 days + 1 hours)
-        stakers[1].mplRewards_getReward(rewardsContract);
+        stakers[1].mplRewards_getReward(address(rewardsContract));
 
         /*** Staker-1 time = (2 days + 1 hours) post-claim ***/
         assertEq(rewardsContract.totalSupply(),                               4 * 10 * WAD);
@@ -498,7 +498,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[1])),                  dTime2_rpt * 10 + dTime3_rpt * 30);
         
         // Try double claim
-        stakers[1].mplRewards_getReward(rewardsContract);
+        stakers[1].mplRewards_getReward(address(rewardsContract));
 
         /*** Staker-1 time = (2 days + 1 hours) post-claim (ASSERT NOTHING CHANGES) ***/
         assertEq(rewardsContract.totalSupply(),                               4 * 10 * WAD);
@@ -509,7 +509,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[1])),                  dTime2_rpt * 10 + dTime3_rpt * 30);
 
         // Staker-0 withdraws 5 * WAD at time = (2 days + 1 hours)
-        stakers[0].mplRewards_withdraw(rewardsContract, 5 * WAD);
+        stakers[0].mplRewards_withdraw(address(rewardsContract), 5 * WAD);
 
         /*** Staker-0 time = (2 days + 1 hours) pre-claim ***/
         assertEq(rewardsContract.totalSupply(),                               35 * WAD);
@@ -542,10 +542,10 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[1])),                  dTime2_rpt * 10 + dTime3_rpt * 30);
 
         // Staker-0 exits at time = (3 days + 1 hours)
-        stakers[0].mplRewards_exit(rewardsContract);
+        stakers[0].mplRewards_exit(address(rewardsContract));
 
         // Staker-1 exits at time = (3 days + 1 hours)
-        stakers[1].mplRewards_exit(rewardsContract);
+        stakers[1].mplRewards_exit(address(rewardsContract));
 
         /*** Staker-0 time = (3 days + 1 hours) post-exit ***/
         assertEq(rewardsContract.totalSupply(), 0);
@@ -579,16 +579,16 @@ contract MplRewardsTest is DSTest {
 
         for (uint256 i; i < stakers.length; ++i) {
             stakingToken.mint(address(stakers[i]), 100 * WAD);
-            stakers[i].erc2258_increaseCustodyAllowance(stakingToken, address(rewardsContract), 100 * WAD);
+            stakers[i].erc2258_increaseCustodyAllowance(address(stakingToken), address(rewardsContract), 100 * WAD);
         }
 
-        stakers[0].mplRewards_stake(rewardsContract, 10 * WAD);
-        stakers[1].mplRewards_stake(rewardsContract, 30 * WAD);
+        stakers[0].mplRewards_stake(address(rewardsContract), 10 * WAD);
+        stakers[1].mplRewards_stake(address(rewardsContract), 30 * WAD);
 
         rewardToken.mint(address(rewardsContract), totalRewardsInWad);
 
-        owner.mplRewards_setRewardsDuration(rewardsContract, rewardsDuration);
-        owner.mplRewards_notifyRewardAmount(rewardsContract, totalRewardsInWad);
+        owner.mplRewards_setRewardsDuration(address(rewardsContract), rewardsDuration);
+        owner.mplRewards_notifyRewardAmount(address(rewardsContract), totalRewardsInWad);
         
         uint256 start = block.timestamp;
 
@@ -623,7 +623,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[1])),                  0);
 
         // Staker-0 claims all rewards for epoch 1
-        stakers[0].mplRewards_getReward(rewardsContract);
+        stakers[0].mplRewards_getReward(address(rewardsContract));
 
         /*** Staker-0 time = (30 days) post-claim ***/
         assertEq(rewardsContract.totalSupply(),                               40 * WAD);
@@ -651,7 +651,7 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[0])),                  dTime1_rpt * 10);
 
         // Staker-0 claims rewards, but epoch 1 is finished
-        stakers[0].mplRewards_getReward(rewardsContract);
+        stakers[0].mplRewards_getReward(address(rewardsContract));
         
         /*** Staker-0 time = (31 days) post-claim (ASSERT NOTHING CHANGES DUE TO EPOCH BEING OVER) ***/
         assertEq(rewardsContract.totalSupply(),                               40 * WAD);
@@ -673,8 +673,8 @@ contract MplRewardsTest is DSTest {
 
         rewardToken.mint(address(rewardsContract), totalRewardsInWad);
 
-        owner.mplRewards_setRewardsDuration(rewardsContract, rewardsDuration);
-        owner.mplRewards_notifyRewardAmount(rewardsContract, totalRewardsInWad);
+        owner.mplRewards_setRewardsDuration(address(rewardsContract), rewardsDuration);
+        owner.mplRewards_notifyRewardAmount(address(rewardsContract), totalRewardsInWad);
 
         assertEq(rewardsContract.rewardRate(), totalRewardsInWad / rewardsDuration);
 
@@ -701,8 +701,8 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[1])),                  0);
 
         // Staker-0 and Staker-1 exit at time = (1 days into epoch 2)
-        stakers[0].mplRewards_exit(rewardsContract);
-        stakers[1].mplRewards_exit(rewardsContract);
+        stakers[0].mplRewards_exit(address(rewardsContract));
+        stakers[1].mplRewards_exit(address(rewardsContract));
         
         /*** Staker-0 time = (1 days into epoch 2) post-exit ***/
         assertEq(rewardsContract.totalSupply(),                               0);

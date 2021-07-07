@@ -46,7 +46,7 @@ contract MplRewardsFactoryTest is DSTest {
         
         assertTrue(!notGovernor.try_mplRewards_createMplRewards(address(rewardsFactoryContract), address(1), address(2)));
 
-        address rewardsContract = governor.mplRewards_createMplRewards(rewardsFactoryContract, address(1), address(2));
+        address rewardsContract = governor.mplRewards_createMplRewards(address(rewardsFactoryContract), address(1), address(2));
 
         assertTrue(rewardsFactoryContract.isMplRewards(rewardsContract));
 
