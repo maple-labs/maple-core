@@ -30,6 +30,7 @@ import "core/stake-locker/v1/StakeLockerFactory.sol";
 import "core/treasury/v1/MapleTreasury.sol";
 import "core/usd-oracle/v1/UsdOracle.sol";
 import "core/loan/v1/interfaces/ILoan.sol";
+import "core/loan/v2/LoanfactoryV2.sol";
 
 import "./user/Borrower.sol";
 import "./user/Commoner.sol";
@@ -110,6 +111,7 @@ contract TestUtil is DSTest {
     FundingLockerFactory            flFactory;
     LiquidityLockerFactory          llFactory;
     LoanFactory                   loanFactory;
+    LoanFactoryV2               loanFactoryV2;
     PoolFactory                   poolFactory;
     StakeLockerFactory              slFactory;
     MplRewardsFactory       mplRewardsFactory;
@@ -311,13 +313,14 @@ contract TestUtil is DSTest {
     /********************************/
     /*** Factory Setup Functions ***/
     /********************************/
-    function createPoolFactory()             public { poolFactory = new PoolFactory(address(globals)); }
-    function createStakeLockerFactory()      public { slFactory   = new StakeLockerFactory(); }
-    function createLiquidityLockerFactory()  public { llFactory   = new LiquidityLockerFactory(); }
-    function createDebtLockerFactories()     public { dlFactory1  = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
-    function createLoanFactory()             public { loanFactory = new LoanFactory(address(globals)); }
-    function createCollateralLockerFactory() public { clFactory   = new CollateralLockerFactory(); }
-    function createFundingLockerFactory()    public { flFactory   = new FundingLockerFactory(); }
+    function createPoolFactory()             public { poolFactory   = new PoolFactory(address(globals)); }
+    function createStakeLockerFactory()      public { slFactory     = new StakeLockerFactory(); }
+    function createLiquidityLockerFactory()  public { llFactory     = new LiquidityLockerFactory(); }
+    function createDebtLockerFactories()     public { dlFactory1    = new DebtLockerFactory(); dlFactory2  = new DebtLockerFactory(); }
+    function createLoanFactory()             public { loanFactory   = new LoanFactory(address(globals)); }
+    function createLoanFactoryV2()           public { loanFactoryV2 = new LoanFactoryV2(address(globals)); }
+    function createCollateralLockerFactory() public { clFactory     = new CollateralLockerFactory(); }
+    function createFundingLockerFactory()    public { flFactory     = new FundingLockerFactory(); }
 
     function setUpFactories() public {
         createPoolFactory();
@@ -325,6 +328,7 @@ contract TestUtil is DSTest {
         createLiquidityLockerFactory();
         createDebtLockerFactories();
         createLoanFactory();
+        createLoanFactoryV2();
         createCollateralLockerFactory();
         createFundingLockerFactory();
 
@@ -334,9 +338,12 @@ contract TestUtil is DSTest {
         gov.setValidSubFactory( address(poolFactory), address(dlFactory1), true);
         gov.setValidSubFactory( address(poolFactory), address(dlFactory2), true);
 
-        gov.setValidLoanFactory(address(loanFactory), true);
-        gov.setValidSubFactory( address(loanFactory), address(flFactory), true);
-        gov.setValidSubFactory( address(loanFactory), address(clFactory), true);
+        gov.setValidLoanFactory(address(loanFactory),   true);
+        gov.setValidLoanFactory(address(loanFactoryV2), true);
+        gov.setValidSubFactory( address(loanFactory),   address(flFactory), true);
+        gov.setValidSubFactory( address(loanFactory),   address(clFactory), true);
+        gov.setValidSubFactory( address(loanFactoryV2), address(flFactory), true);
+        gov.setValidSubFactory( address(loanFactoryV2), address(clFactory), true);
     }
 
     /**************************************/
@@ -491,9 +498,18 @@ contract TestUtil is DSTest {
     /*** Loan Setup Functions ***/
     /****************************/
     function createLoan() public {
-        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
-        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        _createLoan(address(loanFactory));
     }
+
+    function createLoanV2() public {
+        _createLoan(address(loanFactoryV2));
+    }
+
+    function _createLoan(address _loanFactory) internal {
+        uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
+        loan1 = bob.createLoan(_loanFactory, USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+    }
+
     function createLoan(uint256[5] memory specs) public {
         loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }

@@ -124,8 +124,17 @@
     "contracts/core/loan/v1/test/Loan.t.sol": {
       "urls": ["contracts/core/loan/v1/test/Loan.t.sol"]
     },
+    "contracts/core/loan/v1/test/helpers/LoanUtil.sol": {
+      "urls":["contracts/core/loan/v1/test/helpers/LoanUtil.sol"]
+    },
+    "contracts/core/loan/v2/test/LoanV2.t.sol": {
+      "urls": ["contracts/core/loan/v2/test/LoanV2.t.sol"]
+    },
     "contracts/core/loan/v1/test/LoanFactory.t.sol": {
       "urls": ["contracts/core/loan/v1/test/LoanFactory.t.sol"]
+    },
+    "contracts/core/loan/v2/test/LoanFactoryV2.t.sol": {
+      "urls": ["contracts/core/loan/v2/test/LoanFactoryV2.t.sol"]
     },
     "contracts/core/loan/v1/test/LoanLiquidation.t.sol": {
       "urls": ["contracts/core/loan/v1/test/LoanLiquidation.t.sol"]
