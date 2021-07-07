@@ -30,7 +30,7 @@ import "core/stake-locker/v1/StakeLockerFactory.sol";
 import "core/treasury/v1/MapleTreasury.sol";
 import "core/usd-oracle/v1/UsdOracle.sol";
 import "core/loan/v1/interfaces/ILoan.sol";
-import "core/loan/v2/LoanfactoryV2.sol";
+import "core/loan/v2/LoanFactoryV2.sol";
 
 import "./user/Borrower.sol";
 import "./user/Commoner.sol";
