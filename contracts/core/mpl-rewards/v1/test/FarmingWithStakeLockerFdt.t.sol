@@ -37,32 +37,4 @@ contract StakeLockerCustodialTest is CustodialTestHelper {
         mint("BPT", address(sam), 1000 * WAD);
         withdraw_test(false, 1000, 100, IStakeToken(address(stakeLocker1)));
     }
-
-    function test_rewards_single_epoch() public {
-        uint256 totalRewardsInWad = 25_000 * WAD;
-        uint256 rewardsDuration = 30 days;
-
-        Farmer[] memory farmers = new Farmer[](2);
-        farmers[0] = fay;
-        farmers[1] = fez;
-
-        Staker[] memory stakers = new Staker[](2);
-        stakers[0] = sam;
-        stakers[1] = sid;
-
-        prepareStakers(stakers, farmers, mplRewards, 100);
-
-        farmers[0].stake(10 * WAD);
-
-        uint256 start = startRewards(mpl, mplRewards, gov, totalRewardsInWad, rewardsDuration);
-
-        assertEq(mplRewards.rewardRate(), uint256(totalRewardsInWad) / rewardsDuration);
-        assertEq(mpl.balanceOf(address(mplRewards)), totalRewardsInWad);
-
-        rewards_single_epoch_test(start, farmers, mplRewards);
-    }
-
-    function test_stake_rewards_multi_epoch() public {
-        rewards_multi_epoch_test(false, 100, IStakeToken(address(stakeLocker1)));
-    }
 }

@@ -5,8 +5,7 @@ import "lib/ds-test/contracts/test.sol";
 
 import "core/globals/v1/MapleGlobals.sol";
 
-import "../interfaces/IMplRewards.sol";
-
+import "../MplRewards.sol";
 import "../MplRewardsFactory.sol";
 
 import "./accounts/MplRewardsFactoryGovernor.sol";
@@ -51,9 +50,9 @@ contract MplRewardsFactoryTest is DSTest {
 
         assertTrue(rewardsFactoryContract.isMplRewards(rewardsContract));
 
-        assertEq(address(IMplRewards(rewardsContract).rewardsToken()),    address(1));
-        assertEq(address(IMplRewards(rewardsContract).stakingToken()),    address(2));
-        assertEq(uint256(IMplRewards(rewardsContract).rewardsDuration()), 7 days);
-        assertEq(address(IMplRewards(rewardsContract).owner()),           address(governor));
+        assertEq(address(MplRewards(rewardsContract).rewardsToken()),    address(1));
+        assertEq(address(MplRewards(rewardsContract).stakingToken()),    address(2));
+        assertEq(uint256(MplRewards(rewardsContract).rewardsDuration()), 7 days);
+        assertEq(address(MplRewards(rewardsContract).owner()),           address(governor));
     }
 }
