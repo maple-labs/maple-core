@@ -3,29 +3,28 @@ pragma solidity 0.6.11;
 
 import "core/mpl-rewards/v1/MplRewards.sol";
 import "core/pool/v1/interfaces/IPool.sol";
+import "external-interfaces/IERC2258.sol";
+import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
 import "./LP.sol";
 
+// Farmers & Staker can be used interchangeablly so supporting staking functions.
 contract Farmer is LP {
 
     MplRewards public mplRewards;
-    IERC20     public poolFDT;
+    IERC20     public stakeToken;
 
-    constructor(MplRewards _mplRewards, IERC20 _poolFDT) public {
+    constructor(MplRewards _mplRewards, IERC20 _stakeToken) public {
         mplRewards = _mplRewards;
-        poolFDT    = _poolFDT;
+        stakeToken = _stakeToken;
     }
 
     /************************/
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    function approve(address account, uint256 amt) public {
-        poolFDT.approve(account, amt);
-    }
-
-    function increaseCustodyAllowance(address pool, address account, uint256 amt) public {
-        IPool(pool).increaseCustodyAllowance(account, amt);
+    function increaseCustodyAllowance(address dst, uint256 amt) public {
+        IERC2258(address(stakeToken)).increaseCustodyAllowance(dst, amt);
     }
 
     function transfer(address asset, address to, uint256 amt) public {
@@ -48,6 +47,10 @@ contract Farmer is LP {
         mplRewards.exit();
     }
 
+    function stakeTo(address stakeLocker, uint256 amt) public {
+        IStakeLocker(stakeLocker).stake(amt);
+    }
+
     /*********************/
     /*** TRY FUNCTIONS ***/
     /*********************/
@@ -62,8 +65,24 @@ contract Farmer is LP {
         (ok,) = address(mplRewards).call(abi.encodeWithSignature(sig, amt));
     }
 
-    function try_increaseCustodyAllowance(address pool, address account, uint256 amt) external returns (bool ok) {
+    function try_increaseCustodyAllowance(address account, uint256 amt) external returns (bool ok) {
         string memory sig = "increaseCustodyAllowance(address,uint256)";
-        (ok,) = pool.call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(stakeToken).call(abi.encodeWithSignature(sig, account, amt));
     }
+
+    function try_stakeTo(address stakeLocker, uint256 amt) external returns (bool ok) {
+        string memory sig = "stake(uint256)";
+        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_unstake(address stakeLocker, uint256 amt) external returns (bool ok) {
+        string memory sig = "unstake(uint256)";
+        (ok,) = address(stakeLocker).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_intendToUnstake(address stakeLocker) external returns (bool ok) {
+        string memory sig = "intendToUnstake()";
+        (ok,) = stakeLocker.call(abi.encodeWithSignature(sig));
+    }
+
 }

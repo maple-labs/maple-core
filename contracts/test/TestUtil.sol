@@ -7,6 +7,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "module/maple-token/contracts/MapleToken.sol";
 
 import "external-interfaces/IBPool.sol";
+import "external-interfaces/IERC2258.sol";
 import "external-interfaces/IBFactory.sol";
 import "external-interfaces/IUniswapV2Factory.sol";
 import "external-interfaces/IUniswapV2Pair.sol";
@@ -504,15 +505,15 @@ contract TestUtil is DSTest {
     /*************************************/
     /*** Yield Farming Setup Functions ***/
     /*************************************/
-    function setUpMplRewards() public {
-        mplRewards = gov.createMplRewards(address(mpl), address(pool1));
+    function setUpMplRewards(address stakeToken) public {
+        mplRewards = gov.createMplRewards(address(mpl), stakeToken);
         fakeGov.setGovMplRewards(mplRewards);                            // Used to assert failures
     }
 
     function createFarmers() public {
-        fay = new Farmer(mplRewards, pool1);
-        fez = new Farmer(mplRewards, pool1);
-        fox = new Farmer(mplRewards, pool1);
+        fay = new Farmer(mplRewards, IERC20(address(mplRewards.stakingToken())));
+        fez = new Farmer(mplRewards, IERC20(address(mplRewards.stakingToken())));
+        fox = new Farmer(mplRewards, IERC20(address(mplRewards.stakingToken())));
     }
 
     function setUpFarmers(uint256 amt1, uint256 amt2, uint256 amt3) public {
@@ -548,6 +549,11 @@ contract TestUtil is DSTest {
         tokens["WBTC"].addr = WBTC;
         tokens["WBTC"].slot = 0;
         tokens["WBTC"].orcl = 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
+    }
+
+    function addBPoolInTokenSlots() public {
+        tokens["BPT"].addr = address(bPool);
+        tokens["BPT"].slot = 0;
     }
 
     // Manipulate mainnet ERC20 balance
@@ -706,7 +712,7 @@ contract TestUtil is DSTest {
     }
 
     function stakeIntoFarm(Farmer farmer, uint256 amt) internal{
-        farmer.increaseCustodyAllowance(address(pool1), address(mplRewards), amt);
+        farmer.increaseCustodyAllowance(address(mplRewards), amt);
         farmer.stake(amt);
     }
 
@@ -821,6 +827,10 @@ contract TestUtil is DSTest {
 
     function toWad(uint256 amt) internal pure returns (uint256) {
         return amt.mul(WAD).div(USD);
+    }
+
+    function toUsd(uint256 amt) internal pure returns (uint256) {
+        return amt.mul(USD).div(WAD);
     }
 
     // function test_cheat_code_for_slot() public {
