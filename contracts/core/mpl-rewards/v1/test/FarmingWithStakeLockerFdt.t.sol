@@ -37,12 +37,4 @@ contract StakeLockerCustodialTest is CustodialTestHelper {
         mint("BPT", address(sam), 1000 * WAD);
         withdraw_test(false, 1000, 100, IStakeToken(address(stakeLocker1)));
     }
-
-    function test_rewards_single_epoch() public {
-        rewards_single_epoch_test(false, 100, IStakeToken(address(stakeLocker1)));
-    }
-
-    function test_rewards_multi_epoch() public {
-        rewards_multi_epoch_test(false, 100, IStakeToken(address(stakeLocker1)));
-    }
 }

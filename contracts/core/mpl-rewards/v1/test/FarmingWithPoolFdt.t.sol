@@ -194,12 +194,4 @@ contract PoolCustodialTest is CustodialTestHelper {
     function test_withdraw() public {
         withdraw_test(true, 1000, 100, IStakeToken(address(pool1)));
     }
-
-    function test_rewards_single_epoch() public {
-        rewards_single_epoch_test(true, 100, IStakeToken(address(pool1)));
-    }
-
-    function test_rewards_multi_epoch() public {
-        rewards_multi_epoch_test(true, 100, IStakeToken(address(pool1)));
-    }
 }

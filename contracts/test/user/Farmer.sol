@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "core/mpl-rewards/v1/MplRewards.sol";
 import "core/pool/v1/interfaces/IPool.sol";
-import "external-interfaces/IERC2258.sol";
+import "core/custodial-ownership-token/v1/interfaces/IERC2258.sol";
 import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
 import "./LP.sol";

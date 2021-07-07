@@ -1,43 +1,58 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
-pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import "lib/ds-test/contracts/test.sol";
 
-contract MplRewardsFactoryTest is TestUtil {
+import "core/globals/v1/MapleGlobals.sol";
 
-    function setUp() public {
-        setUpGlobals();
-        setUpMplRewardsFactory();
+import "../MplRewards.sol";
+import "../MplRewardsFactory.sol";
+
+import "./accounts/MplRewardsFactoryGovernor.sol";
+
+interface Hevm {
+    function warp(uint256) external;
+    function store(address,bytes32,bytes32) external;
+}
+
+contract MplRewardsFactoryTest is DSTest {
+
+    Hevm hevm;
+
+    constructor() public {
+        hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code"))))));
     }
 
-    function test_constructor() public {
-        MplRewardsFactory _mplRewardsFactory = new MplRewardsFactory(address(globals));  // Setup MplRewardsFactory to support MplRewards creation.
-        assertEq(address(_mplRewardsFactory.globals()), address(globals));
+    function test_constructor() external {
+        MplRewardsFactory rewardsFactoryContract = new MplRewardsFactory(address(1));
+        assertEq(address(rewardsFactoryContract.globals()), address(1));
     }
 
-    function test_createMplRewards() public {
-        address mockPool = address(1);  // Fake pool address so a pool doesn't have to be instantiated for PoolFDTs
+    function test_setGlobals() external {
+        MplRewardsFactoryGovernor governor       = new MplRewardsFactoryGovernor();
+        MplRewardsFactoryGovernor notGovernor    = new MplRewardsFactoryGovernor();
+        MapleGlobals mapleGlobalsContract        = new MapleGlobals(address(governor), address(1), address(2));
+        MplRewardsFactory rewardsFactoryContract = new MplRewardsFactory(address(mapleGlobalsContract));
 
-        // Assert permissioning
-        assertTrue(!fakeGov.try_createMplRewards(address(mpl), mockPool));
-        assertTrue(     gov.try_createMplRewards(address(mpl), mockPool));
-
-        MplRewards mplRewards = MplRewards(gov.createMplRewards(address(mpl), mockPool));
-
-        // Validate the storage of mplRewardsFactory
-        assertTrue(mplRewardsFactory.isMplRewards(address(mplRewards)));
-
-        // Validate the storage of mplRewards.
-        assertEq(address(mplRewards.rewardsToken()), address(mpl));
-        assertEq(address(mplRewards.stakingToken()),     mockPool);
-        assertEq(mplRewards.rewardsDuration(),             7 days);
-        assertEq(address(mplRewards.owner()),        address(gov));
+        assertTrue(!notGovernor.try_mplRewards_setGlobals(address(rewardsFactoryContract), address(1)));
+        assertTrue(    governor.try_mplRewards_setGlobals(address(rewardsFactoryContract), address(1)));
     }
 
-    function test_setGlobals() public {
-        assertTrue(!fakeGov.try_setGlobals(address(mplRewardsFactory), address(1)));
-        assertTrue(     gov.try_setGlobals(address(mplRewardsFactory), address(1)));
-        assertEq(address(mplRewardsFactory.globals()), address(1));
+    function test_createMplRewards() external {
+        MplRewardsFactoryGovernor governor       = new MplRewardsFactoryGovernor();
+        MplRewardsFactoryGovernor notGovernor    = new MplRewardsFactoryGovernor();
+        MapleGlobals mapleGlobalsContract        = new MapleGlobals(address(governor), address(1), address(2));
+        MplRewardsFactory rewardsFactoryContract = new MplRewardsFactory(address(mapleGlobalsContract));
+        
+        assertTrue(!notGovernor.try_mplRewards_createMplRewards(address(rewardsFactoryContract), address(1), address(2)));
+
+        address rewardsContract = governor.mplRewards_createMplRewards(address(rewardsFactoryContract), address(1), address(2));
+
+        assertTrue(rewardsFactoryContract.isMplRewards(rewardsContract));
+
+        assertEq(address(MplRewards(rewardsContract).rewardsToken()),    address(1));
+        assertEq(address(MplRewards(rewardsContract).stakingToken()),    address(2));
+        assertEq(uint256(MplRewards(rewardsContract).rewardsDuration()), 7 days);
+        assertEq(address(MplRewards(rewardsContract).owner()),           address(governor));
     }
 }
