@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "test/TestUtil.sol";
 import "test/user/Custodian.sol";
-import "./IStakeToken.sol";
+import "core/mpl-rewards/v1/test/helper/IStakeToken.sol";
 
 contract CustodialTestHelper is TestUtil {
 
