@@ -1,18 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
+import "core/calculator/v1/interfaces/ICalc.sol";
+
 /// @title RepaymentCalc calculates payment amounts on Loans.
-interface IRepaymentCalc {
-
-    /**
-        @dev The Calculator type: INTEREST type.
-     */
-    function calcType() external view returns (uint8);
-
-    /**
-        @dev The name of the Calculator.
-     */
-    function name() external view returns (bytes32);
+interface IRepaymentCalc is ICalc {
 
     /**
         @dev    Calculates the next payment for a Loan.

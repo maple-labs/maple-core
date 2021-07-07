@@ -12,7 +12,7 @@ contract RepaymentCalc is IRepaymentCalc {
 
 	using SafeMath for uint256;
 
-    uint8   public override constant calcType = 10;
+    uint8   public override constant calcType = 10;               // INTEREST type.
     bytes32 public override constant name     = "INTEREST_ONLY";
 
     function getNextPayment(address _loan) external override view returns (uint256 total, uint256 principalOwed, uint256 interest) {

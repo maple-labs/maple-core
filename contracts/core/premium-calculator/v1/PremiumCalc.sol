@@ -12,7 +12,7 @@ contract PremiumCalc is IPremiumCalc {
 
     using SafeMath for uint256;
 
-    uint8   public override constant calcType = 12;
+    uint8   public override constant calcType = 12;      // PREMIUM type.
     bytes32 public override constant name     = "FLAT";
 
     uint256 public override immutable premiumFee;
