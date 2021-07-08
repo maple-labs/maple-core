@@ -1,23 +1,11 @@
 {
   "language": "Solidity",
   "sources": {
-    "contracts/core/chainlink-oracle/v1/interfaces/IChainlinkOracle.sol": {
-      "urls": ["contracts/core/chainlink-oracle/v1/interfaces/IChainlinkOracle.sol"]
-    },
     "contracts/core/chainlink-oracle/v1/ChainlinkOracle.sol": {
       "urls": ["contracts/core/chainlink-oracle/v1/ChainlinkOracle.sol"]
     },
     "contracts/core/chainlink-oracle/v1/test/ChainLinkOracle.t.sol": {
       "urls": ["contracts/core/chainlink-oracle/v1/test/ChainLinkOracle.t.sol"]
-    },
-    "contracts/core/collateral-locker/v1/interfaces/ICollateralLocker.sol": {
-      "urls": ["contracts/core/collateral-locker/v1/interfaces/ICollateralLocker.sol"]
-    },
-    "contracts/core/collateral-locker/v1/interfaces/ICollateralLockerFactory.sol": {
-      "urls": ["contracts/core/collateral-locker/v1/interfaces/ICollateralLockerFactory.sol"]
-    },
-    "contracts/core/collateral-locker/v1/CollateralLocker.sol": {
-      "urls": ["contracts/core/collateral-locker/v1/CollateralLocker.sol"]
     },
     "contracts/core/collateral-locker/v1/CollateralLockerFactory.sol": {
       "urls": ["contracts/core/collateral-locker/v1/CollateralLockerFactory.sol"]
@@ -25,38 +13,17 @@
     "contracts/core/collateral-locker/v1/test/CollateralLockerFactory.t.sol": {
       "urls": ["contracts/core/collateral-locker/v1/test/CollateralLockerFactory.t.sol"]
     },
-    "contracts/core/debt-locker/v1/interfaces/IDebtLocker.sol": {
-      "urls": ["contracts/core/debt-locker/v1/interfaces/IDebtLocker.sol"]
-    },
-    "contracts/core/debt-locker/v1/interfaces/IDebtLockerFactory.sol": {
-      "urls": ["contracts/core/debt-locker/v1/interfaces/IDebtLockerFactory.sol"]
-    },
-    "contracts/core/debt-locker/v1/DebtLocker.sol": {
-      "urls": ["contracts/core/debt-locker/v1/DebtLocker.sol"]
-    },
     "contracts/core/debt-locker/v1/DebtLockerFactory.sol": {
       "urls": ["contracts/core/debt-locker/v1/DebtLockerFactory.sol"]
     },
     "contracts/core/debt-locker/v1/test/DebtLockerFactory.t.sol": {
       "urls": ["contracts/core/debt-locker/v1/test/DebtLockerFactory.t.sol"]
     },
-    "contracts/core/funding-locker/v1/FundingLocker.sol": {
-      "urls": ["contracts/core/funding-locker/v1/FundingLocker.sol"]
-    },
     "contracts/core/funding-locker/v1/FundingLockerFactory.sol": {
       "urls": ["contracts/core/funding-locker/v1/FundingLockerFactory.sol"]
     },
-    "contracts/core/funding-locker/v1/interfaces/IFundingLocker.sol": {
-      "urls": ["contracts/core/funding-locker/v1/interfaces/IFundingLocker.sol"]
-    },
-    "contracts/core/funding-locker/v1/interfaces/IFundingLockerFactory.sol": {
-      "urls": ["contracts/core/funding-locker/v1/interfaces/IFundingLockerFactory.sol"]
-    },
     "contracts/core/funding-locker/v1/test/FundingLockerFactory.t.sol": {
       "urls": ["contracts/core/funding-locker/v1/test/FundingLockerFactory.t.sol"]
-    },
-    "contracts/core/globals/v1/interfaces/IMapleGlobals.sol": {
-      "urls": ["contracts/core/globals/v1/interfaces/IMapleGlobals.sol"]
     },
     "contracts/core/globals/v1/MapleGlobals.sol": {
       "urls": ["contracts/core/globals/v1/MapleGlobals.sol"]
@@ -64,35 +31,14 @@
     "contracts/core/globals/v1/test/MapleGlobals.t.sol": {
       "urls": ["contracts/core/globals/v1/test/MapleGlobals.t.sol"]
     },
-    "contracts/core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol": {
-      "urls": ["contracts/core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol"]
-    },
     "contracts/core/late-fee-calculator/v1/LateFeeCalc.sol": {
       "urls": ["contracts/core/late-fee-calculator/v1/LateFeeCalc.sol"]
     },
     "contracts/core/late-fee-calculator/v1/test/LateFeeCalc.t.sol": {
       "urls": ["contracts/core/late-fee-calculator/v1/test/LateFeeCalc.t.sol"]
     },
-    "contracts/core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol": {
-      "urls": ["contracts/core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol"]
-    },
-    "contracts/core/liquidity-locker/v1/interfaces/ILiquidityLockerFactory.sol": {
-      "urls": ["contracts/core/liquidity-locker/v1/interfaces/ILiquidityLockerFactory.sol"]
-    },
-    "contracts/core/liquidity-locker/v1/LiquidityLocker.sol": {
-      "urls": ["contracts/core/liquidity-locker/v1/LiquidityLocker.sol"]
-    },
     "contracts/core/liquidity-locker/v1/LiquidityLockerFactory.sol": {
       "urls": ["contracts/core/liquidity-locker/v1/LiquidityLockerFactory.sol"]
-    },
-    "contracts/core/loan/v1/interfaces/ILoan.sol": {
-      "urls": ["contracts/core/loan/v1/interfaces/ILoan.sol"]
-    },
-    "contracts/core/loan/v1/interfaces/ILoanFactory.sol": {
-      "urls": ["contracts/core/loan/v1/interfaces/ILoanFactory.sol"]
-    },
-    "contracts/core/loan/v1/Loan.sol": {
-      "urls": ["contracts/core/loan/v1/Loan.sol"]
     },
     "contracts/core/loan/v1/LoanFactory.sol": {
       "urls": ["contracts/core/loan/v1/LoanFactory.sol"]
@@ -105,15 +51,6 @@
     },
     "contracts/core/loan/v1/test/LoanLiquidation.t.sol": {
       "urls": ["contracts/core/loan/v1/test/LoanLiquidation.t.sol"]
-    },
-    "contracts/core/mpl-rewards/v1/interfaces/IMplRewards.sol": {
-      "urls": ["contracts/core/mpl-rewards/v1/interfaces/IMplRewards.sol"]
-    },
-    "contracts/core/mpl-rewards/v1/interfaces/IMplRewardsFactory.sol": {
-      "urls": ["contracts/core/mpl-rewards/v1/interfaces/IMplRewardsFactory.sol"]
-    },
-    "contracts/core/mpl-rewards/v1/MplRewards.sol": {
-      "urls": ["contracts/core/mpl-rewards/v1/MplRewards.sol"]
     },
     "contracts/core/mpl-rewards/v1/MplRewardsFactory.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/MplRewardsFactory.sol"]
@@ -129,15 +66,6 @@
     },
     "contracts/core/mpl-rewards/v1/test/MplRewardsFactory.t.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/test/MplRewardsFactory.t.sol"]
-    },
-    "contracts/core/pool/v1/interfaces/IPool.sol": {
-      "urls": ["contracts/core/pool/v1/interfaces/IPool.sol"]
-    },
-    "contracts/core/pool/v1/interfaces/IPoolFactory.sol": {
-      "urls": ["contracts/core/pool/v1/interfaces/IPoolFactory.sol"]
-    },
-    "contracts/core/pool/v1/Pool.sol": {
-      "urls": ["contracts/core/pool/v1/Pool.sol"]
     },
     "contracts/core/pool/v1/PoolFactory.sol": {
       "urls": ["contracts/core/pool/v1/PoolFactory.sol"]
@@ -163,32 +91,17 @@
     "contracts/core/pool/v1/test/PoolLiquidityProvider.t.sol": {
       "urls": ["contracts/core/pool/v1/test/PoolLiquidityProvider.t.sol"]
     },
-    "contracts/core/premium-calculator/v1/interfaces/IPremiumCalc.sol": {
-      "urls": ["contracts/core/premium-calculator/v1/interfaces/IPremiumCalc.sol"]
-    },
     "contracts/core/premium-calculator/v1/PremiumCalc.sol": {
       "urls": ["contracts/core/premium-calculator/v1/PremiumCalc.sol"]
     },
     "contracts/core/premium-calculator/v1/test/PremiumCalc.t.sol": {
       "urls": ["contracts/core/premium-calculator/v1/test/PremiumCalc.t.sol"]
     },
-    "contracts/core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol": {
-      "urls": ["contracts/core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol"]
-    },
     "contracts/core/repayment-calculator/v1/RepaymentCalc.sol": {
       "urls": ["contracts/core/repayment-calculator/v1/RepaymentCalc.sol"]
     },
     "contracts/core/repayment-calculator/v1/test/RepaymentCalc.t.sol": {
       "urls": ["contracts/core/repayment-calculator/v1/test/RepaymentCalc.t.sol"]
-    },
-    "contracts/core/stake-locker/v1/interfaces/IStakeLocker.sol": {
-      "urls": ["contracts/core/stake-locker/v1/interfaces/IStakeLocker.sol"]
-    },
-    "contracts/core/stake-locker/v1/interfaces/IStakeLockerFactory.sol": {
-      "urls": ["contracts/core/stake-locker/v1/interfaces/IStakeLockerFactory.sol"]
-    },
-    "contracts/core/stake-locker/v1/StakeLocker.sol": {
-      "urls": ["contracts/core/stake-locker/v1/StakeLocker.sol"]
     },
     "contracts/core/stake-locker/v1/StakeLockerFactory.sol": {
       "urls": ["contracts/core/stake-locker/v1/StakeLockerFactory.sol"]
@@ -199,17 +112,11 @@
     "contracts/core/stake-locker/v1/test/StakeLockerFactory.t.sol": {
       "urls": ["contracts/core/stake-locker/v1/test/StakeLockerFactory.t.sol"]
     },
-    "contracts/core/treasury/v1/interfaces/IMapleTreasury.sol": {
-      "urls": ["contracts/core/treasury/v1/interfaces/IMapleTreasury.sol"]
-    },
     "contracts/core/treasury/v1/MapleTreasury.sol": {
       "urls": ["contracts/core/treasury/v1/MapleTreasury.sol"]
     },
     "contracts/core/treasury/v1/test/MapleTreasury.t.sol": {
       "urls": ["contracts/core/treasury/v1/test/MapleTreasury.t.sol"]
-    },
-    "contracts/core/usd-oracle/v1/interfaces/IUsdOracle.sol": {
-      "urls": ["contracts/core/usd-oracle/v1/interfaces/IUsdOracle.sol"]
     },
     "contracts/core/usd-oracle/v1/UsdOracle.sol": {
       "urls": ["contracts/core/usd-oracle/v1/UsdOracle.sol"]
@@ -217,59 +124,14 @@
     "contracts/libraries/loan/v1/LoanLib.sol": {
       "urls": ["contracts/libraries/loan/v1/LoanLib.sol"]
     },
-    "contracts/libraries/math/v1/SafeMathInt.sol": {
-      "urls": ["contracts/libraries/math/v1/SafeMathInt.sol"]
-    },
-    "contracts/libraries/math/v1/SafeMathUint.sol": {
-      "urls": ["contracts/libraries/math/v1/SafeMathUint.sol"]
-    },
     "contracts/libraries/pool/v1/PoolLib.sol": {
       "urls": ["contracts/libraries/pool/v1/PoolLib.sol"]
     },
     "contracts/libraries/util/v1/Util.sol": {
       "urls": ["contracts/libraries/util/v1/Util.sol"]
     },
-    "contracts/test/user/Borrower.sol": {
-      "urls": ["contracts/test/user/Borrower.sol"]
-    },
-    "contracts/test/user/Commoner.sol": {
-      "urls": ["contracts/test/user/Commoner.sol"]
-    },
-    "contracts/test/user/Custodian.sol": {
-      "urls": ["contracts/test/user/Custodian.sol"]
-    },
-    "contracts/test/user/EmergencyAdmin.sol": {
-      "urls": ["contracts/test/user/EmergencyAdmin.sol"]
-    },
-    "contracts/test/user/Farmer.sol": {
-      "urls": ["contracts/test/user/Farmer.sol"]
-    },
-    "contracts/test/user/Governor.sol": {
-      "urls": ["contracts/test/user/Governor.sol"]
-    },
-    "contracts/test/user/Holder.sol": {
-      "urls": ["contracts/test/user/Holder.sol"]
-    },
-    "contracts/test/user/Lender.sol": {
-      "urls": ["contracts/test/user/Lender.sol"]
-    },
-    "contracts/test/user/LP.sol": {
-      "urls": ["contracts/test/user/LP.sol"]
-    },
-    "contracts/test/user/PoolDelegate.sol": {
-      "urls": ["contracts/test/user/PoolDelegate.sol"]
-    },
-    "contracts/test/user/SecurityAdmin.sol": {
-      "urls": ["contracts/test/user/SecurityAdmin.sol"]
-    },
-    "contracts/test/user/Staker.sol": {
-      "urls": ["contracts/test/user/Staker.sol"]
-    },
     "contracts/test/Gulp.t.sol": {
       "urls": ["contracts/test/Gulp.t.sol"]
-    },
-    "contracts/test/TestUtil.sol": {
-      "urls": ["contracts/test/TestUtil.sol"]
     }
   },
   "settings": {
@@ -296,18 +158,10 @@
       "*": {
         "*": [
           "abi",
-          "devdoc",
-          "userdoc",
           "metadata",
           "evm.bytecode",
           "evm.deployedBytecode",
-          "storageLayout",
-          "evm.bytecode.sourceMap",
-          "evm.bytecode.linkReferences",
-          "evm.bytecode.generatedSources",
-          "evm.deployedBytecode.sourceMap",
-          "evm.deployedBytecode.linkReferences",
-          "evm.deployedBytecode.generatedSources"
+          "evm.gasEstimates"
         ],
         "": ["ast"]
       }
