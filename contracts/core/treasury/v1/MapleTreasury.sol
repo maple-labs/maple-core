@@ -9,7 +9,7 @@ import "../../../external-interfaces/IUniswapRouter.sol";
 
 import "libraries/util/v1/Util.sol";
 
-import "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
+import "../..//globals/v1/interfaces/IMapleGlobals.sol";
 
 import "./interfaces/IMapleTreasury.sol";
 

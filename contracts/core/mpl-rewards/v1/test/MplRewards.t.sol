@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 import "lib/ds-test/contracts/test.sol";
 import "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
-import "../../../../core/custodial-ownership-token/v1/ERC2258.sol";
+import "../../../custodial-ownership-token/v1/ERC2258.sol";
 
 import "../MplRewards.sol";
 

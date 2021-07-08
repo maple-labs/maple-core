@@ -6,7 +6,7 @@ import "../../../../lib/openzeppelin-contracts/contracts/math/Math.sol";
 import "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "../../../../core/custodial-ownership-token/v1/interfaces/IERC2258.sol";
+import "../../custodial-ownership-token/v1/interfaces/IERC2258.sol";
 
 import "./interfaces/IMplRewards.sol";
 

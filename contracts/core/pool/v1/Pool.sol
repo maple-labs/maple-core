@@ -5,12 +5,12 @@ import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.s
 
 import "libraries/pool/v1/PoolLib.sol";
 
-import "../../../../core/debt-locker/v1/interfaces/IDebtLocker.sol";
-import "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
-import "../../../../core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
-import "../../../../core/liquidity-locker/v1/interfaces/ILiquidityLockerFactory.sol";
-import "../../../../core/stake-locker/v1/interfaces/IStakeLocker.sol";
-import "../../../../core/stake-locker/v1/interfaces/IStakeLockerFactory.sol";
+import "../../debt-locker/v1/interfaces/IDebtLocker.sol";
+import "../..//globals/v1/interfaces/IMapleGlobals.sol";
+import "../../liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
+import "../../liquidity-locker/v1/interfaces/ILiquidityLockerFactory.sol";
+import "../../stake-locker/v1/interfaces/IStakeLocker.sol";
+import "../../stake-locker/v1/interfaces/IStakeLockerFactory.sol";
 
 import "./interfaces/IPool.sol";
 import "./interfaces/IPoolFactory.sol";

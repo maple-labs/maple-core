@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "../../../../core/funds-distribution-token/v1/interfaces/IExtendedFDT.sol";
+import "../../../funds-distribution-token/v1/interfaces/IExtendedFDT.sol";
 
 /// @title StakeLockerFDT inherits ExtendedFDT and accounts for gains/losses for Stakers.
 interface IStakeLockerFDT is IExtendedFDT {

@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "../../../../core/custodial-ownership-token/v1/interfaces/IERC2258.sol";
+import "../../../custodial-ownership-token/v1/interfaces/IERC2258.sol";
 
 /// @title MplRewards Synthetix farming contract fork for liquidity mining.
 interface IMplRewards {
