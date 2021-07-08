@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-import "lib/openzeppelin-contracts/contracts/math/Math.sol";
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/math/Math.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "core/custodial-ownership-token/v1/interfaces/IERC2258.sol";
+import "../../../../core/custodial-ownership-token/v1/interfaces/IERC2258.sol";
 
 import "./interfaces/IMplRewards.sol";
 

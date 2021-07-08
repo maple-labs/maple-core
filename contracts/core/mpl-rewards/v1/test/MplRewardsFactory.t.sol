@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "lib/ds-test/contracts/test.sol";
 
-import "core/globals/v1/MapleGlobals.sol";
+import "../../../../core/globals/v1/MapleGlobals.sol";
 
 import "../MplRewards.sol";
 import "../MplRewardsFactory.sol";

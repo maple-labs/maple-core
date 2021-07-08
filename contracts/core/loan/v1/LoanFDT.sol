@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "core/funds-distribution-token/v1/BasicFDT.sol";
+import "../../../../core/funds-distribution-token/v1/BasicFDT.sol";
 
 import "./interfaces/ILoanFDT.sol";
 
