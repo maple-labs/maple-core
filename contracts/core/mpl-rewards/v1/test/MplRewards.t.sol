@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../../../../../lib/ds-test/contracts/test.sol";
-import "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import { DSTest } from "../../../../../lib/ds-test/contracts/test.sol";
 
-import "../../../custodial-ownership-token/v1/ERC2258.sol";
+import { ERC2258 } from "../../../custodial-ownership-token/v1/ERC2258.sol";
 
-import "../MplRewards.sol";
+import { MplRewards } from "../MplRewards.sol";
 
-import "./accounts/MplRewardsOwner.sol";
-import "./accounts/MplRewardsStaker.sol";
+import { MplRewardsOwner } from "./accounts/MplRewardsOwner.sol";
+import { MplRewardsStaker } from "./accounts/MplRewardsStaker.sol";
 
 interface Hevm {
     function warp(uint256) external;

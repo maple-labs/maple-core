@@ -2,9 +2,8 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../core/chainlink-oracle/v1/ChainlinkOracle.sol";
-import "../../core/chainlink-oracle/v1/interfaces/IChainlinkOracle.sol";
-import "../../core/pool/v1/interfaces/IPool.sol";
+import { IChainlinkOracle } from "../../core/chainlink-oracle/v1/interfaces/IChainlinkOracle.sol";
+import { IPool } from "../../core/pool/v1/interfaces/IPool.sol";
 
 contract SecurityAdmin {
 

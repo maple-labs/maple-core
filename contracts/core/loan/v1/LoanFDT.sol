@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import { SafeERC20, IERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "../../funds-distribution-token/v1/BasicFDT.sol";
+import { BasicFDT, SafeMath, SafeMathUint, SignedSafeMath, SafeMathInt } from "../../funds-distribution-token/v1/BasicFDT.sol";
 
-import "./interfaces/ILoanFDT.sol";
+import { ILoanFDT } from "./interfaces/ILoanFDT.sol";
 
 /// @title LoanFDT inherits BasicFDT and uses the original ERC-2222 logic.
 abstract contract LoanFDT is ILoanFDT, BasicFDT {

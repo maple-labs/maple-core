@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import { SafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { SafeERC20, IERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "../../../external-interfaces/IERC20Details.sol";
-import "../../../external-interfaces/IUniswapRouter.sol";
+import { IERC20Details } from "../../../external-interfaces/IERC20Details.sol";
+import { IUniswapRouter } from "../../../external-interfaces/IUniswapRouter.sol";
 
-import "../../../core/collateral-locker/v1/interfaces/ICollateralLocker.sol";
-import "../../../core/funding-locker/v1/interfaces/IFundingLocker.sol";
-import "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
-import "../../../core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
-import "../../../core/loan/v1/interfaces/ILoanFactory.sol";
-import "../../../core/premium-calculator/v1/interfaces/IPremiumCalc.sol";
-import "../../../core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol";
+import { ICollateralLocker } from "../../../core/collateral-locker/v1/interfaces/ICollateralLocker.sol";
+import { IFundingLocker } from "../../../core/funding-locker/v1/interfaces/IFundingLocker.sol";
+import { IMapleGlobals } from "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
+import { ILateFeeCalc } from "../../../core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
+import { ILoanFactory } from "../../../core/loan/v1/interfaces/ILoanFactory.sol";
+import { IPremiumCalc } from "../../../core/premium-calculator/v1/interfaces/IPremiumCalc.sol";
+import { IRepaymentCalc } from "../../../core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol";
 
-import "../../../libraries/util/v1/Util.sol";
+import { Util } from "../../../libraries/util/v1/Util.sol";
 
 /// @title LoanLib is a library of utility functions used by Loan.
 library LoanLib {

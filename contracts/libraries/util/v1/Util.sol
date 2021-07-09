@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { SafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
-import "../../../external-interfaces/IERC20Details.sol";
+import { IERC20Details } from "../../../external-interfaces/IERC20Details.sol";
 
-import "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
+import { IMapleGlobals } from "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
 
 /// @title Util is a library that contains utility functions.
 library Util {

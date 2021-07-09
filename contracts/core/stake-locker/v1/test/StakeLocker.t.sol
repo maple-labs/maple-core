@@ -2,9 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../../../test/TestUtil.sol";
-
-contract Treasury { }
+import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract StakeLockerTest is TestUtil {
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "./IStakeLockerFDT.sol";
+import { IStakeLockerFDT } from "./IStakeLockerFDT.sol";
 
 /// @title StakeLocker holds custody of stakeAsset tokens for a given Pool and earns revenue from interest.
 interface IStakeLocker is IStakeLockerFDT {

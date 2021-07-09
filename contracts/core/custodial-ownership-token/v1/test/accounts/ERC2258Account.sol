@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.6.11;
 
-import "../../interfaces/IERC2258.sol";
+import { IERC2258 } from "../../interfaces/IERC2258.sol";
 
 contract ERC2258Account {
     function erc2258_increaseCustodyAllowance(address token, address custodian, uint256 amount) external {

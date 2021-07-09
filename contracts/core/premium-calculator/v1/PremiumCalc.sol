@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { SafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
-import "../../loan/v1/interfaces/ILoan.sol";
+import { ILoan } from "../../loan/v1/interfaces/ILoan.sol";
 
-import "./interfaces/IPremiumCalc.sol";
+import { IPremiumCalc } from "./interfaces/IPremiumCalc.sol";
 
 /// @title PremiumCalc calculates premium fees on Loans.
 contract PremiumCalc is IPremiumCalc {

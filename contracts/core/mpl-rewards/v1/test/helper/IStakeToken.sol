@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.11;
 
-import "../../../../custodial-ownership-token/v1/interfaces/IERC2258.sol";
+import { IERC2258 } from "../../../../custodial-ownership-token/v1/interfaces/IERC2258.sol";
 
 interface IStakeToken is IERC2258 {
     function balanceOf  (address who)  external view returns(uint256);

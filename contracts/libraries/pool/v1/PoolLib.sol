@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import { SafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { SafeERC20, IERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "../../../external-interfaces/IBPool.sol";
-import "../../../external-interfaces/IERC20Details.sol";
+import { IBPool } from "../../../external-interfaces/IBPool.sol";
+import { IERC20Details } from "../../../external-interfaces/IERC20Details.sol";
 
-import "../../../core/debt-locker/v1/interfaces/IDebtLockerFactory.sol";
-import "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
-import "../../../core/loan/v1/interfaces/ILoan.sol";
-import "../../../core/loan/v1/interfaces/ILoanFactory.sol";
-import "../../../core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
-import "../../../core/stake-locker/v1/interfaces/IStakeLocker.sol";
+import { IDebtLockerFactory } from "../../../core/debt-locker/v1/interfaces/IDebtLockerFactory.sol";
+import { IMapleGlobals } from "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
+import { ILoan } from "../../../core/loan/v1/interfaces/ILoan.sol";
+import { ILoanFactory } from "../../../core/loan/v1/interfaces/ILoanFactory.sol";
+import { ILiquidityLocker } from "../../../core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
+import { IStakeLocker } from "../../../core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
 /// @title PoolLib is a library of utility functions used by Pool.
 library PoolLib {

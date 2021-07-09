@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../../../../../lib/ds-test/contracts/test.sol";
+import { DSTest } from "../../../../../lib/ds-test/contracts/test.sol";
 
-import "../../../globals/v1/MapleGlobals.sol";
+import { MapleGlobals } from "../../../globals/v1/MapleGlobals.sol";
 
-import "../MplRewards.sol";
-import "../MplRewardsFactory.sol";
+import { MplRewards } from "../MplRewards.sol";
+import { MplRewardsFactory } from "../MplRewardsFactory.sol";
 
-import "./accounts/MplRewardsFactoryGovernor.sol";
+import { MplRewardsFactoryGovernor } from "./accounts/MplRewardsFactoryGovernor.sol";
 
 interface Hevm {
     function warp(uint256) external;

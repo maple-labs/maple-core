@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../../../funds-distribution-token/v1/interfaces/IExtendedFDT.sol";
+import { IExtendedFDT } from "../../../funds-distribution-token/v1/interfaces/IExtendedFDT.sol";
 
 /// @title PoolFDT inherits ExtendedFDT and accounts for gains/losses for Liquidity Providers.
 interface IPoolFDT is IExtendedFDT {

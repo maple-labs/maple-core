@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import { SafeERC20, IERC20 } from  "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "../../loan/v1/interfaces/ILoan.sol";
+import { ILoan } from "../../loan/v1/interfaces/ILoan.sol";
 
-import "./interfaces/ILiquidityLocker.sol";
+import { ILiquidityLocker } from "./interfaces/ILiquidityLocker.sol";
 
 /// @title LiquidityLocker holds custody of Liquidity Asset tokens for a given Pool.
 contract LiquidityLocker is ILiquidityLocker {

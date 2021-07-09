@@ -2,8 +2,6 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "./helper/Rewards.sol";
-
 contract PoolCustodialTest is CustodialTestHelper {
 
     using SafeMath for uint256;
