@@ -266,4 +266,5 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(  fakeGov.try_acceptGovernor());
         assertEq(    globals.governor(), address(fakeGov));
     }
+
 }

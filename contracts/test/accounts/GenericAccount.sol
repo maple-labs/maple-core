@@ -2,6 +2,7 @@
 pragma solidity >=0.6.11;
 
 contract GenericAccount {
+
     function tryCall(address someContract, bytes memory someData) external returns (bool ok, bytes memory returnData) {
         (ok, returnData) = someContract.call(someData);
     }
@@ -11,4 +12,5 @@ contract GenericAccount {
         (ok, returnData) = someContract.call(someData);
         require(ok);
     }
+
 }

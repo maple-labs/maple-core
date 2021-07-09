@@ -8,8 +8,6 @@ import { IStakeToken } from "./IStakeToken.sol";
 
 contract CustodialTestHelper is TestUtil {
 
-    using SafeMath for uint256;
-
     function setupFarmingEcosystem() internal {
         setUpGlobals();
         setUpTokens();

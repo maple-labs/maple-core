@@ -4,6 +4,7 @@ pragma solidity >=0.6.11;
 import { MplRewards } from "../../MplRewards.sol";
 
 contract MplRewardsOwner {
+
     function mplRewards_transferOwnership(address mplRewards, address newOwner) external {
         MplRewards(mplRewards).transferOwnership(newOwner);
     }
@@ -51,4 +52,5 @@ contract MplRewardsOwner {
     function try_mplRewards_setPaused(address mplRewards, bool paused) external returns (bool ok) {
         (ok,) = mplRewards.call(abi.encodeWithSignature("setPaused(bool)", paused));
     }
+
 }

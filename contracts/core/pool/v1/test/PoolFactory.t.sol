@@ -282,4 +282,5 @@ contract PoolFactoryTest is TestUtil {
         assertTrue(pool.stakeLocker()     != address(0));
         assertTrue(pool.liquidityLocker() != address(0));
     }
+
 }

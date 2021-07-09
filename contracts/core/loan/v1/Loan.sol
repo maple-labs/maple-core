@@ -29,8 +29,6 @@ import { LoanFDT } from "./LoanFDT.sol";
 /// @title Loan maintains all accounting and functionality related to Loans.
 contract Loan is ILoan, LoanFDT, Pausable {
 
-    using SafeMathInt     for int256;
-    using SignedSafeMath  for int256;
     using SafeMath        for uint256;
     using SafeERC20       for IERC20;
 

@@ -38,4 +38,5 @@ contract ChainlinkOracleTest is TestUtil {
         assertTrue(securityAdmin.try_changeAggregator(address(wethOracle), 0xb022E2970b3501d8d83eD07912330d178543C1eB));
         assertEq(address(wethOracle.priceFeed()),                          0xb022E2970b3501d8d83eD07912330d178543C1eB);
     }
+
 }

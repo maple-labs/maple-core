@@ -28,4 +28,5 @@ contract CollateralLockerFactoryTest is TestUtil {
         mint("USDC", address(cl),  500 * USD);
         assertTrue(!bob.try_pull(address(cl), address(bob), 10));
     }
+
 }

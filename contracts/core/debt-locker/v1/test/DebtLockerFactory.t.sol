@@ -26,4 +26,5 @@ contract DebtLockerFactoryTest is TestUtil {
         assertEq(dl.pool(), address(this),            "Incorrect owner of the DebtLocker");
         assertEq(address(dl.liquidityAsset()),  USDC, "Incorrect address of loan asset");
     }
+
 }

@@ -77,4 +77,5 @@ contract LateFeeCalcTest is TestUtil {
             lastTotal = total;
         }
     }
+
 }

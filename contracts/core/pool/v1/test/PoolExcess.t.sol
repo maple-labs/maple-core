@@ -6,8 +6,6 @@ import { TestUtil } from "test/TestUtil.sol";
 
 contract PoolExcessTest is TestUtil {
 
-    using SafeMath for uint256;
-
     function setUp() public {
         setUpGlobals();
         setUpTokens();
@@ -65,4 +63,5 @@ contract PoolExcessTest is TestUtil {
         withinDiff(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD, 1);
         withinDiff(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD, 1);
     }
+
 }

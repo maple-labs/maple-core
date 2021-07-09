@@ -469,4 +469,5 @@ library PoolLib {
             .mul(10 ** IERC20Details(liquidityAsset).decimals())  // Convert to Liquidity Asset precision.
             .div(globals.getLatestPrice(liquidityAsset));         // Convert to Liquidity Asset value.
     }
+
 }

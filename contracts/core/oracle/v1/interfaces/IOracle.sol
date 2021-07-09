@@ -8,4 +8,5 @@ interface IOracle {
         @dev Returns the price of the asset.
      */
     function getLatestPrice() external view returns (int256);
+
 }

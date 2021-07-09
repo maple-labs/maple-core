@@ -8,4 +8,5 @@ interface ISubFactory {
         @dev The type of the factory
      */
     function factoryType() external pure returns (uint8);
+
 }

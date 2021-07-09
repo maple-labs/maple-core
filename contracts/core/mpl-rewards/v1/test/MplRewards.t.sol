@@ -11,16 +11,20 @@ import { MplRewardsOwner } from "./accounts/MplRewardsOwner.sol";
 import { MplRewardsStaker } from "./accounts/MplRewardsStaker.sol";
 
 interface Hevm {
+
     function warp(uint256) external;
     function store(address,bytes32,bytes32) external;
+
 }
 
 contract SomeERC2258 is ERC2258 {
+
     constructor(string memory name, string memory symbol) ERC2258(name, symbol) public { }
 
     function mint(address account, uint256 amount) external {
         _mint(account, amount);
     }
+
 }
 
 contract MplRewardsTest is DSTest {

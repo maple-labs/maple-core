@@ -6,8 +6,6 @@ import { TestUtil } from "test/TestUtil.sol";
 
 contract PoolTest is TestUtil {
 
-    using SafeMath for uint256;
-
     function setUp() public {
         setUpGlobals();
         setUpTokens();

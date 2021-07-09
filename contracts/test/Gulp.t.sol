@@ -6,8 +6,6 @@ import { TestUtil } from "./TestUtil.sol";
 
 contract GulpTest is TestUtil {
 
-    using SafeMath for uint256;
-
     function setUp() public {
         setUpGlobals();
         setUpTokens();
@@ -112,4 +110,5 @@ contract GulpTest is TestUtil {
         assertEq(reserve0_afterSkim,                         after_reserve0, "Should not be a change");
         assertEq(reserve1_afterSkim,                         after_reserve1, "Should not be a change");
     }
+
 }

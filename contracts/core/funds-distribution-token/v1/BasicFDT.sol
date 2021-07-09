@@ -12,6 +12,7 @@ import { IBasicFDT } from "./interfaces/IBasicFDT.sol";
 
 /// @title BasicFDT implements the basic level FDT functionality for accounting for revenues.
 abstract contract BasicFDT is IBasicFDT, ERC20 {
+
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
@@ -152,4 +153,5 @@ abstract contract BasicFDT is IBasicFDT, ERC20 {
 
         _distributeFunds(newFunds.toUint256Safe());
     }
+
 }

@@ -7,7 +7,7 @@ import { IStakeLocker } from "core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
 import { LP } from "./LP.sol";
 
-// Farmers & Staker can be used interchangeablly so supporting staking functions.
+// Farmers & Staker can be used interchangeably so supporting staking functions.
 contract Farmer is LP {
 
     MplRewards public mplRewards;
