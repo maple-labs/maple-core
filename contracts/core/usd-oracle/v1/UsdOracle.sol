@@ -11,4 +11,5 @@ contract UsdOracle is IUsdOracle {
     function getLatestPrice() public override view returns (int256) {
         return USD_PRICE;
     }
+
 }

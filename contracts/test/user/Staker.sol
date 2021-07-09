@@ -85,4 +85,5 @@ contract Staker {
         string memory sig = "increaseCustodyAllowance(address,uint256)";
         (ok,) = stakeLocker.call(abi.encodeWithSignature(sig, account, amt));
     }
+
 }

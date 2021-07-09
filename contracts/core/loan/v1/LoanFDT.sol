@@ -3,16 +3,14 @@ pragma solidity 0.6.11;
 
 import { SafeERC20, IERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import { BasicFDT, SafeMath, SafeMathUint, SignedSafeMath, SafeMathInt } from "../../funds-distribution-token/v1/BasicFDT.sol";
+import { BasicFDT, SignedSafeMath } from "../../funds-distribution-token/v1/BasicFDT.sol";
 
 import { ILoanFDT } from "./interfaces/ILoanFDT.sol";
 
 /// @title LoanFDT inherits BasicFDT and uses the original ERC-2222 logic.
 abstract contract LoanFDT is ILoanFDT, BasicFDT {
-    using SafeMath       for uint256;
-    using SafeMathUint   for uint256;
+
     using SignedSafeMath for  int256;
-    using SafeMathInt    for  int256;
     using SafeERC20      for  IERC20;
 
     IERC20 public override immutable fundsToken;
@@ -44,4 +42,5 @@ abstract contract LoanFDT is ILoanFDT, BasicFDT {
 
         return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
     }
+
 }

@@ -40,12 +40,16 @@ import { SecurityAdmin } from "./user/SecurityAdmin.sol";
 import { Staker } from "./user/Staker.sol";
 
 interface Hevm {
+
     function warp(uint256) external;
     function store(address,bytes32,bytes32) external;
+
 }
 
 interface User {
+
     function approve(address, uint256) external;
+
 }
 
 contract TestUtil is DSTest {
@@ -887,4 +891,5 @@ contract TestUtil is DSTest {
     //     }
     //     // assertTrue(false);
     // }
+
 }

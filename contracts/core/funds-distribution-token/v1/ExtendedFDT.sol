@@ -7,6 +7,7 @@ import { BasicFDT, SafeMath, SafeMathUint, SignedSafeMath, SafeMathInt } from ".
 
 /// @title ExtendedFDT implements the FDT functionality for accounting for losses.
 abstract contract ExtendedFDT is IExtendedFDT, BasicFDT {
+
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
@@ -153,4 +154,5 @@ abstract contract ExtendedFDT is IExtendedFDT, BasicFDT {
         @return A int256 representing the difference of the new and previous losses balance.
      */
     function _updateLossesBalance() internal virtual returns (int256) { }
+
 }

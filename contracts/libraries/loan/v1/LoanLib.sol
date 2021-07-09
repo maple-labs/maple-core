@@ -290,4 +290,5 @@ library LoanLib {
     function _toWad(uint256 amt, IERC20Details liquidityAsset) internal view returns (uint256) {
         return amt.mul(10 ** 18).div(10 ** liquidityAsset.decimals());
     }
+
 }

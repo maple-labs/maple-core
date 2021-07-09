@@ -118,4 +118,5 @@ contract LoanLiquidationTest is TestUtil {
         Loan wethLoan2 = createAndFundLoan(address(repaymentCalc), WETH, 0);
         performLiquidationAssertions(wethLoan2);
     }
+
 }

@@ -6,8 +6,6 @@ import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract PremiumCalcTest is TestUtil {
 
-    using SafeMath for uint256;
-
     function setUp() public {
         setUpGlobals();
         setUpPoolDelegate();
@@ -82,4 +80,5 @@ contract PremiumCalcTest is TestUtil {
 
         assertEq(beforeBal - afterBal, total);
     }
+
 }

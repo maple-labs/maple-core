@@ -12,8 +12,6 @@ import { Loan } from "./Loan.sol";
 /// @title LoanFactory instantiates Loans.
 contract LoanFactory is ILoanFactory, Pausable {
 
-    using SafeMath for uint256;
-
     uint8 public override constant CL_FACTORY = 0;
     uint8 public override constant FL_FACTORY = 2;
 

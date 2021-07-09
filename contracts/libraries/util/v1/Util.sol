@@ -28,4 +28,5 @@ library Util {
                 .div(globals.getLatestPrice(toAsset))             // Convert to `toAsset` value.
                 .div(10 ** IERC20Details(fromAsset).decimals());  // Convert from `fromAsset` decimal precision.
     }
+
 }

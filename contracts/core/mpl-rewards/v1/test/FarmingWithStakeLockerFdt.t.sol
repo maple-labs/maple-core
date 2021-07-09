@@ -4,8 +4,6 @@ pragma experimental ABIEncoderV2;
 
 contract StakeLockerCustodialTest is CustodialTestHelper {
 
-    using SafeMath for uint256;
-
     function setUp() public {
         setupFarmingEcosystem();
         setUpMplRewards(address(stakeLocker1));
@@ -35,4 +33,5 @@ contract StakeLockerCustodialTest is CustodialTestHelper {
         mint("BPT", address(sam), 1000 * WAD);
         withdraw_test(false, 1000, 100, IStakeToken(address(stakeLocker1)));
     }
+
 }

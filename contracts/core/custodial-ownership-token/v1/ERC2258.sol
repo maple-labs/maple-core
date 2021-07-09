@@ -8,6 +8,7 @@ import { IERC2258 } from "./interfaces/IERC2258.sol";
 
 /// @title ERC2258 implements the basic level functionality for a token capable of custodial ownership.
 contract ERC2258 is IERC2258, ERC20 {
+
     using SafeMath       for uint256;
 
     mapping(address => mapping(address => uint256)) public override custodyAllowance;
@@ -39,4 +40,5 @@ contract ERC2258 is IERC2258, ERC20 {
         emit CustodyTransfer(msg.sender, from, to, amount);
         emit CustodyAllowanceChanged(from, msg.sender, oldAllowance, newAllowance);
     }
+
 }

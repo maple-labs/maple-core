@@ -6,8 +6,6 @@ import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract StakeLockerTest is TestUtil {
 
-    using SafeMath for uint256;
-
     function setUp() public {
         setUpGlobals();
         setUpTokens();
@@ -660,4 +658,5 @@ contract StakeLockerTest is TestUtil {
         assertTrue(pat.try_setAllowlist(address(stakeLocker1), address(sam), true));
         assertTrue(stakeLocker1.allowed(address(sam)));
     }
+
 }

@@ -4,8 +4,6 @@ pragma experimental ABIEncoderV2;
 
 contract PoolCustodialTest is CustodialTestHelper {
 
-    using SafeMath for uint256;
-
     uint256 principalOut;        // Total outstanding principal of Pool
     uint256 liquidityLockerBal;  // Total liquidityAsset balance of LiquidityLocker
     uint256 fdtTotalSupply;      // PoolFDT total supply
@@ -192,4 +190,5 @@ contract PoolCustodialTest is CustodialTestHelper {
     function test_withdraw() public {
         withdraw_test(true, 1000, 100, IStakeToken(address(pool1)));
     }
+
 }

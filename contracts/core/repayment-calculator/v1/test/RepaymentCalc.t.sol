@@ -71,4 +71,5 @@ contract RepaymentCalcTest is TestUtil {
             lastInterest = interest;
         }
     }
+
 }

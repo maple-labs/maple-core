@@ -770,4 +770,5 @@ contract LoanTest is TestUtil {
             nextPaymentDue:    due
         });
     }
+
 }

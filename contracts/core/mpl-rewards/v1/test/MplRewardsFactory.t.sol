@@ -11,8 +11,10 @@ import { MplRewardsFactory } from "../MplRewardsFactory.sol";
 import { MplRewardsFactoryGovernor } from "./accounts/MplRewardsFactoryGovernor.sol";
 
 interface Hevm {
+
     function warp(uint256) external;
     function store(address,bytes32,bytes32) external;
+
 }
 
 contract MplRewardsFactoryTest is DSTest {
@@ -55,4 +57,5 @@ contract MplRewardsFactoryTest is DSTest {
         assertEq(uint256(MplRewards(rewardsContract).rewardsDuration()), 7 days);
         assertEq(address(MplRewards(rewardsContract).owner()),           address(governor));
     }
+
 }

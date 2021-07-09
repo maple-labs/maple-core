@@ -31,4 +31,5 @@ contract SecurityAdmin {
         string memory sig = "changeAggregator(address)";
         (ok,) = oracle.call(abi.encodeWithSignature(sig, aggregator));
     }
+
 }

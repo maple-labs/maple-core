@@ -6,8 +6,6 @@ import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract PoolTest is TestUtil {
 
-    using SafeMath for uint256;
-
     function setUp() public {
         setUpGlobals();
         setUpTokens();
@@ -393,4 +391,5 @@ contract PoolTest is TestUtil {
         assertEq(bPool.balanceOf(stakeLocker),                 stakeLockerBptBal);  // BPT owned by the stakeLocker
         assertEq(IERC20(stakeLocker).balanceOf(address(pat)),  patStakeAmount);     // Stake amount of Pool delegate in stakeLocker
     }
+
 }

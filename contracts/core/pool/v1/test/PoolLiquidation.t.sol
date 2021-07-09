@@ -362,4 +362,5 @@ contract PoolLiquidationTest is TestUtil {
 
         assertEq(liquidityLockerBal.pre - liquidityLockerBal.post, withdrawAmt);  // All Bob's USDC was transferred out of LL
     }
+
 }

@@ -43,4 +43,5 @@ contract Commoner {
         string memory sig = "unpause()";
         (ok,) = target.call(abi.encodeWithSignature(sig));
     }
+
 }

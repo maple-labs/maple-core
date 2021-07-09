@@ -5,7 +5,9 @@ pragma experimental ABIEncoderV2;
 import { IBasicFDT } from "../../core/funds-distribution-token/v1/interfaces/IBasicFDT.sol";
 
 contract Holder {
+
     function withdrawFunds(address token) external {
         IBasicFDT(token).withdrawFunds();
     }
+
 }

@@ -21,4 +21,5 @@ interface ILoanFDT is IBasicFDT {
         @dev Withdraws all available funds for a token holder.
     */
     function withdrawFunds() external override;
+
 }

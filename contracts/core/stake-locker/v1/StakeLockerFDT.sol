@@ -9,10 +9,9 @@ import { IStakeLockerFDT } from "./interfaces/IStakeLockerFDT.sol";
 
 /// @title StakeLockerFDT inherits ExtendedFDT and accounts for gains/losses for Stakers.
 abstract contract StakeLockerFDT is IStakeLockerFDT, ExtendedFDT {
+
     using SafeMath       for uint256;
-    using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
-    using SafeMathInt    for  int256;
 
     IERC20 public override immutable fundsToken;
 
@@ -59,4 +58,5 @@ abstract contract StakeLockerFDT is IStakeLockerFDT, ExtendedFDT {
 
         return int256(fundsTokenBalance).sub(int256(_prevFundsTokenBalance));
     }
+
 }

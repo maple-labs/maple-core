@@ -8,7 +8,6 @@ contract LoanFactoryTest is TestUtil {
 
     using SafeMath for uint256;
 
-
     function setUp() public {
         setUpGlobals();
         setUpCalcs();
@@ -164,4 +163,5 @@ contract LoanFactoryTest is TestUtil {
         assertEq(loan.premiumCalc(),               calcs[2], "Incorrect premium calculator");
         assertEq(loan.superFactory(),              address(loanFactory), "Incorrect super factory address");
     }
+
 }
