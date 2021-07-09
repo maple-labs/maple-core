@@ -152,30 +152,6 @@ contract LoanTest is TestUtil {
         assertEq(usdc.balanceOf(address(liquidityLocker)),                        0);
     }
 
-    function createAndFundLoan(
-        uint256 apr,
-        uint256 index,
-        uint256 numPayments,
-        uint256 requestAmount,
-        uint256 collateralRatio,
-        uint256 fundAmount
-    )
-        internal returns (Loan loan)
-    {
-        uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
-        address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
-
-        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-
-        fundAmount = constrictToRange(fundAmount, specs[3], 1E10 * USD, true);  // Fund between requestAmount and 10b USD
-
-        mint("USDC", address(leo),        fundAmount);
-        leo.approve(USDC, address(pool1), fundAmount);
-        leo.deposit(address(pool1),       fundAmount);
-
-        pat.fundLoan(address(pool1), address(loan), address(dlFactory1), fundAmount);
-    }
-
     function test_collateralRequiredForDrawdown(
         uint256 apr,
         uint256 index,
@@ -187,7 +163,7 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, WETH);
 
         address fundingLocker = loan.fundingLocker();
 
@@ -209,7 +185,7 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, WETH);
         address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
@@ -284,7 +260,7 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, WETH);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
@@ -390,7 +366,7 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, WETH);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
@@ -500,7 +476,7 @@ contract LoanTest is TestUtil {
         TestObj memory loanBalance;
         TestObj memory loanState;
 
-        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, WETH);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
 
@@ -566,7 +542,7 @@ contract LoanTest is TestUtil {
     {
         gov.setMaxSwapSlippage(10_000);  // Set 100% slippage to account for very large liquidations from fuzzing
 
-        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, WETH);
         address fundingLocker = loan.fundingLocker();
         fundAmount = IERC20(USDC).balanceOf(fundingLocker);
         uint256 wadAmount = fundAmount * WAD / USD;
@@ -645,7 +621,7 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
+        Loan loan = createAndFundLoan(apr, index, 3, requestAmount, collateralRatio, fundAmount, WETH);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker();
         fundAmount = IERC20(USDC).balanceOf(fundingLocker);
 
@@ -669,7 +645,7 @@ contract LoanTest is TestUtil {
     )
         public
     {
-        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
+        Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, WETH);
         fundAmount = usdc.balanceOf(loan.fundingLocker());
 
         drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);

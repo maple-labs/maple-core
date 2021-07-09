@@ -46,6 +46,9 @@
     "contracts/core/loan/v1/test/Loan.t.sol": {
       "urls": ["contracts/core/loan/v1/test/Loan.t.sol"]
     },
+    "contracts/core/loan/v1/test/LoanCollateralAssetOnboarding.t.sol": {
+      "urls": ["contracts/core/loan/v1/test/LoanCollateralAssetOnboarding.t.sol"]
+    },
     "contracts/core/loan/v1/test/LoanFactory.t.sol": {
       "urls": ["contracts/core/loan/v1/test/LoanFactory.t.sol"]
     },

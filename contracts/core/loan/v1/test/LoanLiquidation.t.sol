@@ -21,6 +21,7 @@ contract LoanLiquidationTest is TestUtil {
         /*** Mint balances to relevant actors ***/
         mint("WETH", address(bob),         100 ether);
         mint("WBTC", address(bob),          10 * BTC);
+        mint("AAVE", address(bob),       50000 ether);
         mint("USDC", address(leo),     100_000 * USD);
         mint("USDC", address(bob),     100_000 * USD);
         mint("USDC", address(this), 50_000_000 * USD);
@@ -98,6 +99,9 @@ contract LoanLiquidationTest is TestUtil {
         // Triangular uniswap path
         Loan wbtcLoan = createAndFundLoan(address(repaymentCalc), WBTC, 2000);
         performLiquidationAssertions(wbtcLoan);
+
+        Loan aaveLoan = createAndFundLoan(address(repaymentCalc), AAVE, 2000);
+        performLiquidationAssertions(aaveLoan);
 
         // Bilateral uniswap path
         Loan wethLoan = createAndFundLoan(address(repaymentCalc), WETH, 2000);
