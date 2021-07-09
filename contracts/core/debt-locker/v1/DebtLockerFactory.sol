@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "./interfaces/IDebtLockerFactory.sol";
+import { IDebtLockerFactory } from "./interfaces/IDebtLockerFactory.sol";
 
-import "./DebtLocker.sol";
+import { DebtLocker } from "./DebtLocker.sol";
 
 /// @title DebtLockerFactory instantiates DebtLockers.
 contract DebtLockerFactory is IDebtLockerFactory {

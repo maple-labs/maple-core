@@ -2,11 +2,11 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "external-interfaces/IBPool.sol";
+import { IBPool } from "external-interfaces/IBPool.sol";
 
-import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
+import { IStakeLocker } from "core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
 contract Staker {
 

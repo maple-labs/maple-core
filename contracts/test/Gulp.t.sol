@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "./TestUtil.sol";
+import { TestUtil } from "./TestUtil.sol";
 
 contract GulpTest is TestUtil {
 

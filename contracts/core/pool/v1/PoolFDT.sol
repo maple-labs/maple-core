@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "core/funds-distribution-token/v1/ExtendedFDT.sol";
+import { ExtendedFDT, SafeMath, SafeMathUint, SignedSafeMath, SafeMathInt } from "core/funds-distribution-token/v1/ExtendedFDT.sol";
 
-import "./interfaces/IPoolFDT.sol";
+import { IPoolFDT } from "./interfaces/IPoolFDT.sol";
 
 /// @title PoolFDT inherits ExtendedFDT and accounts for gains/losses for Liquidity Providers.
 abstract contract PoolFDT is IPoolFDT, ExtendedFDT {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.6.11;
 
-import "../../interfaces/IMplRewardsFactory.sol";
+import { IMplRewardsFactory } from "../../interfaces/IMplRewardsFactory.sol";
 
 contract MplRewardsFactoryGovernor {
     function mplRewards_setGlobals(address mplRewardsFactory, address newGlobals) external {

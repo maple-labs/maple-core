@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "core/mpl-rewards/v1/MplRewards.sol";
-import "core/pool/v1/interfaces/IPool.sol";
-import "core/custodial-ownership-token/v1/interfaces/IERC2258.sol";
-import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
+import { MplRewards } from "core/mpl-rewards/v1/MplRewards.sol";
+import { IERC2258 } from "core/custodial-ownership-token/v1/interfaces/IERC2258.sol";
+import { IStakeLocker } from "core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
-import "./LP.sol";
+import { LP } from "./LP.sol";
 
 // Farmers & Staker can be used interchangeablly so supporting staking functions.
 contract Farmer is LP {

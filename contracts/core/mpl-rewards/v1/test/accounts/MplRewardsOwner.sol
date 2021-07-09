@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.6.11;
 
-import "../../MplRewards.sol";
+import { MplRewards } from "../../MplRewards.sol";
 
 contract MplRewardsOwner {
     function mplRewards_transferOwnership(address mplRewards, address newOwner) external {

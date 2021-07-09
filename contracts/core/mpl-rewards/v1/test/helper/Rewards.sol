@@ -2,9 +2,9 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
-import "test/user/Custodian.sol";
-import "./IStakeToken.sol";
+import { TestUtil } from "test/TestUtil.sol";
+import { Custodian } from "test/user/Custodian.sol";
+import { IStakeToken } from "./IStakeToken.sol";
 
 contract CustodialTestHelper is TestUtil {
 

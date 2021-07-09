@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "core/subfactory/v1/interfaces/ISubFactory.sol";
+import { ISubFactory } from "core/subfactory/v1/interfaces/ISubFactory.sol";
 
 /// @title DebtLockerFactory instantiates DebtLockers.
 interface IDebtLockerFactory is ISubFactory {

@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+import { SafeMath } from "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { Pausable } from "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
-import "./interfaces/ILoanFactory.sol";
+import { IMapleGlobals } from "core/globals/v1/interfaces/IMapleGlobals.sol";
 
-import "./Loan.sol";
+import { ILoanFactory } from "./interfaces/ILoanFactory.sol";
+
+import { Loan } from "./Loan.sol";
 
 /// @title LoanFactory instantiates Loans.
 contract LoanFactory is ILoanFactory, Pausable {

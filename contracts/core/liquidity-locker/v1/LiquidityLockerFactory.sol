@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "./interfaces/ILiquidityLockerFactory.sol";
+import { ILiquidityLockerFactory } from "./interfaces/ILiquidityLockerFactory.sol";
 
-import "./LiquidityLocker.sol";
+import { LiquidityLocker } from "./LiquidityLocker.sol";
 
 /// @title LiquidityLockerFactory instantiates LiquidityLockers.
 contract LiquidityLockerFactory is ILiquidityLockerFactory {
