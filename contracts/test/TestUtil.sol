@@ -6,29 +6,29 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import "module/maple-token/contracts/MapleToken.sol";
 
-import "../../../external-interfaces/IBPool.sol";
-import "../../../external-interfaces/IBFactory.sol";
-import "../../../external-interfaces/IUniswapV2Factory.sol";
-import "../../../external-interfaces/IUniswapV2Pair.sol";
-import "../../../external-interfaces/IUniswapV2Router02.sol";
+import "../external-interfaces/IBPool.sol";
+import "../external-interfaces/IBFactory.sol";
+import "../external-interfaces/IUniswapV2Factory.sol";
+import "../external-interfaces/IUniswapV2Pair.sol";
+import "../external-interfaces/IUniswapV2Router02.sol";
 
-import "../../core/custodial-ownership-token/v1/interfaces/IERC2258.sol";
+import "../core/custodial-ownership-token/v1/interfaces/IERC2258.sol";
 
-import "../../core/chainlink-oracle/v1/ChainlinkOracle.sol";
-import "../../core/collateral-locker/v1/CollateralLockerFactory.sol";
-import "../../core/debt-locker/v1/DebtLockerFactory.sol";
-import "../../core/funding-locker/v1/FundingLockerFactory.sol";
-import "../../../core/globals/v1/MapleGlobals.sol";
-import "../../core/late-fee-calculator/v1/LateFeeCalc.sol";
-import "../../core/liquidity-locker/v1/LiquidityLockerFactory.sol";
-import "../../core/loan/v1/LoanFactory.sol";
-import "../../core/mpl-rewards/v1/MplRewardsFactory.sol";
-import "../../core/pool/v1/PoolFactory.sol";
-import "../../core/premium-calculator/v1/PremiumCalc.sol";
-import "../../core/repayment-calculator/v1/RepaymentCalc.sol";
-import "../../core/stake-locker/v1/StakeLockerFactory.sol";
-import "../../core/treasury/v1/MapleTreasury.sol";
-import "../../core/usd-oracle/v1/UsdOracle.sol";
+import "../core/chainlink-oracle/v1/ChainlinkOracle.sol";
+import "../core/collateral-locker/v1/CollateralLockerFactory.sol";
+import "../core/debt-locker/v1/DebtLockerFactory.sol";
+import "../core/funding-locker/v1/FundingLockerFactory.sol";
+import "../core/globals/v1/MapleGlobals.sol";
+import "../core/late-fee-calculator/v1/LateFeeCalc.sol";
+import "../core/liquidity-locker/v1/LiquidityLockerFactory.sol";
+import "../core/loan/v1/LoanFactory.sol";
+import "../core/mpl-rewards/v1/MplRewardsFactory.sol";
+import "../core/pool/v1/PoolFactory.sol";
+import "../core/premium-calculator/v1/PremiumCalc.sol";
+import "../core/repayment-calculator/v1/RepaymentCalc.sol";
+import "../core/stake-locker/v1/StakeLockerFactory.sol";
+import "../core/treasury/v1/MapleTreasury.sol";
+import "../core/usd-oracle/v1/UsdOracle.sol";
 
 import "./user/Borrower.sol";
 import "./user/Commoner.sol";
