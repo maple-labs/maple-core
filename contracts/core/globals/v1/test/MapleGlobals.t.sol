@@ -3,6 +3,9 @@ pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
 import { TestUtil } from "../../../../test/TestUtil.sol";
+import { Governor } from "../../../../test/user/Governor.sol";
+
+import { MapleGlobals } from "../MapleGlobals.sol";
 
 contract MapleGlobalsTest is TestUtil {
 

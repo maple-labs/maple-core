@@ -2,6 +2,8 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import { CustodialTestHelper, IStakeToken } from "./CustodialTestHelper.sol";
+
 contract PoolCustodialTest is CustodialTestHelper {
 
     uint256 principalOut;        // Total outstanding principal of Pool

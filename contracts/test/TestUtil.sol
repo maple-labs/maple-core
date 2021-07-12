@@ -3,6 +3,7 @@ pragma solidity 0.6.11;
 
 import { DSTest } from "../../lib/ds-test/contracts/test.sol";
 import { IERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { SafeMath } from "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 import { MapleToken } from "../../module/maple-token/contracts/MapleToken.sol";
 
@@ -19,12 +20,12 @@ import { FundingLockerFactory } from "../core/funding-locker/v1/FundingLockerFac
 import { MapleGlobals } from "../core/globals/v1/MapleGlobals.sol";
 import { LateFeeCalc } from "../core/late-fee-calculator/v1/LateFeeCalc.sol";
 import { LiquidityLockerFactory } from "../core/liquidity-locker/v1/LiquidityLockerFactory.sol";
-import { LoanFactory } from "../core/loan/v1/LoanFactory.sol";
-import { MplRewardsFactory } from "../core/mpl-rewards/v1/MplRewardsFactory.sol";
-import { PoolFactory } from "../core/pool/v1/PoolFactory.sol";
+import { Loan, LoanFactory } from "../core/loan/v1/LoanFactory.sol";
+import { MplRewards, MplRewardsFactory } from "../core/mpl-rewards/v1/MplRewardsFactory.sol";
+import { Pool, PoolFactory } from "../core/pool/v1/PoolFactory.sol";
 import { PremiumCalc } from "../core/premium-calculator/v1/PremiumCalc.sol";
 import { RepaymentCalc } from "../core/repayment-calculator/v1/RepaymentCalc.sol";
-import { StakeLockerFactory } from "../core/stake-locker/v1/StakeLockerFactory.sol";
+import { StakeLocker, StakeLockerFactory } from "../core/stake-locker/v1/StakeLockerFactory.sol";
 import { MapleTreasury } from "../core/treasury/v1/MapleTreasury.sol";
 import { UsdOracle } from "../core/usd-oracle/v1/UsdOracle.sol";
 
@@ -500,16 +501,16 @@ contract TestUtil is DSTest {
     /****************************/
     function createLoan() public {
         uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
-        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan1 = Loan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
     }
     function createLoan(uint256[5] memory specs) public {
-        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan1 = Loan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
     }
     function createLoans() public {
         uint256[5] memory specs = [500, 180, 30, uint256(1000 * USD), 2000];
-        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-        loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-        loan3 = bud.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan1 = Loan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        loan2 = Loan(ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        loan3 = Loan(bud.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
     }
 
     function createAndFundLoan(
@@ -728,7 +729,7 @@ contract TestUtil is DSTest {
             // Create loan, fund loan, draw down on loan
             address[3] memory _calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
             uint256[5] memory specs  = [apr, termDays, paymentInterval, loanAmt, 2000];
-            loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, _calcs);
+            loan1 = Loan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory),  specs, _calcs));
         }
 
         assertTrue(pat.try_fundLoan(address(pool1), address(loan1), address(dlFactory1), loanAmt));

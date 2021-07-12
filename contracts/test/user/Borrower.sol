@@ -6,7 +6,6 @@ import { IERC20 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC2
 
 import { ILoan } from "../../core/loan/v1/interfaces/ILoan.sol";
 import { ILoanFactory } from "../../core/loan/v1/interfaces/ILoanFactory.sol";
-import { Loan } from "../../core/loan/v1/Loan.sol";
 
 contract Borrower {
 
@@ -47,17 +46,14 @@ contract Borrower {
         uint256[5] memory specs,
         address[3] memory calcs
     )
-        external returns (Loan loan)
+        external returns (address)
     {
-        loan = Loan(
-            ILoanFactory(loanFactory).createLoan(liquidityAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
+        return ILoanFactory(loanFactory).createLoan(liquidityAsset, collateralAsset, flFactory, clFactory, specs, calcs);
     }
 
     function triggerDefault(address loan) external {
         ILoan(loan).triggerDefault();
     }
-
 
     /*********************/
     /*** TRY FUNCTIONS ***/

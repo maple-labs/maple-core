@@ -2,6 +2,14 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import { SafeMath } from "../../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import { IERC20Details } from "../../../../external-interfaces/IERC20Details.sol";
+
+import { IPool } from "../../../pool/v1/interfaces/IPool.sol";
+import { IStakeLocker } from "../../../stake-locker/v1/interfaces/IStakeLocker.sol";
+
 import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract PoolLiquidationTest is TestUtil {
@@ -102,7 +110,7 @@ contract PoolLiquidationTest is TestUtil {
             will be greater than 0. Calling claim() is the mechanism which settles,
             or rather updates accounting in the Pool which in turn will enable us
             to handle liquidation of BPTs in the StakeLocker accurately.
-        */
+         */
         uint256[7] memory vals_a = pat.claim(address(pool1), address(loan1), address(dlFactory1));
         uint256[7] memory vals_b = pam.claim(address(pool2), address(loan1), address(dlFactory1));
 
@@ -183,7 +191,7 @@ contract PoolLiquidationTest is TestUtil {
         assertEq(stakeLocker_a_bal.pre - stakeLocker_a_bal.post, stakeLocker1.bptLosses());  // Assert FDT loss accounting
     }
 
-    function assertPoolAccounting(Pool pool) internal {
+    function assertPoolAccounting(IPool pool) internal {
         uint256 liquidityAssetDecimals = IERC20Details(address(pool.liquidityAsset())).decimals();
 
         uint256 liquidityLockerBal = pool.liquidityAsset().balanceOf(pool.liquidityLocker());

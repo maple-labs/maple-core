@@ -2,7 +2,19 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import { SafeMath } from "../../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import { IDebtLocker } from "../../../debt-locker/v1/interfaces/IDebtLocker.sol";
+import { IDebtLockerFactory } from "../../..//debt-locker/v1/interfaces/IDebtLockerFactory.sol";
+import { ILoan } from "../../../loan/v1/interfaces/ILoan.sol";
+import { IPool } from "../../../pool/v1/interfaces/IPool.sol";
+
+import { Loan } from "../../../loan/v1/Loan.sol";
+import { PremiumCalc } from "../../../premium-calculator/v1/PremiumCalc.sol";
+
 import { TestUtil } from "../../../../test/TestUtil.sol";
+import { PoolDelegate } from "../../../../test/user/PoolDelegate.sol";
 
 contract PoolClaimTest is TestUtil {
 
@@ -64,7 +76,7 @@ contract PoolClaimTest is TestUtil {
         uint256 depositAmt = specs[3];
         mintFundsAndDepositIntoPool(lex, pool1, depositAmt, depositAmt);
 
-        Loan zero_loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        ILoan zero_loan = ILoan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
 
         // Fund the loan by pool delegate.
         assertTrue(pat.try_fundLoan(address(pool1), address(zero_loan), address(dlFactory1), depositAmt));
@@ -208,10 +220,10 @@ contract PoolClaimTest is TestUtil {
         assertEq(pool1.principalOut(), totalFundedAmount);
         assertEq(usdc.balanceOf(pool1.liquidityLocker()), beforeLLBalance - totalFundedAmount);
 
-        DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory1)));  // debtLocker1 = DebtLocker 1, for loan1 using dlFactory1
-        DebtLocker debtLocker2 = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory2)));  // debtLocker2 = DebtLocker 2, for loan1 using dlFactory2
-        DebtLocker debtLocker3 = DebtLocker(pool1.debtLockers(address(loan2), address(dlFactory1)));  // debtLocker3 = DebtLocker 3, for loan2 using dlFactory1
-        DebtLocker debtLocker4 = DebtLocker(pool1.debtLockers(address(loan2), address(dlFactory2)));  // debtLocker4 = DebtLocker 4, for loan2 using dlFactory2
+        IDebtLocker debtLocker1 = IDebtLocker(pool1.debtLockers(address(loan1), address(dlFactory1)));  // debtLocker1 = DebtLocker 1, for loan1 using dlFactory1
+        IDebtLocker debtLocker2 = IDebtLocker(pool1.debtLockers(address(loan1), address(dlFactory2)));  // debtLocker2 = DebtLocker 2, for loan1 using dlFactory2
+        IDebtLocker debtLocker3 = IDebtLocker(pool1.debtLockers(address(loan2), address(dlFactory1)));  // debtLocker3 = DebtLocker 3, for loan2 using dlFactory1
+        IDebtLocker debtLocker4 = IDebtLocker(pool1.debtLockers(address(loan2), address(dlFactory2)));  // debtLocker4 = DebtLocker 4, for loan2 using dlFactory2
 
         /*****************/
         /*** Draw Down ***/
@@ -346,14 +358,14 @@ contract PoolClaimTest is TestUtil {
             assertEq(loan2.balanceOf(getDL(pool2, loan2, dlFactory2)), toWad(fundedAmounts2[4]) + toWad(fundedAmounts2[5]));  // Balance of debtLocker4 for pool2 with dlFactory2
         }
 
-        DebtLocker debtLocker1_pool1 = DebtLocker(getDL(pool1, loan1, dlFactory1));  // debtLocker1_pool1 = DebtLocker 1, for pool1, for loan1 using dlFactory1
-        DebtLocker debtLocker2_pool1 = DebtLocker(getDL(pool1, loan1, dlFactory2));  // debtLocker2_pool1 = DebtLocker 2, for pool1, for loan1 using dlFactory2
-        DebtLocker debtLocker3_pool1 = DebtLocker(getDL(pool1, loan2, dlFactory1));  // debtLocker3_pool1 = DebtLocker 3, for pool1, for loan2 using dlFactory1
-        DebtLocker debtLocker4_pool1 = DebtLocker(getDL(pool1, loan2, dlFactory2));  // debtLocker4_pool1 = DebtLocker 4, for pool1, for loan2 using dlFactory2
-        DebtLocker debtLocker1_pool2 = DebtLocker(getDL(pool2, loan1, dlFactory1));  // debtLocker1_pool2 = DebtLocker 1, for pool2, for loan1 using dlFactory1
-        DebtLocker debtLocker2_pool2 = DebtLocker(getDL(pool2, loan1, dlFactory2));  // debtLocker2_pool2 = DebtLocker 2, for pool2, for loan1 using dlFactory2
-        DebtLocker debtLocker3_pool2 = DebtLocker(getDL(pool2, loan2, dlFactory1));  // debtLocker3_pool2 = DebtLocker 3, for pool2, for loan2 using dlFactory1
-        DebtLocker debtLocker4_pool2 = DebtLocker(getDL(pool2, loan2, dlFactory2));  // debtLocker4_pool2 = DebtLocker 4, for pool2, for loan2 using dlFactory2
+        IDebtLocker debtLocker1_pool1 = IDebtLocker(getDL(pool1, loan1, dlFactory1));  // debtLocker1_pool1 = DebtLocker 1, for pool1, for loan1 using dlFactory1
+        IDebtLocker debtLocker2_pool1 = IDebtLocker(getDL(pool1, loan1, dlFactory2));  // debtLocker2_pool1 = DebtLocker 2, for pool1, for loan1 using dlFactory2
+        IDebtLocker debtLocker3_pool1 = IDebtLocker(getDL(pool1, loan2, dlFactory1));  // debtLocker3_pool1 = DebtLocker 3, for pool1, for loan2 using dlFactory1
+        IDebtLocker debtLocker4_pool1 = IDebtLocker(getDL(pool1, loan2, dlFactory2));  // debtLocker4_pool1 = DebtLocker 4, for pool1, for loan2 using dlFactory2
+        IDebtLocker debtLocker1_pool2 = IDebtLocker(getDL(pool2, loan1, dlFactory1));  // debtLocker1_pool2 = DebtLocker 1, for pool2, for loan1 using dlFactory1
+        IDebtLocker debtLocker2_pool2 = IDebtLocker(getDL(pool2, loan1, dlFactory2));  // debtLocker2_pool2 = DebtLocker 2, for pool2, for loan1 using dlFactory2
+        IDebtLocker debtLocker3_pool2 = IDebtLocker(getDL(pool2, loan2, dlFactory1));  // debtLocker3_pool2 = DebtLocker 3, for pool2, for loan2 using dlFactory1
+        IDebtLocker debtLocker4_pool2 = IDebtLocker(getDL(pool2, loan2, dlFactory2));  // debtLocker4_pool2 = DebtLocker 4, for pool2, for loan2 using dlFactory2
 
         /*****************/
         /*** Draw Down ***/
@@ -473,7 +485,7 @@ contract PoolClaimTest is TestUtil {
 
         leo.approve(USDC, address(this), MAX_UINT);
 
-        DebtLocker debtLocker1 = DebtLocker(pool1.debtLockers(address(loan1), address(dlFactory1)));
+        IDebtLocker debtLocker1 = IDebtLocker(pool1.debtLockers(address(loan1), address(dlFactory1)));
 
         uint256 poolBal_before       = usdc.balanceOf(address(pool1));
         uint256 debtLockerBal_before = usdc.balanceOf(address(debtLocker1));
@@ -536,17 +548,17 @@ contract PoolClaimTest is TestUtil {
     /*** Helpers ***/
     /***************/
 
-    function assertConstFundLoan(Pool pool, address _loan, address dlFactory, uint256 amt, IERC20 liquidityAsset, uint256 constPoolVal) internal returns (bool) {
+    function assertConstFundLoan(IPool pool, address _loan, address dlFactory, uint256 amt, IERC20 liquidityAsset, uint256 constPoolVal) internal returns (bool) {
         assertTrue(pat.try_fundLoan(address(pool), _loan,  dlFactory, amt));
         assertTrue(isConstantPoolValue(pool, liquidityAsset, constPoolVal));
     }
 
-    function assertConstClaim(Pool pool, address _loan, address dlFactory, IERC20 liquidityAsset, uint256 constPoolVal) internal returns (bool) {
+    function assertConstClaim(IPool pool, address _loan, address dlFactory, IERC20 liquidityAsset, uint256 constPoolVal) internal returns (bool) {
         pat.claim(address(pool), _loan, dlFactory);
         assertTrue(isConstantPoolValue(pool, liquidityAsset, constPoolVal));
     }
 
-    function isConstantPoolValue(Pool pool, IERC20 liquidityAsset, uint256 constPoolVal) internal view returns (bool) {
+    function isConstantPoolValue(IPool pool, IERC20 liquidityAsset, uint256 constPoolVal) internal view returns (bool) {
         return pool.principalOut() + liquidityAsset.balanceOf(pool.liquidityLocker()) == constPoolVal;
     }
 
@@ -554,7 +566,7 @@ contract PoolClaimTest is TestUtil {
         return newAmt == uint256(0) ? uint256(0) : newAmt.mul(totalClaim).div(totalNewAmt);
     }
 
-    function getDL(Pool pool, Loan loan, DebtLockerFactory dlFactory) internal view returns (address) {
+    function getDL(IPool pool, ILoan loan, IDebtLockerFactory dlFactory) internal view returns (address) {
         return pool.debtLockers(address(loan), address(dlFactory));
     }
 
@@ -568,8 +580,8 @@ contract PoolClaimTest is TestUtil {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan1 = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
-        loan2 = ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan1 = Loan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        loan2 = Loan(ben.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
 
         depositAmt = constrictToRange(specs[3], 100 * USD, 1E10 * USD, true);  // Fund value should be between 100 USD - 1B USD
         uint256 estimatedLLBalance = 10 * depositAmt;
@@ -615,7 +627,7 @@ contract PoolClaimTest is TestUtil {
         return (totalFundedAmount, fundedAmounts);
     }
 
-    function checkClaim(DebtLocker debtLocker, Loan _loan, PoolDelegate pd, IERC20 liquidityAsset, Pool pool, address dlFactory) internal {
+    function checkClaim(IDebtLocker debtLocker, ILoan _loan, PoolDelegate pd, IERC20 liquidityAsset, IPool pool, address dlFactory) internal {
         uint256[10] memory balances = [
             liquidityAsset.balanceOf(address(debtLocker)),
             liquidityAsset.balanceOf(address(pool)),

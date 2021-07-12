@@ -2,6 +2,12 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import { SafeMath } from "../../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+
+import { PoolLib } from "../../../../libraries/pool/v1/PoolLib.sol";
+
+import { Loan } from "../../../loan/v1/Loan.sol";
+
 import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract PoolFDTLossesTest is TestUtil {
@@ -31,7 +37,7 @@ contract PoolFDTLossesTest is TestUtil {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio, (125 * minimumRequestAmt) / 100, 0, 1E7 * USD);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        custom_loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        custom_loan = Loan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
         depositAmt  = constrictToRange(requestAmount, specs[3], 1E7 * USD, true);
     }
 

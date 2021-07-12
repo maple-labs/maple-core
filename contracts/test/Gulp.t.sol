@@ -2,7 +2,10 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
 import { TestUtil } from "./TestUtil.sol";
+import { Governor } from "./user/Governor.sol";
 
 contract GulpTest is TestUtil {
 
