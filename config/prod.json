@@ -61,15 +61,6 @@
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      "core/=contracts/core/",
-      "libraries/=contracts/libraries/",
-      "external-interfaces/=contracts/external-interfaces/",
-      "test/=contracts/test/",
-      "maple-token/=module/maple-token/contracts/",
-      "ds-test/=lib/ds-test/contracts/",
-      "openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/"
-    ],
     "libraries": {
       "": {
         "contracts/libraries/loan/v1/LoanLib.sol:LoanLib": "0x51A189ccD2eB5e1168DdcA7e59F7c8f39AA52232",
