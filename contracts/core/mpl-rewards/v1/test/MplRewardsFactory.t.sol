@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/ds-test/contracts/test.sol";
+import "../../../../../lib/ds-test/contracts/test.sol";
 
 import "../../../globals/v1/MapleGlobals.sol";
 
