@@ -168,6 +168,9 @@
         ],
         "": ["ast"]
       }
+    },
+    "metadata": {
+      "bytecodeHash": "none"
     }
   }
 }
