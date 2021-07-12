@@ -4,6 +4,8 @@ pragma experimental ABIEncoderV2;
 
 import { TestUtil } from "test/TestUtil.sol";
 
+import { IDebtLocker } from "../interfaces/IDebtLocker.sol";
+
 contract DebtLockerFactoryTest is TestUtil {
 
     function setUp() public {
@@ -16,7 +18,7 @@ contract DebtLockerFactoryTest is TestUtil {
     }
 
     function test_newLocker() public {
-        DebtLocker dl  = DebtLocker(dlFactory1.newLocker(address(loan1)));
+        IDebtLocker dl  = IDebtLocker(dlFactory1.newLocker(address(loan1)));
         // Validate the storage of dlfactory.
         assertEq(  dlFactory1.owner(address(dl)), address(this));
         assertTrue(dlFactory1.isLocker(address(dl)));

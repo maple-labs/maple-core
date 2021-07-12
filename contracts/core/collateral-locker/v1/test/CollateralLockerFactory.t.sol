@@ -4,6 +4,8 @@ pragma experimental ABIEncoderV2;
 
 import { TestUtil } from "test/TestUtil.sol";
 
+import { ICollateralLocker } from "../interfaces/ICollateralLocker.sol";
+
 contract CollateralLockerFactoryTest is TestUtil {
 
     function setUp() public {
@@ -14,7 +16,7 @@ contract CollateralLockerFactoryTest is TestUtil {
     }
 
     function test_newLocker() public {
-        CollateralLocker cl  = CollateralLocker(clFactory.newLocker(USDC));
+        ICollateralLocker cl  = ICollateralLocker(clFactory.newLocker(USDC));
 
         // Validate the storage of clfactory.
         assertEq(clFactory.owner(address(cl)), address(this), "Invalid owner");

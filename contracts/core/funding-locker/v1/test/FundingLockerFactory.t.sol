@@ -4,6 +4,8 @@ pragma experimental ABIEncoderV2;
 
 import { TestUtil } from "test/TestUtil.sol";
 
+import { IFundingLocker } from "../interfaces/IFundingLocker.sol";
+
 contract FundingLockerFactoryTest is TestUtil {
 
     function setUp() public {
@@ -12,7 +14,7 @@ contract FundingLockerFactoryTest is TestUtil {
     }
 
     function test_newLocker() public {
-        FundingLocker fl  = FundingLocker(flFactory.newLocker(USDC));
+        IFundingLocker fl  = IFundingLocker(flFactory.newLocker(USDC));
 
         // Validate the storage of flfactory.
         assertEq(flFactory.owner(address(fl)), address(this));

@@ -2,7 +2,13 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+
+import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
 import { TestUtil } from "test/TestUtil.sol";
+import { Governor } from "test/user/Governor.sol";
+
+import { Loan } from "../Loan.sol";
 
 contract LoanTest is TestUtil {
 
@@ -58,7 +64,7 @@ contract LoanTest is TestUtil {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        Loan loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        Loan loan = Loan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
 
         assertEq(address(loan.liquidityAsset()),   USDC);
         assertEq(address(loan.collateralAsset()),  WETH);
@@ -93,7 +99,7 @@ contract LoanTest is TestUtil {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        Loan loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        Loan loan = Loan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
 
         address fundingLocker   = loan.fundingLocker();
         address liquidityLocker = pool1.liquidityLocker();
@@ -165,7 +171,7 @@ contract LoanTest is TestUtil {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan = bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
+        loan = Loan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
 
         fundAmount = constrictToRange(fundAmount, specs[3], 1E10 * USD, true);  // Fund between requestAmount and 10b USD
 

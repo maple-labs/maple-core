@@ -4,6 +4,8 @@ pragma experimental ABIEncoderV2;
 
 import { TestUtil } from "test/TestUtil.sol";
 
+import { IStakeLocker } from "core/stake-locker/v1/interfaces/IStakeLocker.sol";
+
 contract StakeLockerFactoryTest is TestUtil {
 
     function setUp() public {
@@ -12,7 +14,7 @@ contract StakeLockerFactoryTest is TestUtil {
     }
 
     function test_newLocker() public {
-        StakeLocker sl = StakeLocker(slFactory.newLocker(address(mpl), USDC));
+        IStakeLocker sl = IStakeLocker(slFactory.newLocker(address(mpl), USDC));
 
         // Validate the storage of slfactory.
         assertEq(slFactory.owner(address(sl)), address(this));
