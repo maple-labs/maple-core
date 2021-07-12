@@ -6,8 +6,8 @@ import "lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 import "../../../external-interfaces/IERC20Details.sol";
 
-import "libraries/loan/v1/LoanLib.sol";
-import "libraries/util/v1/Util.sol";
+import "../../../libraries/loan/v1/LoanLib.sol";
+import "../../../libraries/util/v1/Util.sol";
 
 import "../../collateral-locker/v1/interfaces/ICollateralLocker.sol";
 import "../../collateral-locker/v1/interfaces/ICollateralLockerFactory.sol";

@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../../core/globals/v1/MapleGlobals.sol";
+import "../../core/globals/v1/MapleGlobals.sol";
 import "../../core/mpl-rewards/v1/MplRewards.sol";
 import "../../core/mpl-rewards/v1/MplRewardsFactory.sol";
 import "../../core/treasury/v1/MapleTreasury.sol";

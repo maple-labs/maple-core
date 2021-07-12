@@ -7,15 +7,15 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "../../../external-interfaces/IERC20Details.sol";
 import "../../../external-interfaces/IUniswapRouter.sol";
 
-import "../../../../core/collateral-locker/v1/interfaces/ICollateralLocker.sol";
-import "../../../../core/funding-locker/v1/interfaces/IFundingLocker.sol";
+import "../../../core/collateral-locker/v1/interfaces/ICollateralLocker.sol";
+import "../../../core/funding-locker/v1/interfaces/IFundingLocker.sol";
 import "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
-import "../../../../core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
-import "../../../../core/loan/v1/interfaces/ILoanFactory.sol";
-import "../../../../core/premium-calculator/v1/interfaces/IPremiumCalc.sol";
-import "../../../../core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol";
+import "../../../core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
+import "../../../core/loan/v1/interfaces/ILoanFactory.sol";
+import "../../../core/premium-calculator/v1/interfaces/IPremiumCalc.sol";
+import "../../../core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol";
 
-import "libraries/util/v1/Util.sol";
+import "../../../libraries/util/v1/Util.sol";
 
 /// @title LoanLib is a library of utility functions used by Loan.
 library LoanLib {

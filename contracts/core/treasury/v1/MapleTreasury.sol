@@ -7,9 +7,9 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 import "../../../external-interfaces/IMapleToken.sol";
 import "../../../external-interfaces/IUniswapRouter.sol";
 
-import "libraries/util/v1/Util.sol";
+import "../../../libraries/util/v1/Util.sol";
 
-import "../..//globals/v1/interfaces/IMapleGlobals.sol";
+import "../../globals/v1/interfaces/IMapleGlobals.sol";
 
 import "./interfaces/IMapleTreasury.sol";
 

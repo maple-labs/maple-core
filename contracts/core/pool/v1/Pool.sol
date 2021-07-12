@@ -3,10 +3,10 @@ pragma solidity 0.6.11;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "libraries/pool/v1/PoolLib.sol";
+import "../../../libraries/pool/v1/PoolLib.sol";
 
 import "../../debt-locker/v1/interfaces/IDebtLocker.sol";
-import "../..//globals/v1/interfaces/IMapleGlobals.sol";
+import "../../globals/v1/interfaces/IMapleGlobals.sol";
 import "../../liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
 import "../../liquidity-locker/v1/interfaces/ILiquidityLockerFactory.sol";
 import "../../stake-locker/v1/interfaces/IStakeLocker.sol";

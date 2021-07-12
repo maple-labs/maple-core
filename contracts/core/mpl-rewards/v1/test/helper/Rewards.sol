@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "../../../../../test/TestUtil.sol";
-import "test/user/Custodian.sol";
+import "../../../../../test/user/Custodian.sol";
 import "./IStakeToken.sol";
 
 contract CustodialTestHelper is TestUtil {

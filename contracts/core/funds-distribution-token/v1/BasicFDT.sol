@@ -5,8 +5,8 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import "lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
 
-import "libraries/math/v1/SafeMathUint.sol";
-import "libraries/math/v1/SafeMathInt.sol";
+import "../../../libraries/math/v1/SafeMathUint.sol";
+import "../../../libraries/math/v1/SafeMathInt.sol";
 
 import "./interfaces/IBasicFDT.sol";
 

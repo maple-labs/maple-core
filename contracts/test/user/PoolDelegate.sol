@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "../../../external-interfaces/IBPool.sol";
+import "../../external-interfaces/IBPool.sol";
 
 import "../../core/loan/v1/interfaces/ILoan.sol";
 import "../../core/pool/v1/interfaces/IPool.sol";
