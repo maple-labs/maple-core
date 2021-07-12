@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import { TestUtil } from "../../../../test/TestUtil.sol";
 
-import { IStakeLocker } from "core/stake-locker/v1/interfaces/IStakeLocker.sol";
+import { IStakeLocker } from "../interfaces/IStakeLocker.sol";
 
 contract StakeLockerFactoryTest is TestUtil {
 

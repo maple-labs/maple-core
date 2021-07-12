@@ -2,8 +2,8 @@
 pragma solidity 0.6.11;
 
 import { DSTest } from "../../lib/ds-test/contracts/test.sol";
+import { SafeMath } from "../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import { IERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import { SafeMath } from "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
 import { MapleToken } from "../../module/maple-token/contracts/MapleToken.sol";
 

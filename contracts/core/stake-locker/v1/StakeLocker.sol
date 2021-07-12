@@ -7,6 +7,7 @@ import { Pausable } from "../../../../lib/openzeppelin-contracts/contracts/utils
 
 import { SafeMathInt } from "../../../libraries/math/v1/SafeMathInt.sol";
 
+import { IBasicFDT } from "../../funds-distribution-token/v1/interfaces/IBasicFDT.sol";
 import { IMapleGlobals } from "../../globals/v1/interfaces/IMapleGlobals.sol";
 import { IPool } from "../../pool/v1/interfaces/IPool.sol";
 import { IPoolFactory } from "../../pool/v1/interfaces/IPoolFactory.sol";
