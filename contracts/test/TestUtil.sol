@@ -1,44 +1,44 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import { DSTest } from "../../lib/ds-test/contracts/test.sol";
+import { DSTest }   from "../../lib/ds-test/contracts/test.sol";
 import { SafeMath } from "../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import { IERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC20 }   from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import { MapleToken } from "../../module/maple-token/contracts/MapleToken.sol";
 
-import { IBPool } from "../external-interfaces/IBPool.sol";
-import { IBFactory } from "../external-interfaces/IBFactory.sol";
-import { IUniswapV2Factory } from "../external-interfaces/IUniswapV2Factory.sol";
-import { IUniswapV2Pair } from "../external-interfaces/IUniswapV2Pair.sol";
+import { IBPool }             from "../external-interfaces/IBPool.sol";
+import { IBFactory }          from "../external-interfaces/IBFactory.sol";
+import { IUniswapV2Factory }  from "../external-interfaces/IUniswapV2Factory.sol";
+import { IUniswapV2Pair }     from "../external-interfaces/IUniswapV2Pair.sol";
 import { IUniswapV2Router02 } from "../external-interfaces/IUniswapV2Router02.sol";
 
-import { ChainlinkOracle } from "../core/chainlink-oracle/v1/ChainlinkOracle.sol";
-import { CollateralLockerFactory } from "../core/collateral-locker/v1/CollateralLockerFactory.sol";
-import { DebtLockerFactory } from "../core/debt-locker/v1/DebtLockerFactory.sol";
-import { FundingLockerFactory } from "../core/funding-locker/v1/FundingLockerFactory.sol";
-import { MapleGlobals } from "../core/globals/v1/MapleGlobals.sol";
-import { LateFeeCalc } from "../core/late-fee-calculator/v1/LateFeeCalc.sol";
-import { LiquidityLockerFactory } from "../core/liquidity-locker/v1/LiquidityLockerFactory.sol";
-import { Loan, LoanFactory } from "../core/loan/v1/LoanFactory.sol";
-import { MplRewards, MplRewardsFactory } from "../core/mpl-rewards/v1/MplRewardsFactory.sol";
-import { Pool, PoolFactory } from "../core/pool/v1/PoolFactory.sol";
-import { PremiumCalc } from "../core/premium-calculator/v1/PremiumCalc.sol";
-import { RepaymentCalc } from "../core/repayment-calculator/v1/RepaymentCalc.sol";
+import { ChainlinkOracle }                 from "../core/chainlink-oracle/v1/ChainlinkOracle.sol";
+import { CollateralLockerFactory }         from "../core/collateral-locker/v1/CollateralLockerFactory.sol";
+import { DebtLockerFactory }               from "../core/debt-locker/v1/DebtLockerFactory.sol";
+import { FundingLockerFactory }            from "../core/funding-locker/v1/FundingLockerFactory.sol";
+import { MapleGlobals }                    from "../core/globals/v1/MapleGlobals.sol";
+import { LateFeeCalc }                     from "../core/late-fee-calculator/v1/LateFeeCalc.sol";
+import { LiquidityLockerFactory }          from "../core/liquidity-locker/v1/LiquidityLockerFactory.sol";
+import { Loan, LoanFactory }               from "../core/loan/v1/LoanFactory.sol";
+import { MplRewards, MplRewardsFactory }   from "../core/mpl-rewards/v1/MplRewardsFactory.sol";
+import { Pool, PoolFactory }               from "../core/pool/v1/PoolFactory.sol";
+import { PremiumCalc }                     from "../core/premium-calculator/v1/PremiumCalc.sol";
+import { RepaymentCalc }                   from "../core/repayment-calculator/v1/RepaymentCalc.sol";
 import { StakeLocker, StakeLockerFactory } from "../core/stake-locker/v1/StakeLockerFactory.sol";
-import { MapleTreasury } from "../core/treasury/v1/MapleTreasury.sol";
-import { UsdOracle } from "../core/usd-oracle/v1/UsdOracle.sol";
+import { MapleTreasury }                   from "../core/treasury/v1/MapleTreasury.sol";
+import { UsdOracle }                       from "../core/usd-oracle/v1/UsdOracle.sol";
 
-import { Borrower } from "./user/Borrower.sol";
-import { Commoner } from "./user/Commoner.sol";
+import { Borrower }       from "./user/Borrower.sol";
+import { Commoner }       from "./user/Commoner.sol";
 import { EmergencyAdmin } from "./user/EmergencyAdmin.sol";
-import { Farmer } from "./user/Farmer.sol";
-import { Governor } from "./user/Governor.sol";
-import { Holder } from "./user/Holder.sol";
-import { LP } from "./user/LP.sol";
-import { PoolDelegate } from "./user/PoolDelegate.sol";
-import { SecurityAdmin } from "./user/SecurityAdmin.sol";
-import { Staker } from "./user/Staker.sol";
+import { Farmer }         from "./user/Farmer.sol";
+import { Governor }       from "./user/Governor.sol";
+import { Holder }         from "./user/Holder.sol";
+import { LP }             from "./user/LP.sol";
+import { PoolDelegate }   from "./user/PoolDelegate.sol";
+import { SecurityAdmin }  from "./user/SecurityAdmin.sol";
+import { Staker }         from "./user/Staker.sol";
 
 interface Hevm {
 
@@ -527,7 +527,7 @@ contract TestUtil is DSTest {
         uint256[5] memory _specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory _calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan = bob.createLoan(address(loanFactory), USDC, collateralAsset, address(flFactory), address(clFactory), _specs, _calcs);
+        loan = Loan(bob.createLoan(address(loanFactory), USDC, collateralAsset, address(flFactory), address(clFactory), _specs, _calcs));
 
         fundAmount = constrictToRange(fundAmount, _specs[3], 1E10 * USD, true);  // Fund between requestAmount and 10b USD
 

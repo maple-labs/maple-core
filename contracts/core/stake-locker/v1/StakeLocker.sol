@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import { SignedSafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
-import { SafeERC20, IERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
-import { Pausable } from "../../../../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+import { SignedSafeMath }    from "../../../../lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
+import { IERC20, SafeERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import { Pausable }          from "../../../../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 import { SafeMathInt } from "../../../libraries/math/v1/SafeMathInt.sol";
 
-import { IBasicFDT } from "../../funds-distribution-token/v1/interfaces/IBasicFDT.sol";
+import { IBasicFDT }     from "../../funds-distribution-token/v1/interfaces/IBasicFDT.sol";
 import { IMapleGlobals } from "../../globals/v1/interfaces/IMapleGlobals.sol";
-import { IPool } from "../../pool/v1/interfaces/IPool.sol";
-import { IPoolFactory } from "../../pool/v1/interfaces/IPoolFactory.sol";
+import { IPool }         from "../../pool/v1/interfaces/IPool.sol";
+import { IPoolFactory }  from "../../pool/v1/interfaces/IPoolFactory.sol";
 
 import { IStakeLocker } from "./interfaces/IStakeLocker.sol";
 

@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 import { IChainlinkAggregatorV3 } from "../../../../external-interfaces/IChainlinkAggregatorV3.sol";
 
 import { IMapleGlobals } from "../../../globals/v1/interfaces/IMapleGlobals.sol";
-import { IOracle } from "../../../oracle/v1/interfaces/IOracle.sol";
+import { IOracle }       from "../../../oracle/v1/interfaces/IOracle.sol";
 
 /// @title ChainlinkOracle is a wrapper contract for Chainlink oracle price feeds that allows for manual price feed overrides.
 interface IChainlinkOracle is IOracle {

@@ -4,10 +4,9 @@ pragma experimental ABIEncoderV2;
 
 import { IERC20 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import { MapleGlobals } from "../../core/globals/v1/MapleGlobals.sol";
-import { MplRewards } from "../../core/mpl-rewards/v1/MplRewards.sol";
-import { MplRewardsFactory } from "../../core/mpl-rewards/v1/MplRewardsFactory.sol";
-import { MapleTreasury } from "../../core/treasury/v1/MapleTreasury.sol";
+import { MapleGlobals }                  from "../../core/globals/v1/MapleGlobals.sol";
+import { MplRewards, MplRewardsFactory } from "../../core/mpl-rewards/v1/MplRewardsFactory.sol";
+import { MapleTreasury }                 from "../../core/treasury/v1/MapleTreasury.sol";
 
 contract Governor {
 

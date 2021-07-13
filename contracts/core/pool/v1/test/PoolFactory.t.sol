@@ -5,10 +5,10 @@ pragma experimental ABIEncoderV2;
 import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 import { IBFactory } from "../../../../external-interfaces/IBFactory.sol";
-import { IBPool } from "../../../../external-interfaces/IBPool.sol";
+import { IBPool }    from "../../../../external-interfaces/IBPool.sol";
 
 import { IMapleGlobals } from "../../../globals/v1/interfaces/IMapleGlobals.sol";
-import { IPool } from "../../../pool/v1/interfaces/IPool.sol";
+import { IPool }         from "../../../pool/v1/interfaces/IPool.sol";
 
 import { TestUtil } from "../../../../test/TestUtil.sol";
 

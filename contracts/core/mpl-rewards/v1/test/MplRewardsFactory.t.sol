@@ -5,8 +5,7 @@ import { DSTest } from "../../../../../lib/ds-test/contracts/test.sol";
 
 import { MapleGlobals } from "../../../globals/v1/MapleGlobals.sol";
 
-import { MplRewards } from "../MplRewards.sol";
-import { MplRewardsFactory } from "../MplRewardsFactory.sol";
+import { MplRewards, MplRewardsFactory } from "../MplRewardsFactory.sol";
 
 import { MplRewardsFactoryGovernor } from "./accounts/MplRewardsFactoryGovernor.sol";
 

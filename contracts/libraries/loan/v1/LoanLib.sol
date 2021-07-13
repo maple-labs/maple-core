@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import { SafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import { SafeERC20, IERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import { SafeMath }          from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { IERC20, SafeERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import { IERC20Details } from "../../../external-interfaces/IERC20Details.sol";
+import { IERC20Details }  from "../../../external-interfaces/IERC20Details.sol";
 import { IUniswapRouter } from "../../../external-interfaces/IUniswapRouter.sol";
 
 import { ICollateralLocker } from "../../../core/collateral-locker/v1/interfaces/ICollateralLocker.sol";
-import { IFundingLocker } from "../../../core/funding-locker/v1/interfaces/IFundingLocker.sol";
-import { IMapleGlobals } from "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
-import { ILateFeeCalc } from "../../../core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
-import { ILoanFactory } from "../../../core/loan/v1/interfaces/ILoanFactory.sol";
-import { IPremiumCalc } from "../../../core/premium-calculator/v1/interfaces/IPremiumCalc.sol";
-import { IRepaymentCalc } from "../../../core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol";
+import { IFundingLocker }    from "../../../core/funding-locker/v1/interfaces/IFundingLocker.sol";
+import { IMapleGlobals }     from "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
+import { ILateFeeCalc }      from "../../../core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";
+import { ILoanFactory }      from "../../../core/loan/v1/interfaces/ILoanFactory.sol";
+import { IPremiumCalc }      from "../../../core/premium-calculator/v1/interfaces/IPremiumCalc.sol";
+import { IRepaymentCalc }    from "../../../core/repayment-calculator/v1/interfaces/IRepaymentCalc.sol";
 
 import { Util } from "../../../libraries/util/v1/Util.sol";
 

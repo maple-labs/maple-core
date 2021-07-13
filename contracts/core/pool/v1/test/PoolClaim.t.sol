@@ -3,17 +3,17 @@ pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
 import { SafeMath } from "../../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC20 }   from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import { IDebtLocker } from "../../../debt-locker/v1/interfaces/IDebtLocker.sol";
-import { IDebtLockerFactory } from "../../..//debt-locker/v1/interfaces/IDebtLockerFactory.sol";
-import { ILoan } from "../../../loan/v1/interfaces/ILoan.sol";
-import { IPool } from "../../../pool/v1/interfaces/IPool.sol";
+import { IDebtLocker }        from "../../../debt-locker/v1/interfaces/IDebtLocker.sol";
+import { IDebtLockerFactory } from "../../../debt-locker/v1/interfaces/IDebtLockerFactory.sol";
+import { ILoan }              from "../../../loan/v1/interfaces/ILoan.sol";
+import { IPool }              from "../../../pool/v1/interfaces/IPool.sol";
 
-import { Loan } from "../../../loan/v1/Loan.sol";
+import { Loan }        from "../../../loan/v1/Loan.sol";
 import { PremiumCalc } from "../../../premium-calculator/v1/PremiumCalc.sol";
 
-import { TestUtil } from "../../../../test/TestUtil.sol";
+import { TestUtil }     from "../../../../test/TestUtil.sol";
 import { PoolDelegate } from "../../../../test/user/PoolDelegate.sol";
 
 contract PoolClaimTest is TestUtil {

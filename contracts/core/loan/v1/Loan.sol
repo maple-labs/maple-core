@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import { SafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
-import { SignedSafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
-import { SafeERC20, IERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
-import { Pausable } from "../../../../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
+import { SafeMath }          from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { SignedSafeMath }    from "../../../../lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
+import { IERC20, SafeERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import { Pausable }          from "../../../../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
 import { IERC20Details } from "../../../external-interfaces/IERC20Details.sol";
 
 import { LoanLib } from "../../../libraries/loan/v1/LoanLib.sol";
-import { Util } from "../../../libraries/util/v1/Util.sol";
+import { Util }    from "../../../libraries/util/v1/Util.sol";
 
-import { ICollateralLocker } from "../../collateral-locker/v1/interfaces/ICollateralLocker.sol";
+import { ICollateralLocker }        from "../../collateral-locker/v1/interfaces/ICollateralLocker.sol";
 import { ICollateralLockerFactory } from "../../collateral-locker/v1/interfaces/ICollateralLockerFactory.sol";
-import { IFundingLocker } from "../../funding-locker/v1/interfaces/IFundingLocker.sol";
-import { IFundingLockerFactory } from "../../funding-locker/v1/interfaces/IFundingLockerFactory.sol";
-import { IMapleGlobals } from "../../globals/v1/interfaces/IMapleGlobals.sol";
-import { ILiquidityLocker } from "../../liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
-import { IPool } from "../../pool/v1/interfaces/IPool.sol";
-import { IPoolFactory } from "../../pool/v1/interfaces/IPoolFactory.sol";
+import { IFundingLocker }           from "../../funding-locker/v1/interfaces/IFundingLocker.sol";
+import { IFundingLockerFactory }    from "../../funding-locker/v1/interfaces/IFundingLockerFactory.sol";
+import { IMapleGlobals }            from "../../globals/v1/interfaces/IMapleGlobals.sol";
+import { ILiquidityLocker }         from "../../liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
+import { IPool }                    from "../../pool/v1/interfaces/IPool.sol";
+import { IPoolFactory }             from "../../pool/v1/interfaces/IPoolFactory.sol";
 
-import { ILoan } from "./interfaces/ILoan.sol";
+import { ILoan }        from "./interfaces/ILoan.sol";
 import { ILoanFactory } from "./interfaces/ILoanFactory.sol";
 
 import { LoanFDT } from "./LoanFDT.sol";

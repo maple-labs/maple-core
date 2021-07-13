@@ -7,7 +7,7 @@ import { ERC2258 } from "../../../custodial-ownership-token/v1/ERC2258.sol";
 
 import { MplRewards } from "../MplRewards.sol";
 
-import { MplRewardsOwner } from "./accounts/MplRewardsOwner.sol";
+import { MplRewardsOwner }  from "./accounts/MplRewardsOwner.sol";
 import { MplRewardsStaker } from "./accounts/MplRewardsStaker.sol";
 
 interface Hevm {

@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import { ILoan } from "../../..//loan/v1/interfaces/ILoan.sol";
+import { ILoan } from "../../../loan/v1/interfaces/ILoan.sol";
 
 import { TestUtil } from "../../../../test/TestUtil.sol";
 
@@ -107,7 +107,7 @@ contract LoanLiquidationTest is TestUtil {
         // Assertion for the oracle price check.
         assertTrue(globals.getLatestPrice(AAVE) > uint256(0));
 
-        Loan aaveLoan = createAndFundLoan(address(repaymentCalc), AAVE, 2000);
+        ILoan aaveLoan = createAndFundLoan(address(repaymentCalc), AAVE, 2000);
         performLiquidationAssertions(aaveLoan);
 
         // Bilateral uniswap path

@@ -7,7 +7,7 @@ import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/toke
 import { IPool } from "../../../pool/v1/interfaces/IPool.sol";
 
 import { TestUtil } from "../../../../test/TestUtil.sol";
-import { LP } from "../../../../test/user/LP.sol";
+import { LP }       from "../../../../test/user/LP.sol";
 
 contract PoolTest is TestUtil {
 

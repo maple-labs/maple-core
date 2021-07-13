@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import { SafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { SafeMath }       from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 import { SignedSafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SignedSafeMath.sol";
-import { ERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import { ERC20 }          from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
+import { SafeMathInt }  from "../../../libraries/math/v1/SafeMathInt.sol";
 import { SafeMathUint } from "../../../libraries/math/v1/SafeMathUint.sol";
-import { SafeMathInt } from "../../../libraries/math/v1/SafeMathInt.sol";
 
 import { IBasicFDT } from "./interfaces/IBasicFDT.sol";
 

@@ -2,7 +2,13 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import { IMapleGlobals } from "../../../globals/v1/interfaces/IMapleGlobals.sol";
+
+import { Loan } from "../../../loan/v1/Loan.sol";
+
+import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract LoanCollateralAssetOnboardingTest is TestUtil {
 

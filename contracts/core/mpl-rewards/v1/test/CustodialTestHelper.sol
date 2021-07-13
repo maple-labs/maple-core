@@ -4,10 +4,10 @@ pragma experimental ABIEncoderV2;
 
 import { IERC2258 } from "../../../custodial-ownership-token/v1/interfaces/IERC2258.sol";
 
-import { TestUtil } from "../../../../test/TestUtil.sol";
+import { TestUtil }  from "../../../../test/TestUtil.sol";
 import { Custodian } from "../../../../test/user/Custodian.sol";
-import { Farmer } from "../../../../test/user/Farmer.sol";
-import { Staker } from "../../../../test/user/Staker.sol";
+import { Farmer }    from "../../../../test/user/Farmer.sol";
+import { Staker }    from "../../../../test/user/Staker.sol";
 
 interface IStakeToken is IERC2258 {
 

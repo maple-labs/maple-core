@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import { IExtendedFDT } from "./interfaces/IExtendedFDT.sol";
 
-import { BasicFDT, SafeMath, SafeMathUint, SignedSafeMath, SafeMathInt } from "./BasicFDT.sol";
+import { BasicFDT, SafeMath, SafeMathInt, SafeMathUint, SignedSafeMath } from "./BasicFDT.sol";
 
 /// @title ExtendedFDT implements the FDT functionality for accounting for losses.
 abstract contract ExtendedFDT is IExtendedFDT, BasicFDT {

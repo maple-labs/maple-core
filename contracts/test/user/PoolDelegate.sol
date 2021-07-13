@@ -6,8 +6,8 @@ import { IERC20 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC2
 
 import { IBPool } from "../../external-interfaces/IBPool.sol";
 
-import { ILoan } from "../../core/loan/v1/interfaces/ILoan.sol";
-import { IPool } from "../../core/pool/v1/interfaces/IPool.sol";
+import { ILoan }        from "../../core/loan/v1/interfaces/ILoan.sol";
+import { IPool }        from "../../core/pool/v1/interfaces/IPool.sol";
 import { IPoolFactory } from "../../core/pool/v1/interfaces/IPoolFactory.sol";
 import { IStakeLocker } from "../../core/stake-locker/v1/interfaces/IStakeLocker.sol";
 
