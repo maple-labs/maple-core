@@ -26,9 +26,9 @@ contract LoanCollateralAssetOnboardingTest is TestUtil {
         uint256 collateralRatio,
         uint256 fundAmount,
         uint256 drawdownAmount,
-        bytes32 collateralTicker
+        bytes32 collateralSymbol
     ) public {
-        IERC20 collateralAsset = IERC20(tokens[collateralTicker].addr);
+        IERC20 collateralAsset = IERC20(tokens[collateralSymbol].addr);
         Loan loan = createAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, address(collateralAsset));
         address fundingLocker = loan.fundingLocker();
         fundAmount = usdc.balanceOf(fundingLocker);
@@ -39,7 +39,7 @@ contract LoanCollateralAssetOnboardingTest is TestUtil {
         if (loan.collateralRatio() > 0) assertTrue(!bob.try_drawdown(address(loan), drawdownAmount));  // Can't drawdown without approving collateral
 
         uint256 reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
-        mint(collateralTicker,                address(bob),  reqCollateral);
+        mint(collateralSymbol,                address(bob),  reqCollateral);
         bob.approve(address(collateralAsset), address(loan), reqCollateral);
 
         assertTrue(!bob.try_drawdown(address(loan), loan.requestAmount() - 1));  // Can't drawdown less than requestAmount
@@ -58,11 +58,11 @@ contract LoanCollateralAssetOnboardingTest is TestUtil {
         assertEq(usdc.balanceOf(address(treasury)),         0);  // Treasury liquidityAsset balance
 
         // Pause protocol and attempt drawdown()
-        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), true));
+        emergencyAdmin.setProtocolPause(IMapleGlobals(address(globals)), true);
         assertTrue(!bob.try_drawdown(address(loan), drawdownAmount));
 
         // Unpause protocol and drawdown()
-        assertTrue(emergencyAdmin.try_setProtocolPause(address(globals), false));
+        emergencyAdmin.setProtocolPause(IMapleGlobals(address(globals)), false);
         assertTrue(bob.try_drawdown(address(loan), drawdownAmount));
 
         assertEq(collateralAsset.balanceOf(address(bob)),                                 0);  // Borrower collateral balance
@@ -104,6 +104,9 @@ contract LoanCollateralAssetOnboardingTest is TestUtil {
         uint256 fundAmount,
         uint256 drawdownAmount
     ) public {
-        createLoanAndDrawdown(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, drawdownAmount,"AAVE");
+        // Assertion for the oracle price check.
+        assertTrue(globals.getLatestPrice(AAVE) > uint256(0));
+
+        createLoanAndDrawdown(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, drawdownAmount, "AAVE");
     }
 }

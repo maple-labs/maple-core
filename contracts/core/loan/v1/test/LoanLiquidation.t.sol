@@ -100,6 +100,9 @@ contract LoanLiquidationTest is TestUtil {
         Loan wbtcLoan = createAndFundLoan(address(repaymentCalc), WBTC, 2000);
         performLiquidationAssertions(wbtcLoan);
 
+        // Assertion for the oracle price check.
+        assertTrue(globals.getLatestPrice(AAVE) > uint256(0));
+
         Loan aaveLoan = createAndFundLoan(address(repaymentCalc), AAVE, 2000);
         performLiquidationAssertions(aaveLoan);
 
