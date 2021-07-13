@@ -109,4 +109,5 @@ contract LoanCollateralAssetOnboardingTest is TestUtil {
 
         createLoanAndDrawdown(apr, index, numPayments, requestAmount, collateralRatio, fundAmount, drawdownAmount, "AAVE");
     }
+
 }
