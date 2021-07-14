@@ -129,6 +129,7 @@ contract TestUtil is DSTest {
     ChainlinkOracle wethOracle;
     ChainlinkOracle wbtcOracle;
     ChainlinkOracle  daiOracle;
+    ChainlinkOracle aaveOracle;
     UsdOracle        usdOracle;
 
     /*************/
@@ -160,11 +161,13 @@ contract TestUtil is DSTest {
     address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
     address constant CDAI = 0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643;
+    address constant AAVE = 0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9;
 
     IERC20 constant dai  = IERC20(DAI);
     IERC20 constant usdc = IERC20(USDC);
     IERC20 constant weth = IERC20(WETH);
     IERC20 constant wbtc = IERC20(WBTC);
+    IERC20 constant aave = IERC20(AAVE);
 
     address constant BPOOL_FACTORY        = 0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd;  // Balancer pool factory
     address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;  // Uniswap V2 Router
@@ -284,6 +287,7 @@ contract TestUtil is DSTest {
         gov.setMapleTreasury(address(treasury));
         gov.setGlobalAdmin(address(emergencyAdmin));
         gov.setDefaultUniswapPath(WBTC, USDC, WETH);
+        gov.setDefaultUniswapPath(AAVE, USDC, WETH);
         gov.setGovTreasury(treasury);
         fakeGov.setGovTreasury(treasury);
     }
@@ -413,6 +417,7 @@ contract TestUtil is DSTest {
     /******************************/
     function createWethOracle() public { wethOracle = new ChainlinkOracle(tokens["WETH"].orcl, WETH, address(securityAdmin)); }
     function createWbtcOracle() public { wbtcOracle = new ChainlinkOracle(tokens["WBTC"].orcl, WBTC, address(securityAdmin)); }
+    function createAaveOracle() public { aaveOracle = new ChainlinkOracle(tokens["AAVE"].orcl, AAVE, address(securityAdmin)); }
     function createDaiOracle()  public { daiOracle  = new ChainlinkOracle(tokens["DAI"].orcl,  DAI,  address(securityAdmin)); }
     function createUsdOracle()  public { usdOracle  = new UsdOracle(); }
 
@@ -421,11 +426,13 @@ contract TestUtil is DSTest {
         createWbtcOracle();
         createDaiOracle();
         createUsdOracle();
+        createAaveOracle();
 
         gov.setPriceOracle(WETH, address(wethOracle));
         gov.setPriceOracle(WBTC, address(wbtcOracle));
         gov.setPriceOracle(DAI,  address(daiOracle));
         gov.setPriceOracle(USDC, address(usdOracle));
+        gov.setPriceOracle(AAVE, address(aaveOracle));
     }
 
     /*************************************/
@@ -503,6 +510,31 @@ contract TestUtil is DSTest {
         loan3 = bud.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs);
     }
 
+    function createAndFundLoan(
+        uint256 apr,
+        uint256 index,
+        uint256 numPayments,
+        uint256 requestAmount,
+        uint256 collateralRatio,
+        uint256 fundAmount,
+        address collateralAsset
+    )
+        internal returns (Loan loan)
+    {
+        uint256[5] memory _specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
+        address[3] memory _calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
+
+        loan = bob.createLoan(address(loanFactory), USDC, collateralAsset, address(flFactory), address(clFactory), _specs, _calcs);
+
+        fundAmount = constrictToRange(fundAmount, _specs[3], 1E10 * USD, true);  // Fund between requestAmount and 10b USD
+
+        mint("USDC", address(leo),        fundAmount);
+        leo.approve(USDC, address(pool1), fundAmount);
+        leo.deposit(address(pool1),       fundAmount);
+
+        pat.fundLoan(address(pool1), address(loan), address(dlFactory1), fundAmount);
+    }
+
     /*************************************/
     /*** Yield Farming Setup Functions ***/
     /*************************************/
@@ -535,6 +567,7 @@ contract TestUtil is DSTest {
         gov.setCollateralAsset(USDC, true);
         gov.setCollateralAsset(WETH, true);
         gov.setCollateralAsset(WBTC, true);
+        gov.setCollateralAsset(AAVE, true);
 
         tokens["USDC"].addr = USDC;
         tokens["USDC"].slot = 9;
@@ -550,6 +583,10 @@ contract TestUtil is DSTest {
         tokens["WBTC"].addr = WBTC;
         tokens["WBTC"].slot = 0;
         tokens["WBTC"].orcl = 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
+
+        tokens["AAVE"].addr = AAVE;
+        tokens["AAVE"].slot = 0;
+        tokens["AAVE"].orcl = 0x547a514d5e3769680Ce22B2361c10Ea13619e8a9;
     }
 
     function addBPoolInTokenSlots() public {

@@ -2,9 +2,15 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
+import "core/globals/v1/interfaces/IMapleGlobals.sol";
+
 contract EmergencyAdmin {
-   function try_setProtocolPause(address globals, bool pause) external returns (bool ok) {
+    function try_setProtocolPause(address globals, bool pause) external returns (bool ok) {
         string memory sig = "setProtocolPause(bool)";
         (ok,) = globals.call(abi.encodeWithSignature(sig, pause));
+    }
+
+    function setProtocolPause(IMapleGlobals globals, bool pause) external {
+        globals.setProtocolPause(pause);
     }
 }
