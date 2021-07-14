@@ -2,13 +2,24 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
-import "test/user/Custodian.sol";
-import "./IStakeToken.sol";
+import { IERC2258 } from "../../../custodial-ownership-token/v1/interfaces/IERC2258.sol";
+
+import { TestUtil }  from "../../../../test/TestUtil.sol";
+import { Custodian } from "../../../../test/user/Custodian.sol";
+import { Farmer }    from "../../../../test/user/Farmer.sol";
+import { Staker }    from "../../../../test/user/Staker.sol";
+
+interface IStakeToken is IERC2258 {
+
+    function balanceOf  (address who)  external view returns(uint256);
+
+    function stakeDate  (address whom) external view returns(uint256);
+
+    function depositDate(address whom) external view returns(uint256);
+
+}
 
 contract CustodialTestHelper is TestUtil {
-
-    using SafeMath for uint256;
 
     function setupFarmingEcosystem() internal {
         setUpGlobals();
@@ -23,11 +34,11 @@ contract CustodialTestHelper is TestUtil {
         setUpMplRewardsFactory();
     }
 
-    function custody_and_transfer(uint256 amt, uint256 custodyAmt1, uint256 custodyAmt2, bool isPfdtStakeAsset, IStakeToken stakeToken) public {
+    function custody_and_transfer(uint256 amt, uint256 custodyAmt1, uint256 custodyAmt2, bool isPoolFdtStakeAsset, IStakeToken stakeToken) public {
         Custodian custodian1 = new Custodian();  // Custodial contract for FDTs - will start out as liquidity mining but could be broader DeFi eventually
         Custodian custodian2 = new Custodian();  // Custodial contract for FDTs - will start out as liquidity mining but could be broader DeFi eventually
 
-        if (isPfdtStakeAsset) {
+        if (isPoolFdtStakeAsset) {
             amt         = constrictToRange(amt,         100, 1E9,     true);  // $100 - $1b
             custodyAmt1 = constrictToRange(custodyAmt1,  40, amt / 2, true);  // $40 - half of deposit
             custodyAmt2 = constrictToRange(custodyAmt2,  40, amt / 2, true);  // $40 - half of deposit
@@ -93,10 +104,10 @@ contract CustodialTestHelper is TestUtil {
         assertEq(stakeToken.balanceOf(address(fox)),       transferableAmt);
     }
 
-    function custody_and_withdraw(uint256 amt, uint256 custodyAmt, bool isPfdtStakeAsset, IStakeToken stakeToken) public {
+    function custody_and_withdraw(uint256 amt, uint256 custodyAmt, bool isPoolFdtStakeAsset, IStakeToken stakeToken) public {
         Custodian custodian = new Custodian();
 
-        if (isPfdtStakeAsset) {
+        if (isPoolFdtStakeAsset) {
             amt        = constrictToRange(amt,        1, 1E9, true);  // $1 - $1b
             custodyAmt = constrictToRange(custodyAmt, 1, amt, true);  // $1 - amt
 
@@ -131,7 +142,7 @@ contract CustodialTestHelper is TestUtil {
 
         assertEq(stakeToken.balanceOf(address(fez)), amt);
 
-        if (isPfdtStakeAsset) {
+        if (isPoolFdtStakeAsset) {
             make_withdrawable(fez, pool1);
 
             assertTrue(!fez.try_withdraw(address(stakeToken), toUsd(withdrawAmt) + 1));
@@ -149,10 +160,10 @@ contract CustodialTestHelper is TestUtil {
         assertEq(stakeToken.balanceOf(address(fez)), custodyAmt);
     }
 
-    function fdt_transferByCustodian(uint256 amt, uint256 custodyAmt, bool isPfdtStakeAsset, IStakeToken stakeToken) public {
+    function fdt_transferByCustodian(uint256 amt, uint256 custodyAmt, bool isPoolFdtStakeAsset, IStakeToken stakeToken) public {
         Custodian custodian = new Custodian();  // Custodial contract for FDTs - will start out as liquidity mining but could be broader DeFi eventually
 
-        if (isPfdtStakeAsset) {
+        if (isPoolFdtStakeAsset) {
             amt        = constrictToRange(amt,        1, 1E9, true);  // $1 - $1b
             custodyAmt = constrictToRange(custodyAmt, 1, amt, true);  // $1 - deposit
 
@@ -190,16 +201,16 @@ contract CustodialTestHelper is TestUtil {
     /****************************/
     /*** LP functions testing ***/
     /****************************/
-    function stake_test(bool isPfdtStakeToken, uint256 amt, uint256 stakeAmt, IStakeToken stakeToken) public {
+    function stake_test(bool isPoolFdtStakeToken, uint256 amt, uint256 stakeAmt, IStakeToken stakeToken) public {
         uint256 start = block.timestamp;
 
-        if (isPfdtStakeToken) {
+        if (isPoolFdtStakeToken) {
             mintFundsAndDepositIntoPool(fay, pool1, amt * USD, amt * USD);
         } else {
             setUpForStakeLocker(amt, sam, fay);
         }
 
-        checkDepositOrStakeDate(isPfdtStakeToken, start, stakeToken, fay);
+        checkDepositOrStakeDate(isPoolFdtStakeToken, start, stakeToken, fay);
 
         amt *= WAD;
 
@@ -220,13 +231,13 @@ contract CustodialTestHelper is TestUtil {
         assertEq(mplRewards.balanceOf(address(fay)), stakeAmt * WAD);
         assertEq(mplRewards.totalSupply(),           stakeAmt * WAD);
 
-        checkDepositOrStakeDate(isPfdtStakeToken, start, stakeToken, fay);
+        checkDepositOrStakeDate(isPoolFdtStakeToken, start, stakeToken, fay);
     }
 
-    function withdraw_test(bool isPfdtStakeToken, uint256 amt, uint256 stakeAmt, IStakeToken stakeToken) public {
+    function withdraw_test(bool isPoolFdtStakeToken, uint256 amt, uint256 stakeAmt, IStakeToken stakeToken) public {
         uint256 start = block.timestamp;
 
-        if (isPfdtStakeToken) {
+        if (isPoolFdtStakeToken) {
             mintFundsAndDepositIntoPool(fay, pool1, amt * USD, amt * USD);
             assertEq(stakeToken.balanceOf(address(fay)), amt * WAD);
         } else {
@@ -241,7 +252,7 @@ contract CustodialTestHelper is TestUtil {
 
         hevm.warp(start + 1 days);  // Warp to ensure no effect on depositDates
 
-        checkDepositOrStakeDate(isPfdtStakeToken, start, stakeToken, fay);
+        checkDepositOrStakeDate(isPoolFdtStakeToken, start, stakeToken, fay);
 
         assertEq(stakeToken.balanceOf(address(fay)),      amt);  // FDT balance doesn't change
         assertEq(mplRewards.balanceOf(address(fay)), stakeAmt);
@@ -254,7 +265,7 @@ contract CustodialTestHelper is TestUtil {
 
         assertEq(stakeToken.totalCustodyAllowance(address(fay)), currentCustodyAllowance - stakeAmt);
 
-        checkDepositOrStakeDate(isPfdtStakeToken, start, stakeToken, fay);
+        checkDepositOrStakeDate(isPoolFdtStakeToken, start, stakeToken, fay);
 
         assertEq(stakeToken.balanceOf(address(fay)), amt);
         assertEq(mplRewards.balanceOf(address(fay)),   0);
@@ -276,8 +287,8 @@ contract CustodialTestHelper is TestUtil {
         farmer.stakeTo(                address(stakeLocker1), amt * WAD);
     }
 
-    function checkDepositOrStakeDate(bool isPfdtStakeToken, uint256 date, IStakeToken stakeToken, Farmer farmer) internal {
-        if (isPfdtStakeToken) {
+    function checkDepositOrStakeDate(bool isPoolFdtStakeToken, uint256 date, IStakeToken stakeToken, Farmer farmer) internal {
+        if (isPoolFdtStakeToken) {
             assertEq(stakeToken.depositDate(address(farmer)),     date);  // Has not changed
             assertEq(stakeToken.depositDate(address(mplRewards)),    0);  // Has not changed
         } else {

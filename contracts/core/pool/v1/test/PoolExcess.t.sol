@@ -2,11 +2,11 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract PoolExcessTest is TestUtil {
-
-    using SafeMath for uint256;
 
     function setUp() public {
         setUpGlobals();
@@ -65,4 +65,5 @@ contract PoolExcessTest is TestUtil {
         withinDiff(principalOut_a_pre - principalOut_a_post, 1_000_000 * USD, 1);
         withinDiff(principalOut_b_pre - principalOut_b_post, 3_000_000 * USD, 1);
     }
+
 }

@@ -2,11 +2,16 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import { IERC20Details } from "../../../../external-interfaces/IERC20Details.sol";
+
+import { DebtLocker } from "../../../debt-locker/v1/DebtLocker.sol";
+
+import { TestUtil } from "../../../../test/TestUtil.sol";
+import { Governor } from "../../../../test/user/Governor.sol";
 
 contract PoolTest is TestUtil {
-
-    using SafeMath for uint256;
 
     function setUp() public {
         setUpGlobals();
@@ -393,4 +398,5 @@ contract PoolTest is TestUtil {
         assertEq(bPool.balanceOf(stakeLocker),                 stakeLockerBptBal);  // BPT owned by the stakeLocker
         assertEq(IERC20(stakeLocker).balanceOf(address(pat)),  patStakeAmount);     // Stake amount of Pool delegate in stakeLocker
     }
+
 }

@@ -2,13 +2,11 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-contract Treasury { }
+import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract StakeLockerTest is TestUtil {
-
-    using SafeMath for uint256;
 
     function setUp() public {
         setUpGlobals();
@@ -662,4 +660,5 @@ contract StakeLockerTest is TestUtil {
         assertTrue(pat.try_setAllowlist(address(stakeLocker1), address(sam), true));
         assertTrue(stakeLocker1.allowed(address(sam)));
     }
+
 }

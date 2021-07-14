@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "./interfaces/IExtendedFDT.sol";
+import { IExtendedFDT } from "./interfaces/IExtendedFDT.sol";
 
-import "./BasicFDT.sol";
+import { BasicFDT, SafeMath, SafeMathInt, SafeMathUint, SignedSafeMath } from "./BasicFDT.sol";
 
 /// @title ExtendedFDT implements the FDT functionality for accounting for losses.
 abstract contract ExtendedFDT is IExtendedFDT, BasicFDT {
+
     using SafeMath       for uint256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
@@ -153,4 +154,5 @@ abstract contract ExtendedFDT is IExtendedFDT, BasicFDT {
         @return A int256 representing the difference of the new and previous losses balance.
      */
     function _updateLossesBalance() internal virtual returns (int256) { }
+
 }

@@ -2,7 +2,13 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import { Util } from "../../../../libraries/util/v1/Util.sol";
+
+import { IMapleGlobals } from "../../../globals/v1/interfaces/IMapleGlobals.sol";
+
+import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract MapleTreasuryTest is TestUtil {
 
@@ -19,7 +25,7 @@ contract MapleTreasuryTest is TestUtil {
     }
 
     function test_setGlobals() public {
-        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl));                // Create upgraded MapleGlobals
+        IMapleGlobals globals2 = fakeGov.createGlobals(address(mpl));               // Create upgraded MapleGlobals
 
         assertEq(address(treasury.globals()), address(globals));
 
@@ -131,4 +137,5 @@ contract MapleTreasuryTest is TestUtil {
 
         withinPercentage(IERC20(USDC).balanceOf(address(treasury)), expectedAmtFromDAI, 300);  // Less than 3% difference
     }
+
 }

@@ -1,27 +1,30 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/ds-test/contracts/test.sol";
-import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import { DSTest } from "../../../../../lib/ds-test/contracts/test.sol";
 
-import "core/custodial-ownership-token/v1/ERC2258.sol";
+import { ERC2258 } from "../../../custodial-ownership-token/v1/ERC2258.sol";
 
-import "../MplRewards.sol";
+import { MplRewards } from "../MplRewards.sol";
 
-import "./accounts/MplRewardsOwner.sol";
-import "./accounts/MplRewardsStaker.sol";
+import { MplRewardsOwner }  from "./accounts/MplRewardsOwner.sol";
+import { MplRewardsStaker } from "./accounts/MplRewardsStaker.sol";
 
 interface Hevm {
+
     function warp(uint256) external;
     function store(address,bytes32,bytes32) external;
+
 }
 
 contract SomeERC2258 is ERC2258 {
+
     constructor(string memory name, string memory symbol) ERC2258(name, symbol) public { }
 
     function mint(address account, uint256 amount) external {
         _mint(account, amount);
     }
+
 }
 
 contract MplRewardsTest is DSTest {

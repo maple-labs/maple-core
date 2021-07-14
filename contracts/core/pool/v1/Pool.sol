@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
+import { ERC20 }             from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import { IERC20, SafeERC20 } from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/SafeERC20.sol";
 
-import "libraries/pool/v1/PoolLib.sol";
+import { PoolLib } from "../../../libraries/pool/v1/PoolLib.sol";
 
-import "core/debt-locker/v1/interfaces/IDebtLocker.sol";
-import "core/globals/v1/interfaces/IMapleGlobals.sol";
-import "core/liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
-import "core/liquidity-locker/v1/interfaces/ILiquidityLockerFactory.sol";
-import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
-import "core/stake-locker/v1/interfaces/IStakeLockerFactory.sol";
+import { IDebtLocker }             from "../../debt-locker/v1/interfaces/IDebtLocker.sol";
+import { IBasicFDT }               from "../../funds-distribution-token/v1/interfaces/IBasicFDT.sol";
+import { IMapleGlobals }           from "../../globals/v1/interfaces/IMapleGlobals.sol";
+import { ILiquidityLocker }        from "../../liquidity-locker/v1/interfaces/ILiquidityLocker.sol";
+import { ILiquidityLockerFactory } from "../../liquidity-locker/v1/interfaces/ILiquidityLockerFactory.sol";
+import { IStakeLocker }            from "../../stake-locker/v1/interfaces/IStakeLocker.sol";
+import { IStakeLockerFactory }     from "../../stake-locker/v1/interfaces/IStakeLockerFactory.sol";
 
-import "./interfaces/IPool.sol";
-import "./interfaces/IPoolFactory.sol";
+import { IPool }        from "./interfaces/IPool.sol";
+import { IPoolFactory } from "./interfaces/IPoolFactory.sol";
 
-import "./PoolFDT.sol";
+import { PoolFDT } from "./PoolFDT.sol";
 
 /// @title Pool maintains all accounting and functionality related to Pools.
 contract Pool is IPool, PoolFDT {
 
-    using SafeMath  for uint256;
     using SafeERC20 for IERC20;
 
     uint256 constant WAD = 10 ** 18;

@@ -2,15 +2,15 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { SafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
 
-import "external-interfaces/IERC20Details.sol";
+import { IERC20Details } from "../../../external-interfaces/IERC20Details.sol";
 
-import "core/calculator/v1/interfaces/ICalc.sol";
-import "core/oracle/v1/interfaces/IOracle.sol";
-import "core/subfactory/v1/interfaces/ISubFactory.sol";
+import { ICalc }       from "../../calculator/v1/interfaces/ICalc.sol";
+import { IOracle }     from "../../oracle/v1/interfaces/IOracle.sol";
+import { ISubFactory } from "../../subfactory/v1/interfaces/ISubFactory.sol";
 
-import "./interfaces/IMapleGlobals.sol";
+import { IMapleGlobals } from "./interfaces/IMapleGlobals.sol";
 
 /// @title MapleGlobals maintains a central source of parameters and allowlists for the Maple protocol.
 contract MapleGlobals is IMapleGlobals {

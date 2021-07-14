@@ -2,11 +2,12 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "./TestUtil.sol";
+import { IERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import { TestUtil } from "./TestUtil.sol";
+import { Governor } from "./user/Governor.sol";
 
 contract GulpTest is TestUtil {
-
-    using SafeMath for uint256;
 
     function setUp() public {
         setUpGlobals();
@@ -112,4 +113,5 @@ contract GulpTest is TestUtil {
         assertEq(reserve0_afterSkim,                         after_reserve0, "Should not be a change");
         assertEq(reserve1_afterSkim,                         after_reserve1, "Should not be a change");
     }
+
 }

@@ -2,7 +2,9 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { TestUtil } from "../../../../test/TestUtil.sol";
+
+import { IStakeLocker } from "../interfaces/IStakeLocker.sol";
 
 contract StakeLockerFactoryTest is TestUtil {
 
@@ -12,7 +14,7 @@ contract StakeLockerFactoryTest is TestUtil {
     }
 
     function test_newLocker() public {
-        StakeLocker sl = StakeLocker(slFactory.newLocker(address(mpl), USDC));
+        IStakeLocker sl = IStakeLocker(slFactory.newLocker(address(mpl), USDC));
 
         // Validate the storage of slfactory.
         assertEq(slFactory.owner(address(sl)), address(this));
@@ -23,4 +25,5 @@ contract StakeLockerFactoryTest is TestUtil {
         assertEq(sl.liquidityAsset(),      USDC,             "Incorrect address of loan asset");
         assertEq(sl.pool(),                address(this),    "Incorrect pool address");
     }
+
 }

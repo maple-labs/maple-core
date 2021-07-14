@@ -2,12 +2,17 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { SafeMath } from "../../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+
+import { IMapleGlobals } from "../../../globals/v1/interfaces/IMapleGlobals.sol";
+import { ILoan }         from "../../../loan/v1/interfaces/ILoan.sol";
+
+import { TestUtil } from "../../../../test/TestUtil.sol";
+import { Governor } from "../../../../test/user/Governor.sol";
 
 contract LoanFactoryTest is TestUtil {
 
     using SafeMath for uint256;
-
 
     function setUp() public {
         setUpGlobals();
@@ -20,7 +25,7 @@ contract LoanFactoryTest is TestUtil {
     function test_setGlobals() public {
         Governor fakeGov = new Governor();
 
-        MapleGlobals globals2 = fakeGov.createGlobals(address(mpl));  // Create upgraded MapleGlobals
+        IMapleGlobals globals2 = fakeGov.createGlobals(address(mpl));  // Create upgraded MapleGlobals
 
         assertEq(address(loanFactory.globals()), address(globals));
 
@@ -164,4 +169,5 @@ contract LoanFactoryTest is TestUtil {
         assertEq(loan.premiumCalc(),               calcs[2], "Incorrect premium calculator");
         assertEq(loan.superFactory(),              address(loanFactory), "Incorrect super factory address");
     }
+
 }

@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/ds-test/contracts/test.sol";
+import { DSTest } from "../../../../../lib/ds-test/contracts/test.sol";
 
-import "core/globals/v1/MapleGlobals.sol";
+import { MapleGlobals } from "../../../globals/v1/MapleGlobals.sol";
 
-import "../MplRewards.sol";
-import "../MplRewardsFactory.sol";
+import { MplRewards, MplRewardsFactory } from "../MplRewardsFactory.sol";
 
-import "./accounts/MplRewardsFactoryGovernor.sol";
+import { MplRewardsFactoryGovernor } from "./accounts/MplRewardsFactoryGovernor.sol";
 
 interface Hevm {
+
     function warp(uint256) external;
     function store(address,bytes32,bytes32) external;
+
 }
 
 contract MplRewardsFactoryTest is DSTest {
@@ -55,4 +56,5 @@ contract MplRewardsFactoryTest is DSTest {
         assertEq(uint256(MplRewards(rewardsContract).rewardsDuration()), 7 days);
         assertEq(address(MplRewards(rewardsContract).owner()),           address(governor));
     }
+
 }

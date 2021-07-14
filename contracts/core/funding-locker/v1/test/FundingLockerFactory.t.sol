@@ -2,7 +2,9 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { TestUtil } from "../../../../test/TestUtil.sol";
+
+import { IFundingLocker } from "../interfaces/IFundingLocker.sol";
 
 contract FundingLockerFactoryTest is TestUtil {
 
@@ -12,7 +14,7 @@ contract FundingLockerFactoryTest is TestUtil {
     }
 
     function test_newLocker() public {
-        FundingLocker fl  = FundingLocker(flFactory.newLocker(USDC));
+        IFundingLocker fl  = IFundingLocker(flFactory.newLocker(USDC));
 
         // Validate the storage of flfactory.
         assertEq(flFactory.owner(address(fl)), address(this));
@@ -22,4 +24,5 @@ contract FundingLockerFactoryTest is TestUtil {
         assertEq(fl.loan(), address(this),           "Incorrect loan address");
         assertEq(address(fl.liquidityAsset()), USDC, "Incorrect address of loan asset");
     }
+
 }

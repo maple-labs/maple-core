@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "core/globals/v1/interfaces/IMapleGlobals.sol";
+import { IMapleGlobals } from "../../globals/v1/interfaces/IMapleGlobals.sol";
 
-import "./interfaces/IMplRewardsFactory.sol";
+import { IMplRewardsFactory } from "./interfaces/IMplRewardsFactory.sol";
 
-import "./MplRewards.sol";
+import { MplRewards } from "./MplRewards.sol";
 
 /// @title MplRewardsFactory instantiates MplRewards contracts.
 contract MplRewardsFactory is IMplRewardsFactory{

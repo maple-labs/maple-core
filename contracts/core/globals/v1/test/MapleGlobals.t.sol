@@ -2,7 +2,10 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { TestUtil } from "../../../../test/TestUtil.sol";
+import { Governor } from "../../../../test/user/Governor.sol";
+
+import { MapleGlobals } from "../MapleGlobals.sol";
 
 contract MapleGlobalsTest is TestUtil {
 
@@ -266,4 +269,5 @@ contract MapleGlobalsTest is TestUtil {
         assertTrue(  fakeGov.try_acceptGovernor());
         assertEq(    globals.governor(), address(fakeGov));
     }
+
 }

@@ -2,11 +2,14 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import { IPool } from "../../../pool/v1/interfaces/IPool.sol";
+
+import { TestUtil } from "../../../../test/TestUtil.sol";
+import { LP }       from "../../../../test/user/LP.sol";
 
 contract PoolTest is TestUtil {
-
-    using SafeMath for uint256;
 
     function setUp() public {
         setUpGlobals();
@@ -435,7 +438,7 @@ contract PoolTest is TestUtil {
     /*** Helpers ***/
     /***************/
 
-    function assertLiquidity(Pool pool, LP lp, address liqLocker, uint256 balanceOfLp, uint256 balanceOfLiqLocker, uint256 balanceOfPoolFdt) internal {
+    function assertLiquidity(IPool pool, LP lp, address liqLocker, uint256 balanceOfLp, uint256 balanceOfLiqLocker, uint256 balanceOfPoolFdt) internal {
         assertEq(IERC20(USDC).balanceOf(address(lp)), balanceOfLp);
         assertEq(IERC20(USDC).balanceOf(liqLocker),   balanceOfLiqLocker);
         assertEq(pool.balanceOf(address(lp)),         balanceOfPoolFdt);

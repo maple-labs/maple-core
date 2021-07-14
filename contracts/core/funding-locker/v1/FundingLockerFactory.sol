@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "./FundingLocker.sol";
+import { FundingLocker } from "./FundingLocker.sol";
 
-import "./interfaces/IFundingLockerFactory.sol";
+import { IFundingLockerFactory } from "./interfaces/IFundingLockerFactory.sol";
 
 /// @title FundingLockerFactory instantiates FundingLockers.
 contract FundingLockerFactory is IFundingLockerFactory {

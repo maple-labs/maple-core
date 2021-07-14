@@ -2,7 +2,9 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { TestUtil } from "../../../../test/TestUtil.sol";
+
+import { ICollateralLocker } from "../interfaces/ICollateralLocker.sol";
 
 contract CollateralLockerFactoryTest is TestUtil {
 
@@ -14,7 +16,7 @@ contract CollateralLockerFactoryTest is TestUtil {
     }
 
     function test_newLocker() public {
-        CollateralLocker cl  = CollateralLocker(clFactory.newLocker(USDC));
+        ICollateralLocker cl  = ICollateralLocker(clFactory.newLocker(USDC));
 
         // Validate the storage of clfactory.
         assertEq(clFactory.owner(address(cl)), address(this), "Invalid owner");
@@ -28,4 +30,5 @@ contract CollateralLockerFactoryTest is TestUtil {
         mint("USDC", address(cl),  500 * USD);
         assertTrue(!bob.try_pull(address(cl), address(bob), 10));
     }
+
 }

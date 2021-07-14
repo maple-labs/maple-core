@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.6.11;
 
-import "../../interfaces/IMplRewardsFactory.sol";
+import { IMplRewardsFactory } from "../../interfaces/IMplRewardsFactory.sol";
 
 contract MplRewardsFactoryGovernor {
+
     function mplRewards_setGlobals(address mplRewardsFactory, address newGlobals) external {
         IMplRewardsFactory(mplRewardsFactory).setGlobals(newGlobals);
     }
@@ -19,4 +20,5 @@ contract MplRewardsFactoryGovernor {
     function try_mplRewards_createMplRewards(address mplRewardsFactory, address rewardsToken, address stakingToken) external returns (bool ok) {
         (ok,) = mplRewardsFactory.call(abi.encodeWithSignature("createMplRewards(address,address)", rewardsToken, stakingToken));
     }
+
 }

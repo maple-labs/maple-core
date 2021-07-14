@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import "lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { SafeMath } from "../../../../lib/openzeppelin-contracts/contracts/math/SafeMath.sol";
+import { ERC20 }    from "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
-import "./interfaces/IERC2258.sol";
+import { IERC2258 } from "./interfaces/IERC2258.sol";
 
 /// @title ERC2258 implements the basic level functionality for a token capable of custodial ownership.
 contract ERC2258 is IERC2258, ERC20 {
+
     using SafeMath       for uint256;
 
     mapping(address => mapping(address => uint256)) public override custodyAllowance;
@@ -39,4 +40,5 @@ contract ERC2258 is IERC2258, ERC20 {
         emit CustodyTransfer(msg.sender, from, to, amount);
         emit CustodyAllowanceChanged(from, msg.sender, oldAllowance, newAllowance);
     }
+
 }

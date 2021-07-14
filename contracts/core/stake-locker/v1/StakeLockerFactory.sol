@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "./interfaces/IStakeLockerFactory.sol";
+import { IStakeLockerFactory } from "./interfaces/IStakeLockerFactory.sol";
 
-import "./StakeLocker.sol";
+import { StakeLocker } from "./StakeLocker.sol";
 
 /// @title StakeLockerFactory instantiates StakeLockers.
 contract StakeLockerFactory is IStakeLockerFactory {

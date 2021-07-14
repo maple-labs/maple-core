@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "core/pool/v1/interfaces/IPool.sol";
+import { IPool } from "../../core/pool/v1/interfaces/IPool.sol";
 
 contract Custodian {
 
@@ -22,4 +22,5 @@ contract Custodian {
         string memory sig = "transferByCustodian(address,address,uint256)";
         (ok,) = address(erc2258).call(abi.encodeWithSignature(sig, from, to, amt));
     }
+
 }

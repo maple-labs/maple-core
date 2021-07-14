@@ -2,11 +2,9 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "./helper/Rewards.sol";
+import { CustodialTestHelper, IStakeToken } from "./CustodialTestHelper.sol";
 
 contract StakeLockerCustodialTest is CustodialTestHelper {
-
-    using SafeMath for uint256;
 
     function setUp() public {
         setupFarmingEcosystem();
@@ -37,4 +35,5 @@ contract StakeLockerCustodialTest is CustodialTestHelper {
         mint("BPT", address(sam), 1000 * WAD);
         withdraw_test(false, 1000, 100, IStakeToken(address(stakeLocker1)));
     }
+
 }

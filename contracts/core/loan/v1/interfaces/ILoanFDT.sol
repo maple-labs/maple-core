@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from  "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "core/funds-distribution-token/v1/interfaces/IBasicFDT.sol";
+import { IBasicFDT } from "../../../funds-distribution-token/v1/interfaces/IBasicFDT.sol";
 
 interface ILoanFDT is IBasicFDT {
 
@@ -21,4 +21,5 @@ interface ILoanFDT is IBasicFDT {
         @dev Withdraws all available funds for a token holder.
     */
     function withdrawFunds() external override;
+
 }

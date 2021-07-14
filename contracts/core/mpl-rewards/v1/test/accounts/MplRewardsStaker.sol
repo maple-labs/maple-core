@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity >=0.6.11;
 
-import "core/custodial-ownership-token/v1/test/accounts/ERC2258Account.sol";
+import { ERC2258Account } from "../../../../custodial-ownership-token/v1/test/accounts/ERC2258Account.sol";
 
-import "../../interfaces/IMplRewards.sol";
+import { IMplRewards } from "../../interfaces/IMplRewards.sol";
 
 contract MplRewardsStaker is ERC2258Account {
+
     function mplRewards_stake(address mplRewards, uint256 amount) external {
         IMplRewards(mplRewards).stake(amount);
     }
@@ -37,4 +38,5 @@ contract MplRewardsStaker is ERC2258Account {
     function try_mplRewards_exit(address mplRewards) external returns (bool ok) {
         (ok,) = mplRewards.call(abi.encodeWithSignature("exit()"));
     }
+
 }

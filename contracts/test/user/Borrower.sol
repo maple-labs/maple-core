@@ -2,12 +2,10 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import "core/loan/v1/interfaces/ILoan.sol";
-import "core/loan/v1/interfaces/ILoanFactory.sol";
-import "core/loan/v1/Loan.sol";
-import "core/stake-locker/v1/interfaces/IStakeLocker.sol";
+import { ILoan }        from "../../core/loan/v1/interfaces/ILoan.sol";
+import { ILoanFactory } from "../../core/loan/v1/interfaces/ILoanFactory.sol";
 
 contract Borrower {
 
@@ -48,17 +46,14 @@ contract Borrower {
         uint256[5] memory specs,
         address[3] memory calcs
     )
-        external returns (Loan loan)
+        external returns (address)
     {
-        loan = Loan(
-            ILoanFactory(loanFactory).createLoan(liquidityAsset, collateralAsset, flFactory, clFactory, specs, calcs)
-        );
+        return ILoanFactory(loanFactory).createLoan(liquidityAsset, collateralAsset, flFactory, clFactory, specs, calcs);
     }
 
     function triggerDefault(address loan) external {
         ILoan(loan).triggerDefault();
     }
-
 
     /*********************/
     /*** TRY FUNCTIONS ***/
@@ -120,4 +115,5 @@ contract Borrower {
         string memory sig = "unpause()";
         (ok,) = target.call(abi.encodeWithSignature(sig));
     }
+
 }

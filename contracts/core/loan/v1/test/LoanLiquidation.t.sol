@@ -2,7 +2,11 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "test/TestUtil.sol";
+import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
+import { ILoan } from "../../../loan/v1/interfaces/ILoan.sol";
+
+import { TestUtil } from "../../../../test/TestUtil.sol";
 
 contract LoanLiquidationTest is TestUtil {
 
@@ -31,11 +35,11 @@ contract LoanLiquidationTest is TestUtil {
         leo.deposit(address(pool1), 5000 * USD);
     }
 
-    function createAndFundLoan(address _interestStructure, address _collateral, uint256 collateralRatio) internal returns (Loan loan) {
+    function createAndFundLoan(address _interestStructure, address _collateral, uint256 collateralRatio) internal returns (ILoan loan) {
         uint256[5] memory specs = [500, 90, 30, uint256(1000 * USD), collateralRatio];
         address[3] memory calcs = [_interestStructure, address(lateFeeCalc), address(premiumCalc)];
 
-        loan = bob.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs);
+        loan = ILoan(bob.createLoan(address(loanFactory), USDC, _collateral, address(flFactory), address(clFactory), specs, calcs));
 
         pat.fundLoan(address(pool1), address(loan), address(dlFactory1), 1000 * USD);
 
@@ -43,7 +47,7 @@ contract LoanLiquidationTest is TestUtil {
         assertTrue(bob.try_drawdown(address(loan), 1000 * USD));     // Borrow draws down 1000 USDC
     }
 
-    function performLiquidationAssertions(Loan loan) internal {
+    function performLiquidationAssertions(ILoan loan) internal {
         // Fetch pre-state variables.
         address collateralLocker  = loan.collateralLocker();
         address collateralAsset   = address(loan.collateralAsset());
@@ -97,25 +101,26 @@ contract LoanLiquidationTest is TestUtil {
 
     function test_basic_liquidation() public {
         // Triangular uniswap path
-        Loan wbtcLoan = createAndFundLoan(address(repaymentCalc), WBTC, 2000);
+        ILoan wbtcLoan = createAndFundLoan(address(repaymentCalc), WBTC, 2000);
         performLiquidationAssertions(wbtcLoan);
 
         // Assertion for the oracle price check.
         assertTrue(globals.getLatestPrice(AAVE) > uint256(0));
 
-        Loan aaveLoan = createAndFundLoan(address(repaymentCalc), AAVE, 2000);
+        ILoan aaveLoan = createAndFundLoan(address(repaymentCalc), AAVE, 2000);
         performLiquidationAssertions(aaveLoan);
 
         // Bilateral uniswap path
-        Loan wethLoan = createAndFundLoan(address(repaymentCalc), WETH, 2000);
+        ILoan wethLoan = createAndFundLoan(address(repaymentCalc), WETH, 2000);
         performLiquidationAssertions(wethLoan);
 
         // collateralAsset == liquidityAsset
-        Loan usdcLoan = createAndFundLoan(address(repaymentCalc), USDC, 2000);
+        ILoan usdcLoan = createAndFundLoan(address(repaymentCalc), USDC, 2000);
         performLiquidationAssertions(usdcLoan);
 
         // Zero collateralization
-        Loan wethLoan2 = createAndFundLoan(address(repaymentCalc), WETH, 0);
+        ILoan wethLoan2 = createAndFundLoan(address(repaymentCalc), WETH, 0);
         performLiquidationAssertions(wethLoan2);
     }
+
 }
