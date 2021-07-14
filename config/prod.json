@@ -90,6 +90,9 @@
         ],
         "": ["ast"]
       }
+    },
+    "metadata": {
+      "bytecodeHash": "none"
     }
   }
 }
