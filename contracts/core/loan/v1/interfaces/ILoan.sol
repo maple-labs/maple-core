@@ -3,9 +3,9 @@ pragma solidity 0.6.11;
 
 import { IERC20 } from "../../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import { ILoanFDT } from "./ILoanFDT.sol";
+import { IBasicFundsTokenFDT } from "../../../funds-distribution-token/v1/interfaces/IBasicFundsTokenFDT.sol";
 
-interface ILoan is ILoanFDT {
+interface ILoan is IBasicFundsTokenFDT {
 
     /**
         Ready      = The Loan has been initialized and is ready for funding (assuming funding period hasn't ended).

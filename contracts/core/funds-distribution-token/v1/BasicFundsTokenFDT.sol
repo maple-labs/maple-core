@@ -5,13 +5,13 @@ import { IERC20, SafeERC20 } from "../../../../lib/openzeppelin-contracts/contra
 
 import { BasicFDT, SignedSafeMath } from "../../funds-distribution-token/v1/BasicFDT.sol";
 
-import { ILoanFDT } from "./interfaces/ILoanFDT.sol";
+import { IBasicFundsTokenFDT } from "./interfaces/IBasicFundsTokenFDT.sol";
 
-/// @title LoanFDT inherits BasicFDT and uses the original ERC-2222 logic.
-abstract contract LoanFDT is ILoanFDT, BasicFDT {
+/// @title BasicFundsTokenFDT implements the Basic FDT functionality with a separate Funds Token.
+abstract contract BasicFundsTokenFDT is IBasicFundsTokenFDT, BasicFDT {
 
-    using SignedSafeMath for  int256;
     using SafeERC20      for  IERC20;
+    using SignedSafeMath for  int256;
 
     IERC20 public override immutable fundsToken;
 
@@ -21,7 +21,7 @@ abstract contract LoanFDT is ILoanFDT, BasicFDT {
         fundsToken = IERC20(_fundsToken);
     }
 
-    function withdrawFunds() public virtual override(ILoanFDT, BasicFDT) {
+    function withdrawFunds() public virtual override(IBasicFundsTokenFDT, BasicFDT) {
         uint256 withdrawableFunds = _prepareWithdraw();
 
         if (withdrawableFunds > uint256(0)) {

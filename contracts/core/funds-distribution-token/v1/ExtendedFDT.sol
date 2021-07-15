@@ -9,9 +9,9 @@ import { BasicFDT, SafeMath, SafeMathInt, SafeMathUint, SignedSafeMath } from ".
 abstract contract ExtendedFDT is IExtendedFDT, BasicFDT {
 
     using SafeMath       for uint256;
+    using SafeMathInt    for  int256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
-    using SafeMathInt    for  int256;
 
     uint256 internal lossesPerShare;
 
