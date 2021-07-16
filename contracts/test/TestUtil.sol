@@ -747,7 +747,7 @@ contract TestUtil is DSTest {
     /*****************************/
     function setUpFarming(uint256 totalMpl, uint256 rewardsDuration) internal {
         mpl.transfer(address(gov), totalMpl);              // Transfer MPL to Governor
-        gov.transfer(mpl, address(mplRewards), totalMpl);  // Transfer MPL to MplRewards
+        gov.transfer(IERC20(address(mpl)), address(mplRewards), totalMpl);  // Transfer MPL to MplRewards
         gov.setRewardsDuration(rewardsDuration);
         gov.notifyRewardAmount(totalMpl);
     }
