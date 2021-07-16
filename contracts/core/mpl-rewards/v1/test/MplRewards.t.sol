@@ -68,7 +68,7 @@ contract MplRewardsTest is DSTest {
 
         MplRewardsOwner owner      = new MplRewardsOwner();
         MplRewardsOwner notOwner   = new MplRewardsOwner();
-        SomeERC2258 rewardsToken   = new SomeERC2258("RWT", "RWT");
+        SomeERC2258 rewardsToken   = new SomeERC2258("RT", "RT");
         MplRewards rewardsContract = new MplRewards(address(rewardsToken), address(0), address(owner));
 
         assertEq(rewardsContract.periodFinish(),         0);
@@ -99,7 +99,7 @@ contract MplRewardsTest is DSTest {
     function test_recoverERC20() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
         MplRewardsOwner notOwner   = new MplRewardsOwner();
-        SomeERC2258 someToken      = new SomeERC2258("SMT", "SMT");
+        SomeERC2258 someToken      = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(0), address(1), address(owner));
 
         someToken.mint(address(rewardsContract), 1);
@@ -117,7 +117,7 @@ contract MplRewardsTest is DSTest {
     function test_setRewardsDuration() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
         MplRewardsOwner notOwner   = new MplRewardsOwner();
-        SomeERC2258 rewardsToken   = new SomeERC2258("RWT", "RWT");
+        SomeERC2258 rewardsToken   = new SomeERC2258("RT", "RT");
         MplRewards rewardsContract = new MplRewards(address(rewardsToken), address(0), address(owner));
 
         rewardsToken.mint(address(rewardsContract), 1);
@@ -145,8 +145,8 @@ contract MplRewardsTest is DSTest {
         MplRewardsOwner owner      = new MplRewardsOwner();
         MplRewardsOwner notOwner   = new MplRewardsOwner();
         MplRewardsStaker staker    = new MplRewardsStaker();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
 
         assertTrue(!rewardsContract.paused());
@@ -176,8 +176,8 @@ contract MplRewardsTest is DSTest {
 
     function test_periodFinishes() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
         MplRewardsStaker staker    = new MplRewardsStaker();
 
@@ -232,8 +232,8 @@ contract MplRewardsTest is DSTest {
 
     function test_flashWithdraw() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
         MplRewardsStaker staker    = new MplRewardsStaker();
 
@@ -295,8 +295,8 @@ contract MplRewardsTest is DSTest {
 
     function test_flashExit() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
         MplRewardsStaker staker    = new MplRewardsStaker();
 
@@ -358,8 +358,8 @@ contract MplRewardsTest is DSTest {
 
     function test_rewardsSingleEpoch() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
 
         uint256 totalRewardsInWad = 25_000 * WAD;
@@ -577,8 +577,8 @@ contract MplRewardsTest is DSTest {
 
     function test_rewardsMultiEpoch() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
 
         uint256 totalRewardsInWad = 25_000 * WAD;
@@ -734,8 +734,8 @@ contract MplRewardsTest is DSTest {
 
     function test_midEpochReset() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
 
         uint256 totalRewardsInWad = 20_000 * WAD;
@@ -779,7 +779,7 @@ contract MplRewardsTest is DSTest {
 
         // New period, take out 5000 rewards token no longer needed
         uint256 newTotalRewardsInWad = 5_000 * WAD;
-        rewardsDuration   = 2 days;
+        rewardsDuration = 2 days;
 
         owner.mplRewards_recoverERC20(address(rewardsContract), address(rewardToken), 5_000 * WAD);
         assertEq(rewardToken.balanceOf(address(rewardsContract)), totalRewardsInWad - 5_000 * WAD);
