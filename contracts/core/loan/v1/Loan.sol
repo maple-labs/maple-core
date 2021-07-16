@@ -20,13 +20,13 @@ import { ILiquidityLocker }         from "../../liquidity-locker/v1/interfaces/I
 import { IPool }                    from "../../pool/v1/interfaces/IPool.sol";
 import { IPoolFactory }             from "../../pool/v1/interfaces/IPoolFactory.sol";
 
+import { BasicFundsTokenFDT } from "../../funds-distribution-token/v1/BasicFundsTokenFDT.sol";
+
 import { ILoan }        from "./interfaces/ILoan.sol";
 import { ILoanFactory } from "./interfaces/ILoanFactory.sol";
 
-import { LoanFDT } from "./LoanFDT.sol";
-
 /// @title Loan maintains all accounting and functionality related to Loans.
-contract Loan is ILoan, LoanFDT, Pausable {
+contract Loan is ILoan, BasicFundsTokenFDT, Pausable {
 
     using SafeMath        for uint256;
     using SafeERC20       for IERC20;
@@ -101,7 +101,7 @@ contract Loan is ILoan, LoanFDT, Pausable {
         address _clFactory,
         uint256[5] memory specs,
         address[3] memory calcs
-    ) LoanFDT("Maple Loan Token", "MPL-LOAN", _liquidityAsset) public {
+    ) BasicFundsTokenFDT("Maple Loan Token", "MPL-LOAN", _liquidityAsset) public {
         IMapleGlobals globals = _globals(msg.sender);
 
         // Perform validity cross-checks.
@@ -350,7 +350,7 @@ contract Loan is ILoan, LoanFDT, Pausable {
     /*** FDT Functions ***/
     /*********************/
 
-    function withdrawFunds() public override(ILoan, LoanFDT) {
+    function withdrawFunds() public override(ILoan, BasicFundsTokenFDT) {
         _whenProtocolNotPaused();
         super.withdrawFunds();
         emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));

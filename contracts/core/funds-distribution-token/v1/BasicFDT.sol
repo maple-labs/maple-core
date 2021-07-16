@@ -14,9 +14,9 @@ import { IBasicFDT } from "./interfaces/IBasicFDT.sol";
 abstract contract BasicFDT is IBasicFDT, ERC20 {
 
     using SafeMath       for uint256;
+    using SafeMathInt    for  int256;
     using SafeMathUint   for uint256;
     using SignedSafeMath for  int256;
-    using SafeMathInt    for  int256;
 
     uint256 internal constant pointsMultiplier = 2 ** 128;
     uint256 internal pointsPerShare;
