@@ -37,6 +37,14 @@ contract MplRewardsTest is DSTest {
         hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code"))))));
     }
 
+    function getDiff(uint256 val0, uint256 val1) internal pure returns (uint256 diff) {
+        diff = val0 > val1 ? val0 - val1 : val1 - val0;
+    }
+
+    function assertWithinPrecision(uint256 val0, uint256 val1, uint256 decimalsToIgnore) public {
+        assertEq(getDiff(val0, val1) / (10 ** decimalsToIgnore), 0);
+    }
+
     function test_transferOwnership() external {
         MplRewardsOwner account1   = new MplRewardsOwner();
         MplRewardsOwner account2   = new MplRewardsOwner();
@@ -60,7 +68,7 @@ contract MplRewardsTest is DSTest {
 
         MplRewardsOwner owner      = new MplRewardsOwner();
         MplRewardsOwner notOwner   = new MplRewardsOwner();
-        SomeERC2258 rewardsToken   = new SomeERC2258("RWT", "RWT");
+        SomeERC2258 rewardsToken   = new SomeERC2258("RT", "RT");
         MplRewards rewardsContract = new MplRewards(address(rewardsToken), address(0), address(owner));
 
         assertEq(rewardsContract.periodFinish(),         0);
@@ -91,7 +99,7 @@ contract MplRewardsTest is DSTest {
     function test_recoverERC20() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
         MplRewardsOwner notOwner   = new MplRewardsOwner();
-        SomeERC2258 someToken      = new SomeERC2258("SMT", "SMT");
+        SomeERC2258 someToken      = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(0), address(1), address(owner));
 
         someToken.mint(address(rewardsContract), 1);
@@ -109,7 +117,7 @@ contract MplRewardsTest is DSTest {
     function test_setRewardsDuration() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
         MplRewardsOwner notOwner   = new MplRewardsOwner();
-        SomeERC2258 rewardsToken   = new SomeERC2258("RWT", "RWT");
+        SomeERC2258 rewardsToken   = new SomeERC2258("RT", "RT");
         MplRewards rewardsContract = new MplRewards(address(rewardsToken), address(0), address(owner));
 
         rewardsToken.mint(address(rewardsContract), 1);
@@ -137,8 +145,8 @@ contract MplRewardsTest is DSTest {
         MplRewardsOwner owner      = new MplRewardsOwner();
         MplRewardsOwner notOwner   = new MplRewardsOwner();
         MplRewardsStaker staker    = new MplRewardsStaker();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
 
         assertTrue(!rewardsContract.paused());
@@ -168,8 +176,8 @@ contract MplRewardsTest is DSTest {
 
     function test_periodFinishes() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
         MplRewardsStaker staker    = new MplRewardsStaker();
 
@@ -224,8 +232,8 @@ contract MplRewardsTest is DSTest {
 
     function test_flashWithdraw() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
         MplRewardsStaker staker    = new MplRewardsStaker();
 
@@ -287,8 +295,8 @@ contract MplRewardsTest is DSTest {
 
     function test_flashExit() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
         MplRewardsStaker staker    = new MplRewardsStaker();
 
@@ -350,8 +358,8 @@ contract MplRewardsTest is DSTest {
 
     function test_rewardsSingleEpoch() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
 
         uint256 totalRewardsInWad = 25_000 * WAD;
@@ -569,8 +577,8 @@ contract MplRewardsTest is DSTest {
 
     function test_rewardsMultiEpoch() external {
         MplRewardsOwner owner      = new MplRewardsOwner();
-        SomeERC2258 rewardToken    = new SomeERC2258("RWT", "RWT");
-        SomeERC2258 stakingToken   = new SomeERC2258("SKT", "SKT");
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
         MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
 
         uint256 totalRewardsInWad = 25_000 * WAD;
@@ -724,4 +732,77 @@ contract MplRewardsTest is DSTest {
         assertEq(rewardToken.balanceOf(address(stakers[1])),                  (dTime1_rpt + dTime2_rpt) * 30);
     }
 
+    function test_midEpochReset() external {
+        MplRewardsOwner owner      = new MplRewardsOwner();
+        SomeERC2258 rewardToken    = new SomeERC2258("RT", "RT");
+        SomeERC2258 stakingToken   = new SomeERC2258("ST", "ST");
+        MplRewards rewardsContract = new MplRewards(address(rewardToken), address(stakingToken), address(owner));
+
+        uint256 totalRewardsInWad = 20_000 * WAD;
+        uint256 rewardsDuration   = 40 days;
+
+        MplRewardsStaker staker = new MplRewardsStaker();
+
+        stakingToken.mint(address(staker), 100 * WAD);
+        
+        staker.erc2258_increaseCustodyAllowance(address(stakingToken), address(rewardsContract), 100 * WAD);
+        staker.mplRewards_stake(address(rewardsContract), 100 * WAD);
+
+        rewardToken.mint(address(rewardsContract), totalRewardsInWad);
+
+        owner.mplRewards_setRewardsDuration(address(rewardsContract), rewardsDuration);
+        owner.mplRewards_notifyRewardAmount(address(rewardsContract), totalRewardsInWad);
+        
+        uint256 start = block.timestamp;
+
+        assertEq(rewardsContract.rewardRate(),                    totalRewardsInWad / rewardsDuration);
+        assertEq(rewardToken.balanceOf(address(rewardsContract)), totalRewardsInWad);
+        assertEq(rewardsContract.periodFinish(),                  start + rewardsDuration);
+
+        // Warp to the middle of the epoch
+        hevm.warp(start + (rewardsDuration / 2));
+
+        // End reward period now
+        owner.mplRewards_updatePeriodFinish(address(rewardsContract), block.timestamp);
+        assertEq(rewardsContract.lastTimeRewardApplicable(), block.timestamp);
+
+        uint256 earnedAtLastTimeRewardApplicable = rewardsContract.earned(address(staker));
+        assertWithinPrecision(earnedAtLastTimeRewardApplicable, totalRewardsInWad / 2, 5);
+
+        // Warp to the 3/4 mark of the epoch
+        hevm.warp(start + ((3 * rewardsDuration) / 4));
+
+        uint256 earnedAfterLastTimeRewardApplicable = rewardsContract.earned(address(staker));
+
+        // Should not longer have been earning rewards
+        assertEq(earnedAtLastTimeRewardApplicable, earnedAfterLastTimeRewardApplicable);
+
+        // New period, take out 5000 rewards token no longer needed
+        uint256 newTotalRewardsInWad = 5_000 * WAD;
+        rewardsDuration = 2 days;
+
+        owner.mplRewards_recoverERC20(address(rewardsContract), address(rewardToken), 5_000 * WAD);
+        assertEq(rewardToken.balanceOf(address(rewardsContract)), totalRewardsInWad - 5_000 * WAD);
+
+        owner.mplRewards_setRewardsDuration(address(rewardsContract), rewardsDuration);
+        owner.mplRewards_notifyRewardAmount(address(rewardsContract), newTotalRewardsInWad);
+
+        start = block.timestamp;
+
+        // Warp to the end of the new epoch
+        hevm.warp(start + rewardsDuration);
+
+        assertEq(rewardsContract.lastTimeRewardApplicable(), block.timestamp);
+
+        // Rewards earned by staker should be half of first epoch and all of second epoch
+        assertWithinPrecision(rewardsContract.earned(address(staker)), totalRewardsInWad / 2 + newTotalRewardsInWad, 5);
+
+        staker.mplRewards_exit(address(rewardsContract));
+
+        // After exiting, staker should have rewards token balance of half of first epoch earned rewards and all of second epoch earned rewards
+        assertWithinPrecision(rewardToken.balanceOf(address(staker)), totalRewardsInWad / 2 + newTotalRewardsInWad, 5);
+
+        // After exiting, the rewards contract should no longer have any remaining rewards token 
+        assertWithinPrecision(rewardToken.balanceOf(address(rewardsContract)), 0, 5);
+    }
 }
