@@ -25,6 +25,15 @@
     "contracts/core/loan/v1/LoanFactory.sol": {
       "urls": ["contracts/core/loan/v1/LoanFactory.sol"]
     },
+    "contracts/core/loan/v2/LoanUpgradeableFactory.sol": {
+      "urls": ["contracts/core/loan/v2/LoanUpgradeableFactory.sol"]
+    },
+    "contracts/core/loan/v2/LoanProxy.sol": {
+      "urls": ["contracts/core/loan/v2/LoanProxy.sol"]
+    },
+    "contracts/core/loan/v2/LoanUpgradeable.sol": {
+      "urls": ["contracts/core/loan/v2/LoanUpgradeable.sol"]
+    },
     "contracts/core/mpl-rewards/v1/MplRewardsFactory.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/MplRewardsFactory.sol"]
     },
