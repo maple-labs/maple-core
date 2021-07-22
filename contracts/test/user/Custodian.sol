@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import { IPool } from "../../core/pool/v1/interfaces/IPool.sol";
+import { IPool } from "../../core/pool/contracts/interfaces/IPool.sol";
 
 contract Custodian {
 

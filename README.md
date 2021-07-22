@@ -37,7 +37,7 @@ dapp update
 ## Build Config
 To create a new config.json file, use `DAPP_SRC=contracts dapp mk-standard-json | pbcopy` and then paste that into a new file. If using deployed libraries, make sure to add 
 ```sh
-export DAPP_LIBRARIES=" contracts/libraries/loan/v1/LoanLib.sol:LoanLib:0x51A189ccD2eB5e1168DdcA7e59F7c8f39AA52232 contracts/libraries/pool/v1/PoolLib.sol:PoolLib:0x2c1C30fb8cC313Ef3cfd2E2bBf2da88AdD902C30"
+export DAPP_LIBRARIES=" contracts/libraries/loan/contracts/LoanLib.sol:LoanLib:0x51A189ccD2eB5e1168DdcA7e59F7c8f39AA52232 contracts/libraries/pool/contracts/PoolLib.sol:PoolLib:0x2c1C30fb8cC313Ef3cfd2E2bBf2da88AdD902C30"
 ``` 
 in that format (space delimited with a space at the beginning) with relevant libraries and addresses.
 

@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import { IMapleGlobals } from "../../core/globals/v1/interfaces/IMapleGlobals.sol";
+import { IMapleGlobals } from "../../core/globals/contracts/interfaces/IMapleGlobals.sol";
 
 contract EmergencyAdmin {
 

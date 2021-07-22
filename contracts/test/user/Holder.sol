@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import { IBasicFDT } from "../../core/funds-distribution-token/v1/interfaces/IBasicFDT.sol";
+import { IBasicFDT } from "../../core/funds-distribution-token/contracts/interfaces/IBasicFDT.sol";
 
 contract Holder {
 
