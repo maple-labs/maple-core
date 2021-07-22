@@ -7,7 +7,7 @@ import { IERC20, SafeERC20 } from "../../../../lib/openzeppelin-contracts/contra
 import { IERC20Details }  from "../../../external-interfaces/IERC20Details.sol";
 import { IUniswapRouter } from "../../../external-interfaces/IUniswapRouter.sol";
 
-import { ICollateralLocker } from "../../../core/collateral-locker/v1/interfaces/ICollateralLocker.sol";
+import { ICollateralLocker } from "../../../core/collateral-locker/contracts/interfaces/ICollateralLocker.sol";
 import { IFundingLocker }    from "../../../core/funding-locker/v1/interfaces/IFundingLocker.sol";
 import { IMapleGlobals }     from "../../../core/globals/v1/interfaces/IMapleGlobals.sol";
 import { ILateFeeCalc }      from "../../../core/late-fee-calculator/v1/interfaces/ILateFeeCalc.sol";

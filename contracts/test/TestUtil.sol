@@ -14,7 +14,7 @@ import { IUniswapV2Pair }     from "../external-interfaces/IUniswapV2Pair.sol";
 import { IUniswapV2Router02 } from "../external-interfaces/IUniswapV2Router02.sol";
 
 import { ChainlinkOracle }                 from "../core/chainlink-oracle/v1/ChainlinkOracle.sol";
-import { CollateralLockerFactory }         from "../core/collateral-locker/v1/CollateralLockerFactory.sol";
+import { CollateralLockerFactory }         from "../core/collateral-locker/contracts/CollateralLockerFactory.sol";
 import { DebtLockerFactory }               from "../core/debt-locker/v1/DebtLockerFactory.sol";
 import { FundingLockerFactory }            from "../core/funding-locker/v1/FundingLockerFactory.sol";
 import { MapleGlobals }                    from "../core/globals/v1/MapleGlobals.sol";

@@ -11,3 +11,6 @@
 [submodule "module/maple-token"]
 	path = module/maple-token
 	url = git@github.com:maple-labs/maple-token.git
+[submodule "contracts/core/collateral-locker"]
+	path = contracts/core/collateral-locker
+	url = https://github.com/maple-labs/collateral-locker.git

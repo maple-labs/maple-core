@@ -4,7 +4,7 @@
     "contracts/core/chainlink-oracle/v1/ChainlinkOracle.sol": {
       "urls": ["contracts/core/chainlink-oracle/v1/ChainlinkOracle.sol"]
     },
-    "contracts/core/collateral-locker/v1/CollateralLockerFactory.sol": {
+    "contracts/core/collateral-locker/contracts/CollateralLockerFactory.sol": {
       "urls": ["contracts/core/collateral-locker/v1/CollateralLockerFactory.sol"]
     },
     "contracts/core/debt-locker/v1/DebtLockerFactory.sol": {

@@ -7,11 +7,11 @@
     "contracts/core/chainlink-oracle/v1/test/ChainLinkOracle.t.sol": {
       "urls": ["contracts/core/chainlink-oracle/v1/test/ChainLinkOracle.t.sol"]
     },
-    "contracts/core/collateral-locker/v1/CollateralLockerFactory.sol": {
-      "urls": ["contracts/core/collateral-locker/v1/CollateralLockerFactory.sol"]
+    "contracts/core/collateral-locker/contracts/CollateralLockerFactory.sol": {
+      "urls": ["contracts/core/collateral-locker/contracts/CollateralLockerFactory.sol"]
     },
-    "contracts/core/collateral-locker/v1/test/CollateralLockerFactory.t.sol": {
-      "urls": ["contracts/core/collateral-locker/v1/test/CollateralLockerFactory.t.sol"]
+    "contracts/core/collateral-locker/contracts/test/CollateralLockerFactory.t.sol": {
+      "urls": ["contracts/core/collateral-locker/contracts/test/CollateralLockerFactory.t.sol"]
     },
     "contracts/core/debt-locker/v1/DebtLockerFactory.sol": {
       "urls": ["contracts/core/debt-locker/v1/DebtLockerFactory.sol"]

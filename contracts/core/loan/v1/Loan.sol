@@ -11,8 +11,8 @@ import { IERC20Details } from "../../../external-interfaces/IERC20Details.sol";
 import { LoanLib } from "../../../libraries/loan/v1/LoanLib.sol";
 import { Util }    from "../../../libraries/util/v1/Util.sol";
 
-import { ICollateralLocker }        from "../../collateral-locker/v1/interfaces/ICollateralLocker.sol";
-import { ICollateralLockerFactory } from "../../collateral-locker/v1/interfaces/ICollateralLockerFactory.sol";
+import { ICollateralLocker }        from "../../collateral-locker/contracts/interfaces/ICollateralLocker.sol";
+import { ICollateralLockerFactory } from "../../collateral-locker/contracts/interfaces/ICollateralLockerFactory.sol";
 import { IFundingLocker }           from "../../funding-locker/v1/interfaces/IFundingLocker.sol";
 import { IFundingLockerFactory }    from "../../funding-locker/v1/interfaces/IFundingLockerFactory.sol";
 import { IMapleGlobals }            from "../../globals/v1/interfaces/IMapleGlobals.sol";
