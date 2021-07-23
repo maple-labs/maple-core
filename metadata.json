@@ -2,21 +2,21 @@
  {
   "contractName": "BasicFDT",
   "contractSize": 0,
-  "sourceHash": "0x77c3d1f6f60badcb07440fd75840de892c55ef662b3af41b241a260f0e6d3df4",
+  "sourceHash": "0xcb1b153ae7bcd540aefff964a6e042567a3bcab91a2fb7fb2c048adfa33e7099",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "BasicFundsTokenFDT",
   "contractSize": 0,
-  "sourceHash": "0xead92d438b34441c7c0cbbfd8f5c0b8e23550836fea1c79b0f79ba56d5b175e4",
+  "sourceHash": "0x63b47a0cf25e8c2af4e66d6fd7797f44bf8d67265d2c9de3871e34f5c4e2f02d",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "ChainlinkOracle",
   "contractSize": 2301,
-  "sourceHash": "0x0e73ba2b53f0e9b77398f232f5bf481510668187d6377dbc5751355d06c182c1",
+  "sourceHash": "0x0886aa0926eea8a80a618d466ba69762fc33a940cd41eeb605d68877db206856",
   "bytecodeHashWithLibRefs": "0x1592328cbe2f0cccf8b20bab1d4231e6b90be1c8991d6e63dc4b86ea0bf0754c",
   "bytecodeHashWithoutLibRefs": "0x1592328cbe2f0cccf8b20bab1d4231e6b90be1c8991d6e63dc4b86ea0bf0754c"
  },
@@ -37,7 +37,7 @@
  {
   "contractName": "DebtLocker",
   "contractSize": 4863,
-  "sourceHash": "0x0c4a1a49d8d9349847ee94d3ef3b8411a49e3506453cf3298591287110f7c692",
+  "sourceHash": "0xc122092643f1599e24d65c071ef118ef39afc8de0e846d60806aedb5fd607e53",
   "bytecodeHashWithLibRefs": "0x08f89a0fa3f7d1fca2ff8e0656df02277a6475ca6b960785325d53ecc838d559",
   "bytecodeHashWithoutLibRefs": "0x08f89a0fa3f7d1fca2ff8e0656df02277a6475ca6b960785325d53ecc838d559"
  },
@@ -93,7 +93,7 @@
  {
   "contractName": "IChainlinkOracle",
   "contractSize": 0,
-  "sourceHash": "0xa5a11e86aff20bff58db996315276a57b8316bbc681fd02f14b107d31e4e8e04",
+  "sourceHash": "0x76172d1f90aae8b3a29f9e24cf5801dc4e6b66c124fba12711fe95543dc79d0b",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
@@ -107,21 +107,21 @@
  {
   "contractName": "ICollateralLockerFactory",
   "contractSize": 0,
-  "sourceHash": "0x3c5769e6f91cdb117f2265c7046657805574b621d5917743349e19e4f99b5832",
+  "sourceHash": "0x149f551db33575d1feacf01b33505e030d48fbec7339245eafa307bad80687a8",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "IDebtLocker",
   "contractSize": 0,
-  "sourceHash": "0x03c9ab5e203e6b94aedb2d9f53e347c4d2d70b044f6079cfe5de0704fbe73bb8",
+  "sourceHash": "0xa82fd5ead769a8fb05de6ed96c6896fafc265de0010adc7e96dfe9a10baab124",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "IDebtLockerFactory",
   "contractSize": 0,
-  "sourceHash": "0x45c842849c979b16b1284e51ee60ff34e993dde66172c861b600d04b14d3863f",
+  "sourceHash": "0xb18e997315d864277d582bee4a7a30eeaa412b994a0b255a4ea2fef843631011",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
@@ -149,14 +149,14 @@
  {
   "contractName": "IFundingLockerFactory",
   "contractSize": 0,
-  "sourceHash": "0xe7fc984be1475347c811d8b18a7381ded999ec3a3d591d39388dc1a1c5af0efc",
+  "sourceHash": "0xd3180b025700114458e797bf40b2cac92011aca219d80666b0d41b53d99f7578",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "ILateFeeCalc",
   "contractSize": 0,
-  "sourceHash": "0x9df5b9cf6ef23a5b2814814727d6890471ea5b573ef395b11e1929729a231912",
+  "sourceHash": "0xc49854a666abed4749804dfd67a8a7b157810294812e3f4a29e3976ba38926ed",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
@@ -170,21 +170,21 @@
  {
   "contractName": "ILiquidityLockerFactory",
   "contractSize": 0,
-  "sourceHash": "0x19049212312f72aaf09026e57f254b81784972989da66709b9f53d405110fe78",
+  "sourceHash": "0xabb8e375332bbe7383b2ec1a7220efcdc1fdcecea4b419c1c0e8820a9ebbc5ff",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "ILoan",
   "contractSize": 0,
-  "sourceHash": "0x51809556a17c455366c8dbbf21b58fa1e96d48006909bc3a20379f53ff985a70",
+  "sourceHash": "0x952113dd87d77291fb9d4ea1ec623a898e54fca37282aba96534ab8979276dcd",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "ILoanFactory",
   "contractSize": 0,
-  "sourceHash": "0x890afbb7b605fded97040f3a243d9ee4738813c12a6152681a40a50cac4df136",
+  "sourceHash": "0x9c2dc6e4f4ddc5271a5e7b85f32dbc10bafb949c11ae99f4f0070d5dea3f3ec9",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
@@ -205,14 +205,14 @@
  {
   "contractName": "IMplRewards",
   "contractSize": 0,
-  "sourceHash": "0xf393ca1c415c66d9b78d0312f9ee1efbcd9302212e91441357d038392122a7be",
+  "sourceHash": "0x89d0150c88f5ed340bbd1fa53c4f227a045eadb5f6ba32e436baf67b6632ce2b",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "IMplRewardsFactory",
   "contractSize": 0,
-  "sourceHash": "0x3b6811366c2330da585c09cddc3b416a26e3514427e51f158f3828cb5d353fb9",
+  "sourceHash": "0xb313d0f0d90e5c597024065bd88d8a349ee7dcd302e3087578e619a315bf9ebe",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
@@ -233,28 +233,28 @@
  {
   "contractName": "IPoolFactory",
   "contractSize": 0,
-  "sourceHash": "0x084d6bf45eb0d224d380a7ca0a4c6271013fd76816257cd3d5615f1d5af15756",
+  "sourceHash": "0x1813731499d7ecffc52437b99fffb038023248d56e14f2a46097ada01243b96e",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "IPoolFDT",
   "contractSize": 0,
-  "sourceHash": "0x582bbd8c7d218bd2307450aedb5fd25287e3281f23290fab0306ac50162e1065",
+  "sourceHash": "0x77a558254f571d0d646c1eef3f313b5bcc26dc8b62ca4c0c8a8d25379dec581f",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "IPremiumCalc",
   "contractSize": 0,
-  "sourceHash": "0x360724fbadb0c18dd415d9c061471104edad3b1d932e7ef39135d3ecff98e06b",
+  "sourceHash": "0xa8903766e7875342681e8b19497b3cb2b6a1689d8acd742258b99638ae5244dd",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "IRepaymentCalc",
   "contractSize": 0,
-  "sourceHash": "0xa41369eb8ea2b4fb5464ef05c2d786d1b0b27debaf12ecfdc8d4049874cf7289",
+  "sourceHash": "0x27f95fc24502d99a7988e1d1997e883880f5796b55aa897f331a8ecca958a452",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
@@ -268,14 +268,14 @@
  {
   "contractName": "IStakeLockerFactory",
   "contractSize": 0,
-  "sourceHash": "0xfc5f4c7a19b18fe462dfc1e9ef8678c68d8dea1a23d0a4ba785eb702f1642bd1",
+  "sourceHash": "0x17fcb6ea8804d7181d1df2cf2c9f0ae0cc2d1eaeeb117a1fd539081290a376d3",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "IStakeLockerFDT",
   "contractSize": 0,
-  "sourceHash": "0xb2aaaa33d8ad6e95d663a95e3e21591087d0038d15d80bafb08c646c8418b4fe",
+  "sourceHash": "0x42e098311e32e9ff04a6c42cd7e0314c7a98a98462c704b73459e94888c4ab2a",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
@@ -289,7 +289,7 @@
  {
   "contractName": "IUsdOracle",
   "contractSize": 0,
-  "sourceHash": "0x823285d40592c15d5ebd5c190dbf838f6a57b93e324521c5118e60ceb0e15721",
+  "sourceHash": "0x4a83cb44c042108331bfacfd1a6390431431c30309f46064121e43dd543e3c9d",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
@@ -303,7 +303,7 @@
  {
   "contractName": "LiquidityLocker",
   "contractSize": 2048,
-  "sourceHash": "0x745cdc1eb4c1f8a452a223a469edf8eb5696c5c2a692f0f32459940e13c8e1d7",
+  "sourceHash": "0xde1f0447e6040c7e173338cf965537545c9bd28612fff79db6dc285a6e9c155a",
   "bytecodeHashWithLibRefs": "0x1eafa21cf50dd9e63d0cc96736a66957292115b9515dd6ff02aa9bd4863bf5d9",
   "bytecodeHashWithoutLibRefs": "0x1eafa21cf50dd9e63d0cc96736a66957292115b9515dd6ff02aa9bd4863bf5d9"
  },
@@ -317,91 +317,91 @@
  {
   "contractName": "Loan",
   "contractSize": 16564,
-  "sourceHash": "0xf5882566e2507694e2d227dac83ec9343f0decf83f11812385eb34fe392ce7f5",
-  "bytecodeHashWithLibRefs": "0x9a90c4d9b2c85c9276338cbadb8a212db2fc0360c9e56e4f6767cfc0451fe3e7",
-  "bytecodeHashWithoutLibRefs": "0x9a90c4d9b2c85c9276338cbadb8a212db2fc0360c9e56e4f6767cfc0451fe3e7"
+  "sourceHash": "0x5373198dd59bc7019a1fb2968f4fbb8b8c18d7ed5cd40041faf4f7c91e275532",
+  "bytecodeHashWithLibRefs": "0x85a7fe852c190c28219e360fa3e054ba7b5ed49c5d1d0277857d86871cc4e493",
+  "bytecodeHashWithoutLibRefs": "0xf3041d8d7b45d5f76c44f7b69170c452303bf6aa758ac89ff87fb745c3cb68e8"
  },
  {
   "contractName": "LoanFactory",
   "contractSize": 23795,
-  "sourceHash": "0x657f0da25cb6168cacec2562dddb5f30f22d06b689212eb27edfdea30144be24",
-  "bytecodeHashWithLibRefs": "0x048d79c96609b408563924f224d8ab46cbe302c7483cf0af69c131d92882bb2a",
-  "bytecodeHashWithoutLibRefs": "0x048d79c96609b408563924f224d8ab46cbe302c7483cf0af69c131d92882bb2a"
+  "sourceHash": "0x39a20b40b5a11080a20778ab37ab7fc7a2026ac661e394a91a51dcecce069de1",
+  "bytecodeHashWithLibRefs": "0x5f0e44871764b5d48853994e2eb735ab8bdd789a100e7e54a7c08a99d4ef34fe",
+  "bytecodeHashWithoutLibRefs": "0x6d07c35082f8a5e7550b768663f14a0ea8abc4a99eff521814ac2d25e8334cbb"
  },
  {
   "contractName": "LoanLib",
   "contractSize": 7622,
-  "sourceHash": "0xa1d1ac60c40b9c3236ca0b9b1654fc91a04fa900647b97067a6ac8b071bd3e49",
-  "bytecodeHashWithLibRefs": "0x2bc56190a87cb350ec78c9319566687cb0762ddcbea2dbff73cc2ba06b855799",
-  "bytecodeHashWithoutLibRefs": "0x2bc56190a87cb350ec78c9319566687cb0762ddcbea2dbff73cc2ba06b855799"
+  "sourceHash": "0x677f2a0ecba7878cd6c4eb1c694bf4c2ccbca0732d88a3a716a2ad1f0e346814",
+  "bytecodeHashWithLibRefs": "0x32cc69a04fba4a9500f6dc53df5768ded4ebc2fb20b41939f1e643d0076b2b07",
+  "bytecodeHashWithoutLibRefs": "0x509e63a89f3d76b5bb70610b6bf59bdb38050697efa496256a479d4ad252da5d"
  },
  {
   "contractName": "MapleGlobals",
   "contractSize": 7675,
-  "sourceHash": "0x595dcd0c31b98b2dc43efe3457b7272597f3ff48052ee6271bc9701730eaaae5",
+  "sourceHash": "0x2b521c13c55084ff5fbf45107f0dd3c95d399b821d83e42eba62d63212f912e9",
   "bytecodeHashWithLibRefs": "0xec65233be3b9749e87ec2ed49fafbe3a4744af3d96689b9a0a014ce75d60d4ee",
   "bytecodeHashWithoutLibRefs": "0xec65233be3b9749e87ec2ed49fafbe3a4744af3d96689b9a0a014ce75d60d4ee"
  },
  {
   "contractName": "MapleTreasury",
   "contractSize": 5280,
-  "sourceHash": "0x8715889530dec2cab2084e147ef1e631cb7423302e24115c51a8c1960c335e8d",
-  "bytecodeHashWithLibRefs": "0xd028c15a5b9b70590a9e60c96f87720fe14b4d36a10a2d9fc74a11a45ec19d2c",
-  "bytecodeHashWithoutLibRefs": "0xd028c15a5b9b70590a9e60c96f87720fe14b4d36a10a2d9fc74a11a45ec19d2c"
+  "sourceHash": "0x4f04d62d98cd1764cd97c1071f370c9269c911249201f75d0587026289af9483",
+  "bytecodeHashWithLibRefs": "0xbe352cfc1153641a0f35313617d9948e5560c6aecb2af320f9ea33428a12b07c",
+  "bytecodeHashWithoutLibRefs": "0xa58c0b0d4adca6bba10cbe946fe12acd5c21900ab62bb83295c662363fd9bd35"
  },
  {
   "contractName": "MplRewards",
   "contractSize": 5987,
-  "sourceHash": "0x814524186b1ea9befa09ce4d47fdfedee8f48fea6cda74b52f4fd22fc058ed84",
+  "sourceHash": "0xab0b421103b85fff5bfad243d573039011770355f95374a83c08e868ce11a240",
   "bytecodeHashWithLibRefs": "0x2f04c0513e9a19c22b545432e9c9cc6090ef7e59a399e4e8971c5d18f0043c18",
   "bytecodeHashWithoutLibRefs": "0x2f04c0513e9a19c22b545432e9c9cc6090ef7e59a399e4e8971c5d18f0043c18"
  },
  {
   "contractName": "MplRewardsFactory",
   "contractSize": 7530,
-  "sourceHash": "0x1bd87011bc42369bffbe2ca8ad0bc438eb78577206a0af5a43c1628635edbb98",
+  "sourceHash": "0x9fdf581b05b5d8b6b76a75c85649d6b185725fe3192938d1855eccd412cdf152",
   "bytecodeHashWithLibRefs": "0xa29a9c9e312d83d6b8009f7dfb13b62792c1c3128deb3fdb92cedb9141978c50",
   "bytecodeHashWithoutLibRefs": "0xa29a9c9e312d83d6b8009f7dfb13b62792c1c3128deb3fdb92cedb9141978c50"
  },
  {
   "contractName": "Pool",
   "contractSize": 18644,
-  "sourceHash": "0x4ab36a1620fcc54c4e15b6e76749a7ecb840811e75f24bfdd3a8b7afd0a6707f",
-  "bytecodeHashWithLibRefs": "0xb421633267f35052dcb7ce42f30cc4b7f55bd0a848f15cad111080a6273c1fcb",
-  "bytecodeHashWithoutLibRefs": "0xb421633267f35052dcb7ce42f30cc4b7f55bd0a848f15cad111080a6273c1fcb"
+  "sourceHash": "0x94b82a5312f8dad66ff70f2ec131273869cc74578c8104b0e77d170678d8f19a",
+  "bytecodeHashWithLibRefs": "0xd0ebb5a8b9436f8d98d2f85d5a832079c198bd3ac354ae88ef04033b51ccd954",
+  "bytecodeHashWithoutLibRefs": "0x409d28fc7d37a098fbba3a9811c38ce795d3e1c3c5ef08d5b42c2fd0962fba10"
  },
  {
   "contractName": "PoolFactory",
   "contractSize": 24354,
-  "sourceHash": "0x3a367cb0f0094babb15b9c7e566f3fa8922e8fd95e27d91f27083e5997bd458a",
-  "bytecodeHashWithLibRefs": "0x8616aa79ce0e466ad3591390dda341587702a9a895f0b03adfb171f95f58c299",
-  "bytecodeHashWithoutLibRefs": "0x8616aa79ce0e466ad3591390dda341587702a9a895f0b03adfb171f95f58c299"
+  "sourceHash": "0x52865bc965d6b30e4be8981d8c6b9c9662c563452fba06ee5819582d96ec5806",
+  "bytecodeHashWithLibRefs": "0x15439260717ba072c92378b20c45fdb063dcf1bfa5380ce4570f2f2da06e70e5",
+  "bytecodeHashWithoutLibRefs": "0xa08093e7c8714b9998df8e3a8730b8f145a1e98e6146f29c43cd898758950f5d"
  },
  {
   "contractName": "PoolFDT",
   "contractSize": 0,
-  "sourceHash": "0xfe35a1eafbb21777afb4210c35dccb1831010f36a1ef79b5695b3736a8b48fc5",
+  "sourceHash": "0xce6b68654389f6aa7a9415abc59f24917cd291ae7b9902d12ec113045701b96a",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
  {
   "contractName": "PoolLib",
   "contractSize": 10552,
-  "sourceHash": "0xdf0a949204f0c4f0b3cce519cc52db7ee7bfe0d454db842061a6f1e9d38a57b4",
+  "sourceHash": "0x904d5bddda1bd222cccd95f7a27dea0a4473216e6168299a60a1734dce7ca830",
   "bytecodeHashWithLibRefs": "0x6c35c365ffab791a3a1c3c3191ff1e8e6c3cd2035b9d62964e8ed954e0f5de11",
   "bytecodeHashWithoutLibRefs": "0x6c35c365ffab791a3a1c3c3191ff1e8e6c3cd2035b9d62964e8ed954e0f5de11"
  },
  {
   "contractName": "PremiumCalc",
   "contractSize": 927,
-  "sourceHash": "0x876eac62c11ded86e6ceb2d20184d25f9f19bc30876b943162325f4532b7e5db",
+  "sourceHash": "0x493d90ad309f1fafa9580aaa245efed06ec3bf27fc199b76ff045e3d3ad322cf",
   "bytecodeHashWithLibRefs": "0xf67b3bdd6074aa39136b57925c05ae5c8906a1a2876cf728ea0e37ca66f547ee",
   "bytecodeHashWithoutLibRefs": "0xf67b3bdd6074aa39136b57925c05ae5c8906a1a2876cf728ea0e37ca66f547ee"
  },
  {
   "contractName": "RepaymentCalc",
   "contractSize": 1222,
-  "sourceHash": "0xcb3f426e732f0034ffa29278eccbf217588d06c5d8908c7b23b899a0387dae2c",
+  "sourceHash": "0xc52b7b9c2dd1be4995a5beaaa37fa20b5d57ca1593f564190c7347302d6c90a3",
   "bytecodeHashWithLibRefs": "0xacb51d36f0b742ea827c9c07893b3ecb6f179bf89bb63479d620bd0412b54c88",
   "bytecodeHashWithoutLibRefs": "0xacb51d36f0b742ea827c9c07893b3ecb6f179bf89bb63479d620bd0412b54c88"
  },
@@ -422,7 +422,7 @@
  {
   "contractName": "StakeLocker",
   "contractSize": 15986,
-  "sourceHash": "0x2fe78e7b205b15f9f264b9ffbffdb37621ca4777e8db35c2c4ae034ef168248f",
+  "sourceHash": "0x65759b05824e6e422bf54349d258ba034dbae21aaca09f3cf0a8fdb64037f0a0",
   "bytecodeHashWithLibRefs": "0xa2a6e06fd216c1c236f13c06e9cd404121f0296e0902f9843fd18d0babe753b1",
   "bytecodeHashWithoutLibRefs": "0xa2a6e06fd216c1c236f13c06e9cd404121f0296e0902f9843fd18d0babe753b1"
  },
@@ -436,7 +436,7 @@
  {
   "contractName": "StakeLockerFDT",
   "contractSize": 0,
-  "sourceHash": "0x282bfe038fb85325ab79f9c1b20105d7d5c8f1095783468ac8ef3a3d0da932b1",
+  "sourceHash": "0x6d495f0dd37ae74e6401477771a5e6fe5fde0cfb912a65ce43432fba6e2a8be1",
   "bytecodeHashWithLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "bytecodeHashWithoutLibRefs": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
@@ -450,7 +450,7 @@
  {
   "contractName": "Util",
   "contractSize": 1022,
-  "sourceHash": "0x93cadef25a608d15f13c83682ecd866fa057750bc537d6b4225448d3080d338d",
+  "sourceHash": "0x82d78d778ea946b1046f795cf1093b1120fb8ed1b1f835d6c5893deb037178f4",
   "bytecodeHashWithLibRefs": "0x966e7fefb60e443084fedca0a71242856e201128b5b4cbb922c010cdaea4b334",
   "bytecodeHashWithoutLibRefs": "0x966e7fefb60e443084fedca0a71242856e201128b5b4cbb922c010cdaea4b334"
  }

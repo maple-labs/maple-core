@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import { IERC20 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
-import { ILoan } from "../../core/loan/v1/interfaces/ILoan.sol";
+import { ILoan } from "../../core/loan/contracts/interfaces/ILoan.sol";
 
 contract Lender {
 

@@ -11,3 +11,69 @@
 [submodule "module/maple-token"]
 	path = module/maple-token
 	url = git@github.com:maple-labs/maple-token.git
+[submodule "contracts/core/calculator"]
+	path = contracts/core/calculator
+	url = https://github.com/maple-labs/calculator.git
+[submodule "contracts/core/chainlink-oracle"]
+	path = contracts/core/chainlink-oracle
+	url = https://github.com/maple-labs/chainlink-oracle.git
+[submodule "contracts/core/collateral-locker"]
+	path = contracts/core/collateral-locker
+	url = https://github.com/maple-labs/collateral-locker.git
+[submodule "contracts/core/custodial-ownership-token"]
+	path = contracts/core/custodial-ownership-token
+	url = https://github.com/maple-labs/custodial-ownership-token.git
+[submodule "contracts/core/debt-locker"]
+	path = contracts/core/debt-locker
+	url = https://github.com/maple-labs/debt-locker.git
+[submodule "contracts/core/funding-locker"]
+	path = contracts/core/funding-locker
+	url = https://github.com/maple-labs/funding-locker.git
+[submodule "contracts/core/funds-distribution-token"]
+	path = contracts/core/funds-distribution-token
+	url = https://github.com/maple-labs/funds-distribution-token.git
+[submodule "contracts/core/globals"]
+	path = contracts/core/globals
+	url = https://github.com/maple-labs/globals.git
+[submodule "contracts/core/late-fee-calculator"]
+	path = contracts/core/late-fee-calculator
+	url = https://github.com/maple-labs/late-fee-calculator.git
+[submodule "contracts/core/liquidity-locker"]
+	path = contracts/core/liquidity-locker
+	url = https://github.com/maple-labs/liquidity-locker.git
+[submodule "contracts/core/loan"]
+	path = contracts/core/loan
+	url = https://github.com/maple-labs/loan.git
+[submodule "contracts/core/mpl-rewards"]
+	path = contracts/core/mpl-rewards
+	url = https://github.com/maple-labs/mpl-rewards.git
+[submodule "contracts/core/oracle"]
+	path = contracts/core/oracle
+	url = https://github.com/maple-labs/oracle.git
+[submodule "contracts/core/pool"]
+	path = contracts/core/pool
+	url = https://github.com/maple-labs/pool.git
+[submodule "contracts/core/premium-calculator"]
+	path = contracts/core/premium-calculator
+	url = https://github.com/maple-labs/premium-calculator.git
+[submodule "contracts/core/repayment-calculator"]
+	path = contracts/core/repayment-calculator
+	url = https://github.com/maple-labs/repayment-calculator.git
+[submodule "contracts/core/stake-locker"]
+	path = contracts/core/stake-locker
+	url = https://github.com/maple-labs/stake-locker.git
+[submodule "contracts/core/subfactory"]
+	path = contracts/core/subfactory
+	url = https://github.com/maple-labs/subfactory.git
+[submodule "contracts/core/treasury"]
+	path = contracts/core/treasury
+	url = https://github.com/maple-labs/treasury.git
+[submodule "contracts/core/usd-oracle"]
+	path = contracts/core/usd-oracle
+	url = https://github.com/maple-labs/usd-oracle.git
+[submodule "contracts/libraries/math"]
+	path = contracts/libraries/math
+	url = https://github.com/maple-labs/math.git
+[submodule "contracts/libraries/util"]
+	path = contracts/libraries/util
+	url = https://github.com/maple-labs/util.git

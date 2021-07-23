@@ -13,21 +13,21 @@ import { IUniswapV2Factory }  from "../external-interfaces/IUniswapV2Factory.sol
 import { IUniswapV2Pair }     from "../external-interfaces/IUniswapV2Pair.sol";
 import { IUniswapV2Router02 } from "../external-interfaces/IUniswapV2Router02.sol";
 
-import { ChainlinkOracle }                 from "../core/chainlink-oracle/v1/ChainlinkOracle.sol";
-import { CollateralLockerFactory }         from "../core/collateral-locker/v1/CollateralLockerFactory.sol";
-import { DebtLockerFactory }               from "../core/debt-locker/v1/DebtLockerFactory.sol";
-import { FundingLockerFactory }            from "../core/funding-locker/v1/FundingLockerFactory.sol";
-import { MapleGlobals }                    from "../core/globals/v1/MapleGlobals.sol";
-import { LateFeeCalc }                     from "../core/late-fee-calculator/v1/LateFeeCalc.sol";
-import { LiquidityLockerFactory }          from "../core/liquidity-locker/v1/LiquidityLockerFactory.sol";
-import { Loan, LoanFactory }               from "../core/loan/v1/LoanFactory.sol";
-import { MplRewards, MplRewardsFactory }   from "../core/mpl-rewards/v1/MplRewardsFactory.sol";
-import { Pool, PoolFactory }               from "../core/pool/v1/PoolFactory.sol";
-import { PremiumCalc }                     from "../core/premium-calculator/v1/PremiumCalc.sol";
-import { RepaymentCalc }                   from "../core/repayment-calculator/v1/RepaymentCalc.sol";
-import { StakeLocker, StakeLockerFactory } from "../core/stake-locker/v1/StakeLockerFactory.sol";
-import { MapleTreasury }                   from "../core/treasury/v1/MapleTreasury.sol";
-import { UsdOracle }                       from "../core/usd-oracle/v1/UsdOracle.sol";
+import { ChainlinkOracle }                 from "../core/chainlink-oracle/contracts/ChainlinkOracle.sol";
+import { CollateralLockerFactory }         from "../core/collateral-locker/contracts/CollateralLockerFactory.sol";
+import { DebtLockerFactory }               from "../core/debt-locker/contracts/DebtLockerFactory.sol";
+import { FundingLockerFactory }            from "../core/funding-locker/contracts/FundingLockerFactory.sol";
+import { MapleGlobals }                    from "../core/globals/contracts/MapleGlobals.sol";
+import { LateFeeCalc }                     from "../core/late-fee-calculator/contracts/LateFeeCalc.sol";
+import { LiquidityLockerFactory }          from "../core/liquidity-locker/contracts/LiquidityLockerFactory.sol";
+import { Loan, LoanFactory }               from "../core/loan/contracts/LoanFactory.sol";
+import { MplRewards, MplRewardsFactory }   from "../core/mpl-rewards/contracts/MplRewardsFactory.sol";
+import { Pool, PoolFactory }               from "../core/pool/contracts/PoolFactory.sol";
+import { PremiumCalc }                     from "../core/premium-calculator/contracts/PremiumCalc.sol";
+import { RepaymentCalc }                   from "../core/repayment-calculator/contracts/RepaymentCalc.sol";
+import { StakeLocker, StakeLockerFactory } from "../core/stake-locker/contracts/StakeLockerFactory.sol";
+import { MapleTreasury }                   from "../core/treasury/contracts/MapleTreasury.sol";
+import { UsdOracle }                       from "../core/usd-oracle/contracts/UsdOracle.sol";
 
 import { Borrower }       from "./user/Borrower.sol";
 import { Commoner }       from "./user/Commoner.sol";

@@ -6,7 +6,7 @@ import { IERC20 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC2
 
 import { IBPool } from "../../external-interfaces/IBPool.sol";
 
-import { IStakeLocker } from "../../core/stake-locker/v1/interfaces/IStakeLocker.sol";
+import { IStakeLocker } from "../../core/stake-locker/contracts/interfaces/IStakeLocker.sol";
 
 contract Staker {
 
