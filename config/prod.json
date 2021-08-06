@@ -1,59 +1,62 @@
 {
   "language": "Solidity",
   "sources": {
-    "contracts/core/chainlink-oracle/contracts/ChainlinkOracle.sol": {
-      "urls": ["contracts/core/chainlink-oracle/contracts/ChainlinkOracle.sol"]
+    "modules/chainlink-oracle/contracts/ChainlinkOracle.sol": {
+      "urls": ["modules/chainlink-oracle/contracts/ChainlinkOracle.sol"]
     },
-    "contracts/core/collateral-locker/contracts/CollateralLockerFactory.sol": {
-      "urls": ["contracts/core/collateral-locker/contracts/CollateralLockerFactory.sol"]
+    "modules/collateral-locker/contracts/CollateralLockerFactory.sol": {
+      "urls": ["modules/collateral-locker/contracts/CollateralLockerFactory.sol"]
     },
-    "contracts/core/debt-locker/contracts/DebtLockerFactory.sol": {
-      "urls": ["contracts/core/debt-locker/contracts/DebtLockerFactory.sol"]
+    "modules/debt-locker/contracts/DebtLockerFactory.sol": {
+      "urls": ["modules/debt-locker/contracts/DebtLockerFactory.sol"]
     },
-    "contracts/core/funding-locker/contracts/FundingLockerFactory.sol": {
-      "urls": ["contracts/core/funding-locker/contracts/FundingLockerFactory.sol"]
+    "modules/funding-locker/contracts/FundingLockerFactory.sol": {
+      "urls": ["modules/funding-locker/contracts/FundingLockerFactory.sol"]
     },
-    "contracts/core/globals/contracts/MapleGlobals.sol": {
-      "urls": ["contracts/core/globals/contracts/MapleGlobals.sol"]
+    "modules/globals/contracts/MapleGlobals.sol": {
+      "urls": ["modules/globals/contracts/MapleGlobals.sol"]
     },
-    "contracts/core/late-fee-calculator/contracts/LateFeeCalc.sol": {
-      "urls": ["contracts/core/late-fee-calculator/contracts/LateFeeCalc.sol"]
+    "modules/late-fee-calculator/contracts/LateFeeCalc.sol": {
+      "urls": ["modules/late-fee-calculator/contracts/LateFeeCalc.sol"]
     },
-    "contracts/core/liquidity-locker/contracts/LiquidityLockerFactory.sol": {
-      "urls": ["contracts/core/liquidity-locker/contracts/LiquidityLockerFactory.sol"]
+    "modules/liquidity-locker/contracts/LiquidityLockerFactory.sol": {
+      "urls": ["modules/liquidity-locker/contracts/LiquidityLockerFactory.sol"]
     },
-    "contracts/core/loan/contracts/LoanFactory.sol": {
-      "urls": ["contracts/core/loan/contracts/LoanFactory.sol"]
+    "modules/loan/contracts/LoanFactory.sol": {
+      "urls": ["modules/loan/contracts/LoanFactory.sol"]
     },
-    "contracts/core/mpl-rewards/contracts/MplRewardsFactory.sol": {
-      "urls": ["contracts/core/mpl-rewards/contracts/MplRewardsFactory.sol"]
+    "modules/maple-token/contracts/MapleToken.sol": {
+      "urls": ["modules/maple-token/contracts/MapleToken.sol"]
     },
-    "contracts/core/pool/contracts/PoolFactory.sol": {
-      "urls": ["contracts/core/pool/contracts/PoolFactory.sol"]
+    "modules/mpl-rewards/contracts/MplRewardsFactory.sol": {
+      "urls": ["modules/mpl-rewards/contracts/MplRewardsFactory.sol"]
     },
-    "contracts/core/premium-calculator/contracts/PremiumCalc.sol": {
-      "urls": ["contracts/core/premium-calculator/contracts/PremiumCalc.sol"]
+    "modules/pool/contracts/PoolFactory.sol": {
+      "urls": ["modules/pool/contracts/PoolFactory.sol"]
     },
-    "contracts/core/repayment-calculator/contracts/RepaymentCalc.sol": {
-      "urls": ["contracts/core/repayment-calculator/contracts/RepaymentCalc.sol"]
+    "modules/premium-calculator/contracts/PremiumCalc.sol": {
+      "urls": ["modules/premium-calculator/contracts/PremiumCalc.sol"]
     },
-    "contracts/core/stake-locker/contracts/StakeLockerFactory.sol": {
-      "urls": ["contracts/core/stake-locker/contracts/StakeLockerFactory.sol"]
+    "modules/repayment-calculator/contracts/RepaymentCalc.sol": {
+      "urls": ["modules/repayment-calculator/contracts/RepaymentCalc.sol"]
     },
-    "contracts/core/treasury/contracts/MapleTreasury.sol": {
-      "urls": ["contracts/core/treasury/contracts/MapleTreasury.sol"]
+    "modules/stake-locker/contracts/StakeLockerFactory.sol": {
+      "urls": ["modules/stake-locker/contracts/StakeLockerFactory.sol"]
     },
-    "contracts/core/usd-oracle/contracts/UsdOracle.sol": {
-      "urls": ["contracts/core/usd-oracle/contracts/UsdOracle.sol"]
+    "modules/treasury/contracts/MapleTreasury.sol": {
+      "urls": ["modules/treasury/contracts/MapleTreasury.sol"]
     },
-    "contracts/core/loan/contracts/libraries/LoanLib.sol": {
-      "urls": ["contracts/core/loan/contracts/libraries/LoanLib.sol"]
+    "modules/usd-oracle/contracts/UsdOracle.sol": {
+      "urls": ["modules/usd-oracle/contracts/UsdOracle.sol"]
     },
-    "contracts/core/pool/contracts/libraries/PoolLib.sol": {
-      "urls": ["contracts/core/pool/contracts/libraries/PoolLib.sol"]
+    "modules/loan/contracts/libraries/LoanLib.sol": {
+      "urls": ["modules/loan/contracts/libraries/LoanLib.sol"]
     },
-    "contracts/libraries/util/contracts/Util.sol": {
-      "urls": ["contracts/libraries/util/contracts/Util.sol"]
+    "modules/pool/contracts/libraries/PoolLib.sol": {
+      "urls": ["modules/pool/contracts/libraries/PoolLib.sol"]
+    },
+    "modules/util/contracts/Util.sol": {
+      "urls": ["modules/util/contracts/Util.sol"]
     }
   },
   "settings": {
