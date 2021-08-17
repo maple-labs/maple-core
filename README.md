@@ -14,7 +14,7 @@ For Liquidity Providers, Maple offers a **sustainable yield source through profe
 
 For Pool Delegates, Maple is a **vehicle to attract funding and earn performance fees.**
 
-* Maple is a new platform providing decentralised asset management infrastructure
+* Maple is a new platform providing decentralized asset management infrastructure
 * Globally accessible pools enable increased AUM from varied liquidity sources to be provided to networks of premium, creditworthy borrowers
 
 ## Technical Documentation
@@ -34,17 +34,10 @@ cd maple-core
 dapp update
 ```
 
-## Build Config
-To create a new config.json file, use `DAPP_SRC=contracts dapp mk-standard-json | pbcopy` and then paste that into a new file. If using deployed libraries, make sure to add 
-```sh
-export DAPP_LIBRARIES=" contracts/libraries/loan/contracts/LoanLib.sol:LoanLib:0x51A189ccD2eB5e1168DdcA7e59F7c8f39AA52232 contracts/libraries/pool/contracts/PoolLib.sol:PoolLib:0x2c1C30fb8cC313Ef3cfd2E2bBf2da88AdD902C30"
-``` 
-in that format (space delimited with a space at the beginning) with relevant libraries and addresses.
-
 ## Testing
 
-- To run all unit tests: `make test` (runs `./test.sh`)
-- To run a specific unit test: `./test.sh <test_name>` (e.g. `./test.sh test_fundLoan`)
+- To run all integration tests: `make test` (runs `./test.sh`)
+- To run a specific integration test: `./test.sh <test_name>` (e.g. `./test.sh test_fundLoan`)
 
 To alter number of fuzz runs, change the `--fuzz-runs` flag in `test.sh`. Note: Number of `--fuzz-runs` in `test.sh` should remain constant on push. Only change for local testing if needed.
 

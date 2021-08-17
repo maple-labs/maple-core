@@ -1,12 +1,7 @@
 # macOS
 .DS_Store
-key.json
-.env
 
 # DappTools
 hevm*
 /out
 /cache
-
-# Flattened functions
-/flattened-contracts
