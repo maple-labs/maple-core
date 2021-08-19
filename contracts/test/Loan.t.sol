@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.6.11;
 
-import { TestUtils } from "../../modules/contract-test-utils/contracts/test.sol";
+// TODO: fix erc20_mint, since StateManipulations and TestUtils both have hevm
 
-import { IBFactory } from "./interfaces/Interfaces.sol";
+import { IERC20 }   from "../../modules/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { Pausable } from "../../modules/openzeppelin-contracts/contracts/utils/Pausable.sol";
 
+import { TestUtils, StateManipulations } from "../../modules/contract-test-utils/contracts/test.sol";
+
+import { IBFactoryLike, IBPoolLike } from "./interfaces/Interfaces.sol";
+
+import { LoanUser }          from "../../modules/loan/contracts/test/accounts/LoanUser.sol";
 import { GlobalAdmin }       from "./accounts/GlobalAdmin.sol";
 import { Governor }          from "./accounts/Governor.sol";
 import { Borrower }          from "./accounts/Borrower.sol";
@@ -12,29 +18,29 @@ import { PoolDelegate }      from "./accounts/PoolDelegate.sol";
 import { LiquidityProvider } from "./accounts/LiquidityProvider.sol";
 import { Explorer }          from "./accounts/Explorer.sol";
 
-import { MapleGlobals, IMapleGlobals }                           from "../../modules/globals/contracts/MapleGlobals.sol";
-import { LoanFactory, ILoanFactory }                             from "../../modules/loan/contracts/LoanFactory.sol";
-import { ILoan }                                                 from "../../modules/loan/contracts/interfaces/ILoan.sol";
-import { PoolFactory, IPoolFactory }                             from "../../modules/pool/contracts/PoolFactory.sol";
-import { IPool }                                                 from "../../modules/pool/contracts/interfaces/IPool.sol";
-import { FundingLockerFactory, IFundingLockerFactory }           from "../../modules/funding-locker/contracts/FundingLockerFactory.sol";
-import { CollateralLockerFactory, ICollateralLockerFactory }     from "../../modules/collateral-locker/contracts/CollateralLockerFactory.sol";
-import { StakeLockerFactory, IStakeLockerFactory }               from "../../modules/stake-locker/contracts/StakeLockerFactory.sol";
-import { IStakeLocker }                                          from "../../modules/stake-locker/contracts/interfaces/IStakeLocker.sol";
-import { LiquidityLockerFactory, ILiquidityLockerFactory }       from "../../modules/liquidity-locker/contracts/LiquidityLockerFactory.sol";
-import { IERC20 }                                                from "../../modules/loan/modules/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import { IBPoolLike }                                            from "../../modules/pool/contracts/interfaces/interfaces.sol";
-import { LateFeeCalc, ILateFeeCalc }                             from "../../modules/late-fee-calculator/contracts/LateFeeCalc.sol";
-import { RepaymentCalc, IRepaymentCalc }                         from "../../modules/repayment-calculator/contracts/RepaymentCalc.sol";
-import { PremiumCalc, IPremiumCalc }                             from "../../modules/premium-calculator/contracts/PremiumCalc.sol";
-import { DebtLockerFactory, IDebtLockerFactory }                 from "../../modules/debt-locker/contracts/DebtLockerFactory.sol";
-import { ChainlinkOracle, IChainlinkOracle }                     from "../../modules/chainlink-oracle/contracts/ChainlinkOracle.sol";
-import { UsdOracle, IUsdOracle }                                 from "../../modules/usd-oracle/contracts/UsdOracle.sol";
-import { Pausable }                                              from "../../modules/loan/modules/openzeppelin-contracts/contracts/utils/Pausable.sol";
-import { IMapleTreasury, MapleTreasury }                         from "../../modules/treasury/contracts/MapleTreasury.sol";
-import { IBasicFDT }                                             from "../../modules/loan/modules/funds-distribution-token/contracts/interfaces/IBasicFDT.sol";
+import { IMapleGlobals, MapleGlobals }                       from "../../modules/globals/contracts/MapleGlobals.sol";
+import { ILoanFactory, LoanFactory }                         from "../../modules/loan/contracts/LoanFactory.sol";
+import { ILoan, Loan }                                       from "../../modules/loan/contracts/Loan.sol";
+import { IPoolFactory, PoolFactory }                         from "../../modules/pool/contracts/PoolFactory.sol";
+import { IPool, Pool }                                       from "../../modules/pool/contracts/Pool.sol";
+import { IFundingLockerFactory, FundingLockerFactory }       from "../../modules/funding-locker/contracts/FundingLockerFactory.sol";
+import { ICollateralLockerFactory, CollateralLockerFactory } from "../../modules/collateral-locker/contracts/CollateralLockerFactory.sol";
+import { IStakeLockerFactory, StakeLockerFactory }           from "../../modules/stake-locker/contracts/StakeLockerFactory.sol";
+import { IStakeLocker, StakeLocker }                         from "../../modules/stake-locker/contracts/StakeLocker.sol";
+import { ILiquidityLockerFactory, LiquidityLockerFactory }   from "../../modules/liquidity-locker/contracts/LiquidityLockerFactory.sol";
+import { ILateFeeCalc, LateFeeCalc }                         from "../../modules/late-fee-calculator/contracts/LateFeeCalc.sol";
+import { IRepaymentCalc, RepaymentCalc }                     from "../../modules/repayment-calculator/contracts/RepaymentCalc.sol";
+import { IPremiumCalc, PremiumCalc }                         from "../../modules/premium-calculator/contracts/PremiumCalc.sol";
+import { IDebtLockerFactory, DebtLockerFactory }             from "../../modules/debt-locker/contracts/DebtLockerFactory.sol";
+import { IChainlinkOracle, ChainlinkOracle }                 from "../../modules/chainlink-oracle/contracts/ChainlinkOracle.sol";
+import { IUsdOracle, UsdOracle }                             from "../../modules/usd-oracle/contracts/UsdOracle.sol";
+import { IMapleTreasury, MapleTreasury }                     from "../../modules/treasury/contracts/MapleTreasury.sol";
 
-contract LoanTestUtil is TestUtils {
+contract LoanTestUtil is TestUtils, StateManipulations {
+
+    uint256 constant MAX_UINT   = type(uint256).max;
+    uint256 constant USDC_SCALE = 0;  // TODO: fix
+    uint256 constant WAD_SCALE  = 0;  // TODO: fix
 
     address constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     address constant MPL  = 0x33349B282065b0284d756F0577FB39c158F935e6;
@@ -50,11 +56,6 @@ contract LoanTestUtil is TestUtils {
     uint256 constant WETH_SLOT = 3;
     uint256 constant DAI_SLOT  = 2;
 
-    IERC20 constant usdc = IERC20(USDC);
-    IERC20 constant mpl  = IERC20(MPL);
-    IERC20 constant weth = IERC20(WETH);
-    IERC20 constant dai  = IERC20(DAI);
-
     // Setup for loan creation - 
 
     // 1. Deploy funding locker factory
@@ -64,85 +65,89 @@ contract LoanTestUtil is TestUtils {
     // 5. Deploy the loan factory.
     // 6. whitelist the L, FL & CL factory with globals.
 
+    function validateFactories(
+        address globals,
+        Governor governor,
+        address loanFactory,
+        address poolFactory,
+        address collateralLockerFactory,
+        address fundingLockerFactory,
+        address stakeLockerFactory,
+        address liquidityLockerFactory,
+        address debtLockerFactory
+    )
+        public
+    {
+        governor.mapleGlobals_setValidLoanFactory(globals, loanFactory, true);
 
-    function deployGlobals(address mplToken, address gov) public returns (IMapleGlobals globals, GlobalAdmin globalAdmin) {
-        globals = new MapleGlobals(gov, mplToken, address(globalAdmin = new GlobalAdmin()));
+        governor.mapleGlobals_setValidPoolFactory(globals, poolFactory, true);
+
+        governor.mapleGlobals_setValidSubFactory(globals, loanFactory, collateralLockerFactory, true);
+        governor.mapleGlobals_setValidSubFactory(globals, loanFactory, fundingLockerFactory, true);
+        governor.mapleGlobals_setValidSubFactory(globals, poolFactory, stakeLockerFactory, true);
+        governor.mapleGlobals_setValidSubFactory(globals, poolFactory, liquidityLockerFactory, true);
+        governor.mapleGlobals_setValidSubFactory(globals, poolFactory, debtLockerFactory, true);
     }
 
-    function deployFactories(address globals) public returns(ILoanFactory loanFactory, IPoolFactory poolFactory) {
-        return (new LoanFactory(globals), new PoolFactory(globals));
-    }
-
-    function deployLoanSubFactories() public returns(ICollateralLockerFactory clFactory, IFundingLockerFactory flFactory) {
-        return (new CollateralLockerFactory(), new FundingLockerFactory());
-    }
-
-    function deployPoolSubFactories() public returns(IStakeLockerFactory slFactory, ILiquidityLockerFactory llFactory, IDebtLockerFactory dlFactory) {
-        return (new StakeLockerFactory(), new LiquidityLockerFactory(), new DebtLockerFactory());
-    }
-
-    function validateFactories(address globals, Governor gov, address loanFactory, address poolFactory, address clFactory, address flFactory, address slFactory, address llFactory, address dlFactory) public {
-        gov.mapleGlobals_setValidLoanFactory(globals, loanFactory, true);
-        gov.mapleGlobals_setValidPoolFactory(globals, poolFactory, true);
-        gov.mapleGlobals_setValidSubFactory( globals, loanFactory, clFactory, true);
-        gov.mapleGlobals_setValidSubFactory( globals, loanFactory, flFactory, true);
-        gov.mapleGlobals_setValidSubFactory( globals, poolFactory, slFactory, true);
-        gov.mapleGlobals_setValidSubFactory( globals, poolFactory, llFactory, true);
-        gov.mapleGlobals_setValidSubFactory( globals, poolFactory, dlFactory, true);
-    }
-
-    function deployBalancerPool(address globals, uint256 usdcAmount, uint256 mplAmount, Governor gov) public returns (IBPoolLike bPool) {
+    function deployBalancerPool(
+        address globals,
+        address tokenA,
+        uint256 slotA,
+        uint256 amountA,
+        address tokenB,
+        uint256 slotB,
+        uint256 amountB,
+        Governor governor
+    )
+        public returns (address bPool)
+    {
         // Mint USDC into this account
-        mint(USDC, USDC_SLOT, address(this), usdcAmount);
-        mint(MPL, MPL_SLOT, address(this), mplAmount);
+        erc20_mint(tokenA, slotA, address(this), amountA);
+        erc20_mint(tokenB, slotB, address(this), amountB);
 
         // Initialize MPL/USDC Balancer Pool and whitelist
-        bPool = IBPoolLike(IBFactory(BPOOL_FACTORY).newBPool());
-        usdc.approve(address(bPool), MAX_UINT);
-        mpl.approve(address(bPool),  MAX_UINT);
-        bPool.bind(USDC,         usdcAmount, 5 ether);  // Bind USDC with 5 denormalization weight
-        bPool.bind(address(mpl),  mplAmount, 5 ether);  // Bind  MPL with 5 denormalization weight
-        bPool.finalize();
-        gov.mapleGlobals_setValidBalancerPool(globals, address(bPool), true);
+        bPool = IBFactoryLike(BPOOL_FACTORY).newBPool();
+
+        IERC20(tokenA).approve(bPool, MAX_UINT);
+        IERC20(tokenB).approve(bPool, MAX_UINT);
+
+        IBPoolLike(bPool).bind(tokenA, amountA, 5 ether);  // Bind USDC with 5 denormalization weight
+        IBPoolLike(bPool).bind(tokenB, amountB, 5 ether);  // Bind  MPL with 5 denormalization weight
+
+        IBPoolLike(bPool).finalize();
+
+        governor.mapleGlobals_setValidBalancerPool(globals, bPool, true);
     }
 
-    function transferBptsToPoolDelegate(IBPoolLike bPool, address poolDelegate) public {
-        bPool.transfer(poolDelegate, 50 * WAD);  // Give PD a balance of BPTs to finalize pool
+    function stakeAndFinalizePool(uint256 stakeAmount, address pool, PoolDelegate poolDelegate, address bPool) public {
+        address stakeLocker = IPool(pool).stakeLocker();
+
+        poolDelegate.erc20_approve(bPool, stakeLocker, MAX_UINT);
+        poolDelegate.stakeLocker_stake(stakeLocker, stakeAmount);
+        poolDelegate.pool_finalize(pool);
+        poolDelegate.pool_setOpenToPublic(pool, true);
     }
 
-    function stakeAndFinalizePool(uint256 stakeAmt, IPool pool, PoolDelegate pd, address bPool) public {
-        IStakeLocker stakeLocker = IStakeLocker(pool.stakeLocker());
-        pd.approve(bPool, address(stakeLocker), MAX_UINT);
-        pd.stakelocker_stake(address(stakeLocker), stakeAmt);
-        pd.pool_finalize(address(pool));
-        pd.pool_setOpenToPublic(address(pool), true);
-    }
-
-    function deployPool(PoolDelegate pd, IPoolFactory poolFactory, address liquidityAsset, address stakeAsset, address slFactory, address llFactory) public returns (IPool pool) {
-        pd.createPool(address(poolFactory), USDC, address(stakeAsset), address(slFactory), address(llFactory), 500, 500, MAX_UINT);
-        pool = IPool(poolFactory.pools(poolFactory.poolsCreated() - 1));
-    }
-
-    function deployCalcsAndValidate(address globals, Governor gov) public returns (ILateFeeCalc lateFeeCalc, IPremiumCalc premiumCalc, IRepaymentCalc repaymentCalc) {
-        lateFeeCalc   = new LateFeeCalc(5);
-        premiumCalc   = new PremiumCalc(500);
-        repaymentCalc = new RepaymentCalc();
-        gov.mapleGlobals_setCalc(globals, address(lateFeeCalc),   true);
-        gov.mapleGlobals_setCalc(globals, address(premiumCalc),   true);
-        gov.mapleGlobals_setCalc(globals, address(repaymentCalc), true);
-    }
-
-    function deployOracles(address globals, Governor gov, address securityAdmin) public returns(IChainlinkOracle wethOracle, IUsdOracle usdOracle) {
-        wethOracle = new ChainlinkOracle(WETH_AGGREGATOR, WETH, securityAdmin);
-        usdOracle  = new UsdOracle();
-
-        gov.mapleGlobals_setPriceOracle(globals, WETH, address(wethOracle));
-        gov.mapleGlobals_setPriceOracle(globals, USDC, address(usdOracle));
-    }
-
-    function deployTreasury(address globals, Governor gov) public returns(IMapleTreasury mapleTreasury) {
-        mapleTreasury = new MapleTreasury(MPL, USDC, UNISWAP_V2_ROUTER_02, globals); 
-        gov.mapleGlobals_setMapleTreasury(globals, address(mapleTreasury));
+    function deployPool(
+        PoolDelegate poolDelegate,
+        address poolFactory,
+        address liquidityAsset,
+        address stakeAsset,
+        address stakeLockerFactory,
+        address liquidityLockerFactory
+    )
+        public returns (address pool)
+    {
+        return poolDelegate.poolFactory_createPool(
+            poolFactory,
+            liquidityAsset,
+            stakeAsset,
+            stakeLockerFactory,
+            liquidityLockerFactory,
+            500,
+            500,
+            MAX_UINT
+        );
     }
 
     function getFuzzedSpecs(
@@ -151,8 +156,8 @@ contract LoanTestUtil is TestUtils {
         uint256 numPayments,       // Used for termDays
         uint256 requestAmount,
         uint256 collateralRatio
-    ) public pure returns (uint256[5] memory specs) {
-        return getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio, 10_000 * USD, 10_000, 1E10 * USD);
+    ) public pure returns (uint256[5] memory) {
+        return getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio, 10_000 * USDC_SCALE, 10_000, 1e10 * USDC_SCALE);
     }
 
     function getFuzzedSpecs(
@@ -164,17 +169,17 @@ contract LoanTestUtil is TestUtils {
         uint256 minimumRequestAmt,
         uint256 maxCollateralRatio,
         uint256 maxRequestAmt
-    ) public pure returns (uint256[5] memory specs) {
+    ) public pure returns (uint256[5] memory) {
         uint16[10] memory paymentIntervalArray = [1, 2, 5, 7, 10, 15, 30, 60, 90, 360];
-        numPayments = constrictToRange(numPayments, 5, 100, true);
+        numPayments = constrictToRange(numPayments, 5, 100);
         uint256 paymentIntervalDays = paymentIntervalArray[index % 10];  // TODO: Consider changing this approach
         uint256 termDays            = paymentIntervalDays * numPayments;
 
-        specs = [
-            constrictToRange(apr, 1, 10_000, true),                                   // APR between 0.01% and 100% (non-zero for test behavior)
+        return [
+            constrictToRange(apr, 1, 10_000),                                   // APR between 0.01% and 100% (non-zero for test behavior)
             termDays,                                                                 // Fuzzed term days
             paymentIntervalDays,                                                      // Payment interval days from array
-            constrictToRange(requestAmount, minimumRequestAmt, maxRequestAmt, true),  // 10k USD - 10b USD loans (non-zero) in general scenario
+            constrictToRange(requestAmount, minimumRequestAmt, maxRequestAmt),  // 10k USD - 10b USD loans (non-zero) in general scenario
             constrictToRange(collateralRatio, 0, maxCollateralRatio)                  // Collateral ratio between 0 and maxCollateralRatio
         ];
     }
@@ -183,73 +188,117 @@ contract LoanTestUtil is TestUtils {
 
 contract LoanTest is LoanTestUtil {
 
-    Governor gov;
-    ILoan loan;
-    IMapleGlobals globals;
-    ILoanFactory loanFactory;
-    IPoolFactory poolFactory;
-    ICollateralLockerFactory clFactory;
-    IFundingLockerFactory flFactory;
-    IStakeLockerFactory slFactory;
-    ILiquidityLockerFactory llFactory;
-    IDebtLockerFactory dlFactory;
     IBPoolLike bPool;
-    ILateFeeCalc lateFeeCalc;
-    IRepaymentCalc repaymentCalc;
-    IPremiumCalc premiumCalc;
-    IChainlinkOracle wethOracle;
-    IUsdOracle usdOracle;
-    IMapleTreasury treasury;
 
-    IPool p1;
-    IPool p2;
-    PoolDelegate pd1;
-    PoolDelegate pd2;
-    GlobalAdmin  globalAdmin;
-    Explorer ex;
+    Governor governor;
+    Loan loan;
+    MapleGlobals globals;
+    LoanFactory loanFactory;
+    PoolFactory poolFactory;
+    CollateralLockerFactory collateralLockerFactory;
+    FundingLockerFactory fundingLockerFactory;
+    StakeLockerFactory stakeLockerFactory;
+    LiquidityLockerFactory liquidityLockerFactory;
+    DebtLockerFactory debtLockerFactory;
+    LateFeeCalc lateFeeCalc;
+    RepaymentCalc repaymentCalc;
+    PremiumCalc premiumCalc;
+    ChainlinkOracle wethOracle;
+    UsdOracle usdOracle;
+    MapleTreasury treasury;
 
-    LP lp1;
-    LP lp2;
+    Pool pool1;
+    Pool pool2;
+    PoolDelegate poolDelegate1;
+    PoolDelegate poolDelegate2;
+    GlobalAdmin globalAdmin;
+    Explorer explorer;
 
-    Borrower b1;
-    Borrower b2;
+    LiquidityProvider liquidityProvider1;
+    LiquidityProvider liquidityProvider2;
+
+    Borrower borrower1;
+    Borrower borrower2;
+
+    address securityAdmin = address(this);
 
     function setUp() public {
-        gov  = new Governor();
-        pd1  = new PoolDelegate();
-        pd2  = new PoolDelegate();
-        b1   = new Borrower();
-        b2   = new Borrower();
-        lp1  = new LP();
-        lp2  = new LP();
-        ex   = new Explorer();
+        governor           = new Governor();
+        poolDelegate1      = new PoolDelegate();
+        poolDelegate2      = new PoolDelegate();
+        borrower1          = new Borrower();
+        borrower2          = new Borrower();
+        liquidityProvider1 = new LiquidityProvider();
+        liquidityProvider2 = new LiquidityProvider();
+        explorer           = new Explorer();
 
-        (globals, globalAdmin)                    = deployGlobals(MPL, address(gov));
-        treasury                                  = deployTreasury(address(globals), gov);
-        (wethOracle, usdOracle)                   = deployOracles(address(globals), gov, address(this));
-        (loanFactory, poolFactory)                = deployFactories(address(globals));
-        (clFactory, flFactory)                    = deployLoanSubFactories();
-        (slFactory, llFactory, dlFactory)         = deployPoolSubFactories();
-        bPool                                     = deployBalancerPool(address(globals), 1_550_000 * USD, 155_000 * WAD, gov);
-        (lateFeeCalc, premiumCalc, repaymentCalc) = deployCalcsAndValidate(address(globals), gov);
-        
-        gov.mapleGlobals_setPoolDelegateAllowlist(address(globals), address(pd1), true);
-        gov.mapleGlobals_setPoolDelegateAllowlist(address(globals), address(pd2), true);
-        gov.mapleGlobals_setLiquidityAsset( address(globals), USDC, true);
-        gov.mapleGlobals_setCollateralAsset(address(globals), USDC, true);
-        gov.mapleGlobals_setCollateralAsset(address(globals), WETH, true);
+        globalAdmin = new GlobalAdmin();
+        globals = new MapleGlobals(address(governor), MPL, address(globalAdmin));
 
-        validateFactories(address(globals), gov, address(loanFactory), address(poolFactory), address(clFactory), address(flFactory), address(slFactory), address(llFactory), address(dlFactory));
+        treasury = new MapleTreasury(MPL, USDC, UNISWAP_V2_ROUTER_02, address(globals)); 
+        governor.mapleGlobals_setMapleTreasury(address(globals), address(treasury));
+
+        wethOracle = new ChainlinkOracle(WETH_AGGREGATOR, WETH, securityAdmin);
+        usdOracle  = new UsdOracle();
+
+        governor.mapleGlobals_setPriceOracle(address(globals), WETH, address(wethOracle));
+        governor.mapleGlobals_setPriceOracle(address(globals), USDC, address(usdOracle));
+
+        loanFactory = new LoanFactory(address(globals));
+        poolFactory = new PoolFactory(address(globals));
+
+        collateralLockerFactory = new CollateralLockerFactory();
+        fundingLockerFactory = new FundingLockerFactory();
+
+
+        stakeLockerFactory = new StakeLockerFactory();
+        liquidityLockerFactory = new LiquidityLockerFactory();
+        debtLockerFactory = new DebtLockerFactory();
+
+        bPool = IBPoolLike(deployBalancerPool(
+            address(globals),
+            USDC,
+            USDC_SLOT,
+            1_550_000 * USDC_SCALE,
+            MPL,
+            MPL_SLOT,
+            155_000 * WAD_SCALE,
+            governor
+        ));
+
+        governor.mapleGlobals_setCalc(address(globals), address(lateFeeCalc = new LateFeeCalc(5)),    true);
+        governor.mapleGlobals_setCalc(address(globals), address(premiumCalc = new PremiumCalc(500)),  true);
+        governor.mapleGlobals_setCalc(address(globals), address(repaymentCalc = new RepaymentCalc()), true);
+
+        governor.mapleGlobals_setPoolDelegateAllowlist(address(globals), address(poolDelegate1), true);
+        governor.mapleGlobals_setPoolDelegateAllowlist(address(globals), address(poolDelegate2), true);
+
+        governor.mapleGlobals_setLiquidityAsset(address(globals), USDC, true);
+
+        governor.mapleGlobals_setCollateralAsset(address(globals), USDC, true);
+        governor.mapleGlobals_setCollateralAsset(address(globals), WETH, true);
+
+        validateFactories(
+            address(globals),
+            governor,
+            address(loanFactory),
+            address(poolFactory),
+            address(collateralLockerFactory),
+            address(fundingLockerFactory),
+            address(stakeLockerFactory),
+            address(liquidityLockerFactory),
+            address(debtLockerFactory)
+        );
 
         // Pool 1 setup
-        p1 = deployPool(pd1, poolFactory, USDC, address(bPool), address(slFactory), address(llFactory));
-        transferBptsToPoolDelegate(bPool, address(pd1));
-        stakeAndFinalizePool(bPool.balanceOf(address(pd1)), p1, pd1, address(bPool));
+        pool1 = Pool(deployPool(poolDelegate1, address(poolFactory), USDC, address(bPool), address(stakeLockerFactory), address(liquidityLockerFactory)));
+        bPool.transfer(address(poolDelegate1), 50 * WAD_SCALE);
+        stakeAndFinalizePool(bPool.balanceOf(address(poolDelegate1)), address(pool1), poolDelegate1, address(bPool));
 
         // Pool 2 setup
-        p2 = deployPool(pd2, poolFactory, USDC, address(bPool), address(slFactory), address(llFactory));
-        transferBptsToPoolDelegate(bPool, address(pd2));
-        stakeAndFinalizePool(bPool.balanceOf(address(pd2)), p2, pd2, address(bPool));
+        pool2 = Pool(deployPool(poolDelegate2, address(poolFactory), USDC, address(bPool), address(stakeLockerFactory), address(liquidityLockerFactory)));
+        bPool.transfer(address(poolDelegate2), 50 * WAD_SCALE);
+        stakeAndFinalizePool(bPool.balanceOf(address(poolDelegate2)), address(pool2), poolDelegate2, address(bPool));
     }
 
     function test_fundLoan(
@@ -266,60 +315,60 @@ contract LoanTest is LoanTestUtil {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        loan = ILoan(b1.loanFactory_createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        loan = Loan(borrower1.loanFactory_createLoan(address(loanFactory), USDC, WETH, address(fundingLockerFactory), address(collateralLockerFactory), specs, calcs));
 
         address fundingLocker   = loan.fundingLocker();
-        address liquidityLocker = p1.liquidityLocker();
+        address liquidityLocker = pool1.liquidityLocker();
 
-        fundAmount = constrictToRange(fundAmount, 1 * USD, 1E10 * USD);
-        uint256 wadAmount = fundAmount * WAD / USD;
+        fundAmount = constrictToRange(fundAmount, 1 * USDC_SCALE, 1E10 * USDC_SCALE);
+        uint256 wadAmount = fundAmount * WAD_SCALE / USDC_SCALE;
 
-        fundAmount2 = constrictToRange(fundAmount, 1 * USD, 1E10 * USD);
-        uint256 wadAmount2 = fundAmount2 * WAD / USD;
+        fundAmount2 = constrictToRange(fundAmount, 1 * USDC_SCALE, 1E10 * USDC_SCALE);
+        uint256 wadAmount2 = fundAmount2 * WAD_SCALE / USDC_SCALE;
 
-        mint(USDC, USDC_SLOT, address(lp1), (fundAmount + fundAmount2));
-        lp1.approve(USDC, address(p1),    (fundAmount + fundAmount2));
-        lp1.pool_deposit(address(p1),          (fundAmount + fundAmount2));
+        erc20_mint(USDC, USDC_SLOT, address(liquidityProvider1), (fundAmount + fundAmount2));
+        liquidityProvider1.erc20_approve(USDC, address(pool1), (fundAmount + fundAmount2));
+        liquidityProvider1.pool_deposit(address(pool1), (fundAmount + fundAmount2));
 
         // Note: Cannot do pre-state check for LoanFDT balance of debtLocker since it is not instantiated
-        assertEq(usdc.balanceOf(address(fundingLocker)),                            0);
-        assertEq(usdc.balanceOf(address(liquidityLocker)), (fundAmount + fundAmount2));
+        assertEq(IERC20(USDC).balanceOf(fundingLocker),                            0);
+        assertEq(IERC20(USDC).balanceOf(liquidityLocker), (fundAmount + fundAmount2));
 
         // Loan-specific pause by Borrower
-        assertTrue(!Pausable(address(loan)).paused());
-        assertTrue(b1.try_loan_pause(address(loan)));
-        assertTrue(Pausable(address(loan)).paused());
-        assertTrue(!pd1.try_pool_fundLoan(address(p1), address(loan), address(dlFactory), fundAmount));  // Allow for two fundings
+        assertTrue(!loan.paused());
+        assertTrue(borrower1.try_loan_pause(address(loan)));
+        assertTrue(loan.paused());
+        assertTrue(!poolDelegate1.try_pool_fundLoan(address(pool1), address(loan), address(debtLockerFactory), fundAmount));  // Allow for two fundings
 
-        assertTrue(b1.try_loan_unpause(address(loan)));
-        assertTrue(!Pausable(address(loan)).paused());
+        assertTrue(borrower1.try_loan_unpause(address(loan)));
+        assertTrue(!loan.paused());
 
         uint256 start = block.timestamp;
 
         hevm.warp(start + globals.fundingPeriod() + 1);  // Warp to past fundingPeriod, loan cannot be funded
-        assertTrue(!pd1.try_pool_fundLoan(address(p1), address(loan), address(dlFactory), fundAmount));
+        assertTrue(!poolDelegate1.try_pool_fundLoan(address(pool1), address(loan), address(debtLockerFactory), fundAmount));
 
         hevm.warp(start + globals.fundingPeriod());  // Warp to fundingPeriod, loan can be funded
-        assertTrue(pd1.try_pool_fundLoan(address(p1), address(loan), address(dlFactory), fundAmount));
+        assertTrue(poolDelegate1.try_pool_fundLoan(address(pool1), address(loan), address(debtLockerFactory), fundAmount));
 
-        address debtLocker = p1.debtLockers(address(loan), address(dlFactory));
+        address debtLocker = pool1.debtLockers(address(loan), address(debtLockerFactory));
 
-        assertEq(IERC20(address(loan)).balanceOf(address(debtLocker)), wadAmount);
-        assertEq(usdc.balanceOf(address(fundingLocker)),              fundAmount);
-        assertEq(usdc.balanceOf(address(liquidityLocker)),           fundAmount2);
+        assertEq(loan.balanceOf(debtLocker), wadAmount);
+        assertEq(IERC20(USDC).balanceOf(fundingLocker),              fundAmount);
+        assertEq(IERC20(USDC).balanceOf(liquidityLocker),           fundAmount2);
 
         // Protocol-wide pause by Emergency Admin
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), true));
         assertTrue(globals.protocolPaused());
-        assertTrue(!pd1.try_pool_fundLoan(address(p1), address(loan), address(dlFactory), fundAmount2));
+        assertTrue(!poolDelegate1.try_pool_fundLoan(address(pool1), address(loan), address(debtLockerFactory), fundAmount2));
 
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), false));
         assertTrue(!globals.protocolPaused());
-        assertTrue(pd1.try_pool_fundLoan(address(p1), address(loan), address(dlFactory), fundAmount2));
+        assertTrue(poolDelegate1.try_pool_fundLoan(address(pool1), address(loan), address(debtLockerFactory), fundAmount2));
 
-        assertEq(IERC20(address(loan)).balanceOf(address(debtLocker)),  wadAmount + wadAmount2);
-        assertEq(usdc.balanceOf(address(fundingLocker)),                fundAmount + fundAmount2);
-        assertEq(usdc.balanceOf(address(liquidityLocker)),              0);
+        assertEq(loan.balanceOf(debtLocker),  wadAmount + wadAmount2);
+        assertEq(IERC20(USDC).balanceOf(fundingLocker),                fundAmount + fundAmount2);
+        assertEq(IERC20(USDC).balanceOf(liquidityLocker),              0);
     }
 
     function instantiateAndFundLoan(
@@ -330,21 +379,20 @@ contract LoanTest is LoanTestUtil {
         uint256 collateralRatio,
         uint256 fundAmount
     )
-        internal returns (ILoan _loan)
+        internal returns (Loan _loan)
     {
         uint256[5] memory specs = getFuzzedSpecs(apr, index, numPayments, requestAmount, collateralRatio);
         address[3] memory calcs = [address(repaymentCalc), address(lateFeeCalc), address(premiumCalc)];
 
-        _loan = ILoan(b1.loanFactory_createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+        _loan = Loan(borrower1.loanFactory_createLoan(address(loanFactory), USDC, WETH, address(fundingLockerFactory), address(collateralLockerFactory), specs, calcs));
 
-        fundAmount = constrictToRange(fundAmount, specs[3], 1E10 * USD, true);  // Fund between requestAmount and 10b USD
-        uint256 wadAmount = fundAmount * WAD / USD;
+        fundAmount = constrictToRange(fundAmount, specs[3], 1e10 * USDC_SCALE);  // Fund between requestAmount and 10b USD
 
-        mint(USDC, USDC_SLOT, address(lp1), fundAmount);
-        lp1.approve(USDC, address(p1),      fundAmount);
-        lp1.pool_deposit(address(p1),       fundAmount);
+        erc20_mint(USDC, USDC_SLOT, address(liquidityProvider1), fundAmount);
+        liquidityProvider1.erc20_approve(USDC, address(pool1),      fundAmount);
+        liquidityProvider1.pool_deposit(address(pool1),       fundAmount);
 
-        pd1.pool_fundLoan(address(p1), address(_loan), address(dlFactory), fundAmount);
+        poolDelegate1.pool_fundLoan(address(pool1), address(_loan), address(debtLockerFactory), fundAmount);
     }
 
     function assertLoanState(
@@ -363,16 +411,16 @@ contract LoanTest is LoanTestUtil {
         assertEq(loan_.principalOwed(),              principalOwed);
         assertEq(loan_.principalPaid(),              principalPaid);
         assertEq(loan_.interestPaid(),                interestPaid);
-        assertEq(usdc.balanceOf(address(loan_)),       loanBalance);
+        assertEq(IERC20(USDC).balanceOf(address(loan_)),       loanBalance);
         assertEq(loan_.paymentsRemaining(),      paymentsRemaining);
         assertEq(loan_.nextPaymentDue(),            nextPaymentDue);
     }
 
-    function drawdown(ILoan loan_, uint256 drawdownAmount) internal returns (uint256 reqCollateral) {
-        reqCollateral = loan_.collateralRequiredForDrawdown(drawdownAmount);
-        mint(WETH, WETH_SLOT, address(b1), reqCollateral);
-        b1.erc20_approve(WETH, address(loan_), reqCollateral);
-        assertTrue(b1.try_loan_drawdown(address(loan_), drawdownAmount));  // Borrow draws down on loan
+    function drawdown(ILoan loan_, uint256 drawdownAmount) internal returns (uint256 requiredCollateral) {
+        requiredCollateral = loan_.collateralRequiredForDrawdown(drawdownAmount);
+        erc20_mint(WETH, WETH_SLOT, address(borrower1), requiredCollateral);
+        borrower1.erc20_approve(WETH, address(loan_), requiredCollateral);
+        assertTrue(borrower1.try_loan_drawdown(address(loan_), drawdownAmount));  // Borrow draws down on loan
     }
 
     function test_collateralRequiredForDrawdown(
@@ -390,11 +438,11 @@ contract LoanTest is LoanTestUtil {
 
         address fundingLocker = loan.fundingLocker();
 
-        drawdownAmount = constrictToRange(drawdownAmount, 1 * USD, usdc.balanceOf(fundingLocker));
+        drawdownAmount = constrictToRange(drawdownAmount, 1 * USDC_SCALE, IERC20(USDC).balanceOf(fundingLocker));
         uint256 collateralValue = drawdownAmount * loan.collateralRatio() / 10_000;
 
         uint256 reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
-        withinDiff(reqCollateral * globals.getLatestPrice(WETH) * USD / WAD / 10 ** 8, collateralValue, 1);
+        assertWithinDiff(reqCollateral * globals.getLatestPrice(WETH) * USDC_SCALE / WAD_SCALE / 10 ** 8, collateralValue, 1);
     }
 
     function test_drawdown(
@@ -410,68 +458,69 @@ contract LoanTest is LoanTestUtil {
     {
         loan = instantiateAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
         address fundingLocker = loan.fundingLocker();
-        fundAmount = usdc.balanceOf(fundingLocker);
+        fundAmount = IERC20(USDC).balanceOf(fundingLocker);
 
-        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
+        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount);
 
-        assertTrue(!b2.try_loan_drawdown(address(loan), drawdownAmount));                                   // Non-borrower can't drawdown
-        if (loan.collateralRatio() > 0) assertTrue(!b1.try_loan_drawdown(address(loan), drawdownAmount));  // Can't drawdown without approving collateral
+        assertTrue(!borrower2.try_loan_drawdown(address(loan), drawdownAmount));                                   // Non-borrower can't drawdown
+
+        if (loan.collateralRatio() > 0) assertTrue(!borrower1.try_loan_drawdown(address(loan), drawdownAmount));  // Can't drawdown without approving collateral
 
         uint256 reqCollateral = loan.collateralRequiredForDrawdown(drawdownAmount);
-        mint(WETH, WETH_SLOT, address(b1), reqCollateral);
-        b1.erc20_approve(WETH, address(loan), reqCollateral);
+        erc20_mint(WETH, WETH_SLOT, address(borrower1), reqCollateral);
+        borrower1.erc20_approve(WETH, address(loan), reqCollateral);
 
-        assertTrue(!b1.try_loan_drawdown(address(loan), loan.requestAmount() - 1));  // Can't drawdown less than requestAmount
-        assertTrue(!b1.try_loan_drawdown(address(loan),           fundAmount + 1));  // Can't drawdown more than fundingLocker balance
+        assertTrue(!borrower1.try_loan_drawdown(address(loan), loan.requestAmount() - 1));  // Can't drawdown less than requestAmount
+        assertTrue(!borrower1.try_loan_drawdown(address(loan),           fundAmount + 1));  // Can't drawdown more than fundingLocker balance
 
-        uint256 pre = usdc.balanceOf(address(b1));
+        uint256 pre = IERC20(USDC).balanceOf(address(borrower1));
 
-        assertEq(weth.balanceOf(address(b1)),  reqCollateral);  // Borrower collateral balance
-        assertEq(usdc.balanceOf(fundingLocker),    fundAmount);  // FundingLocker liquidityAsset balance
-        assertEq(usdc.balanceOf(address(loan)),             0);  // Loan liquidityAsset balance
+        assertEq(IERC20(WETH).balanceOf(address(borrower1)),  reqCollateral);  // Borrower collateral balance
+        assertEq(IERC20(USDC).balanceOf(fundingLocker),    fundAmount);  // FundingLocker liquidityAsset balance
+        assertEq(IERC20(USDC).balanceOf(address(loan)),             0);  // Loan liquidityAsset balance
         assertEq(loan.principalOwed(),                      0);  // Principal owed
         assertEq(uint256(loan.loanState()),                 0);  // Loan state: Ready
 
         // Fee related variables pre-check.
         assertEq(loan.feePaid(),                            0);  // feePaid amount
         assertEq(loan.excessReturned(),                     0);  // excessReturned amount
-        assertEq(usdc.balanceOf(address(treasury)),         0);  // Treasury liquidityAsset balance
+        assertEq(IERC20(USDC).balanceOf(address(treasury)),         0);  // Treasury liquidityAsset balance
 
         // Pause protocol and attempt drawdown()
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), true));
-        assertTrue(!b1.try_loan_drawdown(address(loan), drawdownAmount));
+        assertTrue(!borrower1.try_loan_drawdown(address(loan), drawdownAmount));
 
         // Unpause protocol and drawdown()
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), false));
-        assertTrue(b1.try_loan_drawdown(address(loan), drawdownAmount));
+        assertTrue(borrower1.try_loan_drawdown(address(loan), drawdownAmount));
 
-        assertEq(weth.balanceOf(address(b1)),                                 0);  // Borrower collateral balance
-        assertEq(weth.balanceOf(address(loan.collateralLocker())), reqCollateral);  // CollateralLocker collateral balance
+        assertEq(IERC20(WETH).balanceOf(address(borrower1)),                                 0);  // Borrower collateral balance
+        assertEq(IERC20(WETH).balanceOf(loan.collateralLocker()), reqCollateral);  // CollateralLocker collateral balance
 
         uint256 investorFee = drawdownAmount * globals.investorFee() / 10_000;
         uint256 treasuryFee = drawdownAmount * globals.treasuryFee() / 10_000;
 
-        assertEq(usdc.balanceOf(fundingLocker),                                         0);  // FundingLocker liquidityAsset balance
-        assertEq(usdc.balanceOf(address(loan)), fundAmount - drawdownAmount + investorFee);  // Loan liquidityAsset balance
+        assertEq(IERC20(USDC).balanceOf(fundingLocker),                                         0);  // FundingLocker liquidityAsset balance
+        assertEq(IERC20(USDC).balanceOf(address(loan)), fundAmount - drawdownAmount + investorFee);  // Loan liquidityAsset balance
         assertEq(loan.principalOwed(),                                     drawdownAmount);  // Principal owed
         assertEq(uint256(loan.loanState()),                                             1);  // Loan state: Active
 
-        withinDiff(usdc.balanceOf(address(b1)), drawdownAmount - (investorFee + treasuryFee), 1); // Borrower liquidityAsset balance
+        assertWithinDiff(IERC20(USDC).balanceOf(address(borrower1)), drawdownAmount - (investorFee + treasuryFee), 1); // Borrower liquidityAsset balance
 
         assertEq(loan.nextPaymentDue(), block.timestamp + loan.paymentIntervalSeconds());  // Next payment due timestamp calculated from time of drawdown
 
         // Fee related variables post-check.
         assertEq(loan.feePaid(),                                    investorFee);  // Drawdown amount
         assertEq(loan.excessReturned(),             fundAmount - drawdownAmount);  // Principal owed
-        assertEq(usdc.balanceOf(address(treasury)),                 treasuryFee);  // Treasury loanAsset balance
+        assertEq(IERC20(USDC).balanceOf(address(treasury)),                 treasuryFee);  // Treasury loanAsset balance
 
         // Test FDT accounting
-        address debtLocker = p1.debtLockers(address(loan), address(dlFactory));
-        assertEq(IERC20(address(loan)).balanceOf(debtLocker), fundAmount * WAD / USD);
-        withinDiff(IBasicFDT(address(loan)).withdrawableFundsOf(address(debtLocker)), fundAmount - drawdownAmount + investorFee, 1);
+        address debtLocker = pool1.debtLockers(address(loan), address(debtLockerFactory));
+        assertEq(loan.balanceOf(debtLocker), fundAmount * WAD_SCALE / USDC_SCALE);
+        assertWithinDiff(loan.withdrawableFundsOf(debtLocker), fundAmount - drawdownAmount + investorFee, 1);
 
         // Can't drawdown() loan after it has already been called.
-        assertTrue(!b1.try_loan_drawdown(address(loan), drawdownAmount));
+        assertTrue(!borrower1.try_loan_drawdown(address(loan), drawdownAmount));
     }
 
     function test_makePayment(
@@ -486,29 +535,29 @@ contract LoanTest is LoanTestUtil {
         public
     {
         loan = instantiateAndFundLoan(apr, index, _numPayments, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
-        fundAmount = usdc.balanceOf(loan.fundingLocker());
+        fundAmount = IERC20(USDC).balanceOf(loan.fundingLocker());
 
-        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
+        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount);
 
         assertEq(uint256(loan.loanState()), 0);  // Loan state: Ready
 
-        assertTrue(!b1.try_loan_makePayment(address(loan)));  // Can't makePayment when State != Active
+        assertTrue(!borrower1.try_loan_makePayment(address(loan)));  // Can't makePayment when State != Active
 
         // Approve collateral and drawdown loan.
         uint256 reqCollateral = drawdown(loan, drawdownAmount);
-        uint256 loanPreBal    = usdc.balanceOf(address(loan));  // Accounts for excess and fees from drawdown
+        uint256 loanPreBal    = IERC20(USDC).balanceOf(address(loan));  // Accounts for excess and fees from drawdown
 
         // NOTE: Do not need to hevm.warp in this test because payments can be made whenever as long as they are before the nextPaymentDue
 
         uint256 numPayments = loan.paymentsRemaining();
         // Approve 1st of 3 payments.
-        (uint256 total, uint256 principal, uint256 interest, uint256 due,) = loan.getNextPayment();
+        (uint256 total, uint256 principal, uint256 interest, uint256 due, ) = loan.getNextPayment();
         if (total == 0 && interest == 0) return;  // If fuzz params cause payments to be so small they round to zero, skip fuzz iteration
 
-        assertTrue(!b1.try_loan_makePayment(address(loan)));  // Can't makePayment with lack of approval
+        assertTrue(!borrower1.try_loan_makePayment(address(loan)));  // Can't makePayment with lack of approval
 
-        mint(USDC, USDC_SLOT, address(b1), total);
-        b1.erc20_approve(USDC, address(loan), total);
+        erc20_mint(USDC, USDC_SLOT, address(borrower1), total);
+        borrower1.erc20_approve(USDC, address(loan), total);
 
         // Before state
         assertLoanState({
@@ -524,11 +573,11 @@ contract LoanTest is LoanTestUtil {
 
         // Pause protocol and attempt makePayment()
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), true));
-        assertTrue(!b1.try_loan_makePayment(address(loan)));
+        assertTrue(!borrower1.try_loan_makePayment(address(loan)));
 
         // Unpause protocol and makePayment()
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), false));
-        assertTrue(b1.try_loan_makePayment(address(loan)));  // Make payment.
+        assertTrue(borrower1.try_loan_makePayment(address(loan)));  // Make payment.
 
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
 
@@ -550,15 +599,15 @@ contract LoanTest is LoanTestUtil {
         }
         
         // Approve last payment.
-        (total, principal, interest, due,) = loan.getNextPayment();
-        mint(USDC, USDC_SLOT, address(b1), total);
-        b1.erc20_approve(USDC, address(loan), total);
+        (total, principal, interest, due, ) = loan.getNextPayment();
+        erc20_mint(USDC, USDC_SLOT, address(borrower1), total);
+        borrower1.erc20_approve(USDC, address(loan), total);
 
         // Check CollateralLocker balance.
-        assertEq(weth.balanceOf(loan.collateralLocker()), reqCollateral);
+        assertEq(IERC20(WETH).balanceOf(loan.collateralLocker()), reqCollateral);
 
         // Make last payment.
-        assertTrue(b1.try_loan_makePayment(address(loan)));
+        assertTrue(borrower1.try_loan_makePayment(address(loan)));
 
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
 
@@ -575,8 +624,8 @@ contract LoanTest is LoanTestUtil {
         });
 
         // CollateralLocker after state.
-        assertEq(weth.balanceOf(loan.collateralLocker()),            0);
-        assertEq(weth.balanceOf(address(b1)),            reqCollateral);
+        assertEq(IERC20(WETH).balanceOf(loan.collateralLocker()),            0);
+        assertEq(IERC20(WETH).balanceOf(address(borrower1)),            reqCollateral);
     }
 
     function test_makePayment_late(
@@ -592,27 +641,27 @@ contract LoanTest is LoanTestUtil {
     {
         loan = instantiateAndFundLoan(apr, index, numPayments_, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker();
-        fundAmount = usdc.balanceOf(fundingLocker);
+        fundAmount = IERC20(USDC).balanceOf(fundingLocker);
 
-        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
+        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount);
 
         assertEq(uint256(loan.loanState()), 0);  // Loan state: Ready
 
-        assertTrue(!b1.try_loan_makePayment(address(loan)));  // Can't makePayment when State != Active
+        assertTrue(!borrower1.try_loan_makePayment(address(loan)));  // Can't makePayment when State != Active
 
         // Approve collateral and drawdown loan.
         uint256 reqCollateral = drawdown(loan, drawdownAmount);
-        uint256 loanPreBal    = usdc.balanceOf(address(loan));  // Accounts for excess and fees from drawdown
+        uint256 loanPreBal    = IERC20(USDC).balanceOf(address(loan));  // Accounts for excess and fees from drawdown
         uint256 numPayments   = loan.paymentsRemaining();
 
         // Approve 1st of 3 payments.
-        (uint256 total, uint256 principal, uint256 interest, uint256 due,) = loan.getNextPayment();
+        (uint256 total, uint256 principal, uint256 interest, uint256 due, ) = loan.getNextPayment();
         if (total == 0 && interest == 0) return;  // If fuzz params cause payments to be so small they round to zero, skip fuzz iteration
 
-        assertTrue(!b1.try_loan_makePayment(address(loan)));  // Can't makePayment with lack of approval
+        assertTrue(!borrower1.try_loan_makePayment(address(loan)));  // Can't makePayment with lack of approval
 
-        mint(USDC, USDC_SLOT, address(b1), total);
-        b1.erc20_approve(USDC, address(loan), total);
+        erc20_mint(USDC, USDC_SLOT, address(borrower1), total);
+        borrower1.erc20_approve(USDC, address(loan), total);
 
         // Before state
         assertLoanState({
@@ -627,7 +676,7 @@ contract LoanTest is LoanTestUtil {
         });
 
         // Make first payment on time.
-        assertTrue(b1.try_loan_makePayment(address(loan)));
+        assertTrue(borrower1.try_loan_makePayment(address(loan)));
 
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
 
@@ -656,15 +705,15 @@ contract LoanTest is LoanTestUtil {
         hevm.warp(loan.nextPaymentDue() + 1);
 
         // Approve 3nd of 3 payments.
-        (total, principal, interest_late, due,) = loan.getNextPayment();
-        mint(USDC, USDC_SLOT, address(b1), total);
-        b1.erc20_approve(USDC, address(loan), total);
+        (total, principal, interest_late, due, ) = loan.getNextPayment();
+        erc20_mint(USDC, USDC_SLOT, address(borrower1), total);
+        borrower1.erc20_approve(USDC, address(loan), total);
 
         // Check CollateralLocker balance.
-        assertEq(weth.balanceOf(loan.collateralLocker()), reqCollateral);
+        assertEq(IERC20(WETH).balanceOf(loan.collateralLocker()), reqCollateral);
 
         // Make payment.
-        assertTrue(b1.try_loan_makePayment(address(loan)));
+        assertTrue(borrower1.try_loan_makePayment(address(loan)));
 
         due += loan.paymentIntervalSeconds();  // Increment next payment due by interval
 
@@ -681,8 +730,8 @@ contract LoanTest is LoanTestUtil {
         });
 
         // CollateralLocker after state.
-        assertEq(weth.balanceOf(loan.collateralLocker()),             0);
-        assertEq(weth.balanceOf(address(b1)),            reqCollateral);
+        assertEq(IERC20(WETH).balanceOf(loan.collateralLocker()),             0);
+        assertEq(IERC20(WETH).balanceOf(address(borrower1)),            reqCollateral);
     }
 
     function test_unwind_loan(
@@ -698,14 +747,14 @@ contract LoanTest is LoanTestUtil {
     {
         loan = instantiateAndFundLoan(apr, index, numPayments_, requestAmount, collateralRatio, fundAmount);  // Const three payments used for this test
         address fundingLocker = loan.fundingLocker();
-        fundAmount = usdc.balanceOf(fundingLocker);
+        fundAmount = IERC20(USDC).balanceOf(fundingLocker);
 
         // Warp to the fundingPeriod, can't call unwind() yet
         hevm.warp(loan.createdAt() + globals.fundingPeriod());
-        assertTrue(!pd1.try_loan_unwind(address(loan)));
+        assertTrue(!LoanUser(address(poolDelegate1)).try_loan_unwind(address(loan)));
 
-        uint256 flBalancePre   = usdc.balanceOf(fundingLocker);
-        uint256 loanBalancePre = usdc.balanceOf(address(loan));
+        uint256 flBalancePre   = IERC20(USDC).balanceOf(fundingLocker);
+        uint256 loanBalancePre = IERC20(USDC).balanceOf(address(loan));
         uint256 loanStatePre   = uint256(loan.loanState());
 
         assertEq(flBalancePre, fundAmount);
@@ -716,14 +765,14 @@ contract LoanTest is LoanTestUtil {
 
         // Pause protocol and attempt unwind()
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), true));
-        assertTrue(!pd1.try_loan_unwind(address(loan)));
+        assertTrue(!LoanUser(address(poolDelegate1)).try_loan_unwind(address(loan)));
 
         // Unpause protocol and unwind()
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), false));
-        assertTrue(pd1.try_loan_unwind(address(loan)));
+        assertTrue(LoanUser(address(poolDelegate1)).try_loan_unwind(address(loan)));
 
-        uint256 flBalancePost   = usdc.balanceOf(fundingLocker);
-        uint256 loanBalancePost = usdc.balanceOf(address(loan));
+        uint256 flBalancePost   = IERC20(USDC).balanceOf(fundingLocker);
+        uint256 loanBalancePost = IERC20(USDC).balanceOf(address(loan));
         uint256 loanStatePost   = uint256(loan.loanState());
 
         assertEq(flBalancePost, 0);
@@ -736,17 +785,17 @@ contract LoanTest is LoanTestUtil {
 
         // Pause protocol and attempt withdrawFunds() (through claim)
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), true));
-        assertTrue(!pd1.try_pool_claim(address(p1), address(loan), address(dlFactory)));
+        assertTrue(!poolDelegate1.try_pool_claim(address(pool1), address(loan), address(debtLockerFactory)));
 
         // Unpause protocol and withdrawFunds() (through claim)
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), false));
-        assertTrue(pd1.try_pool_claim(address(p1), address(loan), address(dlFactory)));
+        assertTrue(poolDelegate1.try_pool_claim(address(pool1), address(loan), address(debtLockerFactory)));
 
-        withinDiff(usdc.balanceOf(address(p1.liquidityLocker())), fundAmount, 1);
-        withinDiff(usdc.balanceOf(address(loan)),                            0, 1);
+        assertWithinDiff(IERC20(USDC).balanceOf(pool1.liquidityLocker()), fundAmount, 1);
+        assertWithinDiff(IERC20(USDC).balanceOf(address(loan)),                            0, 1);
 
         // Can't unwind() loan after it has already been called.
-        assertTrue(!pd1.try_loan_unwind(address(loan)));
+        assertTrue(!LoanUser(address(poolDelegate1)).try_loan_unwind(address(loan)));
     }
 
     function test_trigger_default(
@@ -760,16 +809,16 @@ contract LoanTest is LoanTestUtil {
     )
         public
     {
-        gov.mapleGlobals_setMaxSwapSlippage(address(globals), 10_000);  // Set 100% slippage to account for very large liquidations from fuzzing
+        governor.mapleGlobals_setMaxSwapSlippage(address(globals), 10_000);  // Set 100% slippage to account for very large liquidations from fuzzing
 
         loan = instantiateAndFundLoan(apr, index, numPayments_, requestAmount, collateralRatio, fundAmount);
         address fundingLocker = loan.fundingLocker();
         fundAmount = IERC20(USDC).balanceOf(fundingLocker);
-        uint256 wadAmount = fundAmount * WAD / USD;
+        uint256 wadAmount = fundAmount * WAD_SCALE / USDC_SCALE;
 
-        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
+        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount);
 
-        address debtLocker = p1.debtLockers(address(loan), address(dlFactory));
+        address debtLocker = pool1.debtLockers(address(loan), address(debtLockerFactory));
 
         assertEq(uint256(loan.loanState()), 0);  // `Ready` state
 
@@ -777,57 +826,59 @@ contract LoanTest is LoanTestUtil {
 
         assertEq(uint256(loan.loanState()), 1);  // `Active` state
 
-        assertTrue(!pd1.try_pool_triggerDefault(address(p1), address(loan), address(dlFactory)));  // Should fail to trigger default because current time is still less than the `nextPaymentDue`.
-        assertTrue( !ex.try_loan_triggerDefault(address(loan)));                                    // Failed because commoner in not allowed to default the loan because they do not own any LoanFDTs.
+        assertTrue(!poolDelegate1.try_pool_triggerDefault(address(pool1), address(loan), address(debtLockerFactory)));  // Should fail to trigger default because current time is still less than the `nextPaymentDue`.
+        assertTrue( !explorer.try_loan_triggerDefault(address(loan)));                                    // Failed because commoner in not allowed to default the loan because they do not own any LoanFDTs.
 
         hevm.warp(loan.nextPaymentDue() + 1);
 
-        assertTrue(!pd1.try_pool_triggerDefault(address(p1), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
-        assertTrue( !ex.try_loan_triggerDefault(address(loan)));                                    // Failed because still commoner is not allowed to default the loan.
+        assertTrue(!poolDelegate1.try_pool_triggerDefault(address(pool1), address(loan), address(debtLockerFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
+        assertTrue( !explorer.try_loan_triggerDefault(address(loan)));                                    // Failed because still commoner is not allowed to default the loan.
 
         hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod());
 
-        assertTrue(!pd1.try_pool_triggerDefault(address(p1), address(loan), address(dlFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
-        assertTrue( !ex.try_loan_triggerDefault(address(loan)));                                   // Failed because still commoner is not allowed to default the loan.
+        assertTrue(!poolDelegate1.try_pool_triggerDefault(address(pool1), address(loan), address(debtLockerFactory)));  // Failed because still loan has defaultGracePeriod to repay the dues.
+        assertTrue( !explorer.try_loan_triggerDefault(address(loan)));                                   // Failed because still commoner is not allowed to default the loan.
 
         hevm.warp(loan.nextPaymentDue() + globals.defaultGracePeriod() + 1);
 
-        assertTrue(!ex.try_loan_triggerDefault(address(loan)));                                   // Failed because still commoner is not allowed to default the loan.
+        assertTrue(!explorer.try_loan_triggerDefault(address(loan)));                                   // Failed because still commoner is not allowed to default the loan.
 
         // Sid's Pool currently has 100% of LoanFDTs, so he can trigger the loan default.
         // For this test, minLoanEquity is transferred to the commoner to test the minimum loan equity condition.
-        assertEq(IERC20(address(loan)).totalSupply(), wadAmount);
+        assertEq(loan.totalSupply(), wadAmount);
         assertEq(globals.minLoanEquity(),             2000);  // 20%
 
-        uint256 minEquity = IERC20(address(loan)).totalSupply() * globals.minLoanEquity() / 10_000;
+        uint256 minEquity = loan.totalSupply() * globals.minLoanEquity() / 10_000;
 
         // Simulate transfer of LoanFDTs from DebtLocker to commoner (<20% of total supply)
         hevm.store(
             address(loan),
-            keccak256(abi.encode(address(ex), 0)), // Mint tokens
+            keccak256(abi.encode(address(explorer), 0)), // Mint tokens
             bytes32(uint256(minEquity - 1))
         );
+
         hevm.store(
             address(loan),
-            keccak256(abi.encode(address(debtLocker), 0)), // Overwrite balance
+            keccak256(abi.encode(debtLocker, 0)), // Overwrite balance
             bytes32(uint256(wadAmount - minEquity + 1))
         );
 
-        assertTrue(!ex.try_loan_triggerDefault(address(loan)));  // Failed because still commoner is not allowed to default the loan.
+        assertTrue(!explorer.try_loan_triggerDefault(address(loan)));  // Failed because still commoner is not allowed to default the loan.
 
         // "Transfer" 1 more wei to meet 20% minimum equity requirement
         hevm.store(
             address(loan),
-            keccak256(abi.encode(address(ex), 0)), // Mint tokens
+            keccak256(abi.encode(address(explorer), 0)), // Mint tokens
             bytes32(uint256(minEquity))
         );
+
         hevm.store(
             address(loan),
-            keccak256(abi.encode(address(debtLocker), 0)), // Overwrite balance
+            keccak256(abi.encode(debtLocker, 0)), // Overwrite balance
             bytes32(uint256(wadAmount - minEquity))
         );
 
-        assertTrue(ex.try_loan_triggerDefault(address(loan)));  // Now with 20% of loan equity, a loan can be defaulted
+        assertTrue(explorer.try_loan_triggerDefault(address(loan)));  // Now with 20% of loan equity, a loan can be defaulted
         assertEq(uint256(loan.loanState()), 4);
     }
 
@@ -845,13 +896,13 @@ contract LoanTest is LoanTestUtil {
         address fundingLocker = loan.fundingLocker();
         fundAmount = IERC20(USDC).balanceOf(fundingLocker);
 
-        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
+        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount);
 
         uint256 reqCollateral = drawdown(loan, drawdownAmount);
 
         uint256 expectedAmount = (reqCollateral * globals.getLatestPrice(WETH)) / globals.getLatestPrice(USDC);
 
-        assertEq((expectedAmount * USD) / WAD, loan.getExpectedAmountRecovered());
+        assertEq((expectedAmount * USDC_SCALE) / WAD_SCALE, loan.getExpectedAmountRecovered());
     }
 
     function test_makeFullPayment(
@@ -866,24 +917,24 @@ contract LoanTest is LoanTestUtil {
         public
     {
         loan = instantiateAndFundLoan(apr, index, numPayments, requestAmount, collateralRatio, fundAmount);
-        fundAmount = usdc.balanceOf(loan.fundingLocker());
+        fundAmount = IERC20(USDC).balanceOf(loan.fundingLocker());
 
-        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount, true);
+        drawdownAmount = constrictToRange(drawdownAmount, loan.requestAmount(), fundAmount);
 
         assertEq(uint256(loan.loanState()), 0);  // Loan state: Ready
 
-        assertTrue(!b1.try_loan_makeFullPayment(address(loan)));  // Can't makePayment when State != Active
+        assertTrue(!borrower1.try_loan_makeFullPayment(address(loan)));  // Can't makePayment when State != Active
 
         // Approve collateral and drawdown loan.
         uint256 reqCollateral = drawdown(loan, drawdownAmount);
-        uint256 loanPreBal    = usdc.balanceOf(address(loan));
+        uint256 loanPreBal    = IERC20(USDC).balanceOf(address(loan));
 
-        assertTrue(!b1.try_loan_makeFullPayment(address(loan)));  // Can't makePayment with lack of approval
+        assertTrue(!borrower1.try_loan_makeFullPayment(address(loan)));  // Can't makePayment with lack of approval
 
         // Approve full payment.
         (uint256 total, uint256 principal, uint256 interest) = loan.getFullPayment();
-        mint(USDC, USDC_SLOT, address(b1), total);
-        b1.erc20_approve(USDC, address(loan), total);
+        erc20_mint(USDC, USDC_SLOT, address(borrower1), total);
+        borrower1.erc20_approve(USDC, address(loan), total);
 
         // Before state
         assertLoanState({
@@ -898,19 +949,19 @@ contract LoanTest is LoanTestUtil {
         });
 
         // CollateralLocker before state.
-        assertEq(weth.balanceOf(loan.collateralLocker()), reqCollateral);
-        assertEq(weth.balanceOf(address(b1)),                 0);
+        assertEq(IERC20(WETH).balanceOf(loan.collateralLocker()), reqCollateral);
+        assertEq(IERC20(WETH).balanceOf(address(borrower1)),                 0);
 
         // Pause protocol and attempt makeFullPayment()
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), true));
-        assertTrue(!b1.try_loan_makeFullPayment(address(loan)));
+        assertTrue(!borrower1.try_loan_makeFullPayment(address(loan)));
 
         // Unpause protocol and makeFullPayment()
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), false));
-        assertTrue(b1.try_loan_makeFullPayment(address(loan)));  // Make full payment.
+        assertTrue(borrower1.try_loan_makeFullPayment(address(loan)));  // Make full payment.
 
         // After state
-        assertEq(usdc.balanceOf(address(loan)), loanPreBal + total);
+        assertEq(IERC20(USDC).balanceOf(address(loan)), loanPreBal + total);
 
         assertLoanState({
             loan_:             loan,
@@ -924,60 +975,62 @@ contract LoanTest is LoanTestUtil {
         });
 
         // CollateralLocker after state.
-        assertEq(weth.balanceOf(loan.collateralLocker()),             0);
-        assertEq(weth.balanceOf(address(b1)),     reqCollateral);
+        assertEq(IERC20(WETH).balanceOf(loan.collateralLocker()),             0);
+        assertEq(IERC20(WETH).balanceOf(address(borrower1)),     reqCollateral);
     }
 
     function test_reclaim_erc20() external {
         loan = instantiateAndFundLoan(2, 10, 5, 100000, 20, 1000000);
         // Add different kinds of assets to the loan.
-        mint(USDC, USDC_SLOT, address(loan), 1000 * USD);
-        mint(DAI,  DAI_SLOT,  address(loan), 1000 * WAD);
-        mint(WETH, WETH_SLOT, address(loan),  100 * WAD);
+        erc20_mint(USDC, USDC_SLOT, address(loan), 1000 * USDC_SCALE);
+        erc20_mint(DAI,  DAI_SLOT,  address(loan), 1000 * WAD_SCALE);
+        erc20_mint(WETH, WETH_SLOT, address(loan),  100 * WAD_SCALE);
 
         Governor fakeGov = new Governor();
 
-        uint256 beforeBalanceDAI  =  dai.balanceOf(address(gov));
-        uint256 beforeBalanceWETH = weth.balanceOf(address(gov));
+        uint256 beforeBalanceDAI  = IERC20(DAI).balanceOf(address(governor));
+        uint256 beforeBalanceWETH = IERC20(WETH).balanceOf(address(governor));
 
         assertTrue(!fakeGov.try_loan_reclaimERC20(address(loan), DAI));
-        assertTrue(    !gov.try_loan_reclaimERC20(address(loan), USDC));  // Governor cannot remove liquidityAsset from loans
-        assertTrue(    !gov.try_loan_reclaimERC20(address(loan), address(0)));
-        assertTrue(     gov.try_loan_reclaimERC20(address(loan), WETH));
-        assertTrue(     gov.try_loan_reclaimERC20(address(loan), DAI));
+        assertTrue(    !governor.try_loan_reclaimERC20(address(loan), USDC));  // Governor cannot remove liquidityAsset from loans
+        assertTrue(    !governor.try_loan_reclaimERC20(address(loan), address(0)));
+        assertTrue(     governor.try_loan_reclaimERC20(address(loan), WETH));
+        assertTrue(     governor.try_loan_reclaimERC20(address(loan), DAI));
 
-        uint256 afterBalanceDAI  =  dai.balanceOf(address(gov));
-        uint256 afterBalanceWETH = weth.balanceOf(address(gov));
+        uint256 afterBalanceDAI  = IERC20(DAI).balanceOf(address(governor));
+        uint256 afterBalanceWETH = IERC20(WETH).balanceOf(address(governor));
 
-        assertEq(afterBalanceDAI  - beforeBalanceDAI,  1000 * WAD);
-        assertEq(afterBalanceWETH - beforeBalanceWETH,  100 * WAD);
+        assertEq(afterBalanceDAI  - beforeBalanceDAI,  1000 * WAD_SCALE);
+        assertEq(afterBalanceWETH - beforeBalanceWETH,  100 * WAD_SCALE);
     }
 
     function test_setLoanAdmin() public {
-        address newLoanAdmin = address(new GlobalAdmin());
+        GlobalAdmin newLoanAdmin = new GlobalAdmin();
         loan = instantiateAndFundLoan(2, 10, 5, 100000, 20, 1000000);
+
         // Pause protocol and attempt setLoanAdmin()
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), true));
-        assertTrue(!b1.try_loan_setLoanAdmin(address(loan), newLoanAdmin, true));
-        assertTrue(!loan.loanAdmins(newLoanAdmin));
+        assertTrue(!borrower1.try_loan_setLoanAdmin(address(loan), address(newLoanAdmin), true));
+        assertTrue(!loan.loanAdmins(address(newLoanAdmin)));
 
         // Unpause protocol and setLoanAdmin()
         assertTrue(globalAdmin.try_mapleGlobals_setProtocolPause(address(globals), false));
-        assertTrue(b1.try_loan_setLoanAdmin(address(loan), newLoanAdmin, true));
-        assertTrue(loan.loanAdmins(newLoanAdmin));
+        assertTrue(borrower1.try_loan_setLoanAdmin(address(loan), address(newLoanAdmin), true));
+        assertTrue(loan.loanAdmins(address(newLoanAdmin)));
     }
 
     function repetitivePayment(ILoan loan_, uint256 numPayments, uint256 paymentCount, uint256 drawdownAmount, uint256 loanPreBal, uint256 oldInterest) internal {
-        (uint256 total,, uint256 interest, uint256 due,) = loan_.getNextPayment();
-        mint(USDC, USDC_SLOT, address(b1), total);
-        b1.erc20_approve(USDC, address(loan_), total);
+        (uint256 total,, uint256 interest, uint256 due, ) = loan_.getNextPayment();
+        erc20_mint(USDC, USDC_SLOT, address(borrower1), total);
+        borrower1.erc20_approve(USDC, address(loan_), total);
 
         // Below is the way of catering two scenarios
         // 1. When there is no late payment so interest paid will be a multiple of `numPayments`.
         // 2. If there is a late payment then needs to handle the situation where interest paid is `interest (without late fee) + interest (late fee) * numPayments`.
         numPayments = oldInterest == uint256(0) ? numPayments - paymentCount : numPayments - paymentCount - 1;
+
         // Make payment.
-        assertTrue(b1.try_loan_makePayment(address(loan_)));
+        assertTrue(borrower1.try_loan_makePayment(address(loan_)));
 
         due += loan_.paymentIntervalSeconds();  // Increment next payment due by interval
 
