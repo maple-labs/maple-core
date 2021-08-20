@@ -81,6 +81,8 @@ To alter number of fuzz runs, change the `--fuzz-runs` flag in `test.sh`. Note: 
 | CollateralLockerFactory | [0xEE3e59D381968f4F9C92460D9d5Cfcf5d3A67987](https://etherscan.io/address/0xEE3e59D381968f4F9C92460D9d5Cfcf5d3A67987) |
 | FundingLockerFactory    | [0x0eB96A53EC793a244876b018073f33B23000F25b](https://etherscan.io/address/0x0eB96A53EC793a244876b018073f33B23000F25b) |
 | MplRewardsFactory       | [0x0155729EbCd47Cb1fBa02bF5a8DA20FaF3860535](https://etherscan.io/address/0x0155729EbCd47Cb1fBa02bF5a8DA20FaF3860535) |
+| PriceOracleAAVE         | [0xCc903496EDEE42F1A298C63905c19a42AF708b15](https://etherscan.io/address/0xCc903496EDEE42F1A298C63905c19a42AF708b15) |
+| PriceOracleLINK         | [0x5ad18e4ce9c88c3c266a1befe924cd6eaf812f24](https://etherscan.io/address/0x5ad18e4ce9c88c3c266a1befe924cd6eaf812f24) |
 | PriceOracleUSDC         | [0x5DC5E14be1280E747cD036c089C96744EBF064E7](https://etherscan.io/address/0x5DC5E14be1280E747cD036c089C96744EBF064E7) |
 | PriceOracleWBTC         | [0xF808ec05c1760DE4794813d08d2Bf1E16e7ECD0B](https://etherscan.io/address/0xF808ec05c1760DE4794813d08d2Bf1E16e7ECD0B) |
 
