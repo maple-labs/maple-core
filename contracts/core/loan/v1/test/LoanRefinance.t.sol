@@ -74,14 +74,25 @@ contract LoanRefinanceTest is TestUtil {
         // Approve collateral and drawdown loan.
         drawdown(loan, loan.requestAmount());
 
-        (uint256 total, uint256 principal, uint256 interest, uint256 due,) = loan.getNextPayment();
+        {
+            (uint256 total, uint256 principal, uint256 interest, uint256 due,) = loan.getNextPayment();
 
-        mint("USDC", address(bob),       total);
-        bob.approve(USDC, address(loan), total);
-        bob.makePayment(address(loan));
+            mint("USDC", address(bob),       total);
+            bob.approve(USDC, address(loan), total);
+            bob.makePayment(address(loan));
 
-        mint("USDC", address(bob),       total);
-        bob.approve(USDC, address(loan), total);
-        bob.makePayment(address(loan));
+            mint("USDC", address(bob),       total);
+            bob.approve(USDC, address(loan), total);
+            bob.makePayment(address(loan));
+        }        
+
+        Loan refinanceLoan = Loan(bob.createLoan(address(loanFactory), USDC, WETH, address(flFactory), address(clFactory), specs, calcs));
+
+        pat.fundLoan(address(pool1), address(refinanceLoan), address(dlFactory1), 0);
+
+        address debtLocker1 = pool1.debtLockers(address(loan),          address(dlFactory1));
+        address debtLocker2 = pool1.debtLockers(address(refinanceLoan), address(dlFactory1));
+
+        pat.refinanceLoan(address(debtLocker2), address(debtLocker1), loanAmount);
     }
 }

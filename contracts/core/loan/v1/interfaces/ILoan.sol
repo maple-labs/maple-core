@@ -359,4 +359,6 @@ interface ILoan is IBasicFundsTokenFDT {
      */
     function collateralRequiredForDrawdown(uint256 amt) external view returns (uint256);
 
+    function burn(uint256 amount) external;
+
 }

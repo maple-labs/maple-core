@@ -6,6 +6,7 @@ import { IERC20 } from "../../../lib/openzeppelin-contracts/contracts/token/ERC2
 
 import { IBPool } from "../../external-interfaces/IBPool.sol";
 
+import { IDebtLocker }  from "../../core/debt-locker/v1/interfaces/IDebtLocker.sol";
 import { ILoan }        from "../../core/loan/v1/interfaces/ILoan.sol";
 import { IPool }        from "../../core/pool/v1/interfaces/IPool.sol";
 import { IPoolFactory } from "../../core/pool/v1/interfaces/IPoolFactory.sol";
@@ -111,6 +112,11 @@ contract PoolDelegate {
     // Balancer Pool
     function joinBPool(IBPool bPool, uint poolAmountOut, uint[] calldata maxAmountsIn) external {
         bPool.joinPool(poolAmountOut, maxAmountsIn);
+    }
+
+    // Refinance
+    function refinanceLoan(address newDebtLocker, address oldDebtLocker, uint256 amount) external {
+        IDebtLocker(newDebtLocker).refinanceLoan(oldDebtLocker, amount);
     }
 
     /*********************/

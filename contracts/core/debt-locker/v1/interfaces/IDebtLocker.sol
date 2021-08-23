@@ -72,4 +72,9 @@ interface IDebtLocker {
      */
     function triggerDefault() external;
 
+    function superFactory() external view returns (address);
+
+    function forgiveLoan(uint256) external;
+
+    function refinanceLoan(address, uint256) external;
 }

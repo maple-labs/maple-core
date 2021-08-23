@@ -356,6 +356,11 @@ contract Loan is ILoan, BasicFundsTokenFDT, Pausable {
         emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
     }
 
+    function burn(uint256 amount) external override {
+        require(balanceOf(msg.sender) >= amount, "L:AMT_GT_BAL");
+        _burn(msg.sender, amount);
+    }
+
     /************************/
     /*** Getter Functions ***/
     /************************/

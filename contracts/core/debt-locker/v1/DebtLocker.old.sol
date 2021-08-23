@@ -8,11 +8,6 @@ import { ILoan } from "../../loan/v1/interfaces/ILoan.sol";
 
 import { IDebtLocker } from "./interfaces/IDebtLocker.sol";
 
-interface IPoolLike {
-    function poolDelegate() external view returns (address);
-    function debtLockers(address, address) external view returns (address);
-}
-
 /// @title DebtLocker holds custody of LoanFDT tokens.
 contract DebtLocker is IDebtLocker {
 
@@ -24,7 +19,6 @@ contract DebtLocker is IDebtLocker {
     ILoan   public override immutable loan;
     IERC20  public override immutable liquidityAsset;
     address public override immutable pool;
-    address public override immutable superFactory;
 
     uint256 public override lastPrincipalPaid;
     uint256 public override lastInterestPaid;
@@ -45,25 +39,11 @@ contract DebtLocker is IDebtLocker {
         loan           = ILoan(_loan);
         pool           = _pool;
         liquidityAsset = IERC20(ILoan(_loan).liquidityAsset());
-        superFactory   = msg.sender;
     }
 
     // Note: If newAmt > 0, totalNewAmt will always be greater than zero.
     function _calcAllotment(uint256 newAmt, uint256 totalClaim, uint256 totalNewAmt) internal pure returns (uint256) {
         return newAmt == uint256(0) ? uint256(0) : newAmt.mul(totalClaim).div(totalNewAmt);
-    }
-
-    function refinanceLoan(address oldDebtLocker, uint256 amount) external override {
-        require(msg.sender == IPoolLike(pool).poolDelegate(), "DL:NOT_PD");
-        IDebtLocker(oldDebtLocker).forgiveLoan(amount);
-    }
-
-    function forgiveLoan(uint256 amount) external override {
-        address newLoan    = address(IDebtLocker(msg.sender).loan());
-        address newFactory = IDebtLocker(msg.sender).superFactory();
-        // TODO: add security checks to prevent bad debtLockers (Check isDebtLocker in factory)
-        require(IPoolLike(pool).debtLockers(newLoan, newFactory) == msg.sender, "DL:NOT_DL");
-        loan.burn(amount);
     }
 
     function claim() external override isPool returns (uint256[7] memory) {
