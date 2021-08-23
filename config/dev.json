@@ -55,6 +55,9 @@
     "contracts/core/loan/v1/test/LoanLiquidation.t.sol": {
       "urls": ["contracts/core/loan/v1/test/LoanLiquidation.t.sol"]
     },
+    "contracts/core/loan/v1/test/LoanRefinance.t.sol": {
+      "urls": ["contracts/core/loan/v1/test/LoanRefinance.t.sol"]
+    },
     "contracts/core/mpl-rewards/v1/MplRewardsFactory.sol": {
       "urls": ["contracts/core/mpl-rewards/v1/MplRewardsFactory.sol"]
     },

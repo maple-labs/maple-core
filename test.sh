@@ -20,12 +20,13 @@ version=$([ -z "$version" ] && echo "v1" || echo "$version")
 
 [[ $SKIP_MAINNET_CHECK || "$ETH_RPC_URL" && "$(seth chain)" == "ethlive" ]] || { echo "Please set a mainnet ETH_RPC_URL"; exit 1; }
 
-export DAPP_TEST_TIMESTAMP=1622483493
-export DAPP_TEST_NUMBER=12543537
+# export DAPP_TEST_TIMESTAMP=1622483493
+# export DAPP_TEST_NUMBER=12543537
 export DAPP_SOLC_VERSION=0.6.11
 export DAPP_SRC="contracts"
 export DAPP_LINK_TEST_LIBRARIES=0
 export DAPP_STANDARD_JSON=$config
+# export DAPP_SKIP_BUILD=1
 
 if [ "$skip_build" = "1" ]; then export DAPP_SKIP_BUILD=1; fi
 
