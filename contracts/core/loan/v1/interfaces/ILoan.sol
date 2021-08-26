@@ -359,6 +359,16 @@ interface ILoan is IBasicFundsTokenFDT {
      */
     function collateralRequiredForDrawdown(uint256 amt) external view returns (uint256);
 
-    function burn(uint256 amount) external;
+    function transferDebt(address newLoan, address mintTo, uint256 amount) external;
+
+    function fundWithFDT(address mintTo, uint256 amount, uint256 collateralToTransfer) external;
+
+    function previousLoan() external view returns (address);
+
+    function setPreviousLoan(address previousLoan) external;
+
+    event PreviousLoanSet(address previousLoan);
+
+    event DebtTransferred(address newLoan, address mintTo, uint256 amount, uint256 collateralToTransfer);
 
 }

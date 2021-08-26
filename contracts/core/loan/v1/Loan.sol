@@ -74,6 +74,9 @@ contract Loan is ILoan, BasicFundsTokenFDT, Pausable {
     uint256 public override defaultSuffered;
     uint256 public override liquidationExcess;
 
+    // Refinance
+    address public override previousLoan;
+
     /**
         @dev    Constructor for a Loan. 
         @dev    It emits a `LoanStateChanged` event. 
@@ -265,8 +268,7 @@ contract Loan is ILoan, BasicFundsTokenFDT, Pausable {
         _isWithinFundingPeriod();
         liquidityAsset.safeTransferFrom(msg.sender, fundingLocker, amt);
 
-        uint256 wad = _toWad(amt);  // Convert to WAD precision.
-        _mint(mintTo, wad);         // Mint LoanFDTs to `mintTo` (i.e DebtLocker contract).
+        _mint(mintTo, amt);         // Mint LoanFDTs to `mintTo` (i.e DebtLocker contract).
 
         emit LoanFunded(mintTo, amt);
         _emitBalanceUpdateEventForFundingLocker();
@@ -356,9 +358,43 @@ contract Loan is ILoan, BasicFundsTokenFDT, Pausable {
         emit BalanceUpdated(address(this), address(fundsToken), fundsToken.balanceOf(address(this)));
     }
 
-    function burn(uint256 amount) external override {
+    /***************************/
+    /*** Refinance Functions ***/
+    /***************************/
+    function setPreviousLoan(address _previousLoan) external override {  
+        require(msg.sender == borrower && msg.sender == ILoan(_previousLoan).borrower(), "L:NOT_B");
+        previousLoan = _previousLoan;
+        emit PreviousLoanSet(_previousLoan);
+    }
+
+    function transferDebt(address newLoan, address mintTo, uint256 amount) external override {
         require(balanceOf(msg.sender) >= amount, "L:AMT_GT_BAL");
         _burn(msg.sender, amount);
+
+        uint256 collateralToTransfer = collateralAsset.balanceOf(collateralLocker) * amount / principalOwed; 
+
+        principalOwed = principalOwed.sub(amount);
+
+        ICollateralLocker(collateralLocker).approve(newLoan, collateralToTransfer);
+        ILoan(newLoan).fundWithFDT(mintTo, amount, collateralToTransfer);
+        emit DebtTransferred(newLoan, mintTo, amount, collateralToTransfer);
+    }
+
+    function fundWithFDT(address mintTo, uint256 amount, uint256 collateralToTransfer) whenNotPaused external override {
+        _whenProtocolNotPaused();
+        _isValidState(State.Ready);
+        _isWithinFundingPeriod();
+        require(msg.sender == previousLoan, "L:NOT_PREV_L");
+
+        _mint(mintTo, amount);
+        principalOwed = principalOwed.add(amount);
+
+        collateralAsset.transferFrom(ILoan(previousLoan).collateralLocker(), collateralLocker, collateralToTransfer);
+
+        _emitBalanceUpdateEventForFundingLocker();
+        _emitBalanceUpdateEventForCollateralLocker();
+        emit BalanceUpdated(ILoan(previousLoan).collateralLocker(), address(collateralAsset), collateralAsset.balanceOf(previousLoan));
+        emit LoanFunded(mintTo, amount);
     }
 
     /************************/

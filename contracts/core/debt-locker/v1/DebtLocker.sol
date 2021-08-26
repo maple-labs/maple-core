@@ -59,11 +59,13 @@ contract DebtLocker is IDebtLocker {
     }
 
     function forgiveLoan(uint256 amount) external override {
-        address newLoan    = address(IDebtLocker(msg.sender).loan());
-        address newFactory = IDebtLocker(msg.sender).superFactory();
+        address newDebtLocker = msg.sender;
+        address newLoan       = address(IDebtLocker(newDebtLocker).loan());
+        address newFactory    = IDebtLocker(newDebtLocker).superFactory();
+
         // TODO: add security checks to prevent bad debtLockers (Check isDebtLocker in factory)
-        require(IPoolLike(pool).debtLockers(newLoan, newFactory) == msg.sender, "DL:NOT_DL");
-        loan.burn(amount);
+        require(IPoolLike(pool).debtLockers(newLoan, newFactory) == newDebtLocker, "DL:NOT_DL");
+        loan.transferDebt(newLoan, newDebtLocker, amount);
     }
 
     function claim() external override isPool returns (uint256[7] memory) {

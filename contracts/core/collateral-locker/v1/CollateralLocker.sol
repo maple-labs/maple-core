@@ -30,4 +30,8 @@ contract CollateralLocker is ICollateralLocker {
         collateralAsset.safeTransfer(dst, amt);
     }
 
+    function approve(address spender, uint256 amount) external override isLoan {
+        collateralAsset.safeApprove(spender, amount);
+    }
+
 }

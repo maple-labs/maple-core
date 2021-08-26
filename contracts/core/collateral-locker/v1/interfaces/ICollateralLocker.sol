@@ -24,4 +24,6 @@ interface ICollateralLocker {
      */
     function pull(address dst, uint256 amt) external;
 
+    function approve(address spender, uint256 amount) external;
+
 }
