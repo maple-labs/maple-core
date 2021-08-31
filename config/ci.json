@@ -57,6 +57,9 @@
     },
     "modules/util/contracts/Util.sol": {
       "urls": ["modules/util/contracts/Util.sol"]
+    },
+     "contracts/test/Loan.t.sol": {
+      "urls": ["contracts/test/Loan.t.sol"]
     }
   },
   "settings": {

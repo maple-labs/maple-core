@@ -53,3 +53,6 @@
 [submodule "modules/util"]
 	path = modules/util
 	url = https://github.com/maple-labs/util.git
+[submodule "modules/contract-test-utils"]
+	path = modules/contract-test-utils
+	url = https://github.com/maple-labs/contract-test-utils.git
