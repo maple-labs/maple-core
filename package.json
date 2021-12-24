@@ -1,0 +1,21 @@
+{
+    "name": "maple-core",
+    "version": "2.0.0",
+    "description": "Maple is a decentralized corporate credit market. Maple provides capital to institutional borrowers through globally accessible fixed-income yield opportunities.",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/maple-labs/maple-core.git"
+    },
+    "author": "Maple Labs",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/maple-labs/maple-core/issues"
+    },
+    "homepage": "https://github.com/maple-labs/maple-core#readme",
+    "devDependencies": {
+        "maple-tools": "github:maple-labs/maple-tools"
+    }
+}
