@@ -1,7 +1,3 @@
 # macOS
 .DS_Store
 
-# DappTools
-hevm*
-/out
-/cache
